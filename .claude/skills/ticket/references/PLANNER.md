@@ -26,13 +26,13 @@ Reads `workareas/ticket-planning/EUDPA-XXXXX/{ticket.md,.plan-meta.json,best-pra
 when done.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX
+tim ticket prepare-plan EUDPA-XXXXX
 ```
 
 Or, if the affected repos are already known up front:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
+tim ticket prepare-plan EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
 ```
 
 ### 2. Explore Codebase
@@ -47,7 +47,7 @@ rules before deciding where anything goes.
 
 Tech + best-practices are already baked in `.plan-meta.json` and
 `best-practices/<repo>.md` for the repos you passed. If you discover
-further repos in scope, re-run `prepare-plan.sh --repos` to refresh.
+further repos in scope, re-run `tim ticket prepare-plan --repos` to refresh.
 
 ### 3. Decide
 

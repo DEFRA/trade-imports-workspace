@@ -83,7 +83,7 @@ before the first write. In short:
 5. **Validate**, once per capability written, then lint the whole spec:
 
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root ~/git/defra/trade-imports-workspace <capability-path> [<capability-path> ...]
+   tim spec lint --capability <capability-path>
    ```
 
    ```bash
@@ -131,17 +131,17 @@ All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
 
 | Domain | Used by | Purpose |
 |---|---|---|
-| `tools/ticket/prepare-plan.sh EUDPA-X [--repos r1,r2] [--json]` | PLANNER | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` |
-| `tools/ticket/prepare-implement.sh EUDPA-X [--repo R] [--json]` | IMPLEMENTOR | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
-| `tools/ticket/setup-branch.sh EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B]` | IMPLEMENTOR | One-dispatch fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` (`--type` defaults to `feat`) |
-| `tools/jira/` (`ticket.sh`, `comments.sh`) | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
-| `tools/jira/` (`add-comment.sh`, `transition-ticket.sh`) | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
-| `tools/github/` (`prs.sh`, `pr-details.sh`, `diff.sh`) | IMPLEMENTOR | PR creation context + inspection |
-| `tools/github-actions/` (`trigger-workflow.sh`, `wait-for-run.sh`, `get-failure.sh`, `run-status.sh`, `get-logs.sh`) | IMPLEMENTOR | CI verification |
-| `tools/review/detect-tech.sh` | called by `prepare-plan.sh` / `prepare-implement.sh` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
+| `tim ticket prepare-plan EUDPA-X [--repos r1,r2] [--json]` | PLANNER | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` |
+| `tim ticket prepare-implement EUDPA-X [--repo R] [--json]` | IMPLEMENTOR | Assert plan, re-validate detect-tech, emit `.implement-meta.json` |
+| `tim ticket branch EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B]` | IMPLEMENTOR | One-dispatch fetch → checkout base → pull → checkout `<type>/EUDPA-X-<slug>` (`--type` defaults to `feat`) |
+| `tim jira ticket EUDPA-X`, `tim jira comments EUDPA-X` | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
+| `tim jira comment EUDPA-X --file F --confirm`, `tim jira transition EUDPA-X "Status"` | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
+| `gh search prs EUDPA-X --owner DEFRA`, `gh pr view <n> --repo DEFRA/<repo>`, `gh pr diff <n> --repo DEFRA/<repo>` | IMPLEMENTOR | PR creation context + inspection |
+| `gh workflow run`, `gh run list`, `gh run watch`, `gh run view [--log-failed\|--log]` | IMPLEMENTOR | CI verification |
+| `tim review detect-tech <repo-path> [--json]` | used by `tim ticket prepare-plan` / `prepare-implement` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
 
-Authenticate to Jira/GitHub before fetching (or run the umbrella
-`~/git/defra/trade-imports-workspace/tools/auth.sh`).
+Check your Jira and Confluence sign-in with `tim auth`, and your GitHub
+sign-in with `gh auth status`, before fetching.
 
 ## Best practices
 
@@ -155,9 +155,9 @@ applies to the repo being worked on.
 
 | Path | Purpose |
 |---|---|
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/ticket.md` | `prepare-plan.sh` writes (Jira metadata + description + comments + Confluence refs) |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/plan.md` | PLANNER writes and records its plan review; IMPLEMENTOR reads; both may amend with deviations |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.plan-meta.json` | `prepare-plan.sh` writes — ticket metadata + per-repo tech list |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/best-practices/<repo>.md` | `prepare-plan.sh` writes — concatenated best-practices bundle per repo |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.implement-meta.json` | `prepare-implement.sh` writes — re-validated tech + cached PR diffs |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.diffs/<repo>.diff` | `prepare-implement.sh` writes — cached PR diff (when a prior PR exists) |
+| `workareas/ticket-planning/EUDPA-X/ticket.md` | `tim ticket prepare-plan` writes (Jira metadata + description + comments + Confluence refs) |
+| `workareas/ticket-planning/EUDPA-X/plan.md` | PLANNER writes and records its plan review; IMPLEMENTOR reads; both may amend with deviations |
+| `workareas/ticket-planning/EUDPA-X/.plan-meta.json` | `tim ticket prepare-plan` writes — ticket metadata + per-repo tech list |
+| `workareas/ticket-planning/EUDPA-X/best-practices/<repo>.md` | `tim ticket prepare-plan` writes — concatenated best-practices bundle per repo |
+| `workareas/ticket-planning/EUDPA-X/.implement-meta.json` | `tim ticket prepare-implement` writes — re-validated tech |
+| `workareas/ticket-planning/EUDPA-X/.diffs/<repo>.diff` | IMPLEMENTOR writes with `gh pr diff` — cached PR diff (when a prior PR exists) |

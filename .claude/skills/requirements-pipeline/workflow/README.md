@@ -244,6 +244,7 @@ missing key. The first log line is the resolved configuration.
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
 | `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed in full once, and revised whenever that review sends it back, with a second pass that re-checks only its findings; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with that second pass run only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `workspace` | The root of the workspace clone the run builds in, as a tilde path. The launch passes it, so a run builds in the clone that launched it. With `null`, the first stage resolves the root from the session folder, then from `CLAUDE_PROJECT_DIR`, then from a fixed list of paths as a last resort. Every Bash command the run gives an agent, and the Codex executor's `-C`, use it |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -376,7 +377,8 @@ ever.
   stopAfter: 'all',
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'standard'
+  rigour: 'standard',
+  workspace: null
 }
 ```
 
@@ -488,7 +490,7 @@ refuses to commit a spec change rather than put it on the base branch with no re
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
 unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), the new-code coverage check
-(`tim build coverage`), FIT after a free-port check,
+(`tim build coverage`), FIT on the first free port from its planned one,
 and the tests repo's local-stack E2E. A red duplication rung is repaired by moving the copied set-up into the shared
 test helper and deleting the copies. The coverage rung runs straight after the rung that writes the report it reads —
 `npm test` or `mvn verify` — and measures what a SonarCloud `new_coverage` condition measures: every line and condition
@@ -630,10 +632,10 @@ spec behind.
 | Stage | What it does with the spec |
 |---|---|
 | Plan | Section 8 names the prefix by repo and set (`live-animals`, `germinal-products`, `plants`, `ins`, `admin`), each capability, requirement and scenario to change, any new AREA row and the coverage links — or `none — <reason>`. Returns `specPrefixes` |
-| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tools/frontend-change/openspec-validate.sh --root <workspace>` and `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
+| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
 | Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
 | Fix | A fix that changes behaviour updates the spec too, and reports its own line |
-| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
+| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it confirms each `deleted:` one is gone, then runs `tim spec lint --capability <prefix>` once per prefix the lines write under, which validates every capability under it |
 | Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
 | Signed off | Full lifecycle: after CI and before the merge, `tim spec diff --signed-off` checks the row's committed work for a change to a signed-off scenario, and a change holds the row for a person's ruling. Branch lifecycle: once at theme end, against `origin/main` |
 
@@ -1125,7 +1127,7 @@ like this:
 | Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
 | Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force`. The tests repo goes first, and the others wait for its branch image to publish |
 | Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
-| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. **A failing check that started before the PR's head commit is a stale rollup, not a red** — GitHub does not re-run a PR's checks when its base moves, so the script compares each failing check's start time with the head commit's own and exits 5 when every one of them predates it. The watcher re-runs those jobs and waits again, up to twice, spending a watch window rather than a fix attempt; the CI fixer confirms the same before it changes a line and refuses rather than fix a check that never saw the code. **An E2E check goes stale a second way**: it drives the workspace stack built from every repo's branch image, so a run that started before a sibling repo's image finished publishing tested that repo's previous image, however fresh its own head is. The fixer compares the check's start with each pushed repo's `publish / Publish branch-tagged index` completion, and on a stale image re-runs the failed jobs rather than editing code — an app rendering copy the branch has already changed is an old image, never a defect. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
+| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `gh pr checks <number> --watch --fail-fast` and reads the verdict from one `gh pr checks --json … --jq` call, whose filter the prompt carries: `SUMMARY: green`, `red`, `pending` (wait again) or `stale`, and gh's own "no checks reported", still there after the watch has re-run every 30s five times so checks that register late after a push are still watched, stops the row as `no-checks`. **A failing check that started before the PR's head commit is a stale rollup, not a red** — GitHub does not re-run a PR's checks when its base moves, so the verdict compares each failing check's start time with the head commit's own and says `stale` when every one of them predates it. The watcher re-runs those jobs and waits again, up to twice, spending a watch window rather than a fix attempt; the CI fixer confirms the same before it changes a line and refuses rather than fix a check that never saw the code. **An E2E check goes stale a second way**: it drives the workspace stack built from every repo's branch image, so a run that started before a sibling repo's image finished publishing tested that repo's previous image, however fresh its own head is. The fixer compares the check's start with each pushed repo's `publish / Publish branch-tagged index` completion, and on a stale image re-runs the failed jobs rather than editing code — an app rendering copy the branch has already changed is an old image, never a defect. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
 | Merge | Does not run |
 | Done | `tim backlog set <workarea> <id> --status done --commit <sha>`. No ticket to move |
 
@@ -1168,7 +1170,10 @@ The worked example for the frontend alignment sync:
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local'
+  e2e: 'local',
+  resumeFrom: null,
+  rigour: 'standard',
+  workspace: null
 }
 ```
 

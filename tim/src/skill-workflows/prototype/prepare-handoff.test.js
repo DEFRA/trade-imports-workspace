@@ -9,7 +9,7 @@ const SCRIPT = readFileSync(
   'utf8'
 )
 
-const WORKSPACE = '~/git/defra/trade-imports-workspace'
+const WORKSPACE = '~/clones/second-workspace'
 const PLANTS_FRONTEND = `${WORKSPACE}/repos/trade-imports-plants-frontend`
 const HANDOFF = `${WORKSPACE}/repos/trade-imports-plants-prototype/handoffs/2026-09-28-consignment-addresses`
 
@@ -25,6 +25,7 @@ const runWorkflow = (args, { agent, log = vi.fn(), phase = vi.fn() }) =>
   )(args, agent, phase, log)
 
 const ARGS = {
+  workspace: WORKSPACE,
   handoff: HANDOFF,
   ticket: 'EUDPA-621',
   route: 'auto',
@@ -123,7 +124,11 @@ describe('prepare-handoff: the args contract', () => {
     [{ ticket: 'eudpa-621' }, /ticket must be/],
     [{ ticket: 'EUDPA' }, /ticket must be/],
     [{ route: 'C3' }, /route must be one of/],
-    [{ dryRun: 'true' }, /dryRun must be true or false/]
+    [{ dryRun: 'true' }, /dryRun must be true or false/],
+    [
+      { workspace: '/home/someone/workspace' },
+      /workspace must be the root of the workspace clone this session runs in, as a tilde path/
+    ]
   ])('refuses %j before any agent', async (change, message) => {
     const agent = answers()
     await expect(
@@ -369,7 +374,7 @@ describe('prepare-handoff: release patterns', () => {
     await runWorkflow(REAL_ARGS, { agent })
     const ladder = promptFor(agent, 'ladder 1')
     expect(ladder).toContain(
-      '- Run: ls ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets'
+      `- Run: ls ${WORKSPACE}/repos/trade-imports-plants-prototype/src/server/app/sets`
     )
     expect(ladder).toContain(
       'It also fails, whether or not upstream.patch adds it, for each "+" line of that diff that names an app-<set>- class for any set that ls lists (app-high-risk-plants- included), or that extends any layout other than "shared/layout.njk"'

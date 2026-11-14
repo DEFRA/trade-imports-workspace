@@ -6,8 +6,9 @@ import {
   acquireStack,
   releaseStack,
   readLease,
-  describeLease,
-  defaultLeasePath
+  defaultLeasePath,
+  foreignStackOwner,
+  foreignStackRefusal
 } from '../exec/stack-lease.js'
 import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
@@ -31,6 +32,17 @@ import {
 } from './machine-config.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
+
+export const CI_E2E_EVIDENCE =
+  'the E2E Tests check (e2e-tests.yml) on each pull request, which runs what config/e2e-tests-pr-scope.json scopes for its repo and may run less than these rungs.'
+
+const e2eLeftToCi = (rungs) => ({
+  where: 'ci',
+  leftToCi: rungs.map(({ repo, name }) => ({ repo, name })),
+  evidence: CI_E2E_EVIDENCE
+})
+
+const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 /**
  * Who the gate takes the stack lease as when no holder is given: this gate
@@ -73,6 +85,7 @@ const machineSummary = (machine) =>
         config: machine.path,
         parallelRepos: machine.parallelRepos ?? null,
         stackAfterLocal: machine.stackAfterLocal ?? null,
+        e2e: machine.e2e ?? null,
         workers: machine.workers
       }
     : null
@@ -132,7 +145,7 @@ export const cannotRunBecause = ({ repo, path, run }) => {
 /**
  * One rung's entry in the gate result.
  *
- * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null, workers: number|null}}
+ * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null, workers: number|null, ports: {planned: number, used: number|null, heldBy: string|null}[]}}
  */
 export const rungResult = ({
   rung,
@@ -150,7 +163,8 @@ export const rungResult = ({
   log,
   durationMs,
   reason,
-  workers: rung.workers ?? null
+  workers: rung.workers ?? null,
+  ports: rung.portClaims ?? []
 })
 
 const failed = (rung, reason, extra = {}) =>
@@ -182,55 +196,68 @@ const runRung = async (rung, { logsDir, env }) => {
   }
 }
 
-const UNLEASED_STACK =
-  'Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.'
-
-const workspaceStackNote = (lease) =>
-  lease
-    ? `The workspace stack is leased to ${describeLease(lease)}.`
-    : UNLEASED_STACK
-
-const leaseOrUnreadable = (leasePath) => {
-  try {
-    return readLease(leasePath)
-  } catch (error) {
-    return {
-      holder: `nobody tim can name (${messageOf(error)})`,
-      mode: '?',
-      acquiredAt: '?'
+const claimFirstFreePortFrom = async (base, { claimedPorts, claimant }) => {
+  const highestPort = 65535
+  for (let port = base; port <= highestPort; port++) {
+    if (!claimedPorts.has(port)) {
+      claimedPorts.set(port, claimant)
+      if (!(await isPortHeld(port))) return port
+      claimedPorts.delete(port)
     }
   }
+  return null
 }
 
-const heldPortReason = (port, holder, lease) => {
-  const reason = `Port ${port} is in use by ${describeHolder(holder)}. The rung needs it free.`
-  return holder.workspaceStack
-    ? `${reason} ${workspaceStackNote(lease)}`
-    : reason
+const describePlannedPortHolder = async (planned, { siblingRung, env }) =>
+  siblingRung
+    ? `the ${siblingRung} rung of this gate`
+    : describeHolder(await portHolder(planned, { env }))
+
+const claimPort = async (planned, { rung, claimedPorts, env }) => {
+  const siblingRung = claimedPorts.get(planned)
+  const used = await claimFirstFreePortFrom(planned, {
+    claimedPorts,
+    claimant: `${rung.repo} ${rung.name}`
+  })
+  if (used === planned || used === null) return { planned, used, heldBy: null }
+  const heldBy = await describePlannedPortHolder(planned, { siblingRung, env })
+  return { planned, used, heldBy }
 }
 
-const heldPortReasons = async (ports, context) => {
-  const reasons = []
-  for (const port of ports) {
-    if (await isPortHeld(port)) {
-      const holder = await portHolder(port, { env: context.env })
-      const lease = holder.workspaceStack
-        ? leaseOrUnreadable(context.leasePath)
-        : null
-      const reason = heldPortReason(port, holder, lease)
-      reasons.push(reason)
-      if (holder.workspaceStack && !context.held) {
-        context.held = { holder: lease?.holder ?? null, detail: reason }
-      }
-    }
+const claimPorts = async (rung, context) => {
+  const claims = []
+  for (const planned of rung.ports) {
+    claims.push(await claimPort(planned, { ...context, rung }))
   }
-  return reasons
+  return claims
 }
+
+const releasePorts = (claims, context) =>
+  claims.forEach(({ used }) => context.claimedPorts.delete(used))
+
+const servingPortEnv = (claims) =>
+  claims.length > 0 ? { PORT: String(claims[0].used) } : {}
+
+const noFreePortReason = (claims) =>
+  claims
+    .filter(({ used }) => used === null)
+    .map(({ planned }) => `No port from ${planned} upwards is free.`)
+    .join(' ')
 
 const runFitRung = async (rung, context) => {
   if (rung.refusal) return failed(rung, rung.refusal)
-  const held = await heldPortReasons(rung.ports, context)
-  return held.length > 0 ? failed(rung, held.join(' ')) : runRung(rung, context)
+  const claims = await claimPorts(rung, context)
+  const servedRung = { ...rung, portClaims: claims }
+  try {
+    const exhausted = noFreePortReason(claims)
+    if (exhausted) return failed(servedRung, exhausted)
+    return await runRung(servedRung, {
+      ...context,
+      env: { ...context.env, ...servingPortEnv(claims) }
+    })
+  } finally {
+    releasePorts(claims, context)
+  }
 }
 
 const runLocalRung = (rung, context) =>
@@ -327,6 +354,33 @@ const takeLease = async (context) => {
       logPath: logIn(context, 'gate-stack-up.log'),
       env: context.env
     })
+  } catch (error) {
+    return {
+      acquired: false,
+      refused: false,
+      up: null,
+      reason: `Can't tell whether the workspace stack is free: ${messageOf(error)}`
+    }
+  }
+}
+
+const refusalForOtherCloneOwner = async (context) => {
+  try {
+    const owner = await foreignStackOwner({
+      workspaceRoot: context.workspaceRoot,
+      leasePath: context.leasePath,
+      env: context.env
+    })
+    if (!owner) return null
+    const lease = readLease(context.leasePath)
+    return {
+      acquired: false,
+      refused: true,
+      up: owner.source === 'containers',
+      holder: lease?.holder ?? null,
+      lease,
+      reason: foreignStackRefusal(owner.workspace)
+    }
   } catch (error) {
     return {
       acquired: false,
@@ -457,6 +511,8 @@ const runE2e = async (rungs, context) => {
     }
   }
   if (context.stackAfterLocal) await context.localDone
+  const ownerRefusal = await refusalForOtherCloneOwner(context)
+  if (ownerRefusal) return refusedE2e(rungs, ownerRefusal)
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const keptForHolder = lease.started && lease.heldBefore === true
@@ -587,8 +643,9 @@ const layerDurations = (startedAt, ran) => {
 }
 
 /**
- * Run a backlog's gate: the unit and FIT rungs (each FIT rung after a check
- * that its ports are free) and the e2e rungs against the workspace stack.
+ * Run a backlog's gate: the unit and FIT rungs (each FIT rung serving on the
+ * first free port from its planned one, passed to it as PORT) and the e2e
+ * rungs against the workspace stack.
  * By default it runs in three layers, each once the one before has
  * finished: each repo's unit and FIT rungs, in order, with other repos' at
  * the same time; then every exclusive e2e rung (a performance test) alone;
@@ -603,6 +660,10 @@ const layerDurations = (startedAt, ran) => {
  * stack lease as it found it: a stack it started for a holder that held no
  * lease is stopped and the lease cleared; a stack it started again for a
  * holder whose lease outlived the stack is left up, still leased to them.
+ * With `e2e` 'ci' (or this machine's `e2e` setting, when no `e2e` is given)
+ * the gate runs no e2e rung, takes no lease and runs no stack command: it
+ * lists those rungs under `e2e.leftToCi`, and each pull request's E2E check
+ * is their evidence. A gate whose only rungs are left to CI is green.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -612,15 +673,17 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} [args.logsDir]
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
  * @param {string} [args.leasePath] - The stack lease file
- * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos and stackAfterLocal
+ * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos, stackAfterLocal and e2e
+ * @param {'local'|'ci'} [args.e2e] - Where the e2e rungs run, over this machine's setting (default: local)
  * @param {object} [args.env] - Extra environment for every command the gate runs
- * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object}>}
+ * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object, e2e: {where: string, leftToCi: object[], evidence: string|null}}>}
  */
 export const runGate = async ({
   workspaceRoot,
   workarea,
   phase = 'all',
   serial = false,
+  e2e,
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
@@ -631,10 +694,15 @@ export const runGate = async ({
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
-  const planned = withMachineWorkers(
+  const wholePlan = withMachineWorkers(
     planRungs({ gates, repos, phase, workspaceRoot }),
     machine
   )
+  const e2eInCi = (e2e ?? machine?.e2e) === 'ci'
+  const planned = e2eInCi
+    ? wholePlan.filter((rung) => rung.phase !== 'e2e')
+    : wholePlan
+  const e2eReport = e2eInCi ? e2eLeftToCi(byPhase(wholePlan, 'e2e')) : LOCAL_E2E
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {
     workspaceRoot,
@@ -645,21 +713,20 @@ export const runGate = async ({
     parallelRepos: machine?.parallelRepos ?? gates.parallelRepos,
     stackAfterLocal:
       (machine?.stackAfterLocal ?? gates.stackAfterLocal) === true,
-    held: null
+    claimedPorts: new Map()
   }
 
   const dependencies = await installPlanDependencies(planned, context)
   const plan = refusingWhereInstallFailed(planned, dependencies)
   const ran = await (serial ? runSerially : runInLayers)(plan, context)
-  const { local, e2e } = ran
+  const { stack } = ran.e2e
 
-  const rungs = [...local.map(({ result }) => result), ...e2e.results]
+  const rungs = [...ran.local.map(({ result }) => result), ...ran.e2e.results]
   const stackClean =
-    e2e.stack.wasUp !== false ||
-    e2e.stack.stoppedAfter ||
-    e2e.stack.keptForHolder
+    stack.wasUp !== false || stack.stoppedAfter || stack.keptForHolder
+  const gatedSomething = rungs.length > 0 || e2eReport.leftToCi.length > 0
   return {
-    green: rungs.length > 0 && rungs.every(({ ok }) => ok) && stackClean,
+    green: gatedSomething && rungs.every(({ ok }) => ok) && stackClean,
     phase,
     serial,
     logs,
@@ -669,6 +736,7 @@ export const runGate = async ({
     rungs,
     machine: machineSummary(machine),
     dependencies: dependencies.filter(({ stale }) => stale),
-    stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
+    stack,
+    e2e: e2eReport
   }
 }

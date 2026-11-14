@@ -1,249 +1,275 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import {
   mkdtempSync,
   mkdirSync,
   symlinkSync,
   rmSync,
-  readFileSync
+  readFileSync,
+  writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  REPOS,
-  NODE_REPOS,
-  JAVA_REPOS,
-  UNIT_TEST_EXEMPT_REPOS,
-  UPSTREAM_REPOS,
-  REPOS_DIR,
+  rosterOf,
   repoPath,
   realRepoPath,
-  isNodeRepo,
-  isJavaRepo,
-  GITHUB_ORG,
   repoUrl,
   isWorkspaceBranchSynced,
+  partitionSyncTargets,
   workspaceSyncSkipLine,
   upstreamOf,
   assertValidUpstreams
 } from './repos.js'
 import { TimError } from '../errors.js'
 
-// Read the roster independently of repos.js so these assertions test the
-// stack classification rather than restating a hardcoded list that goes stale
-// the next time a repo joins the workspace.
-const manifest = JSON.parse(
+const bundledManifest = JSON.parse(
   readFileSync(
     fileURLToPath(new URL('../../../repos.json', import.meta.url)),
     'utf8'
   )
 )
 
-const manifestNamesWithStack = (stack) =>
-  manifest.repos
-    .filter((repo) => repo.stack === stack)
-    .map((repo) => repo.name)
-    .sort()
+const manifestNamesWhere = (manifest, predicate) =>
+  manifest.repos.filter(predicate).map((repo) => repo.name)
 
-describe('repo constants', () => {
-  test('REPOS_DIR is "repos"', () => {
-    expect(REPOS_DIR).toBe('repos')
+const fixtureManifest = {
+  reposDir: 'checkouts',
+  githubOrg: 'FIXTURE-ORG',
+  repos: [
+    { name: 'fixture-web', stack: 'node' },
+    {
+      name: 'fixture-web-copy',
+      stack: 'node',
+      upstream: 'fixture-web',
+      workspaceBranchSync: false,
+      unitTestExempt: true
+    },
+    { name: 'fixture-api', stack: 'java' }
+  ]
+}
+
+const writeWorkspace = (manifest) => {
+  const root = mkdtempSync(join(tmpdir(), 'tim-roster-'))
+  writeFileSync(join(root, 'repos.json'), JSON.stringify(manifest))
+  return root
+}
+
+describe('#rosterOf', () => {
+  let ownRoster
+  let noRoster
+
+  beforeEach(() => {
+    ownRoster = writeWorkspace(fixtureManifest)
+    noRoster = mkdtempSync(join(tmpdir(), 'tim-no-roster-'))
   })
 
-  test('NODE_REPOS is every manifest entry with stack "node"', () => {
-    expect([...NODE_REPOS].sort()).toEqual(manifestNamesWithStack('node'))
+  afterEach(() => {
+    rmSync(ownRoster, { recursive: true, force: true })
+    rmSync(noRoster, { recursive: true, force: true })
   })
 
-  test('JAVA_REPOS is every manifest entry with stack "java"', () => {
-    expect([...JAVA_REPOS].sort()).toEqual(manifestNamesWithStack('java'))
+  test('Should read the roster from the repos.json in the workspace it is given', () => {
+    expect(rosterOf(ownRoster)).toEqual({
+      reposDir: 'checkouts',
+      githubOrg: 'FIXTURE-ORG',
+      nodeRepos: ['fixture-web', 'fixture-web-copy'],
+      javaRepos: ['fixture-api'],
+      repos: ['fixture-web', 'fixture-web-copy', 'fixture-api'],
+      unitTestExemptRepos: ['fixture-web-copy'],
+      upstreamRepos: { 'fixture-web-copy': 'fixture-web' },
+      unsyncedRepos: ['fixture-web-copy']
+    })
   })
 
-  test('every manifest entry is classified as node or java', () => {
-    const unclassified = manifest.repos.filter(
+  test('Should fall back to the repos.json beside tim when the workspace has none', () => {
+    const roster = rosterOf(noRoster)
+
+    expect(roster.repos).toEqual([
+      ...manifestNamesWhere(bundledManifest, (repo) => repo.stack === 'node'),
+      ...manifestNamesWhere(bundledManifest, (repo) => repo.stack === 'java')
+    ])
+    expect(roster.reposDir).toBe(bundledManifest.reposDir)
+    expect(roster.githubOrg).toBe(bundledManifest.githubOrg)
+  })
+
+  test('Should give two workspaces their own rosters in one process', () => {
+    const other = writeWorkspace({
+      ...fixtureManifest,
+      repos: [{ name: 'other-only', stack: 'node' }]
+    })
+
+    try {
+      expect(rosterOf(ownRoster).repos).toEqual([
+        'fixture-web',
+        'fixture-web-copy',
+        'fixture-api'
+      ])
+      expect(rosterOf(other).repos).toEqual(['other-only'])
+    } finally {
+      rmSync(other, { recursive: true, force: true })
+    }
+  })
+
+  test('Should refuse a roster with a malformed upstream', () => {
+    const broken = writeWorkspace({
+      ...fixtureManifest,
+      repos: [{ name: 'a', stack: 'node', upstream: 'ghost' }]
+    })
+
+    try {
+      expect(() => rosterOf(broken)).toThrow(
+        'repos.json: "a".upstream "ghost" is not a repo in the roster.'
+      )
+    } finally {
+      rmSync(broken, { recursive: true, force: true })
+    }
+  })
+
+  test('Should hand back lists that cannot be changed', () => {
+    const roster = rosterOf(ownRoster)
+
+    expect(() => roster.nodeRepos.push('x')).toThrow()
+    expect(() => roster.javaRepos.push('x')).toThrow()
+    expect(() => roster.repos.push('x')).toThrow()
+  })
+
+  test('Should classify every bundled repo as node or java', () => {
+    const unclassified = bundledManifest.repos.filter(
       (repo) => !['node', 'java'].includes(repo.stack)
     )
+
     expect(unclassified).toEqual([])
   })
 
-  test('REPOS is the union of NODE_REPOS and JAVA_REPOS', () => {
-    expect([...REPOS].sort()).toEqual([...NODE_REPOS, ...JAVA_REPOS].sort())
-  })
-
-  test('every unit-test-exempt repo is a known repo', () => {
-    for (const repo of UNIT_TEST_EXEMPT_REPOS) {
-      expect(REPOS).toContain(repo)
-    }
-  })
-
-  test('NODE_REPOS and JAVA_REPOS do not overlap', () => {
-    const overlap = NODE_REPOS.filter((repo) => JAVA_REPOS.includes(repo))
-    expect(overlap).toEqual([])
-  })
-
-  test('repoPath joins workspaceRoot, repos/, and the repo name', () => {
-    expect(repoPath('/ws', 'trade-imports-animals-frontend')).toBe(
-      '/ws/repos/trade-imports-animals-frontend'
-    )
-  })
-
-  test('isNodeRepo identifies Node repos and rejects Java repos', () => {
-    expect(isNodeRepo('trade-imports-animals-frontend')).toBe(true)
-    expect(isNodeRepo('trade-imports-animals-backend')).toBe(false)
-    expect(isNodeRepo('unknown')).toBe(false)
-  })
-
-  test('isJavaRepo identifies Java repos and rejects Node repos', () => {
-    expect(isJavaRepo('trade-imports-animals-backend')).toBe(true)
-    expect(isJavaRepo('trade-imports-animals-frontend')).toBe(false)
-    expect(isJavaRepo('unknown')).toBe(false)
-  })
-
-  test('NODE_REPOS, JAVA_REPOS, REPOS are immutable', () => {
-    expect(() => NODE_REPOS.push('x')).toThrow()
-    expect(() => JAVA_REPOS.push('x')).toThrow()
-    expect(() => REPOS.push('x')).toThrow()
-  })
-
-  test('GITHUB_ORG is DEFRA — matches scripts/setup.sh', () => {
-    expect(GITHUB_ORG).toBe('DEFRA')
-  })
-
-  test('repoUrl builds the canonical HTTPS clone URL', () => {
-    expect(repoUrl('trade-imports-animals-frontend')).toBe(
-      'https://github.com/DEFRA/trade-imports-animals-frontend.git'
-    )
-  })
-
-  test('realRepoPath resolves a workspace root reached through a symlink', () => {
-    const base = mkdtempSync(join(tmpdir(), 'tim-symlink-'))
-    const real = join(base, 'real-workspace')
-    const link = join(base, 'linked-workspace')
-    mkdirSync(join(real, REPOS_DIR, NODE_REPOS[0]), { recursive: true })
-    symlinkSync(real, link)
-
-    try {
-      expect(realRepoPath(link, NODE_REPOS[0])).toBe(
-        realRepoPath(real, NODE_REPOS[0])
+  describe('lookups against a workspace roster', () => {
+    test('Should join the workspace, its repos folder and the repo name', () => {
+      expect(repoPath(ownRoster, 'fixture-web')).toBe(
+        join(ownRoster, 'checkouts', 'fixture-web')
       )
-    } finally {
-      rmSync(base, { recursive: true, force: true })
-    }
-  })
+    })
 
-  test('realRepoPath falls back to the plain path when the repo is not cloned', () => {
-    const workspaceRoot = mkdtempSync(join(tmpdir(), 'tim-uncloned-'))
-
-    try {
-      expect(realRepoPath(workspaceRoot, NODE_REPOS[0])).toBe(
-        repoPath(workspaceRoot, NODE_REPOS[0])
+    test('Should build the clone URL from the workspace GitHub organisation', () => {
+      expect(repoUrl(ownRoster, 'fixture-web')).toBe(
+        'https://github.com/FIXTURE-ORG/fixture-web.git'
       )
-    } finally {
-      rmSync(workspaceRoot, { recursive: true, force: true })
-    }
+    })
+
+    test('Should build the clone URL from TIM_GITHUB_BASE_URL when it is set', () => {
+      const original = process.env.TIM_GITHUB_BASE_URL
+      process.env.TIM_GITHUB_BASE_URL = 'file:///tmp/fixtures'
+
+      try {
+        expect(repoUrl(ownRoster, 'fixture-web')).toBe(
+          'file:///tmp/fixtures/fixture-web.git'
+        )
+      } finally {
+        if (original === undefined) delete process.env.TIM_GITHUB_BASE_URL
+        else process.env.TIM_GITHUB_BASE_URL = original
+      }
+    })
+
+    test('Should name the declared upstream, and null for a repo with none', () => {
+      expect(upstreamOf(ownRoster, 'fixture-web-copy')).toBe('fixture-web')
+      expect(upstreamOf(ownRoster, 'fixture-web')).toBeNull()
+      expect(upstreamOf(ownRoster, 'unknown-repo')).toBeNull()
+    })
+
+    test('Should sync every repo except one that opts out', () => {
+      expect(isWorkspaceBranchSynced(ownRoster, 'fixture-web')).toBe(true)
+      expect(isWorkspaceBranchSynced(ownRoster, 'fixture-web-copy')).toBe(false)
+      expect(isWorkspaceBranchSynced(ownRoster, 'unknown-repo')).toBe(true)
+    })
+
+    test('Should skip a repo that opts out of branch sync', () => {
+      expect(partitionSyncTargets(ownRoster)).toEqual({
+        targets: ['fixture-web', 'fixture-api'],
+        skipped: ['fixture-web-copy']
+      })
+    })
+
+    test('Should target an opted-out repo that include names', () => {
+      expect(partitionSyncTargets(ownRoster, ['fixture-web-copy'])).toEqual({
+        targets: ['fixture-web', 'fixture-web-copy', 'fixture-api'],
+        skipped: []
+      })
+    })
   })
 
-  test('isWorkspaceBranchSynced defaults to true, and is false only for a manifest entry that opts out', () => {
-    const optedOut = manifest.repos
-      .filter((repo) => repo.workspaceBranchSync === false)
-      .map((repo) => repo.name)
-    for (const repo of manifest.repos) {
-      expect(isWorkspaceBranchSynced(repo.name)).toBe(
-        !optedOut.includes(repo.name)
+  describe('#realRepoPath', () => {
+    test('Should resolve a workspace root reached through a symlink', () => {
+      const base = mkdtempSync(join(tmpdir(), 'tim-symlink-'))
+      const real = join(base, 'real-workspace')
+      const link = join(base, 'linked-workspace')
+      mkdirSync(join(real, 'checkouts', 'fixture-web'), { recursive: true })
+      writeFileSync(join(real, 'repos.json'), JSON.stringify(fixtureManifest))
+      symlinkSync(real, link)
+
+      try {
+        expect(realRepoPath(link, 'fixture-web')).toBe(
+          realRepoPath(real, 'fixture-web')
+        )
+      } finally {
+        rmSync(base, { recursive: true, force: true })
+      }
+    })
+
+    test('Should fall back to the plain path when the repo is not cloned', () => {
+      expect(realRepoPath(ownRoster, 'fixture-web')).toBe(
+        repoPath(ownRoster, 'fixture-web')
       )
-    }
-    expect(isWorkspaceBranchSynced('not-a-real-repo')).toBe(true)
+    })
   })
+})
 
-  test('workspaceSyncSkipLine names the repo and the flag that includes it', () => {
+describe('#workspaceSyncSkipLine', () => {
+  test('Should name the repo and the flag that includes it', () => {
     expect(workspaceSyncSkipLine('trade-imports-plants-prototype')).toBe(
       "Skipped trade-imports-plants-prototype: designers' work lives there. Add --include trade-imports-plants-prototype to include it."
     )
   })
+})
 
-  test('repoUrl honours the TIM_GITHUB_BASE_URL override', () => {
-    const original = process.env.TIM_GITHUB_BASE_URL
-    process.env.TIM_GITHUB_BASE_URL = 'file:///tmp/fixtures'
-    try {
-      expect(repoUrl('trade-imports-animals-frontend')).toBe(
-        'file:///tmp/fixtures/trade-imports-animals-frontend.git'
-      )
-    } finally {
-      if (original === undefined) delete process.env.TIM_GITHUB_BASE_URL
-      else process.env.TIM_GITHUB_BASE_URL = original
-    }
+describe('#assertValidUpstreams', () => {
+  test('Should accept a manifest with no upstream fields', () => {
+    expect(() =>
+      assertValidUpstreams({ repos: [{ name: 'a' }, { name: 'b' }] })
+    ).not.toThrow()
   })
 
-  describe('upstream (optional manifest field)', () => {
-    const manifestUpstreams = Object.fromEntries(
-      manifest.repos
-        .filter((repo) => repo.upstream !== undefined)
-        .map((repo) => [repo.name, repo.upstream])
-    )
+  test('Should accept a valid upstream field', () => {
+    expect(() =>
+      assertValidUpstreams({
+        repos: [{ name: 'a', upstream: 'b' }, { name: 'b' }]
+      })
+    ).not.toThrow()
+  })
 
-    test('UPSTREAM_REPOS is every manifest entry that declares an upstream', () => {
-      expect(UPSTREAM_REPOS).toEqual(manifestUpstreams)
-    })
+  test('Should reject a non-string upstream', () => {
+    expect(() =>
+      assertValidUpstreams({ repos: [{ name: 'a', upstream: 123 }] })
+    ).toThrow(TimError)
+  })
 
-    test('upstreamOf returns the declared upstream repo name', () => {
-      for (const [repo, upstream] of Object.entries(manifestUpstreams)) {
-        expect(upstreamOf(repo)).toBe(upstream)
-      }
-    })
+  test('Should reject an empty-string upstream', () => {
+    expect(() =>
+      assertValidUpstreams({ repos: [{ name: 'a', upstream: '  ' }] })
+    ).toThrow('must be a non-empty string')
+  })
 
-    test('upstreamOf returns null when the manifest declares none', () => {
-      const withoutUpstream = REPOS.find(
-        (repo) => manifestUpstreams[repo] === undefined
-      )
-      expect(upstreamOf(withoutUpstream)).toBeNull()
-      expect(upstreamOf('unknown-repo')).toBeNull()
-    })
+  test('Should reject a repo naming itself as upstream', () => {
+    expect(() =>
+      assertValidUpstreams({ repos: [{ name: 'a', upstream: 'a' }] })
+    ).toThrow('cannot name itself')
+  })
 
-    test('every declared upstream is a real repo in the roster', () => {
-      for (const upstream of Object.values(manifestUpstreams)) {
-        expect(REPOS).toContain(upstream)
-      }
-    })
+  test('Should reject an upstream not in the roster', () => {
+    expect(() =>
+      assertValidUpstreams({ repos: [{ name: 'a', upstream: 'ghost' }] })
+    ).toThrow('is not a repo in the roster')
+  })
 
-    test('assertValidUpstreams accepts a manifest with no upstream fields', () => {
-      expect(() =>
-        assertValidUpstreams({
-          repos: [{ name: 'a' }, { name: 'b' }]
-        })
-      ).not.toThrow()
-    })
-
-    test('assertValidUpstreams accepts a valid upstream field', () => {
-      expect(() =>
-        assertValidUpstreams({
-          repos: [{ name: 'a', upstream: 'b' }, { name: 'b' }]
-        })
-      ).not.toThrow()
-    })
-
-    test('assertValidUpstreams rejects a non-string upstream', () => {
-      expect(() =>
-        assertValidUpstreams({ repos: [{ name: 'a', upstream: 123 }] })
-      ).toThrow(TimError)
-    })
-
-    test('assertValidUpstreams rejects an empty-string upstream', () => {
-      expect(() =>
-        assertValidUpstreams({ repos: [{ name: 'a', upstream: '  ' }] })
-      ).toThrow(TimError)
-    })
-
-    test('assertValidUpstreams rejects a repo naming itself as upstream', () => {
-      expect(() =>
-        assertValidUpstreams({ repos: [{ name: 'a', upstream: 'a' }] })
-      ).toThrow('cannot name itself')
-    })
-
-    test('assertValidUpstreams rejects an upstream not in the roster', () => {
-      expect(() =>
-        assertValidUpstreams({
-          repos: [{ name: 'a', upstream: 'ghost' }]
-        })
-      ).toThrow('is not a repo in the roster')
-    })
+  test('Should find every bundled upstream in the bundled roster', () => {
+    expect(() => assertValidUpstreams(bundledManifest)).not.toThrow()
   })
 })

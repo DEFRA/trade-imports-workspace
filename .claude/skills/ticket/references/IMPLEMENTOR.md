@@ -16,11 +16,23 @@ Read that file before you start.
 ## Before You Start
 
 One dispatch — asserts the plan exists, re-validates detect-tech per
-repo, caches the PR diff if a prior PR for the ticket exists, and emits
-`.implement-meta.json`:
+repo, and emits `.implement-meta.json`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-implement.sh EUDPA-XXXXX
+tim ticket prepare-implement EUDPA-XXXXX
+```
+
+Then look for a prior PR for the ticket:
+
+```bash
+gh search prs EUDPA-XXXXX --owner DEFRA --json number,repository,state
+```
+
+For each PR it lists, cache its diff beside the plan (from the workspace
+root, after `mkdir -p workareas/ticket-planning/EUDPA-XXXXX/.diffs`):
+
+```bash
+gh pr diff <number> --repo DEFRA/<repo> > workareas/ticket-planning/EUDPA-XXXXX/.diffs/<repo>.diff
 ```
 
 Then read in this order:
@@ -67,7 +79,7 @@ helper produces `<type>/EUDPA-XXXXX-<slug>`, where `--type` is `feat`
 repo the ticket touches.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
+tim ticket branch EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
 ```
 
 Optional `--base <branch>` if branching from anything other than `main`.
@@ -231,9 +243,17 @@ running the step.
 ## GitHub Actions Verification
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github-actions/trigger-workflow.sh <repo-name> ci.yml <branch-name>
-~/git/defra/trade-imports-workspace/tools/github-actions/wait-for-run.sh <repo-name> <run-id> 1800
+gh workflow run ci.yml --repo DEFRA/<repo-name> --ref <branch-name>
+gh run list --repo DEFRA/<repo-name> --workflow ci.yml --branch <branch-name> --event workflow_dispatch --limit 1 --json databaseId,url,status
+gh run watch <run-id> --repo DEFRA/<repo-name> --exit-status
 ```
+
+Give GitHub a few seconds after `gh workflow run` before `gh run list`, or
+it can return the previous run. Start `gh run watch` as a background task:
+it has no time limit, exits 0 when the run passes and non-zero when it does
+not, and stops on a GitHub API error, so re-run it if it ends without the
+run finishing. Read a failure with
+`gh run view <run-id> --repo DEFRA/<repo-name> --log-failed`.
 
 A red e2e check on the PR comes from the repo's `e2e-tests.yml`, which runs
 after Publish Branch Image, not from `ci.yml`. Read it against the repo's

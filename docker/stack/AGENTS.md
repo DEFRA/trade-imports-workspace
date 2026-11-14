@@ -11,9 +11,29 @@ the wrappers and is the surface to use.
   `tim docker restart`, `tim workspace status`. `tim` passes any other flag
   (`-b`, `-e`, `--profile`) to the wrapper. Below `tim`, use the
   `scripts/stack/` wrappers listed next.
+- **One stack per machine, and any clone may own it.** Every clone of the
+  workspace starts the same compose project, `trade-imports`
+  (`compose.yml`'s `name:`), on the same host ports, so only one stack runs
+  at a time. Whichever clone started it owns it. `tim docker up`, `dev`,
+  `down`, `restart`, `bounce-backend` and `service` refuse a stack another clone
+  started, naming that clone (`STACK_OTHER_CLONE`); work from that clone,
+  or add `--force`. The lease records its clone too, and `tim docker lease
+  acquire|release` refuse the same holder name from another clone unless
+  you add `--force`. `tim docker lease status` says which clone started the
+  running stack, and `tim docker owner` prints it. Only that clone runs
+  local E2E: the tests repo's docker-compose config and `tim build gate`
+  stop from any other clone.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
   profiles and the init-script staging live in `scripts/stack/lib/`. A
   hand-built chain silently drops some of them.
+- **Change the stack definition in two places while tim takes over.** The
+  services, sidecars, compose files and profiles are also in
+  `tim/src/stack/definition.js`, and a tim test fails when it and the
+  scripts differ. tim's tests also hold the Docker and git calls each
+  script makes, under `tim/src/test-support/fixtures/stack/`: a change to
+  what a script calls fails them until you record it again with
+  `npm --prefix tim test -- src/stack --update=all`. Run `npm --prefix tim test`
+  after any change to `scripts/stack/`.
 - **Never `docker start` one container to revive it.** Its dependencies may
   be dead too, and its health wait then never passes. Check the whole stack
   with `tim workspace status`, then recover it with `tim docker dev` or
@@ -79,11 +99,11 @@ the wrappers and is the surface to use.
 ./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database
                                                             # only those profiles; intended for "running other tiers natively"
 
-./scripts/stack/stop-stack.sh         # down --volumes --remove-orphans
-./scripts/stack/restart-stack.sh ...  # stop then run-stack (forwards -b / -e / -d / --profile)
-./scripts/stack/bounce-backend.sh     # recreate backend container — picks up edited Java source in --dev mode
-./scripts/stack/dev-service.sh rebuild <service>...  # --dev stack: rebuild these images from local source, recreate them, wait for healthy
-./scripts/stack/dev-service.sh restart <service>...  # --dev stack: restart these containers (same ids), wait for healthy
+tim docker down                       # down --volumes --remove-orphans, every profile included
+tim docker restart ...                # stop then run-stack (forwards -b / -e / -d / --profile)
+tim docker bounce-backend             # rebuild the backend image and recreate its container — picks up a pom.xml/dependency change
+tim docker service rebuild <service>...  # --dev stack: rebuild these images from local source, recreate them, wait for healthy
+tim docker service restart <service>...  # --dev stack: restart these containers (same ids), wait for healthy
 ```
 
 Images are pulled fresh on every run (`--pull always`).
@@ -138,7 +158,7 @@ the bypass — see [`--exclude` (`-e`) labels](#--exclude--e-labels).
 | Run the stack as a performance target (stubs at their SLA latency) | `run-stack.sh --perf`, or `tim docker perf` to also take the lease |
 | Run one repo-backed service natively from your IDE, rest in docker | `run-stack.sh -e backend` |
 | Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `run-stack.sh --profile frontend --profile infrastructure --profile database` |
-| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `run-stack.sh -d` (rebuilds; `bounce-backend.sh` only recreates the container), or `dev-service.sh rebuild <service>` for just that service |
+| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `tim docker bounce-backend` for the backend, `tim docker service rebuild <service>` for any other service, or `run-stack.sh -d` for all of them |
 
 `--branch` and `--dev` are mutually exclusive (hard error). The other flags
 compose freely, and `--perf` composes with every other flag.
@@ -270,9 +290,9 @@ profile instead of none. `perf.compose.yml` sets `STUB_LATENCY_PROFILE` from
 ```bash
 ./scripts/stack/run-stack.sh --perf                       # published images, stubs on sla
 STUB_PROFILE=zero-delay ./scripts/stack/run-stack.sh --perf
-tim docker perf                                           # the same, and takes the stack lease as "perf"
-tim docker lease status                                   # ... leased to "perf" (perf mode, stubs on sla, ...)
-tim docker lease release --holder perf                    # take it down
+tim docker perf                                           # the same, and takes the stack lease as "perf <this clone's path>"
+tim docker lease status                                   # ... leased to "perf <path>" (perf mode, stubs on sla, ...)
+tim docker lease release --holder "perf <this clone's path>"  # take it down
 curl -s http://localhost:8087/latency-profiles            # trade-imports-stub
 curl -s http://localhost:3007/latency-profiles            # defra-id-stub
 ```
@@ -298,9 +318,13 @@ To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.j
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in
   `lib/colour.sh`; compose `-f` list in `lib/compose.sh`; init-script
   staging in `lib/init-scripts.sh`.
-- `stop-stack.sh`, `restart-stack.sh`, `bounce-backend.sh`, `dev-service.sh`
-  — siblings, share `lib/` helpers.
-- `dev-service.sh rebuild|restart <service>...` touches only the named
+- `tim docker down`, `tim docker restart`, `tim docker bounce-backend` and
+  `tim docker service` run from tim (`tim/src/stack/`), with the compose files
+  and profiles in `tim/src/stack/definition.js`. `down` names every profile,
+  the opt-in `security` and `monitoring` ones too, so nothing is left running.
+  `restart` takes the stack down the way `down` does, then runs
+  `run-stack.sh` with its flags, even when the stop fails.
+- `tim docker service rebuild|restart <service>...` touches only the named
   services of a running `--dev` stack (`--no-deps`), with the same compose
   files and profiles `run-stack.sh -d` uses, and blocks until they report
   healthy. It does not re-stage init scripts.
@@ -331,8 +355,9 @@ for each service in `dev.compose.yml` that has a `build.context`:
 
 On reuse it compares them with the working tree now. Build changed (or the
 lease has no fingerprints, as a lease from before this has none) →
-`dev-service.sh rebuild`, then the lease records the new container ids.
-Only source changed → `dev-service.sh restart`, so E2E never runs against a
+a `tim docker service rebuild` of it, run in-process, then the lease records
+the new container ids. Only source changed → a `tim docker service restart`
+of it, so E2E never runs against a
 service still part-way through a hot reload. Nothing changed → left alone.
 The gate result's `stack.refresh` lists what was rebuilt, restarted and
 left, with the logs. Changes to staged init scripts (Floci, Mongo seeds,
@@ -374,11 +399,12 @@ directory, for the same reason).
   Each `dev-run` image runs `docker/dev-run.sh`, an mtime-poll loop that
   recompiles `src/ → target/classes` on save, then touches a trigger file so
   DevTools restarts the Spring context in ~1-2s. Just save — no
-  `bounce-backend.sh` for routine `.java` edits.
-  - `bounce-backend.sh` recreates the container but does **not** rebuild, so a
-    `pom.xml`/dependency change still needs `run-stack.sh -d` (the
-    `dependency:go-offline` layer is baked at image-build time). Edits outside
-    the watched source tree are likewise not picked up in place.
+  `tim docker bounce-backend` for routine `.java` edits.
+  - A `pom.xml`/dependency change needs the image rebuilt (the
+    `dependency:go-offline` layer is baked at image-build time):
+    `tim docker bounce-backend` rebuilds and recreates the backend,
+    `tim docker service rebuild <service>` any other Java service. Edits
+    outside the watched source tree are likewise not picked up in place.
   - DevTools is scoped `optional` in each pom and excluded from the repackaged
     jar, so the published `development`/`production` images never carry it.
 - Java gateway: has a `dev-run` stage with a source mount but no recompile

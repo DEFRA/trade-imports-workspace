@@ -30,7 +30,7 @@ by name via the Task tool.
 
 | Persona | Used in | Artifact |
 |---|---|---|
-| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `packages-set-classification.sh`) |
+| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `tim npm packages set-classification`) |
 | `references/MANUAL_UPGRADE_IMPLEMENTOR.md` | `references/WALKER.md` `I` keystroke — one per package the operator chooses to implement | source edits + commit + JSON status row update |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
@@ -139,7 +139,7 @@ It exits 1 if any repo's audit fails, or an allowlisted advisory now
 has a fixed version (`fixable_allowlisted`: take the fix and drop the
 entry). Phase 1 refuses to start unless the last phase 0 run covered
 every repo at its current HEAD and was green. Write or renew an
-allowlist entry only with `audit-allowlist-add.sh` (see
+allowlist entry only with `tim npm audit allow` (see
 `references/COMMON.md`); the repo's CI checks the entry rules.
 
 ## Phase 1: Discovery and Planning
@@ -151,7 +151,7 @@ Follow references/DISCOVERY_AND_PLANNING.md. Run ID: {run-id}
 Phase 1 calls the dispatcher (`start-upgrade.sh --phase 1`) which
 runs discovery, pre-bakes per-package context, and emits a JSON spawn
 manifest. The persona fans out one PACKAGE_PLANNER subagent per
-manifest entry, then runs `verify-classification-coverage.sh` as the
+manifest entry, then runs `tim npm packages verify` as the
 gate.
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
@@ -249,16 +249,16 @@ repo / single package / planning-only batches.
 Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 
 - `start-upgrade.sh` — single dispatcher (phase 0 / 1 / 2 / 3 / 4).
-- `audit-baseline.sh` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
-- `audit-allowlist-add.sh` — write or renew one `audit-ci.jsonc` allowlist entry.
+- `tim npm audit baseline` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
+- `tim npm audit allow` — write or renew one `audit-ci.jsonc` allowlist entry.
 - `refresh-lockfile.sh` — Phase 2 end-of-batch transitive refresh.
 - `reset-overrides.sh` — Phase 4 per-repo override reset.
-- `discover-upgrades.sh` — discovery + seed `packages.{repo}.json`.
-- `prebake-context.sh` — per-package context pre-bake (best-effort).
-- `bake-best-practices.sh` — per-repo best-practices bundle.
-- `packages-init.sh` / `packages-set-classification.sh` / `packages-set-status.sh` — JSON state writers.
-- `packages-list.sh` / `packages-counts.sh` — JSON state queries.
-- `verify-classification-coverage.sh` — Phase 1 gate.
+- `tim npm discover` — discovery + seed `packages.{repo}.json`.
+- `tim npm context prebake` — per-package context pre-bake (best-effort).
+- `tim npm context best-practices` — per-repo best-practices bundle.
+- `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
+- `tim npm packages list` / `tim npm packages counts` — JSON state queries.
+- `tim npm packages verify` — Phase 1 gate.
 - `run-automated-upgrades.sh` — Phase 2 per-repo runner.
 - `upgrade-one-package.sh` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
 - `run-manual-upgrade.sh` — Phase 3 per-package runner (spawned by WALKER on `I`).

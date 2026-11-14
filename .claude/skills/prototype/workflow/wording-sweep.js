@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Change many strings across one design release in English and Welsh together: locate, plan, edit per feature folder, check, show',
   whenToUse:
-    'A wording change on more than 5 pages, or a pasted content document, in one design release. Launch by scriptPath with args { set, sweeps: [{ find, replace, scope }], welsh: "mark" | "given", welshText }. Refuses high-risk-plants and frozen releases.',
+    'A wording change on more than 5 pages, or a pasted content document, in one design release. Launch by scriptPath with args { workspace, set, sweeps: [{ find, replace, scope }], welsh: "mark" | "given", welshText }. Refuses high-risk-plants and frozen releases.',
   phases: [
     { title: 'Locate', detail: 'designer:words find for every sweep' },
     { title: 'Plan', detail: 'group edits by feature folder, flag functions' },
@@ -49,14 +49,8 @@ const REAL_JOURNEY = 'high-risk-plants'
 const PLACEHOLDER = 'sample-journey'
 const WELSH_NEEDED = '[Welsh needed]'
 
-// This workflow lives in the workspace, but every command it runs must act on
-// the prototype's own checkout, never on the workspace repo a bare command
-// would otherwise touch.
-const REPO = '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
-const npm = (script) => `npm --prefix ${REPO} run ${script}`
-
 const WORKFLOW_NAME = meta.name
-const REQUIRED_KEYS = ['set', 'sweeps', 'welsh', 'welshText']
+const REQUIRED_KEYS = ['workspace', 'set', 'sweeps', 'welsh', 'welshText']
 const config = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, config, REQUIRED_KEYS)
 logResolvedConfig(WORKFLOW_NAME, config)
@@ -64,6 +58,18 @@ logResolvedConfig(WORKFLOW_NAME, config)
 function fail(message) {
   throw new Error(`${WORKFLOW_NAME}: ${message}`)
 }
+
+if (typeof config.workspace !== 'string' || !config.workspace.startsWith('~/')) {
+  fail(`workspace must be the root of the workspace clone this session runs in, as a tilde path. A /Users/... path is denied in Bash. Got ${JSON.stringify(config.workspace)}`)
+}
+const WORKSPACE = config.workspace.replace(/\/+$/, '')
+const SKILL_DIR = `${WORKSPACE}/.claude/skills/prototype`
+
+// This workflow lives in the workspace, but every command it runs must act on
+// the prototype's own checkout, never on the workspace repo a bare command
+// would otherwise touch.
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
+const npm = (script) => `npm --prefix ${REPO} run ${script}`
 
 function isText(value) {
   return typeof value === 'string' && value.trim() !== ''
@@ -443,7 +449,7 @@ async function editGroup(group) {
 
 const GAPS_PROMPT = [
   `Add rows to the design gaps log of the design release "${set}": ${REPO}/src/server/app/sets/${set}/design-gaps.md.`,
-  `Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/design-gaps.md first. If the log does not exist, create it with the heading and table header given there.`,
+  `Read ${SKILL_DIR}/references/match-the-design/design-gaps.md first. If the log does not exist, create it with the heading and table header given there.`,
   'Add one row per entry below, at the end of the table, in this form:',
   '| all pages | Change "<before>" to "<after>" | No change: shared chrome still says "<before>" | The words live in the shared chrome (<file>), which every set uses and the real service owns. | None |',
   'Escape any pipe character inside a cell as \\|. Change nothing else.',

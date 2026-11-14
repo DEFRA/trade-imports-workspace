@@ -40,6 +40,15 @@ const parseBody = async (response, action) => {
   }
 }
 
+const jiraMessagesOf = async (response) => {
+  const text = await response.text()
+  try {
+    return JSON.parse(text)?.errorMessages ?? []
+  } catch {
+    return []
+  }
+}
+
 const authHeader = (user, token) =>
   `Basic ${Buffer.from(`${user}:${token}`).toString('base64')}`
 
@@ -86,6 +95,21 @@ const readLinkFromIssueSide = (link) => {
     otherKey: link.inwardIssue?.key ?? null
   }
 }
+
+const readLinkWithOtherIssue = (link) => {
+  const otherIssue = link.outwardIssue ?? link.inwardIssue
+  return {
+    ...readLinkFromIssueSide(link),
+    otherStatus: otherIssue?.fields?.status?.name ?? null,
+    otherSummary: otherIssue?.fields?.summary ?? ''
+  }
+}
+
+const readSubtask = (subtask) => ({
+  key: subtask.key,
+  status: subtask.fields?.status?.name ?? null,
+  summary: subtask.fields?.summary ?? ''
+})
 
 const resolutionsOffered = (transition) => {
   const resolutionField = transition.fields?.resolution
@@ -152,10 +176,16 @@ export const createJiraClient = ({
       throw new TimError('NETWORK', `${action}: ${error.message}`, error)
     }
     if (response.status === 400) {
-      throw mapBadRequest(action, await parseBody(response, action))
+      const payload = await parseBody(response, action)
+      const badRequest = mapBadRequest(action, payload)
+      badRequest.jiraMessages = payload?.errorMessages ?? []
+      throw badRequest
     }
     const mapped = mapStatus(response.status, action)
-    if (mapped) throw mapped
+    if (mapped) {
+      mapped.jiraMessages = await jiraMessagesOf(response)
+      throw mapped
+    }
     try {
       return await response.json()
     } catch (error) {
@@ -233,6 +263,30 @@ export const createJiraClient = ({
     )
   }
 
+  const deleteForNoContent = async (path, { action, missing }) => {
+    const url = `${normalisedBase}${path}`
+    let response
+    try {
+      response = await fetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: authHeader(user, token) }
+      })
+    } catch (error) {
+      throw new TimError(
+        'NETWORK',
+        `Could not ${action}: ${error.message}`,
+        error
+      )
+    }
+    await response.arrayBuffer()
+    if (response.status === 204) return
+    if (response.status === 403) {
+      throw new TimError('AUTH', `Not permitted to ${action}.`)
+    }
+    if (response.status === 404) throw new TimError('NOT_FOUND', missing)
+    throw new TimError('NETWORK', `Delete failed with HTTP ${response.status}.`)
+  }
+
   const postMultipart = async (path, form, action) => {
     const url = `${normalisedBase}${path}`
     let response
@@ -256,9 +310,10 @@ export const createJiraClient = ({
     return parseBody(response, action)
   }
 
-  const getTicket = async (id) => {
+  const getTicket = async (id, { withRendered = false } = {}) => {
+    const path = `/rest/api/2/issue/${encodeURIComponent(id)}`
     const data = await get(
-      `/rest/api/2/issue/${encodeURIComponent(id)}`,
+      withRendered ? `${path}?expand=renderedFields` : path,
       `getTicket(${id})`
     )
     return {
@@ -268,7 +323,15 @@ export const createJiraClient = ({
       type: data.fields?.issuetype?.name ?? null,
       assignee: data.fields?.assignee?.displayName ?? null,
       priority: data.fields?.priority?.name ?? null,
-      description: data.fields?.description ?? ''
+      parent: data.fields?.parent?.key ?? null,
+      labels: data.fields?.labels ?? [],
+      updated: data.fields?.updated ?? null,
+      description: data.fields?.description ?? '',
+      ...(withRendered
+        ? { renderedDescription: data.renderedFields?.description ?? null }
+        : {}),
+      subtasks: (data.fields?.subtasks ?? []).map(readSubtask),
+      links: (data.fields?.issuelinks ?? []).map(readLinkWithOtherIssue)
     }
   }
 
@@ -383,7 +446,23 @@ export const createJiraClient = ({
       return data.fields?.resolution?.name ?? null
     },
 
+    /**
+     * A ticket's fields, its subtasks and its links. Each link is read from
+     * this ticket's side, as `getIssueLinks` reads it, with the other
+     * issue's status and summary added.
+     *
+     * @param {string} id
+     * @param {object} [options]
+     * @param {boolean} [options.withRendered=false] - Also return `renderedDescription`: the description as Jira renders it to HTML, or null when the ticket has none
+     * @returns {Promise<{id: string, summary: string, status: string|null, type: string|null, assignee: string|null, priority: string|null, parent: string|null, labels: string[], updated: string|null, description: string, renderedDescription?: string|null, subtasks: Array<{key: string, status: string|null, summary: string}>, links: Array<{id: string|null, type: string|null, direction: 'outward'|'inward', relation: string|null, otherKey: string|null, otherStatus: string|null, otherSummary: string}>}>}
+     */
     getTicket,
+
+    /**
+     * @param {string} key
+     * @returns {string} The issue's page in the Jira web app
+     */
+    browseUrl: (key) => `${normalisedBase}/browse/${key}`,
 
     getComments: async (id) => {
       const data = await get(
@@ -526,6 +605,34 @@ export const createJiraClient = ({
     },
 
     /**
+     * @param {string} attachmentId - Jira's numeric attachment id
+     * @returns {Promise<void>}
+     * @throws {TimError} AUTH when Jira forbids the delete; NOT_FOUND when no attachment has the id; NETWORK for any other answer than 204
+     */
+    deleteAttachment: (attachmentId) =>
+      deleteForNoContent(
+        `/rest/api/2/attachment/${encodeURIComponent(attachmentId)}`,
+        {
+          action: `delete attachment ${attachmentId}`,
+          missing: `No attachment with id ${attachmentId}.`
+        }
+      ),
+
+    /**
+     * @param {string} linkId - Jira's numeric issue link id
+     * @returns {Promise<void>}
+     * @throws {TimError} AUTH when Jira forbids the delete; NOT_FOUND when no issue link has the id; NETWORK for any other answer than 204
+     */
+    deleteIssueLink: (linkId) =>
+      deleteForNoContent(
+        `/rest/api/2/issueLink/${encodeURIComponent(linkId)}`,
+        {
+          action: `delete link ${linkId}`,
+          missing: `No issue link with id ${linkId}.`
+        }
+      ),
+
+    /**
      * @param {string} key
      * @param {string} target
      * @returns {Promise<void>}
@@ -649,6 +756,53 @@ export const createJiraClient = ({
     },
 
     /**
+     * The epics on an agile board. The board, not the issue's status
+     * category, decides whether an epic is done, so this set can differ
+     * from `listOpenEpics` for the board's project. Reads one page of up
+     * to 100 epics.
+     *
+     * @param {number|string} boardId
+     * @param {object} [options]
+     * @param {boolean} [options.includeDone=false] - Keep the epics the board marks done
+     * @returns {Promise<Array<{key: string, summary: string, done: boolean}>>}
+     */
+    listBoardEpics: async (boardId, { includeDone = false } = {}) => {
+      const data = await get(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/epic?maxResults=100`,
+        `listBoardEpics(${boardId})`
+      )
+      return (data.values ?? [])
+        .filter((epic) => includeDone || epic.done === false)
+        .map(({ key, summary, done }) => ({ key, summary, done }))
+    },
+
+    /**
+     * How often each label appears on the issues in an agile board's
+     * backlog, most used first, ties in code point order. Reads one page
+     * of up to 1000 issues.
+     *
+     * @param {number|string} boardId
+     * @returns {Promise<Array<{label: string, count: number}>>}
+     */
+    listBoardLabels: async (boardId) => {
+      const data = await get(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/backlog?maxResults=1000&fields=labels`,
+        `listBoardLabels(${boardId})`
+      )
+      const counts = new Map()
+      for (const issue of data.issues ?? []) {
+        for (const label of issue.fields?.labels ?? []) {
+          counts.set(label, (counts.get(label) ?? 0) + 1)
+        }
+      }
+      return [...counts]
+        .map(([label, count]) => ({ label, count }))
+        .sort(
+          (a, b) => b.count - a.count || compareCodePoints(a.label, b.label)
+        )
+    },
+
+    /**
      * Every open issue under a parent (an epic's children), with its summary,
      * reading every page the enhanced JQL search returns.
      *
@@ -719,3 +873,8 @@ export const createJiraClient = ({
 
 const MAX_CHILD_PAGES = 50
 const MAX_SEARCH_PAGE_SIZE = 100
+
+const compareCodePoints = (a, b) => {
+  if (a < b) return -1
+  return a > b ? 1 : 0
+}

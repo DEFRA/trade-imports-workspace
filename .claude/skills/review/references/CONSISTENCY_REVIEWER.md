@@ -30,7 +30,7 @@ cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
 
 ### 2. Read all diffs (from the workspace cache)
 
-`prepare-review.sh` already cached the full PR diff for every repo
+The review skill's Step 1 already cached the full PR diff for every repo
 at:
 
 ```
@@ -167,7 +167,7 @@ The status is `SINGLE REPO` when both are empty, otherwise
 ## Output
 
 Every `_consistency-check.md` stub must be written (non-empty) before
-`verify-consistency.sh` will pass.
+`tim review verify consistency` will pass.
 
-The parent review skill runs `verify-consistency.sh` afterwards —
+The parent review skill runs `tim review verify consistency` afterwards —
 empty = pending, non-empty = reviewed.

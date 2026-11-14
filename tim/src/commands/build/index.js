@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process'
 import { mkdirSync, openSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { runGate, GATE_PHASES, defaultLogsDir } from '../../build/gate.js'
+import { E2E_LOCATIONS } from '../../build/machine-config.js'
 import { keepSystemAwakeWhile } from '../../exec/keep-awake.js'
 import {
   clearGateResult,
@@ -65,6 +66,11 @@ const gateOptionsSchema = z.object({
       /^[^\n\r"'`$]+$/,
       'The holder must be one line with no quotes, backticks or $.'
     )
+    .optional(),
+  e2e: z
+    .enum(E2E_LOCATIONS, {
+      message: `--e2e must be one of: ${E2E_LOCATIONS.join(', ')}.`
+    })
     .optional(),
   serial: z.boolean()
 })
@@ -127,6 +133,25 @@ const describeRung = ({
     ? `  pass  ${phase}  ${repo} ${name} (${Math.round(durationMs / 1000)}s${workersNote(workers)})`
     : `  FAIL  ${phase}  ${repo} ${name}${workers ? ` (${workers} workers)` : ''} — ${reason}`
 
+const isMovedPort = ({ planned, used }) => used !== null && used !== planned
+
+const describeMovedPort = ({ planned, used, heldBy }) =>
+  `        served on port ${used}, because ${heldBy} holds ${planned}`
+
+const describeRungAndPorts = (rung) => [
+  describeRung(rung),
+  ...(rung.ports ?? []).filter(isMovedPort).map(describeMovedPort)
+]
+
+const rungLabel = ({ repo, name }) => `${repo} ${name}`
+
+const describeE2eLeftToCi = ({ leftToCi = [], evidence = null } = {}) =>
+  leftToCi.length > 0
+    ? [
+        `Left to CI, not run here: ${leftToCi.map(rungLabel).join(', ')}. The evidence is ${evidence}`
+      ]
+    : []
+
 const describeMachine = (machine) =>
   machine ? [`Ran with this machine’s settings from ${machine.config}.`] : []
 
@@ -143,7 +168,7 @@ const listOrNone = (services) =>
   services.length > 0 ? services.join(', ') : 'none'
 
 const STACK_FILES_UNKNOWN =
-  ' The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack) changed, and did not start the whole stack again.'
+  ' The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack, tim/src/stack) changed, and did not start the whole stack again.'
 
 const describeServices = (refresh) =>
   refresh.restacked
@@ -209,14 +234,16 @@ export const renderGateText = ({
   phases = {},
   serial = false,
   machine = null,
-  dependencies = []
+  dependencies = [],
+  e2e
 }) => {
   const failures = rungs.filter(({ ok }) => !ok).length
   return [
     green
       ? `Gate passed: ${rungs.length} rungs.`
       : `Gate failed: ${failures} of ${rungs.length} rungs failed.`,
-    ...rungs.map(describeRung),
+    ...rungs.flatMap(describeRungAndPorts),
+    ...describeE2eLeftToCi(e2e),
     ...describeDependencies(dependencies),
     ...describeMachine(machine),
     describeStack(stack),
@@ -360,15 +387,19 @@ const registerGate = (build, timVersion) =>
       false
     )
     .option(
+      '--e2e <where>',
+      'Where the E2E rungs run: local, against the workspace stack, or ci, left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+    )
+    .option(
       '--detach',
       'Start the gate in its own background process and return at once, printing its process id. The gate keeps running when the shell that started it ends. Wait for it with `tim build gate-wait`; its own output goes to the result file plus `.out`'
     )
     .description(
-      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Before any rung, a repo whose installed direct dependencies differ from its package-lock.json gets `npm ci`, and then, when it uses Playwright, the browsers that version needs; each writes its own log, and a repo whose install fails has its npm rungs fail with the reason. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), and parallelRepos and stackAfterLocal in place of gates.json's. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. On a Mac the gate stops the machine sleeping until it ends (caffeinate -s -i): a Mac left to sleep keeps waking for a few seconds and sleeping again, which freezes the stack and its tests. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, scripts/stack, tim/src/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Before any rung, a repo whose installed direct dependencies differ from its package-lock.json gets `npm ci`, and then, when it uses Playwright, the browsers that version needs; each writes its own log, and a repo whose install fails has its npm rungs fail with the reason. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), parallelRepos and stackAfterLocal in place of gates.json's, and e2e: \"ci\" on a clone with no stack. With --e2e ci, or that setting, the gate runs no E2E rung, takes no lease and starts no stack: it lists those rungs in the result's e2e.leftToCi, and each pull request's E2E Tests check (e2e-tests.yml, scoped by config/e2e-tests-pr-scope.json, so it may run less) is their evidence. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. On a Mac the gate stops the machine sleeping until it ends (caffeinate -s -i): a Mac left to sleep keeps waking for a few seconds and sleeping again, which freezes the stack and its tests. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json --detach'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --e2e ci --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json --detach'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -380,6 +411,7 @@ const registerGate = (build, timVersion) =>
           logs: opts.logs,
           result: opts.result,
           holder: opts.holder,
+          e2e: opts.e2e,
           serial: opts.serial === true
         })
         const workspaceRoot = resolveWorkspaceRoot({
@@ -409,6 +441,7 @@ const registerGate = (build, timVersion) =>
           phase: parsed.phase,
           serial: parsed.serial,
           logsDir,
+          ...(parsed.e2e ? { e2e: parsed.e2e } : {}),
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         const envelope = gateEnvelope(outcome, timVersion)

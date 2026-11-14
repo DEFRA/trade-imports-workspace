@@ -11,8 +11,8 @@ demand from the JSON.
 ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 ```
 
-One file per repo. Initial population: `packages-init.sh` (called by
-`discover-upgrades.sh`). Subsequent mutations: walker, runners,
+One file per repo. Initial population: `tim npm discover`.
+Subsequent mutations: walker, runners,
 PACKAGE_PLANNER workers — all via the `packages-*.sh` helpers under
 `tools/npm/`. Never hand-edit.
 
@@ -20,7 +20,7 @@ Sister files in the same directory:
 
 - `.context/{normalized-pkg}/{changelog.md,migration.md,usages.txt,package-meta.json}`
   — per-package pre-baked context (best-effort), populated by
-  `prebake-context.sh`.
+  `tim npm context prebake`.
 - `best-practices.md` — concatenated dependency-relevant best
   practices for this repo.
 
@@ -45,7 +45,7 @@ state lives in `packages.{repo}.json`.
       "upgrade_type": "patch",                // patch | minor | major
       "dependency_type": "dependencies",      // dependencies | devDependencies
 
-      // Set by PACKAGE_PLANNER via packages-set-classification.sh.
+      // Set by PACKAGE_PLANNER via `tim npm packages set-classification`.
       "classification": null,                 // null | "auto" | "manual"
       "risk": null,                           // null | "LOW" | "MEDIUM" | "HIGH"
       "safe_for_automation": null,            // null | true | false
@@ -56,14 +56,14 @@ state lives in `packages.{repo}.json`.
       "migration_guide_url": null,            // optional
 
       // Set by upgrade-one-package.sh / run-manual-upgrade.sh via
-      // packages-set-status.sh.
+      // `tim npm packages set-status`.
       "implementation_status": null,          // null | "todo" | "inprogress" | "done" | "failed"
       "failure_reason": null,                 // free-text on failure
       "commit_sha": null,                     // short SHA on success
       "completed_at": null,                   // ISO-8601 on success/failure
       "demoted_from_auto": false,             // true if auto upgrade demoted to manual
 
-      // Set by prebake-context.sh.
+      // Set by tim npm context prebake.
       "context_baked": null,                  // null | true | false | "partial"
       "context_missing": []                   // fields prebake couldn't resolve
     }
@@ -76,28 +76,30 @@ state lives in `packages.{repo}.json`.
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | Pending — `PACKAGE_PLANNER` has not yet classified. | Default. |
-| `"auto"` | No code changes required; safe to upgrade automatically. | `packages-set-classification.sh --classification auto`. |
-| `"manual"` | Code changes required, or risk too high for automation. | `packages-set-classification.sh --classification manual`. Auto-set by upgrade-one-package when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
+| `"auto"` | No code changes required; safe to upgrade automatically. | `tim npm packages set-classification --classification auto`. |
+| `"manual"` | Code changes required, or risk too high for automation. | `tim npm packages set-classification --classification manual`. Auto-set by upgrade-one-package when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
 
 ## Implementation status values
 
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | No implementation attempt yet. | Default. |
-| `"todo"` | Queued for the runner (`run-automated-upgrades.sh` or `run-manual-upgrade.sh`). | `packages-set-status.sh --status todo`. |
-| `"inprogress"` | Runner has claimed it. | `packages-set-status.sh --status inprogress`. |
-| `"done"` | Upgrade committed locally. `commit_sha` populated. | `packages-set-status.sh --status done --commit-sha SHA`. |
-| `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `packages-set-status.sh --status failed --failure-reason "..."`. |
+| `"todo"` | Queued for the runner (`run-automated-upgrades.sh` or `run-manual-upgrade.sh`). | `tim npm packages set-status --status todo`. |
+| `"inprogress"` | Runner has claimed it. | `tim npm packages set-status --status inprogress`. |
+| `"done"` | Upgrade committed locally. `commit_sha` populated. | `tim npm packages set-status --status done --commit-sha SHA`. |
+| `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `tim npm packages set-status --status failed --failure-reason "..."`. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/npm/`)
+## Helpers (`tim npm packages` and the scripts under `tools/npm/`)
 
 | Script | Purpose |
 |---|---|
-| `packages-init.sh` | Initial population from ncu output (called by `discover-upgrades.sh`) |
-| `packages-set-classification.sh` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
-| `packages-set-status.sh` | Set implementation_status + failure_reason / commit_sha / completed_at |
-| `packages-list.sh` | Query packages with filters (`--classification`, `--status`, `--risk`, `--repo`, `--json`) |
-| `packages-counts.sh` | Summary counts by classification + risk + status |
+| `tim npm discover` | Initial population from npm-check-updates; a re-run keeps each package's work |
+| `tim npm packages set-classification` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
+| `tim npm packages set-status` | Set implementation_status + failure_reason / commit_sha / completed_at |
+| `tim npm packages list` | Query packages with filters (`--classification`, `--status`, `--risk`, `--repo`, `--json`) |
+| `tim npm packages counts` | Summary counts by classification + risk + status |
+| `tim npm packages aggregate` | Fold the per-package classification files into `packages.{repo}.json` |
+| `tim npm packages verify` | Phase 1 gate: aggregate, then exit 1 while any package is not classified |
 
 All mutations use `mktemp + mv` for atomicity. None of the helpers
 take the markdown plan body as input — there is no markdown plan.
@@ -111,7 +113,8 @@ take the markdown plan body as input — there is no markdown plan.
 - `cat >> *.inprogress` body annotations — gone. Failure reason +
   commit SHA live in dedicated JSON fields.
 - `find ... | wc -l` status queries — replaced by
-  `packages-counts.sh --json` / `packages-list.sh --json`.
+  `tim npm packages counts --json` / `tim npm packages list --json`,
+  read from the envelope's `.result`.
 
 ## Audit and override state (phase 0, 2 and 4)
 
@@ -134,7 +137,7 @@ phase 3 reports the first and last as `audit_before` / `audit_after`.
       "red": [],                             // repos that failed
       "repos": ["trade-imports-animals-admin"],
       "per_repo": [
-        // audit-baseline.sh summary (below) + head + exit_code
+        // tim npm audit baseline summary (below) + head + exit_code
         {"repo": "...", "green": true, "failing": [], "allowlisted": ["GHSA-…"],
          "stale": [], "fixable_allowlisted": [], "head": "<sha>", "exit_code": 0}
       ]
@@ -146,7 +149,7 @@ phase 3 reports the first and last as `audit_before` / `audit_after`.
 ### `audit.{repo}.{label}.json` and `audit.{repo}.{label}.summary.json`
 
 The npm audit report (v2) as audit-ci returned it, and the
-`audit-baseline.sh` summary of it: `green`, `failing`, `allowlisted`,
+`tim npm audit baseline` summary of it: `green`, `failing`, `allowlisted`,
 `stale`, `inactive_allowlist` (GHSA lists), `fixable_allowlisted`,
 `blocked_allowlisted`, `failing_fixable` (`[{ghsa, package, fixes,
 fixed_version}]`), `failing_no_fix` (`[{ghsa, package, title}]`),
@@ -158,7 +161,7 @@ threshold) and `snapshot` (the report's path). Labels:
 
 ### `allowlist.{repo}.json`
 
-Written by `audit-allowlist-add.sh`, one row per GHSA it wrote or
+Written by `tim npm audit allow`, one row per GHSA it wrote or
 renewed in this run. The entry itself lives in the repo's
 `audit-ci.jsonc`; this records why.
 

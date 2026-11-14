@@ -3,22 +3,62 @@ import { makeClientAction } from '../_client-action.js'
 import { register as registerCreate } from './create.js'
 import { register as registerAttach } from './attach.js'
 import { register as registerLink } from './link.js'
+import { register as registerDetach } from './detach.js'
+import { register as registerUnlink } from './unlink.js'
 import { register as registerEpics } from './epics.js'
+import { register as registerLabels } from './labels.js'
 import { register as registerSearch } from './search.js'
 import { register as registerTransition } from './transition.js'
 import { register as registerAssign } from './assign.js'
 import { register as registerComment } from './comment.js'
 import { register as registerUpdate } from './update.js'
+import { register as registerPrereqs } from './prereqs.js'
 
-export const renderTicket = (t) =>
+const alignColumns = (rows) => {
+  const gap = 2
+  const widths = rows[0].map((_, column) =>
+    Math.max(...rows.map((row) => row[column].length))
+  )
+  return rows.map((row) =>
+    row
+      .map((cell, column) =>
+        column === row.length - 1 ? cell : cell.padEnd(widths[column] + gap)
+      )
+      .join('')
+  )
+}
+
+const renderSection = (heading, rows) =>
+  rows.length === 0
+    ? []
+    : ['', `=== ${heading} (${rows.length}) ===`, ...alignColumns(rows)]
+
+const subtaskRow = ({ key, status, summary }) => [key, status ?? '?', summary]
+
+const linkRow = ({ otherKey, relation, otherStatus, otherSummary }) => [
+  otherKey ?? '?',
+  relation ?? '?',
+  otherStatus ?? '?',
+  otherSummary
+]
+
+const descriptionShown = (ticket, { rendered }) =>
+  (rendered ? ticket.renderedDescription : ticket.description)?.trim() ?? ''
+
+export const renderTicket = (ticket, { rendered = false } = {}) =>
   [
-    `${t.id}  ${t.summary}`,
-    `Status:    ${t.status ?? '?'}`,
-    `Type:      ${t.type ?? '?'}`,
-    `Assignee:  ${t.assignee ?? 'unassigned'}`,
-    `Priority:  ${t.priority ?? '?'}`,
+    `${ticket.id}  ${ticket.summary}`,
+    `Status:    ${ticket.status ?? '?'}`,
+    `Type:      ${ticket.type ?? '?'}`,
+    `Assignee:  ${ticket.assignee ?? 'unassigned'}`,
+    `Priority:  ${ticket.priority ?? '?'}`,
+    `Parent:    ${ticket.parent ?? 'none'}`,
+    `Labels:    ${ticket.labels?.length ? ticket.labels.join(', ') : 'none'}`,
+    `Updated:   ${ticket.updated ?? '?'}`,
     '',
-    t.description?.trim() ?? ''
+    descriptionShown(ticket, { rendered }),
+    ...renderSection('Subtasks', (ticket.subtasks ?? []).map(subtaskRow)),
+    ...renderSection('Linked Issues', (ticket.links ?? []).map(linkRow))
   ]
     .join('\n')
     .trimEnd()
@@ -36,16 +76,27 @@ export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
     .description(
-      "Read and search Jira tickets and comments, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, and move a ticket's status (create, update, attach, comment, link and assign are dry run by default; transition is not)"
+      "Read and search Jira tickets and comments, list a project's or board's epics and a board's labels, write the ticket-creator's session-start files, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink and assign are dry run by default; transition is not)"
     )
 
   jira
     .command('ticket <id>')
-    .description('Fetch a Jira ticket by id (e.g. EUDPA-200)')
+    .description(
+      'Fetch a Jira ticket by id (e.g. EUDPA-200), with its parent, labels, last update, subtasks and linked issues'
+    )
+    .option(
+      '--rendered',
+      'Show the description as Jira renders it to HTML, and add it to --json as renderedDescription'
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim jira ticket EUDPA-200\n  tim jira ticket EUDPA-200 --rendered --json'
+    )
     .action(
       makeClientAction({
         client: () => createJiraClient(),
-        call: (c, [id]) => c.getTicket(id),
+        call: (client, [id], { rendered }) =>
+          client.getTicket(id, { withRendered: Boolean(rendered) }),
         renderText: renderTicket,
         timVersion
       })
@@ -66,10 +117,14 @@ export const register = (program, { timVersion }) => {
   registerCreate(jira, { timVersion })
   registerAttach(jira, { timVersion })
   registerLink(jira, { timVersion })
+  registerDetach(jira, { timVersion })
+  registerUnlink(jira, { timVersion })
   registerEpics(jira, { timVersion })
+  registerLabels(jira, { timVersion })
   registerSearch(jira, { timVersion })
   registerTransition(jira, { timVersion })
   registerAssign(jira, { timVersion })
   registerComment(jira, { timVersion })
   registerUpdate(jira, { timVersion })
+  registerPrereqs(jira, { timVersion })
 }

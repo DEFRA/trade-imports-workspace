@@ -84,7 +84,7 @@ Read these before any change, whatever the request:
    - **Who has a mandate.** The designer in this session, once you have
      recorded their words (`references/custom-pattern.md`), and an agent
      whose brief carries that recorded entry. The build loop,
-     journey-builder, frontend-change, Codex on a real repo and a workflow
+     frontend-change, Codex on a real repo and a workflow
      with no recorded mandate have none: they build the nearest GOV.UK
      option and log a gap.
    - Gaps: `references/match-the-design/design-gaps.md`. Patterns:

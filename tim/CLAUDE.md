@@ -36,7 +36,7 @@ See `.claude/rules/` — loaded by glob:
 
 ## Auth env vars (reuse the bash contract)
 
-- `JIRA_USER` + `JIRA_TOKEN` + `JIRA_BASE_URL` — used by `jira-client` AND `confluence-client`. Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token. Matches `../tools/jira/auth.sh` and `../tools/confluence/auth.sh`.
+- `JIRA_USER` + `JIRA_TOKEN` + `JIRA_BASE_URL` — used by `jira-client` AND `confluence-client`. Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token.
 - Anyone with the bash tools working should get seamless pickup with zero new env vars.
 
 ## When to use parent skills
@@ -45,7 +45,9 @@ Use `/review`, `/code-style`, `/ticket`, `/understanding-check` from the workspa
 
 ## What lives where
 
-- `src/cli.js` — commander entry; auto-sets `--no-ui` when `!isTTY`
+- `src/launcher.js` — the `bin` entry; hands over to the `cli.js` of the workspace clone the command addresses
+- `src/cli.js` — the entry: answers the pre-push hook (`sonar push-check --hook`) without loading the commands, else loads `src/program.js`
+- `src/program.js` — the commander program; auto-sets `--no-ui` when `!isTTY`
 - `src/clients/*.js` — external service clients (undici); each with sibling `*.test.js`
 - `src/components/features/<name>/` — Ink feature folders (one per command group)
 - `src/components/common/` — shared screens (Menu, Loading, Error, Confirm, ParallelProgress, StreamingLog)

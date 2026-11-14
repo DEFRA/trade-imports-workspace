@@ -6,7 +6,7 @@ patterns and stops inventing new labels.
 
 **Snapshot date:** 2026-05-26
 **Source:** backlog sample via
-`~/git/defra/trade-imports-workspace/tools/jira/list-board-labels.sh 13780`
+`tim jira labels --board 13780`
 (129 issues).
 
 Casing rule: **camelCase canonical** (e.g. `technicalImprovement`,
@@ -31,14 +31,14 @@ series covers the Notification Hub. These codes are defined in the
 (page id `6468764101`), not in this catalogue.
 
 The active set is pulled fresh on each session by
-`tools/ticket-creator/prepare-ticket-creation.sh` and Read at
+`tim jira prereqs` and Read at
 session start from `workareas/ticket-creation/.prereqs/capabilities.txt`,
 one `CODE — Name [STATUS]` per line. Pick from that list — don't coin
 new codes from this skill.
 
 If that file is missing or the script reported an `ERROR:`, the map has
 drifted from its canonical shape — run
-`tools/ticket-creator/check-capabilities.sh` rather than guessing a code.
+`tim capabilities check` rather than guessing a code.
 
 [cap-map]: https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6468764101
 
@@ -55,7 +55,7 @@ When the snapshot drifts from reality, re-run the aggregator and
 update this file:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/list-board-labels.sh 13780
+tim jira labels --board 13780
 ```
 
 Update the **Snapshot date** in the header, refresh the counts in

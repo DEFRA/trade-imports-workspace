@@ -69,14 +69,14 @@ gh auth login
 
 ### 3. Check Authentication
 
-Run the auth script (from the workspace root) to verify all services
-are configured:
+Check that every service is set up:
 
 ```bash
-./tools/auth.sh
+tim auth
+gh auth status
 ```
 
-This checks Jira, Confluence, and GitHub authentication.
+`tim auth` checks Jira and Confluence. `gh auth status` checks GitHub.
 
 ### 4. SonarCloud (Claude Code integration)
 
@@ -110,7 +110,7 @@ It used to register all eight, but Claude Code starts every server in a project 
 at session start, and each one is an `mcp/sonarqube` docker container (roughly 400–800 MiB).
 Every workspace-root session therefore held about 5–6 GiB of Docker memory, enough to starve
 the testcontainers the Java integration suites start. Nothing automated needed them: the
-pre-push quality gate (`tools/sonar/sonar-push-check.sh`) and the pending-check hooks under
+pre-push quality gate (`tim sonar push-check --hook`) and the pending-check hooks under
 `scripts/sonar/` call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
 
 To query SonarCloud from a workspace-root session, use the `sonar` CLI (for example
@@ -188,16 +188,18 @@ workspace repo's own `gh-pages` is ~1 GiB. Any clone still on the
 default `+refs/heads/*` fetch refspec drags them in on a bare
 `git fetch` / `git pull`.
 
-Pin your workspace clone once:
+Pin your workspace clone once, from its root. `--prune` then runs
+`git gc --prune=now`, which reclaims about 1 GiB if gh-pages was ever
+fetched:
 
 ```bash
-bash tools/git/light-remote.sh --exclude-gh-pages ~/git/defra/trade-imports-workspace
-git -C ~/git/defra/trade-imports-workspace gc --prune=now   # reclaims ~1 GiB if gh-pages was ever fetched
+tim workspace pin-fetch . --exclude-gh-pages --prune
 ```
 
-Per-ticket review clones under `workareas/` are pinned automatically by
-`tools/review/prepare-review.sh` (and self-healed on refresh by
-`tools/review/refresh/pull-repos.sh`).
+Per-ticket review clones under `workareas/` are pinned automatically to
+their pull request (`tim workspace pin-fetch <dir> --pr <number>`) by
+`tim review prepare`, and self-healed on refresh by
+`tim review refresh pull`.
 
 The dev repos under `repos/` are handled for you: `tim workspace setup` clones with the exclusion in
 place (`--single-branch`, pin the refspec, then a widening fetch), and
@@ -291,8 +293,9 @@ this workspace — there is no separate, prototype-only setup:
    raises a real Jira story from the prototype, so the same credentials
    apply.
 3. **Run `tim prototype setup`** (after
-   `npm --prefix ~/git/defra/trade-imports-workspace/tim link` if `tim` is
-   not already on your `PATH`). It writes a short note into a gitignored
+   `npm --prefix tim link`, run from the workspace root, if `tim` is not
+   already on your `PATH`; one link serves every clone, and each clone
+   runs its own tim). It writes a short note into a gitignored
    `CLAUDE.local.md` at the workspace root ("You are working with a
    designer…", so every request routes through the `prototype` skill
    without you ever having to name it), adds the prototype's fetch-only

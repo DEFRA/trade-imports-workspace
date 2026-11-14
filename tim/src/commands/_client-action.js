@@ -1,10 +1,11 @@
 import { OK, USAGE, ERROR } from '../constants/exitCodes.js'
 import { isTimError } from '../errors.js'
+import { writeLine } from './_write-line.js'
 
 const SCHEMA_VERSION = 1
 
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
+const emit = (text) => writeLine(process.stdout, text)
+const emitError = (text) => writeLine(process.stderr, text)
 
 /**
  * Build a commander action handler that calls a client method, then
@@ -13,9 +14,10 @@ const emitError = (text) => process.stderr.write(`${text}\n`)
  * @param {object} args
  * @param {() => object} args.client - Factory that returns the client (called
  *   per invocation so credentials read at run-time, not at module import)
- * @param {(client: object, positional: any[]) => Promise<any>} args.call - Function
+ * @param {(client: object, positional: any[], options: object) => Promise<any>} args.call - Function
  *   that invokes the appropriate method on the client with positional args
- * @param {(result: any) => string} args.renderText
+ *   and the command's own options
+ * @param {(result: any, options: object) => string} args.renderText
  * @param {string} args.timVersion
  * @returns {Function} commander action function (call with `this` bound)
  */
@@ -23,12 +25,13 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
   async function clientAction(...positional) {
     // commander passes parsed positional args, then options, then command — drop the last two
     const args = positional.slice(0, -2)
+    const options = positional.at(-2)
     const globalOpts = this.optsWithGlobals()
     try {
       const c = client()
-      const result = await call(c, args)
+      const result = await call(c, args, options)
       if (globalOpts.json) {
-        emit(
+        await emit(
           JSON.stringify({
             ok: true,
             schema_version: SCHEMA_VERSION,
@@ -39,12 +42,12 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
           })
         )
       } else {
-        emit(renderText(result))
+        await emit(renderText(result, options))
       }
       process.exit(OK)
     } catch (error) {
       if (isTimError(error) && globalOpts.json) {
-        emit(
+        await emit(
           JSON.stringify({
             ok: false,
             schema_version: SCHEMA_VERSION,
@@ -54,7 +57,7 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
           })
         )
       } else {
-        emitError(error.message ?? String(error))
+        await emitError(error.message ?? String(error))
       }
       const exit =
         isTimError(error) && (error.code === 'USAGE' || error.code === 'AUTH')

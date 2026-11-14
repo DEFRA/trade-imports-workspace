@@ -1,5 +1,4 @@
-import { runToLog } from './exec.js'
-import { runStackScriptToLog, stackScriptPath } from './stack.js'
+import { runStackScriptToLog } from './stack.js'
 import {
   RUN_STACK_ARGS,
   recordLeaseContainers,
@@ -11,8 +10,7 @@ import {
   serviceFingerprints,
   stackFilesFingerprint
 } from './stack-fingerprints.js'
-
-export const DEV_SERVICE_SCRIPT = 'dev-service.sh'
+import { logOutput, runServiceAction } from '../stack/services.js'
 
 const RUN_STACK_SCRIPT = 'run-stack.sh'
 
@@ -20,31 +18,32 @@ const NOT_RUN = { exitCode: 0, log: null }
 
 const ACTION_WORDS = { rebuild: 'Rebuilding', restart: 'Restarting' }
 
-// Run through bash, so the script works whether or not git kept its
-// execute bit.
-const runDevService = async (
+const refreshToLog = async (
   { workspaceRoot, env },
   action,
   services,
   logPath
-) =>
-  services.length === 0
-    ? NOT_RUN
-    : runToLog(
-        'bash',
-        [
-          stackScriptPath(workspaceRoot, DEV_SERVICE_SCRIPT),
-          action,
-          ...services
-        ],
-        { cwd: workspaceRoot, env, logPath }
-      )
+) => {
+  if (services.length === 0) return NOT_RUN
+  const output = logOutput({
+    logPath,
+    commandLine: ['tim docker service', action, ...services].join(' '),
+    cwd: workspaceRoot
+  })
+  const result = await runServiceAction({
+    workspaceRoot,
+    action,
+    services,
+    output,
+    env
+  })
+  return { exitCode: result.exitCode, log: logPath }
+}
 
 const failureOf = (action, services, result) =>
   result.exitCode === 0
     ? null
-    : `${ACTION_WORDS[action]} ${services.join(', ')} failed (${DEV_SERVICE_SCRIPT} exited ${result.exitCode}). Read ${result.log}.`
-
+    : `${ACTION_WORDS[action]} ${services.join(', ')} failed (docker compose exited ${result.exitCode}). Read ${result.log}.`
 const fingerprintsOf = (services, current) =>
   Object.fromEntries(services.map((service) => [service, current[service]]))
 
@@ -77,7 +76,7 @@ const startAgain = async (
     logPath: logPaths.restack,
     env
   })
-  await recordLeaseContainers({ holder, leasePath, env })
+  await recordLeaseContainers({ holder, workspaceRoot, leasePath, env })
   const outcome = {
     restacked: true,
     restackLog: upRun.log,
@@ -98,6 +97,7 @@ const startAgain = async (
     lease.mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {}
   recordLeaseFingerprints({
     holder,
+    workspaceRoot,
     leasePath,
     fingerprints: services,
     stackFiles
@@ -120,16 +120,16 @@ const refreshServices = async ({
     refreshWithOf(workspaceRoot)
   )
   const context = { workspaceRoot, env }
-  const rebuild = await runDevService(
+  const rebuild = await refreshToLog(
     context,
     'rebuild',
     plan.rebuild,
     logPaths.rebuild
   )
   if (plan.rebuild.length > 0) {
-    await recordLeaseContainers({ holder, leasePath, env })
+    await recordLeaseContainers({ holder, workspaceRoot, leasePath, env })
   }
-  const restart = await runDevService(
+  const restart = await refreshToLog(
     context,
     'restart',
     plan.restart,
@@ -142,6 +142,7 @@ const refreshServices = async ({
   ]
   recordLeaseFingerprints({
     holder,
+    workspaceRoot,
     leasePath,
     fingerprints: fingerprintsOf(settled, current)
   })
@@ -168,7 +169,7 @@ const refreshServices = async ({
  * stackFilesKnown is false when the workspace is not a git checkout, so tim
  * cannot tell whether its stack files changed and never starts it again.
  *
- * When the workspace's own stack files (docker/stack, scripts/stack) changed
+ * When the workspace's own stack files (docker/stack, scripts/stack, tim/src/stack) changed
  * since the lease recorded them, the whole stack is started again with
  * run-stack.sh, in the lease's mode, and the lease records its new
  * containers, what every service serves and the stack files it was started

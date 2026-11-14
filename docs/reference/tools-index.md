@@ -6,7 +6,7 @@ Shared shell scripts called by skills via
 
 **`tools/` is bash only.** Each script here is bash, and its tests are bash
 scripts beside it named `<script>.<aspect>.test.sh`, each with a `check()`
-helper (for example `tools/review/render-items.write.test.sh`). New
+helper. New
 JavaScript goes in `tim` as a command, tested with tim's own tests, not in
 `tools/`.
 
@@ -17,154 +17,116 @@ text) and a `planId`, and only writes with a matching `--confirm <planId>`;
 `attach`, `link` and `assign` write with `--confirm`. `link` takes
 `relates <key>`, `--blocks <key>` or `--blocked-by <key>` and reads back the
 direction Jira stored. `assign` takes an account id or `me` and reads the
-assignee back. `tim jira epics` and `tim jira search` are read-only; `search`
-takes search words (a text search in the project) or `--jql <query>`. The `ticket-creator` skill and the
-`prototype` skill's hand-off both create through it rather than
-`tools/jira/create-ticket.sh` below, which stays as the plain-bash
-alternative and the one the build loop still calls directly.
+assignee back. `tim jira epics`, `tim jira labels` and `tim jira search` are
+read-only; `search` takes search words (a text search in the project) or
+`--jql <query>`. `tim jira epics --board <id> [--include-done]` lists a
+board's epics as `KEY — summary` lines, and `tim jira labels --board <id>`
+counts the labels in a board's backlog. `tim jira prereqs` writes the
+ticket-creator's session-start files under
+`workareas/ticket-creation/.prereqs/`. Every ticket the workspace raises,
+epics included, goes through `tim jira create`.
 
 | Script | Args | Purpose |
 |---|---|---|
-| **auth** | | |
-| `tools/auth.sh` | | All services umbrella |
-| `tools/jira/auth.sh` | | Jira |
-| `tools/github/auth.sh` | | GitHub |
-| `tools/confluence/auth.sh` | | Confluence |
 | **jira** | | |
-| `tools/jira/ticket.sh` | EUDPA-X [full\|summary\|json] | Get ticket |
-| `tools/jira/comments.sh` | EUDPA-X | Get comments |
-| `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
-| `tools/jira/add-subtask.sh` | EUDPA-X "Summary" ["Desc"] | Add subtask |
-| `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
-| `tools/jira/attach-file.sh` | EUDPA-X FILE | Attach a file to a ticket.<br>e.g. `tools/jira/attach-file.sh EUDPA-333 diagram.svg`<br>Reference it inline from the description with wiki markup — `!diagram.svg\|thumbnail!`.<br>Re-attaching the same filename ADDS a second attachment rather than replacing it, so pair it with `delete-attachment.sh` when refreshing a file. |
-| `tools/jira/delete-attachment.sh` | EUDPA-X FILENAME [--all] \| --id ID \| EUDPA-X --list | Delete an attachment, or list what a ticket has.<br>e.g. `tools/jira/delete-attachment.sh EUDPA-333 diagram.svg`<br>Refuses to act when several attachments share the filename, listing them instead — pick with `--id` or take all with `--all`.<br>Boundary: the delete half of the regenerate loop (vs `attach-file.sh`, which only adds). |
-| `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
-| `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
-| `tools/jira/get-issues-for-board.sh` | board-id [list\|summary\|json] | Board issues |
-| `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |
-| `tools/jira/list-board-labels.sh` | board-id [list\|json] | Aggregate label frequencies from a board's backlog |
-| `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
+| `tim jira ticket` | EUDPA-X [--rendered] [--json] | Get ticket |
+| `tim jira comments` | EUDPA-X [--json] | Get comments |
+| `tim jira comment` | EUDPA-X (--body "Comment" \| --file F) [--confirm] | Add comment (dry run without `--confirm`) |
+| `tim jira transition` | EUDPA-X "Status" [--list] [--resolution R] [--json] | Change status. Takes a status or a transition name; `--list` prints `transition -> status` |
+| `tim jira search` | (words \| --jql "JQL") [--limit N, up to 500] [--json] | Search the project by words or JQL |
 | **github** | | |
-| `tools/github/prs.sh` | EUDPA-X [list\|json\|urls] | Find PRs |
-| `tools/github/pr-details.sh` | repo pr-num [full\|files\|json] | PR details |
-| `tools/github/diff.sh` | repo pr-num | PR diff |
-| `tools/github/file-diff.sh` | repo pr-num file-path | PR diff filtered to one file |
+| `gh search prs`, `gh pr view`, `gh pr diff` | EUDPA-X --owner DEFRA; N --repo DEFRA/R | Find a ticket's PRs and read their details and diffs with the GitHub CLI directly |
+| `tim review file-diff` | file (--ticket EUDPA-X --repo R \| --stdin) [--json] | PR diff filtered to one file, from the review's cached `.diffs/{repo}.diff`, or a `gh pr diff` piped in with `--stdin` |
 | **confluence** | | |
-| `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
-| `tools/confluence/update-page.sh` | page-id "Title" content-file | Update page |
-| `tools/confluence/sync-docs.sh` | [--dry-run] [--root-id ID] | Sync Confluence tree to docs/confluence/ |
-| `tools/confluence/clean-docs.sh` | [args forwarded] | Wipe + re-sync docs/confluence/ |
-| **github-actions** | | |
-| `tools/github-actions/get-logs.sh` | repo run-id-or-url | Workflow run logs |
-| `tools/github-actions/get-failure.sh` | repo run-id-or-url | Failed step logs |
-| `tools/github-actions/run-status.sh` | repo run-id-or-url | Run status |
-| `tools/github-actions/wait-for-run.sh` | repo run-id-or-url [timeout] | Wait for run |
-| `tools/github-actions/trigger-workflow.sh` | repo workflow-file [branch] [key=value...] | Trigger workflow |
-| `tools/github-actions/list-runs.sh` | repo [branch] [workflow] | List recent runs |
-| `tools/github-actions/wait-for-pr-checks.sh` | repo pr-number [timeout] | Wait for a pull request's checks, then report them. Exit 0 green, 1 red, 2 still pending, 4 no checks, 5 every failing check is a stale rollup (re-run them, do not fix code) |
+| `tim confluence page` | page-id-or-url [--raw] [--json] | Get page: its details, labels and HTML body; `--raw` prints Confluence's own JSON |
 | **review** | | |
-| `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
-| `tools/review/detect-tech.sh` | REPO_PATH | Detects technologies + best-practice paths for a repo; reads `.claude/skills/review/assets/routing.json` |
-| `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
-| `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |
-| `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |
-| `tools/review/diff-since-review.sh` | EUDPA-X [--json] | Diff since last review |
-| `tools/review/file-review-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.review.json` placeholder |
-| `tools/review/file-review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file JSON. C is a category from `tools/review/finding-categories.sh`; any other is refused |
-| `tools/review/file-review-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set verdict (marks file as reviewed) |
-| `tools/review/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Populate `items.{repo}.json` + emit File Analysis Summary / Items markdown.<br>e.g. `tools/review/aggregate-file-reviews.sh EUDPA-1 --repo backend --write-items`<br>Boundary: without `--write-items` it only emits markdown to stdout; `--write-items` (re)writes `items.{repo}.json` and renumbers IDs — FRESH population only, prior dispositions/status not preserved. |
-| `tools/review/review-items.sh` | EUDPA-X [--repo R] [--filter ...] [--status ...] [--json] | List items from `## Items` table |
-| `tools/review/review-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition (auto-sets Status).<br>e.g. `tools/review/review-mark.sh EUDPA-1 --repo backend --item 3 --disposition Fix`<br>`Merged` needs `--note "merged into #N"`, naming the owner item.<br>Boundary: sets Disposition and lets it drive Status (vs `review-set-status.sh`, which sets Status alone). |
-| `tools/review/review-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only.<br>e.g. `tools/review/review-set-status.sh EUDPA-1 --repo backend --item 3 --status Done`<br>Boundary: sets Status directly and leaves Disposition untouched (vs `review-mark.sh`, which sets Disposition and derives Status). |
-| `tools/review/review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." | Append new item; prints new ID. C is a category from `finding-categories.sh` |
-| `tools/review/review-counts.sh` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
-| `tools/review/render-items.sh` | EUDPA-X --repo R [--write] | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq`; `--write` puts it into `review.{repo}.md` in place of the old table; a fix's "Must:" and "One way:" parts get a column each |
-| `tools/review/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh: pull + diff + lists A/B/C/D.<br>e.g. `tools/review/refresh/scope.sh EUDPA-1 --write-snapshot`<br>Boundary: read-only — classifies files into the refresh work-lists (vs `reconcile.sh`, which mutates `items.{repo}.json`). |
-| `tools/review/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tools/review/refresh/reconcile.sh EUDPA-1 --repo backend`<br>Boundary: runs after `scope.sh` and appends new findings into `items.{repo}.json` (vs `scope.sh`, which only lists them). |
-| `tools/review/refresh/pull-repos.sh` | EUDPA-X [--repo R] [--json] | Refresh helper |
-| `tools/review/refresh/list-merge-resolved.sh` | REPO_DIR PRIOR_SHA HEAD_SHA [--tsv\|--json] | Refresh helper |
-| `tools/review/refresh/list-coverage-gaps.sh` | REVIEW_DIR REPO PR_NUM [--tsv\|--json] | Refresh helper |
+| `tim review start` | EUDPA-X \| --local R B [--files F1,F2] | Step 0 — say MODE: FRESH (raw folder ready for gh) or MODE: REFRESH (refresh scope built) |
+| `tim review prepare` | EUDPA-X \| --branch B [--desc D] \| --local R B [--files F1,F2] [--select] [--json] | Build the review workspace from what `gh search prs`, `gh pr view`, `gh api .../files` and `gh pr diff` saved (see the review skill, Step 1). `--select` lists the PR per repo to save |
+| `tim review verify files` | EUDPA-X [--json] | Check every file each PR changes has a reviewed `.review.json`. Reads `.prs/{repo}-{pr}.json`, written first by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
+| `tim review verify consistency` | EUDPA-X [--json] | Check consistency |
+| `tim review verify style` | EUDPA-X [--json] | Check code style review coverage |
+| `tim review file init` | EUDPA-X --repo R --file F --commit SHA [--pr N] --mode M [--json] | Initialise per-file `.review.json` placeholder; prints its path |
+| `tim review file add` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] [--json] | Append a finding to a per-file JSON; prints its id. C is a finding category; any other is refused |
+| `tim review file verdict` | EUDPA-X --repo R --file F --verdict V [--reason "..."] [--json] | Set verdict (marks file as reviewed) |
+| `tim review aggregate` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Populate `items.{repo}.json` + emit File Analysis Summary / Items markdown.<br>e.g. `tim review aggregate EUDPA-1 --repo backend --write-items`<br>Boundary: without `--write-items` it only emits markdown to stdout; `--write-items` (re)writes `items.{repo}.json` and renumbers IDs — FRESH population only, prior dispositions/status not preserved. |
+| `tim review items list` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--json] | List items from `items.{repo}.json` as TSV (`--json`: the items are `result`) |
+| `tim review items mark` | EUDPA-X --repo R --item N --disposition V [--note "..."] [--json] | Set Disposition (auto-sets Status).<br>e.g. `tim review items mark EUDPA-1 --repo backend --item 3 --disposition Fix`<br>`Merged` needs `--note "merged into #N"`, naming the owner item.<br>Boundary: sets Disposition and lets it drive Status (vs `tim review items status`, which sets Status alone). |
+| `tim review items status` | EUDPA-X --repo R --item N --status V [--note "..."] [--json] | Set Status only.<br>e.g. `tim review items status EUDPA-1 --repo backend --item 3 --status Done`<br>Boundary: sets Status directly and leaves Disposition untouched (vs `tim review items mark`, which sets Disposition and derives Status). |
+| `tim review items add` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] [--json] | Append new item; prints new ID. C is a finding category |
+| `tim review items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
+| `tim review items render` | EUDPA-X --repo R [--write] [--json] | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` in place of the old table; a fix's "Must:" and "One way:" parts get a column each |
+| `tim review refresh scope` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--json] | Refresh: pull + diff + lists A/B/C/D. Prints a summary; `--json` gives the lists.<br>e.g. `tim review refresh scope EUDPA-1 --write-snapshot --json`<br>Boundary: classifies files into the refresh work-lists; `--write-snapshot` records the window and clears the findings of files to review again (vs `tim review reconcile`, which mutates `items.{repo}.json`). |
+| `tim review reconcile` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tim review reconcile EUDPA-1 --repo backend`<br>Boundary: runs after `tim review refresh scope` and appends new findings into `items.{repo}.json` (vs `tim review refresh scope`, which only lists them). |
+| `tim review refresh pull` | EUDPA-X [--repo R] [--json] | Refresh helper: pin each review clone to its PR, fetch and detach |
+| `tim review refresh merge-resolved` | REPO_DIR PRIOR_SHA HEAD_SHA [--json] | Refresh helper: hand-resolved merge files |
+| `tim review refresh gaps` | EUDPA-X --repo R --pr N [--json] | Refresh helper: PR files with no `.review.json`, from `.prs/{repo}-{pr}.json` written by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
+| `tim review share` | EUDPA-X [--repo R] [--pr N] [--comment-only] [--summary] [--branch B] [--reviewer LOGIN] [--dry-run] [--json] | Fresh Step 7 — render one PR comment body per PR for `gh pr comment N --repo DEFRA/R --body-file F` to post. Without `--comment-only` it also commits the review's `workareas/shared/` copy to handoff branch `chore/EUDPA-X` and pushes it. `--reviewer` takes `gh api user --jq .login`. `--summary` posts counts when the item table passes GitHub's 65536-character limit |
 | **style** | | |
-| `tools/style/start-style.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `tools/style/prepare-style.sh` | EUDPA-X [--json] | Fresh Step 1 — init `.style.json` placeholders + per-repo rules bundle |
-| `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
-| `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
-| `tools/style/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
-| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq` (the table `aggregate-file-reviews.sh` also writes) |
-| `tools/style/style-items.sh` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
-| `tools/style/style-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
-| `tools/style/style-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
-| `tools/style/style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality category |
-| `tools/style/style-counts.sh` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
-| `tools/style/file-style-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.style.json` placeholder |
-| `tools/style/file-style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality category from `tools/review/finding-categories.sh`; any other is refused |
-| `tools/style/file-style-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
-| `tools/style/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh, filtered to `.js` |
-| `tools/style/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
+| `tim style start` | EUDPA-X [--no-pull] [--repo R] \| --local REPO BRANCH [--files F1,F2] [--json] | Step 0 — detect FRESH/REFRESH and run `tim style prepare`, or `tim style scope --write-snapshot` after a `MODE: REFRESH` line |
+| `tim style prepare` | EUDPA-X \| --local REPO BRANCH [--files F1,F2] [--json] | Fresh Step 1 — init `.style.json` placeholders + per-(repo,topic) rules bundles, from the PR files in `.prs/{repo}-{pr}.json` (refuses a missing or empty one) |
+| `tim style topics` | PATH [--json] | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
+| `tim style bundle` | EUDPA-X REPO TOPIC [REPO_DIR] | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
+| `tim style aggregate` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
+| `tim style items render` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view (the table `tim style aggregate` also writes) |
+| `tim style items list` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
+| `tim style items mark` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
+| `tim style items status` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
+| `tim style items add` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality or design category |
+| `tim style items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
+| `tim style file init` | EUDPA-X --repo R --file F --commit SHA [--pr N] --mode M | Initialise per-file `.style.json` placeholder |
+| `tim style file add` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality or design category; any other is refused |
+| `tim style file verdict` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
+| `tim style scope` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--json] | Refresh: pull + diff + lists A/B/C/D over the files with a style topic; List D reads `.prs/{repo}-{pr}.json` |
+| `tim style reconcile` | EUDPA-X --repo R [--dry-run] [--force] [--json] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
 | **npm** | | |
 | `tools/npm/start-upgrade.sh` | EUDPA-X --phase 0\|1\|2\|3\|4 [--repo R ...] [--strategy LEVEL] [--branch NAME] [--allowlist-owner NAME --expiry-days N] | Single dispatcher — phase 0 audits every repo (gates phase 1), phase 1 discovers + emits PACKAGE_PLANNER spawn manifest, phase 2 fans out per-repo runners, phase 3 emits WALKER handoff (with allowlist, audits and held packages), phase 4 resets overrides per repo. `--branch` refuses to run if any repo is on another branch; a repo with no `package.json` is skipped |
-| `tools/npm/audit-baseline.sh` | --run-id TICKET --repo R [--label L] [--repo-path PATH] | Run the repo's audit-ci check; save the npm audit report; print failing / allowlisted / stale / fixable_allowlisted advisories and which have a fixed version. Exit 1 if red or an allowlisted advisory now has a fix |
-| `tools/npm/audit-allowlist-add.sh` | --run-id TICKET --repo R --ghsa GHSA --reason "..." --owner NAME --expiry-days N [--blocked-by "..."] [--stage N] [--repo-path PATH] | Write or renew one `audit-ci.jsonc` allowlist entry; refuses an expiry over 3 months, an advisory not in the audit, or one with a fix (unless `--blocked-by`) |
-| `tools/npm/audit-allowlist-forget.sh` | --run-id TICKET --repo R --ghsa GHSA [--ghsa GHSA ...] | Drop entries from the run's `allowlist.<repo>.json` state after a hand rollback (the scripted upgrades do this themselves); never touches `audit-ci.jsonc`. Run with `bash` |
+| `tim npm audit baseline` | --run-id TICKET --repo R [--label L] [--repo-path PATH] [--json] | Run the repo's audit-ci check; save the npm audit report; print failing / allowlisted / stale / fixable_allowlisted advisories and which have a fixed version. Exit 1 if red or an allowlisted advisory now has a fix, 2 if the audit cannot run |
+| `tim npm audit allow` | --run-id TICKET --repo R --ghsa GHSA --reason "..." --owner NAME --expiry-days N [--blocked-by "..."] [--stage N] [--repo-path PATH] [--json] | Write or renew one `audit-ci.jsonc` allowlist entry; refuses (exit 1) an expiry over 3 months, an advisory not in the audit, or one with a fix (unless `--blocked-by`) |
+| `tim npm audit forget` | --run-id TICKET --repo R --ghsa GHSA [--ghsa GHSA ...] | Drop entries from the run's `allowlist.<repo>.json` state after a hand rollback (the scripted upgrades do this themselves); never touches `audit-ci.jsonc` |
+| `tim npm audit gate` | --run-id TICKET --repo R --package PKG --target V [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | The audit gate after one package upgrade: prints `{status, reason, allowlisted}`; exit 0 green, 1 red, 2 audit could not run |
+| `tim npm exec` | (--repo R \| --clone R) -- \<npm args\> | Run npm in `repos/<R>` or `workareas/clones/<R>` at its real (de-symlinked) path; npm's exit code passes through |
 | `tools/npm/refresh-lockfile.sh` | --run-id TICKET --repo R [--repo-path PATH] | `npm update` (lockfile only), then test, lint, audit and commit "Refresh transitive dependencies"; rolls back and reports on failure |
 | `tools/npm/reset-overrides.sh` | --run-id TICKET --repo R [--repo-path PATH] | Phase 4: remove every override in a throwaway worktree, put back only those a failing audit / test / lint / build needs, commit "Remove overrides" with a kept-overrides table |
-| `tools/npm/verify-classification-coverage.sh` | --run-id TICKET [--repo R] [--json] | Phase 1 coverage gate — fail iff any package.classification == null |
-| `tools/npm/prebake-context.sh` | --run-id TICKET --repo R --package PKG | Best-effort fetch of changelog + grep usages; updates `context_baked` field |
-| `tools/npm/bake-best-practices.sh` | --run-id TICKET --repo R | Concatenate dependency-relevant best-practices into per-repo bundle |
-| `tools/npm/discover-upgrades.sh` | repo-path --run-id TICKET [--strategy LEVEL] [--json] | Discover outdated deps + seed `packages.{repo}.json` |
-| `tools/npm/packages-init.sh` | --run-id TICKET --repo R --repo-path PATH --strategy LEVEL --ncu-version VER (--ncu-json JSON \| --ncu-file PATH) | Seed `packages.{repo}.json` from ncu output |
-| `tools/npm/packages-list.sh` | --run-id TICKET [--repo R] [--package PKG] [--classification ...] [--risk ...] [--status ...] [--json] | List packages with filters |
-| `tools/npm/packages-counts.sh` | --run-id TICKET [--repo R] [--json] | Counts by classification × status × risk |
-| `tools/npm/packages-set-classification.sh` | --run-id TICKET --repo R --package PKG --classification auto\|manual --risk LOW\|MEDIUM\|HIGH --safe-for-automation true\|false --rationale "..." [--files-affected CSV] [--changes-required "..."] [--changelog-url URL] [--migration-guide-url URL] [--demoted-from-auto true\|false] | Set PACKAGE_PLANNER fields on one package |
-| `tools/npm/packages-set-status.sh` | --run-id TICKET --repo R --package PKG --status todo\|inprogress\|done\|failed [--failure-reason "..."] [--commit-sha SHA] | Set implementation_status (+ commit_sha / failure_reason) |
 | `tools/npm/run-automated-upgrades.sh` | repo-name --run-id TICKET [--allowlist-owner NAME --expiry-days N] | Phase 2 per-repo runner (JSON-state-driven), ending with `refresh-lockfile.sh` |
 | `tools/npm/upgrade-one-package.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 2 internal: install + test + audit + commit + rollback (a refused commit rolls back too) |
 | `tools/npm/run-manual-upgrade.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 3 per-package manual runner (spawned by WALKER), same audit gate |
 | **govuk** | | |
-| `tools/govuk/start-upgrade.sh` | --ticket EUDPA-X \| --branch B [--target V] | Phase 1 dispatcher: `.run-meta.json` + branch setup + version discovery + security pre-flight (`npm audit`) |
-| `tools/govuk/discover-repos.sh` | --run-id TICKET [--branch B] [--target V] [--json] | Phase 1: write run-level `.run-meta.json` (in-scope repos) |
-| `tools/govuk/setup-branch.sh` | --branch B --repo R | Phase 1: idempotent `git checkout` for one repo |
-| `tools/govuk/discover-versions.sh` | repo-path --run-id TICKET [--target V] [--json] [--force] | Phase 1: seed `versions.{repo}.json` + cache CHANGELOG + pre-bake per-version sections + best-practices bundle |
-| `tools/govuk/version-classify.sh` | --run-id TICKET --repo R --version V --classification todo\|noop [--summary "..."] | VERSION_PLANNER: set classification |
-| `tools/govuk/version-add-change.sh` | --run-id TICKET --repo R --version V --file F --why "..." --change "..." | VERSION_PLANNER: append change entry |
-| `tools/govuk/apply-version.sh` | --run-id TICKET --repo R --version V [--final] | Phase 3 per-version: package.json + install + test + commit + mark-implemented |
-| `tools/govuk/version-mark-implemented.sh` | --run-id TICKET --repo R --version V [--commit SHA] | Phase 3: mark version applied |
-| `tools/govuk/version-mark-failed.sh` | --run-id TICKET --repo R --version V --reason "..." | Phase 3: mark version failed |
-| `tools/govuk/render-version-plan.sh` | --run-id TICKET --repo R --version V | Markdown view of one version's plan |
-| `tools/govuk/list-plan-summaries.sh` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per pending version |
-| `tools/govuk/list-plans.sh` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable Phase 1/2 status.<br>e.g. `tools/govuk/list-plans.sh --run-id EUDPA-1 --filter todo`<br>Boundary: Phase 1/2 planning/classification view only (vs `upgrade-status.sh`, which also folds in the Phase 3 implementation view). |
-| `tools/govuk/upgrade-status.sh` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Combined Phase 1/2/3 status (delegates to list-plans.sh).<br>e.g. `tools/govuk/upgrade-status.sh --run-id EUDPA-1 --filter done`<br>Boundary: combined planning + Phase 3 implementation view (vs `list-plans.sh`, which stops at Phase 1/2 classification). |
-| **refine** | | |
-| `tools/refine/prepare-refinement.sh` | EUDPA-X [--json] | Fetch Jira ticket + comments + Confluence links, seed `.refinement-meta.json` (verdict=null), stub `review.md`.<br>e.g. `tools/refine/prepare-refinement.sh EUDPA-1`<br>Boundary: Step 1 setup — fetches inputs and seeds verdict=null (vs `refine-finalize.sh`, which stamps the verdict at Step 5). |
-| `tools/refine/refine-finalize.sh` | EUDPA-X --verdict V [--reason "..."] | Stamp verdict (READY \| NEEDS WORK \| SPIKE REQUIRED) + `completed_at` onto `.refinement-meta.json`.<br>e.g. `tools/refine/refine-finalize.sh EUDPA-1 --verdict READY`<br>Boundary: Step 5 — stamps the final verdict after `review.md` is filled (vs `prepare-refinement.sh`, which does the Step 1 setup). |
+| `tim govuk start` | --ticket EUDPA-X \| --branch B [--target V] [--force] [--json] | Phase 1 dispatcher: `.run-meta.json` (repos whose `package.json` lists govuk-frontend) + branch setup per repo + version discovery from the npm registry + cached CHANGELOG and per-version sections + best-practices bundle + security pre-flight (`npm audit`) |
+| `tim govuk classify` | --run-id TICKET --repo R --govuk-version V --classification todo\|noop [--summary "..."] [--json] | VERSION_PLANNER: set classification |
+| `tim govuk add-change` | --run-id TICKET --repo R --govuk-version V --file F --why "..." --change "..." [--json] | VERSION_PLANNER: append change entry |
+| `tim govuk apply` | --run-id TICKET --repo R --govuk-version V [--final] [--json] | Phase 3 per-version: package.json + install + test + commit + mark-done |
+| `tim govuk mark-done` | --run-id TICKET --repo R --govuk-version V [--commit SHA] [--json] | Phase 3: mark version applied |
+| `tim govuk mark-failed` | --run-id TICKET --repo R --govuk-version V --reason "..." [--json] | Phase 3: mark version failed |
+| `tim govuk render-plan` | --run-id TICKET --repo R --govuk-version V [--json] | Markdown view of one version's plan (`--json`: `result.markdown`) |
+| `tim govuk summaries` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per version still to apply that is not a noop (`--json`: the rows are `result`) |
+| `tim govuk plans` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable status of every version, classification and implementation.<br>e.g. `tim govuk plans --run-id EUDPA-1 --filter pending --sort-semver --json` (the object is `result`) |
 | **ticket** | | |
-| `tools/ticket/prepare-plan.sh` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
-| `tools/ticket/prepare-implement.sh` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
-| `tools/ticket/setup-branch.sh` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` in one dispatch. `--type` defaults to `feat`; any other value is refused |
+| `tim ticket prepare-plan` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
+| `tim ticket prepare-implement` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, emit `.implement-meta.json`. IMPLEMENTOR caches prior PR diffs with `gh` |
+| `tim ticket branch` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout `<type>/EUDPA-X-<slug>` (the local branch, else one tracking origin, else a new one). `--type` defaults to `feat`; any other value is refused |
 | **ticket-creator** | | |
-| `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `jira/create-ticket.sh`, which actually creates the ticket in Jira). |
-| `tools/ticket-creator/extract-capabilities.sh` | \<markdown-file\> [--format list\|tsv] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |
-| `tools/ticket-creator/check-capabilities.sh` | [--cap-page ID] [--quiet] | Diagnostic report on capability-map conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: read-only reporting (vs `prepare-ticket-creation.sh`, which writes the prereqs cache). |
+| `tim jira prereqs` | [--board ID] [--cap-page ID] [--json] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes. `capabilities.txt` is replaced only when the synced map is canonical and gives at least `MIN_CAPABILITIES` codes (default 20); prints `WARNING:` for a stale map and `ERROR:` (exit 1) when the codes were not refreshed.<br>e.g. `tim jira prereqs`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `tim jira create`, which actually creates the ticket in Jira). |
+| `tim capabilities extract` | \<markdown-file\> [--format list\|tsv] [--json] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |
+| `tim capabilities check` | [--cap-page ID] [--no-sync] [--quiet] [--json] | Refresh the synced capability map from Confluence (unless `--no-sync`; a failed refresh is reported and the local copy is checked), then report on its conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: writes only the synced map, never the prereqs cache (vs `tim jira prereqs`, which writes it). |
 | **skill-creator** | | |
-| `tools/skill-creator/start-skill-creator.sh` | "<trigger phrase>" | Step 0 dispatcher — parses trigger, emits `MODE: CREATE` / `MODE: AUDIT_ONE` / `MODE: AUDIT_ALL` + JSON payload |
-| `tools/skill-creator/interview-add-answer.sh` | --run-id NAME --field PATH --value JSON | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
-| `tools/skill-creator/render-interview.sh` | --run-id NAME | CREATE — markdown view of `decisions.json` (recap + `decisions.md` sidecar) |
-| `tools/skill-creator/scaffold-skill.sh` | --run-id NAME [--dry-run] | CREATE — materialise SKILL.md + references/ + assets/ + tools/<name>/ stubs from `decisions.json`; append allowlist entries |
+| `tim skill start` | "<trigger phrase>" [--json] | Step 0 dispatcher — parses trigger, emits `MODE: CREATE` / `MODE: AUDIT_ONE` / `MODE: AUDIT_ALL` + JSON payload (`--json`: the mode is `result.mode`) |
+| `tim skill answer` | --run-id NAME --field PATH --value JSON [--json] | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
+| `tim skill render` | --run-id NAME [--json] | CREATE — markdown view of `decisions.json` (mid-interview recap) |
+| `tim skill scaffold` | --run-id NAME [--dry-run] [--json] | CREATE — materialise SKILL.md + references/ + assets/ + tools/<name>/ stubs + `decisions.md` from `decisions.json`; append allowlist entries |
 | **understanding-check** | | |
-| `tools/understanding-check/start-check.sh` | EUDPA-X | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
-| `tools/understanding-check/prepare-check.sh` | EUDPA-X [--json] [--max-diff-bytes N] | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta + per-repo analysis placeholders |
-| `tools/understanding-check/redact-diff.js` | IN OUT | Helper — redact env vars / API keys / PEM blocks in a diff before it lands on disk |
-| `tools/understanding-check/analysis-add-finding.sh` | EUDPA-X --repo R --section S --evidence-file F --evidence-lines L --field K=V ... | ANALYST helper — append finding (rejects without evidence) |
-| `tools/understanding-check/analysis-set-verdict.sh` | EUDPA-X --repo R --change-summary "..." --why-it-changed "..." | ANALYST helper — mark per-repo analysis complete |
-| `tools/understanding-check/question-add.sh` | EUDPA-X --category C --prompt "..." --anchor-file F --anchor-lines L --expected-concepts CSV --rubric-pass "..." --rubric-partial "..." --rubric-fail "..." | QUESTION_GENERATOR helper — append question (caps at 12; rejects hedged rubrics) |
-| `tools/understanding-check/question-replace.sh` | EUDPA-X --id QN ... | Plan-gate edit — replace question by id |
-| `tools/understanding-check/question-remove.sh` | EUDPA-X --id QN | Plan-gate edit — drop a question (renumbers downstream ids) |
-| `tools/understanding-check/transcript-record-answer.sh` | EUDPA-X --question-id QN --answer-file F [--skipped] | Interview — persist developer's answer |
-| `tools/understanding-check/transcript-add-score.sh` | EUDPA-X --question-id QN --verdict V --rubric-match "..." --missed-concepts CSV --evidence-cited file:lines[,...] [--follow-up "..."] | SCORER helper — append score (forces FAIL/unscorable if rubric_match doesn't overlap a clause) |
-| `tools/understanding-check/counts.sh` | EUDPA-X [--json] | Diagnostic — PASS/PARTIAL/FAIL/security-FAIL/coverage-gap counts |
-| `tools/understanding-check/verify-coverage.sh` | EUDPA-X [--json] | Step 7 gate — every question scored, every finding has evidence |
-| `tools/understanding-check/finalize-verdict.sh` | EUDPA-X [--json] | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
-| `tools/understanding-check/render-report.sh` | EUDPA-X [--preview] | Plan-gate preview (Step 4) or full report (Step 7) |
+| `tim understanding-check start` | EUDPA-X [--json] | Step 0 dispatcher — emits `MODE: FRESH` (and makes the check's `.raw/` folder) or `MODE: RESUME` |
+| `tim understanding-check prepare` | EUDPA-X [--select] [--max-diff-bytes N] [--json] | Step 1 — reads the pull requests, head SHAs and diffs the skill saved into `.raw/` with `gh`; `--select` lists one pull request per repo to fetch; otherwise fetches the ticket from Jira, caches redacted diffs, bakes best-practices, seeds meta + per-repo analysis placeholders, then removes `.raw/` |
+| `tim understanding-check analysis add-finding` | EUDPA-X --repo R --section S --evidence-file F --evidence-lines L --field K=V ... [--json] | ANALYST helper — append finding (rejects without evidence) |
+| `tim understanding-check analysis complete` | EUDPA-X --repo R --change-summary "..." --why-it-changed "..." [--json] | ANALYST helper — mark per-repo analysis complete |
+| `tim understanding-check question add` | EUDPA-X --category C --prompt "..." --anchor-file F --anchor-lines L --expected-concepts CSV --rubric-pass "..." --rubric-partial "..." --rubric-fail "..." [--json] | QUESTION_GENERATOR helper — append question (caps at 12; rejects hedged rubrics) |
+| `tim understanding-check question replace` | EUDPA-X --id QN ... [--json] | Plan-gate edit — replace question by id |
+| `tim understanding-check question remove` | EUDPA-X --id QN [--json] | Plan-gate edit — drop a question (renumbers downstream ids) |
+| `tim understanding-check answer` | EUDPA-X --question-id QN --answer-file F [--skipped] [--json] | Interview — persist developer's answer |
+| `tim understanding-check score` | EUDPA-X --question-id QN --verdict V --rubric-match "..." --missed-concepts CSV --evidence-cited file:lines[,...] [--follow-up "..."] [--json] | SCORER helper — append score (forces FAIL/unscorable if rubric_match doesn't overlap a clause) |
+| `tim understanding-check counts` | EUDPA-X [--json] | Diagnostic — PASS/PARTIAL/FAIL/security-FAIL/coverage-gap counts |
+| `tim understanding-check verify` | EUDPA-X [--json] | Step 7 gate — every question scored, every finding has evidence; gaps on stderr, exit 1 |
+| `tim understanding-check finalize` | EUDPA-X [--json] | Step 7 — apply deterministic counting rule, stamp verdict + exit code (0 pass, 1 needs-review, 2 high-risk) |
+| `tim understanding-check report` | EUDPA-X [--preview] [--json] | Plan-gate preview (Step 4) or full report (Step 7) |
 | **sonar** | | |
-| `tools/sonar/sonar-push-check.sh` | (reads `.tool_input.command` from stdin JSON) | Canonical `PreToolUse(Bash)` hook body, referenced by every SonarCloud-integrated repo's `.claude/settings.json` via its `$HOME`-absolute path rather than duplicated per repo. Fires only when the command is an actual `git push`; runs the real build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos, scoped to the current branch's open PR when one exists) and blocks the push (exit 2) if the SonarCloud quality gate fails. Requires `SONAR_TOKEN` in the environment; skips gracefully (exit 0) if it's unset, `jq`/`gh` are missing, or the repo isn't recognised as Java/Node. See CLAUDE.md's "SonarCloud integration" section for why this replaced the (unlicensed-for-this-org) `sonar analyze agentic` Stop hook. |
+| `tools/sonar/sonar-push-check.sh` | (hook JSON on stdin) | Forwarder kept for the `PreToolUse(Bash)` hook in each SonarCloud-integrated repo's `.claude/settings.json`, which still names this path. It runs `tim sonar push-check --hook` from the workspace clone that holds it, giving a hook call without `cwd` the current folder. Exits 0 when that clone has no `tim/node_modules` or `node` is missing. To run the check by hand, use `tim sonar push-check` in the repo. |
+| `scripts/sonar/sonar-push-gate.sh` | (hook JSON on stdin) | Forwarder kept for the workspace root's `PreToolUse(Bash)` hook in `.claude/settings.json`: runs `tim sonar push-check --hook` from the workspace clone that holds it. Exits 0 when that clone has no `tim/node_modules` or `node` is missing. |

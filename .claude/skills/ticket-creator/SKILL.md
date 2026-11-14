@@ -14,8 +14,8 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/tools/<domain>/`,
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+your home directory automatically. `tim` finds the workspace it runs
+in by itself — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -28,18 +28,18 @@ Before the interview, refresh the present-info prereqs and Read the
 rules.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket-creator/prepare-ticket-creation.sh
+tim jira prereqs
 ```
 
 That writes the current set of active EUDPA-board epics and EUDP
 capability codes under `workareas/ticket-creation/.prereqs/`. Surface
 any `WARNING:` line from the output to the user (e.g. stale capability
-map suggests running `tools/confluence/sync-docs.sh`).
+map suggests running `tim confluence sync`).
 
 If it exits non-zero with an `ERROR:` line, the capability map has
 drifted from its canonical row shape and `capabilities.txt` was
 deliberately left unchanged rather than written short. Tell the user
-to run `tools/ticket-creator/check-capabilities.sh`, which names the
+to run `tim capabilities check`, which names the
 offending rows. Do not offer a capability picker from a stale file.
 
 Then Read these references so they sit in context for the whole
@@ -157,12 +157,12 @@ drafting — typo'd keys are easier to catch now than after the user has
 spent a turn answering the rest of the interview.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/ticket.sh "$PARENT" summary
+tim jira ticket "$PARENT"
 ```
 
 - Exit 0: confirm the epic summary back to the user ("Parent: $PARENT
   — $SUMMARY"), then continue.
-- Non-zero or `Issue does not exist...` in the output: surface the
+- Non-zero, with `not found` in the output: surface the
   error verbatim and ask for a corrected key, or for the user to
   remove the parent. Do not proceed to drafting until the lookup
   succeeds or the user removes the parent.
@@ -288,7 +288,7 @@ Write two files under
 ```json
 {
   "schema": "tim-ticket/1",
-  "project": "EUDPA",
+  "project": "<JIRA_PROJECT_KEY>",
   "type": "Story",
   "summary": "<Summary from Step 1>",
   "descriptionFile": "description.jira.txt",
@@ -300,9 +300,12 @@ Write two files under
 }
 ```
 
-`project` is always `EUDPA`. Omit `parent`, `priority`, `labels` or
+Set `project` from `JIRA_PROJECT_KEY`: `EUDPA` for real tickets, or the
+sandbox project the user has pointed it at. If it is unset, ask the user
+rather than guessing. Omit `parent`, `priority`, `labels` or
 `attachments` entirely rather than writing `null` or `""` when the interview
-gave nothing for that field. Copy any screenshots or logs the user gave you
+gave nothing for that field; a manifest with no `priority` is raised as
+Medium. Copy any screenshots or logs the user gave you
 (Bugs) into this same folder and list their filenames in `attachments`.
 
 ### 5.2 Dry run: show the plan
@@ -342,45 +345,40 @@ stale `planId`. On success `tim` writes `ticket.created.json` next to the
 manifest and refuses to create from that manifest a second time — that
 receipt, not `draft.md`, is the record of what got raised.
 
-### Fallback: `tools/jira/create-ticket.sh`
-
-Reach for this only when `tim` is not on `PATH` (`which tim` finds
-nothing — `npm --prefix ~/git/defra/trade-imports-workspace/tim link` fixes
-that where possible, so prefer that over falling back):
-
-```bash
-~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh [options] "Summary" "Description"
-```
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| -t, --type | Bug/Story/Task | Task |
-| -p, --parent | Epic key | None |
-| -P, --priority | Lowest-Highest | Medium |
-| -l, --label | Add label (repeatable) | None |
-| -a | Self-assign | No |
-
-This creates immediately — there is no dry run — so only run it once the
-draft's **Status** is `APPROVED`.
+If `which tim` finds nothing, run `npm --prefix tim link` from the
+workspace root. There is no other way to create a ticket.
 
 ### After Creation
 
-Read the created key and link from `ticket.created.json` (or from the
-fallback script's own output). Append them to the bottom of `draft.md` and
+Read the created key and link from `ticket.created.json`. Append them to the bottom of `draft.md` and
 update **Status** to `CREATED: EUDPA-XXXXX`.
+
+`tim jira create` does not set an assignee. When the approved draft says
+**Assignee:** Self, assign the new ticket straight away. The approval that
+raised the ticket covers this, so it needs no dry run:
+
+```bash
+tim jira assign EUDPA-XXXXX me --confirm
+```
+
+It reads the assignee back after writing. With **Assignee:** None, skip
+this step.
 
 Check the description rendered:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-XXXXX full > ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/rendered.txt
+tim jira ticket EUDPA-XXXXX --rendered > workareas/ticket-creation/<slug>/rendered.txt
 ```
 
 Search `rendered.txt` for `class="error"`. A match is an unescaped
-bracket: fix `description.jira.txt` and update the ticket with
-`tools/jira/update-ticket.sh EUDPA-XXXXX -d -`, reading the file on
-stdin.
+bracket: fix `description.jira.txt` and update the ticket from it.
+Dry run first, then add `--confirm` to write it:
 
-To assign the ticket to someone else, or to link it as blocking or
+```bash
+tim jira update EUDPA-XXXXX --description-file workareas/ticket-creation/<slug>/description.jira.txt
+```
+
+To assign the ticket to someone other than yourself, or to link it as blocking or
 blocked by another, follow "Workflow facts" in
 `ticket-conventions.md`. Both are dry runs until `--confirm`:
 

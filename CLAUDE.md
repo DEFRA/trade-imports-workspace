@@ -18,7 +18,7 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - Cross-repo changes: coordinate via the tests repo. A fix that needs two repos changes both, the tests repo included.
 - Splitting a branch: every part keeps the ticket key. `chore/EUDPA-35-frontend-test-rewrites`, not `chore/admin-notifications-tidy`.
 - A programme of several tasks in one repo: one branch, one PR, a commit per task, merged once at the end.
-- **Where to work:** on branches in this checkout and in `repos/`, switched in place (`git checkout` or `tim workspace branch <name>`). No git worktrees: the stack builds and mounts `repos/<repo>`, so work in a worktree is invisible to E2E and to `git status`. No side clones to keep out of another session's way. The one exception is the worktrees `journey-builder` creates for its own runs.
+- **Where to work:** on branches in this checkout and in `repos/`, switched in place (`git checkout` or `tim workspace branch <name>`). No git worktrees: the stack builds and mounts `repos/<repo>`, so work in a worktree is invisible to E2E and to `git status`. No side clones to keep out of another session's way.
 - **Reading `main`:** a `repos/` checkout is often on a spike branch, so check `git -C <repo> branch --show-current` first. Read `main` with `git -C <repo> show origin/main:<path>`, or from a shallow clone in the scratchpad that you read and never write to.
 - **Stashing:** only when a branch switch forces it, with `git stash push -u`. Leave untracked `workareas/` files alone.
 - **Exempt: the plants prototype's own `design/<set>-<slug>` branches.** `trade-imports-plants-prototype` has no Docker stack service (`dockerStack: null`) and no branch-tagged image to probe for, so a design branch never needs a matching name anywhere else. A hand-off out of the prototype is different work, not a prototype branch: it lands as one real `feat/EUDPA-N-<slug>` (or `feat/NO_JIRA-<slug>` without a ticket yet) across every real repo it touches — `trade-imports-plants-frontend`, `trade-imports-plants-backend`, the tests repo, this workspace's `openspec/` — following the same-name rule above like any other cross-repo change.
@@ -136,18 +136,19 @@ DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
 `gh auth status` (see rule 8).
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
+npm --prefix tim link     # from any clone's root, once per machine: tim on PATH
 tim --help                # full surface
 tim workspace status      # git status for every repo, with jq-friendly --json
 tim docker dev            # start the stack from local source (run-stack.sh -d)
-tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
+tim jira ticket EUDPA-X [--rendered]   # a ticket with its parent, labels, last update, subtasks and links; --rendered shows the HTML description
 tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
-tim jira update EUDPA-X --summary "..." --description-file d.txt   # rewrite an existing ticket's title or description; dry run by default, --confirm to write
-tim jira attach|link                           # the rest of the Jira write surface — also dry run by default; --confirm to write
-tim jira epics                                 # list open epics (read-only)
+tim jira update EUDPA-X --summary "..." --description-file d.txt   # rewrite an existing ticket's title, description, --priority, --parent or labels; dry run by default, --confirm to write
+tim jira attach|link|detach|unlink             # the rest of the Jira write surface — also dry run by default; --confirm to write
+tim jira epics [--board <id>]                  # list open epics in a project or on a board (read-only)
+tim jira labels --board <id>                   # count the labels in a board's backlog (read-only)
 tim jira search <words> [--open] | --jql <q>   # find tickets by text or JQL (read-only)
 tim jira transition EUDPA-X "Done"             # move a ticket's status straight away (no dry run); --list shows what it offers
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
@@ -176,15 +177,17 @@ cd ~/git/defra/trade-imports-workspace/tim
 npm ci
 ```
 
-`tim` finds the workspace by walking up from the current directory, then
-falls back to the canonical path. Standing in another checkout — the old
+`tim` finds the workspace from `--workspace`, then `TIM_WORKSPACE`, then
+by walking up from the current directory, then falls back to the
+canonical path. The global `tim` is a launcher: once it has found a
+workspace clone that holds `tim/src/cli.js` and `repos.json`, it runs
+that clone's own tim, against that clone's roster. One `npm link` serves
+every clone on the machine, and each clone runs its own code. A clone
+whose `tim/node_modules` is missing is refused with a message to run
+`npm ci` in its `tim` folder. Standing in another checkout — the old
 `trade-imports-animals` clone, say — that walk-up wins and reads the
-wrong data, so pass `--workspace ~/git/defra/trade-imports-workspace`
-when you are not inside this one.
-
-If `tim` behaves as though it is looking at a different workspace, check
-`readlink -f "$(which tim)"` — a `tim` linked from an older clone resolves
-that clone's `tools/` and `workareas/`.
+wrong data, so pass `--workspace <path to this clone>` when you are not
+inside this one.
 
 See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary
@@ -205,8 +208,9 @@ services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
 tiers), and `--perf` (both stubs answer at their SLA latency, on published
 images; `tim docker perf` takes the lease in perf mode). In `--dev` mode the Java backend, stub and reference-data hot-reload
-edited source via Spring Boot DevTools; `tim docker bounce-backend` is a fallback that
-recreates the backend container (e.g. after a `pom.xml`/dependency change).
+edited source via Spring Boot DevTools; `tim docker bounce-backend` rebuilds the backend
+image and recreates its container (e.g. after a `pom.xml`/dependency change), and
+`tim docker service rebuild|restart <service>...` does the same for any named service.
 
 Init scripts are staged from their owning repos on every stack start
 (backend: Floci init; tests repo: mongo seed fixtures; dynamics-gateway:

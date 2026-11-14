@@ -374,11 +374,12 @@ const committedWorkspace = async () => {
 }
 
 describe('stackFilesFingerprint', () => {
-  test('stays the same while no stack file changes', async () => {
+  test('stays the same while no stack file changes, ignoring staged init scripts and tim stack tests', async () => {
     await committedWorkspace()
     const before = await stackFilesFingerprint(root)
     writeFile(join(root, 'README.md'), '# edited\n')
     writeFile(join(root, 'docker', 'stack', '.staged', 'init.sh'), 'x\n')
+    writeFile(join(root, 'tim', 'src', 'stack', 'compose.test.js'), 'x\n')
 
     expect(await stackFilesFingerprint(root)).toBe(before)
   })
@@ -386,7 +387,8 @@ describe('stackFilesFingerprint', () => {
   test.each([
     ['an edited compose file', join('docker', 'stack', 'compose.yml')],
     ['an edited stack script', join('scripts', 'stack', 'run-stack.sh')],
-    ['a new compose overlay', join('docker', 'stack', 'perf.compose.yml')]
+    ['a new compose overlay', join('docker', 'stack', 'perf.compose.yml')],
+    ['a new tim stack module', join('tim', 'src', 'stack', 'compose.js')]
   ])('changes with %s', async (_change, file) => {
     await committedWorkspace()
     const before = await stackFilesFingerprint(root)

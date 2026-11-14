@@ -82,7 +82,8 @@ purpose, say); when either points to C2, take C2.
 Workflow({
   scriptPath: ".claude/skills/prototype/workflow/prepare-handoff.js",
   args: {
-    handoff: "~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>",
+    workspace: "<this clone's root, as a tilde path>",
+    handoff: "<workspace>/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>",
     ticket: "EUDPA-N" or "NO_JIRA",
     route: "C1" | "C2" | "auto",
     dryRun: true

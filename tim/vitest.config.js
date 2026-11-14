@@ -32,9 +32,11 @@ export default defineConfig({
         'src/test-support/**',
         'src/**/__fixtures__/**',
         'src/**/fixtures/**',
-        // cli.js is the bin entry — covered behaviourally via subprocess
-        // tests in cli.test.js, which v8 coverage can't instrument.
+        // cli.js is the bin entry and program.js the commander program it
+        // loads — covered behaviourally via subprocess tests in cli.test.js,
+        // which v8 coverage can't instrument.
         'src/cli.js',
+        'src/program.js',
         // Command action handlers are integration-tested through the CLI
         // (real subprocess spawn in *.test.js). The logic inside each
         // command file (buildTasks, parseBranch, collectStatuses, etc.) is

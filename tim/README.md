@@ -10,7 +10,15 @@ npm install
 npm i -g .
 ```
 
-`tim` is now on your PATH. To uninstall:
+`tim` is now on your PATH. The global `tim` is a launcher: it finds the
+workspace you address (`--workspace`, `TIM_WORKSPACE`, or the folders
+above the current one) and, when that clone holds its own `tim/src/cli.js`
+and `repos.json`, runs that clone's tim against that clone's repo roster.
+One install serves every clone on the machine. A clone whose
+`tim/node_modules` is missing is refused with exit code 2 and a message to
+run `npm ci` in its `tim` folder.
+
+To uninstall:
 
 ```bash
 npm un -g tim
@@ -37,30 +45,30 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 
 #### Menu quick reference
 
-| Menu path                                                    | CLI equivalent                |
-| ------------------------------------------------------------ | ----------------------------- |
-| Workspace → Status                                           | `tim workspace status`        |
-| Workspace → Branch                                           | `tim workspace branch [name]` |
-| Workspace → Install                                          | `tim workspace install`       |
-| Workspace → Lint                                             | `tim workspace lint`          |
-| Workspace → Test                                             | `tim workspace test`          |
-| Workspace → Clean                                            | `tim workspace clean`         |
-| Workspace → Setup                                            | `tim workspace setup`         |
-| Workspace → Update                                           | `tim workspace update`        |
-| Workspace → Reset                                            | `tim workspace reset`         |
-| Docker → Start the stack (run-stack.sh)                      | `tim docker up`               |
-| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`              |
-| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`             |
-| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`          |
-| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`   |
-| Start → Frontend (npm run dev)                               | `tim start frontend`          |
-| Start → Backend (mvn spring-boot:run)                        | `tim start backend`           |
-| Start → Admin (npm run dev)                                  | `tim start admin`             |
-| Auth                                                         | `tim auth`                    |
-| Jira → Look up a ticket                                      | `tim jira ticket <id>`        |
-| Jira → Read comments on a ticket                             | `tim jira comments <id>`      |
-| Confluence → Look up a page                                  | `tim confluence page <id>`    |
-| Quit                                                         | exits the menu                |
+| Menu path                                                    | CLI equivalent                    |
+| ------------------------------------------------------------ | --------------------------------- |
+| Workspace → Status                                           | `tim workspace status`            |
+| Workspace → Branch                                           | `tim workspace branch [name]`     |
+| Workspace → Install                                          | `tim workspace install`           |
+| Workspace → Lint                                             | `tim workspace lint`              |
+| Workspace → Test                                             | `tim workspace test`              |
+| Workspace → Clean                                            | `tim workspace clean`             |
+| Workspace → Setup                                            | `tim workspace setup`             |
+| Workspace → Update                                           | `tim workspace update`            |
+| Workspace → Reset                                            | `tim workspace reset`             |
+| Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
+| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
+| Docker → Stop the stack (tim docker down)                    | `tim docker down`                 |
+| Docker → Restart the whole stack (tim docker restart)        | `tim docker restart`              |
+| Docker → Bounce backend (tim docker bounce-backend)          | `tim docker bounce-backend`       |
+| Start → Frontend (npm run dev)                               | `tim start frontend`              |
+| Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
+| Start → Admin (npm run dev)                                  | `tim start admin`                 |
+| Auth                                                         | `tim auth`                        |
+| Jira → Look up a ticket                                      | `tim jira ticket <id>`            |
+| Jira → Read comments on a ticket                             | `tim jira comments <id>`          |
+| Confluence → Look up a page                                  | `tim confluence page <id-or-url>` |
+| Quit                                                         | exits the menu                    |
 
 ### Direct CLI
 
@@ -96,6 +104,678 @@ tim workspace repo-state --repos tests:repos/trade-imports-ins-tests --branch fe
 `--branch` adds whether each repo is on that branch and where the branch
 points locally. `--base` counts commits against `origin/<base>`. `--fetch`
 fetches origin first.
+
+### `tim workspace pin-fetch` — keep gh-pages out of a clone
+
+Pins one clone's fetch refspec so a bare `git fetch` or `git pull` cannot
+bring in gh-pages, and deletes the gh-pages remote-tracking ref. Safe to run
+again.
+
+```bash
+tim workspace pin-fetch . --exclude-gh-pages --prune
+tim workspace pin-fetch workareas/reviews/EUDPA-1/repos/trade-imports-stub --pr 42 --include-main
+```
+
+`--exclude-gh-pages` fetches every branch except gh-pages (git 2.29 or
+later); `--prune` then runs `git gc --prune=now`. `--pr <number>` fetches
+only that pull request's head, as `origin/pr-<number>`; `--include-main`
+adds main.
+
+### `tim ci` — the e2e workflow's test scope
+
+The E2E workflow (`.github/workflows/e2e-tests.yml`) runs these. Each
+reads environment variables, as the workflow sets them, and prints only
+what the step captures. A refusal prints `::error::<message>` on stderr and
+exits 1. `--json` gives the result as one envelope instead.
+
+```bash
+REPOSITORY=DEFRA/trade-imports-ins-backend tim ci scope >> "$GITHUB_OUTPUT"
+SUITES="tests/ins tests/animals" tim ci suites
+TAGS="@ins-backend @gateway" tim ci tags
+```
+
+- `scope` prints `suites=` and `tags=` lines from the repo's entry in
+  `config/e2e-tests-pr-scope.json` (`REPOSITORY` is owner/name; a repo with
+  no entry uses `default`). With `MANUAL=true` it takes `SUITES` and `TAGS`
+  instead. `all` runs every suite and stands alone. It notes where the
+  scope came from on stderr.
+- `suites` prints one Playwright path per line, giving a folder a trailing
+  slash so `tests/animals` cannot also select `tests/animals-admin/`. It
+  refuses a path outside `tests/`, with `..`, or with characters other than
+  letters, digits, `.`, `_`, `-` and `/`.
+- `tags` prints the tags joined by `|`, as one `--grep` pattern. It refuses
+  a tag that is not `@` followed by letters, digits, `_` or `-`.
+
+### `tim refine` — the ticket-refiner skill's workarea
+
+```bash
+tim refine prepare EUDPA-1234
+tim refine finalize EUDPA-1234 --verdict READY --reason "Clear AC, repos identified"
+```
+
+- `prepare` writes `workareas/ticket-refinement/<ticket>/` in the workspace
+  it runs in: `ticket.md` (the rendered description, comments and the
+  Confluence pages the description links to), `.refinement-meta.json` with
+  `verdict: null`, and `review.md` from the skill's template. It keeps a
+  `review.md` that already has content. Running it again resets the
+  verdict. Comments or a page it cannot read are left out, and `--json`
+  lists them under `skipped`.
+- `finalize` records the verdict, which must be `READY`, `NEEDS WORK` or
+  `SPIKE REQUIRED`, its reason (null when empty) and `completed_at`,
+  keeping the meta's other keys in place.
+
+### `tim service-tag` — what the service-tag skill reads
+
+```bash
+tim service-tag start --service address-book --json
+tim service-tag specs --domain animals --type e2e --json
+```
+
+- `start` reads, and changes nothing: the workspace's and the ins-tests
+  clone's branch and `git status --porcelain` lines, each entry of
+  `config/e2e-tests-pr-scope.json` but `default` (or the one `--service`
+  names, short or full) with the services that call it directly, the
+  `SERVICE_TAG_DOMAINS` map the ins-tests lint reads, and the places where
+  the scope file and the map disagree. A direct call is a list-form
+  `- TRADE_IMPORTS_<NAME>_URL=` entry under a service in
+  `docker/stack/*.compose.yml`; `_BASE_URL` and map-form entries are not
+  calls. Without `--json` it prints `MODE: READY`, then the report.
+- `specs` lists the ins-tests clone's specs with their tags, each with one
+  leading `@`, by asking Playwright to list the tests (no stack needed).
+  `--domain` keeps specs under `tests/<domain>/`, `--type` those of one test
+  type, and `--tag` those carrying the tag.
+- Both refuse, with exit 1, a workspace with no `repos/trade-imports-ins-tests`;
+  `start` also refuses one with no scope file.
+
+### `tim confluence sync` — mirror Confluence as Markdown
+
+```bash
+tim confluence sync                        # the whole tree under folder 6447269328
+tim confluence sync --clean                # remove docs/confluence first, then sync
+tim confluence sync --page-id 6468764101   # refresh one already-synced page in place
+tim confluence sync --root-id <id> --dry-run
+```
+
+- Writes under `<workspace>/docs/confluence` of the workspace tim resolves,
+  never anywhere else. A page with children becomes `<slug>/index.md`, a
+  page without becomes `<slug>.md`, a folder becomes `<slug>/`, and a full
+  sync writes `_index.md`.
+- Each file starts with front matter: `confluence-page-id`, `title`,
+  `version`, `space`, `last-updated` and `url`.
+- `--clean` removes only `docs/confluence`, so pages deleted in Confluence
+  go too.
+- `--page-id` exits 1 when the page has no synced file yet.
+- `--page-id` and `--root-id` take a page id or a page URL with
+  `/pages/<id>` in it. Anything else exits 2 before `--clean` removes
+  anything.
+
+### `tim capabilities extract` — read the capability map
+
+```bash
+tim capabilities extract docs/confluence/import-notification-capability-map.md
+tim capabilities extract docs/confluence/import-notification-capability-map.md --format tsv
+```
+
+- A row is any table line whose first cell starts with a capability code
+  (`CAP-0.4`, `CAP-H.3`, `COMMON-CAP-01.2`, `CORE-CAP-1.1`). A canonical
+  row has the code alone in its first cell, an empty or `STATUS: <value>`
+  second cell, and a name in its third.
+- `list` (the default) prints `CODE — Name [STATUS]` for each row. When any
+  row is not canonical it prints nothing on stdout, reports each broken row
+  on stderr and exits 1.
+- `tsv` prints `code`, `status`, `name`, `verdict` and `line` for every row,
+  canonical or not, and exits 0.
+- `--json` gives the rows, the violations, `total` and `canonical`. In
+  `list` format a map that is not canonical is an error naming each broken
+  row.
+
+### `tim capabilities check` — report on the synced capability map
+
+```bash
+tim capabilities check
+tim capabilities check --no-sync --quiet
+```
+
+- Reads `docs/confluence/import-notification-capability-map.md` in this
+  workspace, and exits 1 when it is not there.
+- First refreshes that file from Confluence page `--cap-page` (default
+  6468764101), using `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`. A
+  refresh that fails prints a warning on stderr and the local copy is
+  checked as it is. `--no-sync` skips the refresh.
+- Prints the version, a table of every row (`--quiet` leaves it out), the
+  codes breaking each rule, and status values outside NOT STARTED, IN
+  PROGRESS, SKELETON, COMPLETE and POST DAY ONE.
+- Exits 0 only when every row is canonical.
+
+### `tim jira prereqs` — the ticket-creator's session-start files
+
+```bash
+tim jira prereqs
+tim jira prereqs --board 13780 --cap-page 6468764101 --json
+```
+
+- Writes `workareas/ticket-creation/.prereqs/` in this workspace:
+  `epics.txt` (the board's open epics as `KEY — summary`),
+  `capabilities.txt` (the strict `list` lines of the synced capability map,
+  sorted and without repeats) and `meta.json`.
+- `capabilities.txt` is replaced only when the map is canonical. A map that
+  is not canonical leaves the old file, prints the parser's report on
+  stderr and an `ERROR:` line, and exits 1. Fewer codes than
+  `MIN_CAPABILITIES` (default 20) is an `ERROR:` too.
+- A synced map at a different version from the live page, or no synced map
+  at all, prints a `WARNING:` line.
+- When Jira will not list the board, `epics.txt` is left empty and nothing
+  else is written.
+
+### `tim skill` — the skill-creator skill's steps
+
+```bash
+tim skill start "scaffold skill ticket-notes" --json
+tim skill answer --run-id ticket-notes --field fanout.enabled --value 'true'
+tim skill render --run-id ticket-notes
+tim skill scaffold --run-id ticket-notes --dry-run
+```
+
+- `start` reads a trigger phrase. CREATE (`scaffold skill <name>`,
+  `skill-create <name>`, `new workspace skill <name>`) refuses a skill
+  folder that exists and seeds `workareas/skill-creator/<name>/decisions.json`
+  unless it is there already. AUDIT_ONE (`audit skill <name>`,
+  `review skill <name>`) names the skill's SKILL.md and audit file.
+  AUDIT_ALL (`audit skills`, `audit all skills`) lists every skill with a
+  SKILL.md except skill-creator. Plain output is `MODE: <mode>` then one
+  line of JSON; `--json` puts the mode in `result.mode`.
+- `answer` sets one answer under `answers`, splitting `--field` on dots and
+  reading `--value` as JSON. It refuses a value that is not JSON and a
+  field under a value that is not an object, and prints nothing.
+- `render` prints the answers as markdown, with `(not answered)` where one
+  is missing.
+- `scaffold` refuses while an answer is missing, then writes SKILL.md, a
+  reference per worker, a state schema for JSON state, a stub script per
+  helper (executable), `decisions.md`, appends the skill's two
+  `tools/<name>/` entries to `.claude/settings.json` (never twice) and
+  stamps `scaffolded_at`. `--dry-run` only says what it would write.
+- Every refusal exits 1. Paths come from the workspace tim runs in.
+
+### `tim theme-ticket` — the theme-ticket skill's steps
+
+```bash
+tim theme-ticket start "which theme tickets are stale" --workarea shared/design-release-2-1
+tim theme-ticket derive --workarea shared/design-release-2-1 --theme origin-page --out derived.json
+tim theme-ticket stale --workarea shared/design-release-2-1
+tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
+```
+
+- `start` prints `MODE: <NAME>` (STUB, START, WRITE, MERGE or STALE, from
+  `--mode` or the trigger phrase), then indented JSON with the workarea's
+  paths, the branch and each ticket folder with its Jira key. It makes the
+  workarea's `tickets/` folder if it is missing.
+- `derive` finds the commits that wrote the theme's openspec (scoped by the
+  theme, a Jira key `tickets.json` records for it, or a row scope), takes
+  the scenarios they added, reads each from the current spec, and splits
+  scenarios, spec files and rows by domain. A scenario a later commit
+  renamed keeps its id and counts; one whose id no spec holds now is
+  named in `warnings`. A review commit counts only inside the spec files
+  the row commits wrote, unless `footprint-overrides.json` includes it.
+  It fails rather than publish a split that does not sum, or one with an
+  openspec area it has no domain for.
+- `stale` compares, per ticket folder, the last change on the branch to
+  the spec files its description links to against the Jira ticket's last
+  update, as instants with their offsets. It reads only.
+- `push` posts `description.txt` and the summary from `ticket.json` in one
+  update, refusing hard-wrapped prose and `{expand}`. It is a dry run that
+  sends nothing until `--confirm`.
+- A usage error exits 2; every other refusal exits 1.
+
+### `tim understanding-check` — the understanding-check skill's steps
+
+```bash
+tim understanding-check start EUDPA-123
+tim understanding-check prepare EUDPA-123 --select
+tim understanding-check prepare EUDPA-123 [--max-diff-bytes 200000]
+tim understanding-check analysis add-finding EUDPA-123 --repo trade-imports-stub \
+  --section edgeCases --evidence-file src/a.js --evidence-lines 4-9 --field case="Empty list"
+tim understanding-check analysis complete EUDPA-123 --repo trade-imports-stub \
+  --change-summary "Adds the check." --why-it-changed "Users asked for it."
+tim understanding-check question add EUDPA-123 --category implementation \
+  --prompt "Why does the retry skip 4xx?" --anchor-file src/retry.js --anchor-lines 42-58 \
+  --expected-concepts "retry budget,idempotency" --rubric-pass "Names both reasons" \
+  --rubric-partial "Names one reason but not the other" --rubric-fail "Conflates them"
+tim understanding-check question replace EUDPA-123 --id Q3 ...   # the same options as add
+tim understanding-check question remove EUDPA-123 --id Q3
+tim understanding-check report EUDPA-123 --preview
+tim understanding-check answer EUDPA-123 --question-id Q3 --answer-file answer.txt
+tim understanding-check score EUDPA-123 --question-id Q3 --verdict PARTIAL \
+  --rubric-match "Names one reason but not the other" --missed-concepts "retry budget" \
+  --evidence-cited src/retry.js:42-58
+tim understanding-check counts EUDPA-123
+tim understanding-check verify EUDPA-123
+tim understanding-check finalize EUDPA-123
+tim understanding-check report EUDPA-123
+```
+
+- State lives in `workareas/understanding-checks/<ticket>/` of the
+  workspace tim runs in.
+- `start` prints `MODE: RESUME` and the meta when the check has
+  `.interview-meta.json`. Otherwise it prints `MODE: FRESH` and makes the
+  check's `.raw/` folder, where the skill saves what `gh` gives back:
+  `prs.json` from `gh search prs`, then `<repo>.sha` and `<repo>.diff`
+  from `gh pr view` and `gh pr diff`. tim makes no GitHub calls.
+- `prepare --select` prints `<repo> <number>` for one pull request per
+  repo: an open one over any other, then the newest.
+- `prepare` fetches the ticket from Jira (`JIRA_USER`, `JIRA_TOKEN`,
+  `JIRA_BASE_URL`) into `ticket.md`, cuts each saved diff to
+  `--max-diff-bytes` (a cut is a coverage gap), redacts its secrets into
+  `.diffs/<repo>.diff`, writes `best-practices/<repo>.md` and an
+  `analysis.<repo>.json` placeholder, writes `.interview-meta.json`, then
+  removes `.raw/`. A repo with no saved diff is left out. The redaction
+  count goes to stderr; the matched text never does. `--json` gives the
+  meta.
+- `analysis add-finding` appends a finding to `analysis.<repo>.json`: an
+  id one past the section's highest, each `--field KEY=VALUE` (split on
+  the first `=`) in order, then the evidence. It prints the id.
+  `analysis complete` stamps `changeSummary` and `whyItChanged` (at most
+  300 characters each), `verdict: "complete"` and `completed_at`.
+- `question add` appends a question to `questions.json`, starting the file
+  with the ticket and `generated_at`, and prints its id, one past the
+  number of questions. It refuses a 13th question, a category outside
+  `architecture`, `implementation`, `scenario`, `debugging`,
+  `test-coverage`, `operability` and `security`, and a PASS or PARTIAL
+  clause without one of the categorical verbs (names, identifies,
+  explains, describes, cites, distinguishes, contrasts, enumerates) as a
+  whole word in any ASCII case. A letter, a decimal digit or an
+  underscore next to the verb makes it part of a longer word.
+  `--expected-concepts` splits on commas, drops empty parts, then trims
+  each. `question replace` swaps a question for a new one with the same
+  id; `question remove` drops one and numbers the rest from Q1.
+- `answer` records the answer file's text, without its trailing
+  newlines, as the question's only entry in `transcript.json`, last. An
+  empty answer, or `--skipped`, records a skip.
+- `score` writes the score onto the question's entry. The rubric match
+  must quote the rubric: after each run of white space becomes one space,
+  a match of at least 12 characters must hold a line of a clause, sit
+  inside one, or hold one of its 24-character windows taken every 4
+  characters. Otherwise the score is FAIL, `<unscorable>` and the missed
+  concept `unscorable`, with an unscorable coverage gap on
+  `.interview-meta.json`, and a match that was not empty or
+  `<unscorable>` prints a warning on stderr.
+- `report --preview` prints the plan-gate preview; `report` writes the
+  ten-section `report.md`. A full report needs `questions.json`.
+- `counts` prints PASS, PARTIAL, FAIL and PENDING overall and by question
+  category, with security FAILs and coverage gaps. It refuses an answer to
+  a question with no category in `questions.json`.
+- `verify` lists, on stderr, every missing state file, incomplete or
+  missing analysis, finding without evidence (a missing section counts as
+  one), unanswered question and unscored answer, and exits 1 when there
+  are any.
+- `finalize` applies the counting rule in
+  `.claude/skills/understanding-check/assets/verdict-rule.md`, stamps the
+  verdict, its reason, `exit_code`, `completed_at` and the counts onto
+  `.interview-meta.json`, and exits 0 for pass, 1 for needs-review and 2
+  for high-risk. `--json` adds `meta_path`.
+- Every refusal, a usage error included, exits 1, so it never reads as
+  high-risk.
+
+### `tim govuk` — start, read and change a govuk-frontend upgrade run
+
+```bash
+tim govuk start --ticket EUDPA-264
+tim govuk start --branch chore/EUDPA-264-govuk-6 --target 6.1.0 --force
+tim govuk plans --run-id EUDPA-264
+tim govuk plans --run-id EUDPA-264 --repo trade-imports-animals-frontend --filter pending --sort-semver --json
+tim govuk summaries --run-id EUDPA-264 --json
+tim govuk render-plan --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
+tim govuk classify --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --classification todo --summary "Rename the header macro"
+tim govuk add-change --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --file src/a.njk --why "..." --change "..."
+tim govuk mark-done --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --commit 0123abc
+tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --reason "npm test failed"
+tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
+```
+
+- `start` finds every repo under `repos/` whose `package.json` lists
+  govuk-frontend, writes `.run-meta.json`, puts each repo on the branch
+  (`chore/<ticket>`, or `--branch` as given), seeds each repo's state with
+  every stable version up to `--target` (else npm's latest, from
+  `npm_config_registry` when set), caches govuk-frontend's CHANGELOG.md
+  and each version's section, writes the best-practices bundle, prints
+  the plans and reports each repo's `npm audit` critical and high counts.
+  A re-run keeps each version's state; `--force` reseeds it. `--ticket`
+  must be a key of `JIRA_PROJECT_KEY`, else EUDPA.
+- State lives in `workareas/govuk-upgrades/<run>/<repo>/versions.<repo>.json`
+  of the workspace tim runs in. `plans`, `summaries` and `render-plan`
+  only read.
+- `classify`, `add-change`, `mark-done` and `mark-failed` each change one
+  version in the state file, through a temporary file and a rename, and
+  print one line saying what they did. `--json` gives `{message, entry}`.
+  `classify --classification noop` empties the version's changes;
+  `--summary ""` clears the summary and leaving `--summary` out keeps it.
+  Two writes to one file at the same moment can still lose one.
+- `apply` sets the govuk-frontend constraint in the repo's `package.json`
+  (the exact version, or the run's original prefix plus the version for
+  the target or with `--final`), runs `npm install` and `npm test` in the
+  repo's real path with their output in
+  `/tmp/govuk-{install,test}-<repo>-<version>-<stamp>.txt`, commits
+  everything in the repo and marks the version done. A failed npm step
+  marks the version failed, prints the reason to stderr and exits 1. An
+  intermediate noop version is only marked done, and a version already
+  done is left alone. `--json` gives the outcome.
+- `plans` prints each repo's counts (unplanned, todo, noop, done, failed)
+  and its versions, then the totals. `--filter` lists only the versions
+  that are `unplanned` (not classified), `todo` (classified todo, not
+  applied), `noop`, `done`, `failed` or `pending` (not applied); the
+  counts always cover every version. `--sort-semver` orders versions by
+  their first three numeric parts. `--json` gives `run_id`, `repos` and
+  `summary` as the result.
+- `summaries` prints one tab-separated line per version that is not
+  applied and is not a noop: repo, version, classification (`unplanned`
+  when not classified), number of changes and summary, sorted by repo and
+  then version. A run with no state files prints nothing.
+- `render-plan` prints one version's plan as markdown, ending with its
+  pre-baked changelog section. `--json` gives `{markdown}`.
+- Every command that names one version takes `--govuk-version`, because
+  `--version` prints tim's own version.
+- A missing option, or a classification other than todo or noop, exits
+  2; every other refusal exits 1.
+
+### `tim npm packages` — read and change an npm upgrade run's packages
+
+```bash
+tim npm packages list --run-id EUDPA-500 --classification manual --json
+tim npm packages counts --run-id EUDPA-500 --repo trade-imports-animals-frontend
+tim npm packages set-status --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --status done --commit-sha 0123abc
+tim npm packages set-classification --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --classification auto --risk LOW --safe-for-automation true --rationale "Patch fix only"
+tim npm packages aggregate --run-id EUDPA-500
+tim npm packages verify --run-id EUDPA-500 --json
+```
+
+- The state is `workareas/npm-upgrades/<run>/<repo>/packages.<repo>.json`.
+- `list` prints one tab-separated line per package; `--json` gives the
+  rows, each with its `repo`. A `pending` classification is one nobody
+  has set; a `pending` status is none or `todo`. `--filter` is the same
+  as `--classification`.
+- `list` and `counts` refuse a missing run, but give `[]` or zero counts
+  with `--json`.
+- `set-classification` writes one file per package under
+  `<repo>/classifications/`, so planners can run at once. `aggregate`
+  folds those files into the packages file.
+- `verify` runs `aggregate` first, writing what it did to stderr, then
+  exits 1 and lists the packages still not classified when there are any.
+  `--json` gives `{pending_count, pending}`.
+- Every refusal, a usage error included, exits 1.
+
+### `tim npm discover` and `tim npm context` — seed a run and prepare its planners
+
+```bash
+tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-500 --strategy minor
+tim npm discover repos/trade-imports-animals-frontend --run-id EUDPA-500 --json
+tim npm context best-practices --run-id EUDPA-500 --repo trade-imports-animals-frontend
+tim npm context prebake --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi
+```
+
+- `discover` runs npm-check-updates, a pinned tim dependency, so you do
+  not need `ncu` installed. It takes a repository path or `--repo`, writes
+  `packages.<repo>.json` and `.upgrades-meta.json`, and keeps the
+  classification, status and context of every package still outdated.
+  `--json` gives the packages file. A `service`, `app` or `src` folder is
+  named for its parent.
+- `context best-practices` writes the repo's `best-practices.md` (the
+  Hapi, GOV.UK Frontend, testing and Playwright guides) and prints its
+  path.
+- `context prebake` writes `.context/<package>/` (`/` becomes `__`):
+  `package-meta.json`, `usages.txt` (the repo's `src` lines that import
+  the package, in path order) and, when the package's public npm registry
+  record names a GitHub repository, `changelog.md` from main or master. A
+  failed download is skipped. It sets the row's `context_baked` and
+  `context_missing`.
+- Every refusal exits 1.
+
+### `tim npm audit` and `tim npm exec` — audit a repo, keep its allowlist and run npm in it
+
+```bash
+tim npm audit baseline --run-id EUDPA-500 --repo trade-imports-animals-admin --label before-upgrade
+tim npm audit allow --run-id EUDPA-500 --repo trade-imports-animals-frontend --ghsa GHSA-c475-qrg2-pj4r --reason "Dev only" --owner "Sam Farrington" --expiry-days 30
+tim npm audit forget --run-id EUDPA-500 --repo trade-imports-animals-frontend --ghsa GHSA-c475-qrg2-pj4r
+tim npm audit gate --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --target 4.17.21
+tim npm exec --repo trade-imports-animals-frontend -- install date-fns@4.3.0
+```
+
+- `baseline` runs `npx --no-install audit-ci` with the repo's
+  `audit-ci.jsonc`, saves the report, its stderr and a summary under
+  `workareas/npm-upgrades/<run>/<repo>/`, and prints the summary as
+  indented JSON. It asks `npm view`, in the repo, whether each advisory
+  at the threshold has a fixed version. Exit 0 green, 1 red or an
+  allowlisted advisory that now has a fix, 2 when the audit cannot run.
+- `allow` writes one entry into `audit-ci.jsonc` in jq's layout and
+  records it in `allowlist.<repo>.json`. An expiry is a UTC day; three
+  months on from the 31st is the last day of that month, as BSD `date
+-v+3m` gives. A refusal exits 1, a usage error or no audit 2.
+- `forget` drops entries from `allowlist.<repo>.json` and tells you on
+  stderr.
+- `gate` prints `{status, reason, allowlisted}` and exits 0 green, 1 red,
+  2 when the audit cannot run.
+- `exec` runs `npm --prefix <real path>` with the arguments after `--`,
+  and exits with npm's exit code. A missing repo or argument exits 1.
+
+### `tim review` — the review skill's helpers
+
+```bash
+tim review detect-tech repos/trade-imports-stub --no-ui
+tim review detect-tech repos/trade-imports-animals-frontend --json
+```
+
+- `detect-tech` reads `.claude/skills/review/assets/routing.json` from the
+  workspace tim runs in and prints the technologies it detects in the
+  repo, with each one's best-practice files in routing order, as
+  `{"technologies":[...],"best_practices":[...]}`. `--json` gives the same
+  object as the result.
+- A missing, empty or non-folder path prints empty arrays and exits 0.
+  Routing it cannot read exits 1.
+
+```bash
+tim review file init EUDPA-1234 --repo trade-imports-stub --file src/Main.java --commit abc1234 --pr 42 --mode FRESH
+tim review file add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "Returns 200 for a missing id" --fix "Must: return 404."
+tim review file verdict EUDPA-1234 --repo trade-imports-stub --file src/Main.java --verdict RISKY --reason "Logs a token"
+tim review items list EUDPA-1234 --filter pending --json
+tim review items add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "..." --fix "..."
+tim review items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
+tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim review items counts EUDPA-1234
+```
+
+- `file init|add|verdict` write one file's review under
+  `workareas/reviews/<review-id>/file-reviews/<repo>/`, in the workspace
+  tim runs in. `init` prints the file's path, `add` the new todo's id and
+  `verdict` nothing. A todo's line is stored as a number.
+- `items list|counts|add|mark|status` read and change
+  `workareas/reviews/<review-id>/items.<repo>.json`. `list` prints one
+  tab-separated line per item (repo, id, file, line, severity, category,
+  issue, fix, disposition, status, notes); `add` prints the new id, with
+  the line stored as text; `mark` and `status` print one confirmation
+  line.
+- `--json` gives the envelope: the items for `list`, the review id, repo,
+  breakdown and total for `counts`, and the item written for the others.
+- Every refusal exits 1, as the scripts they replace did.
+
+```bash
+tim review items render EUDPA-1234 --repo trade-imports-stub --write
+tim review aggregate EUDPA-1234 --repo trade-imports-stub --write-items --section file-summary
+gh api repos/DEFRA/trade-imports-stub/pulls/42/files --paginate --slurp > workareas/reviews/EUDPA-1234/.prs/trade-imports-stub-42.json
+tim review verify files EUDPA-1234
+tim review verify consistency EUDPA-1234
+tim review verify style EUDPA-1234
+tim review reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
+```
+
+- `items render` prints a repo's `## Items` markdown table. `--write` puts
+  it into `review.<repo>.md`: over the table there, else over a comment
+  naming `tim review items render` or `render-items.sh`, else before
+  `## Repository Verdict`.
+- `aggregate` prints the File Analysis Summary, the items table or both.
+  `--write-items` starts `items.<repo>.json` afresh from the file reviews
+  and stamps `reconciled_at` on each reviewed one. `--json` gives each
+  file's rollup.
+- `verify files|consistency|style` write the checklist beside the file
+  reviews and print the coverage. `files` reads each pull request's changed
+  files from `.prs/<repo>-<pr>.json`, which `gh` writes, and refuses a pull
+  request with none; tim never calls GitHub.
+- `reconcile` appends each finding from the file reviews refreshed since
+  they were last reconciled, and lists the fixed items in those files to
+  spot-check. `--json` gives the counts, the items added and the
+  spot-check.
+
+```bash
+tim review refresh pull EUDPA-1234
+tim review refresh merge-resolved workareas/reviews/EUDPA-1234/repos/trade-imports-stub 1a2b3c4 5d6e7f8
+tim review refresh gaps EUDPA-1234 --repo trade-imports-stub --pr 42
+tim review refresh scope EUDPA-1234 --write-snapshot --json
+tim review file-diff src/Main.java --ticket EUDPA-1234 --repo trade-imports-stub
+gh pr diff 42 --repo DEFRA/trade-imports-stub | tim review file-diff src/Main.java --stdin
+```
+
+- `refresh pull` pins each review clone's fetch refspec to its pull
+  request (and main for a merged one), fetches, and detaches at
+  `origin/pr-<n>`, or `origin/main` for a merged pull request. It exits 1
+  when any repo fails.
+- `refresh merge-resolved` lists the files a merge commit in the window
+  lists under `# Conflicts:`, leaving out one the window leaves unchanged.
+- `refresh gaps` lists the files a pull request changes with no
+  `.review.json`, from `.prs/<repo>-<pr>.json`, which `gh` writes.
+- `refresh scope` pulls, then sorts the refresh into lists A (changed), B
+  (open items in unchanged files), C (merge-resolved) and D (gaps) per
+  repo. It prints a summary; `--json` gives the lists. `--write-snapshot`
+  records the window in `.review-meta.json` and clears the findings of
+  the files in lists A and C.
+- `file-diff` prints one file's blocks from the review's cached pull
+  request diff, `.diffs/<repo>.diff`, or from a diff piped in with
+  `--stdin`. It refuses when there is no cached diff.
+
+```bash
+tim review start EUDPA-1234
+tim review prepare EUDPA-1234 --select
+tim review prepare EUDPA-1234
+tim review prepare --branch feat/tidy-logs --desc "Tidy the logs"
+tim review prepare --local trade-imports-stub feat/tidy-logs --files src/Main.java
+tim review start --local trade-imports-stub feat/tidy-logs
+```
+
+- `start` prints `MODE: REFRESH` and the `refresh scope --write-snapshot`
+  envelope when the review has a `review-index.md`. Otherwise it prints
+  `MODE: FRESH`, makes the review's `.raw` folder and names the
+  `gh search prs` command that fills it. With `--local` it prints
+  `MODE: FRESH` and runs `prepare --local`.
+- `prepare` reads what `gh` saved: `.raw/prs.json` from `gh search prs`,
+  `.raw/<repo>.json` from `gh pr view`, `.prs/<repo>-<pr>.json` from
+  `gh api .../files` and `.diffs/<repo>.diff` from `gh pr diff`. `--select`
+  prints the pull request to save for each repo, as `<repo> <number>`.
+  Without it, prepare writes `ticket.md` from Jira and Confluence (or from
+  `--branch` and `--desc`), clones each pull request's merge commit (or
+  head) into `repos/`, writes `.review-meta.json`, the best-practices
+  bundles, the file review placeholders and the per-repo stubs, then
+  removes `.raw`. `--json` gives the meta.
+- `prepare --local` needs no Jira or GitHub. It lists the files the branch
+  changes since its merge-base with main, plus staged and unstaged files,
+  or takes `--files`, and writes the same workspace under
+  `workareas/reviews/local/<repo>/<branch>`.
+
+```bash
+tim review share EUDPA-1234 --repo trade-imports-stub --pr 42 --comment-only --reviewer "$(gh api user --jq .login)"
+tim review share EUDPA-1234 --repo trade-imports-stub --pr 42 --reviewer "$(gh api user --jq .login)"
+gh pr comment 42 --repo DEFRA/trade-imports-stub --body-file <the file share printed>
+```
+
+- `share` writes one comment body per pull request in scope to the
+  system temp folder and prints the `gh pr comment` command that posts
+  each. tim posts nothing itself. `--reviewer` is the login the body
+  names; without it the body says `(unknown)`.
+- Without `--comment-only` it is a handoff. It copies the review to
+  `workareas/shared/<ticket>` without `repos/` and `.diffs/`, deleting
+  files the review no longer has. It refuses when the workspace has
+  changes outside `workareas/shared/`. It checks out the handoff branch
+  (`chore/<ticket>` unless `--branch`): the local one, else origin's,
+  tracked, else a new one. It commits the copy when it changed, pushes
+  without forcing, and goes back to the branch you were on, even when
+  the push fails.
+- A body over GitHub's 65536-character limit stops it and names the
+  file it left. `--summary` posts status and severity counts in place of
+  the item table. `--dry-run` renders and copies only.
+
+### `tim style` — the code-style skill's helpers
+
+```bash
+tim style start EUDPA-1234
+tim style start --local trade-imports-plants-prototype design/1-home
+tim style prepare EUDPA-1234 --json
+tim style scope EUDPA-1234 --no-pull --repo trade-imports-stub
+tim style topics tests/specs/a.spec.ts
+tim style bundle EUDPA-1234 trade-imports-animals-frontend hapi repos/trade-imports-animals-frontend
+tim style file init EUDPA-1234 --repo trade-imports-stub --file src/a.js --commit abc1234 --pr 42 --mode FRESH
+tim style file add EUDPA-1234 --repo trade-imports-stub --file src/a.js --line 4 --rule 6 --category naming --severity WARN --issue "Abbreviated name" --fix "Spell it out"
+tim style file verdict EUDPA-1234 --repo trade-imports-stub --file src/a.js --verdict MINOR_ISSUES --reason "One long line"
+tim style aggregate EUDPA-1234 --repo trade-imports-stub --write-items --section file-summary
+tim style items list EUDPA-1234 --filter fix --status not-done --by-file --json
+tim style items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
+tim style items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim style items counts EUDPA-1234
+tim style items render EUDPA-1234 --repo trade-imports-stub
+tim style reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
+```
+
+- They read and write `workareas/code-style-reviews/<review-id>/` in the
+  workspace tim runs in, as `tim review`'s same-named commands do under
+  `workareas/reviews/`.
+- `start` says `MODE: REFRESH` when the review has `.style-meta.json`,
+  then prints the scope envelope as `scope --write-snapshot --json` does;
+  otherwise it says `MODE: FRESH` and runs `prepare`.
+- `prepare` reads the ticket's review workspace, which `tim review
+prepare` writes first, and each pull request's changed files from
+  `.prs/<repo>-<pr>.json` there (`gh api repos/DEFRA/<repo>/pulls/<pr>/files
+--paginate --slurp` writes it). It refuses a pull request whose file is
+  missing, or lists no files when the pull request changes some. With
+  `--local` it runs `tim review prepare --local` first, printing its report
+  on stderr.
+- `scope` keeps only files `topics` maps to a topic. List D reads the
+  latest pull request's `.prs/` file; a missing one is left out with a
+  warning that names the `gh api` command.
+- `topics` and `bundle` read `.claude/skills/code-style/assets/routing.json`.
+- Style findings have a rule, a FAIL or WARN severity and, on items, an
+  optional category; the line is stored as text and may be empty. The
+  dispositions are Fix, Won't Fix, Discuss and Auto-Resolved.
+- `items list` prints one tab-separated line per item (repo, id, file,
+  line, rule, severity, issue, fix, disposition, status, notes).
+  `--by-file` prints the items grouped by repo and file as JSON instead.
+- `items mark` and `items status` end their line with `, Notes set` only
+  when `--note` is given.
+- `file verdict` takes COMPLIANT, MINOR_ISSUES or NEEDS_WORK.
+  `aggregate`'s File Analysis Summary counts FAIL and WARN.
+- `--json` gives the envelope: the items, or the groups, for `items list`,
+  the review id, repo, breakdown and total for `items counts`, each file's
+  rollup for `aggregate`, the summary for `reconcile`, and what was written
+  for the others. Every refusal exits 1.
+
+### `tim ticket` — the ticket skill's helpers
+
+```bash
+tim ticket prepare-plan EUDPA-1234 --repos trade-imports-stub,trade-imports-animals-frontend
+tim ticket prepare-implement EUDPA-1234
+tim ticket branch EUDPA-1234 --repo trade-imports-stub --slug tidy-logs --type chore
+```
+
+- `prepare-plan` writes `workareas/ticket-planning/<ticket>/ticket.md`
+  (the ticket, its comments and the Confluence pages its description
+  links to) and `.plan-meta.json`. With `--repos` it also detects each
+  repo's technologies and writes `best-practices/<repo>.md`. It reads
+  `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`. A ticket it cannot read
+  exits 1.
+- `prepare-implement` checks `plan.md` is there (exit 1 if not), detects
+  the technologies again for the repos `.plan-meta.json` names, or for
+  `--repo` alone, and writes `.implement-meta.json`. Prior pull request
+  diffs come from `gh`, as `references/IMPLEMENTOR.md` says.
+- `branch` fetches origin, checks out and fast-forwards `--base` (default
+  `main`), then switches to `<type>/<ticket>-<slug>`: the local branch,
+  else one tracking `origin/<branch>`, else a new one. `--type` is `feat`
+  (the default), `fix` or `chore`. A git step that fails exits with git's
+  code and message.
+- The ticket must start with `EUDPA-` (`branch` also takes `NO_JIRA`), and
+  a refused ticket or `--type` exits 2.
 
 ### `tim capture` — photograph a running app
 
@@ -400,8 +1080,11 @@ tim docker up -b feat/EUDPA-123-x    # run each service's branch-tagged image wh
 tim docker dev                       # build the repo-backed services from local source
 tim docker up -e backend             # leave the backend out, to run it with tim start backend
 tim docker restart -d                # stop the stack, wipe its volumes, start it from source
-tim docker bounce-backend            # recreate the backend container only
+tim docker bounce-backend            # rebuild and recreate the backend container only
+tim docker service rebuild <svc...>  # dev stack: rebuild and recreate these services, wait until healthy
+tim docker service restart <svc...>  # dev stack: restart these containers as they are, wait until healthy
 tim docker logs [services...]        # follow service logs (Ctrl-C to stop)
+tim docker owner                     # print the clone that owns the stack
 tim docker down                      # stop the stack and wipe its volumes
 ```
 
@@ -444,15 +1127,32 @@ tim docker lease status --json                                                  
 - `release` takes down the stack its holder started, then clears the lease.
   It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
   stack nobody leases. A stack restarted by hand under the lease is left up and
-  the lease cleared (`FOREIGN_STACK`). When `stop-stack.sh` fails the lease is
+  the lease cleared (`FOREIGN_STACK`). When `docker compose down` fails the lease is
   kept.
 - A lease whose stack has gone, and whose start is not still running, is stale
   and the next `acquire` replaces it, under a lock (`stack-lease.json.lock`) so
   two processes never both take it over.
-- While a lease is held, `tim docker up`, `dev`, `down`, `restart` and
-  `bounce-backend` refuse with `STACK_HELD`, naming the holder. Add `--force`
+- While a lease is held, `tim docker up`, `dev`, `down`, `restart`,
+  `bounce-backend` and `service` refuse with `STACK_HELD`, naming the holder. Add `--force`
   to go ahead anyway; the holder then refuses to reuse or take down what you
   start.
+- Any clone of the workspace may own the one stack. The lease records the
+  clone that took it (`workspace`). `acquire` and `release` refuse the same
+  holder name from another clone: `acquire` with `STACK_HELD` while that
+  stack is up or starting, `release` with `NOT_HOLDER`. Add `--force` to take
+  or give back the lease anyway.
+- `tim docker up`, `dev`, `down`, `restart`, `bounce-backend` and `service` read the
+  clone each running container was started from (its
+  `com.docker.compose.project.working_dir` label). When that is another clone
+  they refuse with `STACK_OTHER_CLONE`, naming it. Add `--force` to go ahead
+  anyway. `tim docker lease status --json` gives that clone as `workspace`.
+- `tim docker owner` prints the clone that owns the stack: the clone its
+  running containers were started from or, while it is still starting, the
+  clone on its lease. It prints nothing on stdout when the stack is down.
+  `--json` gives `{workspace, source, thisClone, ownedHere}`. Only the owner
+  runs local E2E: the tests repo's docker-compose Playwright config, and
+  `tim build gate`'s E2E phase, stop with "The stack belongs to <clone>"
+  from any other clone. `ALLOW_FOREIGN_STACK=1` skips the Playwright check.
 
 The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 `tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).
@@ -467,12 +1167,14 @@ with `run-stack.sh --perf`, so both stubs answer at the latency profile in
 records the profile, and `tim docker lease status` says
 `perf mode, stubs on sla`. An unknown `STUB_PROFILE` exits 2 before anything
 starts. A stack leased to a build, or up with no lease, is refused with
-`STACK_HELD`. The holder defaults to `perf`. The build gate never uses perf mode.
+`STACK_HELD`. The holder defaults to `perf` followed by the clone's path,
+such as `perf /path/to/your-clone`, and `tim docker
+perf` prints the release command to run. The build gate never uses perf mode.
 
 ```bash
 tim docker perf
 STUB_PROFILE=zero-delay tim docker perf --json
-tim docker lease release --holder perf
+tim docker lease release --holder "perf <this clone’s path>"
 ```
 
 **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
@@ -536,8 +1238,10 @@ files). Running it again is a no-op.
 
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog
-repo: the unit rungs, the FIT rungs (each after checking its ports are free —
-a held port fails the rung and names the holder) and the E2E rungs against
+repo: the unit rungs, the FIT rungs (each on the first free port at or above
+the one gates.json plans for it, passed to its script as `PORT`; a rung that
+moves records `{planned, used, heldBy}` in its `ports`, so two clones can run
+the same FIT suite at once) and the E2E rungs against
 the workspace stack built from local source (`run-stack.sh -d`, the path
 `tim docker dev` takes), under a stack lease held as `--holder` (default:
 this gate run). It runs in three layers, each starting only once the one
@@ -572,8 +1276,8 @@ afterwards. If this holder already leases it, the gate does not start it
 again: it rebuilds only the services whose image inputs changed, restarts
 only those whose bind-mounted `src/` changed (waiting until each is healthy),
 and leaves the rest — see `docker/stack/AGENTS.md` for the fingerprints. A
-stack leased to anyone else, or up with no lease, is refused and left alone,
-and so is a FIT port such a stack holds: `stack.held` names the holder (null
+stack leased to anyone else, or up with no lease, is refused and left alone:
+`stack.held` names the holder (null
 for no lease) and the reason. Each rung writes to `gate-<repo>-<rung>.log`;
 nothing streams. A rung that cannot run fails with its reason.
 
@@ -854,7 +1558,10 @@ increment id sit under `(run)`.
 
 ### `tim jira create|update|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` and `epics` are read-only. `create`, `update`,
+`tim jira ticket`/`comments` and `epics` are read-only. `tim jira ticket`
+gives the ticket's parent, labels, last update time, subtasks and links, each
+link read from this ticket's side; `--rendered` adds the description as Jira
+renders it to HTML (`renderedDescription` in `--json`). `create`, `update`,
 `attach`, `link` and `assign` write to Jira, so they follow one rule: **dry
 run by default, a real write needs an explicit `--confirm`** (or, for
 `create`, a matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
@@ -866,24 +1573,33 @@ tim jira create --from ticket.json --json          # dry run: prints the plan (f
 tim jira create --from ticket.json --confirm <planId> --json   # creates the issue, attaches every file, links every `relates`, writes ticket.created.json
 tim jira update EUDPA-200 --summary "A clearer title"   # dry run: the fields that would change, and their new values
 tim jira update EUDPA-200 --description-file description.txt --confirm  # writes only the fields that differ, then reads the ticket back to check
+tim jira update EUDPA-200 --priority High --parent EUDPA-215 --add-label urgent --confirm  # --parent none takes the parent away; --labels a,b replaces the labels
 tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be attached
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
 tim jira link EUDPA-200 relates EUDPA-100 --confirm  # creates the link, then GETs the ticket back to verify it landed
 tim jira link EUDPA-200 --blocks EUDPA-300 --confirm # EUDPA-200 blocks EUDPA-300; reads the link back and reports the direction Jira stored
 tim jira link EUDPA-300 --blocked-by EUDPA-200       # dry run of the same link, from the other side
+tim jira detach EUDPA-333 --list                    # read-only: id, filename, size and created time of each attachment
+tim jira detach EUDPA-333 diagram.svg               # dry run: the attachment that would be deleted
+tim jira detach EUDPA-333 diagram.svg --all --confirm  # deletes every attachment with that filename; without --all a shared filename is refused
+tim jira detach --id 479899 --confirm               # deletes one attachment by its id
+tim jira unlink EUDPA-368 --list                    # read-only: id, type and other side of each issue link
+tim jira unlink --id 426407 --confirm               # deletes one issue link by its id (dry run without --confirm)
 tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
 tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
 tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added
 tim jira comment EUDPA-200 --file comment.txt --confirm  # posts it, then reads the comments back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
+tim jira epics --board 13780 [--include-done]      # read-only: the board's epics as 'KEY — summary' lines, open only unless --include-done (the board decides what is done)
+tim jira labels --board 13780 --json               # read-only: how often each label appears in the board's backlog, most used first
 tim jira search commodity MDM --open               # read-only: tickets in JIRA_PROJECT_KEY (or --project) whose text matches the words, newest change first; --open leaves out done tickets
 tim jira search --jql "parent = EUDPA-125" --limit 100 --json  # read-only: sends the JQL as written (--limit defaults to 50, up to 500)
 ```
 
 `tim jira create --from <path>` reads a `tim-ticket/1` manifest (project,
-type, summary, `descriptionFile`, parent, labels, priority, attachments,
-relates) from the given JSON file, resolving `descriptionFile` and every
+type, summary, `descriptionFile`, parent, labels, priority (Medium when
+left out), attachments, relates) from the given JSON file, resolving `descriptionFile` and every
 attachment path relative to the manifest's own directory. The dry run's
 `planId` is a hash of the exact payload plus every attachment's own content
 hash, so `--confirm <planId>` only succeeds when the plan it names is still
@@ -893,9 +1609,11 @@ different from what was shown. A manifest that already has a
 `ticket.created.json` receipt beside it refuses to create again, naming the
 key it already created. `create` and `attach` also exit `PARTIAL_FAILURE`
 (not `ERROR`) when some but not all attachments fail, so the receipt still
-gets written for what did succeed. The `ticket-creator` skill and the
-`prototype` skill's hand-off both build a manifest and call this surface
-rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
+gets written for what did succeed. `type` is one of `Story`, `Task`,
+`Bug` or `Epic`. The description file's trailing newlines are dropped
+before it is sent. Every ticket the workspace raises goes through this
+surface; to take the new ticket yourself, follow it with
+`tim jira assign <key> me --confirm`.
 
 `tim jira link` takes exactly one link: `relates <key>`, `--blocks <key>` or
 `--blocked-by <key>`. A positional `blocks` is refused, because the flags
@@ -914,7 +1632,12 @@ reports `unchanged`, even with `--confirm`. `--json` puts
 
 `tim jira update` rewrites a ticket that already exists: `--summary` for the
 title, and `--description` or `--description-file` (not both) for the
-description, as Jira wiki markup. It reads the ticket first and sends only
+description, as Jira wiki markup. `--priority` takes Lowest, Low, Medium,
+High or Highest. `--parent` takes the parent epic's key, or `none` to take
+the parent away. `--labels a,b` replaces the ticket's labels; `--add-label`,
+which can be repeated, adds to the labels it has and is not used with
+`--labels`. Labels compare as a set, so a new order is not a change. It
+reads the ticket first and sends only
 the fields whose value differs, so a field already holding that value is
 left out of the write and a re-run reports `unchanged` rather than stamping
 the ticket's history with a no-op. After the write it reads the ticket back
@@ -931,8 +1654,7 @@ retry never posts a duplicate. `--json` puts `{mode, key, body, comment}` in
 ### `tim jira transition` — move a ticket's status
 
 Moving a ticket is the whole job of this command, so it is **not** a dry run:
-it changes the ticket straight away. It replaces
-`../tools/jira/transition-ticket.sh`, which stays for use by hand.
+it changes the ticket straight away.
 
 ```bash
 tim jira transition EUDPA-200 "Done" --json   # moves the ticket to the status named exactly "Done", then reads it back to confirm
@@ -1025,6 +1747,109 @@ tim sonar issues trade-imports-plants-frontend --branch main [--json]
 - Giving both `--pull-request` and `--branch`, or a PR that is not a number,
   fails with `USAGE` before any request is sent.
 
+### `tim sonar pending record|check` — SonarCloud findings after a push
+
+Two Claude Code hooks that report the BLOCKER and CRITICAL issues SonarCloud
+finds on a pushed pull request, the next time you interact after CI's scan
+lands.
+
+```bash
+tim sonar pending record                          # PostToolUse on git push
+tim sonar pending check --event UserPromptSubmit  # UserPromptSubmit
+tim sonar pending check --event SessionStart      # SessionStart
+```
+
+- `record` writes `pending__<project>__<sha>` under `.sonar-checks/` in the
+  workspace, holding the branch then the push time in epoch seconds, for each
+  of `trade-imports-animals-frontend`, `-admin`, `-backend` and
+  `trade-imports-dynamics-gateway` whose feature branch has its HEAD pushed.
+  It skips main, master, a detached HEAD, unpushed commits and a commit
+  already marked `seen__<project>__<sha>`.
+- `check` looks once at SonarCloud for each pending check. When SonarCloud
+  has analysed the commit on its pull request, it prints the issues as
+  `{hookSpecificOutput: {hookEventName, additionalContext}}` and marks the
+  commit seen. A check still not analysed after 45 minutes is dropped.
+- `check` reads `SONAR_TOKEN` from the environment, else from an interactive
+  zsh, and works without one for a public project. It needs no `sonar` CLI.
+- Both always exit 0 and print nothing to stdout on any failure, so a hook
+  never blocks a prompt or a push. Run them as hooks from the session's own
+  clone, with `TIM_NO_AUTO_PULL=1`:
+
+```bash
+TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event SessionStart 2>/dev/null || true
+```
+
+### `tim sonar mcp-tidy` — remove stale sonar MCP containers
+
+A `SessionStart` hook. The `sonar` CLI's MCP server runs in a docker
+container that keeps running after its `sonar run mcp` process dies. For
+each project key, `mcp-tidy` keeps as many of the newest containers as there
+are live processes whose command line ends `sonar run mcp --project <key>`,
+and force-removes the rest.
+
+```bash
+tim sonar mcp-tidy
+```
+
+- It prints `Removed N stale sonar MCP container(s).` when it removed any,
+  and nothing otherwise.
+- It only touches containers labelled
+  `io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server`,
+  and leaves one with no `SONARQUBE_PROJECT_KEY` alone.
+- It always exits 0, and does nothing when docker is not running.
+
+### `tim sonar push-check` — the pre-push build, test and Sonar check
+
+Runs the check CI runs, on the repo you are in or the folder you name, and
+waits for the SonarCloud quality gate.
+
+```bash
+tim sonar push-check [dir] [--json]
+tim sonar push-check --pull-request 435 --base main     # analyse as that pull request
+tim sonar push-check --hook < hook-input.json           # as the Claude Code PreToolUse hook
+```
+
+- A Java repo (`pom.xml`) runs `mvn -q clean verify sonar:sonar`, integration
+  tests included, so Docker must be running for Testcontainers.
+- A Node repo (`package.json`) runs `npm ci`, `npm run --if-present
+format:check`, `npm run --if-present lint` and `npm test`, cheapest first,
+  then `sonar-scanner`. Once all four pass and the tree is clean, it writes
+  `HEAD` to `.cache/prepush-verified`, which a repo's own git `pre-push` hook
+  can read to skip its run. Without `sonar-scanner` installed it skips.
+- Each command's output goes to `.cache/sonar-push-check.log`. A failing
+  command shows only the log's last 60 lines.
+- Untracked files the check creates are deleted afterwards, however it ends.
+  Files that were there before it started are kept.
+- It analyses the pull request SonarCloud lists for the current branch, else
+  the branch. SonarCloud lists a pull request only once CI has analysed it,
+  so the first push of a new pull request is checked on its branch.
+  `--pull-request` and `--base` (given together) name the pull request
+  instead. A detached `HEAD` with no pull request is skipped, because an
+  analysis with no branch is recorded against main.
+- It needs `SONAR_TOKEN` and skips, saying how to set it, without one.
+- Exit codes: `0` when the check passed or was skipped, `2` when it blocks
+  the push. Its text goes to stderr; `--json` puts `{outcome, exitCode,
+project, pullRequest, branch}` in `result` on stdout. Without `--hook`, a
+  usage error (a bad `--pull-request`, `--pull-request` without `--base`, a
+  folder that does not exist) also exits `2`, tim's usage code, with the
+  reason on stderr and no check run; `--json` tells the two apart by
+  `ok: false` and the `USAGE` error code. With `--hook`, a usage error
+  exits `0`.
+- A build command that a signal ends (an out-of-memory kill, say) counts
+  as a failure with exit `128 + the signal's number`, so it blocks the push
+  and shows the log tail.
+- When SonarCloud lists several pull requests for the branch, the one with
+  the highest number is used. SonarCloud's list does not say which are open.
+- `--hook` reads the PreToolUse JSON on stdin. It checks only a Bash call that
+  runs `git push` (also `git -C <path> push` and other options before `push`),
+  in the repo the call names with `-C`, `--git-dir=` or `--work-tree=`, else
+  the call's `cwd`, narrowed to the top of its repo. It looks for the token
+  in an interactive zsh when the environment has none, waiting however long
+  that zsh takes to start, never updates the
+  workspace, writes nothing on stdout and exits 0 on any error, so the hook
+  cannot block by accident. A call that does not push exits 0 without
+  loading the rest of tim. `--hook` takes no other arguments.
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo
@@ -1082,7 +1907,7 @@ The menu only opens when stdout is a TTY and the user has not asked for plain te
 | `TIM_GITHUB_BASE_URL`                      | Clone URL prefix override for `workspace setup` (default `https://github.com/DEFRA`) — used by the behavioural tests to clone from local fixtures |
 | `TIM_NO_AUTO_PULL`                         | Set to any value to turn off the automatic workspace pull described below                                                                         |
 
-Run [`../tools/auth.sh`](../tools/auth.sh) to verify your setup against the bash side. `tim auth` checks Jira and Confluence through library clients. For GitHub, run `gh auth status`.
+Run `tim auth` to check your setup. It checks Jira and Confluence through library clients. For GitHub, run `gh auth status`.
 
 ## Staying up to date
 

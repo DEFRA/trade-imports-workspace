@@ -2,13 +2,14 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 /**
- * Inputs shared by the routing golden test (captures the three bash
- * routers' pre-move output) and by `standards.test.js` group G (proves the
- * in-process resolver agrees with those same routers). One list, so the two
+ * Inputs shared by the routing golden test (the frozen routing output that
+ * `tim style topics`, `tim style bundle` and `tim review detect-tech` must
+ * give) and by `standards.test.js` group G (proves the
+ * in-process resolver agrees with the same goldens). One list, so the two
  * suites can never drift onto different fixtures.
  */
 
-/** One path per `file-topics.sh` `case` arm and edge, in the order the table in inc-012's plan section 3 lists them. */
+/** One path per routing pattern and edge. */
 export const fixturePaths = [
   'src/Main.java',
   'src/app.js',
@@ -31,7 +32,7 @@ export const fixturePaths = [
   'X.JS'
 ]
 
-/** `bake-rules-bundle.sh` argv tuples: one per topic, plus the unknown-topic and usage branches. */
+/** `tim style bundle` arguments: one per topic, plus an unknown topic and none at all. */
 export const bakeCases = [
   ['EUDPA-0', 'repo', 'node'],
   ['EUDPA-0', 'repo', 'java'],
@@ -43,8 +44,8 @@ export const bakeCases = [
 ]
 
 /**
- * `detect-tech.sh` fixture repos: `{relativePath: content}` per repo, per
- * the table in inc-012's plan section 3. `empty` is materialised with no
+ * `tim review detect-tech` fixture repos: `{relativePath: content}` per
+ * repo. `empty` is materialised with no
  * files at all — its directory still exists because the golden test creates
  * every repo's root folder before calling `materialise`.
  */
@@ -132,9 +133,9 @@ export const fixtureRepos = {
 }
 
 /**
- * Every best-practice path `bake-rules-bundle.sh`'s per-topic lists name,
+ * Every best-practice path the routing's per-topic lists name,
  * minus `docs/best-practices/k6/BEST_PRACTICES.md` — left absent so the
- * golden capture pins bake's `(missing)` branch.
+ * golden pins the bundle's `(missing)` heading.
  */
 export const bestPracticeStubs = [
   'docs/best-practices/node/code-style.md',

@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Work through a list of design requests in one design release: split each into parts, route each part to its reference with references/ROUTING.md, build it, check it, show the whole session in one gallery, and save each landed part as its own commit',
   whenToUse:
-    "Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {set, requests}; both are required. Optional: keepOffMain (boolean) when the designer already asked to keep this session off main; designerMandate ({ id }) when the skill has recorded the designer's own permission for release patterns with designer:mandate record. Never pushes.",
+    "Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {workspace, set, requests}; all three are required. workspace is the root of the workspace clone the session runs in, as a tilde path. Optional: keepOffMain (boolean) when the designer already asked to keep this session off main; designerMandate ({ id }) when the skill has recorded the designer's own permission for release patterns with designer:mandate record. Never pushes.",
   phases: [
     {
       title: 'Classify',
@@ -59,15 +59,25 @@ const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolv
 // <<< args-contract
 
 const WORKFLOW_NAME = meta.name
-const REQUIRED_KEYS = ['set', 'requests']
+const REQUIRED_KEYS = ['workspace', 'set', 'requests']
 const config = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, config, REQUIRED_KEYS)
 logResolvedConfig(WORKFLOW_NAME, config)
 
+const refuse = (reason) => {
+  throw new Error(`${WORKFLOW_NAME}: ${reason}`)
+}
+
+if (typeof config.workspace !== 'string' || !config.workspace.startsWith('~/')) {
+  refuse(`workspace must be the root of the workspace clone this session runs in, as a tilde path. A /Users/... path is denied in Bash. Got ${JSON.stringify(config.workspace)}`)
+}
+const WORKSPACE = config.workspace.replace(/\/+$/, '')
+const SKILL_DIR = `${WORKSPACE}/.claude/skills/prototype`
+
 // This workflow lives in the workspace, but every command it runs must act on
 // the prototype's own checkout, never on the workspace repo a bare `npm run`
 // or `git` command would otherwise touch.
-const REPO = '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
 const npm = (script) => `npm --prefix ${REPO} run ${script}`
 const git = (command) => `git -C ${REPO} ${command}`
 
@@ -104,10 +114,6 @@ const CHECK_LEVEL = {
   [PATTERN_REFERENCE]: 'full'
 }
 
-const refuse = (reason) => {
-  throw new Error(`${WORKFLOW_NAME}: ${reason}`)
-}
-
 if (typeof config.set !== 'string' || !KEBAB.test(config.set)) {
   refuse(
     `set must be a design release id such as plants-working, not "${config.set}"`
@@ -137,7 +143,6 @@ if (
 }
 
 const SET_DIR = `src/server/app/sets/${config.set}`
-const SKILL_DIR = '~/git/defra/trade-imports-workspace/.claude/skills/prototype'
 
 // The prototype-owned service folders: each has its own line in the ours
 // list of overrides.json. Every other folder under src/server/app/services/
@@ -384,7 +389,7 @@ const classify = (mandate) =>
       'releaseOk is false when the answer does not start with "Yours", or when it says the release is frozen. Put the plain reason in releaseReason.',
       '',
       'Step 2. Split each request into parts and route each part to exactly one reference.',
-      'Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/ROUTING.md: "Working out what they want", the "Outcomes" and "Phrases" tables, "When no single row fits" and "Requests that fit two references". Then read each of these references, at ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/<name>.md (in the workspace, not the prototype repo — this skill lives in the workspace):',
+      `Read ${SKILL_DIR}/references/ROUTING.md: "Working out what they want", the "Outcomes" and "Phrases" tables, "When no single row fits" and "Requests that fit two references". Then read each of these references, at ${SKILL_DIR}/references/<name>.md (in the workspace, not the prototype repo — this skill lives in the workspace):`,
       sessionReferences(mandate).join(', '),
       ...classifyMandateLines(mandate),
       'Follow "Working out what they want": name the outcome of each request, split it into parts, and map each part with the Outcomes table, then the Phrases table, matching on meaning rather than exact words ("overdue" is "late", "attach" is "upload").',
@@ -479,7 +484,7 @@ const build = (request, route, context) =>
       `Make one change in the design release "${config.set}". The designer asked:`,
       `"${request}"`,
       ...partLine(request, route),
-      `Follow ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/${route.skill}.md (in the workspace, not the prototype repo). The pages involved are likely: ${route.pages.join(', ') || 'not known yet'}.`,
+      `Follow ${SKILL_DIR}/references/${route.skill}.md (in the workspace, not the prototype repo). The pages involved are likely: ${route.pages.join(', ') || 'not known yet'}.`,
       'How to follow the reference in this session:',
       '- Do the steps that find, plan and make the change, including its ownership step (designer:where) and any reference or recipe it tells you to read.',
       '- Skip the steps that check, show, save, share or hand off. This workflow does those for every request.',
@@ -532,7 +537,7 @@ const repair = (request, route, failure, context) =>
       ...partLine(request, route),
       `Summary: ${failure.summary}`,
       `Full log: ${failure.logPath} (read it; the path is inside ${REPO}).`,
-      `Fix the cause in the files this request changed, following ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/${route.skill}.md and ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/check-my-change.md. If the failure is in a file this request did not touch, change nothing and say so in notes.`,
+      `Fix the cause in the files this request changed, following ${SKILL_DIR}/references/${route.skill}.md and ${SKILL_DIR}/references/check-my-change.md. If the failure is in a file this request did not touch, change nothing and say so in notes.`,
       ...patternRepairLines(context),
       `Run ${npm('designer:format')} when you have finished. Return what you changed.`,
       builderRails(context.mandate)
@@ -623,7 +628,7 @@ const commit = (group) =>
       `Files: ${group.paths.join(' ')}`,
       `Recipes followed: ${group.recipes.join(', ') || 'none'}`,
       'Every landed request is staged. Save only these files, from the staged changes, with no path list on the commit: a commit with paths makes git run the pre-commit hook against a temporary index, which the hook’s own tests trip over.',
-      `1. Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/share-my-change/commit-message.md and follow it exactly.`,
+      `1. Read ${SKILL_DIR}/references/share-my-change/commit-message.md and follow it exactly.`,
       `2. Run: ${git('restore --staged -- .')}`,
       '   This only takes every change off the staging area. Nothing on disk changes.',
       `3. Run: ${git(`add -A -- ${group.paths.join(' ')}`)}`,

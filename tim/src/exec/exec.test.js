@@ -102,6 +102,18 @@ describe('runToLog', () => {
     expect(body).toMatch(/^\$ node -e .*\n# in .*\n\nout\nerr\n$/s)
   })
 
+  test('writes only the output to the log when the command header is off', async () => {
+    const logPath = tempLogPath()
+
+    await runToLog(
+      'node',
+      ['-e', "process.stdout.write('out\\n'); process.stderr.write('err\\n')"],
+      { logPath, commandHeader: false }
+    )
+
+    expect(readFileSync(logPath, 'utf8')).toBe('out\nerr\n')
+  })
+
   test('returns the exit code and the log path', async () => {
     const logPath = tempLogPath()
 
@@ -123,6 +135,22 @@ describe('runToLog', () => {
     await runToLog('node', ['-e', "console.log('second')"], { logPath })
 
     expect(readFileSync(logPath, 'utf8')).not.toContain('first')
+  })
+
+  test('adds to the end of the log from an earlier run when appending', async () => {
+    const logPath = tempLogPath()
+    await runToLog('node', ['-e', "console.log('first')"], {
+      logPath,
+      commandHeader: false
+    })
+
+    await runToLog('node', ['-e', "console.log('second')"], {
+      logPath,
+      commandHeader: false,
+      append: true
+    })
+
+    expect(readFileSync(logPath, 'utf8')).toBe('first\nsecond\n')
   })
 
   test('throws TimError(MISSING_DEP) when the executable is not found', async () => {

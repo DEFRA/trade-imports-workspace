@@ -1,26 +1,11 @@
 import { describe, test, expect, vi, afterEach } from 'vitest'
 import { TimError } from '../errors.js'
 import { makeRunAction } from './_run-action.js'
+import { captureProcessOutput } from '../test-support/process-output.js'
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
-
-const captureProcessOutput = () => {
-  const captured = { stdout: '', stderr: '', exitCode: null }
-  vi.spyOn(process.stdout, 'write').mockImplementation((text) => {
-    captured.stdout += text
-    return true
-  })
-  vi.spyOn(process.stderr, 'write').mockImplementation((text) => {
-    captured.stderr += text
-    return true
-  })
-  vi.spyOn(process, 'exit').mockImplementation((code) => {
-    captured.exitCode = code
-  })
-  return captured
-}
 
 const invoke = (action, { positional = [], options = {} } = {}) =>
   action.call({ optsWithGlobals: () => options }, ...positional, options, {})
@@ -66,5 +51,57 @@ describe('makeRunAction', () => {
       errors: [{ code: 'USAGE', message: 'Give a repo.' }]
     })
     expect(captured.exitCode).toBe(2)
+  })
+
+  test('prints a result that partly failed to stdout and its failure to stderr', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => ({ done: 'a', failed: 'b' }),
+      renderText: ({ done }) => `Done: ${done}`,
+      renderTextError: ({ failed }) => `Could not do ${failed}.`,
+      exitCodeForResult: () => 1,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({
+      stdout: 'Done: a\n',
+      stderr: 'Could not do b.\n',
+      exitCode: 1
+    })
+  })
+
+  test('prints nothing, not even a newline, when the text rendering is null', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => [],
+      renderText: () => null,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({ stdout: '', stderr: '', exitCode: 0 })
+  })
+
+  test('exits with the code the command chooses for an error', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => {
+        throw new TimError('NOT_FOUND', 'No such thing.')
+      },
+      renderText: () => '',
+      exitCodeForError: () => 1,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({
+      stdout: '',
+      stderr: 'No such thing.\n',
+      exitCode: 1
+    })
   })
 })

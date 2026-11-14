@@ -152,7 +152,7 @@ A red check on a PR is a failure to fix (see `CLAUDE.md` rule 6). These are the 
 
 **E2E red in seconds, with no Playwright report.** The branch image did not publish, so no E2E ran. The report step marks that a failure, because a skipped check would count as a pass under the main ruleset (§9). Read the `Publish Branch Image` run for the branch and re-run it.
 
-**A re-run went green but the PR still shows red.** `gh run rerun --failed` does not refresh the check run a reporting workflow posted to another repo's PR. Dispatch a fresh run instead, for example `tools/github-actions/trigger-workflow.sh trade-imports-ins-tests workspace-e2e-tests.yml <branch>`. Confirm any outcome with `gh run view <id> --json conclusion`, not the PR rollup.
+**A re-run went green but the PR still shows red.** `gh run rerun --failed` does not refresh the check run a reporting workflow posted to another repo's PR. Dispatch a fresh run instead, for example `gh workflow run workspace-e2e-tests.yml --repo DEFRA/trade-imports-ins-tests --ref <branch>`. Confirm any outcome with `gh run view <id> --json conclusion`, not the PR rollup.
 
 ## 9. `main` takes only a branch that is up to date and green
 

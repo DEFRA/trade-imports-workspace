@@ -1,0 +1,82 @@
+[
+  {
+    "name": "no args",
+    "args": [],
+    "env": {},
+    "fake": {},
+    "exitCode": 0,
+    "stdout": "Bouncing backend (force-recreate, no-deps)...\n",
+    "stderr": "",
+    "sequence": [
+      {
+        "tool": "docker",
+        "args": [
+          "version",
+          "--format",
+          "{{.Server.Arch}}"
+        ],
+        "env": {}
+      },
+      {
+        "tool": "docker",
+        "args": [
+          "compose",
+          "-f",
+          "<WORKSPACE>/docker/stack/compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/database.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/infrastructure.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/stubs.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/backend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/frontend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/security.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/monitoring.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/dev.compose.yml",
+          "--profile",
+          "database",
+          "--profile",
+          "infrastructure",
+          "--profile",
+          "servicebus",
+          "--profile",
+          "stubs",
+          "--profile",
+          "backend",
+          "--profile",
+          "frontend",
+          "up",
+          "--force-recreate",
+          "--no-deps",
+          "--wait",
+          "trade-imports-animals-backend"
+        ],
+        "env": {
+          "DEV_BUILD_PLATFORM": "linux/arm64"
+        }
+      }
+    ],
+    "concurrent": [],
+    "stagedInitFiles": []
+  },
+  {
+    "name": "an argument it does not take",
+    "args": [
+      "--bogus"
+    ],
+    "env": {},
+    "fake": {},
+    "exitCode": 2,
+    "stdout": "",
+    "stderr": "error: unexpected argument: --bogus\nUsage: bounce-backend.sh\n\nRecreates the trade-imports-animals-backend container on its own, without\nits dependencies, and waits until it is healthy. Use it after a pom.xml or\ndependency change, which hot reload does not pick up. Data is kept.\n\n  -h, --help    Show this help.\n",
+    "sequence": [],
+    "concurrent": [],
+    "stagedInitFiles": []
+  }
+]

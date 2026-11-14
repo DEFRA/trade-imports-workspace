@@ -86,7 +86,7 @@ canonical.
 
 ## A7. Pre-bake helpers for context the workflow reads once
 
-**Symptom:** `prebake-context.sh` populates a workarea file the
+**Symptom:** a pre-bake step (`tim npm context prebake`, say) populates a workarea file the
 workflow opens exactly once, in the same session as the prebake.
 
 **Why it's wrong:** the pre-bake adds a script + a workarea path +

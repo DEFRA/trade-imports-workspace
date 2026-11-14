@@ -13,7 +13,7 @@
 # Phase semantics (no FRESH/RESUME dual-state — every invocation is
 # fresh; consumers idempotently merge into prior packages.{repo}.json):
 #
-#   --phase 0  Run `audit-baseline.sh` for every requested repo and
+#   --phase 0  Run `tim npm audit baseline` for every requested repo and
 #              append the result to {run-id}/phase0.json. Exits 1 if
 #              any repo's audit is red or has an allowlisted advisory
 #              that now has a fix (fixable_allowlisted). A repo with no
@@ -21,12 +21,12 @@
 #
 #   --phase 1  Refuses to start unless the last phase 0 run covered
 #              every requested repo, at its current HEAD, and was
-#              green. Then runs `discover-upgrades.sh` for every requested repo,
+#              green. Then runs `tim npm discover` for every requested repo,
 #              then emit a JSON manifest on stdout listing every
 #              package that still has classification=null. The caller
 #              fans out one PACKAGE_PLANNER subagent per manifest
 #              entry. After workers finish, the caller runs
-#              `verify-classification-coverage.sh` as the gate.
+#              `tim npm packages verify` as the gate.
 #
 #   --phase 2  Spawn `run-automated-upgrades.sh` per repo in
 #              parallel (background tasks), aggregate exit codes,
@@ -55,6 +55,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
 
 REPOS_MANIFEST="$SCRIPT_DIR/../../repos.json"
 
@@ -160,9 +162,9 @@ phase0() {
     for repo in "${REPOS[@]}"; do
         echo "Auditing $repo..." >&2
         local summary code=0 head
-        summary=$("$SCRIPT_DIR/audit-baseline.sh" --run-id "$TICKET" --repo "$repo" --label "$label") || code=$?
+        summary=$(tim --workspace "$WORKSPACE" npm audit baseline --run-id "$TICKET" --repo "$repo" --label "$label") || code=$?
         if [[ "$code" -eq 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$summary"; then
-            summary=$(jq -nc --arg repo "$repo" '{repo: $repo, green: false, error: "audit-baseline.sh could not run the audit"}')
+            summary=$(jq -nc --arg repo "$repo" '{repo: $repo, green: false, error: "tim npm audit baseline could not run the audit"}')
         fi
         head=$(git -C "$REPO_BASE/$repo" rev-parse HEAD)
         [[ "$code" -ne 0 ]] && red+=("$repo")
@@ -234,7 +236,7 @@ phase1() {
     for repo in "${REPOS[@]}"; do
         local repo_path="$REPO_BASE/$repo"
         echo "Discovering $repo..." >&2
-        "$SCRIPT_DIR/discover-upgrades.sh" \
+        tim --workspace "$WORKSPACE" npm discover \
             "$repo_path" \
             --run-id "$TICKET" \
             --strategy "$STRATEGY" \
@@ -243,31 +245,28 @@ phase1() {
 
     # Per-repo best-practices bundle (one file per repo). Cheap and
     # depends only on local files.
-    if [[ -x "$SCRIPT_DIR/bake-best-practices.sh" ]]; then
-        for repo in "${REPOS[@]}"; do
-            "$SCRIPT_DIR/bake-best-practices.sh" --run-id "$TICKET" --repo "$repo" \
-                >/dev/null 2>&1 || true
-        done
-    fi
+    for repo in "${REPOS[@]}"; do
+        tim --workspace "$WORKSPACE" npm context best-practices \
+            --run-id "$TICKET" --repo "$repo" \
+            >/dev/null 2>&1 || true
+    done
 
     # Per-package pre-bake (best-effort; sets context_baked +
     # context_missing on each package row). Worker hydrates missing
     # pieces via WebFetch / Grep at spawn time.
-    if [[ -x "$SCRIPT_DIR/prebake-context.sh" ]]; then
-        echo "Pre-baking per-package context..." >&2
-        for repo in "${REPOS[@]}"; do
-            local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
-            [[ -f "$pkgs_file" ]] || continue
-            while IFS= read -r pkg; do
-                [[ -z "$pkg" ]] && continue
-                "$SCRIPT_DIR/prebake-context.sh" \
-                    --run-id "$TICKET" \
-                    --repo "$repo" \
-                    --package "$pkg" \
-                    >/dev/null 2>&1 || true
-            done < <(jq -r '.packages[] | select(.classification == null) | .package' "$pkgs_file")
-        done
-    fi
+    echo "Pre-baking per-package context..." >&2
+    for repo in "${REPOS[@]}"; do
+        local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
+        [[ -f "$pkgs_file" ]] || continue
+        while IFS= read -r pkg; do
+            [[ -z "$pkg" ]] && continue
+            tim --workspace "$WORKSPACE" npm context prebake \
+                --run-id "$TICKET" \
+                --repo "$repo" \
+                --package "$pkg" \
+                >/dev/null 2>&1 || true
+        done < <(jq -r '.packages[] | select(.classification == null) | .package' "$pkgs_file")
+    done
 
     # Emit the spawn manifest. One JSON object per line: each is a
     # complete PACKAGE_PLANNER spawn task.
@@ -296,13 +295,13 @@ phase1() {
 
     echo >&2
     echo "Phase 1 setup complete. Spawn one PACKAGE_PLANNER per MANIFEST entry," >&2
-    echo "then run: ~/git/defra/trade-imports-workspace/tools/npm/verify-classification-coverage.sh --run-id $TICKET" >&2
+    echo "then run: tim npm packages verify --run-id $TICKET" >&2
 }
 
 phase2() {
     # Fold any leftover PACKAGE_PLANNER classification fragments into
     # the canonical packages.{repo}.json before reading state.
-    "$SCRIPT_DIR/packages-aggregate-classifications.sh" --run-id "$TICKET" >&2 || true
+    tim_packages aggregate --run-id "$TICKET" >&2 || true
 
     # Fan out per-repo runners. Run sequentially per repo (so the
     # internal --no-discover / sequential-package loop is honoured),
@@ -379,22 +378,22 @@ phase2() {
 
 phase3() {
     # Defensive aggregate in case Phase 1 verify wasn't the last gate.
-    "$SCRIPT_DIR/packages-aggregate-classifications.sh" --run-id "$TICKET" >&2 || true
+    tim_packages aggregate --run-id "$TICKET" >&2 || true
 
     # Emit the handoff manifest: every manual package (regardless of
     # status) plus any auto that ended up failed (these have already
     # been demoted to manual by upgrade-one-package, but the safety
     # net is cheap).
     local manual_json failed_json
-    manual_json=$("$SCRIPT_DIR/packages-list.sh" \
+    manual_json=$(tim_packages list \
         --run-id "$TICKET" \
         --classification manual \
-        --json)
-    failed_json=$("$SCRIPT_DIR/packages-list.sh" \
+        --json | jq -e '.result')
+    failed_json=$(tim_packages list \
         --run-id "$TICKET" \
         --classification auto \
         --status failed \
-        --json)
+        --json | jq -e '.result')
 
     # Every allowlist entry in each repo's audit-ci.jsonc (the truth),
     # with the package and kind this run's writer recorded for it.

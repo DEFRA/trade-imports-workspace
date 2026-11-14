@@ -1,5 +1,15 @@
 import { describe, test, expect } from 'vitest'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync
+} from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'acorn'
@@ -9,6 +19,11 @@ import {
 } from '../test-support/workflow-runtime.js'
 import { ATTEMPT_STAGES } from '../build/start.js'
 import { loadBacklogSchema, rigoursOf } from './backlog-schema.js'
+import {
+  CODE_QUALITY_CATEGORIES,
+  DESIGN_CATEGORIES,
+  FUNCTIONAL_CATEGORIES
+} from '../review/finding-categories.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -73,15 +88,10 @@ const wordsInJsArray = (source, name) => {
   return [...items.matchAll(/'([^']+)'/g)].map(([, word]) => word)
 }
 
-const wordsInShellArray = (source, name) => {
-  const [, items] = source.match(new RegExp(`^${name}=\\(([^)]*)\\)`, 'm'))
-  return items.trim().split(/\s+/)
-}
-
-const findingCategoriesOf = (source, wordsInArray) => ({
-  functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
-  design: wordsInArray(source, 'DESIGN_CATEGORIES')
+const findingCategoriesIn = (loop) => ({
+  functional: wordsInJsArray(loop, 'FUNCTIONAL_CATEGORIES'),
+  codeQuality: wordsInJsArray(loop, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInJsArray(loop, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -124,7 +134,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'approvalWaitMinutes',
     'e2e',
     'resumeFrom',
-    'rigour'
+    'rigour',
+    'workspace'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -177,14 +188,15 @@ const BASE_ARGS = {
   approvalWaitMinutes: 20,
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'full'
+  rigour: 'full',
+  workspace: null
 }
 
 const WORKSPACE_ANSWER = {
   ok: true,
   abs: '/ws',
   tilde: '~/ws',
-  canonical: true,
+  from: 'session',
   startedAt: '20261001T090000Z',
   machineConfig: null,
   workers: {},
@@ -368,6 +380,22 @@ const withoutKeys = (object, keys) =>
 
 const withoutKey = (object, key) => withoutKeys(object, [key])
 
+const WATCH_LOOP_EXCEPTION =
+  'The ONE exception to the single-command and no-sleep rules is the `for try in ...; done` checks watch loop that a WAIT ON ITS CHECKS step gives you: run it as one Bash call, exactly as written, `;`, `||` and `sleep 30` included. Never split it into separate calls, never drop its loop, and never write a sleep of your own anywhere else.'
+
+const watchLoopExceptionPlacesIn = (prompt) => {
+  const flatPrompt = prompt.replace(/\s+/g, ' ')
+  return {
+    afterTheNoSleepRule: flatPrompt.includes(
+      `treat it as unresolved, never as a pass. ${WATCH_LOOP_EXCEPTION}`
+    ),
+    rightBeforeTheWatchLoop: flatPrompt.includes(
+      `${WATCH_LOOP_EXCEPTION} Block on it by running this exactly: \`for try in $(seq 5); do gh pr checks`
+    ),
+    timesStated: countOccurrences(flatPrompt, WATCH_LOOP_EXCEPTION)
+  }
+}
+
 describe('every workflow script', () => {
   test('finds at least the build loop, the distil workflow and the canary', () => {
     const names = workflowScripts().map((script) => script.name)
@@ -427,14 +455,12 @@ describe('every workflow script', () => {
       join(buildLoopDir, 'increment-build-loop.js'),
       'utf8'
     )
-    const tools = readFileSync(
-      join(workspaceRoot, 'tools', 'review', 'finding-categories.sh'),
-      'utf8'
-    )
 
-    expect(findingCategoriesOf(tools, wordsInShellArray)).toEqual(
-      findingCategoriesOf(loop, wordsInJsArray)
-    )
+    expect({
+      functional: FUNCTIONAL_CATEGORIES,
+      codeQuality: CODE_QUALITY_CATEGORIES,
+      design: DESIGN_CATEGORIES
+    }).toEqual(findingCategoriesIn(loop))
   })
 
   test('has no FALLBACK', () => {
@@ -458,6 +484,14 @@ describe('every workflow script', () => {
       .map((script) => script.name)
 
     expect(withDefault).toEqual([])
+  })
+
+  test('names no absolute home folder', () => {
+    const withHomePath = workflowScripts()
+      .filter((script) => /\/Users\/[a-z]/.test(script.source))
+      .map((script) => script.name)
+
+    expect(withHomePath).toEqual([])
   })
 
   test('stops before any agent and names its required keys when args is empty', async () => {
@@ -629,6 +663,81 @@ describe('increment-build-loop', () => {
     expect(run.error.message).toContain(
       'no readable backlog at /ws/workareas/shared/args-fixture/backlog.json'
     )
+  })
+
+  describe('the workspace root', () => {
+    const SECOND_CLONE = '~/clones/second-workspace'
+
+    const runWithWorkspace = (workspace) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace },
+        answers: [
+          {
+            ...WORKSPACE_ANSWER,
+            abs: '/home/second-workspace',
+            from: 'config'
+          },
+          null
+        ]
+      })
+
+    test('builds every command in the clone config.workspace names, whatever the resolver reports', async () => {
+      const run = await runWithWorkspace(`${SECOND_CLONE}/`)
+
+      expect(run.agents[1].prompt).toContain(
+        `${SECOND_CLONE}/workareas/shared/args-fixture/backlog.json`
+      )
+      expect(run.agents[1].prompt).not.toContain('~/ws/')
+      expect(run.logs).toContain(
+        `increment-build-loop: workspace ${SECOND_CLONE}, from config`
+      )
+    })
+
+    test('tells the resolver to check config.workspace alone', async () => {
+      const run = await runWithWorkspace(SECOND_CLONE)
+
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`git -C ${SECOND_CLONE} rev-parse --show-toplevel\``
+      )
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`ls ${SECOND_CLONE}/.claude/skills/requirements-pipeline/workflow/increment-build-loop.js\``
+      )
+      expect(promptOf(run, 'workspace')).not.toContain('CLAUDE_PROJECT_DIR')
+      expect(promptOf(run, 'workspace')).not.toContain('is "fallback"')
+    })
+
+    test('resolves from the session folder first when config.workspace is null', async () => {
+      const run = await runJsonStringArgs()
+      const prompt = promptOf(run, 'workspace')
+
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeGreaterThan(
+        -1
+      )
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeLessThan(
+        prompt.indexOf('CLAUDE_PROJECT_DIR')
+      )
+      expect(prompt.indexOf('CLAUDE_PROJECT_DIR')).toBeLessThan(
+        prompt.indexOf('is "fallback"')
+      )
+      expect(run.logs).toContain(
+        'increment-build-loop: workspace ~/ws, from session'
+      )
+    })
+
+    test.each([
+      ['an absolute path', '/Users/someone/ws'],
+      ['an empty string', ''],
+      ['a number', 7]
+    ])('refuses %s before any agent', async (_, workspace) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace }
+      })
+
+      expect(run.error.message).toContain(
+        'config.workspace must be the workspace root as a tilde path'
+      )
+      expect(run.agents).toEqual([])
+    })
   })
 
   test('resolves object args to the same configuration as the string', async () => {
@@ -1251,7 +1360,7 @@ describe('increment-build-loop', () => {
     const run = await runJsonStringArgs()
 
     expect(run.agents[0].prompt).toContain(
-      'Then run `tim build workers --workspace <the candidate path you used> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
+      'Then run `tim build workers --workspace <tilde> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
     )
   })
 
@@ -1802,7 +1911,7 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
+        `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
     })
@@ -2342,7 +2451,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
+          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -2424,10 +2533,10 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
@@ -3167,11 +3276,12 @@ describe('increment-build-loop', () => {
             'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
           )
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [<capability path> ...]`'
+            '3. Validate, in the FOREGROUND: run `tim spec lint --capability <prefix> --workspace ~/ws --json` once per\n   prefix you wrote under.'
           )
           expect(prompt).toContain(
-            'Either exiting non-zero means the row is NOT complete'
+            'A non-zero exit means the row is NOT complete'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the implementor to report a spec sync line, none with its reason included', async () => {
@@ -3309,15 +3419,15 @@ describe('increment-build-loop', () => {
             'each one removed as `deleted: <capability path>`'
           )
           expect(prompt).toContain(
-            'A capability you deleted is not validated: confirm it is gone\n   with `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
+            'A capability you deleted is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
           )
         })
 
-        test('tells the ladder to validate only the capabilities that still exist', async () => {
+        test('tells the ladder to confirm a deleted capability is gone rather than validate it', async () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            'A path marked `deleted:` is not validated: confirm it is gone with `ls ~/ws/openspec/specs/<capability path>`,\n   which must fail'
+            'A path the lines mark `deleted:` is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail'
           )
         })
 
@@ -3339,8 +3449,9 @@ describe('increment-build-loop', () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [...] > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-validate.log 2>&1`'
+            '`tim spec lint --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-lint-<prefix>.log 2>&1`'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the fixer to keep the spec in step with its fix', async () => {
@@ -6723,9 +6834,7 @@ describe('increment-build-loop', () => {
       test('makes no Jira call in any stage', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const jiraCallers = run.agents
-          .filter(({ prompt }) =>
-            /tools\/jira|move-to-board|transition-ticket|tim jira/.test(prompt)
-          )
+          .filter(({ prompt }) => /tim jira/.test(prompt))
           .map(({ options }) => options.label)
 
         expect(jiraCallers).toEqual([])
@@ -7109,8 +7218,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )
@@ -7123,6 +7232,14 @@ describe('increment-build-loop', () => {
 
         expect(promptOf(run, 'inc-900 baseline')).toContain(
           "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+        )
+      })
+
+      test('tells the gate to leave e2e to CI when the pull requests prove it', async () => {
+        const run = await runBranch({ e2e: 'ci' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).toContain(
+          `\`tim build gate shared/args-fixture --phase unit --e2e ci --workspace ~/ws --json`
         )
       })
 
@@ -7285,7 +7402,7 @@ describe('increment-build-loop', () => {
         expect(
           prompt.indexOf('gh pr view <url> --json mergeable,mergeStateStatus')
         ).toBeLessThan(
-          prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh')
+          prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch')
         )
       })
 
@@ -7305,7 +7422,7 @@ describe('increment-build-loop', () => {
           ),
           capped: prompt.includes('at most 2 times per pr'),
           mixedIsStillRed: prompt.includes(
-            'Exit 1 with some lines marked stale is a real red'
+            '`SUMMARY: red` with some lines marked stale is a real red'
           ),
           keepsStaleOutOfFailures: prompt.includes(
             'Put only the checks NOT marked stale in failures[]'
@@ -7317,6 +7434,204 @@ describe('increment-build-loop', () => {
           capped: true,
           mixedIsStillRed: true,
           keepsStaleOutOfFailures: true
+        })
+      })
+
+      describe('the checks verdict the watcher reads', () => {
+        const recordedVerdicts = JSON.parse(
+          readFileSync(
+            join(
+              dirname(fileURLToPath(import.meta.url)),
+              '__fixtures__/pr-checks/bash-goldens.json'
+            ),
+            'utf8'
+          )
+        )
+        const verdictWordOfExit = {
+          0: 'green',
+          1: 'red',
+          2: 'pending',
+          5: 'stale'
+        }
+        const listedChecksCases = Object.entries(recordedVerdicts).filter(
+          ([, recorded]) => recorded.checks
+        )
+
+        const verdictFilterIn = (prompt) =>
+          textBetween(
+            prompt,
+            "--json name,bucket,link,startedAt --jq '",
+            "' > "
+          )
+
+        const verdictOf = (filter, { checks, headCommittedAt }) =>
+          spawnSync(
+            'jq',
+            ['-r', filter.replace('HEAD_COMMITTED_AT', headCommittedAt)],
+            { input: JSON.stringify(checks), encoding: 'utf8' }
+          ).stdout
+
+        const summaryWordOf = (output) => output.match(/^SUMMARY: (\w+)/m)?.[1]
+
+        test.each(listedChecksCases)(
+          'gives the recorded decision for %s',
+          async (_, recorded) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              summaryWordOf(verdictOf(verdictFilterIn(prompt), recorded))
+            ).toBe(verdictWordOfExit[recorded.bash.exit])
+          }
+        )
+
+        test.each(
+          listedChecksCases.filter(([, recorded]) => recorded.bash.exit !== 2)
+        )('prints the recorded lines for %s', async (_, recorded) => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(verdictOf(verdictFilterIn(prompt), recorded)).toBe(
+            recorded.bash.stdout
+          )
+        })
+
+        test('says it is red while a check on the current head failed and others still run', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+          const { red } = recordedVerdicts
+          const stillRunning = {
+            ...red,
+            checks: [...red.checks, { ...red.checks[0], bucket: 'pending' }]
+          }
+
+          expect(
+            summaryWordOf(verdictOf(verdictFilterIn(prompt), stillRunning))
+          ).toBe('red')
+        })
+
+        const watchCommandIn = (prompt) =>
+          textBetween(prompt, 'running this exactly:', 'Its exit code')
+            .trim()
+            .replace(/^`|`$/g, '')
+
+        const watchAgainstStubGh = (
+          prompt,
+          { reportsNoChecksFor, noChecksMessage }
+        ) => {
+          const dir = mkdtempSync(join(tmpdir(), 'pr-checks-watch-'))
+          const stubs = join(dir, 'bin')
+          mkdirSync(stubs)
+          mkdirSync(join(dir, 'logs'))
+          writeFileSync(
+            join(stubs, 'gh'),
+            [
+              '#!/bin/bash',
+              `calls=$(( $(cat "${dir}/calls" 2>/dev/null || echo 0) + 1 ))`,
+              `echo "$calls" > "${dir}/calls"`,
+              `if [ "$calls" -le ${reportsNoChecksFor} ]; then`,
+              `  echo "${noChecksMessage}" >&2`,
+              '  exit 1',
+              'fi',
+              'echo "build pass 1m https://github.com/DEFRA/x/actions/runs/1"'
+            ].join('\n')
+          )
+          writeFileSync(join(stubs, 'sleep'), '#!/bin/bash\n')
+          chmodSync(join(stubs, 'gh'), 0o755)
+          chmodSync(join(stubs, 'sleep'), 0o755)
+          const command = watchCommandIn(prompt)
+            .replaceAll('<number>', '42')
+            .replaceAll('<owner/name>', 'DEFRA/x')
+            .replaceAll('<repo>', 'x')
+            .replace(/\S*\/logs\//g, `${dir}/logs/`)
+          spawnSync('bash', ['-c', command], {
+            env: { ...process.env, PATH: `${stubs}:${process.env.PATH}` },
+            encoding: 'utf8'
+          })
+          return {
+            ghCalls: Number(readFileSync(join(dir, 'calls'), 'utf8')),
+            log: readFileSync(join(dir, 'logs', 'inc-900-ci-x.log'), 'utf8')
+          }
+        }
+
+        const noChecksMessages = [
+          "no checks reported on the 'feat/x' branch",
+          "No checks reported on the 'feat/x' branch"
+        ]
+
+        test.each(noChecksMessages)(
+          'watches again while gh reports "%s", then logs the checks that registered',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 2,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 3,
+              log: 'build pass 1m https://github.com/DEFRA/x/actions/runs/1\n'
+            })
+          }
+        )
+
+        test.each(noChecksMessages)(
+          'leaves "%s" in the log after five watches of a PR with no checks',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 99,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 5,
+              log: `${noChecksMessage}\n`
+            })
+          }
+        )
+
+        test('stops on a PR gh still reports no checks for, as no-checks', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          ).replace(/\s+/g, ' ')
+
+          expect({
+            readsTheWatchLog: prompt.includes(
+              'a log that STILL says "No checks reported" (in any case) after that loop means the PR has NO CHECKS'
+            ),
+            stopsAsNoChecks: prompt.includes(
+              'NO CHECKS at all: state "unresolved", blocked "no checks on <repo>", stopReason "no-checks"'
+            )
+          }).toEqual({ readsTheWatchLog: true, stopsAsNoChecks: true })
+        })
+
+        test('lets the watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
         })
       })
 
@@ -7626,6 +7941,16 @@ describe('increment-build-loop', () => {
           expect(run.logs).toContain(
             'inc-900: theme origin-pages gets no style review of its whole change — a style reviewer read every row'
           )
+        })
+
+        test('lets the theme CI watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme ci watch')
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
         })
 
         const THEME_STYLE_LABELS = [
@@ -8809,13 +9134,11 @@ describe('increment-build-loop', () => {
           ),
           confirm: prompt.includes(
             '`tim jira ticket EUDPA-914 --workspace ~/ws --json`'
-          ),
-          shellScript: prompt.includes('tools/jira')
+          )
         }).toEqual({
           move: true,
           list: true,
-          confirm: true,
-          shellScript: false
+          confirm: true
         })
       })
 
@@ -9465,7 +9788,8 @@ describe('increment-build-loop', () => {
           mergeabilityBeforeChecks:
             prompt.indexOf(
               'gh pr view <url> --json mergeable,mergeStateStatus'
-            ) < prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh'),
+            ) <
+            prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch'),
           stopReason: prompt.includes('stopReason "pr-conflict"')
         }).toEqual({
           everyFirst: true,

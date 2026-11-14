@@ -73,7 +73,8 @@ const ALWAYS_REQUIRED = [
   'approvalWaitMinutes',
   'e2e',
   'resumeFrom',
-  'rigour'
+  'rigour',
+  'workspace'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -85,6 +86,13 @@ if (typeof CFG.workarea !== 'string') {
   )
 }
 const WORKAREA_REL = CFG.workarea.replace(/^\/+|\/+$/g, '')
+const CONFIGURED_WORKSPACE = CFG.workspace
+if (CONFIGURED_WORKSPACE !== null && (typeof CONFIGURED_WORKSPACE !== 'string' || !CONFIGURED_WORKSPACE.startsWith('~/'))) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.workspace must be the workspace root as a tilde path: the clone this session runs in, written with a leading ~/. A /Users/... path is denied in Bash. Pass null to resolve the root from the session folder. Got ${JSON.stringify(CONFIGURED_WORKSPACE)}`
+  )
+}
+const CONFIGURED_ROOT = CONFIGURED_WORKSPACE === null ? null : CONFIGURED_WORKSPACE.replace(/\/+$/, '')
 const SCOPE = CFG.scope
 if (typeof SCOPE !== 'string' || !SCOPE.trim()) {
   throw new Error(
@@ -404,22 +412,42 @@ log(`${WORKFLOW_NAME}: rigour ${RIGOUR} — ${rigourSummary(RIGOUR)}`)
 const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
   command you have not run, and never report Bash or any tool as missing without first calling it.`
 
-const WORKSPACE_CANDIDATES = [
+const FALLBACK_WORKSPACES = [
   '~/git/defra/trade-imports-workspace',
   '~/git/defra/trade-imports-animals-workspace',
   '~/git/defra/trade-imports-animals'
 ]
+const WORKSPACE_SOURCES = ['config', 'session', 'project', 'fallback']
+const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
+
+const workspaceCheckStep = (root) =>
+  `then \`ls ${root}/${LOOP_SCRIPT}\`, which must exit zero, or that folder is not the workspace`
+
+const configuredWorkspaceSteps = (root) =>
+  `config.workspace names the workspace, so use that and nothing else:
+1. \`git -C ${root} rev-parse --show-toplevel\`, ${workspaceCheckStep(root)}.
+Report \`abs\` as exactly what git printed, \`tilde\` as \`${root}\` and \`from\` as "config".
+If either command fails, report ok:false. Do NOT try any other folder.`
+
+const resolvedWorkspaceSteps = () =>
+  `Try each of these in order and stop at the first that works:
+1. From the folder this session started in, with no -C: \`git rev-parse --show-toplevel\`, ${workspaceCheckStep('<the ~/ form of what it printed>')}. \`from\` is "session".
+2. \`printenv CLAUDE_PROJECT_DIR\`; when it prints a folder, \`git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel\`, ${workspaceCheckStep('<the ~/ form of what it printed>')}. \`from\` is "project".
+${FALLBACK_WORKSPACES.map((c, i) => `${i + 3}. \`git -C ${c} rev-parse --show-toplevel\`, ${workspaceCheckStep(c)}. \`from\` is "fallback".`).join('\n')}
+For steps 1 and 2, run \`printenv HOME\` once: the ~/ form is what git printed with that home folder replaced by \`~\`.
+A folder outside the home folder has no ~/ form, so that step does not work: go on to the next.
+Report \`abs\` as exactly what git printed and \`tilde\` as the ~/ form (for steps 3 onward, the path you passed to -C).`
 
 const STARTED_AT_FORMAT = /^\d{8}T\d{6}Z$/
 
 const WORKSPACE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'tilde', 'startedAt', 'machineConfig', 'workers', 'summary'],
+  required: ['ok', 'abs', 'tilde', 'from', 'startedAt', 'machineConfig', 'workers', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
     tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
-    canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
+    from: { type: 'string', enum: WORKSPACE_SOURCES, description: 'Which step found the workspace' },
     startedAt: { type: 'string', description: 'Exactly what `date -u +%Y%m%dT%H%M%SZ` printed, such as 20261001T091500Z' },
     machineConfig: {
       type: ['string', 'null'],
@@ -437,14 +465,11 @@ const WORKSPACE_SCHEMA = {
 
 const workspace = await agent(
   `Resolve THIS machine's workspace root and report it, with the time. That is your whole job.
-Try each of these in order, ONE Bash call each, and stop at the first that exits zero:
-${WORKSPACE_CANDIDATES.map((c, i) => `${i + 1}. \`git -C ${c} rev-parse --show-toplevel\``).join('\n')}
-Report \`abs\` as exactly what that command printed, and \`tilde\` as the candidate path you used —
-tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
-Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
-rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
+ONE Bash call per command.
+${CONFIGURED_ROOT === null ? resolvedWorkspaceSteps() : configuredWorkspaceSteps(CONFIGURED_ROOT)}
+tilde MUST begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
-Then run \`tim build workers --workspace <the candidate path you used> --json\` and copy its \`result.config\` as
+Then run \`tim build workers --workspace <tilde> --json\` and copy its \`result.config\` as
 \`machineConfig\` and its \`result.workers\` as \`workers\`, every key and number exactly as printed. If it exits
 non-zero, report ok:false and quote its error message in your summary.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
@@ -455,7 +480,7 @@ ${RUN_WITH_BASH}`,
 
 if (!workspace || !workspace.ok || !workspace.abs?.startsWith('/') || !workspace.tilde?.startsWith('~/')) {
   throw new Error(
-    `increment-build-loop: could not resolve the workspace root. CLAUDE.md rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace checkout — symlink it if your clone is elsewhere. ${workspace ? workspace.summary : 'the resolver agent failed'}`
+    `${WORKFLOW_NAME}: could not resolve the workspace root. Launch from the workspace clone, or pass config.workspace as its tilde path. ${workspace ? workspace.summary : 'the resolver agent failed'}`
   )
 }
 if (!STARTED_AT_FORMAT.test(workspace.startedAt ?? '')) {
@@ -465,10 +490,8 @@ if (!STARTED_AT_FORMAT.test(workspace.startedAt ?? '')) {
 }
 
 const ABS = workspace.abs.replace(/\/+$/, '')
-const TILDE = workspace.tilde.replace(/\/+$/, '')
-if (!workspace.canonical) {
-  log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
-}
+const TILDE = CONFIGURED_ROOT ?? workspace.tilde.replace(/\/+$/, '')
+log(`${WORKFLOW_NAME}: workspace ${TILDE}, from ${CONFIGURED_ROOT === null ? workspace.from : 'config'}`)
 
 const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
 const badWorkerEntries = Object.entries(workspace.workers ?? {}).filter(
@@ -537,8 +560,6 @@ const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 
 let workspaceInIncrement = null
 const buildsWorkspace = () => workspaceInIncrement !== null
-
-const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
 
 const workspaceCarriedFrom = (started) => {
   const named = started.preexistingDirty ?? []
@@ -738,8 +759,6 @@ const SPEC_PREFIXES_BY_REPO_PATH = {
   'repos/trade-imports-animals-admin': ['admin']
 }
 
-const SPEC_VALIDATE = `${TILDE}/tools/frontend-change/openspec-validate.sh`
-
 const SPEC_WHOLE_CAPABILITY = `Validation and lint judge the WHOLE capability, not only your lines, so a failure in a
    capability this row writes is this row's to fix even where it predates the row: an over-long requirement, a scenario
    missing, a lint finding. Fix it in place by ${ABS}/openspec/config.yaml's rules, keeping the behaviour it states:
@@ -793,19 +812,18 @@ ${SPEC_PREFIX_TABLE}
    shapes — then find each capability under \`${TILDE}/openspec/specs/<prefix>/\` with \`grep -rln\` and merge into its
    \`spec.md\` and \`${TILDE}/openspec/coverage/<path>/coverage.json\`. A genuinely new capability gets its row in
    \`${TILDE}/openspec/coverage/AREAS.md\` first. Link only tests this row wrote or changed, read from their bodies.
-3. Validate, in the FOREGROUND: \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [<capability path> ...]\` once
-   for every capability you wrote that still exists. A capability you deleted is not validated: confirm it is gone
-   with \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. Then run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
-   prefix you wrote under. Either exiting non-zero means the row is NOT complete: fix the write, or report ok:false
-   saying what failed. Never report ok:true over a red validation.
+3. Validate, in the FOREGROUND: run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
+   prefix you wrote under. A capability you deleted is not validated: confirm it is gone with
+   \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. A non-zero exit means the row is NOT complete:
+   fix the write, or report ok:false saying what failed. Never report ok:true over a red validation.
    ${SPEC_WHOLE_CAPABILITY}
 4. Leave \`openspec/\` uncommitted: the land stage commits it.
 5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
    ${rulesOf(rigour).consistencyReview ? SPEC_SYNC_REASON_CHECKED_BY_REVIEWER : SPEC_SYNC_REASON_CHECKED_BY_LADDER}`
 
 const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
-duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
-and \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
+duty the implementor followed — update what it wrote, validate it again with
+\`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
 confirmed gone with \`ls\`, not validated), and put your own \`Spec sync:\` line in notes.
 ${SPEC_WHOLE_CAPABILITY}`
 
@@ -930,9 +948,8 @@ const SPEC_SYNC_TO_JUDGE_HERE = `The write is yours to judge too.
 
 const restoredSpecStep = (id) => `2a. THE SPEC SYNC. ${RESTORED_LINES_RULE} Find the capabilities the plan's section 8 writes,
    and any \`git -C ${TILDE} status --short -- openspec/\` shows changed. Run
-   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
-   once for them, then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
-   once per prefix, reading each log ONCE. Either exiting non-zero is a failure you repair. A capability section 8
+   \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix they sit under, reading each log ONCE. A non-zero exit is a failure you repair. A capability section 8
    writes that holds none of the plan's behaviour is a failure you repair too. ${SPEC_SYNC_TO_JUDGE_HERE}
    ${SPEC_WHOLE_CAPABILITY}`
 
@@ -944,11 +961,10 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) =>
    The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
    When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
    reported" in failures[]. A fixer with no line is normal when the implementor reported one: a fixer reports a line
-   only when its fix changed behaviour. For the capability paths the lines name that still exist, run
-   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
-   once. A path marked \`deleted:\` is not validated: confirm it is gone with \`ls ${TILDE}/openspec/specs/<capability path>\`,
-   which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
-   once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
+   only when its fix changed behaviour. A path the lines mark \`deleted:\` is not validated: confirm it is gone with
+   \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail — one that still exists is a failure. Then run
+   \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix the lines write under, reading each log ONCE. A non-zero exit is a failure, which you repair like
    any other: the spec write is this increment's, and a row whose spec does not validate is not complete. ${
      rulesOf(rigour).consistencyReview ? SPEC_SYNC_LEFT_TO_REVIEWERS : SPEC_SYNC_TO_JUDGE_HERE
    }
@@ -992,7 +1008,7 @@ const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1313,8 +1329,8 @@ const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose pr
 
 const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
   once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
-  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
-  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
+  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\`, no
+  \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
   rebuild to test a change against it: it runs in dev mode, serving each frontend from its repo's src and restarting
   it a few seconds after a file there changes. Running a tests-repo spec against it, or \`tim build probe\` with
   \`--reload-url\`, is using it as it is.
@@ -1327,7 +1343,7 @@ ${OTHER_COMPOSE_GUARD}`
 const NO_STACK_GUARD = `- THERE IS NO WORKSPACE STACK IN THIS RUN, and that is deliberate: its end-to-end behaviour is
   proved by each repo's own pull request in CI, so the run takes no \`tim docker lease\` and the stack stays down.
   Never start it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no
-  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+  \`run-stack.sh\`, no \`docker compose\` against it.
 - SKIP any check that needs the stack up: anything driving a browser against it, and anything calling a service over
   \`localhost\`. Say in your summary which you skipped and why. Its absence is NOT a finding, and a stack that is
   down is NOT \`stackHeld\` or \`stackDown\` — never report either, whatever \`tim docker lease status\` says. The
@@ -1337,7 +1353,7 @@ ${OTHER_COMPOSE_GUARD}`
 const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
   \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
   you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
-  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+  \`run-stack.sh\`, no \`docker compose\` against it.
 ${OTHER_COMPOSE_GUARD}`
 
 const SECTION_5_STACK_LINE = E2E_IS_LOCAL
@@ -1443,6 +1459,10 @@ ${workerCountLines.join('\n')}
   script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
 `
 
+const WATCH_LOOP_EXCEPTION = `The ONE exception to the single-command and no-sleep rules is the \`for try in ...; done\` checks watch loop that a
+  WAIT ON ITS CHECKS step gives you: run it as one Bash call, exactly as written, \`;\`, \`||\` and \`sleep 30\` included. Never
+  split it into separate calls, never drop its loop, and never write a sleep of your own anywhere else.`
+
 const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
 ${RUN_WITH_BASH}
@@ -1458,6 +1478,7 @@ ${DENIED_FORMS_LINE}
 - NEVER sleep-poll. Foreground \`sleep\` is denied. Wait on CI by BLOCKING on \`gh pr checks --watch\` or
   \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
+  ${WATCH_LOOP_EXCEPTION}
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
 ${stackGuard}
@@ -2889,17 +2910,56 @@ For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
 
 const STALE_RERUNS = 2
 
+const PR_CHECKS_VERDICT_JQ = [
+  String.raw`"HEAD_COMMITTED_AT" as $head`,
+  String.raw`| def failing: .bucket == "fail" or .bucket == "cancel";`,
+  String.raw`def stale: failing and ((.startedAt // "") as $at | $head != "" and $at != "" and ($at | startswith("0001") | not) and $at < $head);`,
+  String.raw`def line: "\(.bucket) \(.name) \(.link)" + (if stale then " (stale: started \(.startedAt), head committed \($head))" else "" end);`,
+  String.raw`length as $total`,
+  String.raw`| (map(select(.bucket == "pending")) | length) as $pending`,
+  String.raw`| (map(select(failing)) | length) as $failed`,
+  String.raw`| (map(select(failing and (stale | not))) | length) as $current`,
+  String.raw`| (map(select(.bucket == "pass" or .bucket == "skipping")) | length) as $passed`,
+  String.raw`| (.[] | line),`,
+  String.raw`if $total == 0 then "SUMMARY: pending — no checks reported yet"`,
+  String.raw`elif $current > 0 then "SUMMARY: red — \($current) of \($total) checks failed on the current head (\($failed - $current) stale)"`,
+  String.raw`elif $failed > 0 then "SUMMARY: stale — all \($failed) failing checks started before the head commit (\($head)). Re-run them; this is not a code failure"`,
+  String.raw`elif $pending > 0 then "SUMMARY: pending — \($pending) of \($total) checks still running"`,
+  String.raw`else "SUMMARY: green — \($passed) of \($total) checks passed" end`
+].join(' ')
+
+const NO_CHECKS_TRIES = 5
+
+const prChecksWatchCommand = (id) =>
+  `for try in $(seq ${NO_CHECKS_TRIES}); do gh pr checks <number> --repo <owner/name> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1; grep -qi 'no checks reported' ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log || break; sleep 30; done`
+
+const prChecksWaitStep = (id) => `WAIT ON ITS CHECKS, then read their verdict. Three Bash calls:
+   a. Block until the checks finish, in ONE Bash call with the Bash tool's \`timeout\` parameter set to 600000.
+      ${WATCH_LOOP_EXCEPTION} Block on it by running this exactly:
+      \`${prChecksWatchCommand(id)}\`
+      Its exit code, or the Bash call timing out, decides nothing: step c does. A PR's checks can take a few seconds
+      to register after a push, and until then \`gh\` prints "no checks reported on the '<branch>' branch" and exits
+      at once, so the loop watches again every 30s, ${NO_CHECKS_TRIES} times in all. The one exception: a log that
+      STILL says "No checks reported" (in any case) after that loop means the PR has NO CHECKS (see below). Skip b and c for it.
+   b. When the PR's head commit was committed: \`gh pr view <number> --repo <owner/name> --json headRefOid --jq .headRefOid\`,
+      then \`gh api repos/<owner/name>/commits/<sha> --jq .commit.committer.date\`. Either call failing leaves the time empty.
+   c. The verdict, with that time (or nothing, when it is empty) in place of HEAD_COMMITTED_AT:
+      \`gh pr checks <number> --repo <owner/name> --json name,bucket,link,startedAt --jq '${PR_CHECKS_VERDICT_JQ}' > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>-verdict.log 2>&1\`
+      Read that log ONCE. It lists every check as \`<bucket> <name> <link>\`, then one \`SUMMARY:\` line. A log
+      with no \`SUMMARY:\` line means \`gh\` failed: treat it as \`SUMMARY: pending\`.`
+
 const STALE_ROLLUP_STEP = `A STALE ROLLUP IS NOT A FAILURE, and it never reaches a fixer. GitHub does not re-run a pull request's checks when
-its base moves, so a PR can go on showing a failure from before its last merge. The wait script works this out for
-you: it compares every failing check's start time with the PR head commit's own commit time, marks each stale line
-\`(stale: started ..., head committed ...)\`, and exits 5 only when EVERY failing check started before that commit.
-A check that ran before the commit under test is no evidence about that commit, so exit 5 means unknown, never red:
+its base moves, so a PR can go on showing a failure from before its last merge. The verdict works this out for you:
+it compares every failing check's start time with the PR head commit's own commit time, marks each stale line
+\`(stale: started ..., head committed ...)\`, and says \`SUMMARY: stale\` only when EVERY failing check started before
+that commit. A check that ran before the commit under test is no evidence about that commit, so \`SUMMARY: stale\`
+means unknown, never red:
 1. Re-run the runs the stale lines name: \`gh run rerun <run-id> --failed --repo <ghRepo>\`, one Bash call each.
 2. Wait on that pr's checks again from the top of this step. A re-run spends a watch window, NEVER a fix attempt,
    and you may do it at most ${STALE_RERUNS} times per pr.
-3. Exit 5 still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
-Exit 1 with some lines marked stale is a real red: at least one failing check did run on this head. Put only the
-checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
+3. \`SUMMARY: stale\` still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
+\`SUMMARY: red\` with some lines marked stale is a real red: at least one failing check did run on this head. Put only
+the checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
 
 const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE. The watcher should have caught a stale rollup, but
    confirm it yourself, because changing correct code to match an old image is the most expensive thing you can do
@@ -3206,7 +3266,7 @@ const FRONTEND_CHANGE_IMPLEMENT_LINE = FRONTEND_CHANGE_KEYS.length
 Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
 paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
 skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
-and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
+and validates it with \`tim spec lint\`; the spec lives in the workspace repo, and rewriting its paths
 at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
 ${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). The SET, and so
 the spec namespace, is the one the plan names, read from where the change lives — never assumed from the repo:
@@ -3348,7 +3408,7 @@ ${BOUNDED_TIDY_UP}
       plus any programme invariant this change could break. Other stages run these checks. Mark a check that needs
       the workspace stack up "needs the workspace stack": the run holds the stack's lease and keeps it up for every
       increment, and the stage that runs the check uses it as it is, so never write how to start or stop the stack
-      here — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease\`, no \`run-stack.sh\` or \`stop-stack.sh\`.
+      here — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease\`, no \`run-stack.sh\`.
       The integration proof is still the gate's E2E phase: for a criterion only the whole slice running end to end can prove, name the E2E rung from
       gates.json that carries it, as the check.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
@@ -4533,12 +4593,11 @@ ${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: state
 failures[], stopReason "mergeability-unknown", and do not watch its checks.
 
 Then, for EACH pr, in the order listed:
-1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
-   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
-   Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
-   what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
-   "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
-   stopReason "no-checks". An absence of evidence is not green. Exit 5 → by step 2 below.
+1. ${prChecksWaitStep(id)}
+   \`SUMMARY: green\` → green. \`SUMMARY: red\` → RED: one line per failing check in failures[], naming the check and
+   what it said. \`SUMMARY: pending\` → not resolved yet: wait again from a, at most ${CI_WATCH_WINDOWS} times per PR in
+   all, then state "unresolved", which counts as RED. NO CHECKS at all: state "unresolved", blocked "no checks on
+   <repo>", stopReason "no-checks". An absence of evidence is not green. \`SUMMARY: stale\` → by step 2 below.
 2. ${STALE_ROLLUP_STEP}
 3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
@@ -6852,9 +6911,11 @@ ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null, rowRigour
   later baseline goes red. Read the trace's request timings first. If this increment made a request slow, fix the
   code. If the spec simply drives more of the journey than its budget holds, give it \`test.slow()\` as the tests
   repo's other full-journey specs do, and never cut a step or an assertion to make it fit.
-- A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
-  start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
-  \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.
+- A FIT rung whose planned port is held moves to the next free port, and the rung's \`ports\` name the holder. It
+  fails only when no port from its planned one upwards is free. A rung that cannot run fails with its reason. Never
+  kill a port's holder and never start or stop the stack to clear it: record the reason in failures[] and set
+  green:false. Where the gate's \`result.stack.held\` is not null (the e2e rungs' stack lease), return \`stackHeld\` as
+  THE GATE rule says.
 ${RUN_STACK_RULE}
 In ran[], list every gate rung as \`<repo> <name>\`, every plan check and every spec check you ran. In failures[], one
 line per red rung or check, with its reason and its log.
@@ -7189,17 +7250,16 @@ ${prList(prs)}
 ${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: go on and watch its checks.
 
 Then, for EACH pr, in the order listed:
-1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
-   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
-2. Read that log ONCE.
-   - Exit 0 → that PR is green.
-   - Exit 1 → that PR is RED. Put one line per failing check in failures\[\], naming the check and what it
+1. ${prChecksWaitStep(id)}
+2. Act on the verdict.
+   - \`SUMMARY: green\` → that PR is green.
+   - \`SUMMARY: red\` → that PR is RED. Put one line per failing check in failures\[\], naming the check and what it
      actually said.
-   - Exit 2 → the checks have NOT resolved. Repeat step 1. You may do this at most ${CI_WATCH_WINDOWS} times per
-     PR in total. Still unresolved after that → state "unresolved", and it counts as RED, never as green.
-   - Exit 4 → the PR has NO checks: state "unresolved", green:false, and put "no checks configured on <repo>" in
-     blocked. Merging on an absence of evidence is not merging on green.
-   - Exit 5 → by step 3 below.
+   - \`SUMMARY: pending\` → the checks have NOT resolved. Repeat step 1. You may do this at most ${CI_WATCH_WINDOWS}
+     times per PR in total. Still unresolved after that → state "unresolved", and it counts as RED, never as green.
+   - NO CHECKS → state "unresolved", green:false, and put "no checks configured on <repo>" in blocked. Merging on an
+     absence of evidence is not merging on green.
+   - \`SUMMARY: stale\` → by step 3 below.
 3. ${STALE_ROLLUP_STEP}
 4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing

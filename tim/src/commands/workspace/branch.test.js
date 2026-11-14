@@ -5,7 +5,11 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
+import { isWorkspaceBranchSynced } from '../../constants/repos.js'
+import { bundledRoster, timWorkspaceRoot } from '../../test-support/roster.js'
+
+const { repos: REPOS } = bundledRoster
+const isSynced = (repo) => isWorkspaceBranchSynced(timWorkspaceRoot, repo)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -65,9 +69,7 @@ const repoDir = (workspace, index) => join(workspace, 'repos', REPOS[index])
 
 // seedWorkspace clones only the first three repos; any later repo the
 // workspace branch sync covers is reported as not cloned.
-const UNCLONED_SYNCED_REPO = REPOS.slice(3).find((repo) =>
-  isWorkspaceBranchSynced(repo)
-)
+const UNCLONED_SYNCED_REPO = REPOS.slice(3).find((repo) => isSynced(repo))
 
 let workspace
 let fixtures
@@ -293,7 +295,7 @@ describe('workspace branch', () => {
 
   test('excludes a workspace-branch-sync-exempt repo from the report, and lists it as skipped', async () => {
     await seedWorkspace()
-    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+    const exempt = REPOS.find((repo) => !isSynced(repo))
 
     const { stdout, exitCode } = await runCli(workspace, ['--json'])
 
@@ -305,7 +307,7 @@ describe('workspace branch', () => {
 
   test('reports a workspace-branch-sync-exempt repo when --include names it', async () => {
     await seedWorkspace()
-    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+    const exempt = REPOS.find((repo) => !isSynced(repo))
 
     const { stdout, exitCode } = await runCli(workspace, [
       '--include',

@@ -24,10 +24,6 @@ artifacts that downstream `tools/` scripts consume.
 | `understanding-check` | `references/ANALYST.md` | Per-repo diff analyst — emits `analysis.{repo}.json` (one per repo, parallel) |
 | `understanding-check` | `references/QUESTION_GENERATOR.md` | One-shot — combines all per-repo analyses into `questions.json` |
 | `understanding-check` | `references/SCORER.md` | Per-question scorer — must quote the rubric clause that fired (one per question, parallel) |
-| `journey-builder` | `references/SOURCE_EXTRACTOR.md` | Per-source extraction of a target's requirement sources into `extract.<source>.json` (one per source, parallel) |
-| `journey-builder` | `references/SPEC_RECONCILER.md` | One-shot — reconciles the extracts into `journey-spec.json` and `conflicts.json` |
-| `journey-builder` | `references/INCREMENT_PLANNER.md` | Per-increment plan into the build loop's shape, written through `backlog-plan-increment.sh` (ten at a time, in dependency order) |
-| `journey-builder` | `references/MODEL_EXTENDER.md` | One gated `model-extension` increment — grows the engine's obligation vocabulary |
 | `requirements-pipeline` | `workflow/distil/briefs/characterise.md` | Per-source characterisation into `distil/extract/<slug>.partition.json`: the source cut into parts one agent each can read in full (run by `workflow/distil.js`, one per source, pipelined) |
 | `requirements-pipeline` | `workflow/distil/briefs/extract.md` + `extract-<kind>.md` | Per-part exhaustive extraction into `distil/extract/<slug>.part<N>.json`, one brief per source kind (parallel within a source; `tim distil merge-extract` joins the parts into `distil/extract/<slug>.json`) |
 | `requirements-pipeline` | `references/TRACE_EXTRACTOR.md` | The trace method `extract-trace.md` points at: mine a trace corpus or read a mined set |

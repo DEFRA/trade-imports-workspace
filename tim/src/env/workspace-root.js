@@ -6,9 +6,8 @@ import { TimError } from '../errors.js'
 const MARKER_FILES = ['.git', 'docs/best-practices']
 
 /**
- * Where CLAUDE.md rule 1 mandates the workspace lives. `tools/*.sh` hardcode
- * this path, so the workspace is cloned there rather than living under another
- * name.
+ * The workspace path `resolveWorkspaceRoot` falls back on when nothing else
+ * names a workspace.
  */
 export const CANONICAL_WORKSPACE_PATH = resolve(
   homedir(),

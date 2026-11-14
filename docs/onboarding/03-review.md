@@ -48,7 +48,7 @@ Don't memorise the surface — read the current version:
 
 - `review · re-review · walk review` — fresh pass, refresh, or interactive triage
 - `.claude/skills/review/SKILL.md` — the trigger table and scripts cheat-sheet
-- `review-items.sh EUDPA-X --json` — the live findings mid-review
+- `tim review items list EUDPA-X --json` — the live findings mid-review
 
 ## Try it
 

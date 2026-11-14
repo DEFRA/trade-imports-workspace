@@ -25,9 +25,8 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/tools/<domain>/`,
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
-Skill-internal references stay relative
+your home directory automatically. `tim refine` works on the workspace
+you run it in, and prints the folder it wrote. Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
 
@@ -47,14 +46,13 @@ in this file.
 
 ## Prerequisites
 
-Authenticate to Jira before fetching tickets:
+Check your Jira and Confluence sign-in before fetching tickets:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/auth.sh
+tim auth
 ```
 
-(Or the umbrella `~/git/defra/trade-imports-workspace/tools/auth.sh` covering Jira +
-Confluence + GitHub.)
+For GitHub, run `gh auth status`.
 
 ## Ready When Team Can
 
@@ -82,10 +80,10 @@ standards you assess against:
 Then prepare the workarea:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/refine/prepare-refinement.sh EUDPA-XXXXX
+tim refine prepare EUDPA-XXXXX
 ```
 
-This produces, under `~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-XXXXX/`:
+This produces, in the `Directory:` it prints (`workareas/ticket-refinement/EUDPA-XXXXX/` in the workspace):
 
 - `ticket.md` — summary, description, AC, comments, Confluence references (from Jira JSON)
 - `.refinement-meta.json` — ticket fields + `verdict: null` (finalised in Step 5)
@@ -119,7 +117,7 @@ description structure, AC quality, parent/epic, label conformance
 | Scope | In/out of scope clear? |
 | Specificity | Concrete details? |
 | No history | Is it free of timelines, commit hashes and audit dumps, with evidence linked instead? |
-| Markup | Does it render? No literal Markdown, no `class="error"` in `ticket.sh EUDPA-X full`. |
+| Markup | Does it render? No literal Markdown, no `class="error"` in `tim jira ticket EUDPA-X --rendered`. |
 
 ### Acceptance Criteria
 | Check | Question |
@@ -169,8 +167,7 @@ PR plus a one-off history rewrite. The ticket was READY.
 
 ## Step 4: Write Review
 
-`prepare-refinement.sh` already stubbed
-`~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-XXXXX/review.md`
+`tim refine prepare` already stubbed `review.md` in the folder it printed
 from `assets/refinement-template.md`. Fill each section in place from
 Steps 1-3 — `## Description Summary`, `## Acceptance Criteria`,
 `## Codebase Investigation`, `## Readiness Assessment`,
@@ -182,7 +179,7 @@ trailing `## Verdict` block.
 After filling `review.md`, record the verdict on the meta JSON:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/refine/refine-finalize.sh EUDPA-XXXXX --verdict READY --reason "Clear AC, repos identified"
+tim refine finalize EUDPA-XXXXX --verdict READY --reason "Clear AC, repos identified"
 ```
 
 Verdict must be one of `READY`, `NEEDS WORK`, `SPIKE REQUIRED` (the

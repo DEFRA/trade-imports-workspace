@@ -5,7 +5,8 @@ import {
   writeFileSync,
   chmodSync,
   rmSync,
-  readFileSync
+  readFileSync,
+  symlinkSync
 } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -16,6 +17,9 @@ import {
   stackContainers,
   stackContainerIds,
   writeStackLogs,
+  stackOwners,
+  otherCloneOwningStack,
+  isSameWorkspace,
   STACK_PROJECT
 } from './stack.js'
 
@@ -273,5 +277,86 @@ describe('stackContainerIds', () => {
     )
 
     expect(await stackContainerIds({ env })).toEqual(['a1b2c3', 'd4e5f6'])
+  })
+})
+
+const WORKING_DIR_FORMAT = '{{.Label "com.docker.compose.project.working_dir"}}'
+
+const dockerListingWorkingDirs = (...workingDirs) =>
+  fakeDocker(
+    `if [ "$1" = ps ] && [ "$3" = "label=com.docker.compose.project=trade-imports" ] && [ "$5" = '${WORKING_DIR_FORMAT}' ]; then printf '${workingDirs.map((dir) => `${dir}\\n`).join('')}'; fi`
+  )
+
+describe('stackOwners', () => {
+  test('names the clone each running container was started from, once each', async () => {
+    const env = dockerListingWorkingDirs(
+      '/clones/a/docker/stack',
+      '/clones/a/docker/stack',
+      '/clones/b/docker/stack'
+    )
+
+    expect(await stackOwners({ env })).toEqual(['/clones/a', '/clones/b'])
+  })
+
+  test('is empty when the stack is down', async () => {
+    const env = dockerListingWorkingDirs()
+
+    expect(await stackOwners({ env })).toEqual([])
+  })
+
+  test('is empty, without starting Docker, when the Docker daemon is not running', async () => {
+    const env = fakeDocker(
+      'echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1'
+    )
+
+    expect(await stackOwners({ env })).toEqual([])
+  })
+
+  test('throws UNKNOWN when docker cannot list containers for another reason', async () => {
+    const env = fakeDocker('echo "permission denied" >&2; exit 1')
+
+    await expect(stackOwners({ env })).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message: "Can't list the workspace stack's containers: permission denied"
+    })
+  })
+})
+
+describe('otherCloneOwningStack', () => {
+  test('names the other clone that started the running stack', async () => {
+    const env = dockerListingWorkingDirs('/clones/a/docker/stack')
+
+    expect(await otherCloneOwningStack({ workspaceRoot: workspace, env })).toBe(
+      '/clones/a'
+    )
+  })
+
+  test('is null when this clone started the running stack', async () => {
+    const env = dockerListingWorkingDirs(join(workspace, 'docker', 'stack'))
+
+    expect(
+      await otherCloneOwningStack({ workspaceRoot: workspace, env })
+    ).toBeNull()
+  })
+
+  test('is null when the stack is down', async () => {
+    const env = dockerListingWorkingDirs()
+
+    expect(
+      await otherCloneOwningStack({ workspaceRoot: workspace, env })
+    ).toBeNull()
+  })
+})
+
+describe('isSameWorkspace', () => {
+  test('treats a symlink to a clone as that clone', () => {
+    const link = join(workspace, 'link-to-clone')
+    symlinkSync(workspace, link)
+
+    expect(isSameWorkspace(link, workspace)).toBe(true)
+  })
+
+  test('tells two clones apart', () => {
+    expect(isSameWorkspace('/clones/a', '/clones/b')).toBe(false)
   })
 })

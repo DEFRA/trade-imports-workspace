@@ -106,8 +106,123 @@ describe('getTicket', () => {
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',
-      description: 'do it'
+      parent: null,
+      labels: [],
+      updated: null,
+      description: 'do it',
+      subtasks: [],
+      links: []
     })
+  })
+
+  test('returns the rendered description, parent, labels, update time and links read from this side', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-713')
+      .query({ expand: 'renderedFields' })
+      .reply(200, loadFixture('issue-rendered-with-links.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-713', { withRendered: true })
+
+    expect(ticket).toEqual({
+      id: 'EUDPA-713',
+      summary:
+        'Store and enforce the owning organisation on every live animals notification',
+      status: 'Done',
+      type: 'Story',
+      assignee: 'Martyn Nevers',
+      priority: 'Medium',
+      parent: 'EUDPA-133',
+      labels: ['COMMON-CAP-0.2'],
+      updated: '2026-11-13T15:43:59.072+0000',
+      description:
+        "*As* a trader acting for an organisation,\n*I want* to see and change only my organisation's import notifications,\n*So that* other organisations cannot see or change our consignments and party details",
+      renderedDescription:
+        "<p><b>As</b> a trader acting for an organisation,<br/>\n<b>I want</b> to see and change only my organisation's import notifications,<br/>\n<b>So that</b> other organisations cannot see or change our consignments and party details</p>",
+      subtasks: [],
+      links: [
+        {
+          id: '432588',
+          type: 'Relates',
+          direction: 'inward',
+          relation: 'relates to',
+          otherKey: 'EUDPA-715',
+          otherStatus: 'Done',
+          otherSummary:
+            'Store and enforce the owning organisation on every plants notification'
+        },
+        {
+          id: '432589',
+          type: 'Blocks',
+          direction: 'outward',
+          relation: 'blocks',
+          otherKey: 'EUDPA-714',
+          otherStatus: 'In Dev',
+          otherSummary:
+            'Store and enforce the owning organisation on INS dashboard notifications'
+        }
+      ]
+    })
+  })
+
+  test('returns no parent, no labels and no renderedDescription key for an epic read without rendering', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-745')
+      .reply(200, loadFixture('issue-epic-no-parent.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-745')
+
+    expect(ticket).toEqual(
+      expect.objectContaining({
+        id: 'EUDPA-745',
+        type: 'Epic',
+        assignee: null,
+        parent: null,
+        labels: [],
+        updated: '2026-10-27T18:06:56.908+0000',
+        subtasks: [],
+        links: []
+      })
+    )
+    expect(Object.keys(ticket)).not.toContain('renderedDescription')
+  })
+
+  test('returns a null renderedDescription when the ticket has no description to render', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300')
+      .query({ expand: 'renderedFields' })
+      .reply(200, {
+        ...loadFixture('issue-in-dev.json'),
+        renderedFields: { description: null }
+      })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-300', { withRendered: true })
+
+    expect(ticket.renderedDescription).toBeNull()
+  })
+
+  test('returns each subtask with its key, status and summary', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-799')
+      .reply(200, loadFixture('issue-with-subtasks.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-799')
+
+    expect(ticket.subtasks).toEqual([
+      {
+        key: 'EUDPA-801',
+        status: 'In Dev',
+        summary: 'Turn on hot reload for the proxy in dev mode'
+      },
+      {
+        key: 'EUDPA-802',
+        status: 'To Do',
+        summary: 'Document the dev overlay'
+      }
+    ])
   })
 
   test('maps 404 to TimError(NOT_FOUND)', async () => {
@@ -136,6 +251,26 @@ describe('error mapping', () => {
       name: 'TimError',
       code: 'NETWORK',
       message: expect.stringContaining('500')
+    })
+  })
+
+  test("keeps Jira's error messages on a mapped failure", async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/myself')
+      .reply(404, { errorMessages: ['Issue does not exist'] })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.whoami()).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      jiraMessages: ['Issue does not exist']
+    })
+  })
+
+  test('keeps no Jira error messages when the failure body is not JSON', async () => {
+    mockPool(BASE).get('/rest/api/2/myself').reply(500, 'Bad gateway')
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.whoami()).rejects.toMatchObject({
+      code: 'NETWORK',
+      jiraMessages: []
     })
   })
 
@@ -428,6 +563,56 @@ describe('listAttachments', () => {
   })
 })
 
+describe.each([
+  {
+    method: 'deleteAttachment',
+    path: '/rest/api/2/attachment/501',
+    forbidden: 'Not permitted to delete attachment 501.',
+    missing: 'No attachment with id 501.'
+  },
+  {
+    method: 'deleteIssueLink',
+    path: '/rest/api/2/issueLink/501',
+    forbidden: 'Not permitted to delete link 501.',
+    missing: 'No issue link with id 501.'
+  }
+])('$method', ({ method, path, forbidden, missing }) => {
+  const deleteAnswering = (status) => {
+    const deletion = mockPool(BASE).delete(path).reply(status)
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    return { deletion, outcome: client[method]('501') }
+  }
+
+  test('sends the DELETE and resolves when Jira answers 204', async () => {
+    const { deletion, outcome } = deleteAnswering(204)
+
+    await expect(outcome).resolves.toBeUndefined()
+    expect(deletion.isDone()).toBe(true)
+  })
+
+  test.each([
+    [403, 'AUTH', forbidden],
+    [404, 'NOT_FOUND', missing],
+    [500, 'NETWORK', 'Delete failed with HTTP 500.']
+  ])('maps %i to TimError(%s)', async (status, code, message) => {
+    const { outcome } = deleteAnswering(status)
+
+    await expect(outcome).rejects.toMatchObject({ code, message })
+  })
+})
+
+describe('browseUrl', () => {
+  test("gives the issue's page under a base URL with its trailing slash removed", () => {
+    const client = createJiraClient({
+      user: 'u',
+      token: 't',
+      baseUrl: `${BASE}/`
+    })
+
+    expect(client.browseUrl('EUDPA-1')).toBe(`${BASE}/browse/EUDPA-1`)
+  })
+})
+
 const capturesIssueLink = () => {
   const posted = { body: null }
   mockPool(BASE)
@@ -646,6 +831,95 @@ describe('listOpenEpics', () => {
     const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
     await expect(client.listOpenEpics('EUDPA')).rejects.toMatchObject({
       code: 'RATE_LIMIT'
+    })
+  })
+})
+
+describe('listBoardEpics', () => {
+  const boardGoldens = loadFixture('board-epics-labels-bash-goldens.json')
+
+  const servesBoardEpics = () =>
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/epic?maxResults=100')
+      .reply(200, boardGoldens.boardEpicResponse)
+
+  test('returns the epics the board has not marked done', async () => {
+    servesBoardEpics()
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const epics = await client.listBoardEpics(13780)
+
+    expect(epics).toEqual(boardGoldens['epics-json'].stdout)
+  })
+
+  test('keeps the done epics when asked', async () => {
+    servesBoardEpics()
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const epics = await client.listBoardEpics(13780, { includeDone: true })
+
+    const openEpics = boardGoldens['epics-json'].stdout
+    const doneEpic = {
+      key: 'EUDPA-155',
+      summary: 'Integrate with Gov.Notify for SMS/EMAIL',
+      done: true
+    }
+    const doneEpicPosition = openEpics.findIndex(
+      ({ key }) => key === 'EUDPA-190'
+    )
+    expect(epics).toEqual(openEpics.toSpliced(doneEpicPosition, 0, doneEpic))
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/99/epic?maxResults=100')
+      .reply(404, { errorMessages: ['The requested board cannot be viewed'] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardEpics(99)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      jiraMessages: ['The requested board cannot be viewed']
+    })
+  })
+
+  test("keeps Jira's error messages on a 400", async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/99/epic?maxResults=100')
+      .reply(400, { errorMessages: ['The board does not support epics.'] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardEpics(99)).rejects.toMatchObject({
+      code: 'USAGE',
+      jiraMessages: ['The board does not support epics.']
+    })
+  })
+})
+
+describe('listBoardLabels', () => {
+  const boardGoldens = loadFixture('board-epics-labels-bash-goldens.json')
+
+  test("counts each label in the board's backlog, most used first, ties in code point order", async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/backlog?maxResults=1000&fields=labels')
+      .reply(200, boardGoldens.boardBacklogResponse)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const labels = await client.listBoardLabels(13780)
+
+    expect(labels).toEqual(boardGoldens['labels-json'].stdout)
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/backlog?maxResults=1000&fields=labels')
+      .reply(401, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardLabels(13780)).rejects.toMatchObject({
+      code: 'AUTH'
     })
   })
 })

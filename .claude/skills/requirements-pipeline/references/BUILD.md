@@ -31,6 +31,10 @@ The user gives the workarea and the epic. Everything else is worked out or
 defaulted. Never ask for a value the list below says how to derive.
 
 ```
+workspace     the root of the workspace clone this session runs in, as a tilde
+              path: the folder `git rev-parse --show-toplevel` prints, with
+              your home folder written as ~. The run builds in that clone.
+              null makes the run resolve it from the session folder
 workarea      path under workareas/ holding backlog.json, e.g. shared/my-programme
 lifecycle     full (default) | branch. branch builds onto one existing
               long-lived branch with no Jira and no merge: see "Branch
@@ -154,6 +158,17 @@ repo's own domain plus the specs elsewhere carrying its service tag
 after deployment. The loop still stops at `ci-red`. A `local` run's gate takes the
 same scope and runs it the same way: the suites whole in its `e2e` rung, then the
 tagged specs from every domain in an `e2e-tagged` rung.
+
+The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
+<local or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
+starts no stack; it lists the rungs it left out in its result's
+`e2e.leftToCi`, and the loop's wait for the pull requests' checks gates the
+merge. A clone with no stack at all can also set `"e2e": "ci"` in its own
+`config/machine.json`, so a gate run by hand there leaves E2E to CI too (see
+[`machine-tuning.md`](machine-tuning.md)). It is opt-in per machine: the
+pull request's E2E run follows `config/e2e-tests-pr-scope.json` and may run
+less than the local gate would, so say so in the row's evidence when a row
+lands with only CI E2E.
 
 Record the answer in the theme's `build-args.json` so a relaunch after a stop
 defaults to it and needs a confirm rather than the question again. A relaunch is
@@ -341,8 +356,7 @@ tim jira transition <ANY-EXISTING-KEY> --list --workspace ~/git/defra/trade-impo
 On EUDPA the working status is `In Dev` and the finished status is `Done`; the
 args use those names. The done stage closes each ticket with
 `tim jira transition <KEY> "<jiraDoneStatus>" --workspace ~/git/defra/trade-imports-workspace --json`,
-which `Bash(tim:*)` allows; `tools/jira/transition-ticket.sh` still works by hand
-but the loop no longer calls it.
+which `Bash(tim:*)` allows.
 
 Do not take a status name from a command's `--help` text — that is example
 wording, not this board's workflow.
@@ -413,8 +427,8 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
-   rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
-   a free-port check, then E2E against the workspace stack built from local
+   rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT on the
+   first free port from its planned one, then E2E against the workspace stack built from local
    source, under the run's stack lease. It refuses a stack anybody else holds.
    Every rung writes to its own log, a rung that cannot run fails with its
    reason, and the command exits 1 unless every rung passed. The baseline and the
@@ -637,6 +651,7 @@ Build the args object with every key below:
 
 ```js
 {
+  workspace: '<workspace>', // this clone's root as a tilde path, so the run builds here and not in another clone
   workarea: '<workarea>',
   branch: '<branch>',
   lifecycle: 'full', // 'branch' only for a run onto an existing branch: see "Branch lifecycle"
@@ -1377,6 +1392,7 @@ state the next machine cannot see.
 ````
 Resume the <programme> build with the requirements-pipeline skill's BUILD phase.
 
+workspace    <the clone's root as a tilde path>
 workarea     <workarea>
 branch       <branch>
 lifecycle    <full or branch>

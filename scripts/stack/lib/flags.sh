@@ -28,7 +28,7 @@ Usage: $(basename "$0") [-b|--branch <name>] [-e|--exclude <label>]... [--profil
   -d, --dev              Build the repo-backed services from local source
                          under repos/ and mount source volumes. Node services
                          hot-reload via nodemon; Java services need
-                         scripts/stack/bounce-backend.sh after source changes.
+                         tim docker bounce-backend after source changes.
                          Mutually exclusive with --branch.
   --perf                 Start the stack as a performance target: both stubs
                          answer with the latency profile in STUB_PROFILE

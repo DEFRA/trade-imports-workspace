@@ -9,8 +9,8 @@ const SCRIPT = readFileSync(
   'utf8'
 )
 
-const REPO =
-  '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
+const WORKSPACE = '~/clones/second-workspace'
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
 
 // The Workflow tool runs a script as the body of an async function with
 // `args`, `agent`, `log` and `phase` in scope. Run it the same way, with
@@ -30,6 +30,7 @@ const SET = 'plants-working'
 const FEATURES = `src/server/app/sets/${SET}/journeys/linear/features`
 
 const ARGS = {
+  workspace: WORKSPACE,
   set: SET,
   requests: [
     "Change the hint on origin to 'The country the plants were grown in'",
@@ -166,7 +167,11 @@ const logText = (log) => log.mock.calls.map(([line]) => line).join('\n')
 describe('design-session', () => {
   describe('refuses before any agent runs', () => {
     it.each([
-      ['a missing requests key', { set: SET }, /missing required key requests/],
+      [
+        'a missing requests key',
+        { workspace: WORKSPACE, set: SET },
+        /missing required key requests/
+      ],
       [
         'the real journey',
         { ...ARGS, set: 'high-risk-plants' },
@@ -178,6 +183,11 @@ describe('design-session', () => {
         /not a design release/
       ],
       ['a set id with capitals', { ...ARGS, set: 'Plants' }, /set must be/],
+      [
+        'an absolute workspace path',
+        { ...ARGS, workspace: '/Users/someone/workspace' },
+        /workspace must be the root of the workspace clone this session runs in, as a tilde path/
+      ],
       ['no requests', { ...ARGS, requests: [] }, /requests must be/],
       ['a blank request', { ...ARGS, requests: ['  '] }, /requests must be/],
       [
@@ -543,7 +553,7 @@ describe('design-session', () => {
       await runWorkflow(ARGS, { agent })
       const prompt = classifyPrompt(calls)
       expect(prompt).toContain(
-        'Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/ROUTING.md'
+        `Read ${WORKSPACE}/.claude/skills/prototype/references/ROUTING.md`
       )
       expect(prompt).toContain('"Working out what they want"')
       expect(prompt).toContain('"Outcomes" and "Phrases" tables')
@@ -562,6 +572,7 @@ describe('design-session', () => {
 
   describe('a request split into parts', () => {
     const VAGUE = {
+      workspace: WORKSPACE,
       set: SET,
       requests: [
         "Change the hint on origin to 'The country the plants were grown in'",
@@ -652,7 +663,7 @@ describe('design-session', () => {
         'This step makes only this part of it: "Add a late filter, a late count and a red late tag to the dashboard"'
       )
       expect(build).toContain(
-        '~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/fake-a-service.md'
+        `${WORKSPACE}/.claude/skills/prototype/references/fake-a-service.md`
       )
       const single = calls.find((call) => call.opts.label === 'build 1').prompt
       expect(single).not.toContain('This step makes only this part')
@@ -823,7 +834,7 @@ describe('design-session', () => {
       })
       await runWorkflow(WITH_MANDATE, { agent })
       expect(promptOf(calls, 'build 1')).toContain(
-        '~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/custom-pattern.md'
+        `${WORKSPACE}/.claude/skills/prototype/references/custom-pattern.md`
       )
       expect(promptOf(calls, 'check 1')).toContain('--full')
     })

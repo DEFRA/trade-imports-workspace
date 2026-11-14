@@ -15,7 +15,7 @@ You will **not** write markdown. You will call three commands:
 
 ```bash
 # For each finding (run as many times as you have findings):
-~/git/defra/trade-imports-workspace/tools/review/file-review-add-item.sh EUDPA-XXXXX \
+tim review file add EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --line <line> --severity <Critical|Major|Minor> \
     --category <category> \
@@ -24,18 +24,18 @@ You will **not** write markdown. You will call three commands:
     [--best-practice <relative/path.md>]
 
 # Exactly once, at the end:
-~/git/defra/trade-imports-workspace/tools/review/file-review-set-verdict.sh EUDPA-XXXXX \
+tim review file verdict EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --verdict <SAFE|NEEDS_ATTENTION|RISKY> \
     --reason "<one sentence>"
 ```
 
 The placeholder JSON file is already initialised — don't run
-`file-review-init.sh`. Setting the verdict is what marks the file as
+`tim review file init`. Setting the verdict is what marks the file as
 reviewed for the coverage gate.
 
-If you have **no findings**, skip the add-item calls and go straight to
-`set-verdict --verdict SAFE --reason "..."`.
+If you have **no findings**, skip the `file add` calls and go straight to
+`tim review file verdict ... --verdict SAFE --reason "..."`.
 
 ### The `--fix` text has two parts
 
@@ -86,13 +86,13 @@ In every mode:
    ```
    ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/best-practices/{repo}.md
    ```
-   `prepare-review.sh` already concatenated every best-practice file
+   `tim review prepare` already concatenated every best-practice file
    applicable to your repo there. Don't walk `.review-meta.json` **for
    best-practice paths**, and don't read individual
    `docs/best-practices/*.md` files — the bundle is the single source for
    those. (Reading `.review-meta.json` for the PR set is a different
    thing, and the behaviour-spec check in step 5 needs it.) When citing a rule on
-   `file-review-add-item.sh --best-practice <path>`, use the relative
+   `tim review file add --best-practice <path>`, use the relative
    path shown in the bundle's `## Source: docs/best-practices/...`
    headings (e.g. `node/pino-logging.md`).
 2. **House rules.** Read
@@ -105,7 +105,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 4. **Prior consolidated items for this file** — this is the most
    important context:
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --repo {repo} --file {file-path}
+   tim review items list EUDPA-XXXXX --repo {repo} --file {file-path}
    ```
    Columns: `repo  id  file  line  severity  category  issue  fix  disposition  status  notes`.
 
@@ -133,7 +133,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 
    Net: in REFRESH, your `.review.json` should contain only deltas —
    regressions and net-new findings. Often it's empty (verdict SAFE,
-   no findings), and that's correct. `refresh/scope.sh --write-snapshot`
+   no findings), and that's correct. `tim review refresh scope --write-snapshot`
    already clears the prior `todos` array for files in Lists A and C
    before you run, so any todos in your `.review.json` at the end are
    genuinely new.
@@ -146,14 +146,19 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 ### 3. Get the file-scoped diff
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/file-diff.sh {repo} {pr-number} {file-path} --ticket EUDPA-XXXXX
+tim review file-diff {file-path} --ticket EUDPA-XXXXX --repo {repo}
 ```
 
 Returns only the hunks for your file — don't fetch the whole PR diff.
 `--ticket` makes it read from the workspace's cached PR diff
 (`workareas/reviews/EUDPA-XXXXX/.diffs/{repo}.diff`) instead of
 hitting the GitHub API, which matters when 100 reviewers run in
-parallel.
+parallel. If it refuses with `No cached diff`, filter the PR diff
+instead:
+
+```bash
+gh pr diff {pr-number} --repo DEFRA/{repo} | tim review file-diff {file-path} --stdin
+```
 
 In MERGE_RESOLVED mode the prompt also gives you `old_sha` / `new_sha`;
 the resolution delta is:
@@ -406,7 +411,7 @@ does not cover the scenario. Links routinely name tests in
 `trade-imports-ins-tests`, which often has no PR in the set — "not in
 this PR's diff" is not on its own a finding.
 
-**Which checkout to read.** `prepare-review.sh` clones every repo in the
+**Which checkout to read.** `tim review prepare` clones every repo in the
 PR set pinned at its merge commit under
 `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/`
 — the same pinned path step 4 uses. Go there first. Only fall back to the
@@ -444,10 +449,10 @@ PR" is not a reason to skip the check.
 
 ### 7. Write findings + verdict
 
-For each finding that survives filtering, run `file-review-add-item.sh`
+For each finding that survives filtering, run `tim review file add`
 with the appropriate flags.
 
-Then run `file-review-set-verdict.sh` once:
+Then run `tim review file verdict` once:
 
 | Verdict | When |
 |---|---|
@@ -469,7 +474,7 @@ Then run `file-review-set-verdict.sh` once:
 
 Give every finding exactly one `--category` from the fixed list in
 `~/git/defra/trade-imports-workspace/.claude/skills/review/assets/file-review-schema.md`
-→ "Category values". `file-review-add-item.sh` refuses any other word.
+→ "Category values". `tim review file add` refuses any other word.
 
 - Functional: `correctness`, `security`, `error-handling`,
   `coverage-gap`.
@@ -511,6 +516,6 @@ When you're done, your placeholder JSON file should have:
   `severity`, `category`, `issue`, `fix`, and optionally
   `best_practice`).
 
-The parent skill runs `verify-coverage.sh` afterwards — it checks
+The parent skill runs `tim review verify files` afterwards — it checks
 `.verdict != null`. If your file still has `verdict: null`, coverage
 fails and you'll be re-spawned.

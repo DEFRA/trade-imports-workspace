@@ -168,16 +168,23 @@ export const repoFingerprints = async ({ path, mounted }) => {
 
 /**
  * The folders of the workspace repo that define the stack itself: its
- * compose files, env and init scripts, and the scripts that start it.
+ * compose files, env and init scripts, and the code that starts it.
  */
-export const STACK_FILE_FOLDERS = ['docker/stack', 'scripts/stack']
+export const STACK_FILE_FOLDERS = [
+  'docker/stack',
+  'scripts/stack',
+  'tim/src/stack'
+]
+
+const isTestFile = (file) => file.endsWith('.test.js')
 
 // Written on every stack start from the owning repos, never edited by hand.
 const GENERATED_STACK_FOLDERS = ['docker/stack/.staged']
 
 /**
- * One fingerprint of the workspace repo's own stack files (docker/stack and
- * scripts/stack, less the generated docker/stack/.staged): the sorted paths of
+ * One fingerprint of the workspace repo's own stack files (docker/stack,
+ * scripts/stack and tim/src/stack, less the generated docker/stack/.staged
+ * and test files): the sorted paths of
  * the files on disk with their contents, from git's index and whatever
  * differs from it on disk, so an edit, a new file, a deleted file and a rename
  * all change it. A stack started before such a change is not the stack those
@@ -196,6 +203,7 @@ export const stackFilesFingerprint = async (workspaceRoot) => {
     workingTreeBlobs(workspaceRoot, index, changed).filter(
       ([file]) =>
         !isUnder(file, GENERATED_STACK_FOLDERS) &&
+        !isTestFile(file) &&
         existsSync(join(workspaceRoot, file))
     )
   )

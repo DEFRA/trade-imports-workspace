@@ -15,6 +15,8 @@ export const PLACEHOLDER_PATTERNS = [
   'TODO'
 ]
 
+const withoutTrailingNewlines = (text) => text.replace(/\n+$/, '')
+
 const sha256Hex = (buffer) => createHash('sha256').update(buffer).digest('hex')
 
 const readTextFile = (dir, relPath, label) => {
@@ -157,10 +159,8 @@ export const computePlanId = ({ manifest, description, attachments }) => {
  * @throws {TimError} USAGE when the description file or an attachment is missing
  */
 export const buildPlan = ({ manifest, dir }) => {
-  const description = readTextFile(
-    dir,
-    manifest.descriptionFile,
-    'description file'
+  const description = withoutTrailingNewlines(
+    readTextFile(dir, manifest.descriptionFile, 'description file')
   )
   const attachments = manifest.attachments.map((relPath) =>
     readAttachment(dir, relPath)

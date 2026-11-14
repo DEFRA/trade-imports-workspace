@@ -33,7 +33,7 @@ Canonical state lives at the `Output JSON path` you receive. Mutate it
 
 ```bash
 # Append a finding to one of the sections.
-~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
+tim understanding-check analysis add-finding \
     EUDPA-XXXXX \
     --repo <repo> \
     --section <keyDesignDecisions|edgeCases|failureModes|securityRisks|dataOrApiChanges|testCoverageNotes|aiSuspectedRegions> \
@@ -42,7 +42,7 @@ Canonical state lives at the `Output JSON path` you receive. Mutate it
     --field <field-name>=<value>  [--field ...]
 
 # Mark this repo's analysis complete (sets verdict=complete + completed_at).
-~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-set-verdict.sh \
+tim understanding-check analysis complete \
     EUDPA-XXXXX --repo <repo> --change-summary "..." --why-it-changed "..."
 ```
 
@@ -65,8 +65,8 @@ inject the finding — drop it.
    conventions this repo's code follows; they help you spot AI-generated
    regions that violate the repo's idiom.
 4. **For each section** in the schema, scan the diff and add findings
-   via `analysis-add-finding.sh`. Categorical scope rules below.
-5. **Call `analysis-set-verdict.sh`** with the change summary
+   via `tim understanding-check analysis add-finding`. Categorical scope rules below.
+5. **Call `tim understanding-check analysis complete`** with the change summary
    (≤300 chars) and why-it-changed (≤300 chars). This marks your work
    done.
 
@@ -105,7 +105,7 @@ before scanning the diff.
 ### Worked example 1 — keyDesignDecision (good)
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
+tim understanding-check analysis add-finding \
     EUDPA-XXXXX \
     --repo trade-imports-animals-backend \
     --section keyDesignDecisions \
@@ -121,7 +121,7 @@ choice the author should be able to defend.
 ### Worked example 2 — aiSuspectedRegion (good)
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
+tim understanding-check analysis add-finding \
     EUDPA-XXXXX \
     --repo trade-imports-animals-frontend \
     --section aiSuspectedRegions \
@@ -147,7 +147,7 @@ the AI-boilerplate smell.
 ```
 
 If `LegacyParser.java:200-260` is not part of this PR's diff, this is
-out of scope. The `analysis-add-finding.sh` helper won't catch this
+out of scope. The `tim understanding-check analysis add-finding` command won't catch this
 (it has no diff context); your discipline is to skip it.
 
 ## Common failure modes

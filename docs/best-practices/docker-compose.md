@@ -192,4 +192,4 @@ AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
 ```
 
 **5. Mounting source as a volume without rebuilding when dependencies change**
-`tim docker dev` mounts `src/` for hot-reload, but a dependency change (`package.json`, `pom.xml`) needs a rebuild: `./scripts/stack/dev-service.sh rebuild <service>`, or `tim docker dev` again. See [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#--dev-caveats).
+`tim docker dev` mounts `src/` for hot-reload, but a dependency change (`package.json`, `pom.xml`) needs a rebuild: `tim docker service rebuild <service>`, or `tim docker dev` again. See [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#--dev-caveats).

@@ -4,9 +4,8 @@ import { TimError } from '../errors.js'
 
 /**
  * The checkout `tim spec lint` reads the Behaviour Spec from. Defaults to
- * the workspace root; `--root` overrides it so a run against a worktree
- * (`journey-builder` writes into `workareas/journey-builder/<run>/workspace-worktree`)
- * validates that tree instead of silently falling back to this checkout.
+ * the workspace root; `--root` overrides it so a run against another
+ * checkout validates that tree instead of silently falling back to this one.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot

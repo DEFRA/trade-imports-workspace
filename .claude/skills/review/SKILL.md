@@ -35,9 +35,9 @@ by name via the Task tool.
 
 Per-repo state lives in
 `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXX/items.{repo}.json`
-— canonical JSON, mutated only via `review-*.sh` helpers. The
+— canonical JSON, mutated only via `tim review` commands. The
 `## Items` markdown table in `review.{repo}.md` is a rendered view
-(via `render-items.sh`). See `assets/items-table.md` for the JSON
+(via `tim review items render`). See `assets/items-table.md` for the JSON
 schema and allowed Disposition/Status values.
 
 ## When to use
@@ -45,7 +45,7 @@ schema and allowed Disposition/Status values.
 | Trigger | What to follow |
 |---------|----------------|
 | "review EUDPA-X" / "re-review EUDPA-X" / "refresh review" / "check fixes" | this SKILL.md — Fresh + Refresh sections |
-| "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-review.sh dispatches on `--local` |
+| "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); `tim review start --local` |
 | "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` |
 | "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` |
 
@@ -99,17 +99,17 @@ repo checkout under `repos/<repo>/` directly — no Jira ticket, no GitHub
 PR, no `gh` call of any kind.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/start-review.sh --local REPO BRANCH
+tim review start --local REPO BRANCH
 ```
 
-This always runs `prepare-review-local.sh` (there is no separate refresh
+This always runs `tim review prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
 `~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
 — same shape as the ticket flow: `branch.md` in place of `ticket.md`,
 `.review-meta.json` (`"local": true`), `best-practices/{repo}.md` (via
-the same `detect-tech.sh` the ticket flow uses), and per-file
+the same `tim review detect-tech` the ticket flow uses), and per-file
 `file-reviews/{repo}/{safe_path}.review.json` placeholders.
 
 The changed-file list is `git -C <repo> diff --name-only <merge-base with
@@ -136,7 +136,7 @@ local-mode review without a human ever saying "review":
   whole branch's git diff), `fix` (`true` — also run
   `BATCH_IMPLEMENTOR.md` on any Fix-disposition items found; `false` —
   report only).
-- **Call shape**: run Local mode above (`start-review.sh --local REPO
+- **Call shape**: run Local mode above (`tim review start --local REPO
   BRANCH [--files ...]`) through the Fresh Review steps; when `fix:
   true`, continue into `BATCH_IMPLEMENTOR.md` for the items just found.
 - **One-line return** to the calling skill:
@@ -165,21 +165,31 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 
 ## Step 0: Start the review
 
+On a refresh (`review-index.md` already exists), first write each PR's
+changed files again, so List D sees files added since the last run. Run
+one `gh api` per entry in `.review-meta.json`'s `prs`, from the
+workspace root:
+
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/start-review.sh EUDPA-XXXXX
+gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/reviews/EUDPA-XXXXX/.prs/{repo}-{pr}.json
 ```
 
-Single dispatch — detects mode and runs the appropriate first-step
-setup script.
+Then start the review:
+
+```bash
+tim review start EUDPA-XXXXX
+```
 
 First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
-- `MODE: FRESH` → setup ran `prepare-review.sh`; go to Fresh Review,
-  Step 2.
-- `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
-  Refresh Review, Step R3.5.
+- `MODE: FRESH` → nothing is prepared yet. The output names the review
+  folder and its raw folder; go to Fresh Review, Step 1.
+- `MODE: REFRESH` → start ran the equivalent of
+  `tim review refresh scope --write-snapshot --json`; go to Refresh
+  Review, Step R3.5.
 
-**Pin the head you review.** For each PR in `.review-meta.json`, read
+**Pin the head you review.** Once the review is prepared, for each PR in
+`.review-meta.json`, read
 its current head:
 
 ```bash
@@ -192,14 +202,15 @@ Then read the review clone's head:
 git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} rev-parse HEAD
 ```
 
-If they differ, the clone is stale: run Step 0 again (it refetches)
-before any reviewer starts. Record the SHA you reviewed for each repo;
+If they differ, the clone is stale: on a fresh review run Step 1 again
+(prepare fetches the new head into the clone); on a refresh run Step 0
+again. Do this before any reviewer starts. Record the SHA you reviewed for each repo;
 Step 7 and the Completion Output state it. Local mode has no PR: record
 `git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse HEAD`
 instead.
 
-**On Claude Code auto-backgrounding:** for fresh reviews the setup
-clones repos in parallel but can still take 30–90s. If the Bash tool
+**On Claude Code auto-backgrounding:** for fresh reviews
+`tim review prepare` clones repos in parallel but can still take 30–90s. If the Bash tool
 auto-backgrounds it, **wait for the harness's `task-notification`
 (status: completed) — do NOT poll the PID file or `tail` the output**.
 The notification arrives automatically.
@@ -208,14 +219,66 @@ The notification arrives automatically.
 
 # FRESH REVIEW
 
-## Step 1: Workspace prepared (by Step 0)
+## Step 1: Prepare the workspace
 
-`start-review.sh` already ran `prepare-review.sh` and produced:
+GitHub stays on `gh`; tim reads what `gh` saves. Write the review folder
+`start` printed as `<review>` and its raw folder as `<raw>`. Run each
+command in its own Bash call.
 
-- `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/` with
-  ticket.md, repos/, file-reviews/ placeholders, and
-  `.review-meta.json` (detected tech + best-practices paths under
-  `~/git/defra/trade-imports-workspace/docs/best-practices/`).
+1. Save the ticket's pull requests:
+
+   ```bash
+   gh search prs EUDPA-XXXXX --owner DEFRA --json number,title,repository,url,state,createdAt > <raw>/prs.json
+   ```
+
+   For a branch with no ticket, skip `tim review start`: the review
+   folder is `workareas/reviews/<branch>`, with a leading `feature/`
+   dropped and each `/` as `-`, so make its `.raw` folder yourself.
+   Search by the branch head instead (no `createdAt`), and pass `--branch <branch> --desc "<what it does>"` in
+   place of the ticket in the two `tim review prepare` calls below:
+
+   ```bash
+   gh search prs head:<branch> --owner DEFRA --json number,title,repository,url,state > <raw>/prs.json
+   ```
+
+2. List the pull request to review in each repo. Each line is
+   `<repo> <number>`:
+
+   ```bash
+   tim review prepare EUDPA-XXXXX --select
+   ```
+
+3. For each line, save its state, its changed files and its diff. Do not
+   skip a line: a repo with no saved state is left out of the review.
+
+   ```bash
+   gh pr view <number> --repo DEFRA/<repo> --json files,mergedAt,mergeCommit,headRefOid > <raw>/<repo>.json
+   ```
+
+   ```bash
+   gh api repos/DEFRA/<repo>/pulls/<number>/files --paginate --slurp > <review>/.prs/<repo>-<number>.json
+   ```
+
+   ```bash
+   gh pr diff <number> --repo DEFRA/<repo> > <review>/.diffs/<repo>.diff
+   ```
+
+   Make the `.prs/` and `.diffs/` folders first if they are missing.
+
+4. Prepare the workspace:
+
+   ```bash
+   tim review prepare EUDPA-XXXXX
+   ```
+
+   It reads `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`, and writes
+   `ticket.md` (the ticket, its comments and the Confluence pages it
+   links), clones each pull request's merge commit (or head, when open)
+   into `repos/`, writes `best-practices/{repo}.md`, `.review-meta.json`
+   (detected tech and best-practices paths under
+   `~/git/defra/trade-imports-workspace/docs/best-practices/`), a
+   `file-reviews/` placeholder for each changed file and the per-repo
+   stubs, then removes the raw folder.
 
 Proceed to Step 2.
 
@@ -246,14 +309,23 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/re
 ```
 
 The reviewer writes findings to the per-file JSON placeholder via the
-`file-review-add-item.sh` / `file-review-set-verdict.sh` helpers — no
+`tim review file add` / `tim review file verdict` commands — no
 markdown, no placeholder path needed in the spawn prompt.
 
 ## Step 3: Verify Coverage
 
+First write each PR's changed files, so the gate checks the PR as it
+is now. Run one `gh api` per entry in `.review-meta.json`'s `prs`, from
+the workspace root, then the gate:
+
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/verify-coverage.sh EUDPA-XXXXX
+gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/reviews/EUDPA-XXXXX/.prs/{repo}-{pr}.json
+tim review verify files EUDPA-XXXXX
 ```
+
+Make the `.prs/` folder first if it is not there. The gate refuses a PR
+with no `.prs/` file and names the `gh api` command to run. A review with
+no PRs (Local mode) has nothing to check.
 
 **Do NOT proceed to Step 4 until 100% coverage.**
 
@@ -272,7 +344,11 @@ Write _consistency-check.md for every repo listed.
 ```
 
 Wait for completion. Verify `_consistency-check.md` exists for every repo
-before proceeding.
+before proceeding:
+
+```bash
+tim review verify consistency EUDPA-XXXXX
+```
 
 ## Step 5: Create Repository Summaries
 
@@ -288,18 +364,18 @@ per-file JSONs and the diff.
 # Write items.{repo}.json from per-file .review.json (initial population).
 # Globally renumbers IDs across the repo's files; preserves no prior
 # disposition/status — call this ONCE per repo at FRESH Step 5.
-~/git/defra/trade-imports-workspace/tools/review/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --write-items
+tim review aggregate EUDPA-XXXXX --repo {repo} --write-items
 
 # File Analysis Summary table (markdown)
-~/git/defra/trade-imports-workspace/tools/review/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --section file-summary
+tim review aggregate EUDPA-XXXXX --repo {repo} --section file-summary
 
 # ## Items markdown view (rendered from items.{repo}.json)
-~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo}
+tim review items render EUDPA-XXXXX --repo {repo}
 ```
 
 **Then reconcile the items before you render them** (Step 5a below).
 Once `review.{repo}.md` is written from the skeleton, run
-`render-items.sh EUDPA-XXXXX --repo {repo} --write` to put the table in
+`tim review items render EUDPA-XXXXX --repo {repo} --write` to put the table in
 it. Never paste the table by hand or splice it in with a script of your
 own.
 
@@ -310,14 +386,15 @@ and Reuse" and "Statements Made Untrue" in each repo's
 `_consistency-check.md`, add an item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
+tim review items add EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
 ```
 
 A "Naming and Reuse" row is `naming`, or `duplication` when it names a
 second copy of something. A "Statements Made Untrue" row is `comments`.
 
 **2. Merge findings that share one root.** Read
-`review-items.sh EUDPA-XXXXX --repo {repo} --json` across every repo.
+`tim review items list EUDPA-XXXXX --repo {repo} --json` (the items
+are `result`) across every repo.
 Group items whose Musts would each add or change the same rule, guard,
 format or name in a different place. Signs of one root:
 
@@ -333,7 +410,7 @@ different ways.
 For each group of two or more, add one "decide the owner" item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
+tim review items add EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
 ```
 
 The owner item is `duplication` when its members are copies of one
@@ -342,16 +419,16 @@ rule, and `structure` otherwise. Its issue always starts `One rule,`.
 Then close each member with a pointer to it:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
+tim review items mark EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
 ```
 
 Run each call as its own Bash call. A finding with no partner stays as
 it is.
 
 After Step 5, the canonical state is `items.{repo}.json`. Walker /
-batch implementor / refresh tools mutate it via `review-*.sh`. The
+batch implementor / refresh tools mutate it via `tim review` commands. The
 `## Items` markdown view in `review.{repo}.md` is regenerated by
-`render-items.sh --write` whenever the JSON changes.
+`tim review items render --write` whenever the JSON changes.
 
 **Skeleton:**
 
@@ -365,7 +442,7 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 ## Summary
 [2-3 sentences about changes in this repository]
 
-<!-- paste output of `aggregate-file-reviews.sh ... --section file-summary` here -->
+<!-- paste output of `tim review aggregate ... --section file-summary` here -->
 
 ## Positive Observations
 [What was done well]
@@ -378,7 +455,7 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 **Overall Risk:** Low / Medium / High
 **Rationale:** [One sentence]
 
-<!-- items table: `render-items.sh EUDPA-XXXXX --repo {repo} --write` puts it here.
+<!-- items table: `tim review items render EUDPA-XXXXX --repo {repo} --write` puts it here.
      Full schema and `|` escape rules: assets/items-table.md.
      Disposition / Status / Notes start blank — walker fills them. -->
 
@@ -387,7 +464,7 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 ```
 
 Skip the `review.{repo}.md` summary if only one repository is
-involved. Never skip `--write-items`, Step 5a or `render-items.sh`.
+involved. Never skip `--write-items`, Step 5a or `tim review items render`.
 
 ## Step 6: Write Index
 
@@ -455,18 +532,18 @@ This runs after Step 6 because the comment carries the verdict from
 Look up the `gh` user once:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/whoami.sh
+gh api user --jq .login
 ```
 
 Then, for each PR in `.review-meta.json`, look up its author:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/pr-author.sh {repo} {pr}
+gh pr view {pr} --repo DEFRA/{repo} --json author --jq .author.login
 ```
 
 **Before every post, check the head again.** Run the `gh pr view …
 --json headRefOid` call from Step 0 for that PR, immediately before its
-`share-review.sh` call. If the head has moved since the SHA you pinned:
+`tim review share` call. If the head has moved since the SHA you pinned:
 
 - run a refresh review (Step 0 again) and post that instead, or
 - post with a first line that names the SHA reviewed and says newer
@@ -477,11 +554,20 @@ against a head that has moved. An author can push several commits
 during one long review. Every posted comment names the commit it
 reviewed.
 
+`tim review share` renders the comment body to a file and prints the
+`gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}` command that
+posts it. Pass the login you looked up as `--reviewer`. Run the printed
+`gh pr comment` command; its output is the comment URL. When a body
+passes GitHub's 65536-character limit, `tim review share` stops and says
+so: run it again with `--summary` to post counts in place of the item
+table.
+
 **PRs authored by you** — post the review as a comment. No prompt, no
 handoff branch: the review state is already in your workspace.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/share-review.sh EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only
+tim review share EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only --reviewer {login}
+gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}
 ```
 
 **PRs authored by someone else** — show the user a per-PR table and
@@ -497,14 +583,16 @@ On `Y`, post the comment and push the handoff branch they walk the
 review from:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/share-review.sh EUDPA-XXXXX --repo {repo} --pr {pr}
+tim review share EUDPA-XXXXX --repo {repo} --pr {pr} --reviewer {login}
+gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}
 ```
 
 On `n`, skip that PR.
 
 Always pass both `--repo` and `--pr` — PR numbers repeat across repos.
-Run one `share-review.sh` call per PR, sequentially: handoff runs
-switch the workspace branch and must not overlap.
+Run one `tim review share` call per PR, sequentially: handoff runs
+switch the workspace branch and must not overlap. A handoff refuses to
+run while the workspace has changes outside `workareas/shared/`.
 
 Capture every PR comment URL, and the handoff branch if one was pushed,
 for the Completion Output.
@@ -548,13 +636,13 @@ Handoff branch: chore/EUDPA-XXXXX (pushed to workspace remote)
 
 Next: run `walk review EUDPA-XXXXX` to triage items. (Don't hand-edit
 the markdown items table — it's rendered from items.{repo}.json by
-render-items.sh and gets overwritten.)
+tim review items render and gets overwritten.)
 ```
 
 **Bulk-marking shortcut:** the markdown `## Items` table in
 `review.{repo}.md` is a rendered view of `items.{repo}.json` —
-hand-edits there get overwritten by the next `render-items.sh`.
-To pre-decide items before walking, call `review-mark.sh` directly
+hand-edits there get overwritten by the next `tim review items render`.
+To pre-decide items before walking, call `tim review items mark` directly
 for each (or run `walk review EUDPA-XXXXX` and rattle through with
 F / W / D keystrokes — that's normally faster). The walker only
 shows items with `disposition: null`, so pre-marked items are
@@ -570,8 +658,11 @@ after further work or merge conflicts.
 
 ## Step R1-R3: Refresh scope built (by Step 0)
 
-`start-review.sh` already ran `refresh/scope.sh --write-snapshot` and
-emitted a JSON object on stdout. Read it from there.
+`tim review start` already ran the equivalent of
+`tim review refresh scope EUDPA-XXXXX --write-snapshot --json` and printed
+its JSON envelope after the `MODE:` line. The scope is the envelope's
+`result`. A warning on stderr names any PR whose `.prs/` file is missing:
+List D leaves that PR out, so write it (Step 0) and run Step 0 again.
 
 Each `repos[]` entry has `prior_sha`, `current_sha`, `no_changes`,
 and `lists.{A,B,C,D}`:
@@ -579,7 +670,7 @@ and `lists.{A,B,C,D}`:
 - **List A** — `[{ file, old_sha, new_sha }]` — file changed in window, not merge-resolved
 - **List B** — `[{ id, file, line, issue, fix, disposition, status, ... }]` — open items whose file did *not* change
 - **List C** — `[{ file, merge_sha, old_sha, new_sha }]` — hand-resolved merge files (non-trivial resolution)
-- **List D** — `[{ file }]` — PR files lacking a `.review.md`
+- **List D** — `[{ file }]` — PR files lacking a `.review.json`
 
 `prior_sha` is the most recent re_review snapshot's `current_commit` that
 differs from today's HEAD; falls back to `prs[].commit` on the first
@@ -599,8 +690,10 @@ SHA for the refresh summary.
 ## Step R3.5: Load Full Item Inventory
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --json
+tim review items list EUDPA-XXXXX --json
 ```
+
+The items are the envelope's `result`.
 
 Use this when reconciling agent results in R6:
 
@@ -609,7 +702,7 @@ Use this when reconciling agent results in R6:
 - `Fix` + `Not Done` (and `Discuss`) → still open.
 - Blank disposition → pending (walker will pick up; should appear in List B).
 
-Deleted files: mark their items as `Auto-Resolved` via `review-mark.sh`.
+Deleted files: mark their items as `Auto-Resolved` via `tim review items mark`.
 
 ## Step R4: Re-review Files
 
@@ -667,10 +760,10 @@ consolidated items file and re-render the markdown view:
 ```bash
 # Append new findings from .review.json files; emit Fix+Done
 # spot-check advisory for refreshed files (potential regressions).
-~/git/defra/trade-imports-workspace/tools/review/refresh/reconcile.sh EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
+tim review reconcile EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
 
 # Re-render the ## Items markdown view from items.{repo}.json
-~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo} --write
+tim review items render EUDPA-XXXXX --repo {repo} --write
 ```
 
 Between the two calls, run Fresh Step 5a part 2 (merge findings that
@@ -684,12 +777,12 @@ regressions and net-new findings. Items that exist in items.json and
 are still present in the code are NOT re-reported (the persona
 instructs this). The reconciler simply appends every todo it finds.
 
-`/tmp/refresh-summary-{repo}.json` shape:
+`/tmp/refresh-summary-{repo}.json` is tim's envelope. Its `result`:
 ```json
 {
   "added_count": N,
   "added": ["file:line [severity] issue", ...],
-  "added_ids": [12, 13, ...],
+  "added_ids": ["12", "13", ...],
   "spot_check": [{ "id": 6, "file": "...", "line": 42, "issue": "...", "notes": "abc1234" }, ...],
   "skipped_already_reconciled": N,
   "skipped_unreviewed": N
@@ -764,28 +857,38 @@ Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/revie
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/review/`:
-
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
-| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
-| `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
-| `verify-coverage.sh` | Fresh Step 3 coverage gate |
-| `verify-consistency.sh` | Fresh Step 4 consistency gate |
-| `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |
-| `diff-since-review.sh` | Refresh helper — per-file diff between snapshot SHA and HEAD |
-| `review-items.sh` | Walker / batch / refresh — list items with filters |
-| `review-mark.sh` | Set Disposition (auto-sets Status) |
-| `review-set-status.sh` | Set Status only (after fix attempt) |
-| `review-add-item.sh` | Append a newly-found violation; returns the new ID |
-| `review-counts.sh` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
-| `aggregate-file-reviews.sh` | Fresh Step 5 — write `items.{repo}.json` from per-file `.review.json` files; emit File Analysis Summary / Items markdown |
-| `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
-| `render-items.sh` | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` |
-| `file-review-init.sh` / `file-review-add-item.sh` / `file-review-set-verdict.sh` | Per-file JSON helpers used by the FILE_REVIEWER persona |
-| `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
-| `refresh/reconcile.sh` | Refresh Step R5 — fold per-file `.review.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |
-| `refresh/pull-repos.sh` | Refresh helper — pin PR-ref refspec, fetch + detach per repo (origin/main for merged PRs) |
-| `refresh/list-merge-resolved.sh` | Refresh helper — hand-resolved merge files (List C) |
-| `refresh/list-coverage-gaps.sh` | Refresh helper — PR files lacking a `.review.md` (List D) |
+| `tim review start EUDPA-XXXXX` | Step 0 — say MODE: FRESH (raw folder ready) or MODE: REFRESH (refresh scope built); `--local REPO BRANCH [--files ...]` for Local mode |
+| `tim review prepare EUDPA-XXXXX [--select]` | Fresh Step 1 — `--select` lists the PR per repo to save with gh; then it builds the workspace from what gh saved, seeding best-practices from `assets/routing.json`. `--branch B [--desc D]` for a branch with no ticket |
+| `tim review prepare --local REPO BRANCH [--files F1,F2]` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
+| `tim review share EUDPA-XXXXX --repo R --pr N --reviewer LOGIN` | Fresh Step 7 — render the PR comment body for `gh pr comment` to post; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote; `--summary` for counts in place of the item table |
+
+The refresh helpers go through `tim review refresh` (`--json` puts the
+output in the envelope's `result`):
+
+| Command | Purpose |
+|---|---|
+| `tim review refresh scope EUDPA-XXXXX [--repo R] [--no-pull] [--write-snapshot]` | Refresh Steps R1-R3 — pull, then Lists A/B/C/D. Prints a summary; pass `--json` for the lists |
+| `tim review refresh pull EUDPA-XXXXX [--repo R]` | Pin PR-ref refspec, fetch + detach per repo (origin/main for merged PRs) |
+| `tim review refresh merge-resolved {repo-dir} {prior} {head}` | Hand-resolved merge files (List C) |
+| `tim review refresh gaps EUDPA-XXXXX --repo R --pr N` | PR files lacking a `.review.json` (List D), from `.prs/{repo}-{pr}.json` |
+| `tim review file-diff {file} --ticket EUDPA-XXXXX --repo R` | One file's hunks from the cached PR diff; `--stdin` filters a piped `gh pr diff` |
+
+The items ledger and the per-file review JSON go through `tim review`
+(`--json` puts the output in the envelope's `result`):
+
+| Command | Purpose |
+|---|---|
+| `tim review items list` | Walker / batch / refresh — list items with filters (`--json`: the items are `result`) |
+| `tim review items mark` | Set Disposition (auto-sets Status) |
+| `tim review items status` | Set Status only (after fix attempt) |
+| `tim review items add` | Append a newly-found violation; returns the new ID |
+| `tim review items counts` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
+| `tim review file init` / `add` / `verdict` | Per-file JSON helpers used by the FILE_REVIEWER persona |
+| `tim review verify files` | Fresh Step 3 coverage gate — reads each PR's changed files from `.prs/{repo}-{pr}.json`, which `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` writes |
+| `tim review verify consistency` | Fresh Step 4 consistency gate |
+| `tim review verify style` | Cross-domain — style-review coverage check (used by code-style) |
+| `tim review aggregate` | Fresh Step 5 — `--write-items` writes `items.{repo}.json` from per-file `.review.json` files; emits File Analysis Summary / Items markdown |
+| `tim review items render` | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` |
+| `tim review reconcile` | Refresh Step R5 — fold per-file `.review.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |

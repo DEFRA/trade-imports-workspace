@@ -141,8 +141,8 @@ any premise we now know is wrong rather than preserving it.
 ## Jira wiki markup
 
 Every workspace path that writes a description or comment
-(`tim jira create`, `tools/jira/create-ticket.sh`,
-`tools/jira/update-ticket.sh`, `tools/jira/add-comment.sh`) sends the
+(`tim jira create`, `tim jira update`, `tim jira comment`)
+sends the
 text raw to Jira's wiki renderer. Markdown does not work: `# Heading`
 renders as a numbered list, `**bold**` keeps its asterisks, and
 backticks print as backticks. Write wiki markup from the start.
@@ -168,7 +168,7 @@ Escape these, or Jira renders an error span or a broken table:
   `{noformat}` block.
 
 Check every write. Run
-`~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-X full > <file>`,
+`tim jira ticket EUDPA-X --rendered > <file>`,
 then search the file for `class="error"`. Any match is an unescaped
 bracket.
 
@@ -185,7 +185,7 @@ project = EUDPA AND status changed TO Done DURING ("<from>", "<to + 1 day>")
 ```
 
 The upper bound is exclusive, so add a day. Run it with
-`~/git/defra/trade-imports-workspace/tools/jira/search.sh "<jql>"`.
+`tim jira search --jql "<jql>" --limit 500`.
 
 ### Statuses and transitions
 
@@ -199,14 +199,14 @@ There is no "In Dev" transition; "In Progress" is the nearest.
 
 There is no "Won't Do" transition. `CLOSED` is not a substitute: every
 `CLOSED` ticket on EUDPA carries resolution `Done`, so it reads as
-delivered. `tools/jira/transition-ticket.sh` sends no fields, so it
-cannot set a resolution. `tim jira transition EUDPA-X "<status>"
---resolution "<name>"` can, where the transition's screen accepts one.
+delivered. `tim jira transition EUDPA-X "<status>"
+--resolution "<name>"` can set a resolution, where the transition's
+screen accepts one.
 
 To drop a ticket:
 
 1. Post the reasoning as a comment with
-   `~/git/defra/trade-imports-workspace/tools/jira/add-comment.sh EUDPA-X -f <file>`.
+   `tim jira comment EUDPA-X --file <file> --confirm`.
 2. Set resolution "Won't Do" in the Jira UI, or through the Atlassian
    MCP's `transitionJiraIssue` with a `fields` payload where the
    organisation has authorised it.
@@ -215,22 +215,21 @@ To drop a ticket:
 
 ### Assigning a ticket
 
-`tools/jira/create-ticket.sh -a` assigns a new ticket to you.
-`tim jira assign EUDPA-X <accountId|me>` assigns an existing ticket. It is
-a dry run until you add `--confirm`.
+`tim jira assign EUDPA-X <accountId|me>` assigns a ticket, a new one
+included. It is a dry run until you add `--confirm`.
 
 ### Links
 
 For "Blocks", use `tim jira link EUDPA-X --blocks <key>` or
 `tim jira link EUDPA-X --blocked-by <key>`. It reads the link back and
-reports the direction Jira stored. `tools/jira/link-tickets.sh` also
-works, and reads left to right:
+reports the direction Jira stored. It reads left to right:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/link-tickets.sh EUDPA-181 Blocks EUDPA-183
+tim jira link EUDPA-181 --blocks EUDPA-183 --confirm
 ```
 
-That makes EUDPA-181 block EUDPA-183.
+That makes EUDPA-181 block EUDPA-183. For any other relationship, use
+`tim jira link EUDPA-X relates <key>`.
 
 If you call the REST API directly, the field names mislead. To record
 "EUDPA-183 is blocked by EUDPA-181", send the **blocked** ticket as
@@ -245,8 +244,8 @@ If you call the REST API directly, the field names mislead. To record
 ```
 
 Check the direction after every link with
-`~/git/defra/trade-imports-workspace/tools/jira/delete-link.sh EUDPA-183 --list`.
-Remove a wrong link with `delete-link.sh --id <id>` and create it again.
+`tim jira unlink EUDPA-183 --list`.
+Remove a wrong link with `tim jira unlink --id <id> --confirm` and create it again.
 Check other directional types (Duplicates, Causes) the same way.
 
 ## EUDPA project shape
@@ -264,17 +263,17 @@ via the recipe in [Listing active epics](#listing-active-epics).
 ### Listing active epics
 
 When the user needs help picking a parent epic, list the open epics
-on the EUDPA board via `tools/jira/list-board-epics.sh`:
+on the EUDPA board via `tim jira epics --board`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/list-board-epics.sh 13780
+tim jira epics --board 13780
 ```
 
-That prints `KEY — summary` lines for each open epic. Pass `json`
-as a second arg for `[{key, summary, done}]`, or `--include-done`
-to include closed epics.
+That prints `KEY — summary` lines for each open epic. Add `--json`
+for `{board, epics: [{key, summary, done}]}` in the envelope's
+`result`, or `--include-done` to include closed epics.
 
-Pair with `tools/jira/ticket.sh EUDPA-X summary` for verification
+Pair with `tim jira ticket EUDPA-X` for verification
 (Step 1.5 of the skill does this automatically).
 
 ## Field-default modifiers (opt-in)

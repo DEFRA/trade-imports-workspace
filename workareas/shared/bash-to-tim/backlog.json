@@ -3621,14 +3621,36 @@
       ],
       "risk": "High: it installs, commits and rolls back in real repos. Keep every rollback path and the runner exit codes 0/1/3.",
       "proof": "Fixture git repo scenarios (green, failing tests, audit red, allowlisted, hook refusal) compared against bash on identical copies: git log, state and exit codes.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e51226d14d009ab49806a06bfaf17d66dae8e3e5"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "3d492890"
+          }
+        ],
+        "checks": [
+          "verifier finding 1 fixed: tim/src/commands/npm/upgrade.js registerRunAuto now accepts --discover and --no-discover as hidden no-op options, as the Bash did. A new test in tim/src/commands/npm/upgrade.test.js runs run-auto with each flag and without it and checks the exit code, stdout and stderr match once the temp root is normalised. Mutation probe: with the two options removed, the test went red (exit 1). With them restored it passes.",
+          "verifier finding 2 fixed: the tools/npm/start-upgrade.sh phase2 comment no longer mentions --no-discover.",
+          "tim-unit: PASS. npm --prefix tim test gave 422 files passed and 28 skipped, and 6324 tests passed.",
+          "tim-lint: PASS. npm run lint and npm run format:check are both clean.",
+          "Earlier builder checks (parity 63/63, no-callers, no new fixed paths) are unaffected: the fix only adds hidden options and changes a comment."
+        ],
+        "deviations": [
+          "The fix is a new commit (3d492890) on top of e51226d1, not an amend.",
+          "The builder's other deviations still apply: nvm-wrapped npm, real repo path in the next-step hints, --repo accepted, unknown options refused with exit 1, --json on refresh-lockfile and reset-overrides, and the fixed /tmp log names kept."
+        ]
+      }
     },
     {
       "id": "P68",

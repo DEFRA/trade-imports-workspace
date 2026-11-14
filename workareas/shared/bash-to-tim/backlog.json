@@ -3144,7 +3144,7 @@
       ],
       "risk": "Medium: tim build gate refreshes through dev-service every row. Adding --build to bounce closes the shared-image-tag sharp edge, and is the one intentional argv difference.",
       "proof": "Golden argv diffs against the traces from P58. A live gate run touching one frontend file gives the same refresh log as before.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -3152,7 +3152,41 @@
         "no-callers",
         "stack-smoke"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "f2ac7ee7"
+          },
+          {
+            "repo": "trade-imports-ins-tests",
+            "sha": "dbef919"
+          },
+          {
+            "repo": "trade-imports-animals-backend",
+            "sha": "f3588fc"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS. npm --prefix tim test: 397 files passed, 24 skipped; 5986 tests passed.",
+          "tim-lint: PASS. npm run lint and npm run format:check both exit 0.",
+          "parity: PASS. tim/src/stack/services.test.js and restart.test.js run tim against a staged workspace with the fake docker. They compare exit code, stdout, stderr, the Docker call sequence, concurrent calls and staged files with the P58 goldens (bounce-backend 'no args', dev-service rebuild and restart, restart-stack -d). The only difference is the intended --build on bounce-backend's compose up. A mutation probe (replacing --build with --pull in bounceBackend) turns the bounce golden test red. Extra tests: a failing stop still reaches the start; a failing restart stops before the wait; help calls no Docker; bad arguments exit 2 with no Docker calls.",
+          "no-callers: PASS. git grep of the workspace and every repos/* finds bounce-backend.sh, dev-service.sh and restart-stack.sh only in the P58 golden fixtures and their skipIf recorders (bash-traces.golden.test.js, plus the compose.test.js title that reads those fixtures). In repos/, the only hits are trade-imports-address-book's review history (docs/review/EUDPA-58-*). The live READMEs in animals-backend and ins-tests are updated. No .claude/settings*.json allowlist names the scripts.",
+          "fixed-path / new .sh: PASS. The diff adds no git/defra or $HOME/git path and no .sh file. It deletes 3.",
+          "stack-smoke: NOT RUN. An unleased stack started by hand is still up (tim docker lease status shows lease null and 21 containers), so lease acquire would refuse it and taking it down could wipe someone's stack. This is recorded in settings-followups.md under P59, with the live gate-refresh log comparison the row's proof asks for."
+        ],
+        "deviations": [
+          "tim docker service now refuses under a lease or on another clone's stack, like the other stack commands, unless given --force. The build gate calls the service actions in-process and so skips that check.",
+          "bounce-backend and service use commander for parsing. A bad argument exits 2 with commander's error text instead of the Bash usage text. An unknown service action exits 2 before the 'docker version' call that dev-service.sh made first.",
+          "The --json result of up, dev, down, restart and bounce-backend now carries 'command' instead of 'script'. Nothing reads that field. The error message still names the step that failed (for example 'run-stack.sh exited 5' or 'docker compose exited 6').",
+          "The build gate's refresh failure text says '(docker compose exited N)' instead of '(dev-service.sh exited N)'. Its log header is '$ tim docker service <action> <services>' instead of the bash command line. The heading and docker output that follow are unchanged.",
+          "restart runs stop-stack.sh and run-stack.sh directly. Like restart-stack.sh before it, it does not first bring Docker Desktop back, which tim docker up does.",
+          "The tim docker menu now launches through the shared runStackCommand. The prop launchStackScript became launchStackCommand, and the menu labels for restart and bounce-backend name the tim commands.",
+          "runToLog gained an append option. test-support/fake-docker.js gained recordedStackScenario and recordTimStackRun. bash-help.test.js dropped the help cases for the deleted scripts, which tim's own tests now cover.",
+          "trade-imports-animals-backend had no chore/NO_JIRA-bash-to-tim branch, so I created it from origin/main (cb2a456) for its README fix. Its local main was behind, at f9ccb3f.",
+          "The run-stack.sh help line in scripts/stack/lib/flags.sh now names tim docker bounce-backend."
+        ]
+      }
     },
     {
       "id": "P60",

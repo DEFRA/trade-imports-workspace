@@ -53,6 +53,15 @@ Agents cannot edit `.claude/settings.json`.
     `tim/src/cli.js`, from before the launcher. It works again now that
     `cli.js` has its execute bit back, but `npm --prefix tim link` did not
     move it. `npm rm -g tim` then `npm --prefix tim link` does.
+11. **Plants prototype: a red test and a stale README line.**
+    `repos/trade-imports-plants-prototype/README.md:300` still names
+    `run-stack.sh`. Fixing it needs a prototype commit, and the prototype's
+    pre-commit hook fails today: `ins-address-book.test.js` checks the
+    prototype against `trade-imports-ins-frontend`, whose barrel now
+    exports `addressTypeOfRole` and `keepRolesOfferedBy`. Either port
+    ins-frontend's typed address-book model into the prototype, or stop
+    the test tracking the sibling. That choice is for whoever owns the
+    prototype, so P62 leaves the line alone.
 
 ## Done
 

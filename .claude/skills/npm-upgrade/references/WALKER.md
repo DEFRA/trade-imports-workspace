@@ -111,7 +111,7 @@ tim npm packages set-status \
 (We use `failed` rather than introducing a new status or a `held`
 classification — failed + a reason starting "Deferred by walker:"
 carries the same "needs human attention later" signal, and
-`start-upgrade.sh --phase 3` lists those rows under `held`.)
+`tim npm upgrade --phase 3` lists those rows under `held`.)
 
 For `S`: do nothing — the package row stays as it is.
 

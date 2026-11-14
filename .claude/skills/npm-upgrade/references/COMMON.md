@@ -2,9 +2,8 @@
 
 Shared reference for all npm-upgrade phases.
 
-All scripts referenced below live at `~/git/defra/trade-imports-workspace/tools/npm/` per
-the parent SKILL.md's path-conventions preamble. The phase managers
-invoke them by absolute path.
+Every command below is a `tim` command. With `--json`, each gives its
+report as the JSON envelope's `.result`.
 
 ## Prerequisites
 
@@ -14,9 +13,9 @@ invoke them by absolute path.
 
 ## Scripts (cheat-sheet)
 
-| Script | Phase | Purpose |
+| Command | Phase | Purpose |
 |--------|-------|---------|
-| `start-upgrade.sh` | All | Single dispatcher (`--phase 0\|1\|2\|3\|4`) |
+| `tim npm upgrade` | All | Single dispatcher (`--phase 0\|1\|2\|3\|4`) |
 | `tim npm audit baseline` | 0, 2 | Run one repo's audit-ci check; report failing, allowlisted, stale and fixable-allowlisted advisories |
 | `tim npm audit allow` | 0–4 | Write or renew one `audit-ci.jsonc` allowlist entry (refuses an advisory with a fix, or an expiry over 3 months) |
 | `tim npm audit forget` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves) |

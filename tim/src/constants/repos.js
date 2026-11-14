@@ -74,6 +74,10 @@ const rosterFrom = (manifest) => {
     unsyncedRepos: namesWhere(
       manifest,
       (repo) => repo.workspaceBranchSync === false
+    ),
+    npmUpgradeDefaultRepos: namesWhere(
+      manifest,
+      (repo) => repo.npmUpgradeDefault
     )
   })
 }
@@ -88,7 +92,8 @@ const rostersByManifestPath = new Map()
  * @param {string} workspaceRoot
  * @returns {{reposDir: string, githubOrg: string, repos: string[],
  *   nodeRepos: string[], javaRepos: string[], unitTestExemptRepos: string[],
- *   upstreamRepos: Record<string, string>, unsyncedRepos: string[]}}
+ *   upstreamRepos: Record<string, string>, unsyncedRepos: string[],
+ *   npmUpgradeDefaultRepos: string[]}}
  * @throws {TimError} USAGE when no roster is found, or an `upstream` is malformed
  */
 export const rosterOf = (workspaceRoot) => {

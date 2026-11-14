@@ -31,7 +31,7 @@ export const REPO = 'trade-imports-animals-frontend'
 export const TESTS_REPO = 'trade-imports-ins-tests'
 export const RUN_FOLDER = `workareas/npm-upgrades/${RUN_ID}`
 
-const GIT_ENV = {
+export const GIT_ENV = {
   GIT_AUTHOR_NAME: 'Fixture',
   GIT_AUTHOR_EMAIL: 'fixture@example.com',
   GIT_COMMITTER_NAME: 'Fixture',
@@ -44,7 +44,7 @@ const GIT_ENV = {
 
 const jsonText = (value) => `${JSON.stringify(value, null, 2)}\n`
 
-const advisory = (ghsa, name, severity, range, title, extra = {}) => ({
+export const advisory = (ghsa, name, severity, range, title, extra = {}) => ({
   ghsa,
   package: name,
   severity,
@@ -101,7 +101,7 @@ const BASIC_FTP = advisory(
 )
 
 const GREEN = { report: reportOf(), exit: 0 }
-const FIXABLE_RED = { report: reportOf(BRACES), exit: 1 }
+export const FIXABLE_RED = { report: reportOf(BRACES), exit: 1 }
 const NO_FIX_RED = { report: reportOf(BASIC_FTP), exit: 1 }
 const NO_FIX_ALLOWED = { report: reportOf(BASIC_FTP), exit: 0 }
 const NO_REPORT = { report: 'audit-ci: registry offline', exit: 1 }
@@ -114,13 +114,13 @@ const REGISTRY = {
   minimatch: ['9.0.4']
 }
 
-const OVERRIDES = {
+export const OVERRIDES = {
   'brace-expansion': '^2.0.2',
   lighthouse: { '.': '12.0.0', ws: '^8.17.1' },
   'dead-pin': '1.0.0'
 }
 
-const OVERRIDE_RULES = [
+export const OVERRIDE_RULES = [
   advisory(
     'GHSA-3h5v-q93c-6h6q',
     'ws',
@@ -249,7 +249,7 @@ const packagesFileOf = (fixtureCase) => ({
   packages: fixtureCase.packages ?? [packageRow('lodash', '4.17.20', '4.17.21')]
 })
 
-const writeFakeBin = (home, fixtureCase) => {
+export const writeFakeBin = (home, fixtureCase) => {
   const bin = join(home, 'fake-bin')
   mkdirSync(bin, { recursive: true })
   const shim = (name, command) => {

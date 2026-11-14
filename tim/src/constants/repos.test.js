@@ -37,7 +37,7 @@ const fixtureManifest = {
   reposDir: 'checkouts',
   githubOrg: 'FIXTURE-ORG',
   repos: [
-    { name: 'fixture-web', stack: 'node' },
+    { name: 'fixture-web', stack: 'node', npmUpgradeDefault: true },
     {
       name: 'fixture-web-copy',
       stack: 'node',
@@ -78,7 +78,8 @@ describe('#rosterOf', () => {
       repos: ['fixture-web', 'fixture-web-copy', 'fixture-api'],
       unitTestExemptRepos: ['fixture-web-copy'],
       upstreamRepos: { 'fixture-web-copy': 'fixture-web' },
-      unsyncedRepos: ['fixture-web-copy']
+      unsyncedRepos: ['fixture-web-copy'],
+      npmUpgradeDefaultRepos: ['fixture-web']
     })
   })
 

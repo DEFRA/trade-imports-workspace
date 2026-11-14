@@ -340,3 +340,9 @@ No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/npm/upgrade-one-package.sh`, `refresh-lockfile.sh`,
 `run-automated-upgrades.sh`, `run-manual-upgrade.sh` or
 `reset-overrides.sh`; nothing to remove.
+
+## P68
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/start-upgrade.sh` or `tools/npm/README.md`; nothing to
+remove. `tools/npm/` is gone.

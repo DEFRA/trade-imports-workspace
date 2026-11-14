@@ -26,30 +26,31 @@ beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
 ## Step 1: Dispatcher — discover and pre-bake
 
 One call sets up everything: discovery, per-repo best-practices
-bundle, per-package context pre-bake, and emits a JSON spawn manifest.
+bundle, per-package context pre-bake, and gives the spawn manifest as
+the JSON envelope's `.result`.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch}
+tim npm upgrade {run-id} --phase 1 --branch {branch} --json
 ```
 
 Optionally narrow to a subset:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch} --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
+tim npm upgrade {run-id} --phase 1 --branch {branch} --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor --json
 ```
 
-Stdout shape (between sentinel lines):
+`.result` shape:
 
-```
-MANIFEST_BEGIN
-{"ticket":"EUDPA-X","repo":"...","package":"...","current":"...","target":"...","upgrade_type":"...","dependency_type":"...","context_baked":...,"context_missing":[...]}
-{"ticket":"EUDPA-X","repo":"...","package":"...",...}
-...
-MANIFEST_END
+```json
+[
+  {"ticket":"EUDPA-X","repo":"...","package":"...","current":"...","target":"...","upgrade_type":"...","dependency_type":"...","context_baked":...,"context_missing":[...]},
+  {"ticket":"EUDPA-X","repo":"...","package":"...",...}
+]
 ```
 
-Each manifest line is a complete spawn task for one PACKAGE_PLANNER
-subagent.
+Each entry is a complete spawn task for one PACKAGE_PLANNER subagent.
+A refusal (no green phase 0 covering every repo at its HEAD) gives
+`ok: false` with the reason in `errors[0].message`, and exit 1.
 
 ---
 

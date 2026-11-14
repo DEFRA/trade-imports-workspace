@@ -13,8 +13,8 @@ demand from the JSON.
 
 One file per repo. Initial population: `tim npm discover`.
 Subsequent mutations: walker, runners,
-PACKAGE_PLANNER workers — all via the `packages-*.sh` helpers under
-`tools/npm/`. Never hand-edit.
+PACKAGE_PLANNER workers — all via the `tim npm packages` helpers.
+Never hand-edit.
 
 Sister files in the same directory:
 
@@ -89,9 +89,9 @@ state lives in `packages.{repo}.json`.
 | `"done"` | Upgrade committed locally. `commit_sha` populated. | `tim npm packages set-status --status done --commit-sha SHA`. |
 | `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `tim npm packages set-status --status failed --failure-reason "..."`. |
 
-## Helpers (`tim npm packages` and the scripts under `tools/npm/`)
+## Helpers (`tim npm discover` and `tim npm packages`)
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
 | `tim npm discover` | Initial population from npm-check-updates; a re-run keeps each package's work |
 | `tim npm packages set-classification` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
@@ -123,7 +123,7 @@ unless noted. All are runtime cache under `workareas/` (gitignored).
 
 ### `{run-id}/phase0.json` (one per run, not per repo)
 
-Appended by `start-upgrade.sh --phase 0`. Phase 1 reads the last run;
+Appended by `tim npm upgrade --phase 0`. Phase 1 reads the last run;
 phase 3 reports the first and last as `audit_before` / `audit_after`.
 
 ```jsonc

@@ -581,6 +581,35 @@ tim npm reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend
   envelope with `--json`). Everything npm prints goes to a log under
   `workareas/npm-upgrades/<run>/<repo>/`.
 
+### `tim npm upgrade` — run one phase of an npm upgrade across its repos
+
+```bash
+tim npm upgrade EUDPA-500 --phase 0 --branch chore/EUDPA-500-npm
+tim npm upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json
+tim npm upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --allowlist-owner "Sam Farrington" --expiry-days 30
+tim npm upgrade EUDPA-500 --phase 3 --repo trade-imports-animals-frontend --json
+```
+
+- Without `--repo` it runs on every repo `repos.json` flags
+  `npmUpgradeDefault`. A repo with no checkout or no `package.json` is
+  skipped with a warning; with none left, every phase but 3 exits 1.
+  `--branch` refuses to run unless every repo is checked out on it.
+- Phase 0 runs `audit baseline` in each repo and adds the run to
+  `workareas/npm-upgrades/<run>/phase0.json`; it exits 1 when any repo is
+  red. Phase 1 refuses unless the last phase 0 run was green for every
+  repo at its current HEAD, then runs `discover`, `context
+best-practices` and `context prebake`, and lists one PACKAGE_PLANNER
+  task per unclassified package. Phase 2 runs `run-auto` in every repo
+  at once, keeps each one's output as `<repo>/phase2.log` and exits 1
+  unless every repo finished. Phase 3 gives the WALKER's handoff: manual
+  and failed automatic packages, the held ones, the allowlist and the
+  first and last phase 0 audits. Phase 4 runs `reset-overrides` in every
+  repo at once and exits 1 when any repo stopped.
+- Text mode prints each phase's report on stdout (phase 1's between
+  `MANIFEST_BEGIN` and `MANIFEST_END` lines) and its progress on stderr.
+  `--json` puts the report in the envelope's `result`; a refusal is an
+  error envelope and exits 1.
+
 ### `tim review` — the review skill's helpers
 
 ```bash

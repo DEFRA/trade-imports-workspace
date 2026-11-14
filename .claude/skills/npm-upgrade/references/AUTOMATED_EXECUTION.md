@@ -27,7 +27,7 @@ operator's attention.
 One call runs all repos in parallel and aggregates exit codes:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2 --branch {branch} --allowlist-owner "{owner}" --expiry-days {expiry-days}
+tim npm upgrade {run-id} --phase 2 --branch {branch} --allowlist-owner "{owner}" --expiry-days {expiry-days} --json
 ```
 
 For each package, in a repo that has `audit-ci.jsonc`,
@@ -57,7 +57,7 @@ failure rolls the refresh back and is reported in the runner's log
 upgrades stay committed. In trade-imports-ins-tests the E2E gate runs
 after the refresh.
 
-Stdout is one JSON object:
+The JSON envelope's `.result` is one object:
 
 ```json
 {

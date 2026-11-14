@@ -6,6 +6,11 @@ import {
   RUN_ID,
   stageUpgradeWorkspace
 } from '../../npm-upgrade/__fixtures__/npm-upgrade-workspace.js'
+import {
+  FRONTEND,
+  RUN_ID as START_RUN_ID,
+  stageStartUpgradeWorkspace
+} from '../../npm-upgrade/__fixtures__/npm-start-upgrade-workspace.js'
 
 const cliPath = fileURLToPath(new URL('../../cli.js', import.meta.url))
 const staging = []
@@ -92,6 +97,77 @@ describe('tim npm upgrade steps', () => {
     expect(JSON.parse(result.stdout)).toMatchObject({
       ok: true,
       result: { repo: REPO, status: 'no_change', commit: null, reason: null }
+    })
+  })
+})
+
+describe('tim npm upgrade', () => {
+  const unusedRegistry = 'http://127.0.0.1:9'
+
+  const upgradeIn = (fixtureCase, args) => {
+    const staged = stageStartUpgradeWorkspace(fixtureCase, unusedRegistry)
+    staging.push(staged)
+    return execa(
+      process.execPath,
+      [cliPath, '--workspace', staged.root, 'npm', 'upgrade', ...args],
+      { env: staged.env, extendEnv: true, reject: false }
+    )
+  }
+
+  test('Should describe the phases with an example in its help', async () => {
+    const result = await upgradeIn({}, ['--help'])
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain(
+      '  tim npm upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json'
+    )
+  })
+
+  test('Should give the phase 3 handoff as the result of a JSON envelope', async () => {
+    const result = await upgradeIn({}, [
+      START_RUN_ID,
+      '--phase',
+      '3',
+      '--repo',
+      FRONTEND,
+      '--json'
+    ])
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      ok: true,
+      result: {
+        ticket: START_RUN_ID,
+        manual_count: 0,
+        failed_auto_count: 0,
+        packages: [],
+        held: [],
+        allowlist: [],
+        audit_before: null,
+        audit_after: null
+      }
+    })
+  })
+
+  test('Should give a phase 1 refusal as a JSON error envelope and exit 1', async () => {
+    const result = await upgradeIn({}, [
+      START_RUN_ID,
+      '--phase',
+      '1',
+      '--repo',
+      FRONTEND,
+      '--json'
+    ])
+
+    expect(result.exitCode).toBe(1)
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: 'REFUSED',
+          message: `Refusing phase 1: no phase 0 run for ${START_RUN_ID}. Run --phase 0 first.`
+        }
+      ]
     })
   })
 })

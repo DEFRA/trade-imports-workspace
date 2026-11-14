@@ -22,10 +22,10 @@ worker) own implementation.
 ## Step 1: Dispatch — emit handoff manifest
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 3 --branch {branch}
+tim npm upgrade {run-id} --phase 3 --branch {branch} --json
 ```
 
-Stdout shape:
+The JSON envelope's `.result` shape:
 
 ```json
 {

@@ -58,7 +58,7 @@ extension conventions, and global rules shared by all phases.
 The workspace roster lives in one place —
 `~/git/defra/trade-imports-workspace/repos.json`. This skill covers the
 entries flagged `npmUpgradeDefault`, all checked out under
-`~/git/defra/trade-imports-workspace/repos/`. `start-upgrade.sh` reads
+`~/git/defra/trade-imports-workspace/repos/`. `tim npm upgrade` reads
 the same flag, so ask the roster rather than a copied list:
 
 ```bash
@@ -87,7 +87,7 @@ Parse `EUDPA-XXXXX` from the branch name (e.g.
 the user for the ticket and the branch name.
 
 Pass the branch to every dispatcher call as `--branch {branch}`.
-`start-upgrade.sh` then refuses to run if any repo is on another branch.
+`tim npm upgrade` then refuses to run if any repo is on another branch.
 
 ## Step 2: Branch Setup
 
@@ -132,7 +132,7 @@ root) and start green. A repo without one is red in phase 0, so phase
 them all and records the run in `{run-id}/phase0.json`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 0 --branch {branch}
+tim npm upgrade {run-id} --phase 0 --branch {branch}
 ```
 
 It exits 1 if any repo's audit fails, or an allowlisted advisory now
@@ -148,9 +148,9 @@ allowlist entry only with `tim npm audit allow` (see
 Follow references/DISCOVERY_AND_PLANNING.md. Run ID: {run-id}
 ```
 
-Phase 1 calls the dispatcher (`start-upgrade.sh --phase 1`) which
-runs discovery, pre-bakes per-package context, and emits a JSON spawn
-manifest. The persona fans out one PACKAGE_PLANNER subagent per
+Phase 1 calls the dispatcher (`tim npm upgrade --phase 1 --json`)
+which runs discovery, pre-bakes per-package context, and gives the
+spawn manifest as the envelope's `.result`. The persona fans out one PACKAGE_PLANNER subagent per
 manifest entry, then runs `tim npm packages verify` as the
 gate.
 
@@ -165,7 +165,7 @@ Phase 2?"
 Follow references/AUTOMATED_EXECUTION.md. Run ID: {run-id}
 ```
 
-Phase 2 calls the dispatcher (`start-upgrade.sh --phase 2`) which
+Phase 2 calls the dispatcher (`tim npm upgrade --phase 2 --json`) which
 fans out `tim npm run-auto` per repo in parallel and
 aggregates JSON status. Per-package demotions to manual happen
 automatically. Each package is audited after its tests; pass
@@ -188,8 +188,9 @@ proceeding. Each runner's log is at `{run-id}/{repo}/phase2.log`.
 Follow references/MANUAL_HANDOFF.md. Run ID: {run-id}
 ```
 
-Phase 3 calls the dispatcher (`start-upgrade.sh --phase 3`) which
-emits a JSON manifest of every manual (and failed-auto) package. The
+Phase 3 calls the dispatcher (`tim npm upgrade --phase 3 --json`)
+which gives, as the envelope's `.result`, a manifest of every manual
+(and failed-auto) package. The
 persona renders the operator report and hands off to the WALKER.
 
 ## Walker (manual triage)
@@ -210,7 +211,7 @@ Run on its own, once the upgrades are in, to take each repo back to
 no `overrides` and keep only the ones it can prove it needs:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 4 --branch {branch}
+tim npm upgrade {run-id} --phase 4 --branch {branch}
 ```
 
 Per repo (in parallel), `tim npm reset-overrides` does every trial in a
@@ -246,9 +247,9 @@ repo / single package / planning-only batches.
 - `references/MANUAL_UPGRADE_IMPLEMENTOR.md` — per-package atomic edit-test-commit-rollback worker (spawned by the WALKER on `I`).
 - `assets/packages-table.md` — canonical JSON schema for `packages.{repo}.json`.
 
-Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
+Commands:
 
-- `start-upgrade.sh` — single dispatcher (phase 0 / 1 / 2 / 3 / 4).
+- `tim npm upgrade` — single dispatcher (phase 0 / 1 / 2 / 3 / 4); `--json` gives each phase's report as the envelope's `.result`.
 - `tim npm audit baseline` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
 - `tim npm audit allow` — write or renew one `audit-ci.jsonc` allowlist entry.
 - `tim npm refresh-lockfile` — Phase 2 end-of-batch transitive refresh.

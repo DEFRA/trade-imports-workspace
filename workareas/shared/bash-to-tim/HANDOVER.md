@@ -53,7 +53,10 @@ It stops when any of these happens:
 
 - `maxRows` rows have landed
 - no row is left that it can build
-- two rows in a row are blocked
+- `maxBlockedInARow` rows in a row are blocked (default 4)
+
+A blocked row does not stop it: the loop moves on to the next row it can
+build. Everything waiting on Sam is listed in `NEEDS-SAM.md`.
 
 **E2E runs once, at the end, in GitHub Actions.** It never runs while the
 work is under way, locally or in CI. The pull requests stay as drafts
@@ -71,7 +74,8 @@ Workflow({ scriptPath: "<workspace>/workareas/shared/bash-to-tim/loop.js", args:
 ```
 
 `args` is optional. It accepts `workspace` (default
-`~/git/defra/trade-imports-workspace`), `branch` and `maxRows` (default 10).
+`~/git/defra/trade-imports-workspace`), `branch`, `maxRows` (default 10)
+and `maxBlockedInARow` (default 4).
 Launch it again to continue: it picks up from `backlog.json`.
 
 **On a new machine, you need:**

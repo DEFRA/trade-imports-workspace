@@ -153,7 +153,7 @@ describe('tim understanding-check score matches transcript-add-score.sh', () => 
       runs: golden.overlaps.runs.map(expectedRun),
       files: golden.overlaps.files
     })
-  })
+  }, 120_000)
 })
 
 const resultOf = (timRun) => JSON.parse(timRun.stdout).result

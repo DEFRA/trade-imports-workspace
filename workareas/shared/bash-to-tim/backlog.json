@@ -1872,7 +1872,7 @@
       ],
       "risk": "Medium. The file format is what other tools grep for (`^version:`, the confluence-page-id line). --clean deletes only <root>/docs/confluence, and still does so under --dry-run, as clean-docs.sh did. Other changes on purpose, on error paths only: an unset JIRA_BASE_URL (USAGE) exits 2 instead of the Bash 1. A missing JIRA_USER or JIRA_TOKEN (AUTH) still exits 1, as the Bash validate_env did. Both print the Confluence client's message in place of the Bash one ('Set JIRA_USER and JIRA_TOKEN to authenticate with Confluence.' in place of 'Error: JIRA_USER not set' or 'Error: JIRA_TOKEN not set'). Both are refused before anything is fetched or removed, so --clean no longer deletes the mirror before failing on the environment. An API error, such as an unknown root or a 401, 403 or 429 from Confluence, prints tim's client error ('getChildren(999): not found.') and exits 1, instead of the Bash 'Error [...]' lines, a jq error and exit 5. --page-id for a page never synced still exits 1, but now prints why ('No synced file found for page X under DIR ...') where the Bash printed nothing. A --page-id or --root-id with no page id in it is refused with a usage error ('Cannot find a page id in \"X\". Give a page id, or a page URL with /pages/<id> in it.') and exit 2, before --clean removes anything; the Bash exited 1 for such a --page-id and 5 for such a --root-id, after clean-docs.sh had already removed the mirror. Both options also take a page URL with /pages/<id> in it, as tim confluence page does; the Bash took only a bare id. The one caller, check-capabilities.sh, checks only for a non-zero exit.",
       "proof": "Golden HTML-to-Markdown corpus. `diff -r` of a live sync tree from bash and from tim (ignoring the timestamp line). A second clone writes only under itself.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1880,8 +1880,35 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 44fd2d86, 2d4ebeea, a8df0af3. Cherry-pick them and fix only the reason, rather than rebuilding.",
-        "previousBlockedReason": "tim confluence sync now refuses a non-numeric --page-id or --root-id with a usage error (exit 2) before --clean removes anything, and accepts a page URL, where sync-docs.sh exited 1, but the row's risk does not name this change and no test covers it."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "35e11c14"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "25da4fb5"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "a26dcce9"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "f7b5aa4c"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 370 test files passed and 21 skipped (the Bash golden recording tests skip now that the scripts are gone); 5641 tests passed, 8 expected fail",
+          "tim-lint: npm run lint and npm run format:check both exit 0",
+          "parity: the cherry-picked golden corpus (HTML to Markdown, plus sync and clean outputs, files and exit codes recorded from the Bash) is reproduced; the three new tests for the page-id check (non-numeric --root-id under --clean exits 2 and keeps the mirror, non-numeric --page-id exits 2 and keeps files, a --page-id URL gives the same result as the bare-id golden) all failed with the check removed and passed once it was restored",
+          "no-callers: git grep across the workspace and every repos/* finds no caller of sync-docs.sh, html_to_md.js or clean-docs.sh. The only hits are the golden fixtures and recording test in tim/src/confluence, and history notes in other workareas",
+          "no new .sh files; the only new mention of a fixed path is a <HOME>-normalised path inside the golden fixtures"
+        ],
+        "deviations": [
+          "Cherry-picked the earlier blocked attempt's commits as the row's evidence asked: 44fd2d86, 2d4ebeea and a8df0af3, now 35e11c14, 25da4fb5 and a26dcce9. Resolved one conflict in settings-followups.md by keeping both sides (the newer P40 to P56 entries and the P37 entry).",
+          "Fixed the blocked reason in a fourth commit, f7b5aa4c, instead of changing behaviour back. The row's risk in backlog.json and tim/README.md now say that a non-numeric --page-id or --root-id exits 2 before --clean removes anything, and that a page URL is accepted. New tests cover both."
+        ]
       }
     },
     {

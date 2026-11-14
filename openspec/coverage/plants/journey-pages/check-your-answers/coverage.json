@@ -58,16 +58,27 @@
     },
     {
       "id": "REQ-PLANTS-CYA-003",
-      "name": "The contact card shows the selected party's details",
+      "name": "The party cards show the selected party's name and address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-003-A",
-          "name": "Contact details appear on the Contact card",
+          "name": "Party details appear on the party cards",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "name, address, phone, email on Contact card" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows name/address/phone/email" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-copied.spec.ts", "test": "picking a record for a role with no address reads its name, address lines and country back on the review page, with no telephone or email row", "strength": "partial", "notes": "row keys exactly Name and Address on the Place of destination and Contact cards, with the exact address lines then the country; the consignor card is not driven" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that open their page on the review trail and go on with Save and continue", "strength": "partial", "notes": "the Address rows of the destination and contact cards read one line per line then the country" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows are exactly Name and Address, the address lines one per line then the country" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the consignor card with a Name row and a multi-line Address row", "strength": "full", "notes": "the consignor card's rows are exactly Name and Address, the Address value the multi-line read-back" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-003-B",
+          "name": "A copy whose email breaks the address book's rules shows that message on the Name row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the country error above the unchanged address lines and the email error above the name, on the place of destination card", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the telephone error above the name on a copy with an invalid telephone number", "strength": "full", "notes": "an overlong telephone number shows its message above the Name row" }
           ]
         }
       ]

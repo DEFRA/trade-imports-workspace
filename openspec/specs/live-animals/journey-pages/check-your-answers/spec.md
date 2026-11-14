@@ -32,8 +32,16 @@ The system MUST group the page under six numbered section headings, in order, ho
 **ID**: SCN-CYA-001-E
 - **GIVEN** a notification with no documents uploaded
 - **WHEN** the user views the review
-- **THEN** the Uploaded documents section and its card are still shown, saying no documents have been added yet
+- **THEN** the Uploaded documents section is still shown, with one card titled "Document 1" whose "Document reference" reads "Not applicable"
 - **AND** a Change route to the upload documents page is still offered
+
+#### Scenario: Each uploaded document stands on its own card showing its file name
+**ID**: SCN-CYA-001-I
+- **GIVEN** a notification with two documents uploaded
+- **WHEN** the user views the review
+- **THEN** "4. Uploaded documents" holds a card titled "Document 1" and a card titled "Document 2", in upload order
+- **AND** each card has rows "Document reference", "Document type", "Date of issue" and "Attachment", where "Attachment" reads the uploaded file's name
+- **AND** each card's header Change link opens the upload documents page
 
 #### Scenario: A fully answered notification's check-your-answers reflects every entered value
 **ID**: SCN-CYA-001-C
@@ -45,7 +53,8 @@ The system MUST group the page under six numbered section headings, in order, ho
 **ID**: SCN-CYA-001-D
 - **GIVEN** the user has selected a party for each of the notification's address roles — place of origin, consignor, consignee, importer, and place of destination
 - **WHEN** they view check-your-answers
-- **THEN** the Addresses card, the one card under "5. Consignment addresses", lists all of them, each showing the selected party's name and country
+- **THEN** the Addresses card, the one card under "5. Consignment addresses", lists all of them, each showing the selected party's name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line, with no telephone number or email address
+- **AND** an address in Great Britain reads "United Kingdom" as its country
 - **AND** its one header Change link opens the roles and addresses page
 
 #### Scenario: The reason, additional details and contact address answers stand on their own titled cards
@@ -56,6 +65,7 @@ The system MUST group the page under six numbered section headings, in order, ho
 - **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason"
 - **AND** the additional details answers stand on the card titled "Additional details", whose Change link opens the additional details page
 - **AND** "6. Contact address" holds one card titled "Contact address", with a "Contact address" row
+- **AND** that row reads the contact address's name, address lines and country, each on its own line, with no telephone number or email address
 
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
 **ID**: SCN-CYA-001-G
@@ -88,6 +98,13 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 - **WHEN** they choose Continue on the review and it is refused
 - **THEN** each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
 - **AND** the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
+
+#### Scenario: A blank answer on any document card of an unfinished documents task is left blank
+**ID**: SCN-CYA-002-D
+- **GIVEN** a notification with two documents uploaded, the second missing its document reference, date of issue and attachment
+- **WHEN** the user views the review
+- **THEN** both document cards carry the "Complete documents" line and the red left border
+- **AND** each blank answer on either card shows no visible text and is announced as "Missing"
 
 ### Requirement: A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard
 **ID**: REQ-CYA-003
@@ -277,21 +294,27 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is
+### Requirement: The review marks each document card while a document is still being scanned or was found infected, and refuses to continue while it is
 **ID**: REQ-CYA-010
-The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
+The system MUST mark each document card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown. The error summary MUST link to the first document card.
 
-#### Scenario: Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review
+#### Scenario: Continuing while a document is still being scanned is refused, marking each document card on the review
 **ID**: SCN-CYA-010-A
 - **GIVEN** a ready draft notification is open on the review, and one of its documents is still being scanned
 - **WHEN** the user continues
-- **THEN** they are returned to the review, which marks the uploaded-documents card as still being scanned
+- **THEN** they are returned to the review, which marks the document cards as still being scanned
 
-#### Scenario: An infected document marks the uploaded-documents card in preference to one still scanning
+#### Scenario: An infected document marks each document card in preference to one still scanning
 **ID**: SCN-CYA-010-B
 - **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
 - **WHEN** the user continues
-- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document, not as still being scanned
+- **THEN** they are returned to the review, which marks the document cards as holding an infected document, not as still being scanned
+
+#### Scenario: The error summary links to the first of several document cards
+**ID**: SCN-CYA-010-C
+- **GIVEN** a ready draft notification is open on the review, with two documents, one of which is scanned or found infected
+- **WHEN** the user continues
+- **THEN** they are returned to the review, whose error summary link goes to the first document card, not the second
 
 ### Requirement: Continuing is refused if the notification has changed since the review was shown
 **ID**: REQ-CYA-011

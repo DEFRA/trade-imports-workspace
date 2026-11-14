@@ -42,15 +42,22 @@ The system MUST omit the consignor card for a potatoes notification, and MUST sh
 - **WHEN** the user views check-your-answers after submission
 - **THEN** the "Consignor" card shows that party's name
 
-### Requirement: The contact card shows the selected party's details
+### Requirement: The party cards show the selected party's name and address
 **ID**: REQ-PLANTS-CYA-003
-The system MUST show the selected consignment contact's name, address, telephone number and email address on the Contact card.
+The system MUST show the selected party's name and address on the Place of destination, Consignor and Contact cards, reading the address one address line per line followed by the country, and MUST NOT show a telephone number or email address row on them. A copy whose telephone number or email address breaks the address book's rules MUST show that message above the Name row.
 
-#### Scenario: Contact details appear on the Contact card
+#### Scenario: Party details appear on the party cards
 **ID**: SCN-PLANTS-CYA-003-A
-- **GIVEN** a notification has a consignment contact selected
+- **GIVEN** a notification has a place of destination, a consignor and a consignment contact selected
 - **WHEN** the user views check-your-answers
-- **THEN** the Contact card shows that party's name, address lines, telephone number and email address
+- **THEN** each of those cards has a "Name" row and an "Address" row, and no "Telephone number" or "Email address" row
+- **AND** each card's "Address" row reads each non-empty address line on its own line, followed by the country on its own line
+
+#### Scenario: A copy whose email breaks the address book's rules shows that message on the Name row
+**ID**: SCN-PLANTS-CYA-003-B
+- **GIVEN** a notification whose copied party has an email address that breaks the address book's rules
+- **WHEN** the user views check-your-answers
+- **THEN** that party's card shows the email message above the name, on its "Name" row
 
 ### Requirement: Anything not yet answered is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004

@@ -431,6 +431,32 @@ tim review detect-tech repos/trade-imports-animals-frontend --json
 - A missing, empty or non-folder path prints empty arrays and exits 0.
   Routing it cannot read exits 1.
 
+### `tim ticket` — the ticket skill's helpers
+
+```bash
+tim ticket prepare-plan EUDPA-1234 --repos trade-imports-stub,trade-imports-animals-frontend
+tim ticket prepare-implement EUDPA-1234
+tim ticket branch EUDPA-1234 --repo trade-imports-stub --slug tidy-logs --type chore
+```
+
+- `prepare-plan` writes `workareas/ticket-planning/<ticket>/ticket.md`
+  (the ticket, its comments and the Confluence pages its description
+  links to) and `.plan-meta.json`. With `--repos` it also detects each
+  repo's technologies and writes `best-practices/<repo>.md`. It reads
+  `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`. A ticket it cannot read
+  exits 1.
+- `prepare-implement` checks `plan.md` is there (exit 1 if not), detects
+  the technologies again for the repos `.plan-meta.json` names, or for
+  `--repo` alone, and writes `.implement-meta.json`. Prior pull request
+  diffs come from `gh`, as `references/IMPLEMENTOR.md` says.
+- `branch` fetches origin, checks out and fast-forwards `--base` (default
+  `main`), then switches to `<type>/<ticket>-<slug>`: the local branch,
+  else one tracking `origin/<branch>`, else a new one. `--type` is `feat`
+  (the default), `fix` or `chore`. A git step that fails exits with git's
+  code and message.
+- The ticket must start with `EUDPA-` (`branch` also takes `NO_JIRA`), and
+  a refused ticket or `--type` exits 2.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

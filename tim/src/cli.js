@@ -39,6 +39,7 @@ import { register as registerThemeTicket } from './commands/theme-ticket/index.j
 import { register as registerUnderstandingCheck } from './commands/understanding-check/index.js'
 import { register as registerGovuk } from './commands/govuk/index.js'
 import { register as registerReview } from './commands/review/index.js'
+import { register as registerTicket } from './commands/ticket/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -184,6 +185,7 @@ export const buildProgram = () => {
   registerUnderstandingCheck(program, { timVersion: pkg.version })
   registerGovuk(program, { timVersion: pkg.version })
   registerReview(program, { timVersion: pkg.version })
+  registerTicket(program, { timVersion: pkg.version })
 
   return program
 }

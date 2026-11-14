@@ -68,3 +68,11 @@ folder is now gone. `Bash(tim:*)` covers `tim govuk start`.
 
 None. No allowlist entry names `tools/review/detect-tech.sh`, and
 `Bash(tim:*)` covers `tim review detect-tech`.
+
+## P31
+
+None. No allowlist entry names `tools/ticket/setup-branch.sh`,
+`prepare-plan.sh` or `prepare-implement.sh`, and the folder is now gone.
+`Bash(tim:*)` covers `tim ticket branch`, `prepare-plan` and
+`prepare-implement`; IMPLEMENTOR's `gh search prs` and `gh pr diff` calls
+need whatever `gh` permission the session already has.

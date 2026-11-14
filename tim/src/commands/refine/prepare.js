@@ -37,7 +37,7 @@ const fetchTicket = async (ticket) => {
   }
 }
 
-const fetchComments = async (ticket, skipped) => {
+export const fetchComments = async (ticket, skipped) => {
   try {
     return await createJiraClient().getComments(ticket)
   } catch (error) {
@@ -46,7 +46,7 @@ const fetchComments = async (ticket, skipped) => {
   }
 }
 
-const fetchPages = async (links, { log, skipped }) => {
+export const fetchPages = async (links, { log, skipped }) => {
   const pages = []
   for (const link of links) {
     await log(`  Fetching: ${link}`)

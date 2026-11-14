@@ -16,11 +16,23 @@ Read that file before you start.
 ## Before You Start
 
 One dispatch — asserts the plan exists, re-validates detect-tech per
-repo, caches the PR diff if a prior PR for the ticket exists, and emits
-`.implement-meta.json`:
+repo, and emits `.implement-meta.json`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-implement.sh EUDPA-XXXXX
+tim ticket prepare-implement EUDPA-XXXXX
+```
+
+Then look for a prior PR for the ticket:
+
+```bash
+gh search prs EUDPA-XXXXX --owner DEFRA --json number,repository,state
+```
+
+For each PR it lists, cache its diff beside the plan (from the workspace
+root, after `mkdir -p workareas/ticket-planning/EUDPA-XXXXX/.diffs`):
+
+```bash
+gh pr diff <number> --repo DEFRA/<repo> > workareas/ticket-planning/EUDPA-XXXXX/.diffs/<repo>.diff
 ```
 
 Then read in this order:
@@ -67,7 +79,7 @@ helper produces `<type>/EUDPA-XXXXX-<slug>`, where `--type` is `feat`
 repo the ticket touches.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
+tim ticket branch EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
 ```
 
 Optional `--base <branch>` if branching from anything other than `main`.

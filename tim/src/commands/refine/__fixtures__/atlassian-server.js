@@ -56,6 +56,19 @@ const tickets = {
       labels: ['plants']
     },
     renderedFields: { description: '<p>The date shows in US order.</p>' }
+  },
+  'EUDPA-104': {
+    key: 'EUDPA-104',
+    fields: {
+      summary: 'Retire the old "export" button',
+      issuetype: { name: 'Task' },
+      status: { name: 'To Do' },
+      priority: null,
+      assignee: null,
+      parent: null,
+      labels: []
+    },
+    renderedFields: { description: null }
   }
 }
 
@@ -72,7 +85,8 @@ const comments = {
       'Two questions:\n# Which page?\n# Which code?'
     )
   ],
-  'EUDPA-102': []
+  'EUDPA-102': [],
+  'EUDPA-104': []
 }
 
 const pages = {
@@ -163,7 +177,8 @@ const route = (url) => {
  * EUDPA-101 has comments and five Confluence links (one repeated, one with
  * no page id, one to a missing page). EUDPA-102 has no priority, assignee,
  * parent, labels, description or comments. EUDPA-103's comments cannot be
- * read. Any other ticket is missing.
+ * read. EUDPA-104 has an empty labels list and no priority, assignee,
+ * parent, description or comments. Any other ticket is missing.
  *
  * @returns {Promise<{base: string, close: () => Promise<void>}>}
  */

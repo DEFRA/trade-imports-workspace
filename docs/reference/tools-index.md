@@ -108,9 +108,9 @@ epics included, goes through `tim jira create`.
 | `tim govuk summaries` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per version still to apply that is not a noop (`--json`: the rows are `result`) |
 | `tim govuk plans` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable status of every version, classification and implementation.<br>e.g. `tim govuk plans --run-id EUDPA-1 --filter pending --sort-semver --json` (the object is `result`) |
 | **ticket** | | |
-| `tools/ticket/prepare-plan.sh` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
-| `tools/ticket/prepare-implement.sh` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
-| `tools/ticket/setup-branch.sh` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` in one dispatch. `--type` defaults to `feat`; any other value is refused |
+| `tim ticket prepare-plan` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
+| `tim ticket prepare-implement` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, emit `.implement-meta.json`. IMPLEMENTOR caches prior PR diffs with `gh` |
+| `tim ticket branch` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout `<type>/EUDPA-X-<slug>` (the local branch, else one tracking origin, else a new one). `--type` defaults to `feat`; any other value is refused |
 | **ticket-creator** | | |
 | `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `tim jira create`, which actually creates the ticket in Jira). |
 | `tim capabilities extract` | \<markdown-file\> [--format list\|tsv] [--json] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |

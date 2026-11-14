@@ -214,10 +214,10 @@ term(s, {
   lines: [
     [["▸ ", "prompt", true], ["plan EUDPA-213", "prompt", true]],
     "",
-    [["$ ", "ok"], ["tools/ticket/prepare-plan.sh EUDPA-213", "cmd"]],
+    [["$ ", "ok"], ["tim ticket prepare-plan EUDPA-213", "cmd"]],
     [["  → wrote ticket.md + .plan-meta.json", "muted"]],
     "",
-    [["$ ", "ok"], ["tools/ticket/prepare-plan.sh EUDPA-213 \\", "cmd"]],
+    [["$ ", "ok"], ["tim ticket prepare-plan EUDPA-213 \\", "cmd"]],
     [["      --repos backend,stub,reference-data", "cmd"]],
     [["  → detected [springboot, spring-data-mongodb, openapi-springdoc,", "muted"]],
     [["     aws-sdk-v2, rest-api]; baked best-practices/{repo}.md", "muted"]],
@@ -343,7 +343,7 @@ term(s, {
   lines: [
     [["▸ ", "prompt", true], ["implement EUDPA-213", "prompt", true], ["   (+ the handover prompt)", "muted"]],
     "",
-    [["$ ", "ok"], ["tools/ticket/prepare-implement.sh EUDPA-213", "cmd"]],
+    [["$ ", "ok"], ["tim ticket prepare-implement EUDPA-213", "cmd"]],
     [["  → plan present; detect-tech re-validated; .implement-meta.json", "muted"]],
     "",
     [["  Investigated current state:", "text"]],

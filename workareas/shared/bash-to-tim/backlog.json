@@ -2304,14 +2304,36 @@
       ],
       "risk": "Low. tim/src/backlog/standards/review-routing.js already matches it byte for byte (golden G-5).",
       "proof": "The existing __golden__/detect-tech.json passes unchanged through `tim review detect-tech --no-ui`.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "2e71bb974c64f966c16b3834e5465b34122b11fd"
+          }
+        ],
+        "checks": [
+          "parity: PASS. Before any change, the existing detect-tech.sh golden test was green. The frozen __golden__/detect-tech.json (every fixture repo, plus 'does-not-exist' and no argument) now passes unchanged through `tim review detect-tech --no-ui`, compared as exact file text, so `-u` cannot rewrite it. A mutation probe (dropping the first array element in the renderer) turned it red. The old script and tim also gave identical stdout and exit codes on all 17 real repos/*, with no path, and with a missing path.",
+          "tim-unit: PASS. `npm --prefix tim test` gave 318 files passed and 12 skipped, 5052 tests passed. The new suites are src/review/detect-tech.test.js and src/commands/review/index.test.js; the targeted suites were re-run after the lint fix.",
+          "tim-lint: PASS. `npm --prefix tim run lint` and `run format:check` are both clean.",
+          "no-callers: PASS. `git grep detect-tech.sh` over tim, .claude, .github, docs, tools and scripts now finds nothing. The only hits left are in workareas/shared history and plans, and in a binary .pptx. Nothing in repos/* referenced it. The hits for the bare word 'detect-tech' that remain are concept words ('re-validate detect-tech') or the new tim command.",
+          "extra: the diff adds no new mention of ~/git/defra/trade-imports-workspace or $HOME/git/defra, and no new .sh file. No .claude/settings.json names the script; settings-followups.md records P46 as 'None'."
+        ],
+        "deviations": [
+          "The Bash callers now call `tim --workspace <their own root> review detect-tech <dir> --no-ui`. prepare-plan and prepare-implement pass $WORKSPACE, prepare-review-local passes $ROOT, and prepare-review.sh passes $SCRIPT_DIR/../.. because it has no root variable. Each therefore reads the same routing it did before.",
+          "Deliberate wording change: the bundle marker for a missing file now reads '(missing — check tim review detect-tech)' instead of '(missing — check detect-tech.sh)', in prepare-plan.sh, prepare-review.sh and prepare-review-local.sh. No golden covers that text. The commit message records the change.",
+          "When the routing cannot be read, the exit code is still 1, but the stderr text is now tim's (\"Can't find .claude/skills/review/assets/routing.json.\" or a PARSE message) instead of \"Can't read routing data: <path>\". tim's validation is also stricter than the Bash's jq check. All callers discard stderr. The commit message records this.",
+          "tim resolves the workspace before it checks the path. Run outside any workspace with no --workspace, an empty path now gives tim's usage error instead of empty arrays. No caller does this.",
+          "Additional files beyond the row's caller list: tim/README.md (new `tim review` section), docs/reference/tools-index.md (row removed), standards.test.js describe title, the routing-fixtures.js doc comment, and the review-routing.js comment that named the script (deleted, per the house comment rules). The deleted script is also gone from HELPER_SCRIPTS in tim/src/understanding-check/__fixtures__/prepare-workspace.js; that is used only by golden tests that are skipped now that the understanding-check scripts are gone.",
+          "The row lists tools/understanding-check/prepare-check.sh as a caller, but that script no longer exists (ported earlier), so there was nothing to change."
+        ]
+      }
     },
     {
       "id": "P47",

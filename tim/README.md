@@ -273,9 +273,21 @@ tim understanding-check analysis add-finding EUDPA-123 --repo trade-imports-stub
   --section edgeCases --evidence-file src/a.js --evidence-lines 4-9 --field case="Empty list"
 tim understanding-check analysis complete EUDPA-123 --repo trade-imports-stub \
   --change-summary "Adds the check." --why-it-changed "Users asked for it."
+tim understanding-check question add EUDPA-123 --category implementation \
+  --prompt "Why does the retry skip 4xx?" --anchor-file src/retry.js --anchor-lines 42-58 \
+  --expected-concepts "retry budget,idempotency" --rubric-pass "Names both reasons" \
+  --rubric-partial "Names one reason but not the other" --rubric-fail "Conflates them"
+tim understanding-check question replace EUDPA-123 --id Q3 ...   # the same options as add
+tim understanding-check question remove EUDPA-123 --id Q3
+tim understanding-check report EUDPA-123 --preview
+tim understanding-check answer EUDPA-123 --question-id Q3 --answer-file answer.txt
+tim understanding-check score EUDPA-123 --question-id Q3 --verdict PARTIAL \
+  --rubric-match "Names one reason but not the other" --missed-concepts "retry budget" \
+  --evidence-cited src/retry.js:42-58
 tim understanding-check counts EUDPA-123
 tim understanding-check verify EUDPA-123
 tim understanding-check finalize EUDPA-123
+tim understanding-check report EUDPA-123
 ```
 
 - State lives in `workareas/understanding-checks/<ticket>/` of the
@@ -285,6 +297,31 @@ tim understanding-check finalize EUDPA-123
   the first `=`) in order, then the evidence. It prints the id.
   `analysis complete` stamps `changeSummary` and `whyItChanged` (at most
   300 characters each), `verdict: "complete"` and `completed_at`.
+- `question add` appends a question to `questions.json`, starting the file
+  with the ticket and `generated_at`, and prints its id, one past the
+  number of questions. It refuses a 13th question, a category outside
+  `architecture`, `implementation`, `scenario`, `debugging`,
+  `test-coverage`, `operability` and `security`, and a PASS or PARTIAL
+  clause without one of the categorical verbs (names, identifies,
+  explains, describes, cites, distinguishes, contrasts, enumerates) as a
+  whole word in any ASCII case. A letter, a decimal digit or an
+  underscore next to the verb makes it part of a longer word.
+  `--expected-concepts` splits on commas, drops empty parts, then trims
+  each. `question replace` swaps a question for a new one with the same
+  id; `question remove` drops one and numbers the rest from Q1.
+- `answer` records the answer file's text, without its trailing
+  newlines, as the question's only entry in `transcript.json`, last. An
+  empty answer, or `--skipped`, records a skip.
+- `score` writes the score onto the question's entry. The rubric match
+  must quote the rubric: after each run of white space becomes one space,
+  a match of at least 12 characters must hold a line of a clause, sit
+  inside one, or hold one of its 24-character windows taken every 4
+  characters. Otherwise the score is FAIL, `<unscorable>` and the missed
+  concept `unscorable`, with an unscorable coverage gap on
+  `.interview-meta.json`, and a match that was not empty or
+  `<unscorable>` prints a warning on stderr.
+- `report --preview` prints the plan-gate preview; `report` writes the
+  ten-section `report.md`. A full report needs `questions.json`.
 - `counts` prints PASS, PARTIAL, FAIL and PENDING overall and by question
   category, with security FAILs and coverage gaps. It refuses an answer to
   a question with no category in `questions.json`.

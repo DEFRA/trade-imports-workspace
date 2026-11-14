@@ -23,7 +23,7 @@ Cross-workspace paths use the literal home-relative form —
 ## Output contract — one helper call
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
+tim understanding-check score \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict <PASS|PARTIAL|FAIL> \
@@ -101,7 +101,7 @@ Answer:
 Your call:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
+tim understanding-check score \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict PASS \
@@ -118,7 +118,7 @@ Same question. Answer:
 Your call:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
+tim understanding-check score \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict PARTIAL \
@@ -137,7 +137,7 @@ Same question. Answer:
 Your call (the answer never addresses the actual question):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
+tim understanding-check score \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict FAIL \

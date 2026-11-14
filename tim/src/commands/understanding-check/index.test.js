@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { execa } from 'execa'
-import { join } from 'node:path'
-import {
-  normaliseRecordedText,
-  recordFolderFiles
-} from '../../test-support/bash-golden-harness.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { recordTimRun as recordTimCommand } from '../../test-support/bash-golden-harness.js'
 import {
   analysisRefusals,
   analysisSteps,
@@ -20,41 +14,15 @@ import {
 
 const golden = readCheckGolden()
 
-const runTim = (staged, command, args) =>
-  execa(
-    'node',
-    [
-      TIM_CLI_PATH,
-      '--workspace',
-      staged.root,
-      'understanding-check',
-      ...TIM_COMMAND_FOR[command],
-      ...args
-    ],
-    {
-      reject: false,
-      stripFinalNewline: false,
-      env: { TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
-      extendEnv: true
-    }
-  )
-
 const ticketOf = (args) => args.find((arg) => arg.startsWith('EUDPA-'))
 
-const recordTimRun = async (staged, command, args) => {
-  const run = await runTim(staged, command, args)
+const recordTimRun = (staged, command, args) => {
   const ticket = ticketOf(args)
-  return {
-    exitCode: run.exitCode,
-    stdout: normaliseRecordedText(run.stdout, staged.home),
-    stderr: normaliseRecordedText(run.stderr, staged.home),
-    ...(ticket && {
-      files: recordFolderFiles(
-        join(staged.root, watchedFolder(ticket)),
-        staged.home
-      )
-    })
-  }
+  return recordTimCommand(
+    staged,
+    ['understanding-check', ...TIM_COMMAND_FOR[command], ...args],
+    ticket ? { watch: watchedFolder(ticket) } : {}
+  )
 }
 
 const recordTimFresh = async (command, args) => {

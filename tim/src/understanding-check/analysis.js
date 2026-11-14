@@ -1,8 +1,8 @@
-import { existsSync } from 'node:fs'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
 import { writeJsonAtomic } from '../review/store.js'
 import { analysisFilePath, checkFolder } from './paths.js'
+import { requireExisting, requireGiven } from './refusals.js'
 
 export const FINDING_SECTIONS = [
   'keyDesignDecisions',
@@ -30,20 +30,6 @@ export const splitField = (field) => {
     )
   }
   return [field.slice(0, separator), field.slice(separator + 1)]
-}
-
-const requireGiven = (given) => {
-  for (const [label, value] of Object.entries(given)) {
-    if (!value) {
-      throw new TimError('USAGE', `Error: missing required arg ${label}`)
-    }
-  }
-}
-
-const requireAnalysisFile = (path, hint = '') => {
-  if (!existsSync(path)) {
-    throw new TimError('NOT_FOUND', `Error: ${path} not found${hint}`)
-  }
 }
 
 const nextFindingId = (findings = []) =>
@@ -94,7 +80,7 @@ export const addFinding = ({
     )
   }
   const path = analysisFilePath(checkFolder(workspaceRoot, ticket), repo)
-  requireAnalysisFile(path, ' — run prepare-check.sh first')
+  requireExisting(path, ' — run prepare-check.sh first')
   const analysis = readJsonFile(path)
   const id = nextFindingId(analysis[section] ?? [])
   const finding = {
@@ -153,7 +139,7 @@ export const completeAnalysis = ({
   requireAtMostChars(changeSummary, '--change-summary')
   requireAtMostChars(whyItChanged, '--why-it-changed')
   const path = analysisFilePath(checkFolder(workspaceRoot, ticket), repo)
-  requireAnalysisFile(path)
+  requireExisting(path)
   writeJsonAtomic(path, {
     ...readJsonFile(path),
     changeSummary,

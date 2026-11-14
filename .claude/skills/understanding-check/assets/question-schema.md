@@ -2,12 +2,12 @@
 
 Combined question set across all repos in scope. Mutated only by:
 
-- `tools/understanding-check/question-add.sh` — append.
-- `tools/understanding-check/question-replace.sh` — replace by id.
-- `tools/understanding-check/question-remove.sh` — drop by id.
+- `tim understanding-check question add` — append.
+- `tim understanding-check question replace` — replace by id.
+- `tim understanding-check question remove` — drop by id.
 
 The plan-gate artifact. The user reviews this file (via
-`render-report.sh --preview`) and edits it before the interview starts.
+`tim understanding-check report --preview`) and edits it before the interview starts.
 
 ## Shape
 
@@ -37,8 +37,8 @@ The plan-gate artifact. The user reviews this file (via
 | Field | Type | Notes |
 |---|---|---|
 | `ticket` | string | `EUDPA-XXXXX`. |
-| `generated_at` | ISO8601 | When `question-add.sh` first ran. |
-| `questions[].id` | string | `Q1`-`Q12`, assigned by the helper in order. Stable across replaces; `question-remove.sh` renumbers downstream ids. |
+| `generated_at` | ISO8601 | When `tim understanding-check question add` first ran. |
+| `questions[].id` | string | `Q1`-`Q12`, assigned by the helper in order. Stable across replaces; `tim understanding-check question remove` renumbers downstream ids. |
 | `questions[].category` | enum | See below. |
 | `questions[].prompt` | string | The question, phrased plainly. No multi-part stems. |
 | `questions[].anchorEvidence` | `{ file, lines }` | The diff hunk the question is grounded in. Required — surfaced in the interview UI without leaking the diff content. |
@@ -59,9 +59,9 @@ The plan-gate artifact. The user reviews this file (via
 | `operability` | Logging, metrics, error visibility, alerting, rollback |
 | `security` | Inputs trusted, secrets handled, authz boundaries |
 
-## Hard constraints (enforced by `question-add.sh`)
+## Hard constraints (enforced by `tim understanding-check question add`)
 
-- 8 ≤ total questions ≤ 12. `question-add.sh` exits non-zero on the 13th.
+- 8 ≤ total questions ≤ 12. `tim understanding-check question add` exits non-zero on the 13th.
 - ≥1 question per category that has analysis findings. The
   QUESTION_GENERATOR persona is told to skip empty categories — **do not
   fabricate** to fill a slot. The cross-run audit asserts this.

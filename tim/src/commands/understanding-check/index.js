@@ -12,6 +12,25 @@ import {
 } from '../../understanding-check/finalize.js'
 import { requireTicket } from '../../understanding-check/paths.js'
 import {
+  addQuestion,
+  QUESTION_CATEGORIES,
+  removeQuestion,
+  replaceQuestion
+} from '../../understanding-check/questions.js'
+import {
+  renderPreview,
+  writeReport,
+  writeReportText
+} from '../../understanding-check/report.js'
+import {
+  addScore,
+  addScoreText,
+  recordAnswer,
+  recordAnswerText,
+  SCORE_VERDICTS
+} from '../../understanding-check/transcript.js'
+import { TimError } from '../../errors.js'
+import {
   coverageGapsText,
   coverageOkText,
   verifyCoverage
@@ -51,8 +70,11 @@ const ticketAction = (
 const givenTicket = (ticket) =>
   ticket === undefined ? undefined : requireTicket(ticket)
 
-const analysisAction = (timVersion, { parseOptions, run, renderText }) =>
-  function analysisCommandAction(ticket, ...rest) {
+const optionalTicketAction = (
+  timVersion,
+  { parseOptions, run, renderText, renderTextError }
+) =>
+  function optionalTicketCommandAction(ticket, ...rest) {
     return makeRunAction({
       parseOptions: (opts) => ({
         ...parseOptions(opts),
@@ -61,10 +83,237 @@ const analysisAction = (timVersion, { parseOptions, run, renderText }) =>
       }),
       run: (_context, parsed) => run(parsed),
       renderText,
+      renderTextError,
       exitCodeForError: () => ERROR,
       timVersion
     }).call(this, ticket, ...rest)
   }
+
+const requiredTicketAction = (
+  timVersion,
+  { usage, parseOptions, requiredOptions, run, renderText }
+) =>
+  function requiredTicketCommandAction(ticket, ...rest) {
+    return makeRunAction({
+      parseOptions: (opts) => {
+        const parsed = {
+          ...parseOptions(opts),
+          workspaceRoot: workspaceRootOf(opts),
+          ticket: requireTicket(ticket, usage)
+        }
+        if (requiredOptions.some((name) => !parsed[name])) {
+          throw new TimError('USAGE', usage)
+        }
+        return parsed
+      },
+      run: (_context, parsed) => run(parsed),
+      renderText,
+      exitCodeForError: () => ERROR,
+      timVersion
+    }).call(this, ticket, ...rest)
+  }
+
+const QUESTION_OPTIONS = [
+  ['--category <category>', `One of ${QUESTION_CATEGORIES.join(', ')}`],
+  ['--prompt <text>', 'The question, asked plainly'],
+  ['--anchor-file <file>', 'The file the question is grounded in'],
+  ['--anchor-lines <lines>', 'The lines in that file, such as 42-58'],
+  [
+    '--expected-concepts <list>',
+    'Comma-separated concepts the answer should touch'
+  ],
+  [
+    '--rubric-pass <text>',
+    'What a PASS answer does. It must hold names, identifies, explains, describes, cites, distinguishes, contrasts or enumerates.'
+  ],
+  [
+    '--rubric-partial <text>',
+    'What a PARTIAL answer does, with one of the same verbs'
+  ],
+  ['--rubric-fail <text>', 'What a FAIL answer does']
+]
+
+const withQuestionOptions = (command) =>
+  QUESTION_OPTIONS.reduce(
+    (withOptions, [flags, description]) =>
+      withOptions.option(flags, description),
+    command
+  )
+
+const questionOptionsOf = (opts) => ({
+  category: opts.category,
+  prompt: opts.prompt,
+  anchorFile: opts.anchorFile,
+  anchorLines: opts.anchorLines,
+  expectedConcepts: opts.expectedConcepts,
+  rubricPass: opts.rubricPass,
+  rubricPartial: opts.rubricPartial,
+  rubricFail: opts.rubricFail
+})
+
+const QUESTION_EXAMPLE_OPTIONS =
+  '    --category implementation --prompt "Why does the retry skip 4xx?" \\\n    --anchor-file src/retry.js --anchor-lines 42-58 \\\n    --expected-concepts "retry budget,idempotency" \\\n    --rubric-pass "Names both reasons" \\\n    --rubric-partial "Names one reason but not the other" \\\n    --rubric-fail "Conflates 4xx with 5xx"'
+
+const registerQuestionAdd = (question, { timVersion }) =>
+  withQuestionOptions(
+    question
+      .command('add')
+      .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+      .description(
+        "Add a question to the check's questions.json, starting the file when there is none. Prints the new question's id. A check holds at most 12 questions."
+      )
+  )
+    .addHelpText(
+      'after',
+      `\nExample:\n  tim understanding-check question add EUDPA-123 \\\n${QUESTION_EXAMPLE_OPTIONS}`
+    )
+    .action(
+      optionalTicketAction(timVersion, {
+        parseOptions: questionOptionsOf,
+        run: (parsed) => addQuestion({ ...parsed, now: stampNow() }),
+        renderText: ({ id }) => id
+      })
+    )
+
+const registerQuestionReplace = (question, { timVersion }) =>
+  withQuestionOptions(
+    question
+      .command('replace')
+      .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+      .description('Replace a question, keeping its id.')
+      .option('--id <id>', 'The question to replace, such as Q3')
+  )
+    .addHelpText(
+      'after',
+      `\nExample:\n  tim understanding-check question replace EUDPA-123 --id Q3 \\\n${QUESTION_EXAMPLE_OPTIONS}`
+    )
+    .action(
+      optionalTicketAction(timVersion, {
+        parseOptions: (opts) => ({ ...questionOptionsOf(opts), id: opts.id }),
+        run: replaceQuestion,
+        renderText: ({ id }) => `Replaced ${id}.`
+      })
+    )
+
+const registerQuestionRemove = (question, { timVersion }) =>
+  question
+    .command('remove')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      'Remove a question and number the ones after it again, so the ids run Q1, Q2 and on.'
+    )
+    .option('--id <id>', 'The question to remove, such as Q3')
+    .addHelpText(
+      'after',
+      '\nExample:\n  tim understanding-check question remove EUDPA-123 --id Q3'
+    )
+    .action(
+      requiredTicketAction(timVersion, {
+        usage:
+          'Usage: tim understanding-check question remove EUDPA-XXXXX --id Q3',
+        parseOptions: (opts) => ({ id: opts.id }),
+        requiredOptions: ['id'],
+        run: removeQuestion,
+        renderText: ({ id }) => `Removed ${id}; downstream ids renumbered.`
+      })
+    )
+
+const registerAnswer = (group, { timVersion }) =>
+  group
+    .command('answer')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      "Record the developer's answer to a question in transcript.json, replacing any earlier answer to it. An empty answer file, or --skipped, records a skip."
+    )
+    .option('--question-id <id>', 'The question answered, such as Q3')
+    .option('--answer-file <file>', 'A file holding the answer as typed')
+    .option('--skipped', 'The developer skipped the question')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim understanding-check answer EUDPA-123 --question-id Q3 --answer-file answer.txt\n  tim understanding-check answer EUDPA-123 --question-id Q4 --skipped'
+    )
+    .action(
+      requiredTicketAction(timVersion, {
+        usage:
+          'Usage: tim understanding-check answer EUDPA-XXXXX --question-id Q3 --answer-file FILE [--skipped]',
+        parseOptions: (opts) => ({
+          questionId: opts.questionId,
+          answerFile: opts.answerFile,
+          skipped: opts.skipped === true
+        }),
+        requiredOptions: ['questionId'],
+        run: (parsed) => recordAnswer({ ...parsed, now: stampNow() }),
+        renderText: recordAnswerText
+      })
+    )
+
+const registerScore = (group, { timVersion }) =>
+  group
+    .command('score')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      "Score a question's answer in transcript.json. The rubric match must quote the question's rubric: a match that is empty, <unscorable> or quotes no clause records FAIL as unscorable, warns on stderr and adds a coverage gap."
+    )
+    .option('--question-id <id>', 'The question scored, such as Q3')
+    .option('--verdict <verdict>', `One of ${SCORE_VERDICTS.join(', ')}`)
+    .option(
+      '--rubric-match <text>',
+      'The rubric clause that decided the verdict, quoted'
+    )
+    .option(
+      '--missed-concepts <list>',
+      'Comma-separated concepts the answer missed'
+    )
+    .option(
+      '--evidence-cited <list>',
+      'Comma-separated file:lines the score rests on'
+    )
+    .option('--follow-up <text>', 'Something for the developer to read next')
+    .addHelpText(
+      'after',
+      '\nExample:\n  tim understanding-check score EUDPA-123 --question-id Q3 --verdict PARTIAL \\\n    --rubric-match "Names the 4xx-non-transient distinction but not the budget reasoning" \\\n    --missed-concepts "retry budget" --evidence-cited src/retry.js:42-58'
+    )
+    .action(
+      optionalTicketAction(timVersion, {
+        parseOptions: (opts) => ({
+          questionId: opts.questionId,
+          verdict: opts.verdict,
+          rubricMatch: opts.rubricMatch,
+          missedConcepts: opts.missedConcepts,
+          evidenceCited: opts.evidenceCited,
+          followUp: opts.followUp
+        }),
+        run: (parsed) => addScore({ ...parsed, now: stampNow() }),
+        renderText: addScoreText,
+        renderTextError: ({ warning }) => warning
+      })
+    )
+
+const registerReport = (group, { timVersion }) =>
+  group
+    .command('report')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      "Write the check's full report to report.md, or with --preview print the plan-gate preview: the analysis counts and the question set."
+    )
+    .option('--preview', 'Print the plan-gate preview instead')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim understanding-check report EUDPA-123 --preview\n  tim understanding-check report EUDPA-123'
+    )
+    .action(
+      requiredTicketAction(timVersion, {
+        usage: 'Usage: tim understanding-check report EUDPA-XXXXX [--preview]',
+        parseOptions: (opts) => ({ preview: opts.preview === true }),
+        requiredOptions: [],
+        run: (parsed) =>
+          parsed.preview ? renderPreview(parsed) : writeReport(parsed),
+        renderText: (result) =>
+          'preview' in result
+            ? result.preview.replace(/\n$/, '')
+            : writeReportText(result)
+      })
+    )
 
 const registerCounts = (group, { timVersion }) =>
   group
@@ -149,7 +398,7 @@ const registerAddFinding = (analysis, { timVersion }) =>
       `\nExample:\n  tim understanding-check analysis add-finding EUDPA-123 \\\n    --repo trade-imports-animals-backend --section edgeCases \\\n    --evidence-file src/main/java/Foo.java --evidence-lines 40-52 \\\n    --field case="Empty list" --field handling="Returns 404"`
     )
     .action(
-      analysisAction(timVersion, {
+      optionalTicketAction(timVersion, {
         parseOptions: (opts) => ({
           repo: opts.repo,
           section: opts.section,
@@ -177,7 +426,7 @@ const registerComplete = (analysis, { timVersion }) =>
       '\nExample:\n  tim understanding-check analysis complete EUDPA-123 \\\n    --repo trade-imports-animals-backend \\\n    --change-summary "Adds a commodity-code length check on submit." \\\n    --why-it-changed "Short codes were reaching PIMS and being rejected."'
     )
     .action(
-      analysisAction(timVersion, {
+      optionalTicketAction(timVersion, {
         parseOptions: (opts) => ({
           repo: opts.repo,
           changeSummary: opts.changeSummary,
@@ -198,11 +447,20 @@ export const register = (program, { timVersion }) => {
   const group = program
     .command('understanding-check')
     .description(
-      "Count, verify and finalise an understanding check, and write each repo's analysis"
+      "Write an understanding check's analysis, questions, answers and scores, then count, verify, finalise and report on it"
     )
   registerCounts(group, { timVersion })
   registerFinalize(group, { timVersion })
   registerVerify(group, { timVersion })
+  const question = group
+    .command('question')
+    .description("Add, replace or remove a check's questions")
+  registerQuestionAdd(question, { timVersion })
+  registerQuestionReplace(question, { timVersion })
+  registerQuestionRemove(question, { timVersion })
+  registerAnswer(group, { timVersion })
+  registerScore(group, { timVersion })
+  registerReport(group, { timVersion })
   const analysis = group
     .command('analysis')
     .description("Write a repo's analysis: add findings, then mark it complete")

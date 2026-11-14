@@ -48,7 +48,7 @@ Per
 
 ## Report layout — `report.md`
 
-Produced by `render-report.sh EUDPA-XXXXX` (no `--preview` flag). Ten
+Produced by `tim understanding-check report EUDPA-XXXXX` (no `--preview` flag). Ten
 sections, in this order:
 
 1. **Header** — ticket id, base ref, head SHA per repo, model + skill

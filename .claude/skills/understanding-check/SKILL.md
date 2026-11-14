@@ -43,9 +43,9 @@ JSON canonical:
 |---|---|---|
 | `.interview-meta.json` | `prepare-check.sh`, `tim understanding-check finalize` | run metadata + verdict + coverage gaps |
 | `analysis.{repo}.json` | `tim understanding-check analysis add-finding`, `tim understanding-check analysis complete` | per-repo findings (evidence-anchored) |
-| `questions.json` | `question-add.sh`, `question-replace.sh`, `question-remove.sh` | combined question set (the plan-gate artifact) |
-| `transcript.json` | `transcript-record-answer.sh`, `transcript-add-score.sh` | per-question answer + score |
-| `report.md` | `render-report.sh` | rendered final report (regenerable from JSON) |
+| `questions.json` | `tim understanding-check question add`, `question replace`, `question remove` | combined question set (the plan-gate artifact) |
+| `transcript.json` | `tim understanding-check answer`, `tim understanding-check score` | per-question answer + score |
+| `report.md` | `tim understanding-check report` | rendered final report (regenerable from JSON) |
 
 Schemas live under `assets/`:
 [`analysis-schema.md`](assets/analysis-schema.md),
@@ -151,7 +151,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/un
 ```
 
 The generator reads every `analysis.{repo}.json`, emits 8-12 questions
-via `question-add.sh`. Constraints (enforced by the helper, not by the
+via `tim understanding-check question add`. Constraints (enforced by the helper, not by the
 persona's good intentions):
 
 - ≥1 question per category that has analysis findings; **categories
@@ -170,7 +170,7 @@ interview starts, render the question set + analysis summary as a
 preview and present it to the user:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX --preview
+tim understanding-check report EUDPA-XXXXX --preview
 ```
 
 Show the preview and prompt:
@@ -179,9 +179,9 @@ Show the preview and prompt:
 Question set is ready. Approve to start the interview, or list edits.
 
 Available edits:
-- `replace N` — replace question N with a new one (call question-replace.sh)
-- `remove N`  — drop question N (call question-remove.sh)
-- `add`       — add a new question (call question-add.sh)
+- `replace N` — replace question N with a new one (`tim understanding-check question replace`)
+- `remove N`  — drop question N (`tim understanding-check question remove`)
+- `add`       — add a new question (`tim understanding-check question add`)
 
 Type `go` to start the interview.
 ```
@@ -212,7 +212,7 @@ For each question in `questions.json`, in order:
      record `FAIL` with `missedConcepts: ["skipped"]`.
    - `quit` → finalise with a `coverage_gap` entry; verdict will be
      downgraded.
-4. Persist via `transcript-record-answer.sh EUDPA-XXXXX --question-id Q3 --answer-file /tmp/ans.txt`.
+4. Persist via `tim understanding-check answer EUDPA-XXXXX --question-id Q3 --answer-file /tmp/ans.txt`.
 
 Do NOT volunteer the answer between questions, even if the developer
 asks. The point is to find gaps, not to fill them.
@@ -234,7 +234,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/un
 ```
 
 Each scorer reads the question + rubric + answer + anchored diff hunk,
-then calls `transcript-add-score.sh`. The helper **requires** a
+then calls `tim understanding-check score`. The command **requires** a
 `--rubric-match "<quoted clause>"` argument; if the scorer can't quote
 the rubric clause that fired, the helper records `verdict: FAIL,
 missedConcepts: [unscorable]` (the categorical anchor that replaces
@@ -270,7 +270,7 @@ recorded during the run automatically downgrade `pass` → `needs-review`.
 Then render the report:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX
+tim understanding-check report EUDPA-XXXXX
 ```
 
 `report.md` has 10 sections (header, ticket summary, change summary,
@@ -317,12 +317,12 @@ Scripts under the workspace's `tools/understanding-check/`, and the `tim` comman
 | `prepare-check.sh` | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta |
 | `tim understanding-check analysis add-finding` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence-file` and `--evidence-lines`) |
 | `tim understanding-check analysis complete` | ANALYST helper — mark per-repo analysis as `complete` |
-| `question-add.sh` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |
-| `question-replace.sh` | Plan-gate edit — replace question by id |
-| `question-remove.sh` | Plan-gate edit — drop a question by id (renumbers downstream ids) |
-| `transcript-record-answer.sh` | Interview helper — persist developer's answer for a question |
-| `transcript-add-score.sh` | SCORER helper — append a score (rubric-match required) |
+| `tim understanding-check question add` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |
+| `tim understanding-check question replace` | Plan-gate edit — replace question by id |
+| `tim understanding-check question remove` | Plan-gate edit — drop a question by id (renumbers downstream ids) |
+| `tim understanding-check answer` | Interview helper — persist developer's answer for a question |
+| `tim understanding-check score` | SCORER helper — append a score (rubric-match required) |
 | `tim understanding-check counts` | Diagnostic — PASS/PARTIAL/FAIL by category |
 | `tim understanding-check verify` | Step 7 gate — every question scored, every finding has evidence |
 | `tim understanding-check finalize` | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
-| `render-report.sh` | Step 4 (`--preview`) and Step 7 — render markdown from JSON state |
+| `tim understanding-check report` | Step 4 (`--preview`) and Step 7 — render markdown from JSON state |

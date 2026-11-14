@@ -30,3 +30,8 @@ Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)
 
 None. No allowlist entry names `tools/understanding-check/`; the generic
 `tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P41
+
+None. No allowlist entry names `tools/understanding-check/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.

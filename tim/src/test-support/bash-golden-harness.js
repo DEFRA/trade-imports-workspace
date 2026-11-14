@@ -20,6 +20,8 @@ const realWorkspaceRoot = join(
   '..'
 )
 
+const timCliPath = join(realWorkspaceRoot, 'tim', 'src', 'cli.js')
+
 const ISO_TIMESTAMP =
   /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g
 
@@ -129,6 +131,41 @@ export const recordBashRun = async (
       extendEnv: true,
       reject: false,
       stripFinalNewline: !exactOutput
+    }
+  )
+  const recording = {
+    exitCode: result.exitCode,
+    stdout: normaliseRecordedText(result.stdout, staged.home),
+    stderr: normaliseRecordedText(result.stderr, staged.home)
+  }
+  if (watch === undefined) return recording
+  return {
+    ...recording,
+    files: recordFolderFiles(join(staged.root, watch), staged.home)
+  }
+}
+
+/**
+ * Runs tim against a staged workspace and records what it did in the
+ * shape {@link recordBashRun} records a script: exit code, stdout, stderr
+ * with their final newlines and, when `watch` names a workspace-relative
+ * folder, every file under it.
+ *
+ * @param {{home: string, root: string}} staged - From {@link stageBashWorkspace}
+ * @param {string[]} args - tim's arguments after `--workspace <root>`
+ * @param {object} [opts]
+ * @param {string} [opts.watch] - Workspace-relative folder whose files to record
+ * @returns {Promise<{exitCode: number, stdout: string, stderr: string, files?: Record<string, string>}>}
+ */
+export const recordTimRun = async (staged, args, { watch } = {}) => {
+  const result = await execa(
+    'node',
+    [timCliPath, '--workspace', staged.root, ...args],
+    {
+      reject: false,
+      stripFinalNewline: false,
+      env: { TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
+      extendEnv: true
     }
   )
   const recording = {

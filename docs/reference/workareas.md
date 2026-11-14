@@ -24,8 +24,8 @@ workareas/shared/EUDPA-X/                          → review handoff artifacts 
 workareas/skill-creator/<name>/                    → decisions.json (CREATE-mode interview state)
 workareas/skills-audit/<name>.md                   → AUDIT-mode plan document (per skill)
 workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md; .raw/ (prs.json, {repo}.sha, {repo}.diff as gh saved them) only between `tim understanding-check start` and `prepare`
-workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; canonical build-loop state)
-workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; provenance — pins, captures, resolved citations)
+workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; historical, read-only: the retired journey-builder skill wrote them)
+workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; historical, read-only provenance — pins, captures, resolved citations)
 workareas/<programme>/traces/<app>/<sha>/          → Playwright traces, manifest.json and coverage.json (written by `tim capture`)
 workareas/stack-logs/                              → lease-acquire.log, lease-release.log (the stack script output `tim docker lease` and `tim docker perf` write when no --logs is given)
 ```
@@ -34,8 +34,8 @@ workareas/stack-logs/                              → lease-acquire.log, lease-
 
 Eight files, each because it outlives the run that made it:
 
-- `journey-builder/*/backlog.json` — the executable definition of a body of
-  work. Judgement, not cache.
+- `journey-builder/*/backlog.json` — the record of a body of work the retired
+  journey-builder skill built. Judgement, not cache.
 - `journey-builder/*/deferred.json` — leads found but not yet verified to
   backlog standard.
 - `journey-builder/*/.corpus-meta.json` — which commit each side is pinned at

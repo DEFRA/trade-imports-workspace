@@ -301,3 +301,9 @@ acquire` refuses an unleased stack. Taking it down would wipe a stack
 someone may be using. Run the smoke once that stack is down: it is also the
 first live run of the native `tim docker down` (and of `tim docker lease
 release`, which now takes the stack down through it).
+
+## P63
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/journey-builder/` or a script in it; nothing to remove. The
+generic `tools/**` entries cover what remains.

@@ -1,6 +1,6 @@
 ---
 name: frontend-change
-description: 'Make a change to a frontend repo in this workspace (trade-imports-animals-frontend or trade-imports-plants-frontend, per the caller or the build-loop target profile) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then the openspec behaviour spec and coverage entries it touched, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill), NOT for the plants prototype or a design release (use `prototype`).'
+description: 'Make a change to a frontend repo in this workspace (trade-imports-animals-frontend or trade-imports-plants-frontend, per the caller or its target profile in targets.json) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then the openspec behaviour spec and coverage entries it touched, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use requirements-pipeline, whose build loop routes frontend rows through this skill), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill), NOT for the plants prototype or a design release (use `prototype`).'
 ---
 
 Make one change to a frontend repo in this workspace by following the recipe
@@ -12,7 +12,7 @@ skill is welded to. Two targets exist today — `trade-imports-animals-frontend`
 (`sets/high-risk-plants`) — a third, `sets/germinal-products` in
 `trade-imports-animals-frontend`, arrives with the Design Release 2.1
 programme, and the workspace expects more, so read the target
-from the caller (or from the build loop's target profile) rather than
+from the caller or from its target profile in [`targets.json`](targets.json) rather than
 assuming it. See "Targets" below.
 
 The recipes are the instructions — this skill routes to the right one, adds the
@@ -29,15 +29,15 @@ otherwise.
 
 Not for the high-risk plants **prototype**
 (`repos/trade-imports-plants-prototype`) or a design release built there —
-that repo is not a target profile in `tools/journey-builder/targets.json` and
+that repo is not a target profile in [`targets.json`](targets.json) and
 carries no verification ladder or behaviour spec of its own; use the
 `prototype` skill instead.
 
 ## Targets
 
 The canonical target list lives in
-[`tools/journey-builder/targets.json`](../../../tools/journey-builder/targets.json)
-(read there for the full profile — sources, commit paths, spec IDs). The
+[`targets.json`](targets.json), beside this file (read there for the full
+profile — repos, scope, verify scripts, sources). The
 columns this skill actually uses:
 
 | Target | Repo | Set | Unit script | Recipes | openspec namespace |
@@ -140,8 +140,8 @@ above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants,
 | "change the journey flow" (page order, task rows, entry guards, section gating) | Flow-maintenance guard rails below + `sets/<set>/docs/journey-flow-and-gates.md`, `docs/flow-and-gates.md` |
 | "change the frontend" (anything else) | Step 1 routing below — pick the guide(s) for the layer you are touching |
 
-NOT for a multi-increment run over a backlog — that is `journey-builder`, which
-invokes this skill once per increment. NOT for the tests repo
+NOT for a multi-increment run over a backlog — that is `requirements-pipeline`,
+whose build loop routes each frontend row through this skill. NOT for the tests repo
 (`trade-imports-ins-tests` owns the workspace E2E suite), NOT for ticket
 planning (`ticket`), NOT for the plants prototype or a design release
 (`prototype`).
@@ -184,10 +184,9 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-fron
 **The repo path and the unit script are inputs, not constants.** The two
 commands above are the animals and plants targets spelled out (the Targets
 table above); for either one, take the checkout and the script name from
-the caller or from the build loop's target profile
-(`tools/journey-builder/targets.json` → `repo`, `verify.unit`), exactly as
-Step 5 takes the set. Under `journey-builder` the checkout is the run's
-worktree, not `repos/<name>`. Every `npm --prefix` and every repo path in
+the caller or from the target profile
+([`targets.json`](targets.json) → `repo`, `verify.unit`), exactly as
+Step 5 takes the set. Every `npm --prefix` and every repo path in
 Steps 2 and 4 substitutes the same way.
 
 If this is red at baseline, STOP and report — do not build on a broken tree.
@@ -337,7 +336,7 @@ technique, the capability lookup and the file shapes.
 directly, using the merge technique `references/SPEC_SYNC.md` carries,
 and validate the spec write with the CLI. No `openspec/changes/`
 proposal per increment — the increment already has a planning record
-(the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a
+(the ticket's AC, or the backlog row), and a
 second one costs an agent turn on every increment of a backlog. Do not
 spin up a throwaway proposal to reach for a lifecycle skill; those
 skills are gone.
@@ -349,17 +348,15 @@ checkouts before writing anything.
 
 | Root | What it is | Default |
 |---|---|---|
-| **Target repo** | the checkout you just implemented and verified in | the caller's repo — `repos/<name>` on a direct invocation, the run's worktree under `journey-builder` |
+| **Target repo** | the checkout you just implemented and verified in | the caller's repo — `repos/<name>` unless the caller named another checkout |
 | **Spec root** | the checkout whose `openspec/` this increment writes | `~/git/defra/trade-imports-workspace` unless the caller named one |
 
-Under `journey-builder` **both** are worktrees, not the `repos/…` and
-workspace checkouts — the loop passes them. Resolve every path in this
-step, and the `--root` argument in 5.4, against these two. Hardcoding
+When the caller names either checkout, resolve every path in this step,
+and the `--root` argument in 5.4, against the one it named. Hardcoding
 either validates and self-checks the wrong tree, silently and green.
 
-Who commits afterwards differs by caller, and 5.8 is where that is
-settled. This skill runs no `git add` and no `git commit` on either
-checkout, on either path.
+The caller commits afterwards, as 5.8 says. This skill runs no `git add`
+and no `git commit` on either checkout.
 
 ### 5.1 Identify the capabilities
 
@@ -387,7 +384,7 @@ tracked modifications **and** newly created files.
 One consequence worth knowing: an intent-to-add path is no longer
 *untracked*, so a bare `git clean -fd` walks straight past it. Anything
 undoing an increment must `git reset` the paths first or the new files
-survive the rollback — `journey-builder`'s `rollback-increment.sh` does.
+survive the rollback.
 
 Map each touched element to its capability path with the lookup tables in
 `references/SPEC_SYNC.md`. Read the set from the caller or the target
@@ -513,30 +510,24 @@ Spec root: <path>
 Written so far (uncommitted): <paths>
 ```
 
-`journey-builder`'s loop re-verifies rather than trusting a worker's
-green, so a non-completion lands as a failed increment: it rolls back the
-target worktree **and** the spec write in its workspace worktree. Name
-what you wrote either way — on the direct path that line is the caller's
-to act on; under the loop it is where the rollback will look.
+Name what you wrote: that line is what the caller acts on, and where a
+rollback of the increment will look.
 
 ### 5.8 Written, not committed — by this skill
 
 The spec write lands in the spec root and stays there. Do not `git add`
 (beyond 5.1's `add -N`, which stages nothing) and do not `git commit`, in
-either checkout, on either path. The commit decision belongs to the
+either checkout. The commit decision belongs to the
 caller — exactly as it already does for the target repo.
 
-What the caller then does with it differs, and the Completion output says
-which case you are in:
-
-| Caller | Spec root | Who commits |
-|---|---|---|
-| Direct — a person, or the `ticket` skill | `~/git/defra/trade-imports-workspace` | Nobody yet. Left uncommitted and named in the Completion output; the caller commits it with the rest of their work. |
-| `journey-builder` | the run's workspace worktree | `commit-increment.sh`, per increment, on the run's `spec/<run-id>` branch. One PR at run end. |
+The files are left uncommitted and named in the Completion output; the
+caller — a person, the `ticket` skill or the `requirements-pipeline` build
+loop — commits them with the rest of its work.
 
 **Why the spec root is an input and not a constant.** If this step always
-wrote the main workspace checkout, a `journey-builder` rollback would undo
-the code and keep the spec describing it — a `spec.md` asserting behaviour
+wrote the main workspace checkout, a caller that rolled back an increment
+in its own checkout would undo the code and keep the spec describing it —
+a `spec.md` asserting behaviour
 that exists in no repo. That is drift-by-assertion, and it is worse than
 the drift-by-omission this step exists to stop, because it validates
 green. A later edit that "tidies" the root back to a constant
@@ -576,13 +567,8 @@ block is unchanged:
 Spec sync: none — no observable behaviour change (<one clause: why>)
 ```
 
-On the `journey-builder` path the closing line reads
-`Uncommitted — journey-builder commits both` instead: telling the loop to
-go and commit by hand would be wrong, and the skill knows which path it
-is on because the caller passed a spec root.
-
 Name every spec file you wrote. The caller cannot commit or review what
-it has not been told about, and on the direct path it was not otherwise
+it has not been told about, and it was not otherwise
 watching that checkout.
 
 One increment per invocation. If the request implies several elements, do the

@@ -128,7 +128,7 @@ const unselectedGroupSkips = (groups) =>
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
- * @param {string} [args.root] - Overrides the spec root (journey-builder worktrees)
+ * @param {string} [args.root] - Overrides the spec root
  * @param {string} [args.capability] - Scope to one capability path and its descendants
  * @param {string[]} [args.groups] - Which of CHECK_GROUPS to run; defaults to all three
  * @param {Function} [args.run] - The subprocess seam for the delegated openspec-validate call

@@ -2392,14 +2392,41 @@
       ],
       "risk": "Medium: the walker's hot path. Keep the TSV column order, the line stored as a string (items) or a number (per-file), and the confirmation lines.",
       "proof": "Harness goldens for every filter and every transition. One walker session on a throwaway copy, with items.json diffed.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "0b05666fa6d1b40eec557798215f9898d606ca67"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. npm --prefix tim test passed 327 files and 5188 tests, with 15 files skipped. The skipped files include the bash recorder tests, which now find no scripts to run.",
+          "tim-lint: green. npm run lint and npm run format:check are both clean.",
+          "parity: green. tim/src/review/__fixtures__/__golden__/review-ledger.json was recorded from the unmodified eight scripts over 72 cases, each on a fresh fixture ledger. The cases cover every list --filter and --status, --file, --repo, a combined filter, every mark disposition (Merged with and without a valid note), every status value, an empty note, refusals, missing files and items, and a seven-step walker session (add, mark, mark, list, status, list, counts). Each step records stdout, stderr, exit code and the files it wrote. tim/src/commands/review/file.test.js and items.test.js replay every case through the CLI and match byte for byte: TSV order and escaping, line stored as a string in items and as a number per file, confirmation lines, and the counts table padded to 15 bytes. For the 5 usage cases, only the exit code, the files and the first stderr line are compared. Mutation probe: changing Discuss's implied status to — turned 2 parity tests red, and restoring it turned them green.",
+          "no-callers: green. A git grep outside workareas/ for the eight script names finds only the golden recordings, the bash-recorder golden test and P27's recorder test titles (store.test.js, finding-categories.test.js, review-scripts.golden.test.js). Nothing in repos/* names them. No settings.json or hook names them, and settings-followups.md records P47 as none (Bash(tim:*) covers the new commands).",
+          "extra: the diff adds no ~/git/defra or $HOME/git/defra line outside the normalised goldens, and no .sh file. The eight scripts are deleted."
+        ],
+        "deviations": [
+          "--json returns tim's envelope. list puts the items in result, and gives [] where the Bash printed nothing. counts gives {reviewId, repo, breakdown, total}. The write commands give what they wrote. WALKER.md, BATCH_IMPLEMENTOR.md, SKILL.md and items-table.md now say the items are `result`.",
+          "Where the Bash printed its usage block (to stdout), tim prints one line on stderr and still exits 1. That line is the same first line Bash printed (for example '--fix required'), or a one-line 'Usage: tim review items ...' when the review id is missing. --help exits 0.",
+          "A --line, --pr or --item value that is not JSON is now refused with exit 1 and nothing is written. Before, file add and file init left a .tmp file and exited 0, and mark and status exited 2 with a jq error.",
+          "items add into a review folder that does not exist now says 'Review workspace not found: <dir>'. Before, it printed bash's redirect error. The exit code is 1 in both.",
+          "The missing-file refusal now reads 'call tim review file init first' instead of naming file-review-init.sh.",
+          "The confirmation lines keep the Bash's always-present ', Notes set' suffix, for parity, even when no --note is given.",
+          "Every refusal exits 1, matching the Bash, rather than tim's usual exit 2 for usage errors.",
+          "The four Bash scripts still waiting for later rows (prepare-review.sh, prepare-review-local.sh, refresh/reconcile.sh, refresh/scope.sh) now call `tim --workspace <their workspace> review file init|items add|items list`. They follow P46's detect-tech pattern.",
+          "The parity cases include the 'walker session on a throwaway copy with items.json diffed' proof, as a recorded seven-step case. No separate live walker run was done.",
+          "The onboarding review deck (03-review.pptx and .md) was regenerated from skill-specs.js. The other decks that the build touched were restored unchanged.",
+          "store.js: the doc comment of reviewItemsJsonText no longer names review-items.sh. The function stays, used only by P27's store tests."
+        ]
+      }
     },
     {
       "id": "P48",

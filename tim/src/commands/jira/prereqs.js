@@ -32,8 +32,9 @@ const lineCountOf = (text) => text.split('\n').length - 1
 const writeEpics = async ({ outputDir, board }) => {
   const epicsFile = join(outputDir, 'epics.txt')
   try {
+    const client = createJiraClient()
     const epics = await readBoard(() =>
-      createJiraClient().listBoardEpics(board, { includeDone: false })
+      client.listBoardEpics(board, { includeDone: false })
     )
     const text = asFileText(renderEpics({ board, epics }))
     await writeFile(epicsFile, text)
@@ -130,6 +131,7 @@ const secondsTimestamp = (date) => date.toISOString().replace(/\.\d+Z$/, 'Z')
  * @param {Date} [opts.now]
  * @returns {Promise<{outputDir: string, board: string, capPage: string, epicCount: number, capCount: number, staleWarning: string, liveVersionError: string, parseError: string, refusal: string}>} Each message is '' when there is none; `liveVersionError` says why the live version could not be read, which leaves the map unchecked for staleness
  * @throws {BoardReadError} when Jira will not list the board's epics; epics.txt is then left empty
+ * @throws {TimError} AUTH or USAGE when JIRA_USER, JIRA_TOKEN or JIRA_BASE_URL is not set; epics.txt is then left empty
  */
 export const writePrereqs = async ({
   workspaceRoot,

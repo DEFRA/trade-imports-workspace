@@ -115,6 +115,7 @@ describe('tim capabilities check refreshing from Confluence', () => {
   afterEach(() => {
     staged.current?.remove()
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
   const pageMap = mapFixture('canonical').replace(
@@ -144,7 +145,7 @@ describe('tim capabilities check refreshing from Confluence', () => {
 
   const runCheck = async (...args) => {
     staged.current = stageTimWorkspace({ map: 'canonical', mapText: pageMap })
-    process.env.TIM_WORKSPACE = staged.current.root
+    vi.stubEnv('TIM_WORKSPACE', staged.current.root)
     const run = await runRegisteredCommand(
       register,
       'capabilities',

@@ -23,6 +23,7 @@ afterEach(() => {
   staged.current?.remove()
   staged.current = null
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
 })
 
 const caseNamed = (caseName) =>
@@ -54,14 +55,18 @@ const optionValue = (args, name, fallback) => {
 
 const runPrereqs = async (theCase, extraArgs = []) => {
   const args = theCase.args ?? []
-  servesBoard(theCase, optionValue(args, '--board', '13780'))
-  if (!theCase.boardMissing && theCase.map !== null) {
+  if (!theCase.epicsFromTim) {
+    servesBoard(theCase, optionValue(args, '--board', '13780'))
+  }
+  if (!theCase.epicsFromTim && !theCase.boardMissing && theCase.map !== null) {
     servesPage(theCase, optionValue(args, '--cap-page', '6468764101'))
   }
-  delete process.env.MIN_CAPABILITIES
-  Object.assign(process.env, theCase.env)
+  vi.stubEnv('MIN_CAPABILITIES', undefined)
+  for (const [name, value] of Object.entries(theCase.env ?? {})) {
+    vi.stubEnv(name, value)
+  }
   staged.current = stageTimWorkspace(theCase)
-  process.env.TIM_WORKSPACE = staged.current.root
+  vi.stubEnv('TIM_WORKSPACE', staged.current.root)
   const { home, root } = staged.current
 
   const run = await runRegisteredCommand(
@@ -158,7 +163,7 @@ describe('tim jira prereqs --json', () => {
 
   test('Should refuse a board that is not a number before writing anything', async () => {
     staged.current = stageTimWorkspace({ map: null })
-    process.env.TIM_WORKSPACE = staged.current.root
+    vi.stubEnv('TIM_WORKSPACE', staged.current.root)
 
     const run = await runRegisteredCommand(
       register,

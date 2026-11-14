@@ -45,7 +45,8 @@ const recordPrereqs = (theCase) =>
           theCase.liveVersion === null
             ? undefined
             : String(theCase.liveVersion),
-        STAND_IN_BOARD_MISSING: theCase.boardMissing ? '1' : undefined
+        STAND_IN_BOARD_MISSING: theCase.boardMissing ? '1' : undefined,
+        STAND_IN_EPICS_FROM_TIM: theCase.epicsFromTim ? '1' : undefined
       }
     })
   )

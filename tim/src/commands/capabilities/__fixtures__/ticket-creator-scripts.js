@@ -73,7 +73,8 @@ export const checkCases = [
  * Each case run against prepare-ticket-creation.sh and `tim jira prereqs`.
  * `liveVersion` is the version Confluence reports for the page, or null
  * when the page cannot be read. `previousCapabilities` is a
- * capabilities.txt left by an earlier run.
+ * capabilities.txt left by an earlier run. `epicsFromTim` has the Bash
+ * run list the board with the real `tim jira epics`, not the stand-in.
  */
 export const prereqsCases = [
   {
@@ -116,6 +117,25 @@ export const prereqsCases = [
     liveVersion: 42,
     args: ['--board', '999', '--cap-page', '123'],
     env: { MIN_CAPABILITIES: '10' }
+  },
+  {
+    name: 'JIRA_USER and JIRA_TOKEN not set',
+    map: 'canonical',
+    liveVersion: 42,
+    epicsFromTim: true,
+    env: { MIN_CAPABILITIES: '10', JIRA_USER: '', JIRA_TOKEN: '' }
+  },
+  {
+    name: 'JIRA_BASE_URL not set',
+    map: 'canonical',
+    liveVersion: 42,
+    epicsFromTim: true,
+    env: {
+      MIN_CAPABILITIES: '10',
+      JIRA_USER: 'sam',
+      JIRA_TOKEN: 'token',
+      JIRA_BASE_URL: ''
+    }
   }
 ]
 
@@ -125,7 +145,7 @@ const writeExecutable = (path, text) => {
 }
 
 const standInTim = ({ epicsFile, mapFile }) => `#!/bin/bash
-if [[ "$1 $2" == "jira epics" ]]; then
+if [[ "$1 $2" == "jira epics" && -z "\${STAND_IN_EPICS_FROM_TIM:-}" ]]; then
   if [[ -n "\${STAND_IN_BOARD_MISSING:-}" ]]; then
     echo "${BOARD_MISSING_MESSAGE}" >&2
     exit 1

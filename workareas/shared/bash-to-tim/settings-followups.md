@@ -200,3 +200,9 @@ None. No allowlist entry names `tools/confluence/sync-docs.sh`,
 None. No allowlist entry names `tools/ticket-creator/check-capabilities.sh`
 or `prepare-ticket-creation.sh`; `Bash(tim:*)` covers `tim capabilities check`
 and `tim jira prereqs`.
+
+## P56
+
+None to remove. P56 adds `tim sonar push-check` and deletes no script;
+`tools/sonar/sonar-push-check.sh` and `scripts/sonar/sonar-push-gate.sh`
+stay, and the hooks keep calling them, until P57 cuts them over.

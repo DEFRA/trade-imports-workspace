@@ -159,6 +159,22 @@ describe('tim CLI auto-pull', () => {
     expect(await headSha(workspace)).toBe(await headSha(upstream))
   }, 30_000)
 
+  test('leaves the workspace alone when answering the pre-push hook', async () => {
+    await pushUpstreamCommit('new-file.txt')
+    const before = await headSha(workspace)
+
+    await execa(
+      'node',
+      [cliPath, 'sonar', 'push-check', '--hook', '--workspace', workspace],
+      {
+        reject: false,
+        input: JSON.stringify({ tool_input: { command: 'ls' }, cwd: workspace })
+      }
+    )
+
+    expect(await headSha(workspace)).toBe(before)
+  }, 30_000)
+
   test('keeps --json stdout parseable and puts the note on stderr', async () => {
     await pushUpstreamCommit('new-file.txt')
 

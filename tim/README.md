@@ -1695,6 +1695,58 @@ tim sonar mcp-tidy
   and leaves one with no `SONARQUBE_PROJECT_KEY` alone.
 - It always exits 0, and does nothing when docker is not running.
 
+### `tim sonar push-check` — the pre-push build, test and Sonar check
+
+Runs the check CI runs, on the repo you are in or the folder you name, and
+waits for the SonarCloud quality gate.
+
+```bash
+tim sonar push-check [dir] [--json]
+tim sonar push-check --pull-request 435 --base main     # analyse as that pull request
+tim sonar push-check --hook < hook-input.json           # as the Claude Code PreToolUse hook
+```
+
+- A Java repo (`pom.xml`) runs `mvn -q clean verify sonar:sonar`, integration
+  tests included, so Docker must be running for Testcontainers.
+- A Node repo (`package.json`) runs `npm ci`, `npm run --if-present
+format:check`, `npm run --if-present lint` and `npm test`, cheapest first,
+  then `sonar-scanner`. Once all four pass and the tree is clean, it writes
+  `HEAD` to `.cache/prepush-verified`, which a repo's own git `pre-push` hook
+  can read to skip its run. Without `sonar-scanner` installed it skips.
+- Each command's output goes to `.cache/sonar-push-check.log`. A failing
+  command shows only the log's last 60 lines.
+- Untracked files the check creates are deleted afterwards, however it ends.
+  Files that were there before it started are kept.
+- It analyses the pull request SonarCloud lists for the current branch, else
+  the branch. SonarCloud lists a pull request only once CI has analysed it,
+  so the first push of a new pull request is checked on its branch.
+  `--pull-request` and `--base` (given together) name the pull request
+  instead. A detached `HEAD` with no pull request is skipped, because an
+  analysis with no branch is recorded against main.
+- It needs `SONAR_TOKEN` and skips, saying how to set it, without one.
+- Exit codes: `0` when the check passed or was skipped, `2` when it blocks
+  the push. Its text goes to stderr; `--json` puts `{outcome, exitCode,
+project, pullRequest, branch}` in `result` on stdout. Without `--hook`, a
+  usage error (a bad `--pull-request`, `--pull-request` without `--base`, a
+  folder that does not exist) also exits `2`, tim's usage code, with the
+  reason on stderr and no check run; `--json` tells the two apart by
+  `ok: false` and the `USAGE` error code. With `--hook`, a usage error
+  exits `0`.
+- A build command that a signal ends (an out-of-memory kill, say) counts
+  as a failure with exit `128 + the signal's number`, so it blocks the push
+  and shows the log tail.
+- When SonarCloud lists several pull requests for the branch, the one with
+  the highest number is used. SonarCloud's list does not say which are open.
+- `--hook` reads the PreToolUse JSON on stdin. It checks only a Bash call that
+  runs `git push` (also `git -C <path> push` and other options before `push`),
+  in the repo the call names with `-C`, `--git-dir=` or `--work-tree=`, else
+  the call's `cwd`, narrowed to the top of its repo. It looks for the token
+  in an interactive zsh when the environment has none, waiting however long
+  that zsh takes to start, never updates the
+  workspace, writes nothing on stdout and exits 0 on any error, so the hook
+  cannot block by accident. A call that does not push exits 0 without
+  loading the rest of tim. `--hook` takes no other arguments.
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo

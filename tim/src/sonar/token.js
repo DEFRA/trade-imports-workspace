@@ -11,17 +11,19 @@ const printedToken = async (env, timeoutMs) => {
     extendEnv: false,
     stdin: 'ignore',
     stderr: 'ignore',
-    timeout: timeoutMs
+    timeout: Number.isFinite(timeoutMs) ? timeoutMs : undefined
   })
   return lastLineOf(stdout)
 }
 
+const printedTokenWithin = (env, timeoutMs) =>
+  Number.isFinite(timeoutMs)
+    ? Promise.race([printedToken(env, timeoutMs), emptyAfter(timeoutMs)])
+    : printedToken(env, timeoutMs)
+
 const readTokenFromInteractiveZsh = async (env, timeoutMs) => {
   try {
-    return await Promise.race([
-      printedToken(env, timeoutMs),
-      emptyAfter(timeoutMs)
-    ])
+    return await printedTokenWithin(env, timeoutMs)
   } catch {
     return ''
   }
@@ -35,7 +37,7 @@ const readTokenFromInteractiveZsh = async (env, timeoutMs) => {
  *
  * @param {object} [opts]
  * @param {Record<string, string|undefined>} [opts.env] - The environment to read and to start zsh with
- * @param {number} [opts.timeoutMs=5000] - How long zsh may take before the lookup gives up
+ * @param {number} [opts.timeoutMs=5000] - How long zsh may take before the lookup gives up; Infinity waits for zsh however long it takes
  * @returns {Promise<string|undefined>}
  */
 export const resolveSonarToken = async ({

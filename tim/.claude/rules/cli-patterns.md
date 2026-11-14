@@ -1,6 +1,7 @@
 ---
 paths:
   - 'src/cli.js'
+  - 'src/program.js'
   - 'src/commands/**'
 ---
 
@@ -9,7 +10,7 @@ paths:
 ## Commander wiring
 
 - One subcommand = one file under `src/commands/`. The file exports a `register(program)` function that adds the command, options, and action handler.
-- `src/cli.js` is the only commander entry point. It imports every `register` and calls it. The `bin` entry, `src/launcher.js`, only picks which clone's `cli.js` to run and registers no commands. No dynamic discovery — explicit imports keep the surface obvious.
+- `src/program.js` is the only commander program. It imports every `register` and calls it. `src/cli.js` is the entry: it answers the pre-push hook call `sonar push-check --hook` itself, so a hook on every Bash call does not load every command, and loads `program.js` for everything else. The `bin` entry, `src/launcher.js`, only picks which clone's `cli.js` to run and registers no commands. No dynamic discovery — explicit imports keep the surface obvious.
 - Every command sets these options on top of its own:
   - `--json` — emit one zod-validated JSON line to stdout, suppress Ink
   - `--no-ui` — plain text to stdout, no Ink

@@ -8,6 +8,7 @@ import { settlePendingChecks } from '../../sonar/pending-check.js'
 import { recordPushedCommits } from '../../sonar/pending-record.js'
 import { sonarChecksFolder } from '../../sonar/pending-store.js'
 import { resolveSonarToken } from '../../sonar/token.js'
+import { registerPushCheck } from './push-check.js'
 
 const scopeOf = ({ pullRequest, branch }) => {
   if (pullRequest !== undefined && branch !== undefined) {
@@ -175,7 +176,7 @@ export const register = (program, { timVersion }) => {
   const sonar = program
     .command('sonar')
     .description(
-      'Read SonarCloud issues for a DEFRA project, and run the SonarCloud Claude Code hooks'
+      'Read SonarCloud gates and issues for a DEFRA project, run the pre-push check and run the SonarCloud Claude Code hooks'
     )
   registerHooks(sonar)
 
@@ -221,4 +222,6 @@ export const register = (program, { timVersion }) => {
         timVersion
       }).call(this, project, options, command)
     })
+
+  registerPushCheck(sonar, { timVersion })
 }

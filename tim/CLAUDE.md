@@ -46,7 +46,8 @@ Use `/review`, `/code-style`, `/ticket`, `/understanding-check` from the workspa
 ## What lives where
 
 - `src/launcher.js` — the `bin` entry; hands over to the `cli.js` of the workspace clone the command addresses
-- `src/cli.js` — commander entry; auto-sets `--no-ui` when `!isTTY`
+- `src/cli.js` — the entry: answers the pre-push hook (`sonar push-check --hook`) without loading the commands, else loads `src/program.js`
+- `src/program.js` — the commander program; auto-sets `--no-ui` when `!isTTY`
 - `src/clients/*.js` — external service clients (undici); each with sibling `*.test.js`
 - `src/components/features/<name>/` — Ink feature folders (one per command group)
 - `src/components/common/` — shared screens (Menu, Loading, Error, Confirm, ParallelProgress, StreamingLog)

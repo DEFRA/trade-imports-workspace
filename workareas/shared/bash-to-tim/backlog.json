@@ -3503,14 +3503,37 @@
       ],
       "risk": "Medium. ncu becomes a pinned tim dependency, so users no longer need a global install; its version may differ from a user's global copy.",
       "proof": "The same pinned ncu run both ways gives an equal packages.json (stamps stripped). nock fixtures for the changelog fetch.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "7289f934"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "d284ebea"
+          }
+        ],
+        "checks": [
+          "verifier finding (strategy and repo path reach ncu): FIXED in d284ebea. A new shared fixture, tim/src/npm-upgrade/__fixtures__/ncu-registry.js, serves registry documents with nock at http://registry.test. It writes a temporary repo whose .npmrc points npm at that registry, and blocks real network access. tim/src/npm-upgrade/ncu.test.js now runs the real runNcu against a package with 1.2.3, 1.2.9, 1.5.0 and 2.1.0. latest gives ^2.1.0, minor ^1.5.0 and patch ^1.2.9, and a second package proves ncu reads the package.json in cwd. tim/src/npm-upgrade/discover.test.js runs discoverUpgrades with the real runNcu for each strategy and checks the recorded target and upgrade_type for the repo at the given path.",
+          "mutation probes: PASS. Each production file was restored with git checkout afterwards. The verifier's own probe, `target: 'latest'` in ncu.js runNcu, now gives 4 failures. Making ncu.js read packageFile from process.cwd() gives 4 failures. Forcing `target: 'latest'` at discover.js askNcu gives 2 failures. Making askNcu pass `cwd: process.cwd()` gives 3 failures.",
+          "tim-unit: PASS. `npm --prefix tim test` runs 409 files: 6118 tests passed, 8 expected fails and 37 skipped, with 26 files skipped. The targeted run of `src/npm-upgrade src/commands/npm` passed 125 tests, up from 118.",
+          "tim-lint: PASS. `npm --prefix tim run lint` and `run format:check` are both clean.",
+          "Earlier builder checks (parity, real-run parity, no-callers, fixed paths, no new .sh): not affected. The fix only adds test files and one test fixture, and changes no production code."
+        ],
+        "deviations": [
+          "Besides the runNcu test the verifier asked for, I added a discoverUpgrades test that uses the real runNcu. A runNcu-only test would not catch discover.js passing the wrong target or cwd, since every other discover test injects a stub.",
+          "The registry is reached through a `.npmrc` (`registry=http://registry.test/`) in the temporary repo, so runNcu keeps its `{cwd, target}` signature and has no registry option added for tests.",
+          "All builder deviations still stand. In particular, the two scratch run folders workareas/npm-upgrades/EUDPA-90001 and EUDPA-90002 are still there for Sam to remove."
+        ]
+      }
     },
     {
       "id": "P66",

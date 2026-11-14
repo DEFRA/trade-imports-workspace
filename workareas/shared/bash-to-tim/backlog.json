@@ -2079,14 +2079,39 @@
       ],
       "risk": "High: the only script that handles secrets. Redaction regexes are copied verbatim and their order kept. The gh half now lives in skill text.",
       "proof": "A redaction corpus covering every pattern gives byte-equal output and the same count. A golden workarea tree from nock and staged .raw/. One live run from a second clone at a non-canonical path.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "f427eebd"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. npm --prefix tim test passed 299 files and 4928 tests (9 files skipped, among them the bash recorder tests, which now find no scripts to run).",
+          "tim-lint: green. npm --prefix tim run lint and run format:check are both clean.",
+          "parity: green. tim/src/understanding-check/__fixtures__/__golden__/understanding-check-prepare.json was recorded from the unmodified start-check.sh, prepare-check.sh and redact-diff.js, using stand-in gh and ticket.sh scripts. It covers a fresh start, a resume, a cut diff in text and JSON, no PRs, a Jira refusal and the redaction corpus. prepare.test.js (Jira mocked with nock) and redact.test.js reproduce it byte for byte: files, stdout, stderr, exit codes and the redaction count (12 matches across 1 file). start-prepare.test.js runs the CLI and matches the RESUME output. Changing one regex in redact.js turns the tests red; restoring it turns them green.",
+          "no-callers: green. A git grep for start-check, prepare-check.sh, redact-diff and tools/understanding-check outside workareas/ finds only golden snapshots and bash-recorder fixtures, the same history-only hits P40 and P41 left. Nothing in repos/* names them. No settings.json allowlist entry names them; settings-followups.md records P42 as none.",
+          "extra: no new ~/git/defra or $HOME/git/defra line in the diff, no new .sh file, and the sonar secrets scan of the new fixtures is clean."
+        ],
+        "deviations": [
+          "`start` FRESH no longer runs prepare. It makes the check's .raw/ folder and prints MODE: FRESH, the check folder, the raw folder and the next step. RESUME output is byte-equal to bash, except that the meta is printed with JSON.stringify instead of cat, which is the same for any meta that jq or tim wrote.",
+          "--json returns tim's envelope, whose data is the meta prepare-check.sh printed. Before, start --json printed a MODE line followed by bare JSON.",
+          "start and prepare refuse a ticket that does not start with EUDPA- (the bash accepted any non-empty value), and --help exits 0. Both match the other understanding-check commands.",
+          "If the review routing data cannot be read, prepare now writes one warning to stderr before the bundles fall back to the heading alone. detect-tech.sh fell back silently. This only happens when the routing data cannot be read.",
+          "If prepare stops because no PRs were found or Jira failed, .raw/ is kept so a retry works. It is removed only after a successful prepare.",
+          "The 'not found' hints in tim/src/understanding-check/analysis.js and questions.js now name `tim understanding-check prepare` instead of prepare-check.sh. The P40 and P41 golden comparisons translate the old hint through asTimNamesPrepare in check-workspace.js.",
+          "The redaction corpus builds its fake secrets at run time and uses 'Bearer (none)', so the workspace's sonar secrets hook does not block reading the fixture or golden files.",
+          "The live run from a second clone at a non-canonical path was not done: CLAUDE.md rule 2 forbids side clones. Instead the CLI tests run tim with --workspace pointing at a temporary workspace under a temporary HOME.",
+          "tools/github/prs.sh and tools/jira/ticket.sh lose this caller but stay, as the row says."
+        ]
+      }
     },
     {
       "id": "P43",

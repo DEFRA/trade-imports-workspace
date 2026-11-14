@@ -115,45 +115,46 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 26 of 68 (38%), counted over rows that are not for Sam.
-- Landed this run: P26, P27, P28, P29 and P30.
+- Progress: 46 of 68 (68%), counted over rows that are not for Sam.
+- Landed this run: P31, P32, P35, P36, P39, P40, P41, P42, P43, P44, P45,
+  P46, P47, P48, P49, P50, P52, P53 and P54.
 - Blocked this run:
-  - **P32 (`tim capabilities extract`):** two output changes that the row's
-    risk does not name.
-    1. File missing and `--format` invalid together (for example
-       `tim capabilities extract no-such.md --format csv`). The Bash checked
-       the file first: `Error: file not found: no-such.md`, exit 1. tim checks
-       `--format` in `parseOptions` (`checkedFormat`, in
-       `tim/src/commands/capabilities/index.js`) before `run()` reads the
-       file, so it prints `Error: --format must be 'list' or 'tsv', got: csv`,
-       exit 2.
-    2. An empty file argument (`tim capabilities extract ''`). The Bash
-       printed its usage line and exited 1. Commander accepts `''`, so tim
-       prints `Error: file not found: ` and exits 2. The risk only covers the
-       missing argument that commander catches.
-    Fix: for each, either match the Bash (check the file before the format;
-    refuse an empty path as usage) or name the change in P32's risk, and add
-    a test for each case. Nothing else blocks it: tim tests (259 files, 4483
-    tests), lint and format are green, nothing outside `workareas/` still
-    names `extract-capabilities`, and the two hand-derived violations rows
-    (CAP-04.1, CAP-04.2) match the Perl source. Neither builder nor verifier
-    could re-run the Perl for parity, because the permission classifier
-    refused it.
-  - **P34 (`tim service-tag`):** the only problem is two allowlist entries
-    for the deleted `tools/service-tag` scripts, at `.claude/settings.json`
-    lines 92 and 93. A hook stops agents editing permission config, so Sam
-    has to make this change: delete lines 92 and 93 and the trailing comma
-    at the end of line 91
-    (`"Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)",`),
-    then commit it as a follow-up `chore(NO_JIRA)` commit on
-    `chore/NO_JIRA-bash-to-tim`, or amend it into 12827163. No other commits
-    were made for this.
-- Why the loop stopped: two rows in a row were blocked, which points at
-  something systemic. P32 is again an output change for existing callers
-  that the risk does not name. P34 needs a change only Sam can make.
+  - **P37 (`tim confluence sync`):** an exit code changed that the row's
+    risk does not name. A non-numeric `--page-id` or `--root-id` (for
+    example `tim confluence sync --page-id abc`) is now refused by
+    `pageIdFrom` with a usage error, exit 2: `Cannot find a page id in
+    "abc". Give a page id, or a page URL with /pages/<id> in it.` The Bash
+    `sync-docs.sh` found no synced file and exited 1; for `--root-id` it
+    failed on the API call. The risk also does not say that both options
+    now accept a page URL, or that this refusal comes before `--clean`
+    removes anything. Fix: name these changes in P37's risk, or map the
+    usage error back to exit 1, and add a test either way. The options are
+    parsed in `tim/src/commands/confluence/index.js`; `pageIdFrom` is in
+    `tim/src/clients/confluence-client.js`.
+  - **P55 (Sonar session hooks):** needs Sam. Four hook commands in
+    `.claude/settings.json` still run the Bash scripts: line 146
+    (PostToolUse `sonar-record-push.sh`), line 164 (UserPromptSubmit
+    `sonar-check-pending.sh`), line 175 (SessionStart
+    `sonar-check-pending.sh`) and line 180 (SessionStart
+    `sonar-remove-stale-mcp-containers.sh`). Agents cannot edit that file.
+    Until they switch, the three scripts under `scripts/sonar/` cannot be
+    deleted, and the hook section of `docs/agent-onboarding.md` and the
+    comment on line 26 of `scripts/sonar/sonar-push-gate.sh` cannot be
+    rewritten. The replacement commands and follow-up steps are under
+    `## P55` in `settings-followups.md`. They have only run in tests; the
+    permission system refused a smoke run. After the switch, one follow-up
+    commit deletes the scripts and rewrites the docs and the comment, then
+    Sam runs a SessionStart check by hand.
+  - **P56 (`tim sonar push-check`):** its proof needs one real run in
+    `trade-imports-address-book` and one in
+    `trade-imports-animals-frontend`, and a live check that SonarCloud's PR
+    list agrees with `gh pr view`. `SONAR_TOKEN` is not set in the session
+    or in Sam's shell profile, so someone with a token must run both.
+- Why the loop stopped: two rows in a row were blocked (P55 and P56), which
+  points at something systemic. Both need Sam: one a settings change agents
+  cannot make, the other a SonarCloud token.
 - Rows for Sam: P11 and P19B. P26's canary (raising a real govuk ticket)
   still waits for Sam's go-ahead.
 - Landing result: none yet.
-- Next: Sam removes the two `tools/service-tag` allowlist entries from
-  `.claude/settings.json` and commits it, so P34 can be set to `done`; then
-  fix P32 as set out above, set it back to `todo`, and run the loop again.
+- Next: Sam switches the four hook commands in `.claude/settings.json` as
+  set out under `## P55` in `settings-followups.md`.

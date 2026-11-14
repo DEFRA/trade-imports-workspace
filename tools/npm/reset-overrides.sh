@@ -14,7 +14,7 @@
 #    as animals-admin's) never sees a red state, and no other script's
 #    `git checkout` rollback can undo the trial.
 # 3. Each trial: write the overrides being tried, `npm install`,
-#    `npm update`, audit-baseline.sh, `npm test` (not for
+#    `npm update`, `tim npm audit baseline`, `npm test` (not for
 #    trade-imports-ins-tests), `npm run lint`, and `npm run
 #    build:frontend` where those scripts exist.
 # 4. With no overrides at all: if every check passes, every override is
@@ -48,8 +48,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=audit-lib.sh
-source "$SCRIPT_DIR/audit-lib.sh"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+AUDIT_CONFIG_FILE="audit-ci.jsonc"
 
 RUN_ID=""
 REPO=""
@@ -73,8 +73,10 @@ done
 [[ -z "$RUN_ID" ]] && usage
 [[ -z "$REPO" ]] && usage
 
-REPO_PATH=$(audit_resolve_repo_path "$REPO" "$REPO_PATH_OVERRIDE") || exit 2
-STATE_DIR=$(audit_state_dir "$RUN_ID" "$REPO")
+REPO_PATH="${REPO_PATH_OVERRIDE:-$WORKSPACE/repos/$REPO}"
+[[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 2; }
+REPO_PATH=$(cd "$REPO_PATH" && pwd -P)
+STATE_DIR="$WORKSPACE/workareas/npm-upgrades/$RUN_ID/$REPO"
 mkdir -p "$STATE_DIR"
 STATE_FILE="$STATE_DIR/overrides.${REPO}.json"
 WORKTREE="$STATE_DIR/override-trial"
@@ -200,9 +202,9 @@ trial() {
     run_in "$WORKTREE" npm update >>"$TRIAL_LOG" 2>&1 || { TRIAL_FAILED_CHECK="npm update"; return 1; }
 
     if [[ -f "$WORKTREE/$AUDIT_CONFIG_FILE" ]]; then
-        echo "== audit-baseline.sh" >>"$TRIAL_LOG"
+        echo "== tim npm audit baseline" >>"$TRIAL_LOG"
         local code=0
-        TRIAL_SUMMARY=$("$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO" \
+        TRIAL_SUMMARY=$(tim --workspace "$WORKSPACE" npm audit baseline --run-id "$RUN_ID" --repo "$REPO" \
             --repo-path "$WORKTREE" --label "override-trial-$TRIAL" 2>>"$TRIAL_LOG") || code=$?
         echo "$TRIAL_SUMMARY" >>"$TRIAL_LOG"
         if [[ "$code" -eq 2 ]]; then
@@ -348,8 +350,16 @@ BELOW='[]'
 if [[ -f "$WORKTREE/$AUDIT_CONFIG_FILE" ]]; then
     SNAPSHOT="$STATE_DIR/audit.${REPO}.override-trial-${TRIAL}.json"
     if [[ -f "$SNAPSHOT" ]]; then
-        THRESHOLD=$(jq "$AUDIT_JQ_THRESHOLD" "$WORKTREE/$AUDIT_CONFIG_FILE")
-        BELOW=$(jq -c --argjson t "$THRESHOLD" "$AUDIT_JQ_ADVISORIES | map(select(.severity_rank < \$t) | {ghsa, package, severity, title})" "$SNAPSHOT")
+        THRESHOLD=$(jq '[({"low": 1, "moderate": 2, "high": 3, "critical": 4} | to_entries[]) as $l
+            | select(.[$l.key] == true) | $l.value] | min // 99' "$WORKTREE/$AUDIT_CONFIG_FILE")
+        BELOW=$(jq -c --argjson t "$THRESHOLD" '
+            def rank: {"info": 0, "low": 1, "moderate": 2, "high": 3, "critical": 4}[.] // 0;
+            [.vulnerabilities // {} | .[] | .via[] | objects
+             | {ghsa: (.url | split("/") | last), package: .name, severity, title}]
+            | group_by(.ghsa)
+            | map({ghsa: .[0].ghsa, package: .[0].package, severity: (map(.severity) | max_by(rank)),
+                   severity_rank: (map(.severity | rank) | max), title: .[0].title})
+            | map(select(.severity_rank < $t) | {ghsa, package, severity, title})' "$SNAPSHOT")
     fi
 fi
 

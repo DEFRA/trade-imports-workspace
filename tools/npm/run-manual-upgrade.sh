@@ -29,8 +29,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
-# shellcheck source=audit-lib.sh
-source "$SCRIPT_DIR/audit-lib.sh"
+tim_audit() { tim --workspace "$WORKSPACE" npm audit "$@"; }
+AUDIT_CONFIG_FILE="audit-ci.jsonc"
 
 RUN_ID=""
 REPO_NAME=""
@@ -89,7 +89,7 @@ AUDIT_GATE_ALLOWLISTED=()
 
 # Logs live in the run's per-repo state directory, not fixed /tmp paths.
 PKG_SAFE="${PACKAGE//[^A-Za-z0-9._-]/_}"
-LOG_DIR="$(audit_state_dir "$RUN_ID" "$REPO_NAME")/logs"
+LOG_DIR="$WORKSPACE/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/logs"
 mkdir -p "$LOG_DIR"
 BASELINE_AUDIT_LOG="$LOG_DIR/baseline-audit-manual.$PKG_SAFE-$TARGET.log"
 COMMIT_LOG="$LOG_DIR/commit-manual.$PKG_SAFE-$TARGET.log"
@@ -106,6 +106,27 @@ set_status() {
         --status "$status" "$@" >/dev/null
 }
 
+# Sets AUDIT_GATE_REASON and AUDIT_GATE_ALLOWLISTED from the gate's
+# result and returns its exit code: 0 green, 1 red, 2 could not run.
+run_audit_gate() {
+    local result code=0 ghsa
+    result=$(tim_audit gate --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$PACKAGE" --target "$TARGET" \
+        --allowlist-owner "$ALLOWLIST_OWNER" --expiry-days "$EXPIRY_DAYS" --repo-path "$REPO_PATH") || code=$?
+    AUDIT_GATE_REASON=$(jq -r '.reason // ""' <<<"$result" 2>/dev/null) || AUDIT_GATE_REASON=""
+    [[ "$code" -ne 0 && -z "$AUDIT_GATE_REASON" ]] && AUDIT_GATE_REASON="audit could not run after upgrading $PACKAGE to $TARGET"
+    AUDIT_GATE_ALLOWLISTED=()
+    for ghsa in $(jq -r '.allowlisted[]?' <<<"$result" 2>/dev/null); do
+        AUDIT_GATE_ALLOWLISTED+=("$ghsa")
+    done
+    return "$code"
+}
+
+forget_gate_allowlisted() {
+    local args=() ghsa
+    for ghsa in "${AUDIT_GATE_ALLOWLISTED[@]}"; do args+=(--ghsa "$ghsa"); done
+    tim_audit forget --run-id "$RUN_ID" --repo "$REPO_NAME" "${args[@]}" 2>/dev/null
+}
+
 # Put package.json, package-lock.json and audit-ci.jsonc back to HEAD,
 # check the tests still pass, and mark the package failed. If the
 # tests fail on the rolled-back tree, it is a cascade.
@@ -113,7 +134,7 @@ rollback_and_fail() {
     local reason="$1"
     git -C "$REPO_PATH" checkout HEAD -- "${ROLLBACK_FILES[@]}"
     npm --prefix "$REPO_PATH" install >/dev/null 2>&1
-    [[ "${#AUDIT_GATE_ALLOWLISTED[@]}" -gt 0 ]] && audit_forget_entries "$RUN_ID" "$REPO_NAME" "${AUDIT_GATE_ALLOWLISTED[@]}"
+    [[ "${#AUDIT_GATE_ALLOWLISTED[@]}" -gt 0 ]] && forget_gate_allowlisted
     if [[ "$SKIP_NPM_TEST" == "0" ]] && ! npm --prefix "$REPO_PATH" test >/tmp/rollback-verify-manual.log 2>&1; then
         echo "✗ CASCADE: rollback also failed"
         set_status failed --failure-reason "CASCADE: rollback failed after manual upgrade; manual intervention required"
@@ -148,7 +169,7 @@ fi
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Running baseline audit..."
     baseline_audit=0
-    "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
+    tim_audit baseline --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
         --label "before-$PKG_SAFE-${TARGET}" >"$BASELINE_AUDIT_LOG" 2>&1 || baseline_audit=$?
     if [[ "$baseline_audit" -eq 1 ]]; then
         echo "ERROR: Baseline audit red (repo issue)"
@@ -185,7 +206,7 @@ fi
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Auditing upgraded tree..."
     gate=0
-    audit_upgrade_gate "$RUN_ID" "$REPO_NAME" "$PACKAGE" "$TARGET" "$ALLOWLIST_OWNER" "$EXPIRY_DAYS" "$REPO_PATH" || gate=$?
+    run_audit_gate || gate=$?
     if [[ "$gate" -ne 0 ]]; then
         echo "ERROR: $AUDIT_GATE_REASON — rolling back"
         rollback_and_fail "$AUDIT_GATE_REASON; rolled back"

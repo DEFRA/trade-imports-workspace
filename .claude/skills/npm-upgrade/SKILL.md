@@ -139,7 +139,7 @@ It exits 1 if any repo's audit fails, or an allowlisted advisory now
 has a fixed version (`fixable_allowlisted`: take the fix and drop the
 entry). Phase 1 refuses to start unless the last phase 0 run covered
 every repo at its current HEAD and was green. Write or renew an
-allowlist entry only with `audit-allowlist-add.sh` (see
+allowlist entry only with `tim npm audit allow` (see
 `references/COMMON.md`); the repo's CI checks the entry rules.
 
 ## Phase 1: Discovery and Planning
@@ -249,8 +249,8 @@ repo / single package / planning-only batches.
 Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 
 - `start-upgrade.sh` — single dispatcher (phase 0 / 1 / 2 / 3 / 4).
-- `audit-baseline.sh` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
-- `audit-allowlist-add.sh` — write or renew one `audit-ci.jsonc` allowlist entry.
+- `tim npm audit baseline` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
+- `tim npm audit allow` — write or renew one `audit-ci.jsonc` allowlist entry.
 - `refresh-lockfile.sh` — Phase 2 end-of-batch transitive refresh.
 - `reset-overrides.sh` — Phase 4 per-repo override reset.
 - `tim npm discover` — discovery + seed `packages.{repo}.json`.

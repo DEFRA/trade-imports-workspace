@@ -31,7 +31,7 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 - Context bundle: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
 - `{owner}`, `{expiry-days}` — who owns any allowlist entry Step 6a
   writes, and for how many days. 89 at most: the repo's CI rejects an
-  expiry more than 3 calendar months away, and `audit-allowlist-add.sh`
+  expiry more than 3 calendar months away, and `tim npm audit allow`
   refuses one, and from February to mid-May (and late January) 90 days
   runs past 3 months
 
@@ -62,7 +62,7 @@ at end of batch as the integration gate.
 For every other repo:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} test > /tmp/baseline-{repo}-{package-normalized}.log 2>&1
+tim npm exec --repo {repo} -- test > /tmp/baseline-{repo}-{package-normalized}.log 2>&1
 ```
 
 If baseline fails: stop before installing anything. Leave the package's
@@ -89,7 +89,7 @@ extras in your edit pass.
 ## Step 4: Install the target
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} install {package}@{target}
+tim npm exec --repo {repo} -- install {package}@{target}
 ```
 
 If install fails (peer conflict, network etc.):
@@ -126,7 +126,7 @@ any regression there.
 For every other repo:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} test > /tmp/upgrade-{repo}-{package-normalized}.log 2>&1
+tim npm exec --repo {repo} -- test > /tmp/upgrade-{repo}-{package-normalized}.log 2>&1
 ```
 
 Read the log file you just created.
@@ -142,13 +142,13 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} install
+tim npm exec --repo {repo} -- install
 ```
 
 Verify rollback:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} test > /tmp/rollback-verify-{repo}-{package-normalized}.log 2>&1
+tim npm exec --repo {repo} -- test > /tmp/rollback-verify-{repo}-{package-normalized}.log 2>&1
 ```
 
 If rollback verification passes:
@@ -168,7 +168,7 @@ adopted audit-ci). Otherwise run it for every repo, the tests repo
 included:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/audit-baseline.sh --run-id {run-id} --repo {repo} --label upgrade-{package-normalized}
+tim npm audit baseline --run-id {run-id} --repo {repo} --label upgrade-{package-normalized}
 ```
 
 (The script turns the `@` and `/` of a scoped package name into `_`
@@ -189,12 +189,12 @@ Read the JSON it prints.
   gives the owner and the expiry in days:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/audit-allowlist-add.sh --run-id {run-id} --repo {repo} --ghsa {GHSA} --reason "{advisory title}: no fixed release; arrived with {package} {target}" --owner "{owner}" --expiry-days {expiry-days}
+tim npm audit allow --run-id {run-id} --repo {repo} --ghsa {GHSA} --reason "{advisory title}: no fixed release; arrived with {package} {target}" --owner "{owner}" --expiry-days {expiry-days}
 ```
 
   Never edit `audit-ci.jsonc` by hand. The script writes the entry in
   the shape the repo's CI check accepts and refuses an advisory that
-  has a fix. Run `audit-baseline.sh` again: it must exit 0.
+  has a fix. Run `tim npm audit baseline` again: it must exit 0.
 
 ### Rolling back after Step 6a
 
@@ -207,14 +207,14 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} install
+tim npm exec --repo {repo} -- install
 ```
 
 If you allowlisted anything, also drop those entries from the run's
 `allowlist.{repo}.json` (the handoff reads it), one `--ghsa` per entry:
 
 ```bash
-bash ~/git/defra/trade-imports-workspace/tools/npm/audit-allowlist-forget.sh --run-id {run-id} --repo {repo} --ghsa {GHSA}
+tim npm audit forget --run-id {run-id} --repo {repo} --ghsa {GHSA}
 ```
 
 ---

@@ -16,7 +16,9 @@ import {
   verifyClassificationCoverage
 } from '../../npm-upgrade/writers.js'
 import { makeRunAction } from '../_run-action.js'
+import { registerAudit } from './audit.js'
 import { registerContext } from './context.js'
+import { registerExec } from './exec.js'
 import { registerDiscover } from './discover.js'
 import { writeLine } from '../_write-line.js'
 
@@ -264,8 +266,8 @@ const registerVerify = (packages, { timVersion }) =>
     })
 
 /**
- * `tim npm`: discover an npm upgrade run's packages, prepare its planners
- * and read and change its state.
+ * `tim npm`: discover an npm upgrade run's packages, prepare its planners,
+ * read and change its state, audit its repos and run npm in them.
  *
  * @param {import('commander').Command} program
  * @param {{timVersion: string}} options
@@ -274,7 +276,7 @@ export const register = (program, { timVersion }) => {
   const npm = program
     .command('npm')
     .description(
-      'Discover the outdated packages of an npm upgrade run, prepare its planners and read and change its state'
+      'Discover the outdated packages of an npm upgrade run, prepare its planners, read and change its state, audit its repos and run npm in them'
     )
   const packages = npm
     .command('packages')
@@ -289,4 +291,6 @@ export const register = (program, { timVersion }) => {
   registerVerify(packages, { timVersion })
   registerDiscover(npm, { timVersion })
   registerContext(npm, { timVersion })
+  registerAudit(npm, { timVersion })
+  registerExec(npm)
 }

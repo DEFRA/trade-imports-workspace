@@ -528,6 +528,33 @@ tim npm context prebake --run-id EUDPA-500 --repo trade-imports-animals-frontend
   `context_missing`.
 - Every refusal exits 1.
 
+### `tim npm audit` and `tim npm exec` — audit a repo, keep its allowlist and run npm in it
+
+```bash
+tim npm audit baseline --run-id EUDPA-500 --repo trade-imports-animals-admin --label before-upgrade
+tim npm audit allow --run-id EUDPA-500 --repo trade-imports-animals-frontend --ghsa GHSA-c475-qrg2-pj4r --reason "Dev only" --owner "Sam Farrington" --expiry-days 30
+tim npm audit forget --run-id EUDPA-500 --repo trade-imports-animals-frontend --ghsa GHSA-c475-qrg2-pj4r
+tim npm audit gate --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --target 4.17.21
+tim npm exec --repo trade-imports-animals-frontend -- install date-fns@4.3.0
+```
+
+- `baseline` runs `npx --no-install audit-ci` with the repo's
+  `audit-ci.jsonc`, saves the report, its stderr and a summary under
+  `workareas/npm-upgrades/<run>/<repo>/`, and prints the summary as
+  indented JSON. It asks `npm view`, in the repo, whether each advisory
+  at the threshold has a fixed version. Exit 0 green, 1 red or an
+  allowlisted advisory that now has a fix, 2 when the audit cannot run.
+- `allow` writes one entry into `audit-ci.jsonc` in jq's layout and
+  records it in `allowlist.<repo>.json`. An expiry is a UTC day; three
+  months on from the 31st is the last day of that month, as BSD `date
+-v+3m` gives. A refusal exits 1, a usage error or no audit 2.
+- `forget` drops entries from `allowlist.<repo>.json` and tells you on
+  stderr.
+- `gate` prints `{status, reason, allowlisted}` and exits 0 green, 1 red,
+  2 when the audit cannot run.
+- `exec` runs `npm --prefix <real path>` with the arguments after `--`,
+  and exits with npm's exit code. A missing repo or argument exits 1.
+
 ### `tim review` — the review skill's helpers
 
 ```bash

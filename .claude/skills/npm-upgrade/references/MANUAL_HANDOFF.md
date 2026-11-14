@@ -68,7 +68,7 @@ Stdout shape:
 `held` is every package the walker deferred (`D`), with the reason the
 user gave. `allowlist` reads each repo's `audit-ci.jsonc`, so it holds
 every entry, not only the ones this run wrote; `package` and `kind` are
-null for an entry this run's `audit-allowlist-add.sh` did not write.
+null for an entry this run's `tim npm audit allow` did not write.
 `audit_before` and `audit_after` are the first and the latest
 `--phase 0` runs (null if phase 0 never ran).
 

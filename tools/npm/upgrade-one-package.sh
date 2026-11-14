@@ -25,9 +25,9 @@
 #      - tests fail → rollback. If rollback also fails → cascade,
 #        mark failed, exit 1. Otherwise demote to manual, mark
 #        failed, exit 0.
-#   5a. Audit (repos with audit-ci.jsonc), via audit_upgrade_gate.
+#   5a. Audit (repos with audit-ci.jsonc), via `tim npm audit gate`.
 #      - new advisories with no fixed version → allowlisted with
-#        audit-allowlist-add.sh (needs --allowlist-owner and
+#        `tim npm audit allow` (needs --allowlist-owner and
 #        --expiry-days); audit-ci.jsonc goes in the same commit.
 #      - an advisory with a fix, or no owner to allowlist under →
 #        rollback, demote to manual with the GHSA as the reason, exit 0.
@@ -61,8 +61,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
-# shellcheck source=audit-lib.sh
-source "$SCRIPT_DIR/audit-lib.sh"
+tim_audit() { tim --workspace "$WORKSPACE" npm audit "$@"; }
+AUDIT_CONFIG_FILE="audit-ci.jsonc"
 
 RUN_ID=""
 REPO_NAME=""
@@ -124,7 +124,7 @@ fi
 # Logs live in the run's per-repo state directory, not fixed /tmp
 # paths: phase 2 runs one repo runner per repo at the same time.
 PKG_SAFE="${PACKAGE//[^A-Za-z0-9._-]/_}"
-LOG_DIR="$(audit_state_dir "$RUN_ID" "$REPO_NAME")/logs"
+LOG_DIR="$WORKSPACE/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/logs"
 mkdir -p "$LOG_DIR"
 BASELINE_AUDIT_LOG="$LOG_DIR/baseline-audit.$PKG_SAFE-$TARGET.log"
 COMMIT_LOG="$LOG_DIR/commit.$PKG_SAFE-$TARGET.log"
@@ -153,6 +153,27 @@ demote_to_manual() {
         >/dev/null
 }
 
+# Sets AUDIT_GATE_REASON and AUDIT_GATE_ALLOWLISTED from the gate's
+# result and returns its exit code: 0 green, 1 red, 2 could not run.
+run_audit_gate() {
+    local result code=0 ghsa
+    result=$(tim_audit gate --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$PACKAGE" --target "$TARGET" \
+        --allowlist-owner "$ALLOWLIST_OWNER" --expiry-days "$EXPIRY_DAYS" --repo-path "$REPO_PATH") || code=$?
+    AUDIT_GATE_REASON=$(jq -r '.reason // ""' <<<"$result" 2>/dev/null) || AUDIT_GATE_REASON=""
+    [[ "$code" -ne 0 && -z "$AUDIT_GATE_REASON" ]] && AUDIT_GATE_REASON="audit could not run after upgrading $PACKAGE to $TARGET"
+    AUDIT_GATE_ALLOWLISTED=()
+    for ghsa in $(jq -r '.allowlisted[]?' <<<"$result" 2>/dev/null); do
+        AUDIT_GATE_ALLOWLISTED+=("$ghsa")
+    done
+    return "$code"
+}
+
+forget_gate_allowlisted() {
+    local args=() ghsa
+    for ghsa in "${AUDIT_GATE_ALLOWLISTED[@]}"; do args+=(--ghsa "$ghsa"); done
+    tim_audit forget --run-id "$RUN_ID" --repo "$REPO_NAME" "${args[@]}" 2>/dev/null
+}
+
 # Put package.json, package-lock.json and audit-ci.jsonc back to HEAD
 # (index and working tree), and node_modules back in step with them.
 rollback() {
@@ -167,7 +188,7 @@ rollback() {
 rollback_and_demote() {
     local demote_reason="$1" failure_reason="$2" exit_code="${3:-0}"
     rollback
-    [[ "${#AUDIT_GATE_ALLOWLISTED[@]}" -gt 0 ]] && audit_forget_entries "$RUN_ID" "$REPO_NAME" "${AUDIT_GATE_ALLOWLISTED[@]}"
+    [[ "${#AUDIT_GATE_ALLOWLISTED[@]}" -gt 0 ]] && forget_gate_allowlisted
     if [[ "$SKIP_NPM_TEST" == "0" ]]; then
         echo "Verifying rollback..."
         if ! npm --prefix "$REPO_PATH" test >/tmp/rollback-verify.log 2>&1; then
@@ -211,7 +232,7 @@ fi
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Running baseline audit..."
     baseline_audit=0
-    "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
+    tim_audit baseline --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
         --label "before-$PKG_SAFE-${TARGET}" >"$BASELINE_AUDIT_LOG" 2>&1 || baseline_audit=$?
     if [[ "$baseline_audit" -eq 1 ]]; then
         echo "ERROR: Baseline audit red (repo issue, not upgrade)"
@@ -250,7 +271,7 @@ fi
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Auditing upgraded tree..."
     gate=0
-    audit_upgrade_gate "$RUN_ID" "$REPO_NAME" "$PACKAGE" "$TARGET" "$ALLOWLIST_OWNER" "$EXPIRY_DAYS" "$REPO_PATH" || gate=$?
+    run_audit_gate || gate=$?
     if [[ "$gate" -eq 2 ]]; then
         echo "ERROR: $AUDIT_GATE_REASON — rolling back (not demoted)"
         rollback_and_demote "" "$AUDIT_GATE_REASON; rolled back; environment issue, not demoted" 3

@@ -37,7 +37,7 @@ again after the tests pass:
 
 - green: commit.
 - red only on new advisories with no fixed version: each is allowlisted
-  with `audit-allowlist-add.sh` (owner and expiry from the flags above)
+  with `tim npm audit allow` (owner and expiry from the flags above)
   and `audit-ci.jsonc` goes in the upgrade's commit.
 - red on an advisory with a fix, or no owner given: roll back
   `package.json`, `package-lock.json` and `audit-ci.jsonc`, and demote

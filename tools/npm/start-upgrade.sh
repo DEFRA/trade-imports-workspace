@@ -13,7 +13,7 @@
 # Phase semantics (no FRESH/RESUME dual-state — every invocation is
 # fresh; consumers idempotently merge into prior packages.{repo}.json):
 #
-#   --phase 0  Run `audit-baseline.sh` for every requested repo and
+#   --phase 0  Run `tim npm audit baseline` for every requested repo and
 #              append the result to {run-id}/phase0.json. Exits 1 if
 #              any repo's audit is red or has an allowlisted advisory
 #              that now has a fix (fixable_allowlisted). A repo with no
@@ -162,9 +162,9 @@ phase0() {
     for repo in "${REPOS[@]}"; do
         echo "Auditing $repo..." >&2
         local summary code=0 head
-        summary=$("$SCRIPT_DIR/audit-baseline.sh" --run-id "$TICKET" --repo "$repo" --label "$label") || code=$?
+        summary=$(tim --workspace "$WORKSPACE" npm audit baseline --run-id "$TICKET" --repo "$repo" --label "$label") || code=$?
         if [[ "$code" -eq 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$summary"; then
-            summary=$(jq -nc --arg repo "$repo" '{repo: $repo, green: false, error: "audit-baseline.sh could not run the audit"}')
+            summary=$(jq -nc --arg repo "$repo" '{repo: $repo, green: false, error: "tim npm audit baseline could not run the audit"}')
         fi
         head=$(git -C "$REPO_BASE/$repo" rev-parse HEAD)
         [[ "$code" -ne 0 ]] && red+=("$repo")

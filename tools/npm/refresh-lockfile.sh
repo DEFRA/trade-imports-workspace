@@ -13,7 +13,7 @@
 #
 #   npm test        (skipped for trade-imports-ins-tests, which has no unit suite)
 #   npm run lint    (where the repo has a lint script)
-#   audit-baseline.sh   (repos with audit-ci.jsonc)
+#   tim npm audit baseline   (repos with audit-ci.jsonc)
 #
 # and commits "Refresh transitive dependencies". On any failure, or if
 # npm update touched package.json, it restores package.json and
@@ -30,8 +30,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=audit-lib.sh
-source "$SCRIPT_DIR/audit-lib.sh"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+AUDIT_CONFIG_FILE="audit-ci.jsonc"
 
 RUN_ID=""
 REPO=""
@@ -55,8 +55,10 @@ done
 [[ -z "$RUN_ID" ]] && usage
 [[ -z "$REPO" ]] && usage
 
-REPO_PATH=$(audit_resolve_repo_path "$REPO" "$REPO_PATH_OVERRIDE") || exit 2
-STATE_DIR=$(audit_state_dir "$RUN_ID" "$REPO")
+REPO_PATH="${REPO_PATH_OVERRIDE:-$WORKSPACE/repos/$REPO}"
+[[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 2; }
+REPO_PATH=$(cd "$REPO_PATH" && pwd -P)
+STATE_DIR="$WORKSPACE/workareas/npm-upgrades/$RUN_ID/$REPO"
 mkdir -p "$STATE_DIR"
 LOG="$STATE_DIR/refresh-lockfile.${REPO}.log"
 : >"$LOG"
@@ -128,8 +130,8 @@ if has_script lint; then
 fi
 
 if [[ -f "$REPO_PATH/$AUDIT_CONFIG_FILE" ]]; then
-    echo "== audit-baseline.sh" >>"$LOG"
-    "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO" --repo-path "$REPO_PATH" \
+    echo "== tim npm audit baseline" >>"$LOG"
+    tim --workspace "$WORKSPACE" npm audit baseline --run-id "$RUN_ID" --repo "$REPO" --repo-path "$REPO_PATH" \
         --label refresh-lockfile >>"$LOG" 2>&1 || rollback "audit red after npm update (see $STATE_DIR/audit.${REPO}.refresh-lockfile.summary.json)"
 fi
 

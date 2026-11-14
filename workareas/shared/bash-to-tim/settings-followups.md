@@ -326,3 +326,10 @@ names `tools/npm/packages-list.sh`, `packages-counts.sh`,
 No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/npm/discover-upgrades.sh`, `packages-init.sh`,
 `bake-best-practices.sh` or `prebake-context.sh`; nothing to remove.
+
+## P66
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/audit-lib.sh`, `audit-fix-check.mjs`, `audit-baseline.sh`,
+`audit-allowlist-add.sh`, `audit-allowlist-forget.sh` or `npm-in-repo.sh`;
+nothing to remove.

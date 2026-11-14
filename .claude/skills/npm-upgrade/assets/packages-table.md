@@ -137,7 +137,7 @@ phase 3 reports the first and last as `audit_before` / `audit_after`.
       "red": [],                             // repos that failed
       "repos": ["trade-imports-animals-admin"],
       "per_repo": [
-        // audit-baseline.sh summary (below) + head + exit_code
+        // tim npm audit baseline summary (below) + head + exit_code
         {"repo": "...", "green": true, "failing": [], "allowlisted": ["GHSA-…"],
          "stale": [], "fixable_allowlisted": [], "head": "<sha>", "exit_code": 0}
       ]
@@ -149,7 +149,7 @@ phase 3 reports the first and last as `audit_before` / `audit_after`.
 ### `audit.{repo}.{label}.json` and `audit.{repo}.{label}.summary.json`
 
 The npm audit report (v2) as audit-ci returned it, and the
-`audit-baseline.sh` summary of it: `green`, `failing`, `allowlisted`,
+`tim npm audit baseline` summary of it: `green`, `failing`, `allowlisted`,
 `stale`, `inactive_allowlist` (GHSA lists), `fixable_allowlisted`,
 `blocked_allowlisted`, `failing_fixable` (`[{ghsa, package, fixes,
 fixed_version}]`), `failing_no_fix` (`[{ghsa, package, title}]`),
@@ -161,7 +161,7 @@ threshold) and `snapshot` (the report's path). Labels:
 
 ### `allowlist.{repo}.json`
 
-Written by `audit-allowlist-add.sh`, one row per GHSA it wrote or
+Written by `tim npm audit allow`, one row per GHSA it wrote or
 renewed in this run. The entry itself lives in the repo's
 `audit-ci.jsonc`; this records why.
 

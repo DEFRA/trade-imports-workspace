@@ -17,9 +17,11 @@ invoke them by absolute path.
 | Script | Phase | Purpose |
 |--------|-------|---------|
 | `start-upgrade.sh` | All | Single dispatcher (`--phase 0\|1\|2\|3\|4`) |
-| `audit-baseline.sh` | 0, 2 | Run one repo's audit-ci check; report failing, allowlisted, stale and fixable-allowlisted advisories |
-| `audit-allowlist-add.sh` | 0–4 | Write or renew one `audit-ci.jsonc` allowlist entry (refuses an advisory with a fix, or an expiry over 3 months) |
-| `audit-allowlist-forget.sh` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves). Run with `bash` |
+| `tim npm audit baseline` | 0, 2 | Run one repo's audit-ci check; report failing, allowlisted, stale and fixable-allowlisted advisories |
+| `tim npm audit allow` | 0–4 | Write or renew one `audit-ci.jsonc` allowlist entry (refuses an advisory with a fix, or an expiry over 3 months) |
+| `tim npm audit forget` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves) |
+| `tim npm audit gate` | 2–3 | Audit after one package upgrade; allowlist advisories with no fix when given an owner and expiry |
+| `tim npm exec --repo R -- <npm args>` | 2–3 | Run npm in a repo at its real path, so a symlinked workspace never rewrites the lockfile |
 | `refresh-lockfile.sh` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
 | `reset-overrides.sh` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
 | `tim npm discover` | 1 | Find outdated packages + seed `packages.{repo}.json` |
@@ -76,7 +78,7 @@ streaming log tail).
 | Audit red at baseline | Phase 0, or the audit before a package's install, fails (or cannot run). A repo with no `audit-ci.jsonc` is red in phase 0: adoption is required before phase 1 | Phase 0 exits 1 and phase 1 refuses. In phase 2, that package is marked failed (not demoted) and the repo's batch stops (`stopped` in the phase 2 summary), skipping the lockfile refresh. Not an upgrade issue: take the fix, or allowlist an advisory with no fix, then rerun |
 | Audit could not run after an upgrade | Registry offline, `npm view` failing, audit-ci missing | Roll back, mark failed without demoting, stop the repo's batch (`stopped`). Rerun when the registry is back |
 | Advisory with fix available | The audit after an upgrade fails on an advisory that has a fixed version, or an allowlisted advisory now has one (`fixable_allowlisted`) | Roll back, auto-demote with the GHSA as the reason. Take the fix; never allowlist it |
-| New advisory with no fix | The audit after an upgrade fails only on advisories with no fixed version | `audit-allowlist-add.sh` writes the entries and they go in the upgrade's commit (needs `--allowlist-owner` and `--expiry-days`; without them, treated as above) |
+| New advisory with no fix | The audit after an upgrade fails only on advisories with no fixed version | `tim npm audit allow` writes the entries and they go in the upgrade's commit (needs `--allowlist-owner` and `--expiry-days`; without them, treated as above) |
 | Commit refused | The repo's pre-commit hook (animals-admin runs the audit and the tests) rejects the commit | Roll back, auto-demote, failure_reason holds the hook output. Never `--no-verify` |
 
 ## Audit allowlist
@@ -89,7 +91,7 @@ entry has one shape:
 {"GHSA-xxxx-xxxx-xxxx": {"active": true, "notes": "<reason>. Owner: <name>", "expiry": "YYYY-MM-DD"}}
 ```
 
-Write or renew entries only with `audit-allowlist-add.sh`. It refuses
+Write or renew entries only with `tim npm audit allow`. It refuses
 an advisory that has a fixed version unless `--blocked-by` names the
 parent package that stops the repo taking it (the notes then say "Fix
 blocked upstream: ..."), and an expiry more than 3 months away. The

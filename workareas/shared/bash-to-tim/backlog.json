@@ -1962,14 +1962,32 @@
       ],
       "risk": "Low once its callers are ported.",
       "proof": "`grep -rn 'tools/confluence'` is empty; tim test and lint green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "26159db0c0e6b5cccff4ca3f018060b53f4e0ff3"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 398 test files passed and 24 skipped; 5983 tests passed, 8 expected fail, 35 skipped (log at /private/tmp/claude-501/-Users-samfarrington-git-defra-trade-imports-workspace/51c6e0f9-b7cd-4625-9a54-d8226c61b362/scratchpad/p38-test.log)",
+          "tim-lint: eslint clean and prettier format:check clean",
+          "parity: this row only deletes, so no golden was recorded. page.sh has no live caller, and `tim confluence page` (id or URL, details, labels, HTML body; --raw gives Confluence's own JSON) already replaces its full and json formats. Its tests are in tim/src/commands/confluence/index.test.js",
+          "no-callers: git grep over skills, rules, docs, settings, hooks, CI and workflows has no hit for tools/confluence or page.sh, and repos/* has none either. The only hits left are skipped Bash recorder fixtures under tim/ for scripts that earlier rows already deleted, plus their frozen goldens",
+          "no new fixed path and no new .sh file. No allowlist entry names page.sh; P38 is noted in settings-followups.md"
+        ],
+        "deviations": [
+          "The proof expects `grep -rn 'tools/confluence'` to come back empty. It still finds the skipped Bash recorder fixtures and frozen goldens under tim/: ticket-creator-scripts.js stand-in, refine-scripts.golden.test.js SCRIPTS_PREPARE_CALLS, review-prepare.js helperScripts, ticket-workspace.js PLAN_SCRIPTS, and the confluence sync-cases.js and golden JSON. These record goldens for scripts that P30, P31, P33 and P53 already deleted, and run only when those scripts exist. I left them as history, the same way earlier rows left their own recorders.",
+          "The page.sh `summary` format has no tim equivalent. No caller used it, and the commit message says so."
+        ]
+      }
     },
     {
       "id": "P39",

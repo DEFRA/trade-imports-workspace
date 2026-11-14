@@ -307,3 +307,8 @@ release`, which now takes the stack down through it).
 No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/journey-builder/` or a script in it; nothing to remove. The
 generic `tools/**` entries cover what remains.
+
+## P38
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/confluence/page.sh`; nothing to remove.

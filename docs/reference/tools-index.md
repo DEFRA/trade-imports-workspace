@@ -38,7 +38,7 @@ epics included, goes through `tim jira create`.
 | `gh search prs`, `gh pr view`, `gh pr diff` | EUDPA-X --owner DEFRA; N --repo DEFRA/R | Find a ticket's PRs and read their details and diffs with the GitHub CLI directly |
 | `tim review file-diff` | file (--ticket EUDPA-X --repo R \| --stdin) [--json] | PR diff filtered to one file, from the review's cached `.diffs/{repo}.diff`, or a `gh pr diff` piped in with `--stdin` |
 | **confluence** | | |
-| `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
+| `tim confluence page` | page-id-or-url [--raw] [--json] | Get page: its details, labels and HTML body; `--raw` prints Confluence's own JSON |
 | **review** | | |
 | `tim review start` | EUDPA-X \| --local R B [--files F1,F2] | Step 0 — say MODE: FRESH (raw folder ready for gh) or MODE: REFRESH (refresh scope built) |
 | `tim review prepare` | EUDPA-X \| --branch B [--desc D] \| --local R B [--files F1,F2] [--select] [--json] | Build the review workspace from what `gh search prs`, `gh pr view`, `gh api .../files` and `gh pr diff` saved (see the review skill, Step 1). `--select` lists the PR per repo to save |

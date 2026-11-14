@@ -154,7 +154,15 @@ const compareByCodePoint = (left, right) => {
   return leftPoints.length - rightPoints.length
 }
 
-const compareJq = (left, right) => {
+/**
+ * Orders two values as jq's `sort` does: by type (null, false, true,
+ * number, string, array, object), then by value, strings by code point.
+ *
+ * @param {unknown} left
+ * @param {unknown} right
+ * @returns {number} Negative, zero or positive, as `Array.prototype.sort` takes
+ */
+export const compareJq = (left, right) => {
   const rankDifference = typeRank(left) - typeRank(right)
   if (rankDifference !== 0) return rankDifference
   if (typeof left === 'number') return left - right

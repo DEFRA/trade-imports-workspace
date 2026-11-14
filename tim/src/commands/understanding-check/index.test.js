@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { recordTimRun as recordTimCommand } from '../../test-support/bash-golden-harness.js'
 import {
   analysisRefusals,
+  asTimNamesPrepare,
   analysisSteps,
   countsCases,
   finalizeCases,
@@ -201,6 +202,11 @@ describe('tim understanding-check analysis matches the analysis scripts', () => 
   test('Should refuse each bad command as the scripts did, with the same message and exit code', async () => {
     const runs = await recordTimInOrder(analysisRefusals)
 
-    expect(runs).toEqual(golden.analysisRefusals.map(withoutRunFields))
+    expect(runs).toEqual(
+      golden.analysisRefusals.map(withoutRunFields).map((run) => ({
+        ...run,
+        stderr: asTimNamesPrepare(run.stderr)
+      }))
+    )
   })
 })

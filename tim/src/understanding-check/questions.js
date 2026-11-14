@@ -112,7 +112,7 @@ const startedQuestionSet = ({ workspaceRoot, ticket, now }) => {
   const folder = checkFolder(workspaceRoot, ticket)
   const path = questionsPath(workspaceRoot, ticket)
   if (existsSync(path)) return readJsonFile(path)
-  requireExisting(folder, ' — run prepare-check.sh first')
+  requireExisting(folder, ' — run tim understanding-check prepare first')
   return { ticket, generated_at: now, questions: [] }
 }
 

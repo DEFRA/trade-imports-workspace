@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   alternative,
+  compareJq,
   elements,
   field,
   interpolated,
@@ -102,5 +103,13 @@ describe('#uniqueSorted', () => {
     expect(
       uniqueSorted(['b', 'a', 1, null, 'B', 'é', 'z', 'a', '😀', '￿'])
     ).toEqual([null, 1, 'B', 'a', 'b', 'z', 'é', '￿', '😀'])
+  })
+})
+
+describe('#compareJq', () => {
+  test('Should sort values as jq sort does: null, then numbers, then strings by code point', () => {
+    const sorted = ['b', 2, null, 'B', 'é', 1].sort(compareJq)
+
+    expect(sorted).toEqual([null, 1, 2, 'B', 'b', 'é'])
   })
 })

@@ -12,6 +12,16 @@ import {
 } from '../../understanding-check/finalize.js'
 import { requireTicket } from '../../understanding-check/paths.js'
 import {
+  DEFAULT_MAX_DIFF_BYTES,
+  maxDiffBytesOf,
+  prepareCheck
+} from '../../understanding-check/prepare.js'
+import {
+  selectedPullRequestsFor,
+  selectedText
+} from '../../understanding-check/pull-requests.js'
+import { startCheck, startText } from '../../understanding-check/start.js'
+import {
   addQuestion,
   QUESTION_CATEGORIES,
   removeQuestion,
@@ -437,6 +447,76 @@ const registerComplete = (analysis, { timVersion }) =>
       })
     )
 
+const writeStdoutLine = (line) => process.stdout.write(`${line}\n`)
+const writeStderrLine = (line) => process.stderr.write(`${line}\n`)
+const ignoreLine = () => {}
+
+const stdoutFlushed = () =>
+  new Promise((resolve) => process.stdout.write('', resolve))
+
+const registerStart = (group, { timVersion }) =>
+  group
+    .command('start')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      "Start a check. The first line says MODE: RESUME when the check already has .interview-meta.json, and prints it. Otherwise it says MODE: FRESH and makes the check's raw folder ready for the pull requests gh finds."
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim understanding-check start EUDPA-123\n  tim understanding-check start EUDPA-123 --json'
+    )
+    .action(
+      requiredTicketAction(timVersion, {
+        usage: usageLine('start'),
+        parseOptions: () => ({}),
+        requiredOptions: [],
+        run: startCheck,
+        renderText: startText
+      })
+    )
+
+const prepareFromRaw = async (parsed) => {
+  const meta = await prepareCheck({ ...parsed, now: stampNow() })
+  await stdoutFlushed()
+  return meta
+}
+
+const registerPrepare = (group, { timVersion }) =>
+  group
+    .command('prepare')
+    .argument('[ticket]', 'The ticket the check is for, such as EUDPA-123')
+    .description(
+      "Prepare a check from Jira and the pull requests gh saved in its raw folder. With --select, print the pull request to fetch for each repo: an open one over any other, then the newest. Without it, write ticket.md, each diff cut to --max-diff-bytes and redacted, each repo's best-practices bundle and analysis placeholder, and .interview-meta.json, then remove the raw folder. Reads JIRA_USER, JIRA_TOKEN and JIRA_BASE_URL."
+    )
+    .option('--select', 'Print the pull requests to fetch, one per repo')
+    .option(
+      '--max-diff-bytes <bytes>',
+      `Cut each diff to this many bytes and record a coverage gap (default ${DEFAULT_MAX_DIFF_BYTES})`
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim understanding-check prepare EUDPA-123 --select\n  tim understanding-check prepare EUDPA-123\n  tim understanding-check prepare EUDPA-123 --max-diff-bytes 100000 --json'
+    )
+    .action(
+      requiredTicketAction(timVersion, {
+        usage:
+          'Usage: tim understanding-check prepare EUDPA-XXXXX [--select] [--max-diff-bytes N] [--json]',
+        parseOptions: (opts) => ({
+          select: opts.select === true,
+          maxDiffBytes: maxDiffBytesOf(opts.maxDiffBytes),
+          log: opts.json ? ignoreLine : writeStdoutLine,
+          warn: writeStderrLine
+        }),
+        requiredOptions: [],
+        run: (parsed) =>
+          parsed.select
+            ? selectedPullRequestsFor(parsed)
+            : prepareFromRaw(parsed),
+        renderText: (result) =>
+          Array.isArray(result) ? selectedText(result) : null
+      })
+    )
+
 /**
  * `tim understanding-check`: the steps of the understanding-check skill.
  *
@@ -447,8 +527,10 @@ export const register = (program, { timVersion }) => {
   const group = program
     .command('understanding-check')
     .description(
-      "Write an understanding check's analysis, questions, answers and scores, then count, verify, finalise and report on it"
+      'Start and prepare an understanding check, write its analysis, questions, answers and scores, then count, verify, finalise and report on it'
     )
+  registerStart(group, { timVersion })
+  registerPrepare(group, { timVersion })
   registerCounts(group, { timVersion })
   registerFinalize(group, { timVersion })
   registerVerify(group, { timVersion })

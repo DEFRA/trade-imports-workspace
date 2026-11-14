@@ -126,9 +126,8 @@ epics included, goes through `tim jira create`.
 | `tim skill render` | --run-id NAME [--json] | CREATE — markdown view of `decisions.json` (mid-interview recap) |
 | `tim skill scaffold` | --run-id NAME [--dry-run] [--json] | CREATE — materialise SKILL.md + references/ + assets/ + tools/<name>/ stubs + `decisions.md` from `decisions.json`; append allowlist entries |
 | **understanding-check** | | |
-| `tools/understanding-check/start-check.sh` | EUDPA-X | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
-| `tools/understanding-check/prepare-check.sh` | EUDPA-X [--json] [--max-diff-bytes N] | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta + per-repo analysis placeholders |
-| `tools/understanding-check/redact-diff.js` | IN OUT | Helper — redact env vars / API keys / PEM blocks in a diff before it lands on disk |
+| `tim understanding-check start` | EUDPA-X [--json] | Step 0 dispatcher — emits `MODE: FRESH` (and makes the check's `.raw/` folder) or `MODE: RESUME` |
+| `tim understanding-check prepare` | EUDPA-X [--select] [--max-diff-bytes N] [--json] | Step 1 — reads the pull requests, head SHAs and diffs the skill saved into `.raw/` with `gh`; `--select` lists one pull request per repo to fetch; otherwise fetches the ticket from Jira, caches redacted diffs, bakes best-practices, seeds meta + per-repo analysis placeholders, then removes `.raw/` |
 | `tim understanding-check analysis add-finding` | EUDPA-X --repo R --section S --evidence-file F --evidence-lines L --field K=V ... [--json] | ANALYST helper — append finding (rejects without evidence) |
 | `tim understanding-check analysis complete` | EUDPA-X --repo R --change-summary "..." --why-it-changed "..." [--json] | ANALYST helper — mark per-repo analysis complete |
 | `tim understanding-check question add` | EUDPA-X --category C --prompt "..." --anchor-file F --anchor-lines L --expected-concepts CSV --rubric-pass "..." --rubric-partial "..." --rubric-fail "..." [--json] | QUESTION_GENERATOR helper — append question (caps at 12; rejects hedged rubrics) |

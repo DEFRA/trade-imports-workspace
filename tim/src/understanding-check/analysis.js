@@ -80,7 +80,7 @@ export const addFinding = ({
     )
   }
   const path = analysisFilePath(checkFolder(workspaceRoot, ticket), repo)
-  requireExisting(path, ' — run prepare-check.sh first')
+  requireExisting(path, ' — run tim understanding-check prepare first')
   const analysis = readJsonFile(path)
   const id = nextFindingId(analysis[section] ?? [])
   const finding = {

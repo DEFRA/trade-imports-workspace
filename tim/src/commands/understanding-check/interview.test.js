@@ -19,6 +19,7 @@ import {
   verbSteps,
   watchedFolder
 } from '../../understanding-check/__fixtures__/interview-workspace.js'
+import { asTimNamesPrepare } from '../../understanding-check/__fixtures__/check-workspace.js'
 
 const golden = readInterviewGolden()
 
@@ -83,7 +84,7 @@ const asTimSaysUsage = (command, stderr) =>
 
 const expectedRun = ({ case: _name, input: _input, command, ...run }) => ({
   ...run,
-  stderr: asTimSaysUsage(command, run.stderr)
+  stderr: asTimNamesPrepare(asTimSaysUsage(command, run.stderr))
 })
 
 describe('tim understanding-check question matches question-add.sh, question-replace.sh and question-remove.sh', () => {

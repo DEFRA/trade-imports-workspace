@@ -18,8 +18,8 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/tools/<domain>/`,
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+your home directory automatically. `tim understanding-check` finds the
+workspace it runs in, and `start` prints the check folder's path.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -41,7 +41,7 @@ JSON canonical:
 
 | File | Mutated by | Purpose |
 |---|---|---|
-| `.interview-meta.json` | `prepare-check.sh`, `tim understanding-check finalize` | run metadata + verdict + coverage gaps |
+| `.interview-meta.json` | `tim understanding-check prepare`, `tim understanding-check finalize` | run metadata + verdict + coverage gaps |
 | `analysis.{repo}.json` | `tim understanding-check analysis add-finding`, `tim understanding-check analysis complete` | per-repo findings (evidence-anchored) |
 | `questions.json` | `tim understanding-check question add`, `question replace`, `question remove` | combined question set (the plan-gate artifact) |
 | `transcript.json` | `tim understanding-check answer`, `tim understanding-check score` | per-question answer + score |
@@ -58,7 +58,7 @@ Schemas live under `assets/`:
 | Trigger | What to follow |
 |---------|----------------|
 | "interview EUDPA-X" / "check understanding EUDPA-X" / "understanding-check EUDPA-X" / "verify I understand EUDPA-X" | this SKILL.md — full workflow |
-| "resume understanding-check EUDPA-X" | this SKILL.md — `start-check.sh` emits `MODE: RESUME`, pick up where left off |
+| "resume understanding-check EUDPA-X" | this SKILL.md — `tim understanding-check start` emits `MODE: RESUME`, pick up where left off |
 
 NOT a code review (use `review`). NOT a style review (use `code-style`).
 NOT a refinement check (use `ticket-refiner`). Those judge **the code or
@@ -85,13 +85,13 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 ## Step 0: Start the check
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/start-check.sh EUDPA-XXXXX
+tim understanding-check start EUDPA-XXXXX
 ```
 
 First line of output is `MODE: FRESH` or `MODE: RESUME`. Branch on it:
 
-- `MODE: FRESH` → the dispatcher ran `prepare-check.sh`; go to Step 2
-  (Step 1 is now done).
+- `MODE: FRESH` → the output names the check folder and its raw folder;
+  go to Step 1.
 - `MODE: RESUME` → state already exists; read `.interview-meta.json` to
   see how far the prior run got. Jump to the next pending step:
   - no `analysis.{repo}.json` for any repo → Step 2.
@@ -101,19 +101,58 @@ First line of output is `MODE: FRESH` or `MODE: RESUME`. Branch on it:
   - transcript complete but scores missing → Step 6.
   - scores complete but verdict null → Step 7.
 
-## Step 1: Workspace prepared (by Step 0)
+## Step 1: Prepare the check
 
-`start-check.sh` already ran `prepare-check.sh` which:
+GitHub stays on `gh`; tim reads what `gh` saves. Use the raw folder
+`start` printed, written `<raw>` below. Run each command in its own
+Bash call.
 
-- Fetched the ticket via `tools/jira/ticket.sh`.
-- Found PRs via `tools/github/prs.sh`.
-- Cached each PR's diff at `.diffs/{repo}.diff` after **redaction**
-  (env-var / API-key / PEM-block patterns stripped; redaction count
-  logged to stderr, never the matched text).
-- Baked `best-practices/{repo}.md` per repo (mirrors
-  `tools/style/bake-rules-bundle.sh`).
-- Seeded `.interview-meta.json` with `verdict: null`,
-  `coverage_gaps: []`, and the head SHA per repo.
+1. Save the ticket's pull requests:
+
+   ```bash
+   gh search prs EUDPA-XXXXX --owner DEFRA --json number,title,repository,url,state,createdAt > <raw>/prs.json
+   ```
+
+2. List the pull request to fetch for each repo (an open one over any
+   other, then the newest). Each line is `<repo> <number>`:
+
+   ```bash
+   tim understanding-check prepare EUDPA-XXXXX --select
+   ```
+
+   It stops with `No PRs found` when `gh` found none.
+
+3. For each line, save the head commit and the diff. Do not skip a line:
+   a repo with no saved diff is left out of the check.
+
+   ```bash
+   gh pr view <number> --repo DEFRA/<repo> --json headRefOid --jq .headRefOid > <raw>/<repo>.sha
+   ```
+
+   ```bash
+   gh pr diff <number> --repo DEFRA/<repo> > <raw>/<repo>.diff
+   ```
+
+   If `gh pr diff` fails, delete `<raw>/<repo>.diff`, so `prepare`
+   reports the repo as not fetched rather than reading an empty diff.
+
+4. Prepare the check:
+
+   ```bash
+   tim understanding-check prepare EUDPA-XXXXX
+   ```
+
+   It reads `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`, and:
+
+   - writes `ticket.md` from the Jira ticket
+   - caches each diff at `.diffs/{repo}.diff`, cut to `--max-diff-bytes`
+     (default 200000, a cut adds a coverage gap) and **redacted** (key
+     assignments, API keys, tokens and private-key blocks; the count goes
+     to stderr, never the matched text)
+   - writes `best-practices/{repo}.md` from the review routing data
+   - seeds `analysis.{repo}.json` and `.interview-meta.json` with
+     `verdict: null`, the head SHA per repo and any coverage gaps
+   - removes the raw folder
 
 Read `ticket.md` to internalise the ticket summary before spawning
 analysts.
@@ -309,12 +348,14 @@ Section 10 of the report is a paste-ready PR comment.
 
 ## Scripts cheat-sheet
 
-Scripts under the workspace's `tools/understanding-check/`, and the `tim` commands that replace some of them:
+The `tim` commands the steps run, and the `gh` calls Step 1 makes:
 
-| Script or command | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-check.sh` | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
-| `prepare-check.sh` | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta |
+| `tim understanding-check start` | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
+| `gh search prs`, `gh pr view`, `gh pr diff` | Step 1 — save the pull requests, head commits and diffs into the raw folder |
+| `tim understanding-check prepare --select` | Step 1 — list the pull request to fetch for each repo |
+| `tim understanding-check prepare` | Step 1 — fetch the ticket, cache redacted diffs, bake best-practices, seed meta |
 | `tim understanding-check analysis add-finding` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence-file` and `--evidence-lines`) |
 | `tim understanding-check analysis complete` | ANALYST helper — mark per-repo analysis as `complete` |
 | `tim understanding-check question add` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |

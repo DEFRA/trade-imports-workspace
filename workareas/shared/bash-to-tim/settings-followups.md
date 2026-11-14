@@ -35,3 +35,10 @@ None. No allowlist entry names `tools/understanding-check/`; the generic
 
 None. No allowlist entry names `tools/understanding-check/`; the generic
 `tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P42
+
+None. No allowlist entry names `tools/understanding-check/`, and the
+folder is now gone. `Bash(tim:*)` covers `tim understanding-check start`
+and `prepare`; the skill's `gh search prs`, `gh pr view` and `gh pr diff`
+calls need whatever `gh` permission the session already has.

@@ -543,3 +543,16 @@ export const analysisRefusals = [
     ]
   }
 ]
+
+/**
+ * A recorded message as tim gives it: the hint to prepare the check names
+ * `tim understanding-check prepare`, not the retired script.
+ *
+ * @param {string} stderr
+ * @returns {string}
+ */
+export const asTimNamesPrepare = (stderr) =>
+  stderr.replace(
+    ' — run prepare-check.sh first',
+    ' — run tim understanding-check prepare first'
+  )

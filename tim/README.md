@@ -269,6 +269,9 @@ tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journe
 ### `tim understanding-check` — the understanding-check skill's steps
 
 ```bash
+tim understanding-check start EUDPA-123
+tim understanding-check prepare EUDPA-123 --select
+tim understanding-check prepare EUDPA-123 [--max-diff-bytes 200000]
 tim understanding-check analysis add-finding EUDPA-123 --repo trade-imports-stub \
   --section edgeCases --evidence-file src/a.js --evidence-lines 4-9 --field case="Empty list"
 tim understanding-check analysis complete EUDPA-123 --repo trade-imports-stub \
@@ -292,6 +295,21 @@ tim understanding-check report EUDPA-123
 
 - State lives in `workareas/understanding-checks/<ticket>/` of the
   workspace tim runs in.
+- `start` prints `MODE: RESUME` and the meta when the check has
+  `.interview-meta.json`. Otherwise it prints `MODE: FRESH` and makes the
+  check's `.raw/` folder, where the skill saves what `gh` gives back:
+  `prs.json` from `gh search prs`, then `<repo>.sha` and `<repo>.diff`
+  from `gh pr view` and `gh pr diff`. tim makes no GitHub calls.
+- `prepare --select` prints `<repo> <number>` for one pull request per
+  repo: an open one over any other, then the newest.
+- `prepare` fetches the ticket from Jira (`JIRA_USER`, `JIRA_TOKEN`,
+  `JIRA_BASE_URL`) into `ticket.md`, cuts each saved diff to
+  `--max-diff-bytes` (a cut is a coverage gap), redacts its secrets into
+  `.diffs/<repo>.diff`, writes `best-practices/<repo>.md` and an
+  `analysis.<repo>.json` placeholder, writes `.interview-meta.json`, then
+  removes `.raw/`. A repo with no saved diff is left out. The redaction
+  count goes to stderr; the matched text never does. `--json` gives the
+  meta.
 - `analysis add-finding` appends a finding to `analysis.<repo>.json`: an
   id one past the section's highest, each `--field KEY=VALUE` (split on
   the first `=`) in order, then the evidence. It prints the id.

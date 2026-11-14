@@ -23,7 +23,7 @@ workareas/govuk-upgrades/EUDPA-X/{repo}/           → versions.{repo}.json, CHA
 workareas/shared/EUDPA-X/                          → review handoff artifacts (tracked; committed to chore/EUDPA-X-review-handoff)
 workareas/skill-creator/<name>/                    → decisions.json (CREATE-mode interview state)
 workareas/skills-audit/<name>.md                   → AUDIT-mode plan document (per skill)
-workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md
+workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md; .raw/ (prs.json, {repo}.sha, {repo}.diff as gh saved them) only between `tim understanding-check start` and `prepare`
 workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; canonical build-loop state)
 workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; provenance — pins, captures, resolved citations)
 workareas/<programme>/traces/<app>/<sha>/          → Playwright traces, manifest.json and coverage.json (written by `tim capture`)

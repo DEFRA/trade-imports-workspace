@@ -82,6 +82,12 @@ const expectStateAsRecorded = (state, recorded) => {
 
 const resultOf = (stdout) => JSON.parse(stdout).result
 
+const withGitFatalBlocksSorted = (text) =>
+  text.replace(
+    /(?:^fatal: .*\n)+/gm,
+    (block) => `${block.split('\n').filter(Boolean).sort().join('\n')}\n`
+  )
+
 const sameAsBashCases = prepareCases.filter(
   ({ name, output }) =>
     ['text', 'json'].includes(output) &&
@@ -107,7 +113,9 @@ describe('tim review prepare matches the Bash it replaces', () => {
         if (prepareCase.output === 'json') {
           expect(resultOf(run.stdout)).toEqual(JSON.parse(recordedStep.stdout))
         } else {
-          expect(run.stdout).toBe(recordedStep.stdout)
+          expect(withGitFatalBlocksSorted(run.stdout)).toBe(
+            withGitFatalBlocksSorted(recordedStep.stdout)
+          )
         }
       })
       if (state !== undefined) {

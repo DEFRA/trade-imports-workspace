@@ -3559,14 +3559,40 @@
       ],
       "risk": "High: the security gate. Severity ranking, expiry and the 'blocked upstream' rules must match jq exactly, and audit-ci.jsonc formatting must not drift.",
       "proof": "Pure-function tables against recorded jq outputs. An end-to-end baseline on two repos gives the same summary and exit code. Month-end expiry cases. The lockfile path test for exec through a symlink.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "154da7a0b4c584714778d217114487eb8b4f2745"
+          }
+        ],
+        "checks": [
+          "tim-unit: pass. npm --prefix tim test: 414 files passed, 27 skipped; 6237 tests passed, 8 expected fail, 38 skipped. The golden recorder is skipped now the scripts are gone.",
+          "tim-lint: pass. npm --prefix tim run lint exits 0 and format:check exits 0.",
+          "parity: pass. Bash goldens were recorded before any change (jq programs, baseline, allow, forget, exec) and every tim replay matches them. Two month-end golden cases failed when the clamp was removed, which proves they catch it. End to end on animals-admin, schemas and animals-frontend, bash and tim baselines gave the same exit code (0) and the same report and summary.",
+          "no-callers: pass. git grep finds no reference to the 6 retired scripts in the workspace (outside workareas and goldens) or in any repos/* checkout. No .claude/settings*.json entry names them, and that is recorded under P66 in settings-followups.md."
+        ],
+        "deviations": [
+          "Added a `tim npm audit gate` subcommand so upgrade-one-package.sh and run-manual-upgrade.sh can drop audit-lib's audit_upgrade_gate.",
+          "Added a TimError code, REFUSED. A refusal from allow exits 1; usage errors and no audit exit 2.",
+          "semver now comes from tim's own pinned dependency (7.8.2), not from the repo's node_modules.",
+          "Expiry month arithmetic follows BSD `date -v+Nm` clamping, as macOS ran it.",
+          "Usage and help text name the tim commands, and -h now exits 0 where it exited 2.",
+          "`tim npm exec` refuses --repo and --clone together; in the bash the last one won.",
+          "A failed npm view no longer prints a node stack trace; only the final error line matches.",
+          "Some log and error strings in the remaining bash now name tim (start-upgrade phase0 error, refresh-lockfile log line).",
+          "The remaining bash finds the workspace from $SCRIPT_DIR/../.. where it used $HOME.",
+          "reset-overrides.sh inlines the threshold and advisories jq until P67 ports it.",
+          "The committed goldens hold recorded paths normalised to `<HOME>/git/defra/trade-imports-workspace/...`. This is recorded data, not a new path mention in code or docs."
+        ]
+      }
     },
     {
       "id": "P67",

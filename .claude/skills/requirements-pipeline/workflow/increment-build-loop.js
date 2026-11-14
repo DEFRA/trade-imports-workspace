@@ -3405,7 +3405,7 @@ const SOURCE_REFERENCE =
   '(\\S+\\.(md|js|mjs|ts|java|njk|json|ya?ml)(:\\d+(-\\d+)?)?`?|§ ?\\d+\\w*`?|\\b(house rules?|rules?|guides?|standards?|best[- ]practices?)\\b)'
 
 const CITED_QUOTE = new RegExp(
-  `${SOURCE_REFERENCE}([^"“”.;]{0,40}?([:(—–]|\\b(says|states|exempts|reads))\\s*|\\s+)["“][^"”]*["”]`,
+  `${SOURCE_REFERENCE}([^"“”.;]{0,40}?([:(—–]|\\b(says|states|exempts|reads|logs|log text|log message))\\s*|\\s+)["“][^"”]*["”]`,
   'gi'
 )
 

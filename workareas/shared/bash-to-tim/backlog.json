@@ -2948,7 +2948,7 @@
       ],
       "risk": "Medium. The first push of a new PR uses branch scope until CI has analysed it once, which is deliberate. Hook start-up time must be measured.",
       "proof": "Fake mvn, npm and sonar-scanner on PATH; a parity harness against both bash scripts over the fixture matrix with zero diffs. One real run on address-book (Java) and animals-frontend (Node).",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -2956,9 +2956,24 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 20f4f81b. Cherry-pick them and fix only the reason, rather than rebuilding.",
-        "previousBlockedReason": "The row's proof needs a real tim sonar push-check run on trade-imports-address-book and trade-imports-animals-frontend and a live check that SonarCloud's PR list agrees with gh pr view, but SONAR_TOKEN is not set in this session, so someone with a token must run it in both repos.",
-        "canaryForSam": "The live runs need SONAR_TOKEN, which agents do not have. Sam runs tim sonar push-check in trade-imports-address-book and trade-imports-animals-frontend and compares the PR SonarCloud picks with gh pr view (NEEDS-SAM.md). The verifier checks everything else and must not block on the live runs."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "23003055"
+          }
+        ],
+        "checks": [
+          "tim-unit: npm --prefix tim test green, 383 files passed and 22 skipped, 5832 tests passed, 8 expected fail and 28 skipped; push-check.golden.test.js ran against both Bash scripts and matched the recorded golden, and pipeline, hook and scope tests replay that golden through tim",
+          "tim-lint: npm run lint and npm run format:check both exit 0",
+          "parity: golden recorded from tools/sonar/sonar-push-check.sh and scripts/sonar/sonar-push-gate.sh over 35 cases with fake mvn, npm, sonar-scanner, gh and zsh on PATH; tim matches it except for the deliberate changes listed in the commit message",
+          "no-callers: no script was deleted in P56. .claude/settings.json, CLAUDE.md, docs/agent-onboarding.md and docs/reference/tools-index.md still name the two scripts, and P57 is the row that switches them to tim; no new ~/git/defra or $HOME/git/defra path, no new .sh file",
+          "live runs on address-book and animals-frontend: not run, because agents have no SONAR_TOKEN. The task is item 8 in workareas/shared/bash-to-tim/NEEDS-SAM.md, and the row says not to block on it"
+        ],
+        "deviations": [
+          "Cherry-picked recoverable commit 20f4f81b as the evidence said. Three files conflicted with P55's sonar hooks, and I kept both sides in each: tim/src/commands/sonar/index.js imports and calls both registerHooks and registerPushCheck, with the description changed to 'Read SonarCloud gates and issues for a DEFRA project, run the pre-push check and run the SonarCloud Claude Code hooks'. tim/README.md keeps the pending, mcp-tidy and push-check sections. settings-followups.md keeps P55, P37, P33 and P56.",
+          "tim/src/cli.js changes mode from 100755 to 100644, as it did in the original commit. The bin entry is src/launcher.js, which runs cli.js through node, so the execute bit is not needed. chmod is blocked by policy, so I could not keep the bit without leaving the tree dirty.",
+          "Hook start-up time was not measured by hand, because running node directly is denied. The module-load-probe test checks that a hook call that does not push exits without loading program.js."
+        ]
       }
     },
     {

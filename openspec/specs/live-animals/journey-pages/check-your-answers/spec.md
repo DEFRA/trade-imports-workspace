@@ -51,9 +51,10 @@ The system MUST group the page under six numbered section headings, in order, ho
 #### Scenario: The reason, additional details and contact address answers stand on their own titled cards
 **ID**: SCN-CYA-001-H
 - **GIVEN** the user has answered the reason for import, the additional details and the contact address
+- **AND** the additional details page is part of the notification's journey
 - **WHEN** they view the review
 - **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason"
-- **AND** the additional details answers stand on the card titled "Additional details"
+- **AND** the additional details answers stand on the card titled "Additional details", whose Change link opens the additional details page
 - **AND** "6. Contact address" holds one card titled "Contact address", with a "Contact address" row
 
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
@@ -290,13 +291,13 @@ While a notification is being amended, the system MUST show the review with no e
 
 ### Requirement: Ports, destination and transited countries and document types read back exactly as they were offered
 **ID**: REQ-CYA-013
-The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does, MUST name a territory among the transited countries "<territory> (<country>)", as the transit search does, and MUST name each document's type with the same wording the upload documents page offered that type under.
+The system MUST show the port of entry, and the "Exit border control post" of a transit or the "Port of exit" of a temporary admission, on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>". It MUST name a territory chosen as the destination country, or among the transited countries, "<territory> (<country>)", as the lists offered it, and MUST name each document's type with the wording the upload documents page offered.
 
-#### Scenario: The port of exit row reads the option the user chose
+#### Scenario: The exit border control post row reads the option the user chose
 **ID**: SCN-CYA-013-A
-- **GIVEN** a transit notification whose port of exit is Port of Dover
+- **GIVEN** a transit notification whose exit border control post is Port of Dover
 - **WHEN** the user views the review
-- **THEN** the port of exit row reads "Port of Dover - GB DVR", the same text as the option they chose
+- **THEN** the "Exit border control post" row reads "Port of Dover - GB DVR", the same text as the option they chose
 
 #### Scenario: The port of entry row reads the port's name, a dash and its code
 **ID**: SCN-CYA-013-B
@@ -345,9 +346,9 @@ The system MUST check a draft's chosen species against the commodity reference d
 - **THEN** the user moves on to the declaration
 - **AND** that species is not named as one to choose again
 
-### Requirement: The Transport details card shows a private transporter's saved country
+### Requirement: The Transport details card always shows its five rows, with a private transporter's saved country
 **ID**: REQ-CYA-015
-The system MUST show a private transporter's saved country on the Transport details card's Country row.
+The system MUST always show the Name, Address, Country, Approval number and Type rows on the Transport details card, writing an empty answer as "Not applicable", and MUST show a transporter's saved country on the Country row, private or commercial.
 
 #### Scenario: A private transporter's saved country shows on the review
 **ID**: SCN-CYA-015-A
@@ -355,16 +356,30 @@ The system MUST show a private transporter's saved country on the Transport deta
 - **WHEN** the user views the review
 - **THEN** the Transport details card's Country row shows that country
 
+#### Scenario: A transporter with no approval number reads Not applicable
+**ID**: SCN-CYA-015-B
+- **GIVEN** a private transporter has been saved with no approval number
+- **WHEN** the user views the review
+- **THEN** the Transport details card's Approval number row reads "Not applicable"
+- **AND** its Name, Address, Country and Type rows are still shown
+
+#### Scenario: A commercial transporter's five rows read its saved values
+**ID**: SCN-CYA-015-C
+- **GIVEN** a commercial transporter has been chosen
+- **WHEN** the user views the review
+- **THEN** the Transport details card reads the transporter's name, address, country and approval number on the Name, Address, Country and Approval number rows
+- **AND** its Type row reads "Commercial"
+
 ### Requirement: The review shows only the exit answers the main import reason asked for
 **ID**: REQ-CYA-016
-The system MUST show the Destination country, Exit date and Port of exit rows on the review only for the import reasons that ask them: Destination country and Port of exit for transit, Exit date and Port of exit for temporary admission horses, and none of the three for a reason that asks none of them.
+The system MUST show the exit rows on the review only for the import reasons that ask them: "Exit border control post" then "Destination country" for transit, "Exit date" then "Port of exit" for temporary admission horses, and none of them for a reason that asks none of them.
 
-#### Scenario: A transit notification shows its destination country and port of exit, and no exit date
+#### Scenario: A transit notification shows its exit border control post then its destination country, and no exit date
 **ID**: SCN-CYA-016-A
-- **GIVEN** a notification whose main import reason is transit, with a port of exit and a destination country saved
+- **GIVEN** a notification whose main import reason is transit, with an exit border control post and a destination country saved
 - **WHEN** the user views the review
-- **THEN** the Destination country and Port of exit rows show what was saved
-- **AND** no Exit date row is shown
+- **THEN** the Main import reason card shows the "Exit border control post" row and then the "Destination country" row, each showing what was saved
+- **AND** no Port of exit or Exit date row is shown
 
 #### Scenario: A temporary admission shows its exit date and port of exit, and no destination country
 **ID**: SCN-CYA-016-B
@@ -377,7 +392,7 @@ The system MUST show the Destination country, Exit date and Port of exit rows on
 **ID**: SCN-CYA-016-C
 - **GIVEN** a notification whose main import reason is re-entry
 - **WHEN** the user views the review
-- **THEN** no Destination country, Exit date or Port of exit row is shown
+- **THEN** no Destination country, Exit date, Port of exit or Exit border control post row is shown
 
 ### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
 **ID**: REQ-CYA-017
@@ -412,3 +427,52 @@ The system MUST list on the Addresses card, after the county parish holding row,
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
 - **THEN** the Addresses card lists no permanent address row
+
+### Requirement: The Origin of import card always shows its three rows
+**ID**: REQ-CYA-021
+The system MUST show the Country of origin, Region of origin code and Internal reference number rows on the Origin of import card, in that order, whether or not a region of origin code was needed, and MUST NOT show a "Region of origin code required" row.
+
+#### Scenario: A given region of origin code reads on its row
+**ID**: SCN-CYA-021-A
+- **GIVEN** a notification whose origin needs a region of origin code and has one saved
+- **WHEN** the user views the review
+- **THEN** the Origin of import card's rows are keyed "Country of origin", "Region of origin code" and "Internal reference number", in that order
+- **AND** the "Region of origin code" row reads the saved code
+
+#### Scenario: A region of origin code that is not needed reads Not applicable
+**ID**: SCN-CYA-021-B
+- **GIVEN** a notification whose origin needs no region of origin code
+- **WHEN** the user views the review
+- **THEN** the Origin of import card's "Region of origin code" row reads "Not applicable"
+
+### Requirement: The Arrival details card dates the arrival at the destination and reads the transit countries inside it
+**ID**: REQ-CYA-022
+The system MUST key the arrival date row on the Arrival details card "Arrival date at destination". When transit countries apply, it MUST read them in that card under a "Transit countries" subsection, on a row keyed "Countries that the consignment will travel through", comma-separated in the order added, with its own Change link and no separate Transit countries card. A submitted notification's row MUST carry no Change link.
+
+#### Scenario: The arrival date row is keyed at the destination
+**ID**: SCN-CYA-022-A
+- **GIVEN** a notification with an arrival date
+- **WHEN** the user views the review
+- **THEN** the Arrival details card reads the date on a row keyed "Arrival date at destination"
+
+#### Scenario: A road notification reads its transit countries inside the Arrival details card
+**ID**: SCN-CYA-022-B
+- **GIVEN** a notification arriving by road, with France and Belgium added as transit countries
+- **WHEN** the user views the review
+- **THEN** the Arrival details card holds a "Transit countries" subsection
+- **AND** its "Countries that the consignment will travel through" row reads "France, Belgium"
+- **AND** that row's Change link opens the transit countries page
+- **AND** no card titled "Transit countries" is shown
+
+#### Scenario: An air notification has no transit countries subsection
+**ID**: SCN-CYA-022-C
+- **GIVEN** a notification arriving by air
+- **WHEN** the user views the review
+- **THEN** the Arrival details card holds no "Transit countries" subsection
+
+#### Scenario: A submitted notification's transit countries row has no Change link
+**ID**: SCN-CYA-022-D
+- **GIVEN** a submitted notification arriving by road, with France and Belgium added as transit countries
+- **WHEN** the user views it
+- **THEN** the "Countries that the consignment will travel through" row reads "France, Belgium"
+- **AND** that row has no Change link

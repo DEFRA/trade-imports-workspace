@@ -2577,14 +2577,36 @@
       ],
       "risk": "High: Jira, Confluence, GitHub and git in one script. Split it into clone-and-seed then ticket.md if the PR grows too big.",
       "proof": "A golden comparison of the whole workarea from nock, PR-fact fixtures and a bare remote. One real merged ticket reviewed both ways and diffed.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "5fd7d00e02cd057c9a88b0b6262e9164bedc4977"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS - npm --prefix tim test, 349 files passed / 18 skipped, 5378 tests passed (golden recorder skips now the scripts are gone); review/ticket subset re-run green after prettier",
+          "tim-lint: PASS - npm run lint exit 0; npm run format:check exit 0",
+          "parity: PASS - tim/src/review/__fixtures__/__golden__/review-prepare.json recorded from the Bash (23 cases); tim/src/commands/review/prepare.test.js replays every same-as-Bash case (stdout, stderr, exit code, review files, parsed .review-meta.json, clone head/fetch/url) and asserts the named deliberate differences",
+          "no-callers: PASS - git grep for prepare-review / start-review / prs.sh / pr-details.sh across the workspace (excluding recording fixtures and workareas) and every repos/* checkout finds no caller"
+        ],
+        "deviations": [
+          "tim review start FRESH no longer prepares the review: it makes .raw and prints the gh search command. The review skill's Step 1 now runs gh search prs, then tim review prepare --select, then gh pr view / gh api .../files / gh pr diff per PR, then tim review prepare (rule 8: GitHub stays on gh).",
+          "--repos dropped from branch mode (narrow the gh search instead); PR diffs are written by gh pr diff in the skill.",
+          "A Jira ticket with a null labels field now prepares (the Bash crashed in jq, exit 5); a separate EUDPA-104 no-PRs case was added to the golden.",
+          "Usage errors are one stderr line; --json uses the tim envelope rather than the Bash's bare JSON.",
+          "tools/style/prepare-style.sh now stops (naming the review skill's Step 1) when the review workspace is missing instead of calling prepare-review.sh, and lists PR files with gh api directly; prepare-style-local.sh calls tim review prepare --local.",
+          "The open-PR-first rule in ticket mode still never fires, because gh search states are lowercase; kept for parity.",
+          "settings-followups.md ## P50: nothing to remove; suggests allowing Bash(gh search prs:*), Bash(gh pr diff:*) and Bash(gh api repos/DEFRA/*/pulls/*/files:*)."
+        ]
+      }
     },
     {
       "id": "P51",

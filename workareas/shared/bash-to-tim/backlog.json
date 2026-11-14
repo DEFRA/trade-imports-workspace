@@ -1550,7 +1550,7 @@
         "P22",
         "P46"
       ],
-      "risk": "Medium. The branch step keeps track-the-remote behaviour, which differs from `tim build start`. .implement-meta.json loses `diffs`, which nothing reads.",
+      "risk": "Medium. The branch step keeps track-the-remote behaviour, which differs from `tim build start`. .implement-meta.json loses `diffs`, which nothing reads. Other changes on purpose: prepare-implement no longer looks for prior pull requests, so its stdout loses the 'Checking for prior PRs...' and '  No prior PRs found' lines and the '.diffs/{repo}.diff (N PR(s))' Created line; IMPLEMENTOR.md caches each diff with gh search prs and gh pr diff instead. A ticket that is not EUDPA-* (or NO_JIRA for branch) and an unknown --type are tim USAGE errors and exit 2 instead of the scripts' 1, with tim's wording for the ticket refusal; a failed ticket fetch, a missing plan and a missing required option still exit 1. --json prints tim's {ok, result} envelope instead of the bare object: branch's result holds {ticket, repo, branch, base, head} plus repoDir, and prepare-plan's and prepare-implement's hold the meta under result.meta. A ticket whose Jira response has no labels field writes empty labels, where prepare-plan.sh stopped with a jq error and exit 5. Nothing checks for exit 1 and no caller passes --json: the only callers are PLANNER.md, IMPLEMENTOR.md and the onboarding deck, which run the commands plainly, and SKILL.md and docs/reference/tools-index.md only list the flag.",
       "proof": "Temp bare-origin fixtures for every branch path. Golden ticket.md, meta and bundles for prepare-plan. A live `diff -r` on one real ticket.",
       "status": "todo",
       "checks": [

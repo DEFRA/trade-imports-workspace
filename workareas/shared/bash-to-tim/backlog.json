@@ -2136,14 +2136,35 @@
       ],
       "risk": "Low. Moving to the --json envelope means callers read `.result`. Also fixes the Bash 4 `${v,,}` crash on macOS bash 3.2.",
       "proof": "Golden output from the EUDPA-264 run copied under a scratch HOME: text byte-identical, JSON deep-equal.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "721d0bb6"
+          }
+        ],
+        "checks": [
+          "parity: before deleting anything, govuk-scripts.golden.test.js recorded all four Bash scripts under a scratch HOME into tim/src/govuk/__fixtures__/__golden__/govuk-scripts.json. That covers 31 plans cases (every filter, with and without --repo, --sort-semver and --json, plus 5 refusals), the same 31 through upgrade-status.sh with identical output, 11 summaries cases and 9 render cases. commands/govuk/index.test.js checks that the text stdout, stderr and exit code are byte-identical to the recordings, that the --json `.result` deep-equals the jq output, and that `tim govuk plans` matches both list-plans.sh and upgrade-status.sh. Two mutation probes (count padding, TSV backslash escape) turned the tests red, then the code was restored",
+          "tim-unit: npm --prefix tim test green: 304 files passed, 10 skipped; 4961 tests passed, 8 expected fail, 11 skipped. The golden recording test now skips because its scripts are gone; the frozen golden is still read by the command and library tests",
+          "tim-lint: npm run lint and npm run format:check both exit 0",
+          "no-callers: git grep for list-plans, upgrade-status, list-plan-summaries and render-version-plan across the workspace (outside workareas/) and every repos/* finds nothing beyond the new golden fixtures. start-upgrade.sh:118 now calls `tim govuk plans`; the skill's SKILL.md, PHASE_1/2/3_MANAGER.md, PLAN_WALKER.md, version-state-schema.md, docs/reference/tools-index.md and tim/README.md are updated, and the --json callers now read `.result`",
+          "no new .sh file; the only new canonical-path text is the Bash's own stderr and stdout frozen in the golden (staged <HOME> layout). One canonical-path mention was removed from start-upgrade.sh",
+          "settings-followups.md: P43 needs no allowlist change (no entry names these scripts)"
+        ],
+        "deviations": [
+          "render-plan takes --govuk-version instead of the planned --version, because tim's root `.version()` catches --version and prints tim's own version. Callers and the tim test map the Bash's --version to it",
+          "The EUDPA-264 run is not on disk (workareas/govuk-upgrades does not exist on this machine), so the goldens come from a hand-made EUDPA-264 fixture instead. It has 3 repos covering todo with and without changes, noop, unplanned, done with a commit, failed with a reason, a missing changelog, pre-release versions and 5.10.0 against 5.9.1, plus an empty run folder and a repo with no versions",
+          "Error texts keep the Bash wording, including list-plans' `Error: ` prefix, so stderr stays byte-identical; they were not rewritten in GDS plain English as findings.json suggested. Exit codes match the Bash (1), except that a missing render-plan option exits 2",
+          "The four rows of findings.json for tools/govuk (increments 1 to 4) landed as one commit, as backlog row P43 combines them"
+        ]
+      }
     },
     {
       "id": "P44",

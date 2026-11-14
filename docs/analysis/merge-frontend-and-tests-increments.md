@@ -131,7 +131,7 @@ Inside that workflow, per shard:
 2. Sanitise the branch into a docker tag, then probe
    `defradigital/trade-imports-animals-tests:<tag>` — **branch tag if it exists,
    `latest` otherwise**.
-3. `./scripts/stack/run-stack.sh --branch <branch>` — the stack probes Dockerhub
+3. `tim docker up --branch <branch>` — the stack probes Dockerhub
    per service and takes the branch tag where published, `:latest` elsewhere.
 4. `docker run … defradigital/trade-imports-animals-tests:<tag> run test:docker-compose:ci -- --shard=N/3`.
 
@@ -283,7 +283,7 @@ through the Playwright `webServer` block with `STUB_MODE=true`, and runs both th
 The tests-repo rung **does** need the stack:
 
 ```bash
-~/git/defra/trade-imports-workspace/scripts/stack/run-stack.sh -d
+tim docker dev
 ```
 
 **Does the local dev stack genuinely serve a branch frontend to a branch test
@@ -300,7 +300,7 @@ path; `-d` is the local path.
 `--project=plants` needs no setup or auth dependency project — there is none in
 `utils/playwright/shared-config.ts`. It does need the address book on :8089 (the
 `globalSetup` seeds fixtures through it) and the Defra ID stub for sign-in, both
-of which a default `run-stack.sh -d` brings up.
+of which a default `tim docker dev` brings up.
 
 **Ladder cost.** The five plants spec files hold ~38 tests. `--project=plants`
 locally, against an already-running stack, is a few minutes; the stack start

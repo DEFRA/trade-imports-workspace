@@ -2,7 +2,7 @@
 
 All compose definitions live in the workspace stack — `docker/stack/` at the
 workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`).
-Only CI still starts it with `scripts/stack/run-stack.sh`. No repo carries its own
+CI starts it with `tim docker up` too. No repo carries its own
 `compose.yml`. The rules for running it are in
 [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#rules-for-agents).
 

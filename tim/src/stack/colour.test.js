@@ -1,8 +1,4 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { workspaceScriptExists } from '../test-support/bash-golden-harness.js'
 import { coloursFor, colourEnabled, errorLine } from './colour.js'
 
 const terminal = { isTTY: true }
@@ -48,26 +44,6 @@ describe('#coloursFor', () => {
       }
     })
   })
-
-  test.skipIf(!workspaceScriptExists('scripts/stack/lib/colour.sh'))(
-    'Should give the escape codes lib/colour.sh sets',
-    () => {
-      const script = readFileSync(
-        join(
-          fileURLToPath(new URL('../../../', import.meta.url)),
-          'scripts/stack/lib/colour.sh'
-        ),
-        'utf8'
-      )
-      const bashCodes = Object.fromEntries(
-        [...script.matchAll(/COLOUR_([A-Z]+)=\$'\\033\[(\d+)m'/g)].map(
-          ([, name, code]) => [name.toLowerCase(), `\u001b[${code}m`]
-        )
-      )
-
-      expect(bashCodes).toEqual(coloursFor({ env: {}, stream: terminal }))
-    }
-  )
 })
 
 describe('#errorLine', () => {

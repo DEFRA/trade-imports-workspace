@@ -337,7 +337,7 @@ workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
 - **Changing the factory mid-run.** On the increment branch, a change to tim,
   `gates.json` or the stack scripts takes effect at once for the rest of that
   increment, and the gate re-ups the stack when `docker/stack` or
-  `scripts/stack` changed. A change to the loop script takes effect from the
+  `tim/src/stack` changed. A change to the loop script takes effect from the
   **next launch** only: a running loop never re-reads it.
 - **An increment that leaves the workspace out** does not touch it. A plan
   that would write there, `openspec/` included, needs `workspace` among the

@@ -9,7 +9,7 @@ and its repos. `tim docker` runs it, and is the surface to use.
   source), `tim docker up` (published images), `tim docker down`,
   `tim docker restart`, `tim workspace status`. `tim docker up`, `dev` and
   `restart` take the stack flags (`-b`, `-e`, `--profile`, `--perf`)
-  themselves. Do not run `scripts/stack/run-stack.sh`: only CI uses it.
+  themselves. CI starts the stack with `tim docker up` too.
 - **One stack per machine, and any clone may own it.** Every clone of the
   workspace starts the same compose project, `trade-imports`
   (`compose.yml`'s `name:`), on the same host ports, so only one stack runs
@@ -23,16 +23,15 @@ and its repos. `tim docker` runs it, and is the surface to use.
   local E2E: the tests repo's docker-compose config and `tim build gate`
   stop from any other clone.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
-  profiles and the init-script staging live in `tim/src/stack/` (and in
-  `scripts/stack/lib/` for CI). A hand-built chain silently drops some of them.
-- **Change the stack definition in two places while tim takes over.** The
-  services, sidecars, compose files and profiles are also in
-  `tim/src/stack/definition.js`, and a tim test fails when it and the
-  scripts differ. tim's tests also hold the Docker and git calls each
-  script makes, under `tim/src/test-support/fixtures/stack/`: a change to
-  what a script calls fails them until you record it again with
-  `npm --prefix tim test -- src/stack --update=all`. Run `npm --prefix tim test`
-  after any change to `scripts/stack/`.
+  profiles and the init-script staging live in `tim/src/stack/`. A
+  hand-built chain silently drops some of them.
+- **Change the stack definition in `tim/src/stack/definition.js`.** It holds
+  the services, sidecars, compose files and profiles. tim's tests hold the
+  Docker and git calls each start makes, under
+  `tim/src/test-support/fixtures/stack/`, so a change to what the stack
+  calls fails them until you update those fixtures. Run
+  `npm --prefix tim test` after any change to `tim/src/stack/` or
+  `docker/stack/`.
 - **Never `docker start` one container to revive it.** Its dependencies may
   be dead too, and its health wait then never passes. Check the whole stack
   with `tim workspace status`, then recover it with `tim docker dev` or
@@ -328,8 +327,8 @@ To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.j
   `security` and `monitoring` ones too, so nothing is left running.
   `restart` takes the stack down the way `down` does, then starts it the
   way `tim docker up` does with its flags, even when the stop fails.
-- CI still starts the stack with `scripts/stack/run-stack.sh` and its
-  `lib/` files, which do the same as `tim docker up`.
+- CI starts the stack with `node tim/src/cli.js docker up --branch <name>`,
+  after `npm ci` in `tim/`.
 - `tim docker service rebuild|restart <service>...` touches only the named
   services of a running `--dev` stack (`--no-deps`), with the same compose
   files and profiles `tim docker dev` uses, and blocks until they report
@@ -381,8 +380,7 @@ stack invokes the repo-owned script rather than keeping its own copy:
 | ASB emulator entity config (`servicebus-config.json`) | dynamics-gateway | `servicebus/servicebus-config.json` |
 | ZAP Automation Framework plans (`automation-*.yaml`) | tests repo | `zap/automation-*.yaml` |
 
-Starting the stack (`tim/src/stack/stage-init-scripts.js`, and
-`scripts/stack/lib/init-scripts.sh` in CI) refreshes `docker/stack/.staged/` — generated,
+Starting the stack (`tim/src/stack/stage-init-scripts.js`) refreshes `docker/stack/.staged/` — generated,
 gitignored, never edit it — from `repos/<repo>/` when present, sparse-fetching
 the paths from GitHub when not (CI checks out only the workspace repo; the
 fetch tries the `--branch` ref first, then the default branch). One

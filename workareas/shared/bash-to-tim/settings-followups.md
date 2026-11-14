@@ -360,3 +360,12 @@ may be using. It is item 9 in `NEEDS-SAM.md`. The landing phase's CI E2E
 run starts the stack through this code once P62 lands, and is the first
 live run of the native start (staging, Dockerhub probes, early pulls,
 mongo first, stack up and the branch re-check).
+
+## P62
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/run-stack.sh` or `scripts/stack/lib/*.sh`; nothing to
+remove. `scripts/stack/` is gone.
+
+The stack-smoke check did not run, for the reason given under P61: the
+stack is up, started by hand, with no lease (`NEEDS-SAM.md` item 9).

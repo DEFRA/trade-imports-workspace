@@ -201,7 +201,7 @@ is covered by tim — the JSON envelope is schema-versioned and stable.
 ## Workspace stack (what `tim docker` runs)
 
 `tim docker up` (and `dev`, `restart`) starts the stack from `tim/src/stack/` and
-takes the flags `tim docker up --help` lists (CI still uses `scripts/stack/run-stack.sh`). It brings up the full stack from Dockerhub — the
+takes the flags `tim docker up --help` lists. CI starts the stack the same way. It brings up the full stack from Dockerhub — the
 only compose stack in the workspace and its repos. Supports `-b <branch>`
 (probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so

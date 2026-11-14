@@ -287,20 +287,19 @@ export const fakeComposeStartLines = ({
   ].join('\n')
 
 /**
- * A temporary workspace holding copies of scripts/stack and docker/stack
- * (less docker/stack/.staged), with every init script the stack stages
- * present under repos/, so staging copies and never clones.
+ * A temporary workspace holding a copy of docker/stack (less
+ * docker/stack/.staged), with every init script the stack stages present
+ * under repos/, so staging copies and never clones.
  *
  * @returns {{root: string, remove: () => void}}
  */
 export const stageStackWorkspace = () => {
   const root = mkdtempSync(join(tmpdir(), 'tim-stack-workspace-'))
-  for (const folder of ['scripts/stack', 'docker/stack']) {
-    cpSync(join(realWorkspaceRoot, folder), join(root, folder), {
-      recursive: true,
-      filter: (source) => !isGeneratedStackFolder(source)
-    })
-  }
+  const stackFolder = join('docker', 'stack')
+  cpSync(join(realWorkspaceRoot, stackFolder), join(root, stackFolder), {
+    recursive: true,
+    filter: (source) => !isGeneratedStackFolder(source)
+  })
   writeRepoInitScripts(root)
   return {
     root,

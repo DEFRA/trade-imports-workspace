@@ -448,7 +448,7 @@ the workspace whenever it may touch it, whether or not the increment builds ther
 **Changing the factory mid-run.** While the workspace is on the increment branch, a change to
 tim, `gates.json` or the stack scripts takes effect at once: every later tim call and gate run
 in that increment uses the branch's copy, and the gate re-ups the stack when `docker/stack` or
-`scripts/stack` changed. A change to this loop script takes effect from the **next launch**
+`tim/src/stack` changed. A change to this loop script takes effect from the **next launch**
 only, because a running loop never re-reads it. Stages are told never to edit the loop script
 unless the row names it, and a planner says so under `risks` when it does.
 

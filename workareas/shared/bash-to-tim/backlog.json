@@ -1957,14 +1957,38 @@
       ],
       "risk": "Medium: the finalize exit code is the skill's contract, and its reason strings go into report.md byte for byte.",
       "proof": "Golden fixtures for every rule branch, with exit code, stdout and meta compared against the recorded bash.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "05c62f53"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "4863b06a"
+          }
+        ],
+        "checks": [
+          "Verifier finding 1 (reposOf) fixed in tim/src/understanding-check/verify.js. A meta.prs entry whose repo is missing or null now becomes the repo 'null', matching jq -r '.prs[].repo' (checked: jq prints null, null, an empty line and 7 for {number:1},{repo:null},{repo:''},{repo:7}). A non-string repo prints as JSON, and only an empty string is skipped, as the Bash skipped empty lines. New verify.test.js case: 'analysis missing for repo: null' twice, then 'analysis missing for repo: 7', exit not ok.",
+          "Verifier finding 2 (sizeOf) fixed in tim/src/understanding-check/counts.js. coverage_gaps is now measured as jq length measures it: an array by its length, an object by its key count, a number as its absolute value, a string by its code points, and null or missing as 0. Checked against jq: 3 gives 3, -12 gives 12, \"héllo\" gives 5, {a,b} gives 2. New counts.test.js test.each covers 12, -3, 'héllo' and a two-key object.",
+          "Invert-red probe: putting back String(value).length and the bare repo turned 3 tests red (12, -3 and the null-repo case). Restoring both turned them green.",
+          "tim-unit: npm --prefix tim test is green. 284 files passed and 7 skipped. 4755 tests passed, 8 were expected fails and 8 were skipped.",
+          "tim-lint: npm run lint and npm run format:check are both clean.",
+          "Earlier checks still hold: the fix adds no .sh file and no fixed ~/git/defra path, and the five deleted scripts still have no callers."
+        ],
+        "deviations": [
+          "Builder deviations from 05c62f53 still stand: (1) verify-coverage.sh as shipped could not compile its jq filter, and tim matches the corrected recording. (2) Every refusal exits 1, so exit 2 always means high-risk. (3) A transcript entry whose question has no category is refused with exit 1, where the Bash died in jq with exit 5. (4) --json uses tim's envelope. (5) verify treats a meta with no prs as no repos, and add-finding tolerates a missing section and ids that are not numbers. (6) verdict-rule.md no longer says verify-coverage appends coverage gaps.",
+          "New in 4863b06a: counts and finalize now refuse a coverage_gaps of true or false with a PARSE error and exit 1. The message is 'Error: .interview-meta.json coverage_gaps is true, which has no length'. The Bash died in jq with exit 5 ('boolean (true) has no length'). A counts.test.js test covers this.",
+          "jq -r prints an object repo across several lines, while tim prints it as one-line JSON. That is not a realistic meta value, and no test covers it."
+        ]
+      }
     },
     {
       "id": "P41",

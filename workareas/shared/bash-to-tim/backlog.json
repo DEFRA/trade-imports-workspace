@@ -2670,14 +2670,36 @@
       ],
       "risk": "Medium. Keep @tsv escaping and codepoint sort. Fixes the ', Notes set' bug on purpose (named in the commit).",
       "proof": "Goldens over copies of the real workareas (EUDPA-211, EUDPA-35, local/) for every flag and transition; file diffs with timestamps normalised.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "9e1ae2f35a5a2191494c55531656259f3f3983be"
+          }
+        ],
+        "checks": [
+          "parity: PASS - the unmodified Bash was recorded before any change into tim/src/style/__fixtures__/__golden__/style-tools.json (104 cases, with files written and timestamps normalised). tim/src/commands/style/index.test.js replays every case through tim and matches stdout, stderr, exit code and files byte for byte. The only differences are the ones the row names. A probe that turned the Notes-set fix off failed 14 tests.",
+          "no-callers: PASS - git grep over the workspace (skills, rules, docs, settings, hooks, CI, tim) and repos/* finds no caller of the 11 retired files. The remaining hits are the review folder's own retired script names in review fixtures and messages, frozen goldens, workareas history, and repos/trade-imports-address-book/docs/review/EUDPA-58-review.md (history).",
+          "tim-unit: PASS - npm --prefix tim test: 356 files passed, 19 skipped; 5501 tests passed, 8 expected fail, 24 skipped. The Bash recording test now skips because its scripts are gone.",
+          "tim-lint: PASS - npm --prefix tim run lint and run format:check are both clean.",
+          "extra: no new ~/git/defra or $HOME path outside the frozen Bash golden (which records <HOME> output), and no new .sh file; 11 files deleted under tools/style.",
+          "settings: no .claude/settings.json allowlist entry names the deleted scripts. A P52 note saying so was added to workareas/shared/bash-to-tim/settings-followups.md."
+        ],
+        "deviations": [
+          "Command shape follows tim review rather than the row's flat names: tim style items list|counts|add|mark|status|render, tim style file add|verdict, tim style aggregate, tim style reconcile (the row listed tim style items|counts|render|add-item|mark|set-status|...).",
+          "The workareas the proof names (EUDPA-211, EUDPA-35, local/) do not exist in this checkout: workareas/code-style-reviews is missing. The goldens use a fixture workarea built from the real item and style-file shapes instead, as P47/P48 did for review.",
+          "The shared code was pulled out of tim review instead of copied. review/items-ledger.js, aggregate.js, reconcile.js, file-review.js and items-table.js now export shared parts, and aggregate and reconcile take a 'kind' of per-file review. Review's own goldens and tests still pass unchanged. review/verify.js now gets its style paths from tim/src/style/paths.js.",
+          "Changes made on purpose and named in the commit: ', Notes set' is printed only when --note is given (the bug fix the row asks for); --json gives tim's envelope (items list gives [] where the Bash printed nothing, and counts adds reviewId and repo); usage refusals print one usage line on stderr and still exit 1; a non-numeric --item exits 1 with nothing written (the Bash exited 2 from jq); reconcile's missing-items message names tim style aggregate --write-items; style files are read in code-point order.",
+          "The message 'No style file at ... call file-style-init.sh first' is kept word for word, because file-style-init.sh lives on until P53, which ports it."
+        ]
+      }
     },
     {
       "id": "P53",

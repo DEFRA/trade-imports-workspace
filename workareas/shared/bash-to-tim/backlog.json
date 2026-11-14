@@ -2731,14 +2731,41 @@
       ],
       "risk": "Medium to high. GitHub file lists come from gh in the skill; it must refuse loudly on an empty diff for a non-empty PR. The existing routing goldens must stay green.",
       "proof": "Routing goldens unchanged. A golden comparison of the prepared tree. Dispatch of MODE lines. One live run from a second clone.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "33bcd9eef78bf3a961a907572062679726cd8e6c"
+          }
+        ],
+        "checks": [
+          "parity: PASS. The golden tim/src/style/__fixtures__/__golden__/style-start.json recorded the 7 Bash scripts on 27 cases before they were deleted. tim/src/commands/style/start.test.js (32 tests) matches it byte for byte, apart from the deliberate changes listed under deviations. The routing goldens file-topics.json and bake-rules-bundle.json are unchanged and now run tim style topics and tim style bundle.",
+          "tim-unit: PASS. npm --prefix tim test: 360 files passed, 20 skipped; 5546 tests passed, 8 expected fail, 25 skipped. The skipped files include the two Bash recording tests, which skip now that the scripts are gone.",
+          "tim-lint: PASS. npm --prefix tim run lint and run format:check are both clean.",
+          "no-callers: PASS. git grep across the workspace (outside workareas) and every repos/* finds no caller of start-style, prepare-style, prepare-style-local, file-style-init, file-topics.sh, bake-rules-bundle.sh or refresh/scope.sh. The only matches left are golden filenames and the recording fixtures for these and earlier rows.",
+          "fixed paths and .sh files: PASS. No added line names ~/git/defra/trade-imports-workspace or $HOME/git/defra outside <HOME>-normalised goldens. No .sh file was added; 7 were deleted and tools/style/ is gone.",
+          "second clone: PASS. tim --workspace <scratchpad clone> style bundle and style topics wrote and read inside the clone and left the main checkout untouched."
+        ],
+        "deviations": [
+          "tim style scope has no --pr-files REPO=FILE flag. For List D it reads the review folder's .prs/<repo>-<pr>.json for the latest pull request, the same file tim review uses. That file is written by gh api repos/DEFRA/<repo>/pulls/<pr>/files --paginate --slurp. The code-style skill's Step 0 now writes these files with gh before a refresh, as the review skill does.",
+          "tim style prepare stops and names the gh api command when a pull request's .prs/ file is missing. It also stops when that file lists no files while .review-meta.json says the pull request changes some (the row's 'refuse loudly' check). The Bash skipped such a pull request silently.",
+          "The tim style scope warning for a missing .prs/ file keeps the Bash's first line and adds a second line naming the gh api command. List D now reads the full paginated file list instead of gh pr view's list.",
+          "tim style scope prints a summary by default (the old --human). --json gives the lists as the envelope's result (the old default). The --human and --json-out flags are gone; nothing called them.",
+          "On a refresh, tim style start prints 'MODE: REFRESH' and then the scope envelope, as tim review start does. A failed pull shows as the envelope's error, and its pull report still goes to stderr.",
+          "tim style start --local works. The Bash recorded 'Permission denied' because prepare-style-local.sh was committed as mode 100644. The tim test checks start --local against the recorded prepare --local output. The prototype conventions-pass.md example of a start failure was reworded to match.",
+          "Usage errors are now one stderr line. Unknown options get commander's 'error: unknown option' refusal. Paths sort in code-point order instead of the locale order of sort.",
+          "Shared code: writePerFilePlaceholder now lives in review/file-review.js and is used by both tim review file init and tim style file init. pullFirst from review/refresh/scope.js is now exported for tim style scope.",
+          "settings-followups.md P53: no allowlist entry to remove. The generic tools/** rules remain; tools/style/ no longer exists.",
+          "One scratch clone is left at /private/tmp/claude-501/-Users-samfarrington-git-defra-trade-imports-workspace/51c6e0f9-b7cd-4625-9a54-d8226c61b362/scratchpad/clone2 because permission to remove it was denied."
+        ]
+      }
     },
     {
       "id": "P54",

@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { recordTimRun } from '../../test-support/bash-golden-harness.js'
 import {
+  asTimStartHint,
   plansCases,
   plansRefusals,
   readGovukGolden,
@@ -36,7 +37,10 @@ const recordEach = async (command, cases) => {
   return runs
 }
 
-const textRunsOf = (runs) => runs.filter(({ input }) => !isJsonCase(input))
+const textRunsOf = (runs) =>
+  runs
+    .filter(({ input }) => !isJsonCase(input))
+    .map((run) => ({ ...run, stderr: asTimStartHint(run.stderr) }))
 
 const jsonRunsOf = (runs) =>
   runs

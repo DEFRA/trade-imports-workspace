@@ -22,6 +22,7 @@ import {
 } from '../../govuk/__fixtures__/govuk-apply.js'
 import {
   ADMIN,
+  asTimStartHint,
   RUN_ID,
   stageGovukWorkspace
 } from '../../govuk/__fixtures__/govuk-workspace.js'
@@ -77,6 +78,14 @@ const asUsageRefusal = (golden) => ({
   runs: golden.runs.map((run) => ({ ...run, exitCode: USAGE }))
 })
 
+const withTimStartHint = (golden) => ({
+  ...golden,
+  runs: golden.runs.map((run) => ({
+    ...run,
+    stderr: asTimStartHint(run.stderr)
+  }))
+})
+
 describe.each(Object.keys(writeCases))(
   'tim govuk %s matches its Bash script',
   (command) => {
@@ -90,7 +99,7 @@ describe.each(Object.keys(writeCases))(
         writesGolden[command].map((golden) =>
           golden.case === 'invalid classification'
             ? asUsageRefusal(golden)
-            : golden
+            : withTimStartHint(golden)
         )
       )
     })

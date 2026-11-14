@@ -64,7 +64,7 @@ export const classifyVersion = ({
     runId,
     repo,
     version,
-    missingFileHint: ' — run discover-versions.sh first'
+    missingFileHint: ' — run tim govuk start first'
   })
   const entry = writeVersion(found, version, (current) => ({
     ...current,

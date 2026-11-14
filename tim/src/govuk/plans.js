@@ -67,7 +67,7 @@ export const listPlans = ({
   if (!isDirectory(folder)) {
     throw refuse(
       'NOT_FOUND',
-      `Workspace not found: ${folder}. Run discover-versions.sh first.`
+      `Workspace not found: ${folder}. Run tim govuk start first.`
     )
   }
   const files = stateFilesOfRun({ folder, repo })

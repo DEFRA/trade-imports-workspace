@@ -285,3 +285,13 @@ export const renderRefusals = [
     args: renderArgs('trade-imports-stub', '5.9.1')
   }
 ]
+
+/**
+ * A recorded Bash message as tim words it: tim points at `tim govuk start`
+ * where the Bash pointed at its own discovery script.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export const asTimStartHint = (text) =>
+  text.replaceAll('discover-versions.sh', 'tim govuk start')

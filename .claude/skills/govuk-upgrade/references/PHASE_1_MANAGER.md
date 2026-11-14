@@ -2,7 +2,7 @@
 
 **Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
-**Job:** Verify Phase 1 ran (via `start-upgrade.sh`) and present its
+**Job:** Verify Phase 1 ran (via `tim govuk start`) and present its
 output. Phase 1 itself is fully scripted — this manager exists for the
 "Phase 1 complete?" gate.
 
@@ -22,7 +22,7 @@ ls ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-me
 ```
 
 If missing: instruct the user to run
-`tools/govuk/start-upgrade.sh --ticket {run-id}` (or `--branch ...`)
+`tim govuk start --ticket {run-id}` (or `--branch ...`)
 first. Stop.
 
 ## Step 2: Present a status snapshot
@@ -34,8 +34,9 @@ tim govuk plans --run-id {run-id}
 Report verbatim, then ask: "Phase 1 complete. Proceed to Phase 2
 (changelog analysis)?"
 
-`start-upgrade.sh` also prints a `=== SECURITY PRE-FLIGHT ===` section
-(`npm audit` per in-scope repo). If any repo is flagged `[WARN]` with
+`tim govuk start` also prints a `=== SECURITY PRE-FLIGHT ===` section
+(`npm audit` per in-scope repo); with `--json` the same counts are in
+`.result.preflight[]` as `{repo, critical, high, flagged}`. If any repo is flagged `[WARN]` with
 HIGH/CRITICAL advisories, surface it explicitly at this gate — a repo
 whose pre-commit hook runs `npm audit` (e.g. admin) will block the
 Phase 3 upgrade commit until those are cleared (direct-dep bump or an

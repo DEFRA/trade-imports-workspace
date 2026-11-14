@@ -10,9 +10,9 @@ queries this JSON.
 ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/versions.{repo-name}.json
 ```
 
-One file per repo. Initial population: `discover-versions.sh`. All
-subsequent mutations go through the helper trio in
-`~/git/defra/trade-imports-workspace/tools/govuk/`. Never hand-edit.
+One file per repo. Initial population: `tim govuk start`. All
+subsequent mutations go through the `tim govuk` write commands below.
+Never hand-edit.
 
 Per-version pre-baked CHANGELOG sections sit alongside as
 `version__{v}.changelog.md`. The per-repo best-practices bundle is
@@ -57,7 +57,7 @@ Per-version pre-baked CHANGELOG sections sit alongside as
 
 | Value | Meaning | How set |
 |---|---|---|
-| `null` | Pending — VERSION_PLANNER has not yet seen this version. | Default at `discover-versions.sh` seed. |
+| `null` | Pending — VERSION_PLANNER has not yet seen this version. | Default at the `tim govuk start` seed. |
 | `todo` | Code changes required. `changes[]` populated. | `tim govuk classify --classification todo`. |
 | `noop` | No changes needed for the repo. `changes[]` empty. | `tim govuk classify --classification noop`. |
 
@@ -75,11 +75,13 @@ commit SHA, so the version disappears from the pending list. The target
 version is applied and committed even when it is a noop, so the upgrade
 lands in `package.json`.
 
-## Helper scripts (under `~/git/defra/trade-imports-workspace/tools/govuk/`)
+## tim govuk commands
 
-| Script | Purpose |
+The seed is in tim:
+
+| Command | Purpose |
 |---|---|
-| `discover-versions.sh` | Seed `versions.{repo}.json` from npm registry + `package.json`. Records `original_constraint_prefix`. |
+| `tim govuk start` | Seed `versions.{repo}.json` from the npm registry + `package.json`. Records `original_constraint_prefix`. A re-run keeps each version's state unless `--force`. |
 
 The read-only views are in tim:
 
@@ -122,7 +124,7 @@ following values, derived from the two columns:
 
 ## Run-level metadata
 
-`discover-versions.sh` also writes a small per-run metadata file:
+`tim govuk start` also writes a small per-run metadata file:
 
 ```
 ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
@@ -150,7 +152,7 @@ list rather than from a hard-coded SKILL.md table.
 ## Invariants
 
 - `version` values are unique within `versions[]` and stable across
-  re-runs of `discover-versions.sh`.
+  re-runs of `tim govuk start`.
 - `implementation_status` may only be `"done"` or `"failed"` when
   `classification != null` (you must classify before applying).
 - `original_constraint_prefix` is captured exactly once, at

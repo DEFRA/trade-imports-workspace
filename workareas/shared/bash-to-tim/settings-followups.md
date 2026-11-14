@@ -57,3 +57,9 @@ None. No allowlist entry names `tools/govuk/version-classify.sh`,
 `version-mark-failed.sh` or `apply-version.sh`; the generic `tools/**`
 entries cover the scripts left in `tools/govuk/`, and `Bash(tim:*)` covers
 `tim govuk classify`, `add-change`, `mark-done`, `mark-failed` and `apply`.
+
+## P45
+
+None. No allowlist entry names `tools/govuk/start-upgrade.sh`,
+`discover-repos.sh`, `discover-versions.sh` or `setup-branch.sh`, and the
+folder is now gone. `Bash(tim:*)` covers `tim govuk start`.

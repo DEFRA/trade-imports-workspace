@@ -99,10 +99,7 @@ epics included, goes through `tim jira create`.
 | `tools/npm/upgrade-one-package.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 2 internal: install + test + audit + commit + rollback (a refused commit rolls back too) |
 | `tools/npm/run-manual-upgrade.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 3 per-package manual runner (spawned by WALKER), same audit gate |
 | **govuk** | | |
-| `tools/govuk/start-upgrade.sh` | --ticket EUDPA-X \| --branch B [--target V] | Phase 1 dispatcher: `.run-meta.json` + branch setup + version discovery + security pre-flight (`npm audit`) |
-| `tools/govuk/discover-repos.sh` | --run-id TICKET [--branch B] [--target V] [--json] | Phase 1: write run-level `.run-meta.json` (in-scope repos) |
-| `tools/govuk/setup-branch.sh` | --branch B --repo R | Phase 1: idempotent `git checkout` for one repo |
-| `tools/govuk/discover-versions.sh` | repo-path --run-id TICKET [--target V] [--json] [--force] | Phase 1: seed `versions.{repo}.json` + cache CHANGELOG + pre-bake per-version sections + best-practices bundle |
+| `tim govuk start` | --ticket EUDPA-X \| --branch B [--target V] [--force] [--json] | Phase 1 dispatcher: `.run-meta.json` (repos whose `package.json` lists govuk-frontend) + branch setup per repo + version discovery from the npm registry + cached CHANGELOG and per-version sections + best-practices bundle + security pre-flight (`npm audit`) |
 | `tim govuk classify` | --run-id TICKET --repo R --govuk-version V --classification todo\|noop [--summary "..."] [--json] | VERSION_PLANNER: set classification |
 | `tim govuk add-change` | --run-id TICKET --repo R --govuk-version V --file F --why "..." --change "..." [--json] | VERSION_PLANNER: append change entry |
 | `tim govuk apply` | --run-id TICKET --repo R --govuk-version V [--final] [--json] | Phase 3 per-version: package.json + install + test + commit + mark-done |

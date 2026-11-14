@@ -1,6 +1,9 @@
+import { createGovukChangelogClient } from '../../clients/govuk-changelog-client.js'
+import { createNpmRegistryClient } from '../../clients/npm-registry-client.js'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { applyVersion } from '../../govuk/apply.js'
+import { startUpgrade } from '../../govuk/start.js'
 import {
   addVersionChange,
   classifyVersion,
@@ -238,6 +241,58 @@ const registerApply = (govuk, { timVersion }) =>
       }).apply(this, positional)
     })
 
+const registerStart = (govuk, { timVersion }) =>
+  govuk
+    .command('start')
+    .description(
+      "Start a govuk-frontend upgrade run. Finds every repo under repos/ whose package.json depends on govuk-frontend, puts each on the run's branch, seeds each repo's versions file with every stable version up to the target, caches each version's changelog section and the best-practices bundle, prints the run's plans and reports each repo's critical and high npm advisories."
+    )
+    .option(
+      '--ticket <key>',
+      'The run ticket, such as EUDPA-264: the branch is chore/<ticket>'
+    )
+    .option(
+      '--branch <name>',
+      'The branch to use as it is: the run id is the ticket key in it, else the branch name'
+    )
+    .option(
+      '--target <version>',
+      'The govuk-frontend version to upgrade to. Defaults to the latest on npm'
+    )
+    .option(
+      '--force',
+      'Download the changelog again and reseed every version, losing its plan'
+    )
+    .addHelpText(
+      'after',
+      '\nThe ticket must be a key of JIRA_PROJECT_KEY, else EUDPA. npm versions come from npm_config_registry when set, else the public npm registry.\n\nExamples:\n  tim govuk start --ticket EUDPA-264\n  tim govuk start --branch chore/EUDPA-264-govuk-6 --target 6.1.0\n  tim govuk start --ticket EUDPA-264 --force --json'
+    )
+    .action(function startAction(...positional) {
+      const { json } = this.optsWithGlobals()
+      const say = json ? undefined : (line) => writeLine(process.stdout, line)
+      const warn = json ? undefined : (line) => writeLine(process.stderr, line)
+      return makeRunAction({
+        parseOptions: (opts) => ({
+          workspaceRoot: workspaceRootOf(opts),
+          ticket: opts.ticket,
+          branch: opts.branch,
+          target: opts.target,
+          force: opts.force === true
+        }),
+        run: (_context, parsed) =>
+          startUpgrade({
+            ...parsed,
+            registry: createNpmRegistryClient(),
+            changelogs: createGovukChangelogClient(),
+            say,
+            warn
+          }),
+        renderText: () => null,
+        exitCodeForError: usageOrError,
+        timVersion
+      }).apply(this, positional)
+    })
+
 /**
  * `tim govuk`: read and change the state of a govuk-frontend upgrade run.
  *
@@ -248,8 +303,9 @@ export const register = (program, { timVersion }) => {
   const govuk = program
     .command('govuk')
     .description(
-      'Read and change the state of a govuk-frontend upgrade run: plans, summaries, one version’s plan, classifying and applying versions'
+      'Start a govuk-frontend upgrade run, then read and change its state: plans, summaries, one version’s plan, classifying and applying versions'
     )
+  registerStart(govuk, { timVersion })
   registerPlans(govuk, { timVersion })
   registerSummaries(govuk, { timVersion })
   registerRenderPlan(govuk, { timVersion })

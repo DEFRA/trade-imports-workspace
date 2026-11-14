@@ -355,9 +355,11 @@ tim understanding-check report EUDPA-123
 - Every refusal, a usage error included, exits 1, so it never reads as
   high-risk.
 
-### `tim govuk` — read and change a govuk-frontend upgrade run
+### `tim govuk` — start, read and change a govuk-frontend upgrade run
 
 ```bash
+tim govuk start --ticket EUDPA-264
+tim govuk start --branch chore/EUDPA-264-govuk-6 --target 6.1.0 --force
 tim govuk plans --run-id EUDPA-264
 tim govuk plans --run-id EUDPA-264 --repo trade-imports-animals-frontend --filter pending --sort-semver --json
 tim govuk summaries --run-id EUDPA-264 --json
@@ -369,6 +371,15 @@ tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend -
 tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
 ```
 
+- `start` finds every repo under `repos/` whose `package.json` lists
+  govuk-frontend, writes `.run-meta.json`, puts each repo on the branch
+  (`chore/<ticket>`, or `--branch` as given), seeds each repo's state with
+  every stable version up to `--target` (else npm's latest, from
+  `npm_config_registry` when set), caches govuk-frontend's CHANGELOG.md
+  and each version's section, writes the best-practices bundle, prints
+  the plans and reports each repo's `npm audit` critical and high counts.
+  A re-run keeps each version's state; `--force` reseeds it. `--ticket`
+  must be a key of `JIRA_PROJECT_KEY`, else EUDPA.
 - State lives in `workareas/govuk-upgrades/<run>/<repo>/versions.<repo>.json`
   of the workspace tim runs in. `plans`, `summaries` and `render-plan`
   only read.

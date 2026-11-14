@@ -205,6 +205,9 @@ tim confluence sync --root-id <id> --dry-run
 - `--clean` removes only `docs/confluence`, so pages deleted in Confluence
   go too.
 - `--page-id` exits 1 when the page has no synced file yet.
+- `--page-id` and `--root-id` take a page id or a page URL with
+  `/pages/<id>` in it. Anything else exits 2 before `--clean` removes
+  anything.
 
 ### `tim capabilities extract` — read the capability map
 

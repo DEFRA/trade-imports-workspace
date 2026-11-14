@@ -330,6 +330,61 @@ describe('tim confluence sync', () => {
     })
   })
 
+  test('refuses a --root-id with no page id in it, exits 2 and leaves the mirror for --clean in place', async () => {
+    const cleanCase = syncCases.find(
+      ({ name }) => name === 'clean removes an orphan then syncs'
+    )
+
+    const recording = await runSync({
+      ...cleanCase,
+      args: ['--root-id', 'root-folder']
+    })
+
+    expect(recording).toEqual({
+      exitCode: 2,
+      stdout: '',
+      stderr:
+        'Cannot find a page id in "root-folder". Give a page id, or a page URL with /pages/<id> in it.\n',
+      files: { 'orphan.md': 'Deleted in Confluence\n' }
+    })
+  })
+
+  test('refuses a --page-id with no page id in it, exits 2 and leaves the synced files as they were', async () => {
+    const refreshCase = syncCases.find(
+      ({ name }) => name === 'one page refreshed in place'
+    )
+
+    const recording = await runSync({
+      ...refreshCase,
+      args: ['--page-id', 'not-a-page']
+    })
+
+    expect(recording).toEqual({
+      exitCode: 2,
+      stdout: '',
+      stderr:
+        'Cannot find a page id in "not-a-page". Give a page id, or a page URL with /pages/<id> in it.\n',
+      files: goldenFor('one page never synced').files
+    })
+  })
+
+  test('refreshes the page a --page-id URL names, as it does for the bare id', async () => {
+    const refreshCase = syncCases.find(
+      ({ name }) => name === 'one page refreshed in place'
+    )
+
+    const recording = await runSync({
+      ...refreshCase,
+      args: [
+        '--page-id',
+        'https://example.atlassian.net/wiki/spaces/EUDP/pages/301/Some+title'
+      ]
+    })
+
+    const { case: _, ...golden } = goldenFor('one page refreshed in place')
+    expect(recording).toEqual(golden)
+  })
+
   test('writes only under the workspace it runs in, and reports that folder in --json', async () => {
     const staged = stageWorkspace()
 

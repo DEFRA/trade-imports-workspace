@@ -3082,7 +3082,30 @@
       "dependsOn": [],
       "risk": "Low. Tests and dark modules. The fake must stand in for git too, so no test reaches GitHub.",
       "proof": "Every help.test.sh assertion ported, plus golden argv traces for each run-stack, stop, bounce, dev-service and restart scenario. A parity test proves the module tables equal the bash tables.",
-      "status": "todo",
+      "status": "done",
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "c4ec0b3b9cf342c908456f73fea6e43cb6de061d"
+          }
+        ],
+        "checks": [
+          "tim-unit: pass. npm --prefix tim test: 394 files passed, 24 skipped; 5957 tests passed, 8 expected fail, 31 skipped, 0 failed. The new stack tests ran with none skipped, including the real `docker compose config --services` check.",
+          "tim-lint: pass. `npm run lint` and `npm run format:check` are both clean.",
+          "parity: pass. Golden traces for every Bash scenario are recorded under tim/src/test-support/fixtures/stack/ from the unchanged Bash: run-stack.sh has 15 scenarios (plain, -d, -d with DEV_BUILD_PLATFORM, -d with Docker not answering, --perf, -d --perf, -b feat/EUDPA-1-X with tags landing, moving and on a merged branch plus a leaked TRADE_IMPORTS_STUB, -e frontend, --profile security, -- --timeout 5, mongo failing twice, and 4 flag errors). stop-stack.sh, bounce-backend.sh, dev-service.sh and restart-stack -d are also recorded. Each trace holds stdout, stderr, exit code, ordered and concurrent docker/git argv with the TRADE_IMPORTS_*/DEV_BUILD_PLATFORM env, and the staged init files. Every help.test.sh assertion is ported to tim/src/stack/bash-help.test.js. Parity tests prove SERVICES, SIDECARS, COMPOSE_FILES and the profile lists equal run-stack.sh and lib/compose.sh, and that the colour codes equal lib/colour.sh. composeArgs equals the recorded -f/--profile prefixes for plain, dev, perf, dev+perf, stop-stack, bounce-backend and dev-service.",
+          "no-callers: pass. Apart from the backlog and findings, `git grep help.test.sh` finds nothing. compose.sh and colour.sh stay as the row intends, because run-stack.sh still sources them until P62. No new .sh file. No new ~/git/defra or $HOME/git/defra mention. The goldens use <WORKSPACE> and hold no machine paths.",
+          "stack-smoke: NOT RUN. The workspace stack has been up for 24 hours with no lease, and `tim docker lease acquire` refuses an unleased stack. I did not tear down a stack someone may be using. The reason is recorded in settings-followups.md under P58."
+        ],
+        "deviations": [
+          "stack-smoke not run: the trade-imports stack has been up 24h with no lease. lease acquire refuses that, and taking it down would wipe someone's stack. This row changes nothing the stack runs, so I suggest running the smoke on P59, the first row that swaps a script for tim.",
+          "Extra caller updated: the help text in tim/src/commands/build/index.js (and its test) and the stack-refresh.js doc now name tim/src/stack among the stack files, because the fingerprint covers that folder now. The fingerprint skips *.test.js files there, so a test-only edit does not restart a leased stack.",
+          "Extra: tim/.prettierignore now skips src/test-support/fixtures/stack/ so the goldens stay byte-exact. docker/stack/AGENTS.md gains a rule: keep definition.js in step with scripts/stack while tim takes over, and how to re-record the traces.",
+          "Golden traces live one file per script, so a later row that deletes a script only skips that script's recording test.",
+          "serviceLabels() in tim docker logs now takes no argument and always returns all 13 labels. Before, it returned an empty map when run-stack.sh was missing.",
+          "No settings.json allowlist names help.test.sh, so settings-followups.md has a P58 note saying there is nothing to remove."
+        ]
+      },
       "checks": [
         "tim-unit",
         "tim-lint",

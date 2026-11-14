@@ -6,7 +6,7 @@
 
 **Page**: notification-view
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification", and "Review before re-submitting" while an amendment's answers differ from the submitted version.
 
 ## Requirements
 
@@ -174,16 +174,23 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
 - **THEN** they go on through the journey to the review
 
-### Requirement: A draft notification offers submission and none of the post-submission actions
+### Requirement: A draft notification ends with a continue action and a red Delete
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification, offering a continue action, and MUST NOT offer copy-as-new, delete, or cancel-amendment while it is still a draft.
+The system MUST invite the user to submit a draft notification, ending the review with a continue action and, beside it, a red "Delete" button that opens the notification's delete confirmation, and MUST NOT offer copy-as-new or cancel-amendment while it is still a draft.
 
-#### Scenario: The draft view invites submission and withholds the post-submission actions
+#### Scenario: The draft view ends with Continue and a red Delete
 **ID**: SCN-CYA-005-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to submit the notification, offering a continue action
-- **AND** no copy-as-new, delete, or cancel-amendment action is offered
+- **AND** a red "Delete" button sits beside the continue action
+- **AND** no copy-as-new or cancel-amendment action is offered
+
+#### Scenario: Delete on a draft's review opens the delete confirmation
+**ID**: SCN-CYA-005-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user presses "Delete"
+- **THEN** the notification's delete confirmation opens
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
 **ID**: REQ-CYA-006
@@ -642,6 +649,51 @@ The system MUST show the county parish holding number on the Addresses card as i
 - **GIVEN** a stored CPH number with fewer or more than nine digits
 - **WHEN** the trader views the review
 - **THEN** the CPH row reads the value exactly as stored
+
+### Requirement: An amendment's review ends with Continue, a secondary Cancel amend and a red Delete
+**ID**: REQ-CYA-027
+The system MUST end an amendment's review with "Continue", which goes on to resubmission, then a secondary "Cancel amend" button that opens the cancel-amendment confirmation, then a red "Delete" button that opens the delete confirmation.
+
+#### Scenario: The amendment review ends with its three controls in order
+**ID**: SCN-CYA-027-A
+- **GIVEN** a notification is being amended
+- **WHEN** the user views check-your-answers
+- **THEN** the review ends with "Continue", then "Cancel amend", then "Delete"
+- **AND** "Cancel amend" is a secondary button and "Delete" is a red button
+
+#### Scenario: Cancel amend on the review opens the confirmation
+**ID**: SCN-CYA-027-B
+- **GIVEN** a notification is being amended
+- **WHEN** the user presses "Cancel amend" on the review
+- **THEN** the cancel-amendment confirmation opens
+
+#### Scenario: Delete on an amendment's review opens the delete confirmation
+**ID**: SCN-CYA-027-C
+- **GIVEN** a notification is being amended
+- **WHEN** the user presses "Delete" on the review
+- **THEN** the notification's delete confirmation opens
+
+### Requirement: An amendment's review is titled for re-submitting once a notification answer differs from the submitted version
+**ID**: REQ-CYA-028
+The system MUST head and title an amendment's review "Review your notification" when it is first opened, and "Review before re-submitting" once any notification answer differs from the submitted version. A change to the uploaded documents alone MUST NOT count as a difference.
+
+#### Scenario: An amendment opened unchanged is headed as a review
+**ID**: SCN-CYA-028-A
+- **GIVEN** a notification is being amended and no answer has changed
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: An amendment is headed for re-submitting after an answer changes
+**ID**: SCN-CYA-028-B
+- **GIVEN** a notification is being amended and a notification answer has changed from the submitted version
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review before re-submitting"
+
+#### Scenario: Adding only a document keeps the review heading
+**ID**: SCN-CYA-028-C
+- **GIVEN** a notification is being amended and only an uploaded document has been added
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
 
 ### Requirement: The Addresses and Contact address cards offer only their heading Change link
 **ID**: REQ-CYA-026

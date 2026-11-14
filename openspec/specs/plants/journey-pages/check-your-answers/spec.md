@@ -81,16 +81,24 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** they follow a Change link for a commodity line, change its quantity and save and continue through the commodities list
 - **THEN** they arrive at check-your-answers, showing the new quantity
 
-### Requirement: A draft notification invites submission and withholds post-submission actions
+### Requirement: A draft notification invites submission and offers a red Delete notification beside Continue
 **ID**: REQ-PLANTS-CYA-006
-The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST NOT offer delete or cancel-amendment while it is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
+The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading with a red "Delete notification" button beside it that opens the delete page, and MUST keep "Save and return to overview" and the "Cancel and return to overview" link. It MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
 
-#### Scenario: The draft view invites submission and withholds delete and cancel-amendment
+#### Scenario: The draft view invites submission and offers Delete notification beside Continue
 **ID**: SCN-PLANTS-CYA-006-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to continue to the declaration to submit
-- **AND** no delete or cancel-amendment action is offered
+- **AND** a red "Delete notification" button sits beside the continue action, before "Save and return to overview"
+- **AND** the "Cancel and return to overview" link stays below the buttons
+- **AND** no cancel-amendment action is offered
+
+#### Scenario: Delete notification on a draft opens the delete page
+**ID**: SCN-PLANTS-CYA-006-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user presses "Delete notification"
+- **THEN** the notification's delete page opens
 
 ### Requirement: Continuing from a ready draft moves on to the declaration
 **ID**: REQ-PLANTS-CYA-007
@@ -123,13 +131,14 @@ The system MUST show a submitted notification read-only — with no Change or Ed
 
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
-The system MUST offer "Cancel amend" in the status bar of check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
+While a notification is being amended, check-your-answers MUST offer "Cancel amend" only as a secondary button beside the continue action, and MUST NOT show a "Cancel amend" link in the status bar under the heading. The button MUST open the cancel-amendment confirmation. Check-your-answers MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: Cancel amendment is offered only while amending
 **ID**: SCN-PLANTS-CYA-009-A
 - **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
-- **THEN** "Cancel amend" is offered in the status bar
+- **THEN** a secondary "Cancel amend" button sits beside the continue action, before "Save and return to overview", and opens the cancel-amendment confirmation
+- **AND** no "Cancel amend" link is shown in the status bar under the heading
 - **AND** no delete action is offered
 
 #### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers

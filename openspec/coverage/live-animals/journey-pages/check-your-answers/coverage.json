@@ -260,18 +260,28 @@
     },
     {
       "id": "REQ-CYA-005",
-      "name": "A draft notification offers submission and none of the post-submission actions",
+      "name": "A draft notification ends with a continue action and a red Delete",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-005-A",
-          "name": "The draft view invites submission and withholds the post-submission actions",
+          "name": "The draft view ends with Continue and a red Delete",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers submission and none of the post-submit actions", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable draft journey", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable amend journey", "strength": "full", "notes": "the amend arm of the same pair" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should expose Cancel amend in the strip only on an amending review", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a warning Delete, with neither Copy as new nor Cancel amend", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue then a warning Delete in its last block, and nothing after it", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should end a draft review with Continue then a warning Delete to the delete path", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs and offer the delete path for an editable draft journey", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer the cancel-amend path only while amending", "strength": "partial", "notes": "not probed red; the draft arm proves no cancel-amend path" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-005-B",
+          "name": "Delete on a draft's review opens the delete confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete on a draft review opens the delete confirmation", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on a draft review opens the delete confirmation", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -500,7 +510,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "an amendment with a missing answer opens with no error summary and no card errors", "strength": "full", "notes": "probed red by letting the page show answer errors on open" }
           ]
         },
         {
@@ -933,6 +944,76 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.test.js", "test": "Should read a stored value of fewer than nine digits exactly as stored", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.test.js", "test": "Should read a stored value of more than nine digits exactly as stored", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-027",
+      "name": "An amendment's review ends with Continue, a secondary Cancel amend and a red Delete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-027-A",
+          "name": "The amendment review ends with its three controls in order",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue, Cancel amend and Delete", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue, a secondary Cancel amend and a warning Delete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should end an amendment review with Continue, a secondary Cancel amend to the cancel-amend path, then Delete", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-027-B",
+          "name": "Cancel amend on the review opens the confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Cancel amend opens the cancel-amendment confirmation", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Cancel amend on the review opens the cancel-amendment confirmation", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-027-C",
+          "name": "Delete on an amendment's review opens the delete confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete on an amendment review opens the delete confirmation", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the review opens the delete confirmation", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-028",
+      "name": "An amendment's review is titled for re-submitting once a notification answer differs from the submitted version",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-028-A",
+          "name": "An amendment opened unchanged is headed as a review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-review-title.spec.ts", "test": "opens headed and titled as a review, then as re-submitting once an answer changes", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title an amendment as opened, then as re-submitting once an answer changes", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-028-B",
+          "name": "An amendment is headed for re-submitting after an answer changes",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-review-title.spec.ts", "test": "opens headed and titled as a review, then as re-submitting once an answer changes", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed and titled for re-submitting once an answer changes", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/records-port.test.js", "test": "Should be true once a notification answer differs and false once it is put back", "strength": "partial", "notes": "not probed red; the stub signal" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-028-C",
+          "name": "Adding only a document keeps the review heading",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-review-title.spec.ts", "test": "keeps the review heading when only a document is added", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep the opened title when an amendment changes only its documents", "strength": "full", "notes": "" }
           ]
         }
       ]

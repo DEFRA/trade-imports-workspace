@@ -153,3 +153,8 @@ None to remove. No allowlist entry names `ticket.sh`, `comments.sh`,
 `tools/jira/`, which is now gone; the generic `tools/**` rules (lines
 63-64) still serve other folders. `Bash(tim:*)` covers `tim jira ticket`,
 `comments`, `comment`, `transition` and `search`.
+
+## P54
+
+None to remove. P54 adds tim library code only and deletes no script;
+`sonar-check-pending.sh` and `sonar-record-push.sh` stay until P55.

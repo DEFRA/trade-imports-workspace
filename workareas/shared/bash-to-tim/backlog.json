@@ -1954,14 +1954,34 @@
       ],
       "risk": "Low once the prepare scripts and check-stale are ported. tim search caps at 500 results, and nothing scripted depends on more.",
       "proof": "Comparison on a scratch ticket. `grep -rn 'tools/jira'` is empty outside workareas/.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e9c4ff32"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 360 test files passed and 20 skipped, 5546 tests passed. A theme-ticket fixture went red once the search.sh stub was gone and is fixed: it now creates its staged root itself.",
+          "tim-lint: npm run lint is clean, and format:check is clean after prettier --write on 2 edited test files.",
+          "parity: read-only checks against live EUDPA. search gave the same 500 keys, in the same order and with the same type, status and summary, as search.sh on a 742-ticket JQL. ticket matched on 11 fields for EUDPA-35, -200, -215 and -801. comments matched on author, created time and body (EUDPA-35 has 7, -200 has 1). transition --list matched on EUDPA-801. A missing ticket exits 1 on both. Goldens are in the session scratchpad, not in the repo.",
+          "no-callers: grep -rn 'tools/jira' outside workareas/, node_modules and .git is empty. The script names do not appear across repos/*. A bare-name grep finds only the P39 note in workareas/shared/bash-to-tim/settings-followups.md.",
+          "extra: the diff adds no ~/git/defra or $HOME/git/defra path and no .sh file. No settings.json entry names a tools/jira script, and P39 in settings-followups.md records this."
+        ],
+        "deviations": [
+          "Parity did not use a scratch ticket. Creating a Jira ticket, posting a comment and moving a status write to shared Jira, and nobody approved that. So the comment and transition write paths were not compared live. They rest on tim's existing nock tests (comment.test.js, transition.test.js).",
+          "Callers updated beyond the row's list: ticket-creator SKILL.md (2 places), ticket-refiner SKILL.md, and tim test fixtures and tests (review-prepare.js, ticket-workspace.js, refine-scripts.golden.test.js, understanding-check prepare-workspace.js, theme-ticket-workspace.js, workflow-contract.test.js). The workflow-contract negative assertions no longer look for 'tools/jira' and 'transition-ticket'. They still look for 'tim jira' or require the tim form.",
+          "understanding-check/SKILL.md:108, named in the row, no longer referenced tools/jira, so it needed no change.",
+          "Intended behaviour changes, recorded in the commit message: search caps at 500 results, comment is a dry run without --confirm, and ticket has its own text layout in place of the full and summary formats."
+        ]
+      }
     },
     {
       "id": "P40",

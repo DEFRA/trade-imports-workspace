@@ -1,6 +1,6 @@
 # tim — Trade Imports CLI
 
-Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the Docker stack in [`../docker/stack/`](../docker/stack/) itself. The scripts in [`../tools/`](../tools/) still exist for the jobs `tim` does not cover yet, but start here.
+Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the Docker stack in [`../docker/stack/`](../docker/stack/) itself. Every workspace command is here: `tim --help` lists them all. GitHub work uses the GitHub CLI (`gh`) directly. [`../docs/reference/tools-index.md`](../docs/reference/tools-index.md) lists the few hook scripts left under `../tools/` and `../scripts/`.
 
 ## Install
 
@@ -1953,7 +1953,7 @@ The menu only opens when stdout is a TTY and the user has not asked for plain te
 
 ## Auth
 
-`tim` reuses the same environment variables as the bash tooling in [`../tools/`](../tools/) — anyone with the bash tools working gets seamless pickup with no new setup:
+`tim` reads the same environment variables the workspace's old bash tooling read, so anyone who had that working needs no new setup:
 
 | Variable                                   | Used for                                                                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2005,7 +2005,7 @@ npm run coverage
 Project conventions live in [`CLAUDE.md`](CLAUDE.md) and `.claude/rules/`. Highlights:
 
 - **Test on input/output.** No `toHaveBeenCalled[With]` — render the component, spawn the CLI, or call the function and assert on what comes back. Pre-commit hook (`forbid-spy-assertions.sh`) enforces this.
-- **Library-first integrations.** External services go through typed clients under `src/clients/`. No shelling out to `gh`, `jq`, `curl`, or `../tools/*.sh`.
+- **Library-first integrations.** External services go through typed clients under `src/clients/`. No shelling out to `gh`, `jq`, `curl` or shell scripts.
 - **No GitHub in tim.** GitHub work uses the GitHub CLI (`gh`) directly, outside tim. Never add a GitHub command or client to tim.
 - **Mock at the network boundary.** `undici` MockAgent for HTTP; never `vi.mock()` your own client modules.
 - **Code and tests ship together.** Every new `src/**/*.js` lands with a sibling `*.test.js`.

@@ -289,7 +289,7 @@ The volatile catalogues live as topic files under [`docs/reference/`](docs/refer
 
 - `tim --help`, and `tim <command> --help` for each command, with usage and the env-var contract in [`tim/README.md`](tim/README.md) — every cross-repo command and what it does.
 - [`docs/reference/workflows.md`](docs/reference/workflows.md) — common workflows (setup, daily update, running the stack, tests).
-- [`docs/reference/tools-index.md`](docs/reference/tools-index.md) — the full `tools/` script index (args + purpose).
+- [`docs/reference/tools-index.md`](docs/reference/tools-index.md) — the hook scripts left under `tools/` and `scripts/`; every other command is in `tim --help`.
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.
 - [`docs/reference/workareas.md`](docs/reference/workareas.md) — the `workareas/` runtime-cache map.
 - [`docs/reference/openspec.md`](docs/reference/openspec.md) — OpenSpec CLI, coverage gap queries, and how to read coverage rows for the Behaviour Spec under `openspec/` (authoring conventions: [`openspec/config.yaml`](openspec/config.yaml)).

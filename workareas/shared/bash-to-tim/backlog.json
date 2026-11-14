@@ -3373,14 +3373,40 @@
       ],
       "risk": "Medium, and a scope call: it removes a dormant skill rather than porting it. It is not in CLAUDE.md's routing table, its last run was 10 Sep (EUDPA-409), and requirements-pipeline absorbed it (75105948). If Sam wants it kept, run the 13 fallback port rows from the tools/journey-builder folder plan instead. The EUDPA-409 worktree is left in place.",
       "proof": "git grep for journey-builder scripts and the skill folder returns nothing outside workareas/ and docs/analysis. frontend-change still resolves its targets. tim test and spec lint green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "2652d7ea43cc8241f2f6a51f8184760a48ec9803"
+          },
+          {
+            "repo": "trade-imports-plants-frontend",
+            "sha": "f03c5ddc02a40197d5ee6879e0e111f694b6380f"
+          },
+          {
+            "repo": "trade-imports-plants-prototype",
+            "sha": "2a34a43"
+          }
+        ],
+        "checks": [
+          "Verifier problem 1 fixed: trade-imports-plants-prototype's panel/README.md on origin/main was the same as the plants-frontend file before f03c5dd (diff exit 0). I created chore/NO_JIRA-bash-to-tim from origin/main (ce34385), switched it in place, and applied f03c5dd with git format-patch | git am -3. That gave commit 2a34a43, with the same message and README rewrite. grep for journey-builder in that README now finds nothing. Prettier --check passes on the file.",
+          "Verifier problem 2 fixed: .claude/skills/frontend-change/SKILL.md line 15 now says to read the target 'from the caller or from its target profile in [`targets.json`](targets.json)'. It no longer mentions the build loop's target profile. I amended this into the workspace commit, so 7b866ab0 is now 2652d7ea. The tree is clean afterwards.",
+          "no-callers re-run: git grep for journey-builder/*.sh, skills/journey-builder and tools/journey-builder finds nothing in the workspace outside workareas/ and docs/analysis (exit 1). In repos/*, the only hits are line 115 of panel/critic.json in plants-frontend and in the prototype. That file is a recorded critic report, so the hits are history.",
+          "Not re-run: tim spec lint and the tim unit tests. The tim launcher and node tim/src/cli.js were both denied permission in this session. This fix changed no tim code and no openspec file, only one prose line in SKILL.md, so the builder's green tim-unit, tim-lint and spec-lint results still cover the code."
+        ],
+        "deviations": [
+          "The workspace commit was amended. Its SHA changed from 7b866ab0 to 2652d7ea, and it is not pushed.",
+          "In the prototype I used git am, not git commit, so the repo's pre-commit hook did not run on 2a34a43. The change touches only README.md, which passes Prettier. The same content passed the full pre-commit hook (format:check, lint, npm test) in plants-frontend.",
+          "trade-imports-plants-prototype now has a chore/NO_JIRA-bash-to-tim branch. It is checked out in place of main."
+        ]
+      }
     },
     {
       "id": "P64",

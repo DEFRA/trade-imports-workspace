@@ -21,43 +21,19 @@ import {
 } from './__fixtures__/standards/routing-fixtures.js'
 
 /**
- * Captures the two bash routers' (`file-topics.sh`, `bake-rules-bundle.sh`)
- * output, and `tim review detect-tech`'s, against a fixed fixture set, in a
- * temporary HOME so the routers' hardcoded workspace path resolves into an
- * isolated tree.
- *
- * Run once with `--update` on the UNMODIFIED scripts (inc-012 plan step
- * S1) — that snapshot is req-122 ac-1's "before". After the routing moves
- * into data, this test runs again with no update flag: an unchanged
- * snapshot is the "after" half of the same claim. Every occurrence of the
- * temporary HOME in a script's own stdout/stderr is replaced with
- * `<HOME>` first, so the snapshot does not embed a path unique to one
- * test run.
- *
- * A deliberate CONTENT change to `.claude/skills/code-style/assets/
- * routing.json` (a new topic, a new fileTopics pattern, a topic's
- * bestPractice list gaining an entry) is expected to move this snapshot —
- * re-run with `--update` and read the diff as a change-log entry, not a
- * regression. Group G in `standards.test.js` re-derives the same golden
- * cases from the JS resolver and will catch a genuine disagreement.
+ * The file-topics and bake-rules-bundle goldens hold what the Bash routers
+ * printed and wrote over a fixed fixture set, in a temporary HOME, with
+ * the HOME written as `<HOME>`. `tim style topics` and `tim style bundle`
+ * must give the same, apart from the usage line. A deliberate change to
+ * `.claude/skills/code-style/assets/routing.json` moves these goldens:
+ * edit them to match and read the diff as a change-log entry.
  */
 
 const here = dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = join(here, '..', '..', '..')
 
-const FILE_TOPICS_SCRIPT = 'tools/style/file-topics.sh'
-const BAKE_RULES_BUNDLE_SCRIPT = 'tools/style/bake-rules-bundle.sh'
-
 let tmpHome
 let root
-
-const stageRouterScripts = () => {
-  for (const rel of [FILE_TOPICS_SCRIPT, BAKE_RULES_BUNDLE_SCRIPT]) {
-    const dest = join(root, rel)
-    mkdirSync(dirname(dest), { recursive: true })
-    cpSync(join(workspaceRoot, rel), dest)
-  }
-}
 
 const stageSkillAssets = () => {
   cpSync(
@@ -93,7 +69,6 @@ beforeAll(() => {
   root = join(tmpHome, 'git', 'defra', 'trade-imports-workspace')
   mkdirSync(join(root, 'repos'), { recursive: true })
 
-  stageRouterScripts()
   stageSkillAssets()
   stubBestPractices()
   materialiseFixtureRepos()
@@ -105,53 +80,74 @@ afterAll(() => {
 
 const redactHome = (text) => (text ?? '').split(tmpHome).join('<HOME>')
 
-const runScript = async (relScript, args) => {
-  const result = await execa('/bin/bash', [join(root, relScript), ...args], {
-    env: { HOME: tmpHome },
-    extendEnv: true,
-    reject: false
-  })
+const readGolden = (name) =>
+  JSON.parse(
+    readFileSync(
+      join(here, '__fixtures__', 'standards', '__golden__', name),
+      'utf8'
+    )
+  )
+
+const runTimStyle = async (args) => {
+  const result = await execa(
+    'node',
+    [TIM_CLI_PATH, '--workspace', root, 'style', ...args],
+    {
+      env: { TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
+      extendEnv: true,
+      reject: false
+    }
+  )
   return {
-    recorded: {
-      exitCode: result.exitCode,
-      stdout: redactHome(result.stdout),
-      stderr: redactHome(result.stderr)
-    },
+    exitCode: result.exitCode,
+    stdout: redactHome(result.stdout),
+    stderr: redactHome(result.stderr),
     rawStdout: result.stdout ?? ''
   }
 }
 
-test('file-topics.sh over every fixture path, unmodified', async () => {
-  const cases = []
-  for (const path of fixturePaths) {
-    const { recorded } = await runScript(FILE_TOPICS_SCRIPT, [path])
-    cases.push({ input: path, ...recorded })
-  }
-  const noArg = await runScript(FILE_TOPICS_SCRIPT, [])
-  cases.push({ input: null, ...noArg.recorded })
+const expectUsageRefused = (run, golden) => {
+  expect(run.exitCode).toBe(golden.exitCode)
+  expect(run.stdout).toBe('')
+  expect(run.stderr).toMatch(/^Usage: tim style /)
+}
 
-  await expect(JSON.stringify(cases, null, 2) + '\n').toMatchFileSnapshot(
-    '__fixtures__/standards/__golden__/file-topics.json'
+test('tim style topics prints the frozen file-topics golden for every fixture path, and a usage line with no path', async () => {
+  const golden = readGolden('file-topics.json')
+  const noPath = golden.find(({ input }) => input === null)
+
+  const runs = await Promise.all(
+    fixturePaths.map(async (path) => ({
+      path,
+      run: await runTimStyle(['topics', path])
+    }))
   )
+  const noArg = await runTimStyle(['topics'])
+
+  for (const { path, run } of runs) {
+    const { exitCode, stdout, stderr } = run
+    expect({ input: path, exitCode, stdout, stderr }).toEqual(
+      golden.find(({ input }) => input === path)
+    )
+  }
+  expectUsageRefused(noArg, noPath)
 })
 
-test('bake-rules-bundle.sh over every topic, unmodified', async () => {
-  const cases = []
-  for (const args of bakeCases) {
-    const { recorded, rawStdout } = await runScript(
-      BAKE_RULES_BUNDLE_SCRIPT,
-      args
-    )
-    const entry = { input: args, ...recorded }
-    if (recorded.exitCode === 0) {
-      entry.bundle = readFileSync(rawStdout.trim(), 'utf8')
-    }
-    cases.push(entry)
-  }
+test('tim style bundle writes the frozen bake-rules-bundle golden for every topic, refuses an unknown one, and prints a usage line with no arguments', async () => {
+  const golden = readGolden('bake-rules-bundle.json')
 
-  await expect(JSON.stringify(cases, null, 2) + '\n').toMatchFileSnapshot(
-    '__fixtures__/standards/__golden__/bake-rules-bundle.json'
-  )
+  for (const [index, args] of bakeCases.entries()) {
+    const run = await runTimStyle(['bundle', ...args])
+    const recorded = golden[index]
+    if (args.length === 0) {
+      expectUsageRefused(run, recorded)
+      continue
+    }
+    const { exitCode, stdout, stderr, rawStdout } = run
+    const entry = { input: args, exitCode, stdout, stderr }
+    if (exitCode === 0) entry.bundle = readFileSync(rawStdout.trim(), 'utf8')
+    expect(entry).toEqual(recorded)
+  }
 })
 
 const runTimDetectTech = (args) =>

@@ -80,10 +80,11 @@ export const nextIdAfter = (entries) => {
 }
 
 /**
- * Writes a file's review placeholder, replacing any review already there.
+ * Writes a per-file placeholder with no verdict and no todos at the path
+ * `pathOf` gives, replacing any review already there.
  *
  * @param {object} args
- * @param {string} args.workspaceRoot
+ * @param {(names: {reviewId: string, repo: string, file: string}) => string} args.pathOf
  * @param {string} [args.reviewId] - A ticket key or a `local/<repo>/<branch>` id
  * @param {string} [args.repo]
  * @param {string} [args.file]
@@ -93,8 +94,8 @@ export const nextIdAfter = (entries) => {
  * @returns {{path: string, review: object}}
  * @throws {TimError} USAGE for a missing option, an unknown mode or a PR that is not JSON
  */
-export const initFileReview = ({
-  workspaceRoot,
+export const writePerFilePlaceholder = ({
+  pathOf,
   reviewId,
   repo,
   file,
@@ -125,10 +126,31 @@ export const initFileReview = ({
     verdict_reason: null,
     todos: []
   }
-  const path = fileReviewPath(reviewDir(workspaceRoot, reviewId), repo, file)
+  const path = pathOf({ reviewId, repo, file })
   writeJsonAtomic(path, review)
   return { path, review }
 }
+
+/**
+ * Writes a file's review placeholder, replacing any review already there.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} [args.reviewId] - A ticket key or a `local/<repo>/<branch>` id
+ * @param {string} [args.repo]
+ * @param {string} [args.file]
+ * @param {string} [args.commit]
+ * @param {string} [args.pr] - JSON text; the stored PR is null without it
+ * @param {string} [args.mode] - One of {@link REVIEW_MODES}
+ * @returns {{path: string, review: object}}
+ * @throws {TimError} USAGE for a missing option, an unknown mode or a PR that is not JSON
+ */
+export const initFileReview = ({ workspaceRoot, ...options }) =>
+  writePerFilePlaceholder({
+    ...options,
+    pathOf: ({ reviewId, repo, file }) =>
+      fileReviewPath(reviewDir(workspaceRoot, reviewId), repo, file)
+  })
 
 /**
  * Appends a todo to a file's review, after its highest todo id.

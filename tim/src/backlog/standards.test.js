@@ -422,7 +422,7 @@ describe('#lintStandards', () => {
   })
 })
 
-describe('tim agrees with the routing data the bash goldens were captured against', () => {
+describe('tim agrees with the routing data the routing goldens hold', () => {
   const routing = loadCodeStyleRouting(realWorkspaceRoot)
 
   test('topics for every fixture path match the topic order the goldens pin', () => {

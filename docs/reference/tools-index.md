@@ -61,10 +61,10 @@ epics included, goes through `tim jira create`.
 | `tim review refresh merge-resolved` | REPO_DIR PRIOR_SHA HEAD_SHA [--json] | Refresh helper: hand-resolved merge files |
 | `tim review refresh gaps` | EUDPA-X --repo R --pr N [--json] | Refresh helper: PR files with no `.review.json`, from `.prs/{repo}-{pr}.json` written by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
 | **style** | | |
-| `tools/style/start-style.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `tools/style/prepare-style.sh` | EUDPA-X [--json] | Fresh Step 1 — init `.style.json` placeholders + per-repo rules bundle |
-| `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
-| `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
+| `tim style start` | EUDPA-X [--no-pull] [--repo R] \| --local REPO BRANCH [--files F1,F2] [--json] | Step 0 — detect FRESH/REFRESH and run `tim style prepare`, or `tim style scope --write-snapshot` after a `MODE: REFRESH` line |
+| `tim style prepare` | EUDPA-X \| --local REPO BRANCH [--files F1,F2] [--json] | Fresh Step 1 — init `.style.json` placeholders + per-(repo,topic) rules bundles, from the PR files in `.prs/{repo}-{pr}.json` (refuses a missing or empty one) |
+| `tim style topics` | PATH [--json] | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
+| `tim style bundle` | EUDPA-X REPO TOPIC [REPO_DIR] | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
 | `tim style aggregate` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
 | `tim style items render` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view (the table `tim style aggregate` also writes) |
 | `tim style items list` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
@@ -72,10 +72,10 @@ epics included, goes through `tim jira create`.
 | `tim style items status` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
 | `tim style items add` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality or design category |
 | `tim style items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
-| `tools/style/file-style-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.style.json` placeholder |
+| `tim style file init` | EUDPA-X --repo R --file F --commit SHA [--pr N] --mode M | Initialise per-file `.style.json` placeholder |
 | `tim style file add` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality or design category; any other is refused |
 | `tim style file verdict` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
-| `tools/style/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh, filtered to `.js` |
+| `tim style scope` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--json] | Refresh: pull + diff + lists A/B/C/D over the files with a style topic; List D reads `.prs/{repo}-{pr}.json` |
 | `tim style reconcile` | EUDPA-X --repo R [--dry-run] [--force] [--json] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
 | **npm** | | |
 | `tools/npm/start-upgrade.sh` | EUDPA-X --phase 0\|1\|2\|3\|4 [--repo R ...] [--strategy LEVEL] [--branch NAME] [--allowlist-owner NAME --expiry-days N] | Single dispatcher — phase 0 audits every repo (gates phase 1), phase 1 discovers + emits PACKAGE_PLANNER spawn manifest, phase 2 fans out per-repo runners, phase 3 emits WALKER handoff (with allowlist, audits and held packages), phase 4 resets overrides per repo. `--branch` refuses to run if any repo is on another branch; a repo with no `package.json` is skipped |

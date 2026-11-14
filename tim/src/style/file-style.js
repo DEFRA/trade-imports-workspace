@@ -4,6 +4,7 @@ import {
   appendPerFileTodo,
   refuseFirstMissing,
   refuseOutside,
+  writePerFilePlaceholder,
   writePerFileVerdict
 } from '../review/file-review.js'
 import { refuseCategoryOutside } from '../review/finding-categories.js'
@@ -17,11 +18,33 @@ const existingFileStylePath = ({ workspaceRoot, reviewId, repo, file }) => {
   if (!existsSync(path)) {
     throw new TimError(
       'NOT_FOUND',
-      `No style file at ${path} — call file-style-init.sh first`
+      `No style file at ${path} — call tim style file init first`
     )
   }
   return path
 }
+
+/**
+ * Writes a file's style review placeholder, replacing any review already
+ * there.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} [args.reviewId] - A ticket key or a `local/<repo>/<branch>` id
+ * @param {string} [args.repo]
+ * @param {string} [args.file]
+ * @param {string} [args.commit]
+ * @param {string} [args.pr] - JSON text; the stored PR is null without it
+ * @param {string} [args.mode] - FRESH, REFRESH or MERGE_RESOLVED
+ * @returns {{path: string, review: object}}
+ * @throws {TimError} USAGE for a missing option, an unknown mode or a PR that is not JSON
+ */
+export const initFileStyle = ({ workspaceRoot, ...options }) =>
+  writePerFilePlaceholder({
+    ...options,
+    pathOf: ({ reviewId, repo, file }) =>
+      fileStylePath(styleDir(workspaceRoot, reviewId), repo, file)
+  })
 
 /**
  * Appends a finding to a file's style review, after its highest todo id.

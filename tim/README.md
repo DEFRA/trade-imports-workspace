@@ -540,6 +540,13 @@ tim review start --local trade-imports-stub feat/tidy-logs
 ### `tim style` — the code-style skill's helpers
 
 ```bash
+tim style start EUDPA-1234
+tim style start --local trade-imports-plants-prototype design/1-home
+tim style prepare EUDPA-1234 --json
+tim style scope EUDPA-1234 --no-pull --repo trade-imports-stub
+tim style topics tests/specs/a.spec.ts
+tim style bundle EUDPA-1234 trade-imports-animals-frontend hapi repos/trade-imports-animals-frontend
+tim style file init EUDPA-1234 --repo trade-imports-stub --file src/a.js --commit abc1234 --pr 42 --mode FRESH
 tim style file add EUDPA-1234 --repo trade-imports-stub --file src/a.js --line 4 --rule 6 --category naming --severity WARN --issue "Abbreviated name" --fix "Spell it out"
 tim style file verdict EUDPA-1234 --repo trade-imports-stub --file src/a.js --verdict MINOR_ISSUES --reason "One long line"
 tim style aggregate EUDPA-1234 --repo trade-imports-stub --write-items --section file-summary
@@ -554,6 +561,20 @@ tim style reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
 - They read and write `workareas/code-style-reviews/<review-id>/` in the
   workspace tim runs in, as `tim review`'s same-named commands do under
   `workareas/reviews/`.
+- `start` says `MODE: REFRESH` when the review has `.style-meta.json`,
+  then prints the scope envelope as `scope --write-snapshot --json` does;
+  otherwise it says `MODE: FRESH` and runs `prepare`.
+- `prepare` reads the ticket's review workspace, which `tim review
+prepare` writes first, and each pull request's changed files from
+  `.prs/<repo>-<pr>.json` there (`gh api repos/DEFRA/<repo>/pulls/<pr>/files
+--paginate --slurp` writes it). It refuses a pull request whose file is
+  missing, or lists no files when the pull request changes some. With
+  `--local` it runs `tim review prepare --local` first, printing its report
+  on stderr.
+- `scope` keeps only files `topics` maps to a topic. List D reads the
+  latest pull request's `.prs/` file; a missing one is left out with a
+  warning that names the `gh api` command.
+- `topics` and `bundle` read `.claude/skills/code-style/assets/routing.json`.
 - Style findings have a rule, a FAIL or WARN severity and, on items, an
   optional category; the line is stored as text and may be empty. The
   dispositions are Fix, Won't Fix, Discuss and Auto-Resolved.

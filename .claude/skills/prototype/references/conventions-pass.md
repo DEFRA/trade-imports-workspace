@@ -85,10 +85,9 @@ copied into this skill.
 
 2. Run the `code-style` skill's local mode with `fix: true` over the
    changed `.js`, `.njk` and `copy.*.js` files:
-   `~/git/defra/trade-imports-workspace/tools/style/start-style.sh --local trade-imports-plants-prototype <branch>`
-   (called by its tilde path, never through `bash <script>`). FIX items are
-   applied silently — never surface a FIX item to the designer by name or
-   line number.
+   `tim style start --local trade-imports-plants-prototype <branch>`.
+   FIX items are applied silently — never surface a FIX item to the
+   designer by name or line number.
 3. Re-run layer 1 (`designer:check`) once, so a style fix that changed
    behaviour is caught before it reaches the designer.
 4. Run the `review` skill's local mode
@@ -107,8 +106,8 @@ copied into this skill.
 ### When the local modes cannot run
 
 The local modes fan out to Task subagents. When this session has no Task
-tool, or `start-style.sh`/`tim review start` fails to start (for example
-"Permission denied" on a prepare script), do the same judgement inline, file
+tool, or `tim style start`/`tim review start` fails to start (for example
+a branch the repo does not have), do the same judgement inline, file
 by file, with no subagent. Never fall back to `bash <script>`, and never skip
 layer 2 silently. Read the bundle from step 1, then check each changed `.js`
 file against:

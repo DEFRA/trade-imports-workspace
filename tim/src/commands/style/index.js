@@ -1,6 +1,7 @@
 import { aggregateFileStyles } from '../../style/aggregate.js'
 import {
   addFileStyleTodo,
+  initFileStyle,
   setFileStyleVerdict
 } from '../../style/file-style.js'
 import {
@@ -19,6 +20,7 @@ import { reconcileFileStyles } from '../../style/reconcile.js'
 import { renderCountsText } from '../../review/items-ledger.js'
 import { reconciledJson, renderReconciledText } from '../../review/reconcile.js'
 import { reviewAction } from '../review/tools.js'
+import { registerStartCommands } from './start.js'
 
 const withReviewId = (command) =>
   command.argument('[review-id]', 'A ticket key, or local/<repo>/<branch>')
@@ -158,7 +160,27 @@ const fileOptions = (command) =>
 const registerFile = (style, { timVersion }) => {
   const file = style
     .command('file')
-    .description("Write one file's style review: its findings and its verdict")
+    .description(
+      "Write one file's style review: its placeholder, its findings and its verdict"
+    )
+  fileOptions(file.command('init'))
+    .description(
+      "Write a file's style review placeholder to workareas/code-style-reviews/<review-id>/file-reviews/<repo>/<file>.style.json, replacing any review already there, and print its path. The mode is FRESH, REFRESH or MERGE_RESOLVED; the PR is null without --pr."
+    )
+    .option('--commit <sha>', 'The commit reviewed')
+    .option('--pr <number>', 'The pull request number')
+    .option('--mode <mode>', 'FRESH, REFRESH or MERGE_RESOLVED')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim style file init EUDPA-1234 --repo trade-imports-stub --file src/Main.java --commit abc1234 --pr 42 --mode FRESH\n  tim style file init local/trade-imports-stub/feat/NO_JIRA-x --repo trade-imports-stub --file src/a.js --commit abc1234 --mode FRESH'
+    )
+    .action(
+      reviewAction({
+        run: initFileStyle,
+        renderText: ({ path }) => path,
+        timVersion
+      })
+    )
   fileOptions(file.command('add'))
     .description(
       "Append a finding to a file's .style.json as its next todo and print the todo's id. The line is stored as text."
@@ -256,4 +278,5 @@ export const register = (program, { timVersion }) => {
   registerFile(style, { timVersion })
   registerAggregate(style, { timVersion })
   registerReconcile(style, { timVersion })
+  registerStartCommands(style, { timVersion })
 }

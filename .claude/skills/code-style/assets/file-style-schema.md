@@ -66,9 +66,9 @@ wrong. A design finding is marked Discuss, for the designer.
 
 ## Lifecycle
 
-1. **Init** — `prepare-style.sh` (Fresh) or the refresh tooling
+1. **Init** — `tim style prepare` (Fresh) or the refresh tooling
    (List D coverage gap) seeds an empty placeholder via
-   `file-style-init.sh`. `verdict: null`, `todos: []`,
+   `tim style file init`. `verdict: null`, `todos: []`,
    `reviewed_at: null`.
 2. **Reviewer adds todos** — each finding goes in via
    `tim style file add` (auto-assigns next `id`, handles

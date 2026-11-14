@@ -11,14 +11,14 @@ tickets (Java, GDS/Nunjucks, Playwright, k6, Node). The per-file reviewer
 persona (`references/STYLE_FILE_REVIEWER.md`) is written
 language-neutrally and takes its ruleset from the pre-baked
 per-(repo,topic) `style-rules.{repo}.{topic}.md` bundle(s) rather than an
-inlined catalogue. Discovery routes each file through `tools/style/file-topics.sh`, a thin
-jq reader of `assets/routing.json`'s path→topic map (java, node, gds,
+inlined catalogue. Discovery routes each file through `tim style topics`,
+which reads `assets/routing.json`'s path→topic map (java, node, gds,
 playwright, k6; additive, so a Playwright spec, and the tests repo's
 `flows/`, `page-objects/` and `domain/` TypeScript, gets both playwright
 and node); rule-bundling then reads the per-topic best-practice lists from
-the same file via `tools/style/bake-rules-bundle.sh`. `assets/routing.json`
+the same file via `tim style bundle`. `assets/routing.json`
 is the single source of truth for the file-type mapping; edit it, not
-the scripts, to add a topic.
+tim, to add a topic.
 
 Every reviewer also reads `.claude/rules/code-quality.md` in full. Its
 house rules on comments, ids, history and names apply to every file
@@ -56,8 +56,8 @@ by name via the Task tool.
 
 | User intent | What to follow |
 |---|---|
-| "style review EUDPA-X" / "re-style review" / "style refresh" | this SKILL.md — FRESH + REFRESH (start-style.sh dispatches) |
-| "style review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-style.sh dispatches on `--local` |
+| "style review EUDPA-X" / "re-style review" / "style refresh" | this SKILL.md — FRESH + REFRESH (`tim style start` dispatches) |
+| "style review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); `tim style start` dispatches on `--local` |
 | "walk style EUDPA-X" / "triage style" | `Follow references/STYLE_WALKER.md` |
 | "fix style EUDPA-X" / "implement style fixes" | IMPLEMENTATION section below (or `Follow references/STYLE_IMPLEMENTOR.md` per group) |
 
@@ -69,10 +69,10 @@ Reviews a repo checkout under `repos/<repo>/` directly — no Jira ticket,
 no GitHub PR, no `gh` call of any kind.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/start-style.sh --local REPO BRANCH
+tim style start --local REPO BRANCH
 ```
 
-This always runs `prepare-style-local.sh` (there is no separate refresh
+This always runs `tim style prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
@@ -108,7 +108,7 @@ local-mode style check without a human ever saying "style review":
   (an explicit list — when given, scope is exactly those files, not the
   whole branch's git diff), `fix` (`true` — also run the IMPLEMENTATION
   flow on any Fix-disposition items found; `false` — report only).
-- **Call shape**: run Local mode above (`start-style.sh --local REPO
+- **Call shape**: run Local mode above (`tim style start --local REPO
   BRANCH [--files ...]`) through Steps 2-6; when `fix: true`, continue
   into IMPLEMENTATION for the files just reviewed.
 - **One-line return** to the calling skill:
@@ -137,28 +137,44 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 
 ## Step 0: Start the review
 
+On a refresh (`.style-meta.json` already exists under
+`workareas/code-style-reviews/EUDPA-XXXXX/`), first write each PR's
+changed files again, so List D sees files added since the last run. Run
+one `gh api` per entry in the review's `.review-meta.json` `prs`, from
+the workspace root:
+
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/start-style.sh EUDPA-XXXXX
+gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/reviews/EUDPA-XXXXX/.prs/{repo}-{pr}.json
+```
+
+Then start the review:
+
+```bash
+tim style start EUDPA-XXXXX
 ```
 
 Single dispatch — detects FRESH vs REFRESH from workspace state and
-runs the appropriate first-step setup script.
+runs the appropriate first step.
 
 A fresh style review reads the review workspace at
-`workareas/reviews/EUDPA-XXXXX/`. When it is missing, `prepare-style.sh`
-stops and says so: prepare it with the `review` skill's Step 0 and
-Step 1 (`tim review start`, the `gh` saves, then `tim review prepare`),
-then run `start-style.sh` again.
+`workareas/reviews/EUDPA-XXXXX/`, including the `.prs/{repo}-{pr}.json`
+files the review skill's Step 1 writes with `gh api`. When the workspace
+is missing, `tim style start` stops and says so: prepare it with the
+`review` skill's Step 0 and Step 1 (`tim review start`, the `gh` saves,
+then `tim review prepare`), then run `tim style start` again. It also
+stops, naming the `gh api` command to run, when a PR's `.prs/` file is
+missing or lists no files for a PR that changes some.
 
 First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
-- `MODE: FRESH` → setup ran `prepare-style.sh`; go to Fresh Review,
+- `MODE: FRESH` → it ran `tim style prepare`; go to Fresh Review,
   Step 2.
-- `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
-  Refresh Review, Step R3.5.
+- `MODE: REFRESH` → it ran the equivalent of
+  `tim style scope EUDPA-XXXXX --write-snapshot --json` and printed its
+  JSON envelope after the `MODE:` line; go to Refresh Review, Step R3.5.
 
 IMPLEMENT and WALK are separate top-level triggers (Decision 3) — they
-do NOT route through start-style.sh.
+do NOT route through `tim style start`.
 
 **On Claude Code auto-backgrounding:** for fresh reviews the setup may
 shallow-clone repos via `tim review prepare`, which takes 30–90s. If the
@@ -172,7 +188,7 @@ Bash tool auto-backgrounds it, **wait for the harness's
 
 ## Step 1: Workspace prepared (by Step 0)
 
-`start-style.sh` ran `prepare-style.sh` which produced:
+`tim style start` ran `tim style prepare`, which produced:
 
 - `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/`
   with `.style-meta.json`, per-repo `file-reviews/{repo}/` subtrees,
@@ -290,8 +306,12 @@ Output the completion summary (see "Completion Output" below).
 
 ## Steps R1-R3: Refresh scope built (by Step 0)
 
-`start-style.sh` already ran `refresh/scope.sh --write-snapshot` and
-emitted a JSON object on stdout. Read it from there.
+`tim style start` already ran the equivalent of
+`tim style scope EUDPA-XXXXX --write-snapshot --json` and printed its
+JSON envelope after the `MODE:` line. The scope is the envelope's
+`result`. A warning on stderr names any PR whose `.prs/` file is missing,
+with the `gh api` command that writes it: List D leaves that PR out, so
+write it (Step 0) and run Step 0 again.
 
 Each `repos[]` entry has `prior_sha`, `current_sha`, `no_changes`,
 and `lists.{A,B,C,D}`:
@@ -572,24 +592,16 @@ Summary:
 Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
-## Scripts cheat-sheet
-
-All under `~/git/defra/trade-imports-workspace/tools/style/`:
-
-| Script | Purpose |
-|---|---|
-| `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
-| `prepare-style.sh` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles |
-| `prepare-style-local.sh` | Local mode setup — no Jira/GitHub; reuses `tim review prepare --local` for changed-file discovery |
-| `file-topics.sh` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
-| `bake-rules-bundle.sh` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
-| `file-style-init.sh` | Per-file `.style.json` placeholder, written by the setup scripts |
-| `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
-
-The rest are tim commands:
+## Commands cheat-sheet
 
 | Command | Purpose |
 |---|---|
+| `tim style start` | Step 0 — detect FRESH/REFRESH and run the first step; `--local REPO BRANCH` for Local mode |
+| `tim style prepare` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles. `--local REPO BRANCH` runs `tim review prepare --local` first for changed-file discovery |
+| `tim style topics` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
+| `tim style bundle` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
+| `tim style file init` | Per-file `.style.json` placeholder, written by `tim style prepare` |
+| `tim style scope` | Refresh Steps R1-R3 — lists A/B/C/D; `--write-snapshot` records the window |
 | `tim review verify style` | Fresh Step 3 coverage gate — checks `.verdict != null` on each per-file `.style.json` |
 | `tim style aggregate` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |
 | `tim style items render` | Render `items.{repo}.json` as the `## Items` markdown view |

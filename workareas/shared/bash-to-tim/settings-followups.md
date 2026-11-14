@@ -133,3 +133,15 @@ None to remove. No allowlist entry names `style-items.sh`,
 `refresh/reconcile.sh` or `items-table.jq` under `tools/style/`; the
 generic `tools/**` rules still serve the style scripts left for P53.
 `Bash(tim:*)` covers `tim style`.
+
+## P53
+
+None to remove. No allowlist entry names `start-style.sh`,
+`prepare-style.sh`, `prepare-style-local.sh`, `file-style-init.sh`,
+`file-topics.sh`, `bake-rules-bundle.sh` or `refresh/scope.sh` under
+`tools/style/`, which is now gone; the generic `tools/**` rules (lines
+63-64) still serve other folders. `Bash(tim:*)` covers `tim style start`,
+`prepare`, `scope`, `topics`, `bundle` and `file init`. The code-style
+skill's refresh now writes each PR's changed files with
+`gh api repos/DEFRA/<repo>/pulls/<n>/files --paginate --slurp > ...`
+first, as the review skill does.

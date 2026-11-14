@@ -219,7 +219,7 @@ sibling feature's helper is fine.
 ### 5. Persist each finding via `tim style file add`
 
 The per-file `.style.json` placeholder was initialised by
-`prepare-style.sh`. For every violation you decide to flag:
+`tim style prepare`. For every violation you decide to flag:
 
 ```bash
 tim style file add EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history|design} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"

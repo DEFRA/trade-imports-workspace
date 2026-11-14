@@ -88,10 +88,12 @@ export const runStyleSteps = async (staged, steps) => {
 }
 
 const asTimWouldSay = (text, args) => {
-  const named = text.replace(
-    'run aggregate-file-reviews.sh --write-items first',
-    'run tim style aggregate --write-items first'
-  )
+  const named = text
+    .replace(
+      'run aggregate-file-reviews.sh --write-items first',
+      'run tim style aggregate --write-items first'
+    )
+    .replace('call file-style-init.sh first', 'call tim style file init first')
   return args.includes('--note') ? named : named.replace(', Notes set', '')
 }
 

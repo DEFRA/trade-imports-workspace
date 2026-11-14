@@ -23,7 +23,18 @@ const isPresent = (value) =>
 const uniqueSorted = (values) =>
   [...new Set(values.filter((value) => value.length > 0))].sort()
 
-const pullFirst = async ({ workspaceRoot, reviewId, repo, log }) => {
+/**
+ * Pulls a review's clones, sending the pull's report, or its error, to
+ * `log`.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} args.reviewId
+ * @param {string} [args.repo] - Only this repo
+ * @param {(text: string) => void} args.log
+ * @throws {TimError} UNKNOWN, as `Pull failed`, when any repo fails to pull
+ */
+export const pullFirst = async ({ workspaceRoot, reviewId, repo, log }) => {
   try {
     const pulled = await pullReviewRepos({ workspaceRoot, reviewId, repo })
     const text = renderPulledText(pulled)

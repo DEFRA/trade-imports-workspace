@@ -1069,7 +1069,7 @@
     {
       "id": "REQ-CYA-029",
       "name": "A submitted notification's view is headed by its reference and status, and dated",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-029-A",
@@ -1102,6 +1102,15 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/review/notification-date.test.js", "test": "Should write the London day in full for an instant late in the UTC evening during summer time", "strength": "full", "notes": "red probe: formatting the day in UTC fails it" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "dates the notification under its header", "strength": "partial", "notes": "asserts the shape of the line, not the day; not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "dates the notification with the service day it was submitted", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-029-D",
+          "name": "The date submitted reads the same on a later visit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "dates the notification and shows the same date after a reload", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "dates the notification and shows the same date after a reload", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]
@@ -1153,6 +1162,51 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should let a guarded path through for a notification that does not exist, for its page to answer", "strength": "full", "notes": "red probe: removing the admission fails it" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "opening its view goes to the notification list", "strength": "partial", "notes": "not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "opening its view goes to the notification list", "strength": "partial", "notes": "not probed red" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-032",
+      "name": "A notification submitted without its ITAHC is viewed as Submitted action required, read-only",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-032-A",
+          "name": "The view carries the orange tag and the warning",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by an orange Submitted action required tag and the warning to upload a health certificate", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by an orange Submitted action required tag and the warning to upload a health certificate", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-032-B",
+          "name": "With no document uploaded the documents section shows the health certificate error",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the health certificate error under the uploaded documents heading in place of document cards, with no error summary", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the health certificate error under the uploaded documents heading in place of document cards, with no error summary", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-032-C",
+          "name": "The header offers amend, copy and delete, and the import reference numbers show",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the import reference numbers", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Amend this notification, Copy as new and Delete in its header", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the import reference numbers", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-032-D",
+          "name": "Continue starts an amendment and opens Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Continue starts an amendment and opens the overview, with JavaScript off", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should amend a submitted notification and open its overview when the hub exit is posted", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue starts an amendment and opens the overview", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]

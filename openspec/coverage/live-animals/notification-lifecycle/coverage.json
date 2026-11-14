@@ -13,7 +13,7 @@
           "name": "A full lifecycle walk moves the notification through each status in turn",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; each copy gets its own reference number", "strength": "full", "notes": "API statuses Draft → Submitted → Amend → Submitted → Deleted; fulfilment view mirrors each step. Does not assert the user-facing Amend label (covered under 006/008)." }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "records a notification submitted without an ITAHC as Submitted action required through amend and cancel, then copies it into distinct drafts and soft-deletes it", "strength": "full", "notes": "API statuses Draft → Submitted → Amend → Submitted → Deleted; fulfilment view mirrors each step. Does not assert the user-facing Amend label (covered under 006/008)." }
           ]
         },
         {
@@ -21,7 +21,7 @@
           "name": "Deleting an already-deleted notification is idempotent",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; each copy gets its own reference number", "strength": "full", "notes": "soft-deletes twice; both return Deleted with no error" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "records a notification submitted without an ITAHC as Submitted action required through amend and cancel, then copies it into distinct drafts and soft-deletes it", "strength": "full", "notes": "soft-deletes twice; both return Deleted with no error" }
           ]
         }
       ]
@@ -36,7 +36,7 @@
           "name": "Copying a notification twice produces two distinct drafts",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; each copy gets its own reference number", "strength": "full", "notes": "two copy calls → two distinct draft references; source left Submitted before later delete" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "records a notification submitted without an ITAHC as Submitted action required through amend and cancel, then copies it into distinct drafts and soft-deletes it", "strength": "full", "notes": "two copy calls → two distinct draft references; source left Submitted before later delete" }
           ]
         },
         {
@@ -62,7 +62,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the Draft strip with the notification reference", "strength": "full", "notes": "createFullNotification draft reopened on notification-view" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "renders the recorded answers in the numbered design sections", "strength": "full", "notes": "France and commodity answers still shown" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; each copy gets its own reference number", "strength": "partial", "notes": "proves draft status under the minted reference immediately after create; fulfilments empty so does not prove answers survive" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "records a notification submitted without an ITAHC as Submitted action required through amend and cancel, then copies it into distinct drafts and soft-deletes it", "strength": "partial", "notes": "proves draft status under the minted reference immediately after create; fulfilments empty so does not prove answers survive" }
           ]
         }
       ]
@@ -146,7 +146,7 @@
     },
     {
       "id": "REQ-LIFECYCLE-007",
-      "name": "Resubmitting an amendment keeps the edited answers and returns the notification to Submitted",
+      "name": "Resubmitting an amendment keeps the edited answers and records the status the resubmission gives",
       "coverage": "full",
       "scenarios": [
         {
@@ -376,6 +376,39 @@
               "strength": "full",
               "notes": ""
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-LIFECYCLE-010",
+      "name": "Submitting records Submitted action required when no ITAHC passed its virus scan, and Submitted when one did",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-LIFECYCLE-010-A",
+          "name": "A submission with no ITAHC is recorded as Submitted action required",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldTransitionStatusFromDraftToSubmittedActionRequired_whenNoItahcWasUploaded", "strength": "partial", "notes": "backend integration test; not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldRecordSubmittedActionRequired_whenTheItahcIsUnclaimedStillScanningOrRejected", "strength": "partial", "notes": "backend integration test; not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by an orange Submitted action required tag and the warning to upload a health certificate", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-010-B",
+          "name": "A submission with an ITAHC is recorded as Submitted",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldRecordSubmittedAndNoOutstandingItems_whenAClaimedCleanItahcWasUploaded", "strength": "partial", "notes": "backend integration test; not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-010-C",
+          "name": "Cancelling an amendment returns the notification to the status its last submission recorded",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "cancelAmend_shouldReturnToSubmittedActionRequiredWithTheOriginalSubmittedAt", "strength": "partial", "notes": "backend integration test; not probed red" }
           ]
         }
       ]

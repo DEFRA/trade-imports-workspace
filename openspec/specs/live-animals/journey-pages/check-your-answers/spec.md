@@ -752,6 +752,12 @@ The system MUST head a submitted notification's view with its reference number a
 - **WHEN** the user views it
 - **THEN** the header reads "Date submitted: 22 July 2026"
 
+#### Scenario: The date submitted reads the same on a later visit
+**ID**: SCN-CYA-029-D
+- **GIVEN** a submitted notification whose view shows a date submitted
+- **WHEN** the user views it again later
+- **THEN** the header reads the same date submitted
+
 ### Requirement: A submitted notification's view shows its import reference numbers as text to copy
 **ID**: REQ-CYA-030
 The system MUST show, on a submitted notification's view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C640". The values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
@@ -786,3 +792,35 @@ The system MUST send the user to the notification list when they open the view o
 - **GIVEN** a signed-in user
 - **WHEN** they open the view of a notification that does not exist
 - **THEN** the notification list is shown
+
+### Requirement: A notification submitted without its ITAHC is viewed as Submitted action required, read-only
+**ID**: REQ-CYA-032
+The system MUST view a notification submitted without its ITAHC read-only, with an orange "Submitted action required" tag and the warning "You need to upload a health certificate", and MUST end its view with a Continue that starts an amendment and opens Overview.
+
+#### Scenario: The view carries the orange tag and the warning
+**ID**: SCN-CYA-032-A
+- **GIVEN** a notification submitted without an ITAHC
+- **WHEN** the user views it
+- **THEN** an orange "Submitted action required" tag stands beside the reference heading
+- **AND** the warning "You need to upload a health certificate" is shown
+- **AND** no Change links are shown
+
+#### Scenario: With no document uploaded the documents section shows the health certificate error
+**ID**: SCN-CYA-032-B
+- **GIVEN** a notification submitted without any uploaded document
+- **WHEN** the user views it
+- **THEN** "Upload a valid health certificate" is shown under "4. Uploaded documents" and no document card is shown
+- **AND** no error summary is shown
+
+#### Scenario: The header offers amend, copy and delete, and the import reference numbers show
+**ID**: SCN-CYA-032-C
+- **GIVEN** a notification submitted without an ITAHC
+- **WHEN** the user views it
+- **THEN** the header offers Amend this notification, Copy as new and Delete
+- **AND** the "Import reference numbers" section shows the reference and "C640"
+
+#### Scenario: Continue starts an amendment and opens Overview
+**ID**: SCN-CYA-032-D
+- **GIVEN** a notification submitted without an ITAHC, and a browser with JavaScript off
+- **WHEN** the user selects Continue
+- **THEN** Overview opens with the notification's status shown as "Amend"

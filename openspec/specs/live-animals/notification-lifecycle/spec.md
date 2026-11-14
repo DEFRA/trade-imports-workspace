@@ -14,7 +14,8 @@ The system MUST move a notification through Draft, Submitted, Amend, and Deleted
 **ID**: SCN-LIFECYCLE-001-A
 - **GIVEN** a new notification has just been created
 - **WHEN** it is submitted, then an amendment is started on it, then that amendment is cancelled, then it is soft-deleted
-- **THEN** the notification's status is Draft, then Submitted, then Amend, then Submitted again, then Deleted, at each corresponding step
+- **THEN** the notification's status is Draft, then the status its submission records, then Amend, then that same status again, then Deleted, at each corresponding step
+- **AND** that status is Submitted when an ITAHC was uploaded and Submitted action required when none was
 
 #### Scenario: Deleting an already-deleted notification is idempotent
 **ID**: SCN-LIFECYCLE-001-B
@@ -102,15 +103,15 @@ The system MUST let the user start an amendment on a submitted notification from
 - **WHEN** the user follows a Change link
 - **THEN** the page that collects that answer opens
 
-### Requirement: Resubmitting an amendment keeps the edited answers and returns the notification to Submitted
+### Requirement: Resubmitting an amendment keeps the edited answers and records the status the resubmission gives
 **ID**: REQ-LIFECYCLE-007
-The system MUST let the user change an answer while amending, then resubmit through check-your-answers and the declaration, returning the notification to Submitted with the edited answer kept and the dashboard offering to amend it again.
+The system MUST let the user change an answer while amending, then resubmit through check-your-answers and the declaration, recording the status the resubmission gives (Submitted with an ITAHC uploaded, Submitted action required without) with the edited answer kept and the dashboard offering to amend it again.
 
 #### Scenario: An edited answer survives resubmission
 **ID**: SCN-LIFECYCLE-007-A
 - **GIVEN** the user has started an amendment and is on check-your-answers
 - **WHEN** they change an answer via its Change link and then resubmit through the declaration
-- **THEN** the notification returns to Submitted, showing the edited answer
+- **THEN** the notification returns to Submitted, as its ITAHC is uploaded, showing the edited answer
 - **AND** no Change links are shown any longer
 - **AND** searching the dashboard for the notification shows the option to amend it again
 
@@ -204,3 +205,25 @@ The backend MUST persist each new notification under the `Trade-Imports-Organisa
 - **GIVEN** organisation A owns a notification with upload sessions registered
 - **WHEN** organisation B calls register, session lookup, or list document-upload routes for that reference
 - **THEN** the backend responds as if the notification were not found for organisation B
+
+### Requirement: Submitting records Submitted action required when no ITAHC passed its virus scan, and Submitted when one did
+**ID**: REQ-LIFECYCLE-010
+The system MUST record a notification as "Submitted action required" when it is submitted without an uploaded ITAHC that passed its virus scan, and as "Submitted" when it is submitted with one, working this out afresh on each submission, and MUST return a cancelled amendment to the status the last submission recorded. An uploaded veterinary certificate does not count as an ITAHC.
+
+#### Scenario: A submission with no ITAHC is recorded as Submitted action required
+**ID**: SCN-LIFECYCLE-010-A
+- **GIVEN** a notification with no uploaded documents, or only a veterinary certificate
+- **WHEN** the user submits it
+- **THEN** its status is "Submitted action required"
+
+#### Scenario: A submission with an ITAHC is recorded as Submitted
+**ID**: SCN-LIFECYCLE-010-B
+- **GIVEN** a notification with an ITAHC uploaded and scanned clean
+- **WHEN** the user submits it
+- **THEN** its status is "Submitted"
+
+#### Scenario: Cancelling an amendment returns the notification to the status its last submission recorded
+**ID**: SCN-LIFECYCLE-010-C
+- **GIVEN** a notification submitted without an ITAHC, on which an amendment has been started
+- **WHEN** the user cancels the amendment
+- **THEN** its status is "Submitted action required" again, with its original date submitted

@@ -34,6 +34,12 @@ The system MUST link a submitted notification's row to its read-only notificatio
 - **WHEN** the user selects its View link
 - **THEN** the read-only notification-view page opens for that reference
 
+#### Scenario: A notification submitted without its health certificate opens read-only
+**ID**: SCN-INS-DASH-002-C
+- **GIVEN** a notification with status "Submitted action required" is listed on the dashboard
+- **WHEN** the user selects its View link
+- **THEN** the read-only notification-view page opens for that reference
+
 #### Scenario: A draft notification opens its journey hub, not the read-only view
 **ID**: SCN-INS-DASH-002-B
 - **GIVEN** a draft notification is listed on the dashboard

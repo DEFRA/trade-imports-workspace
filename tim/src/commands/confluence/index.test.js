@@ -314,6 +314,22 @@ describe('tim confluence sync', () => {
     })
   })
 
+  test('refuses to start without JIRA_TOKEN, exits 1 and leaves the mirror for --clean in place', async () => {
+    delete process.env.JIRA_TOKEN
+    const cleanCase = syncCases.find(
+      ({ name }) => name === 'clean removes an orphan then syncs'
+    )
+
+    const recording = await runSync(cleanCase)
+
+    expect(recording).toEqual({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'Set JIRA_USER and JIRA_TOKEN to authenticate with Confluence.\n',
+      files: { 'orphan.md': 'Deleted in Confluence\n' }
+    })
+  })
+
   test('writes only under the workspace it runs in, and reports that folder in --json', async () => {
     const staged = stageWorkspace()
 

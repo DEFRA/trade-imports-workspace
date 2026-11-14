@@ -56,6 +56,27 @@ describe('tim npm upgrade steps', () => {
     expect(result.stderr).toContain("unknown option '--colour'")
   })
 
+  test.each(['--no-discover', '--discover'])(
+    'Should run run-auto with %s exactly as without it',
+    async (flag) => {
+      const args = ['npm', 'run-auto', REPO, '--run-id', RUN_ID]
+      const outcomeOf = async (runArgs) => {
+        const result = await timIn({}, runArgs)
+        const { root } = staging.at(-1)
+        return {
+          exitCode: result.exitCode,
+          stdout: result.stdout.replaceAll(root, '<root>'),
+          stderr: result.stderr.replaceAll(root, '<root>')
+        }
+      }
+      const without = await outcomeOf(args)
+
+      const withFlag = await outcomeOf([...args, flag])
+
+      expect(withFlag).toEqual(without)
+    }
+  )
+
   test('Should print the refresh in a JSON envelope with --json', async () => {
     const result = await timIn({}, [
       'npm',

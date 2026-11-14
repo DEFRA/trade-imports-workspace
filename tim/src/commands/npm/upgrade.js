@@ -1,3 +1,4 @@
+import { Option } from 'commander'
 import { realpathSync } from 'node:fs'
 import { ERROR, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
@@ -116,6 +117,8 @@ const registerRunAuto = (npm) =>
       .argument('[repo]', 'The repo, the same as --repo')
       .option('--run-id <ticket>', 'The run, such as EUDPA-500')
       .option('--repo <name>', 'The repo')
+      .addOption(new Option('--discover').hideHelp())
+      .addOption(new Option('--no-discover').hideHelp())
   )
     .exitOverride(exitWith(ERROR))
     .addHelpText(

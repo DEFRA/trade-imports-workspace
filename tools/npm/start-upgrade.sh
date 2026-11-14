@@ -303,9 +303,8 @@ phase2() {
     # the canonical packages.{repo}.json before reading state.
     tim_packages aggregate --run-id "$TICKET" >&2 || true
 
-    # Fan out per-repo runners. Run sequentially per repo (so the
-    # internal --no-discover / sequential-package loop is honoured),
-    # but each repo runs in parallel via background subshells. A repo
+    # Fan out per-repo runners. Run sequentially per repo, but each
+    # repo runs in parallel via background subshells. A repo
     # with no auto packages still runs, for its end-of-batch lockfile
     # refresh (tim npm refresh-lockfile).
     local tmpdir

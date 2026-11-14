@@ -63,6 +63,15 @@ Agents cannot edit `.claude/settings.json`.
     the test tracking the sibling. That choice is for whoever owns the
     prototype, so P62 leaves the line alone.
 
+12. **After the merge: delete the E2E forwarders.** Service repos call
+    `e2e-tests.yml@main`, and main's copy checks out this branch and runs
+    `scripts/ci/resolve-scope.sh`, `normalise-suites.sh`,
+    `normalise-tags.sh` and `scripts/stack/run-stack.sh` (the performance
+    tests' `smoke.yml@main` runs `run-stack.sh` too). Those four are now
+    forwarders into tim, so E2E runs before the merge. Once the workspace
+    and performance-tests pull requests have merged, delete the four
+    scripts. `scripts-ci.golden.test.js` skips while they forward.
+
 ## Done
 
 - P26 canary: EUDPA-804 raised through `tim jira create` on 14 Nov 2026.

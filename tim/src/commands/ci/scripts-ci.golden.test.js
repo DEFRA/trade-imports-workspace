@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, expect, test } from 'vitest'
 import {
   goldenText,
@@ -13,7 +16,13 @@ import {
 } from './__fixtures__/e2e-scope-cases.js'
 
 const scripts = Object.values(BASH_SCRIPT_FOR)
-const scriptsExist = scripts.every(workspaceScriptExists)
+const workspaceRoot = fileURLToPath(new URL('../../../../', import.meta.url))
+
+const holdsTheRecordedBash = (script) =>
+  workspaceScriptExists(script) &&
+  !readFileSync(join(workspaceRoot, script), 'utf8').includes('tim/src/cli.js')
+
+const scriptsExist = scripts.every(holdsTheRecordedBash)
 
 const stagedByConfig = {}
 

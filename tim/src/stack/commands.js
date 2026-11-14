@@ -1,4 +1,5 @@
 import { runStackScript } from '../exec/stack.js'
+import { stopStack } from './down.js'
 import { restartStack } from './restart.js'
 import { bounceBackend, terminalOutput } from './services.js'
 
@@ -13,7 +14,11 @@ const scriptCommand = (script, leadingArgs) => ({
 const STACK_COMMANDS = {
   up: scriptCommand('run-stack.sh', []),
   dev: scriptCommand('run-stack.sh', ['-d']),
-  down: scriptCommand('stop-stack.sh', []),
+  down: {
+    ran: COMPOSE,
+    run: ({ workspaceRoot, args }) =>
+      stopStack({ workspaceRoot, args, output: terminalOutput() })
+  },
   restart: {
     ran: 'run-stack.sh',
     run: ({ workspaceRoot, args }) => restartStack({ workspaceRoot, args })
@@ -37,7 +42,7 @@ export const STACK_COMMAND_NAMES = Object.keys(STACK_COMMANDS)
  * @param {string} opts.command - One of {@link STACK_COMMAND_NAMES}
  * @param {string[]} [opts.args] - Flags passed on to the stack scripts
  * @returns {Promise<{exitCode: number, durationMs: number, ran: string}>} ran names the step whose exit code this is
- * @throws {TimError} USAGE when the workspace is missing a stack script; others as the command's own steps throw
+ * @throws {TimError} USAGE when the workspace has no run-stack.sh; others as the command's own steps throw
  */
 export const runStackCommand = async ({
   workspaceRoot,

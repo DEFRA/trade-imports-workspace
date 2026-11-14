@@ -12,7 +12,8 @@ import {
   defaultLeasePath
 } from '../../exec/stack-lease.js'
 import { runStackCommand } from '../../stack/commands.js'
-import { asksForRestartHelp, printRestartHelp } from '../../stack/restart.js'
+import { asksForHelp, DOWN_USAGE } from '../../stack/down.js'
+import { printRestartHelp } from '../../stack/restart.js'
 import {
   SERVICE_ACTION_NAMES,
   runServiceAction,
@@ -163,9 +164,13 @@ const forwardingAction = ({ name, timVersion }) =>
     const globalOpts = this.optsWithGlobals()
     const given = this.args ?? []
     const args = given.filter((arg) => arg !== FORCE)
-    if (name === 'restart' && asksForRestartHelp(args)) {
+    if (name === 'restart' && asksForHelp(args)) {
       await answerRestartHelp(globalOpts, timVersion)
       return
+    }
+    if (name === 'down' && asksForHelp(args)) {
+      process.stdout.write(DOWN_USAGE)
+      process.exit(OK)
     }
     await runGuarded({
       command: name,
@@ -189,7 +194,8 @@ const FORWARDING_COMMANDS = [
   },
   {
     name: 'down',
-    description: 'Stop the stack and clean up volumes (stop-stack.sh)'
+    description:
+      'Stop the stack, every profile included, removing its containers and wiping its volumes (tim docker down --help)'
   },
   {
     name: 'restart',
@@ -278,7 +284,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack. up, dev and down run the scripts in scripts/stack/; restart, bounce-backend and service run docker compose from tim. While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart, bounce-backend and service refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease. owner prints the clone that owns the stack, the only clone that runs local E2E.'
+      'Workspace Docker stack. up and dev run scripts/stack/run-stack.sh; down, restart, bounce-backend and service run docker compose from tim. While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart, bounce-backend and service refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease. owner prints the clone that owns the stack, the only clone that runs local E2E.'
     )
 
   for (const command of FORWARDING_COMMANDS) {

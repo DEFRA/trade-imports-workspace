@@ -289,3 +289,15 @@ still up with no lease (`tim docker lease status` shows `lease: null`), and
 wipe a stack someone may be using. Run the smoke, and the live gate refresh
 the row's proof asks for (touch one frontend file under a dev lease and
 compare the gate's `gate-stack-restart.log`), once that stack is down.
+
+## P60
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/stop-stack.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack was
+still up (every container up 24 hours) with no lease, and `tim docker lease
+acquire` refuses an unleased stack. Taking it down would wipe a stack
+someone may be using. Run the smoke once that stack is down: it is also the
+first live run of the native `tim docker down` (and of `tim docker lease
+release`, which now takes the stack down through it).

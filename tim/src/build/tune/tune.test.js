@@ -1,3 +1,4 @@
+import { fakeComposeDownLine } from '../../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import {
@@ -83,12 +84,11 @@ const fakeStack = () => {
     `echo up > '${state}'`
   )
   writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `rm -f '${state}'`
-  )
-  writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    [
+      fakeComposeDownLine({ statePath: state }),
+      `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    ].join('\n')
   )
   return {
     state,

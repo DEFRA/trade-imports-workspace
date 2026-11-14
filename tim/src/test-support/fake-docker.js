@@ -380,3 +380,23 @@ export const recordTimStackRun = async (
     workspace.remove()
   }
 }
+
+/**
+ * A line for a hand-written fake `docker` that answers
+ * `docker compose ... down`: it records "docker compose down" in the calls
+ * file, when one is given, then fails with exit 5 or removes the state file
+ * that marks the stack up.
+ *
+ * @param {object} opts
+ * @param {string} opts.statePath
+ * @param {string} [opts.callsPath]
+ * @param {boolean} [opts.fails=false]
+ * @returns {string}
+ */
+export const fakeComposeDownLine = ({ statePath, callsPath, fails = false }) =>
+  [
+    'case " $* " in *" compose "*" down "*)',
+    callsPath ? `echo "docker compose down" >> '${callsPath}';` : '',
+    fails ? 'exit 5 ;;' : `rm -f '${statePath}'; exit 0 ;;`,
+    'esac'
+  ].join(' ')

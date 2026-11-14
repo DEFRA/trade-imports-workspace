@@ -23,6 +23,8 @@ import {
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 import { STUB_LATENCY_PROFILES } from '../stack/definition.js'
+import { stopStack } from '../stack/down.js'
+import { logOutput } from '../stack/services.js'
 
 export const LEASE_MODES = ['dev', 'up', 'perf']
 
@@ -362,8 +364,27 @@ const claimLease = async (leasePath, lease, previous) => {
   }
 }
 
-const stackScript = ({ workspaceRoot, env }, script, args, logPath) =>
-  runStackScriptToLog({ workspaceRoot, script, args, env, logPath })
+const startStack = ({ workspaceRoot, env }, args, logPath) =>
+  runStackScriptToLog({
+    workspaceRoot,
+    script: 'run-stack.sh',
+    args,
+    env,
+    logPath
+  })
+
+const STOP_STEP = 'docker compose down'
+
+const takeStackDown = ({ workspaceRoot, env }, logPath) =>
+  stopStack({
+    workspaceRoot,
+    env,
+    output: logOutput({
+      logPath,
+      commandLine: 'tim docker down',
+      cwd: workspaceRoot
+    })
+  })
 
 const scriptFailure = (script, result) =>
   `${script} exited ${result.exitCode}. Read ${result.log}.`
@@ -432,12 +453,7 @@ const startUnderLease = async (context, previous) => {
         : 'Another acquire is taking the workspace stack lease over right now. Try again once it has finished.'
     })
   }
-  const upRun = await stackScript(
-    context,
-    'run-stack.sh',
-    RUN_STACK_ARGS[mode],
-    logPath
-  )
+  const upRun = await startStack(context, RUN_STACK_ARGS[mode], logPath)
   if (upRun.exitCode === 0) {
     const containers = await stackContainerIds({ env })
     const held = { ...lease, state: UP, pid: null, containers }
@@ -453,12 +469,7 @@ const startUnderLease = async (context, previous) => {
       replaced: previous && !heldBefore ? previous.holder : null
     }
   }
-  const downRun = await stackScript(
-    context,
-    'stop-stack.sh',
-    [],
-    downLogFor(logPath)
-  )
+  const downRun = await takeStackDown(context, downLogFor(logPath))
   const leaseNow = restoreOrClearLease(leasePath, previous, {
     holder,
     workspaceRoot
@@ -466,7 +477,7 @@ const startUnderLease = async (context, previous) => {
   const takenDown =
     downRun.exitCode === 0
       ? `It was taken down again and ${leaseNow}.`
-      : `Taking it down again failed too: ${scriptFailure('stop-stack.sh', downRun)} ${capitalise(leaseNow)}.`
+      : `Taking it down again failed too: ${scriptFailure(STOP_STEP, downRun)} ${capitalise(leaseNow)}.`
   return startFailed({
     log: upRun.log,
     reason: `The workspace stack did not come up (run-stack.sh exited ${upRun.exitCode}). Read ${upRun.log}. ${takenDown}`
@@ -496,16 +507,11 @@ const reuseUnderLease = ({ holder, workspaceRoot, leasePath }, lease) => {
 // The holder's own start died part-way, so the containers up now are its
 // own half-started stack: take them down, then start again cleanly.
 const restartUnderLease = async (context, lease) => {
-  const downRun = await stackScript(
-    context,
-    'stop-stack.sh',
-    [],
-    downLogFor(context.logPath)
-  )
+  const downRun = await takeStackDown(context, downLogFor(context.logPath))
   if (downRun.exitCode !== 0) {
     return startFailed({
       log: downRun.log,
-      reason: `An earlier start of the workspace stack under this lease did not finish, and the half-started stack did not come down (${scriptFailure('stop-stack.sh', downRun)}) The lease is kept.`
+      reason: `An earlier start of the workspace stack under this lease did not finish, and the half-started stack did not come down (${scriptFailure(STOP_STEP, downRun)}) The lease is kept.`
     })
   }
   return startUnderLease(context, lease)
@@ -565,8 +571,8 @@ export const acquireStack = async ({
  * the lease. A lease held by anyone else is refused and left alone, and so is
  * a stack nobody leases. A stack whose containers are not the ones the lease
  * recorded was restarted by hand: it is left up, never taken down, and the
- * lease that no longer describes it is cleared. When stop-stack.sh fails the
- * lease is kept, so nobody takes a stack that is half down. The same holder
+ * lease that no longer describes it is cleared. When docker compose down fails
+ * the lease is kept, so nobody takes a stack that is half down. The same holder
  * name leased from another clone of the workspace is refused, unless `force`
  * is set.
  *
@@ -574,7 +580,7 @@ export const acquireStack = async ({
  * @param {string} args.workspaceRoot
  * @param {string} args.holder
  * @param {string} args.leasePath
- * @param {string} args.logPath - Where stop-stack.sh writes its output
+ * @param {string} args.logPath - Where taking the stack down writes its output
  * @param {object} [args.env]
  * @param {boolean} [args.force] - Release a lease the same holder name holds from another clone
  * @returns {Promise<object>} released, whether the stack was stopped, or the reason nothing was
@@ -634,12 +640,7 @@ export const releaseStack = async ({
       reason: `The workspace stack running now is not the one "${holder}" started: its containers changed, so somebody restarted it by hand. It was left up, and the lease that no longer describes it was cleared.`
     }
   }
-  const downRun = await stackScript(
-    { workspaceRoot, env },
-    'stop-stack.sh',
-    [],
-    logPath
-  )
+  const downRun = await takeStackDown({ workspaceRoot, env }, logPath)
   if (downRun.exitCode !== 0) {
     return {
       released: false,
@@ -648,7 +649,7 @@ export const releaseStack = async ({
       holder,
       lease,
       log: downRun.log,
-      reason: `The workspace stack did not come down (stop-stack.sh exited ${downRun.exitCode}). Read ${downRun.log}. The lease is kept so nobody takes a stack that is half down.`
+      reason: `The workspace stack did not come down (${STOP_STEP} exited ${downRun.exitCode}). Read ${downRun.log}. The lease is kept so nobody takes a stack that is half down.`
     }
   }
   rmSync(leasePath, { force: true })

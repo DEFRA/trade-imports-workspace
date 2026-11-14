@@ -12,6 +12,7 @@ import {
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { fakeComposeDownLine } from '../test-support/fake-docker.js'
 import { stackFilesFingerprint } from './stack-fingerprints.js'
 import {
   acquireStack,
@@ -53,21 +54,21 @@ const callsPath = () => join(root, 'stack-calls')
 const leasePath = () => join(root, 'state', 'stack-lease.json')
 const logPath = () => join(root, 'logs', 'lease.log')
 
-// Stack scripts and a `docker` that share one state file: run-stack.sh marks
-// the stack up, stop-stack.sh marks it down, and `docker ps` lists a
-// container while it is up. Every stack script call is recorded.
 const fakeStack = ({ upFails = false, downFails = false } = {}) => {
   writeExecutable(
     join(root, 'scripts', 'stack', 'run-stack.sh'),
     `echo "run-stack.sh $*" >> '${callsPath()}'\n${upFails ? 'exit 9' : `echo c1 > '${statePath()}'`}`
   )
   writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `echo "stop-stack.sh $*" >> '${callsPath()}'\n${downFails ? 'exit 5' : `rm -f '${statePath()}'`}`
-  )
-  writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
+    [
+      fakeComposeDownLine({
+        statePath: statePath(),
+        callsPath: callsPath(),
+        fails: downFails
+      }),
+      `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
+    ].join('\n')
   )
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
@@ -82,6 +83,7 @@ const dockerQuitUnderStack = () => {
     [
       `if [ ! -f '${running}' ]; then echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1; fi`,
       'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
+      fakeComposeDownLine({ statePath: statePath(), callsPath: callsPath() }),
       `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
     ].join('\n')
   )
@@ -429,7 +431,7 @@ describe('acquireStack', () => {
     }).toEqual({
       acquired: true,
       started: true,
-      calls: ['stop-stack.sh', 'run-stack.sh -d'],
+      calls: ['docker compose down', 'run-stack.sh -d'],
       state: 'up'
     })
   })
@@ -544,7 +546,7 @@ describe('acquireStack', () => {
       reason: expect.stringMatching(
         /^The workspace stack did not come up \(run-stack.sh exited 9\)\. Read .*lease\.log\. It was taken down again and the lease cleared\.$/
       ),
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['run-stack.sh -d', 'docker compose down'],
       lease: null
     })
   })
@@ -589,7 +591,7 @@ describe('acquireStack', () => {
       reason: expect.stringMatching(
         /It was taken down again and the lease kept for "ibl-20261001T090000Z inc-003 consistency", who held it before\.$/
       ),
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['run-stack.sh -d', 'docker compose down'],
       lease: expect.objectContaining({ holder: HOLDER, containers: ['c1'] })
     })
   })
@@ -612,7 +614,7 @@ describe('releaseStack', () => {
     }).toEqual({
       released: true,
       stoppedStack: true,
-      calls: ['stop-stack.sh'],
+      calls: ['docker compose down'],
       up: false,
       lease: null
     })
@@ -711,7 +713,7 @@ describe('releaseStack', () => {
     }).toEqual({
       released: false,
       reason: expect.stringContaining(
-        'The workspace stack did not come down (stop-stack.sh exited 5).'
+        'The workspace stack did not come down (docker compose down exited 5).'
       ),
       leaseHolder: HOLDER
     })

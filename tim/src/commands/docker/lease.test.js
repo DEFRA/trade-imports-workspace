@@ -1,3 +1,4 @@
+import { fakeComposeDownLine } from '../../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
@@ -40,12 +41,9 @@ const makeWorkspace = () => {
     `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath(root)}'\necho "run-stack.sh in ${root}"\necho up > '${statePath(root)}'`
   )
   writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `echo "stop-stack.sh in ${root}"\nrm -f '${statePath(root)}'`
-  )
-  writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      fakeComposeDownLine({ statePath: statePath(root) }),
       `if [ "$1" != ps ] || [ ! -f '${statePath(root)}' ]; then exit 0; fi`,
       `case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
     ].join('\n')
@@ -205,14 +203,20 @@ describe('tim docker lease logs', () => {
     )
   })
 
-  test('release writes the stop-stack.sh output to workareas/stack-logs in the workspace', async () => {
+  test('release writes the tim docker down output to workareas/stack-logs in the workspace', async () => {
     writeFileSync(statePath(), 'up\n')
     writeLease(HOLDER)
 
     await runTim(['release', '--holder', HOLDER])
 
     expect(logText(join(stackLogsOf(workspace), 'lease-release.log'))).toBe(
-      stackScriptLog(workspace, 'stop-stack.sh')
+      [
+        '$ tim docker down',
+        `# in ${workspace}`,
+        '',
+        'Tearing down stack...',
+        ''
+      ].join('\n')
     )
   })
 

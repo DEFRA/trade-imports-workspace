@@ -1,3 +1,4 @@
+import { fakeComposeDownLine } from '../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { createServer } from 'node:net'
@@ -81,12 +82,9 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
     `echo "run-stack.sh $*" >> '${calls}'\nif [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi\necho up > '${state}'`
   )
   writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `echo "stop-stack.sh $*" >> '${calls}'\nrm -f '${state}'`
-  )
-  writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      fakeComposeDownLine({ statePath: state, callsPath: calls }),
       `if [ "$1" != ps ] || [ ! -f '${state}' ]; then exit 0; fi`,
       `case "$5" in *working_dir*) cat '${stackWorkingDirPath()}' 2>/dev/null || echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
     ].join('\n')
@@ -540,7 +538,7 @@ describe('runGate — e2e rungs', () => {
       stack: outcome.stack
     }).toEqual({
       green: true,
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['run-stack.sh -d', 'docker compose down'],
       up: false,
       stack: expect.objectContaining({
         wasUp: false,
@@ -937,7 +935,7 @@ describe('runGate — e2e rungs', () => {
 
     expect({ green: outcome.green, calls: stackCalls() }).toEqual({
       green: true,
-      calls: ['run-stack.sh -d', 'stop-stack.sh']
+      calls: ['run-stack.sh -d', 'docker compose down']
     })
   })
 
@@ -1020,7 +1018,7 @@ describe('runGate — e2e rungs', () => {
           )
         })
       ],
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['run-stack.sh -d', 'docker compose down'],
       lease: null,
       held: null,
       startError: expect.stringMatching(
@@ -1157,7 +1155,7 @@ describe('runGate — running repos at the same time', () => {
       expect(stackCalls()).toEqual([
         'unit-done',
         'run-stack.sh -d',
-        'stop-stack.sh'
+        'docker compose down'
       ])
     },
     CONCURRENCY_TIMEOUT_MS
@@ -1231,7 +1229,7 @@ describe('runGate — running repos at the same time', () => {
         calls: stackCalls()
       }).toEqual({
         rungs: ['frontend:unit:pass', 'tests:e2e-plants:pass'],
-        calls: ['run-stack.sh -d', 'stop-stack.sh']
+        calls: ['run-stack.sh -d', 'docker compose down']
       })
     },
     CONCURRENCY_TIMEOUT_MS
@@ -1653,7 +1651,7 @@ describe('runGate — e2e left to CI', () => {
       rungs: outcomeOf(outcome.rungs),
       e2e: outcome.e2e
     }).toEqual({
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['run-stack.sh -d', 'docker compose down'],
       rungs: ['tests:e2e-plants:pass'],
       e2e: { where: 'local', leftToCi: [], evidence: null }
     })

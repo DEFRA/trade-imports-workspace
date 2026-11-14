@@ -9,7 +9,7 @@ const DOCKER_ITEMS = [
     label: 'Start the stack from local source (run-stack.sh -d)',
     value: 'dev'
   },
-  { label: 'Stop the stack (stop-stack.sh)', value: 'down' },
+  { label: 'Stop the stack (tim docker down)', value: 'down' },
   { label: 'Restart the whole stack (tim docker restart)', value: 'restart' },
   {
     label: 'Bounce backend (tim docker bounce-backend)',

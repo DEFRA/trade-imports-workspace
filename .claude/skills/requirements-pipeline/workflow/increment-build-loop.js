@@ -1329,8 +1329,8 @@ const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose pr
 
 const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
   once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
-  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
-  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
+  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\`, no
+  \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
   rebuild to test a change against it: it runs in dev mode, serving each frontend from its repo's src and restarting
   it a few seconds after a file there changes. Running a tests-repo spec against it, or \`tim build probe\` with
   \`--reload-url\`, is using it as it is.
@@ -1343,7 +1343,7 @@ ${OTHER_COMPOSE_GUARD}`
 const NO_STACK_GUARD = `- THERE IS NO WORKSPACE STACK IN THIS RUN, and that is deliberate: its end-to-end behaviour is
   proved by each repo's own pull request in CI, so the run takes no \`tim docker lease\` and the stack stays down.
   Never start it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no
-  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+  \`run-stack.sh\`, no \`docker compose\` against it.
 - SKIP any check that needs the stack up: anything driving a browser against it, and anything calling a service over
   \`localhost\`. Say in your summary which you skipped and why. Its absence is NOT a finding, and a stack that is
   down is NOT \`stackHeld\` or \`stackDown\` — never report either, whatever \`tim docker lease status\` says. The
@@ -1353,7 +1353,7 @@ ${OTHER_COMPOSE_GUARD}`
 const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
   \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
   you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
-  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+  \`run-stack.sh\`, no \`docker compose\` against it.
 ${OTHER_COMPOSE_GUARD}`
 
 const SECTION_5_STACK_LINE = E2E_IS_LOCAL
@@ -3393,7 +3393,7 @@ ${BOUNDED_TIDY_UP}
       plus any programme invariant this change could break. Other stages run these checks. Mark a check that needs
       the workspace stack up "needs the workspace stack": the run holds the stack's lease and keeps it up for every
       increment, and the stage that runs the check uses it as it is, so never write how to start or stop the stack
-      here — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease\`, no \`run-stack.sh\` or \`stop-stack.sh\`.
+      here — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease\`, no \`run-stack.sh\`.
       The integration proof is still the gate's E2E phase: for a criterion only the whole slice running end to end can prove, name the E2E rung from
       gates.json that carries it, as the check.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from

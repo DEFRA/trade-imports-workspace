@@ -58,7 +58,7 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 | Workspace → Reset                                            | `tim workspace reset`             |
 | Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
 | Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
-| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`                 |
+| Docker → Stop the stack (tim docker down)                    | `tim docker down`                 |
 | Docker → Restart the whole stack (tim docker restart)        | `tim docker restart`              |
 | Docker → Bounce backend (tim docker bounce-backend)          | `tim docker bounce-backend`       |
 | Start → Frontend (npm run dev)                               | `tim start frontend`              |
@@ -1048,7 +1048,7 @@ tim docker lease status --json                                                  
 - `release` takes down the stack its holder started, then clears the lease.
   It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
   stack nobody leases. A stack restarted by hand under the lease is left up and
-  the lease cleared (`FOREIGN_STACK`). When `stop-stack.sh` fails the lease is
+  the lease cleared (`FOREIGN_STACK`). When `docker compose down` fails the lease is
   kept.
 - A lease whose stack has gone, and whose start is not still running, is stale
   and the next `acquire` replaces it, under a lock (`stack-lease.json.lock`) so

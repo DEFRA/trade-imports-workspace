@@ -36,46 +36,22 @@ describe('#runStackCommand', () => {
     ])
   })
 
-  test.each([
-    ['up', 'run-stack.sh', 'run-stack.sh'],
-    ['down', 'stop-stack.sh', 'stop-stack.sh']
-  ])(
-    'Should give the exit code of the script %s runs, naming it',
-    async (command, script, ran) => {
-      writeStackScript(script, 5)
-
-      const result = await runStackCommand({
-        workspaceRoot: workspace,
-        command
-      })
-
-      expect(result).toEqual({
-        exitCode: 5,
-        durationMs: expect.any(Number),
-        ran
-      })
-    }
-  )
-
-  test('Should give the start exit code from a restart whose stop failed', async () => {
-    writeStackScript('stop-stack.sh', 4)
-    writeStackScript('run-stack.sh', 0)
+  test('Should give the exit code of the script up runs, naming it', async () => {
+    writeStackScript('run-stack.sh', 5)
 
     const result = await runStackCommand({
       workspaceRoot: workspace,
-      command: 'restart'
+      command: 'up'
     })
 
     expect(result).toEqual({
-      exitCode: 0,
+      exitCode: 5,
       durationMs: expect.any(Number),
       ran: 'run-stack.sh'
     })
   })
 
-  test('Should refuse with USAGE a restart in a workspace with no stop-stack.sh', async () => {
-    writeStackScript('run-stack.sh', 0)
-
+  test('Should refuse with USAGE a restart in a workspace with no run-stack.sh', async () => {
     await expect(
       runStackCommand({ workspaceRoot: workspace, command: 'restart' })
     ).rejects.toMatchObject({ name: 'TimError', code: 'USAGE' })

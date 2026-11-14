@@ -99,7 +99,7 @@ the wrappers and is the surface to use.
 ./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database
                                                             # only those profiles; intended for "running other tiers natively"
 
-./scripts/stack/stop-stack.sh         # down --volumes --remove-orphans
+tim docker down                       # down --volumes --remove-orphans, every profile included
 tim docker restart ...                # stop then run-stack (forwards -b / -e / -d / --profile)
 tim docker bounce-backend             # rebuild the backend image and recreate its container — picks up a pom.xml/dependency change
 tim docker service rebuild <service>...  # --dev stack: rebuild these images from local source, recreate them, wait for healthy
@@ -318,10 +318,11 @@ To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.j
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in
   `lib/colour.sh`; compose `-f` list in `lib/compose.sh`; init-script
   staging in `lib/init-scripts.sh`.
-- `stop-stack.sh` — sibling, shares `lib/` helpers.
-- `tim docker restart`, `tim docker bounce-backend` and `tim docker service`
-  run from tim (`tim/src/stack/`), with the compose files and profiles in
-  `tim/src/stack/definition.js`. `restart` runs `stop-stack.sh`, then
+- `tim docker down`, `tim docker restart`, `tim docker bounce-backend` and
+  `tim docker service` run from tim (`tim/src/stack/`), with the compose files
+  and profiles in `tim/src/stack/definition.js`. `down` names every profile,
+  the opt-in `security` and `monitoring` ones too, so nothing is left running.
+  `restart` takes the stack down the way `down` does, then runs
   `run-stack.sh` with its flags, even when the stop fails.
 - `tim docker service rebuild|restart <service>...` touches only the named
   services of a running `--dev` stack (`--no-deps`), with the same compose

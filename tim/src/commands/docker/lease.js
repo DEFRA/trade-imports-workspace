@@ -293,7 +293,7 @@ export const registerLease = (docker, timVersion) => {
     .option('--holder <text>', 'Who gives the lease back')
     .option(
       '--logs <dir>',
-      'Where stop-stack.sh writes its log (default workareas/stack-logs in this clone)'
+      'Where taking the stack down writes its log (default workareas/stack-logs in this clone)'
     )
     .option(
       '--force',

@@ -3,7 +3,6 @@ import {
   recordedStackScenario,
   recordTimStackRun
 } from '../test-support/fake-docker.js'
-import { asksForRestartHelp } from './restart.js'
 
 const outcomeOf = ({
   exitCode,
@@ -67,15 +66,4 @@ describe('tim docker restart', () => {
       })
     }
   )
-})
-
-describe('#asksForRestartHelp', () => {
-  test.each([
-    [['--help'], true],
-    [['-d', '-h'], true],
-    [['-d'], false],
-    [['-d', '--', '--help'], false]
-  ])('Should say whether %j asks for help: %s', (args, expected) => {
-    expect(asksForRestartHelp(args)).toBe(expected)
-  })
 })

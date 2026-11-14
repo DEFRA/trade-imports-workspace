@@ -7,6 +7,7 @@ import {
   writeFileSync,
   chmodSync,
   existsSync,
+  readFileSync,
   rmSync
 } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -96,14 +97,20 @@ describe('tim docker subcommands', () => {
     expect(exitCode).toBe(0)
   })
 
-  test('down runs scripts/stack/stop-stack.sh', async () => {
-    writeStackScript('stop-stack.sh', 'exit 0')
+  test('down runs docker compose down, wiping volumes, and exits 0 on success', async () => {
     const { exitCode } = await execa(
       'node',
       [cliPath, 'docker', 'down', '--workspace', workspace],
       { reject: false }
     )
-    expect(exitCode).toBe(0)
+
+    expect({
+      exitCode,
+      composeCall: readFileSync(ranPath(), 'utf8').trim().split(' ').slice(-3)
+    }).toEqual({
+      exitCode: 0,
+      composeCall: ['down', '--volumes', '--remove-orphans']
+    })
   })
 
   test('Should report a bounce-backend that docker compose finished in the --json envelope', async () => {
@@ -293,7 +300,6 @@ describe('tim docker under a stack lease', () => {
     '%s refuses while a build holds the lease, naming the holder',
     async (command) => {
       writeStackScript('run-stack.sh', `touch '${ranPath()}'`)
-      writeStackScript('stop-stack.sh', `touch '${ranPath()}'`)
       writeLease()
 
       const { stdout, exitCode } = await execa(
@@ -343,11 +349,8 @@ describe('tim docker under a stack lease', () => {
 describe('tim docker with a stack another clone started', () => {
   const otherClone = '/clones/trade-imports-workspace-a'
 
-  const writeMarkingScripts = () => {
-    for (const script of ['run-stack.sh', 'stop-stack.sh']) {
-      writeStackScript(script, `touch '${ranPath()}'`)
-    }
-  }
+  const writeMarkingScripts = () =>
+    writeStackScript('run-stack.sh', `touch '${ranPath()}'`)
 
   test.each(GUARDED_COMMANDS)(
     '%s refuses with STACK_OTHER_CLONE, naming that clone',
@@ -404,8 +407,7 @@ describe('tim docker with a stack another clone started', () => {
     })
   })
 
-  test('goes ahead with --force, and does not pass --force to the script', async () => {
-    writeStackScript('stop-stack.sh', `[ "$#" = 0 ] && touch '${ranPath()}'`)
+  test('goes ahead with --force, and does not pass --force to docker compose', async () => {
     stackStartedFrom(otherClone)
 
     const { exitCode } = await execa(
@@ -414,9 +416,12 @@ describe('tim docker with a stack another clone started', () => {
       { reject: false }
     )
 
-    expect({ exitCode, ran: existsSync(ranPath()) }).toEqual({
+    expect({
+      exitCode,
+      composeCallEnd: readFileSync(ranPath(), 'utf8').trim().split(' ').at(-1)
+    }).toEqual({
       exitCode: 0,
-      ran: true
+      composeCallEnd: '--remove-orphans'
     })
   })
 

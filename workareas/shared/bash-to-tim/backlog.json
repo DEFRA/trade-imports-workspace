@@ -2015,14 +2015,42 @@
       ],
       "risk": "High for score: the unscorable-overlap guard decides verdicts and must be ported line for line. The categorical-verb check must agree with BSD grep \\b.",
       "proof": "A table of about 30 overlap pairs and about 20 verb strings, run through bash and tim with identical results. A byte diff of report.md.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "626fa103"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "a25ddba8"
+          }
+        ],
+        "checks": [
+          "verifier problem 1 (null questions): FIXED in a25ddba8. tim/src/understanding-check/transcript.js readQuestions and questions.js readExistingQuestions now read questions through jq-values elements(), so a null or missing questions refuses with exit 1 ('Error: <path> questions is not a list') before anything is written, in answer, question replace, question remove and score. score checks questions.json and transcript.json exist in the Bash order and reads the questions only for a quoted --rubric-match, as transcript-add-score.sh did, so an empty or <unscorable> match still records FAIL without reading them. question add still treats null as empty, as jq's `.questions | length` and `+=` did. New tests in transcript.test.js and questions.test.js cover the verifier's repro (score refuses, transcript.json unchanged, coverage_gaps unchanged), answer refusing with no transcript started, replace and remove refusing, add giving Q1, and an empty match recording FAIL on null questions.",
+          "verifier problem 2 (echo-option summary): FIXED in a25ddba8. New tim/src/understanding-check/echo.js (with echo.test.js) owns the echo-option rule: isEchoOptionsOnly, and echoedLines, which gives the lines bash `echo \"$text\"` printed: the text, no line for options containing n, or one empty line for -e/-E/-eE. report.js ticketSummaryLines uses echoedLines when there is no ticket.md. rubric.js squeezedText now imports isEchoOptionsOnly, so it no longer keeps its own copy of the regex. report.test.js covers a plain summary, '-n' giving '## 2. Ticket summary\\n\\n\\n## 3.' (the Bash output the verifier quoted) and '-eE' giving one empty line.",
+          "mutation probes: changing readQuestions back to `?? []` turned the answer and score null-questions tests red. Changing ticketSummaryLines back to [summary] turned both echo-option report tests red. Both changes restored afterwards.",
+          "tim-unit: PASS. npm --prefix tim test: 293 files passed and 8 skipped; 4893 tests passed.",
+          "tim-lint: PASS. npm run lint and npm run format:check are both clean.",
+          "parity goldens: PASS. understanding-check-interview and the P40 goldens still match byte for byte. No recorded case had null questions or an echo-option summary without ticket.md.",
+          "no new .sh file and no new fixed path in a25ddba8."
+        ],
+        "deviations": [
+          "Usage lines now read 'Usage: tim understanding-check <command> ...' where they used to name the script. An unknown option now gets commander's error with exit 1, where the Bash printed 'Unknown arg'.",
+          "A full report with no questions.json now refuses with exit 1 ('Error: <path> not found — generate questions first') and writes no report.md. render-report.sh died in jq with exit 2 after writing part of report.md.",
+          "Where jq died on a file the skill would never write, tim refuses with exit 1 before writing anything. This covers a questions value that is null, missing or not a list in answer, question replace, question remove and score with a quoted --rubric-match (jq exit 5, 'Cannot iterate over null'), and an entries or prs value that is not a list, or a commit that is not text, in report. The new message is 'Error: <path> questions is not a list'. question add still treats a null or missing questions as empty, as jq did. score with an empty or <unscorable> match does not read the questions, as the Bash did not. The goldens do not record these shapes; unit tests cover them.",
+          "--json prints tim's envelope for each new command. score's result carries the unscorable flag and the warning text.",
+          "Not in the row: requireGiven and requireExisting moved into a new tim/src/understanding-check/refusals.js, and analysis.js (from P40) now imports them. The tim-recording helper moved into test-support/bash-golden-harness.js as recordTimRun, and P40's index.test.js now uses it. The echo-option rule moved into a new echo.js, shared by the rubric clause squeeze and the report's ticket summary.",
+          "Analysis files for the report are listed in plain code-unit sort order. The recorded cases (all lowercase repo names) matched bash's glob order. Mixed-case names were not recorded."
+        ]
+      }
     },
     {
       "id": "P42",

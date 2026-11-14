@@ -14,3 +14,14 @@ then delete the row's section from this file and commit both.
 
 None. No allowlist entry names `tools/skill-creator/`; the generic
 `tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P36
+
+The row deletes every script in `tools/theme-ticket/`. Remove:
+
+```
+Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*)
+Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)
+```
+
+`Bash(tim:*)` covers `tim theme-ticket`.

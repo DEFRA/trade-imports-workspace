@@ -35,6 +35,7 @@ import { register as registerRefine } from './commands/refine/index.js'
 import { register as registerServiceTag } from './commands/service-tag/index.js'
 import { register as registerCapabilities } from './commands/capabilities/index.js'
 import { register as registerSkill } from './commands/skill/index.js'
+import { register as registerThemeTicket } from './commands/theme-ticket/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -176,6 +177,7 @@ export const buildProgram = () => {
   registerServiceTag(program, { timVersion: pkg.version })
   registerCapabilities(program, { timVersion: pkg.version })
   registerSkill(program, { timVersion: pkg.version })
+  registerThemeTicket(program, { timVersion: pkg.version })
 
   return program
 }

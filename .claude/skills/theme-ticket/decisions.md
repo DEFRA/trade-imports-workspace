@@ -35,10 +35,10 @@ Write and maintain the business-facing Jira tickets for a built theme: one ticke
 
 ## 7. Helpers introduced
 
-- start-theme-ticket
-- derive-scenarios
-- check-stale
-- push-description
+- tim theme-ticket start
+- tim theme-ticket derive
+- tim theme-ticket stale
+- tim theme-ticket push
 
 ## 8. Triggers
 

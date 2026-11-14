@@ -236,6 +236,36 @@ tim skill scaffold --run-id ticket-notes --dry-run
   stamps `scaffolded_at`. `--dry-run` only says what it would write.
 - Every refusal exits 1. Paths come from the workspace tim runs in.
 
+### `tim theme-ticket` — the theme-ticket skill's steps
+
+```bash
+tim theme-ticket start "which theme tickets are stale" --workarea shared/design-release-2-1
+tim theme-ticket derive --workarea shared/design-release-2-1 --theme origin-page --out derived.json
+tim theme-ticket stale --workarea shared/design-release-2-1
+tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
+```
+
+- `start` prints `MODE: <NAME>` (STUB, START, WRITE, MERGE or STALE, from
+  `--mode` or the trigger phrase), then indented JSON with the workarea's
+  paths, the branch and each ticket folder with its Jira key. It makes the
+  workarea's `tickets/` folder if it is missing.
+- `derive` finds the commits that wrote the theme's openspec (scoped by the
+  theme, a Jira key `tickets.json` records for it, or a row scope), takes
+  the scenarios they added, reads each from the current spec, and splits
+  scenarios, spec files and rows by domain. A scenario a later commit
+  renamed keeps its id and counts; one whose id no spec holds now is
+  named in `warnings`. A review commit counts only inside the spec files
+  the row commits wrote, unless `footprint-overrides.json` includes it.
+  It fails rather than publish a split that does not sum, or one with an
+  openspec area it has no domain for.
+- `stale` compares, per ticket folder, the last change on the branch to
+  the spec files its description links to against the Jira ticket's last
+  update, as instants with their offsets. It reads only.
+- `push` posts `description.txt` and the summary from `ticket.json` in one
+  update, refusing hard-wrapped prose and `{expand}`. It is a dry run that
+  sends nothing until `--confirm`.
+- A usage error exits 2; every other refusal exits 1.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

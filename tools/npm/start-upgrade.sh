@@ -28,7 +28,7 @@
 #              entry. After workers finish, the caller runs
 #              `tim npm packages verify` as the gate.
 #
-#   --phase 2  Spawn `run-automated-upgrades.sh` per repo in
+#   --phase 2  Spawn `tim npm run-auto` per repo in
 #              parallel (background tasks), aggregate exit codes,
 #              emit a JSON status summary on stdout. Exits 1 unless
 #              every runner exited 0: `cascade_failures` (runner exit
@@ -43,7 +43,7 @@
 #              reason, owner and expiry) and `audit_before` /
 #              `audit_after` (the first and latest phase 0 runs).
 #
-#   --phase 4  Run `reset-overrides.sh` per repo, in parallel across
+#   --phase 4  Run `tim npm reset-overrides` per repo, in parallel across
 #              repos: remove every override, put back only those a
 #              failing audit, test, lint or build proves are needed,
 #              commit "Remove overrides". Emits a JSON summary; exits
@@ -307,7 +307,7 @@ phase2() {
     # internal --no-discover / sequential-package loop is honoured),
     # but each repo runs in parallel via background subshells. A repo
     # with no auto packages still runs, for its end-of-batch lockfile
-    # refresh (refresh-lockfile.sh).
+    # refresh (tim npm refresh-lockfile).
     local tmpdir
     tmpdir=$(mktemp -d)
     trap "rm -rf $tmpdir" RETURN
@@ -322,7 +322,7 @@ phase2() {
         # killing it before the exit code is written.
         (
             code=0
-            "$SCRIPT_DIR/run-automated-upgrades.sh" "$repo" --run-id "$TICKET" \
+            tim --workspace "$WORKSPACE" npm run-auto --repo "$repo" --run-id "$TICKET" \
                 ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"} \
                 >"$tmpdir/$repo.log" 2>&1 || code=$?
             echo "$code" > "$tmpdir/$repo.exit"
@@ -382,7 +382,7 @@ phase3() {
 
     # Emit the handoff manifest: every manual package (regardless of
     # status) plus any auto that ended up failed (these have already
-    # been demoted to manual by upgrade-one-package, but the safety
+    # been demoted to manual by tim npm upgrade-one, but the safety
     # net is cheap).
     local manual_json failed_json
     manual_json=$(tim_packages list \
@@ -462,7 +462,7 @@ phase3() {
 }
 
 phase4() {
-    # One reset-overrides.sh per repo, in parallel across repos (each
+    # One tim npm reset-overrides per repo, in parallel across repos (each
     # works in its own throwaway worktree).
     mkdir -p "$WORKSPACE_BASE"
     local tmpdir
@@ -474,7 +474,7 @@ phase4() {
         echo "Resetting overrides in $repo..." >&2
         (
             code=0
-            "$SCRIPT_DIR/reset-overrides.sh" --run-id "$TICKET" --repo "$repo" \
+            tim --workspace "$WORKSPACE" npm reset-overrides --run-id "$TICKET" --repo "$repo" \
                 >"$tmpdir/$repo.out" 2>"$tmpdir/$repo.err" || code=$?
             echo "$code" > "$tmpdir/$repo.exit"
         ) &

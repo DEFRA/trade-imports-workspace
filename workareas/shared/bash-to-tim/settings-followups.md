@@ -333,3 +333,10 @@ No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/npm/audit-lib.sh`, `audit-fix-check.mjs`, `audit-baseline.sh`,
 `audit-allowlist-add.sh`, `audit-allowlist-forget.sh` or `npm-in-repo.sh`;
 nothing to remove.
+
+## P67
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/upgrade-one-package.sh`, `refresh-lockfile.sh`,
+`run-automated-upgrades.sh`, `run-manual-upgrade.sh` or
+`reset-overrides.sh`; nothing to remove.

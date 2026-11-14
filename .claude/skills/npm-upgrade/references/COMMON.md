@@ -22,17 +22,17 @@ invoke them by absolute path.
 | `tim npm audit forget` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves) |
 | `tim npm audit gate` | 2–3 | Audit after one package upgrade; allowlist advisories with no fix when given an owner and expiry |
 | `tim npm exec --repo R -- <npm args>` | 2–3 | Run npm in a repo at its real path, so a symlinked workspace never rewrites the lockfile |
-| `refresh-lockfile.sh` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
-| `reset-overrides.sh` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
+| `tim npm refresh-lockfile` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
+| `tim npm reset-overrides` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
 | `tim npm discover` | 1 | Find outdated packages + seed `packages.{repo}.json` |
 | `tim npm context prebake` | 1 | Per-package context bundle (best-effort) |
 | `tim npm context best-practices` | 1 | Per-repo best-practices bundle |
 | `tim npm packages set-classification` / `tim npm packages set-status` | All | JSON state writers (atomic) |
 | `tim npm packages list` / `tim npm packages counts` | All | JSON state queries |
 | `tim npm packages verify` | 1 | Phase 1 gate |
-| `run-automated-upgrades.sh` | 2 | Per-repo automated runner |
-| `upgrade-one-package.sh` | 2 | Internal: install + test + commit + rollback, JSON-aware |
-| `run-manual-upgrade.sh` | 3 | Per-package manual runner (spawned by WALKER) |
+| `tim npm run-auto` | 2 | Per-repo automated runner |
+| `tim npm upgrade-one` | 2 | Internal: install + test + commit + rollback, JSON-aware |
+| `tim npm run-manual` | 3 | Per-package manual runner (spawned by WALKER) |
 
 ## State model
 
@@ -55,9 +55,9 @@ in the same JSON row.
 `trade-imports-ins-tests` has **no unit-test suite** — it IS the
 E2E suite (Playwright runner against the live stack). The per-package
 `npm test` baseline + post-upgrade checks are SKIPPED for this repo
-inside both `upgrade-one-package.sh` and `run-manual-upgrade.sh`.
+inside both `tim npm upgrade-one` and `tim npm run-manual`.
 
-Instead, the orchestrating runner — `run-automated-upgrades.sh` for
+Instead, the orchestrating runner — `tim npm run-auto` for
 the auto side, and the WALKER for the manual side — runs
 `npm run test:docker-compose` **once at end of batch** as the integration
 gate. A failure there means at least one of the just-landed

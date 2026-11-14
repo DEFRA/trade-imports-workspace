@@ -20,6 +20,7 @@ import { registerAudit } from './audit.js'
 import { registerContext } from './context.js'
 import { registerExec } from './exec.js'
 import { registerDiscover } from './discover.js'
+import { registerUpgradeSteps } from './upgrade.js'
 import { writeLine } from '../_write-line.js'
 
 const workspaceRootOf = (opts) =>
@@ -293,4 +294,5 @@ export const register = (program, { timVersion }) => {
   registerContext(npm, { timVersion })
   registerAudit(npm, { timVersion })
   registerExec(npm)
+  registerUpgradeSteps(npm, { timVersion })
 }

@@ -555,6 +555,32 @@ tim npm exec --repo trade-imports-animals-frontend -- install date-fns@4.3.0
 - `exec` runs `npm --prefix <real path>` with the arguments after `--`,
   and exits with npm's exit code. A missing repo or argument exits 1.
 
+### `tim npm upgrade-one`, `run-manual`, `run-auto`, `refresh-lockfile` and `reset-overrides` — change a repo
+
+```bash
+tim npm upgrade-one --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash
+tim npm run-manual --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi --allowlist-owner "Sam Farrington" --expiry-days 30
+tim npm run-auto --repo trade-imports-animals-frontend --run-id EUDPA-500
+tim npm refresh-lockfile --run-id EUDPA-500 --repo trade-imports-schemas
+tim npm reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend
+```
+
+- `upgrade-one` and `run-manual` run the baseline tests and audit, the
+  install, the tests and `audit gate`, then commit. npm runs on the Node
+  version the repo's `.nvmrc` names when `$NVM_DIR/nvm.sh` (else
+  `~/.nvm/nvm.sh`) exists. A failure after the install restores
+  `package.json`, `package-lock.json` and `audit-ci.jsonc` from HEAD.
+  `upgrade-one` demotes the package to manual and exits 0, 1 on a
+  cascade, 3 when the audit is red before the install or cannot run.
+  `run-manual` marks it failed and exits 0, 1 on a cascade, 2 on
+  uncommitted changes. Progress goes to stdout.
+- `run-auto` runs `upgrade-one` for every pending automatic package of
+  one repo, then `refresh-lockfile`, and exits 0, 1 or 3 the same way.
+  The repo can also be the first argument.
+- `refresh-lockfile` and `reset-overrides` print one JSON line (an
+  envelope with `--json`). Everything npm prints goes to a log under
+  `workareas/npm-upgrades/<run>/<repo>/`.
+
 ### `tim review` — the review skill's helpers
 
 ```bash

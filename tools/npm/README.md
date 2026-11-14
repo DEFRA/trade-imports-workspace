@@ -19,19 +19,19 @@ check after one package upgrade. `tim npm exec --repo R -- <npm args>`
 runs npm in a repo at its real path. See `tim npm audit --help` and
 `tim npm exec --help`.
 
-## Override and lockfile tooling (EUDPA-668)
+## Upgrades, lockfile refresh and override reset
 
-These scripts serve the `npm-upgrade` skill's phase 2 lockfile refresh
+These tim commands serve the `npm-upgrade` skill's phase 2 upgrades, its lockfile refresh
 and phase 4 (override reset). Each repo that has adopted audit-ci keeps
 a comment-free `audit-ci.jsonc` at its root. State goes under
-`workareas/npm-upgrades/{run-id}/{repo}/`. Every script takes
+`workareas/npm-upgrades/{run-id}/{repo}/`. Every command but `run-auto` takes
 `--repo-path PATH` to work on a scratch checkout instead of
 `repos/<repo>`.
 
-### refresh-lockfile.sh
+### tim npm refresh-lockfile
 
 ```bash
-./refresh-lockfile.sh --run-id EUDPA-668 --repo trade-imports-schemas
+tim npm refresh-lockfile --run-id EUDPA-668 --repo trade-imports-schemas
 ```
 
 `npm update` (lockfile only; it rolls back if `package.json` changes),
@@ -40,12 +40,12 @@ then `npm test` (not in trade-imports-ins-tests), `npm run lint` and
 Any failure, including a refused commit, restores `package.json` and
 `package-lock.json` from HEAD. Prints `{repo, status:
 committed|no_change|rolled_back, commit, reason, log}`.
-`run-automated-upgrades.sh` calls it at the end of each repo's batch.
+`tim npm run-auto` calls it at the end of each repo's batch.
 
-### reset-overrides.sh
+### tim npm reset-overrides
 
 ```bash
-./reset-overrides.sh --run-id EUDPA-668 --repo trade-imports-animals-frontend
+tim npm reset-overrides --run-id EUDPA-668 --repo trade-imports-animals-frontend
 ```
 
 Saves the repo's `overrides`, flattened per leaf
@@ -62,3 +62,19 @@ removed, below_threshold, reason, worktree}`. It stops (exit 1, worktree
 kept) on an advisory no override covers, or a check that fails with
 every override back. `start-upgrade.sh --phase 4` runs it per repo in
 parallel.
+
+### tim npm upgrade-one, run-manual and run-auto
+
+```bash
+tim npm run-auto --repo trade-imports-animals-frontend --run-id EUDPA-668 --allowlist-owner "Sam Farrington" --expiry-days 30
+tim npm run-manual --run-id EUDPA-668 --repo trade-imports-animals-frontend --package @hapi/hapi
+```
+
+`upgrade-one` (phase 2) and `run-manual` (phase 3) upgrade one package:
+baseline tests and audit, install, tests, `tim npm audit gate`, then a
+commit. npm runs on the Node version the repo's `.nvmrc` names when nvm
+is installed (`NVM_DIR`, else `~/.nvm`). A failure after the install
+restores `package.json`, `package-lock.json` and `audit-ci.jsonc` from
+HEAD; `upgrade-one` demotes the package to manual, `run-manual` marks it
+failed. `run-auto` runs `upgrade-one` for every pending automatic
+package of one repo, then `refresh-lockfile`.

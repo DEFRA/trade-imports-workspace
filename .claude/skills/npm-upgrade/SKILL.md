@@ -166,12 +166,12 @@ Follow references/AUTOMATED_EXECUTION.md. Run ID: {run-id}
 ```
 
 Phase 2 calls the dispatcher (`start-upgrade.sh --phase 2`) which
-fans out `run-automated-upgrades.sh` per repo in parallel and
+fans out `tim npm run-auto` per repo in parallel and
 aggregates JSON status. Per-package demotions to manual happen
 automatically. Each package is audited after its tests; pass
 `--allowlist-owner` and `--expiry-days` so a new advisory with no fix
 is allowlisted rather than demoting the package. Each repo's batch
-ends with `refresh-lockfile.sh` (transitive dependencies within their
+ends with `tim npm refresh-lockfile` (transitive dependencies within their
 ranges).
 
 Present its report verbatim. **Gate:** "Phase 2 complete. Proceed to
@@ -213,7 +213,7 @@ no `overrides` and keep only the ones it can prove it needs:
 ~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 4 --branch {branch}
 ```
 
-Per repo (in parallel), `reset-overrides.sh` does every trial in a
+Per repo (in parallel), `tim npm reset-overrides` does every trial in a
 throwaway git worktree under the run's workarea, so the repo checkout
 never sees a red state. With no overrides it runs install, update,
 audit, test, lint and `build:frontend`. A failing advisory (high and
@@ -251,14 +251,14 @@ Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 - `start-upgrade.sh` — single dispatcher (phase 0 / 1 / 2 / 3 / 4).
 - `tim npm audit baseline` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
 - `tim npm audit allow` — write or renew one `audit-ci.jsonc` allowlist entry.
-- `refresh-lockfile.sh` — Phase 2 end-of-batch transitive refresh.
-- `reset-overrides.sh` — Phase 4 per-repo override reset.
+- `tim npm refresh-lockfile` — Phase 2 end-of-batch transitive refresh.
+- `tim npm reset-overrides` — Phase 4 per-repo override reset.
 - `tim npm discover` — discovery + seed `packages.{repo}.json`.
 - `tim npm context prebake` — per-package context pre-bake (best-effort).
 - `tim npm context best-practices` — per-repo best-practices bundle.
 - `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
 - `tim npm packages list` / `tim npm packages counts` — JSON state queries.
 - `tim npm packages verify` — Phase 1 gate.
-- `run-automated-upgrades.sh` — Phase 2 per-repo runner.
-- `upgrade-one-package.sh` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
-- `run-manual-upgrade.sh` — Phase 3 per-package runner (spawned by WALKER on `I`).
+- `tim npm run-auto` — Phase 2 per-repo runner.
+- `tim npm upgrade-one` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
+- `tim npm run-manual` — Phase 3 per-package runner (spawned by WALKER on `I`).

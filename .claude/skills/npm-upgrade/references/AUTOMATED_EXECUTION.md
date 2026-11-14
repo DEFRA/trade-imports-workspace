@@ -31,7 +31,7 @@ One call runs all repos in parallel and aggregates exit codes:
 ```
 
 For each package, in a repo that has `audit-ci.jsonc`,
-`upgrade-one-package.sh` audits the tree before the install (red there
+`tim npm upgrade-one` audits the tree before the install (red there
 marks the package failed as a repo issue, without demoting it) and
 again after the tests pass:
 
@@ -48,7 +48,7 @@ audit and the tests) also rolls back and demotes, with the hook's
 output as the reason.
 
 At the end of each repo's batch, even one with no auto packages,
-`run-automated-upgrades.sh` calls `refresh-lockfile.sh`: `npm update`
+`tim npm run-auto` calls `tim npm refresh-lockfile`: `npm update`
 within the existing ranges (`package.json` untouched), then test, lint
 and audit, then a "Refresh transitive dependencies" commit. This is how
 fixed transitive releases arrive; ncu only sees direct dependencies. A
@@ -118,7 +118,7 @@ Each prints a tim JSON envelope; the rows are its `.result` array.
 
 ## Notes
 
-- Demotion is automatic inside `upgrade-one-package.sh` — when an
+- Demotion is automatic inside `tim npm upgrade-one` — when an
   install, test, audit or commit fails, the row's classification flips to `manual`
   with `demoted_from_auto: true` and a populated `failure_reason`.
   Phase 3 picks these up alongside the natively-manual packages.

@@ -55,7 +55,7 @@ state lives in `packages.{repo}.json`.
       "changelog_url": null,                  // optional
       "migration_guide_url": null,            // optional
 
-      // Set by upgrade-one-package.sh / run-manual-upgrade.sh via
+      // Set by tim npm upgrade-one / tim npm run-manual via
       // `tim npm packages set-status`.
       "implementation_status": null,          // null | "todo" | "inprogress" | "done" | "failed"
       "failure_reason": null,                 // free-text on failure
@@ -77,14 +77,14 @@ state lives in `packages.{repo}.json`.
 |---|---|---|
 | `null` | Pending — `PACKAGE_PLANNER` has not yet classified. | Default. |
 | `"auto"` | No code changes required; safe to upgrade automatically. | `tim npm packages set-classification --classification auto`. |
-| `"manual"` | Code changes required, or risk too high for automation. | `tim npm packages set-classification --classification manual`. Auto-set by upgrade-one-package when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
+| `"manual"` | Code changes required, or risk too high for automation. | `tim npm packages set-classification --classification manual`. Auto-set by `tim npm upgrade-one` when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
 
 ## Implementation status values
 
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | No implementation attempt yet. | Default. |
-| `"todo"` | Queued for the runner (`run-automated-upgrades.sh` or `run-manual-upgrade.sh`). | `tim npm packages set-status --status todo`. |
+| `"todo"` | Queued for the runner (`tim npm run-auto` or `tim npm run-manual`). | `tim npm packages set-status --status todo`. |
 | `"inprogress"` | Runner has claimed it. | `tim npm packages set-status --status inprogress`. |
 | `"done"` | Upgrade committed locally. `commit_sha` populated. | `tim npm packages set-status --status done --commit-sha SHA`. |
 | `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `tim npm packages set-status --status failed --failure-reason "..."`. |
@@ -193,7 +193,7 @@ A rolled-back upgrade removes the rows it added.
 
 ### `overrides.{repo}.json`
 
-Written by `reset-overrides.sh` (phase 4): one row per leaf override in
+Written by `tim npm reset-overrides` (phase 4): one row per leaf override in
 the repo's `package.json` at HEAD.
 
 ```jsonc

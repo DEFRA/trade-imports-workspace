@@ -161,11 +161,11 @@ not given them (the sweep's workflow args `allowlistOwner` and
 The implementor returns one of `DONE`, `FAILED`, `SKIPPED`. It updates
 JSON state itself via `tim npm packages set-status`; you don't need to.
 
-You can also call `run-manual-upgrade.sh` directly if you'd prefer the
+You can also call `tim npm run-manual` directly if you'd prefer the
 script-driven flow without an extra subagent:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/run-manual-upgrade.sh \
+tim npm run-manual \
   --run-id EUDPA-XXXXX --repo {repo} --package {package} \
   --allowlist-owner "{owner}" --expiry-days {expiry-days}
 ```

@@ -232,8 +232,8 @@ const removeMirror = async (outputDir, log) => {
  * @param {string} opts.baseUrl - The Atlassian base URL, as `JIRA_BASE_URL` holds it
  * @param {string} [opts.rootId] - The folder or page the tree starts at
  * @param {string} [opts.pageId] - Refresh only this page, in the file it was synced to
- * @param {boolean} [opts.dryRun] - Fetch and report, but write and remove nothing in the mirror
- * @param {boolean} [opts.clean] - Remove the mirror folder before syncing
+ * @param {boolean} [opts.dryRun] - Fetch and report, but write nothing. With `clean` set, the mirror is still removed
+ * @param {boolean} [opts.clean] - Remove the mirror folder before syncing, even under `dryRun`
  * @param {(line: string) => Promise<void>|void} [opts.log] - Receives each progress line
  * @param {() => Promise<void>} [opts.pause] - Waited on before each child is fetched
  * @param {Date} [opts.now] - When the index says the sync ran

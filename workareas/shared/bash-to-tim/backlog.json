@@ -3314,7 +3314,7 @@
       ],
       "risk": "High: the most logic, and the build loop depends on it every row. Probes and pulls must stay concurrent, and signals must kill the early pulls.",
       "proof": "Golden argv and env diffs for every run-stack scenario. Fixtures for mongo retry and post-healthy re-check. A staging tree diff and the zap inode test. A live canary of tim docker dev then tim build gate.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -3323,8 +3323,68 @@
         "stack-smoke"
       ],
       "evidence": {
-        "previousBlockedReason": "The live canary and stack-smoke could not run: the workspace stack was started by hand and nobody holds a lease, so it must not be taken down without Sam. Do not block on them. Cherry-pick the recoverable commits, check parity, unit and lint are still green, and record the canary (tim docker dev, then tim build gate, under a lease) as not run, pointing at item 9 in NEEDS-SAM.md. The landing phase CI E2E run starts the stack through this code once P62 lands. The earlier session also could not run the global tim: that was a stale link to src/cli.js, which had lost its execute bit, and is fixed.",
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: d33f2d7f; trade-imports-address-book: d0c5f16; trade-imports-animals-admin: facbdf8; trade-imports-animals-backend: aeb5454; trade-imports-animals-frontend: 7e83590b; trade-imports-defra-id-stub: 6ab32c7; trade-imports-dynamics-gateway: 27421cd; trade-imports-ins-frontend: 35d96ef; trade-imports-ins-tests: bf5cab4; trade-imports-plants-frontend: 5c2adbf; trade-imports-reference-data: b7a63cb. Cherry-pick them and fix only the reason, rather than rebuilding."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "ade26429c182542e881aa294ce26e6782d7d7eb9"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "358be874"
+          },
+          {
+            "repo": "trade-imports-address-book",
+            "sha": "a769e54"
+          },
+          {
+            "repo": "trade-imports-animals-admin",
+            "sha": "a6a226c"
+          },
+          {
+            "repo": "trade-imports-animals-backend",
+            "sha": "7fc0b88"
+          },
+          {
+            "repo": "trade-imports-animals-frontend",
+            "sha": "f4d53cea"
+          },
+          {
+            "repo": "trade-imports-defra-id-stub",
+            "sha": "28f61fe"
+          },
+          {
+            "repo": "trade-imports-dynamics-gateway",
+            "sha": "d924066"
+          },
+          {
+            "repo": "trade-imports-ins-frontend",
+            "sha": "50b0ca8"
+          },
+          {
+            "repo": "trade-imports-ins-tests",
+            "sha": "94022da"
+          },
+          {
+            "repo": "trade-imports-plants-frontend",
+            "sha": "90fb4eb"
+          },
+          {
+            "repo": "trade-imports-reference-data",
+            "sha": "dacb51f"
+          }
+        ],
+        "checks": [
+          "Fixed the verifier's finding (exit code and --json change for start-flag errors) by naming it as intentional, not reverting it. Exit 2 (USAGE) is tim's rule for argument-validation failures (tim/.claude/rules/cli-patterns.md), and tim/src/commands/docker/index.test.js already covers it: 'Should exit 2 from up --bogus / up -e nope / dev -b feat/x' and 'up refuses an unknown exclude label with USAGE in --json'. I amended the message of the unpushed HEAD commit (30e7d290, now 358be874) to add an 'Intentional change' entry. It lists the triggers (unknown flag, -b with no value, unknown -e label or profile, -b with -d, bad STUB_PROFILE under --perf), the new exit code 2/USAGE instead of 1/ERROR, and the new --json envelope (result null, errors [{code:'USAGE', message:<flag error>}]) instead of {code:'ERROR', message:'run-stack.sh exited 2'}.",
+          "Tree unchanged: git diff 30e7d290 358be874 is empty",
+          "tim-unit: green, 434 test files passed, 29 skipped; 6430 tests passed, 8 expected fail, 40 skipped",
+          "tim-lint: green, npm run lint and npm run format:check both clean",
+          "parity: green, unchanged (the run-stack.sh golden tests pass in the tim suite)",
+          "fixed-path / new .sh: no change to the tree, so still none",
+          "stack-smoke and live canary: not run, as before; see NEEDS-SAM.md item 9"
+        ],
+        "deviations": [
+          "I amended the commit message of 30e7d290 (unpushed, branch ahead of origin by 2) instead of adding a commit. The new SHA is 358be874 and the tree is the same. The new intentional change is named in that commit, not added to the 'Intentional changes' list in ade26429, because rewriting ade26429 would need a rebase."
+        ]
       }
     },
     {

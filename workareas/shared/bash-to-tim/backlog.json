@@ -3421,7 +3421,7 @@
       ],
       "risk": "Medium: adds a tim npm ci to every e2e run (cache it).",
       "proof": "A branch PR's e2e run prints the same per-service resolution lines as a recent green main run, and passes. A security scan dispatch passes. `git grep scripts/stack` returns only history.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -3430,8 +3430,46 @@
         "stack-smoke"
       ],
       "evidence": {
-        "previousBlockedReason": "The verifier only flagged the run-stack.sh mention at repos/trade-imports-plants-prototype/README.md:300, and changing it needs a prototype commit whose pre-commit hook fails on ins-address-book.test.js (the prototype lacks the addressTypeOfRole and keepRolesOfferedBy exports ins-frontend has). That is the prototype owners decision, so the prototype README is out of this row: do not edit the prototype, and do not use --no-verify. It is item 11 in NEEDS-SAM.md. The verifier must not block on that one line. The draft PR does not run E2E, and the security scan dispatch is a GitHub Actions run: record both as not run, for the landing phase.",
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: dc679488; trade-imports-animals-frontend: 65119129; trade-imports-plants-frontend: f65a1c7; trade-imports-ins-frontend: 86b8152; trade-imports-performance-tests: f03b201; trade-imports-ins-tests: a99d4a1. Cherry-pick them and fix only the reason, rather than rebuilding."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "dcd4ae63"
+          },
+          {
+            "repo": "trade-imports-animals-frontend",
+            "sha": "689f5d3a"
+          },
+          {
+            "repo": "trade-imports-plants-frontend",
+            "sha": "e2ee262"
+          },
+          {
+            "repo": "trade-imports-ins-frontend",
+            "sha": "27ab047"
+          },
+          {
+            "repo": "trade-imports-performance-tests",
+            "sha": "5a37b78"
+          },
+          {
+            "repo": "trade-imports-ins-tests",
+            "sha": "2a43737"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. npm --prefix tim test gave 432 files passed, 29 skipped; 6421 tests passed, 8 expected fail, 36 skipped (log at ~/git/defra/trade-imports-workspace/workareas/shared/bash-to-tim/logs/P62-tim-test.log).",
+          "tim-lint: clean. eslint passed, and prettier format:check reports all files formatted.",
+          "parity: green. The goldens recorded from run-stack.sh are in tim/src/test-support/fixtures/stack/run-stack.json: a CI branch run, and --branch main --profile security under CI. start.test.js and compose.test.js reproduce their stdout, stderr, exit code, Docker and git calls and staged files, and pass.",
+          "no-callers: green. git grep for run-stack and scripts/stack across the workspace and repos/* finds only these: the recorded-golden fixture names in tim tests, the history review docs in address-book, and repos/trade-imports-plants-prototype/README.md:300, which the row excludes (NEEDS-SAM item 11). No .claude/settings*.json allowlist names the deleted scripts.",
+          "stack-smoke: not run. Someone started the workspace stack by hand and nobody holds a lease on it, so tim docker lease acquire refuses it, and taking it down would wipe a stack someone may be using (NEEDS-SAM item 9, as for P58 to P61). This is recorded under P62 in settings-followups.md.",
+          "fixed paths and .sh files: the diff adds no ~/git/defra or $HOME/git/defra path and no .sh file. Five .sh files are deleted (run-stack.sh and lib/{flags,init-scripts,compose,colour}.sh), and scripts/stack/ is gone.",
+          "proof steps run in GitHub Actions: not run. The branch PR's e2e run and the security-active-scan dispatch are left for the landing phase."
+        ],
+        "deviations": [
+          "The work was rebuilt by cherry-picking the recoverable commits from the blocked attempt (dc679488, 65119129, f65a1c7, 86b8152, f03b201, a99d4a1), each onto its unchanged parent, as the row's evidence says to.",
+          "The trade-imports-plants-prototype README.md:300 mention of ./scripts/stack/run-stack.sh is left alone, as the row now directs. The prototype is not touched and --no-verify was not used.",
+          "Intentional change named by the row's risk: the security scan, and the lighthouse and smoke workflows in the service repos, now run a cached npm ci for tim before they start the stack."
+        ]
       }
     },
     {

@@ -59,8 +59,8 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 | Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
 | Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
 | Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`                 |
-| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`              |
-| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`       |
+| Docker → Restart the whole stack (tim docker restart)        | `tim docker restart`              |
+| Docker → Bounce backend (tim docker bounce-backend)          | `tim docker bounce-backend`       |
 | Start → Frontend (npm run dev)                               | `tim start frontend`              |
 | Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
 | Start → Admin (npm run dev)                                  | `tim start admin`                 |
@@ -1001,7 +1001,9 @@ tim docker up -b feat/EUDPA-123-x    # run each service's branch-tagged image wh
 tim docker dev                       # build the repo-backed services from local source
 tim docker up -e backend             # leave the backend out, to run it with tim start backend
 tim docker restart -d                # stop the stack, wipe its volumes, start it from source
-tim docker bounce-backend            # recreate the backend container only
+tim docker bounce-backend            # rebuild and recreate the backend container only
+tim docker service rebuild <svc...>  # dev stack: rebuild and recreate these services, wait until healthy
+tim docker service restart <svc...>  # dev stack: restart these containers as they are, wait until healthy
 tim docker logs [services...]        # follow service logs (Ctrl-C to stop)
 tim docker owner                     # print the clone that owns the stack
 tim docker down                      # stop the stack and wipe its volumes
@@ -1051,8 +1053,8 @@ tim docker lease status --json                                                  
 - A lease whose stack has gone, and whose start is not still running, is stale
   and the next `acquire` replaces it, under a lock (`stack-lease.json.lock`) so
   two processes never both take it over.
-- While a lease is held, `tim docker up`, `dev`, `down`, `restart` and
-  `bounce-backend` refuse with `STACK_HELD`, naming the holder. Add `--force`
+- While a lease is held, `tim docker up`, `dev`, `down`, `restart`,
+  `bounce-backend` and `service` refuse with `STACK_HELD`, naming the holder. Add `--force`
   to go ahead anyway; the holder then refuses to reuse or take down what you
   start.
 - Any clone of the workspace may own the one stack. The lease records the
@@ -1060,7 +1062,7 @@ tim docker lease status --json                                                  
   holder name from another clone: `acquire` with `STACK_HELD` while that
   stack is up or starting, `release` with `NOT_HOLDER`. Add `--force` to take
   or give back the lease anyway.
-- `tim docker up`, `dev`, `down`, `restart` and `bounce-backend` read the
+- `tim docker up`, `dev`, `down`, `restart`, `bounce-backend` and `service` read the
   clone each running container was started from (its
   `com.docker.compose.project.working_dir` label). When that is another clone
   they refuse with `STACK_OTHER_CLONE`, naming it. Add `--force` to go ahead

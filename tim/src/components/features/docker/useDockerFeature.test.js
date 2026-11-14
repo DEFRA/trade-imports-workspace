@@ -6,7 +6,11 @@ import { SCREENS } from '../../../constants/menuConfig.js'
 import LoadingScreen from '../../common/screens/LoadingScreen.js'
 import { useDockerFeature } from './useDockerFeature.js'
 
-const Harness = ({ launchStackScript, workspaceRoot, onReturn = () => {} }) => {
+const Harness = ({
+  launchStackCommand,
+  workspaceRoot,
+  onReturn = () => {}
+}) => {
   const [screen, setScreen] = useState(SCREENS.DOCKER_MENU)
   const [screenData, setScreenData] = useState({})
   const [loadingMessage, setLoadingMessage] = useState('')
@@ -17,7 +21,7 @@ const Harness = ({ launchStackScript, workspaceRoot, onReturn = () => {} }) => {
     setLoadingMessage,
     navigateToMain: onReturn,
     workspaceRoot,
-    launchStackScript
+    launchStackCommand
   })
 
   if (screen === SCREENS.LOADING) {
@@ -34,7 +38,7 @@ const Harness = ({ launchStackScript, workspaceRoot, onReturn = () => {} }) => {
 }
 
 const RunActionHarness = ({
-  launchStackScript,
+  launchStackCommand,
   workspaceRoot,
   action,
   onReturn = () => {}
@@ -48,7 +52,7 @@ const RunActionHarness = ({
     setLoadingMessage,
     navigateToMain: onReturn,
     workspaceRoot,
-    launchStackScript
+    launchStackCommand
   })
   useEffect(() => {
     const { items, onSelect } = feature.routes[SCREENS.DOCKER_MENU].props
@@ -72,7 +76,7 @@ describe('useDockerFeature', () => {
   test('opens on a submenu listing every stack action and Back', () => {
     const { lastFrame } = render(
       createElement(Harness, {
-        launchStackScript: async () => {},
+        launchStackCommand: async () => {},
         workspaceRoot: '/fake/workspace'
       })
     )
@@ -91,77 +95,30 @@ describe('useDockerFeature', () => {
     }
   })
 
-  test('selecting Dev launches run-stack.sh with the -d flag', async () => {
-    const captured = []
-    const launchStackScript = async (spec) => {
-      captured.push(spec)
+  test.each(['up', 'dev', 'down', 'restart', 'bounce-backend'])(
+    'Should launch the %s stack command for its menu item and hand control to it',
+    async (command) => {
+      const captured = []
+      const launchStackCommand = async (spec) => {
+        captured.push(spec)
+      }
+
+      const { lastFrame } = render(
+        createElement(RunActionHarness, {
+          launchStackCommand,
+          workspaceRoot: '/fake/workspace',
+          action: command
+        })
+      )
+
+      await vi.waitFor(() => expect(captured).toHaveLength(1))
+      expect(captured[0]).toEqual({
+        workspaceRoot: '/fake/workspace',
+        command
+      })
+      await vi.waitFor(() => expect(lastFrame()).toMatch(/Handing control/i))
     }
-
-    const { lastFrame } = render(
-      createElement(RunActionHarness, {
-        launchStackScript,
-        workspaceRoot: '/fake/workspace',
-        action: 'dev'
-      })
-    )
-
-    await vi.waitFor(() => expect(captured).toHaveLength(1))
-    expect(captured[0]).toEqual({
-      workspaceRoot: '/fake/workspace',
-      script: 'run-stack.sh',
-      args: ['-d']
-    })
-    await vi.waitFor(() => expect(lastFrame()).toMatch(/Handing control/i))
-  })
-
-  test('selecting Up launches run-stack.sh with no extra flags', async () => {
-    const captured = []
-    const launchStackScript = async (spec) => {
-      captured.push(spec)
-    }
-    render(
-      createElement(RunActionHarness, {
-        launchStackScript,
-        workspaceRoot: '/fake/workspace',
-        action: 'up'
-      })
-    )
-
-    await vi.waitFor(() => expect(captured).toHaveLength(1))
-    expect(captured[0]).toEqual({
-      workspaceRoot: '/fake/workspace',
-      script: 'run-stack.sh',
-      args: []
-    })
-  })
-
-  test('selecting Down launches stop-stack.sh', async () => {
-    const captured = []
-    render(
-      createElement(RunActionHarness, {
-        launchStackScript: async (spec) => captured.push(spec),
-        workspaceRoot: '/fake/workspace',
-        action: 'down'
-      })
-    )
-
-    await vi.waitFor(() => expect(captured).toHaveLength(1))
-    expect(captured[0].script).toBe('stop-stack.sh')
-  })
-
-  test('selecting Bounce backend launches bounce-backend.sh', async () => {
-    const captured = []
-    render(
-      createElement(RunActionHarness, {
-        launchStackScript: async (spec) => captured.push(spec),
-        workspaceRoot: '/fake/workspace',
-        action: 'bounce-backend'
-      })
-    )
-
-    await vi.waitFor(() => expect(captured).toHaveLength(1))
-    expect(captured[0].script).toBe('bounce-backend.sh')
-  })
+  )
 
   test('selecting Back returns to the main menu', async () => {
     let returned = false
@@ -177,7 +134,7 @@ describe('useDockerFeature', () => {
           returned = true
         },
         workspaceRoot: '/fake',
-        launchStackScript: async () => {}
+        launchStackCommand: async () => {}
       })
       const { items, onSelect } = feature.routes[SCREENS.DOCKER_MENU].props
       onSelect(items.find((i) => i.value === 'back'))
@@ -189,12 +146,12 @@ describe('useDockerFeature', () => {
   })
 
   test('a launch failure surfaces on the error screen', async () => {
-    const launchStackScript = async () => {
+    const launchStackCommand = async () => {
       throw new Error('Cannot find run-stack.sh.')
     }
     const { lastFrame } = render(
       createElement(RunActionHarness, {
-        launchStackScript,
+        launchStackCommand,
         workspaceRoot: '/fake',
         action: 'up'
       })
@@ -207,13 +164,13 @@ describe('useDockerFeature', () => {
   })
 
   test('a non-Error throw from the launcher falls back to String(error)', async () => {
-    const launchStackScript = async () => {
+    const launchStackCommand = async () => {
       // eslint-disable-next-line no-throw-literal
       throw 'docker kaboom'
     }
     const { lastFrame } = render(
       createElement(RunActionHarness, {
-        launchStackScript,
+        launchStackCommand,
         workspaceRoot: '/fake',
         action: 'up'
       })

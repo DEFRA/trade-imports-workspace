@@ -208,8 +208,9 @@ services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
 tiers), and `--perf` (both stubs answer at their SLA latency, on published
 images; `tim docker perf` takes the lease in perf mode). In `--dev` mode the Java backend, stub and reference-data hot-reload
-edited source via Spring Boot DevTools; `tim docker bounce-backend` is a fallback that
-recreates the backend container (e.g. after a `pom.xml`/dependency change).
+edited source via Spring Boot DevTools; `tim docker bounce-backend` rebuilds the backend
+image and recreates its container (e.g. after a `pom.xml`/dependency change), and
+`tim docker service rebuild|restart <service>...` does the same for any named service.
 
 Init scripts are staged from their owning repos on every stack start
 (backend: Floci init; tests repo: mongo seed fixtures; dynamics-gateway:

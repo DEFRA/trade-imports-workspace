@@ -137,6 +137,22 @@ describe('runToLog', () => {
     expect(readFileSync(logPath, 'utf8')).not.toContain('first')
   })
 
+  test('adds to the end of the log from an earlier run when appending', async () => {
+    const logPath = tempLogPath()
+    await runToLog('node', ['-e', "console.log('first')"], {
+      logPath,
+      commandHeader: false
+    })
+
+    await runToLog('node', ['-e', "console.log('second')"], {
+      logPath,
+      commandHeader: false,
+      append: true
+    })
+
+    expect(readFileSync(logPath, 'utf8')).toBe('first\nsecond\n')
+  })
+
   test('throws TimError(MISSING_DEP) when the executable is not found', async () => {
     await expect(
       runToLog('a-definitely-not-installed-binary-xyz', [], {

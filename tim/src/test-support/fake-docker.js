@@ -13,6 +13,9 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execa } from 'execa'
+import { TIM_CLI_PATH } from './tim-cli.js'
+import { markWorkspaceRoot } from './workspace-marker.js'
 
 const realWorkspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -301,4 +304,79 @@ export const stagedInitFiles = (root) => {
     .filter((entry) => entry.isFile())
     .map((entry) => relative(staged, join(entry.parentPath, entry.name)))
     .sort()
+}
+
+const goldenFolder = join(
+  realWorkspaceRoot,
+  'tim',
+  'src',
+  'test-support',
+  'fixtures',
+  'stack'
+)
+
+/**
+ * One scenario the stack scripts were recorded running, from
+ * fixtures/stack/<script>.json.
+ *
+ * @param {string} script - The script's name less `.sh`, such as "dev-service"
+ * @param {string} name - The scenario's name
+ * @returns {object}
+ */
+export const recordedStackScenario = (script, name) =>
+  JSON.parse(readFileSync(join(goldenFolder, `${script}.json`), 'utf8')).find(
+    (scenario) => scenario.name === name
+  )
+
+const isOwnershipCheck = ({ tool, args }) =>
+  tool === 'docker' && args[0] === 'ps'
+
+/**
+ * Runs `tim docker <args>` against a staged stack workspace with the fake
+ * tools first on PATH and no stack lease, and records it in the shape the
+ * stack scripts were recorded in. The `docker ps` calls tim makes to find
+ * the clone that owns the stack are left out.
+ *
+ * @param {string[]} args - tim's arguments after `docker`
+ * @param {object} [opts]
+ * @param {object} [opts.fake] - Config for {@link installFakeStackTools}
+ * @param {Record<string, string>} [opts.env]
+ * @returns {Promise<{exitCode: number, stdout: string, stderr: string, sequence: object[], concurrent: object[], stagedInitFiles: string[]}>}
+ */
+export const recordTimStackRun = async (
+  args,
+  { fake: config, env = {} } = {}
+) => {
+  const workspace = stageStackWorkspace()
+  markWorkspaceRoot(workspace.root)
+  const fake = installFakeStackTools(config)
+  try {
+    const result = await execa(
+      'node',
+      [TIM_CLI_PATH, '--workspace', workspace.root, 'docker', ...args],
+      {
+        env: fakeToolsEnv(fake.binDir, {
+          TIM_NO_AUTO_PULL: '1',
+          TIM_STACK_LEASE: join(fake.binDir, 'stack-lease.json'),
+          ...env
+        }),
+        extendEnv: false,
+        reject: false,
+        stripFinalNewline: false
+      }
+    )
+    return {
+      exitCode: result.exitCode,
+      stdout: withWorkspacePlaceholder(result.stdout, workspace.root),
+      stderr: withWorkspacePlaceholder(result.stderr, workspace.root),
+      ...traceOf(
+        fake.calls().filter((call) => !isOwnershipCheck(call)),
+        workspace.root
+      ),
+      stagedInitFiles: stagedInitFiles(workspace.root)
+    }
+  } finally {
+    fake.remove()
+    workspace.remove()
+  }
 }

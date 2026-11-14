@@ -276,3 +276,16 @@ an unleased stack. Taking it down would wipe a stack someone may be using.
 The row changes nothing the stack runs (the Bash scripts are untouched and
 the tim modules are not yet called), so run the smoke on P59, which is the
 first row to swap a script for tim.
+
+## P59
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/bounce-backend.sh`, `dev-service.sh` or
+`restart-stack.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack was
+still up with no lease (`tim docker lease status` shows `lease: null`), and
+`tim docker lease acquire` refuses an unleased stack. Taking it down would
+wipe a stack someone may be using. Run the smoke, and the live gate refresh
+the row's proof asks for (touch one frontend file under a dev lease and
+compare the gate's `gate-stack-restart.log`), once that stack is down.

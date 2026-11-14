@@ -1,5 +1,11 @@
 import { execa } from 'execa'
-import { closeSync, mkdirSync, openSync, writeFileSync } from 'node:fs'
+import {
+  appendFileSync,
+  closeSync,
+  mkdirSync,
+  openSync,
+  writeFileSync
+} from 'node:fs'
 import { dirname } from 'node:path'
 import { TimError } from '../errors.js'
 
@@ -72,28 +78,31 @@ const commandLine = (command, args) => [command, ...args].join(' ')
  * Run a subprocess with its stdout and stderr written to a log file, so
  * nothing streams to the terminal. The log starts with the command line and
  * the folder it ran in, unless `commandHeader` is false, and is replaced on
- * every run.
+ * every run unless `append` is true.
  *
  * @param {string} command
  * @param {string[]} [args]
- * @param {object} opts - Passed to execa (cwd, env, ...), plus `logPath` and `commandHeader`
+ * @param {object} opts - Passed to execa (cwd, env, ...), plus `logPath`, `commandHeader` and `append`
  * @param {string} opts.logPath
  * @param {boolean} [opts.commandHeader=true] - false starts the log with the command's own output
+ * @param {boolean} [opts.append=false] - true adds to the end of the log instead of replacing it
  * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
  * @throws {TimError} MISSING_DEP when the executable is not found
  */
 export const runToLog = async (
   command,
   args = [],
-  { logPath, commandHeader = true, ...opts }
+  { logPath, commandHeader = true, append = false, ...opts }
 ) => {
   mkdirSync(dirname(logPath), { recursive: true })
-  writeFileSync(
-    logPath,
-    commandHeader
-      ? `$ ${commandLine(command, args)}\n# in ${opts.cwd ?? process.cwd()}\n\n`
-      : ''
-  )
+  const header = commandHeader
+    ? `$ ${commandLine(command, args)}\n# in ${opts.cwd ?? process.cwd()}\n\n`
+    : ''
+  if (append) {
+    appendFileSync(logPath, header)
+  } else {
+    writeFileSync(logPath, header)
+  }
   const logFd = openSync(logPath, 'a')
   const start = performance.now()
   const settle = (result) => ({

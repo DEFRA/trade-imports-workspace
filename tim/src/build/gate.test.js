@@ -670,8 +670,15 @@ describe('runGate — e2e rungs', () => {
     writeFileSync(join(repo, 'src', 'index.js'), 'export {}\n')
     await execa('git', ['init', '--quiet', repo])
     writeExecutable(
-      join(root, 'scripts', 'stack', 'dev-service.sh'),
-      `echo "dev-service.sh $*" >> '${stackCallsPath()}'\nif [ -f '${root}/dev-service-fails' ]; then exit 4; fi`
+      join(root, 'fake-bin', 'docker'),
+      [
+        `if [ "$1" = ps ]; then case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac; exit 0; fi`,
+        'if [ "$1" != compose ]; then exit 0; fi',
+        'shift',
+        'while [ "$1" = -f ] || [ "$1" = --profile ]; do shift 2; done',
+        `echo "compose $*" >> '${stackCallsPath()}'`,
+        `if [ -f '${root}/compose-fails' ]; then exit 4; fi`
+      ].join('\n')
     )
     writeFileSync(stackStatePath(), 'up\n')
     writeLease({
@@ -696,7 +703,7 @@ describe('runGate — e2e rungs', () => {
       refresh: outcome.stack.refresh
     }).toEqual({
       green: true,
-      calls: ['dev-service.sh rebuild frontend'],
+      calls: ['compose up --build --no-deps --wait --detach frontend'],
       refresh: {
         ok: true,
         restacked: false,
@@ -726,7 +733,10 @@ describe('runGate — e2e rungs', () => {
       calls: stackCalls(),
       restarted: outcome.stack.refresh.restarted
     }).toEqual({
-      calls: ['dev-service.sh restart frontend'],
+      calls: [
+        'compose restart frontend',
+        'compose up --no-deps --no-recreate --wait --detach frontend'
+      ],
       restarted: ['frontend']
     })
   })
@@ -737,7 +747,7 @@ describe('runGate — e2e rungs', () => {
     )
     await withDevService()
     writeFileSync(join(root, 'repos', 'frontend', 'src', 'index.js'), '1\n')
-    writeFileSync(join(root, 'dev-service-fails'), '')
+    writeFileSync(join(root, 'compose-fails'), '')
 
     const outcome = await gate(env, { phase: 'e2e' })
 
@@ -750,7 +760,7 @@ describe('runGate — e2e rungs', () => {
       green: false,
       e2eRan: false,
       up: true,
-      reason: `Restarting frontend failed (dev-service.sh exited 4). Read ${join(defaultLogsDir(root, WORKAREA), 'gate-stack-restart.log')}.`
+      reason: `Restarting frontend failed (docker compose exited 4). Read ${join(defaultLogsDir(root, WORKAREA), 'gate-stack-restart.log')}.`
     })
   })
 

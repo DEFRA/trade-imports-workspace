@@ -119,28 +119,13 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 62 of 67 (93%), counted over rows whose status is not "person".
-- Landed this run: P61.
-- Blocked this run:
-  - **P62:** it can't be finished until Sam decides how to fix a failing
-    test in the plants prototype. The verifier's only problem is the
-    `run-stack.sh` mention at
-    `repos/trade-imports-plants-prototype/README.md:300`. Changing that
-    line means a commit in the prototype, and the prototype's pre-commit
-    hook runs format:check, lint and the full test suite. One test in that
-    suite fails today: in
-    `src/server/app/services/ins-address-book/ins-address-book.test.js`,
-    the check against the sibling repo fails because
-    `trade-imports-ins-frontend`'s barrel exports `addressTypeOfRole` and
-    `keepRolesOfferedBy`, and the prototype has neither. Fixing it means
-    either porting the ins-frontend typed address-book model
-    (`address-types.js`) into the repo designers own, or changing the test
-    so it no longer tracks the sibling. That is a product and ownership
-    decision under rule 6. Skipping the hook with `--no-verify` would get
-    round it without that decision, so it was not done.
-- Why the loop stopped: no buildable row was left. P11, P55 and P19B are
-  for Sam, P62 is blocked, and P69, P70, P71 and P72 are still to do but
-  wait on those.
+- Progress: 65 of 67 (97%), counted over rows whose status is not "person".
+- Landed this run: P62, P70 and P69.
+- Blocked this run: none.
+- Why the loop stopped: it reached its limit of 3 rows for one run.
+- Still to do: P71 (drop the canonical-path allowlist entries) and P72
+  (skill, rules and docs text stop naming the workspace path). Both wait
+  on P11.
 - Rows for Sam:
   - **P11:** test which allowlist patterns match without a prompt. P71 and
     P72 wait on it.
@@ -151,6 +136,5 @@ Agents cannot do these two rows, so the loop skips them:
   - P26's canary (raising a real govuk ticket) still waits for Sam's
     go-ahead.
 - Landing result: none yet.
-- Next: Sam decides how to fix the failing prototype test for P62 (port
-  `address-types.js` from ins-frontend into the prototype, or stop the
-  test tracking the sibling), then relaunch the loop to finish P62.
+- Next: Sam does P11 and records which allowlist pattern forms match
+  without a prompt, then relaunches the loop to build P71 and P72.

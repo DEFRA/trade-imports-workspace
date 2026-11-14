@@ -199,7 +199,7 @@ describe('#renderRefusal', () => {
         '                           ID cell reads: CAP-1.2',
         '',
         '2 of 2 rows violate the canonical shape.',
-        'Run tools/ticket-creator/check-capabilities.sh for the full picture.'
+        'Run tim capabilities check for the full picture.'
       ].join('\n')
     )
   })

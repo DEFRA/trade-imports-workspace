@@ -21,7 +21,9 @@ assignee back. `tim jira epics`, `tim jira labels` and `tim jira search` are
 read-only; `search` takes search words (a text search in the project) or
 `--jql <query>`. `tim jira epics --board <id> [--include-done]` lists a
 board's epics as `KEY — summary` lines, and `tim jira labels --board <id>`
-counts the labels in a board's backlog. Every ticket the workspace raises,
+counts the labels in a board's backlog. `tim jira prereqs` writes the
+ticket-creator's session-start files under
+`workareas/ticket-creation/.prereqs/`. Every ticket the workspace raises,
 epics included, goes through `tim jira create`.
 
 | Script | Args | Purpose |
@@ -109,9 +111,9 @@ epics included, goes through `tim jira create`.
 | `tim ticket prepare-implement` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, emit `.implement-meta.json`. IMPLEMENTOR caches prior PR diffs with `gh` |
 | `tim ticket branch` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout `<type>/EUDPA-X-<slug>` (the local branch, else one tracking origin, else a new one). `--type` defaults to `feat`; any other value is refused |
 | **ticket-creator** | | |
-| `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `tim jira create`, which actually creates the ticket in Jira). |
+| `tim jira prereqs` | [--board ID] [--cap-page ID] [--json] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes. `capabilities.txt` is replaced only when the synced map is canonical and gives at least `MIN_CAPABILITIES` codes (default 20); prints `WARNING:` for a stale map and `ERROR:` (exit 1) when the codes were not refreshed.<br>e.g. `tim jira prereqs`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `tim jira create`, which actually creates the ticket in Jira). |
 | `tim capabilities extract` | \<markdown-file\> [--format list\|tsv] [--json] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |
-| `tools/ticket-creator/check-capabilities.sh` | [--cap-page ID] [--quiet] | Diagnostic report on capability-map conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: read-only reporting (vs `prepare-ticket-creation.sh`, which writes the prereqs cache). |
+| `tim capabilities check` | [--cap-page ID] [--no-sync] [--quiet] [--json] | Refresh the synced capability map from Confluence (unless `--no-sync`; a failed refresh is reported and the local copy is checked), then report on its conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: writes only the synced map, never the prereqs cache (vs `tim jira prereqs`, which writes it). |
 | **skill-creator** | | |
 | `tim skill start` | "<trigger phrase>" [--json] | Step 0 dispatcher — parses trigger, emits `MODE: CREATE` / `MODE: AUDIT_ONE` / `MODE: AUDIT_ALL` + JSON payload (`--json`: the mode is `result.mode`) |
 | `tim skill answer` | --run-id NAME --field PATH --value JSON [--json] | CREATE — atomic mutation of `decisions.json` (one shape question per call) |

@@ -8,6 +8,7 @@ import {
   renderTsv
 } from '../../capabilities/extract.js'
 import { makeRunAction } from '../_run-action.js'
+import { register as registerCheck } from './check.js'
 
 const FORMATS = ['list', 'tsv']
 const USAGE_LINE =
@@ -119,4 +120,5 @@ export const register = (program, { timVersion }) => {
     .command('capabilities')
     .description('Read the EUDP Import Notification Capability Map')
   registerExtract(capabilities, { timVersion })
+  registerCheck(capabilities, { timVersion })
 }

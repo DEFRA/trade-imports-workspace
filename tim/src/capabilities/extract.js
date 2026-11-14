@@ -164,5 +164,5 @@ export const renderRefusal = ({ rows, violations }) =>
     ...violations.flatMap(violationLines),
     '',
     `${violations.length} of ${rows.length} rows violate the canonical shape.`,
-    'Run tools/ticket-creator/check-capabilities.sh for the full picture.'
+    'Run tim capabilities check for the full picture.'
   ].join('\n')

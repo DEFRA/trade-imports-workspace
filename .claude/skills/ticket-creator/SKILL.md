@@ -14,8 +14,8 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/tools/<domain>/`,
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+your home directory automatically. `tim` finds the workspace it runs
+in by itself — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -28,7 +28,7 @@ Before the interview, refresh the present-info prereqs and Read the
 rules.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket-creator/prepare-ticket-creation.sh
+tim jira prereqs
 ```
 
 That writes the current set of active EUDPA-board epics and EUDP
@@ -39,7 +39,7 @@ map suggests running `tim confluence sync`).
 If it exits non-zero with an `ERROR:` line, the capability map has
 drifted from its canonical row shape and `capabilities.txt` was
 deliberately left unchanged rather than written short. Tell the user
-to run `tools/ticket-creator/check-capabilities.sh`, which names the
+to run `tim capabilities check`, which names the
 offending rows. Do not offer a capability picker from a stale file.
 
 Then Read these references so they sit in context for the whole

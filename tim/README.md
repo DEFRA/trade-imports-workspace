@@ -229,6 +229,44 @@ tim capabilities extract docs/confluence/import-notification-capability-map.md -
   `list` format a map that is not canonical is an error naming each broken
   row.
 
+### `tim capabilities check` — report on the synced capability map
+
+```bash
+tim capabilities check
+tim capabilities check --no-sync --quiet
+```
+
+- Reads `docs/confluence/import-notification-capability-map.md` in this
+  workspace, and exits 1 when it is not there.
+- First refreshes that file from Confluence page `--cap-page` (default
+  6468764101), using `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`. A
+  refresh that fails prints a warning on stderr and the local copy is
+  checked as it is. `--no-sync` skips the refresh.
+- Prints the version, a table of every row (`--quiet` leaves it out), the
+  codes breaking each rule, and status values outside NOT STARTED, IN
+  PROGRESS, SKELETON, COMPLETE and POST DAY ONE.
+- Exits 0 only when every row is canonical.
+
+### `tim jira prereqs` — the ticket-creator's session-start files
+
+```bash
+tim jira prereqs
+tim jira prereqs --board 13780 --cap-page 6468764101 --json
+```
+
+- Writes `workareas/ticket-creation/.prereqs/` in this workspace:
+  `epics.txt` (the board's open epics as `KEY — summary`),
+  `capabilities.txt` (the strict `list` lines of the synced capability map,
+  sorted and without repeats) and `meta.json`.
+- `capabilities.txt` is replaced only when the map is canonical. A map that
+  is not canonical leaves the old file, prints the parser's report on
+  stderr and an `ERROR:` line, and exits 1. Fewer codes than
+  `MIN_CAPABILITIES` (default 20) is an `ERROR:` too.
+- A synced map at a different version from the live page, or no synced map
+  at all, prints a `WARNING:` line.
+- When Jira will not list the board, `epics.txt` is left empty and nothing
+  else is written.
+
 ### `tim skill` — the skill-creator skill's steps
 
 ```bash

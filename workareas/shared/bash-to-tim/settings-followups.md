@@ -194,3 +194,9 @@ the tim commands and the hook JSON above.
 None. No allowlist entry names `tools/confluence/sync-docs.sh`,
 `html_to_md.js` or `clean-docs.sh`; `Bash(tim:*)` covers
 `tim confluence sync`.
+
+## P33
+
+None. No allowlist entry names `tools/ticket-creator/check-capabilities.sh`
+or `prepare-ticket-creation.sh`; `Bash(tim:*)` covers `tim capabilities check`
+and `tim jira prereqs`.

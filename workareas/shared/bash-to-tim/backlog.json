@@ -2704,14 +2704,38 @@
       ],
       "risk": "High: it pushes from the workspace checkout. Keep the dirty-tree refusal, the non-forced push and the 65536-character limit.",
       "proof": "The summary test ported. Body goldens against the bash --dry-run. Git cases against a temp bare origin. One real comment-only share. grep for tools/review and tools/github is empty.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "5dc17a10"
+          }
+        ],
+        "checks": [
+          "parity: PASS. The Bash share-review.sh was recorded before deletion into tim/src/review/__fixtures__/__golden__/review-share.json, which has 16 --dry-run cases covering stdout, stderr, exit code, each body and the workareas/shared copy. These include the full table, --summary, the over-limit refusal, nothing open, summary-only, no items, no reviewer, JSON, --branch, no PR, no review and usage. It was also recorded into review-share-git.json, which has 7 git cases against a temp bare origin: fresh branch, comment-only, re-share no-op, existing local branch, origin-only branch (tracks, no divergence), and dirty tracked and dirty untracked. tim/src/commands/review/share.test.js replays all 23 cases against tim and they pass. Two mutation probes were each caught: dropping the sort by count and inverting the no-op commit check.",
+          "tim-unit: PASS. npm --prefix tim test gives 388 files passed and 23 skipped; 5867 tests passed, 8 expected fail and 30 skipped.",
+          "tim-lint: PASS. npm --prefix tim run lint and run format:check are both clean.",
+          "no-callers: PASS. git grep across the workspace (excluding workareas) and every repos/* finds no caller of share-review.sh, pr-comment.sh, finding-categories.sh or tools/review / tools/github. The remaining hits are golden-harness script lists for scripts already retired, which skip when the script is missing; the .gitignore entry for a personal local-only tools/review/prepare-ac-check.sh; and a historical note in docs/analysis.",
+          "no new .sh file: PASS. The row only deletes .sh files.",
+          "repo-tests / stack-smoke: not listed for this row; no service repo touched."
+        ],
+        "deviations": [
+          "The proof's 'one real comment-only share' was not done. It would post a visible comment on a real GitHub PR, which needs Sam's go, and there is no real review workarea under workareas/reviews to share. The comment-only path is proven end to end against the gh stand-in (git case 'a comment-only post, which touches no branch').",
+          "New fixed path: tim/src/review/share/body.js keeps the handoff body's `git -C ~/git/defra/trade-imports-workspace` lines word for word. The findings plan (R15 risk) explicitly chose this for parity, because the lines address the colleague's canonical clone.",
+          "Behaviour changes, named in the commit: tim posts nothing and instead prints `gh pr comment <pr> --repo DEFRA/<repo> --body-file <file>` per body for the skill to run. --reviewer replaces `gh api user` (default '(unknown)'). The --json envelope result adds `reviewer`, plus `committed` on a real handoff, and has no `posted` list. The commit body and the dirty-refusal text name `tim review share`. git's own output is not printed. A failed push now returns to the starting branch, and a failed checkout restores the parked shared copy.",
+          "A ticket that is not EUDPA-* is refused with tim's usage line, still exit 1, where the Bash printed its own usage. A non-numeric --pr is refused with a plain message where the Bash crashed in jq.",
+          "finding-categories.test.js no longer reads the deleted shell file; it pins tim's own category list.",
+          "settings-followups.md ## P51: nothing to remove; it suggests Bash(gh pr comment:*) for Sam to decide on.",
+          "The .gitignore line for the personal tools/review/prepare-ac-check.sh was kept, so the row's 'grep for tools/review is empty' proof has that one non-caller hit."
+        ]
+      }
     },
     {
       "id": "P52",

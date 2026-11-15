@@ -25,11 +25,20 @@
       "scenarios": [
         {
           "id": "SCN-CONFIRM-002-A",
-          "name": "Requesting confirmation for an unsubmitted notification opens its overview",
+          "name": "Requesting confirmation for an unsubmitted notification sends it to its declaration",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "redirects an unsubmitted notification back to its hub", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should redirect a notification that is not submitted to the hub", "strength": "partial", "notes": "proves only the redirect target" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "sends an unsubmitted notification through its declaration to its review page", "strength": "full", "notes": "requests the declaration on the way, then ends on the review URL with the check-answers heading" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should redirect a draft to its declaration and log the refusal", "strength": "full", "notes": "exact redirect path and the one log line" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "sends a draft through its declaration to its review page", "strength": "partial", "notes": "requests the declaration on the way, then ends on the notification view" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-002-C",
+          "name": "Requesting confirmation for an amendment not yet re-submitted sends it to its declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should redirect an amendment to its declaration and log the refusal", "strength": "full", "notes": "exact redirect path and the one log line with the amend status" }
           ]
         },
         {
@@ -131,7 +140,9 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when an ITAHC has been uploaded", "strength": "full", "notes": "an exact empty list; red when the reminder is always listed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js", "test": "Should show only the transport, view-or-amend and help sections when nothing is outstanding", "strength": "full", "notes": "the exact heading list; fails without the template's outstanding guard" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js", "test": "Should show only the transport, view-or-amend and help sections when nothing is outstanding", "strength": "full", "notes": "the exact heading list; fails without the template's outstanding guard" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "shows only the transporting, view or amend and help sections once an ITAHC is uploaded", "strength": "partial", "notes": "submits with an ITAHC and asserts the exact level-2 heading list; not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "shows only the transporting, view or amend and help sections once an ITAHC is uploaded", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]

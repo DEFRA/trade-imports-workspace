@@ -35,12 +35,20 @@
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONFIRMATION-002-A",
-          "name": "Requesting confirmation for an unsubmitted notification redirects to check-your-answers",
+          "name": "Requesting confirmation for an unsubmitted notification redirects to its declaration",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "returns a draft to check answers instead of showing a receipt", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should return draft to check answers without claiming submission", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should return amend to check answers without claiming submission", "strength": "full", "notes": "the amend arm of the same redirect" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "sends a draft to its declaration instead of showing a receipt", "strength": "full", "notes": "declaration URL and heading" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should send draft to its declaration, log the refusal and leave the status unchanged", "strength": "full", "notes": "exact redirect, one log line, status unchanged" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "opening the confirmation of a draft goes to its declaration", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-002-B",
+          "name": "Requesting confirmation for an amendment not yet re-submitted redirects to its declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should send amend to its declaration, log the refusal and leave the status unchanged", "strength": "full", "notes": "the amend arm of the same redirect" }
           ]
         }
       ]

@@ -22,19 +22,25 @@ The system MUST confirm a completed submission on its own page, showing the refe
 
 ### Requirement: The confirmation page is not shown for a notification that has not yet been submitted
 **ID**: REQ-CONFIRM-002
-The system MUST redirect a request for the confirmation page to the notification's overview when the notification it names has not been submitted.
+The system MUST redirect a request for the confirmation page to the notification's declaration page when the notification it names has not been submitted, whether it is a draft or an amendment.
 
-#### Scenario: Requesting confirmation for an unsubmitted notification opens its overview
+#### Scenario: Requesting confirmation for an unsubmitted notification sends it to its declaration
 **ID**: SCN-CONFIRM-002-A
 - **GIVEN** a notification has been started but not submitted
 - **WHEN** its confirmation page is requested directly
-- **THEN** the notification's overview, headed "Notification tasklist", is shown instead
+- **THEN** it is sent to its declaration page
+
+#### Scenario: Requesting confirmation for an amendment not yet re-submitted sends it to its declaration
+**ID**: SCN-CONFIRM-002-C
+- **GIVEN** a submitted notification has an amendment open that has not been re-submitted
+- **WHEN** its confirmation page is requested directly
+- **THEN** it is sent to its declaration page in the same way
 
 #### Scenario: A notification submitted without its ITAHC still shows its confirmation
 **ID**: SCN-CONFIRM-002-B
 - **GIVEN** a notification was submitted without an ITAHC, so its status is "Submitted action required"
 - **WHEN** its confirmation page is requested
-- **THEN** the confirmation page is shown, not the overview
+- **THEN** the confirmation page is shown
 
 ### Requirement: The page tells the user how the consignment must be transported
 **ID**: REQ-CONFIRM-003

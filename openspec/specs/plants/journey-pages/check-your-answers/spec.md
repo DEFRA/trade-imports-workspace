@@ -6,7 +6,7 @@
 
 **Page**: notification-view
 
-The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers". A submitted notification's read-only view is titled and headed by its reference number.
+The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. An amendment's check answers is titled "Check your answers". A draft and a submitted notification are titled and headed by their notification reference.
 
 ## Requirements
 
@@ -81,23 +81,24 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** they follow a Change link for a commodity line, change its quantity and save and continue through the commodities list
 - **THEN** they arrive at check-your-answers, showing the new quantity
 
-### Requirement: A draft notification invites submission and offers a red Delete notification beside Continue
+### Requirement: A draft notification invites submission and offers a red Delete notification in its header
 **ID**: REQ-PLANTS-CYA-006
-The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading with a red "Delete notification" button beside it that opens the delete page, and MUST keep "Save and return to overview" and the "Cancel and return to overview" link. It MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
+The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST keep "Save and return to overview" and the "Cancel and return to overview" link. It MUST offer a red "Delete notification" button in the draft's header, opening the delete page, and MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
 
-#### Scenario: The draft view invites submission and offers Delete notification beside Continue
+#### Scenario: The draft view invites submission, and its header offers Delete notification
 **ID**: SCN-PLANTS-CYA-006-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to continue to the declaration to submit
-- **AND** a red "Delete notification" button sits beside the continue action, before "Save and return to overview"
+- **AND** the continue action is followed by "Save and return to overview"
 - **AND** the "Cancel and return to overview" link stays below the buttons
+- **AND** a red "Delete notification" button is offered in the header, not beside the continue action
 - **AND** no cancel-amendment action is offered
 
 #### Scenario: Delete notification on a draft opens the delete page
 **ID**: SCN-PLANTS-CYA-006-B
 - **GIVEN** a draft notification is open on check-your-answers
-- **WHEN** the user presses "Delete notification"
+- **WHEN** the user presses "Delete notification" in the header
 - **THEN** the notification's delete page opens
 
 ### Requirement: Continuing from a ready draft moves on to the declaration
@@ -293,7 +294,7 @@ The system MUST show the proposed place of landing exactly as the port was offer
 
 ### Requirement: A submitted notification's read-only view is headed by its reference and status, and dated
 **ID**: REQ-PLANTS-CYA-016
-The system MUST head a submitted notification's read-only view with its reference number and a "Submitted" tag, with no status bar, and start the browser title with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. A draft's or an amendment's review MUST keep its own heading, title and status bar.
+The system MUST head a submitted notification's read-only view with its reference number and a "Submitted" tag, with no status bar, and start the browser title with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. An amendment's review MUST keep its own heading, title and status bar.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
 **ID**: SCN-PLANTS-CYA-016-A
@@ -303,12 +304,13 @@ The system MUST head a submitted notification's read-only view with its referenc
 - **AND** a green "Submitted" tag stands beside the heading
 - **AND** no status bar is shown above it
 
-#### Scenario: The submitted view is titled by its reference, and a draft keeps its title
+#### Scenario: The submitted view and a draft's check answers are titled by their references, and an amendment keeps its title
 **ID**: SCN-PLANTS-CYA-016-B
-- **GIVEN** a submitted notification, and a draft notification
+- **GIVEN** a submitted notification, a draft notification and an amendment
 - **WHEN** the user views each
 - **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
-- **AND** the draft's review is headed "Check your answers" with a "Draft" status bar
+- **AND** the draft's check answers is titled by its reference in the same way
+- **AND** the amendment's review is headed "Check your answers" with an "Amend" status bar
 
 #### Scenario: The date submitted is the UK day of the submission
 **ID**: SCN-PLANTS-CYA-016-C
@@ -316,9 +318,9 @@ The system MUST head a submitted notification's read-only view with its referenc
 - **WHEN** the user views it
 - **THEN** the header reads "Date submitted: 22 July 2026"
 
-### Requirement: A submitted notification's read-only view shows its notification reference as text to copy
+### Requirement: A notification's view shows its notification reference as text to copy
 **ID**: REQ-PLANTS-CYA-017
-The system MUST show, on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row reading the reference number, with no "Customs document code" row. The value MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+The system MUST show, on a draft's check answers and on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row reading the reference number, with no "Customs document code" row. The value MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
 
 #### Scenario: The section shows the warning and the reference row
 **ID**: SCN-PLANTS-CYA-017-A
@@ -334,6 +336,13 @@ The system MUST show, on a submitted notification's read-only view, an "Import r
 - **THEN** the section shows the warning and the reference as text
 - **AND** the section shows no button
 
+#### Scenario: A draft shows the warning and the notification reference only
+**ID**: SCN-PLANTS-CYA-017-C
+- **GIVEN** a draft notification
+- **WHEN** the user opens its check answers
+- **THEN** the "Import reference numbers" section shows its warning and a "Notification reference" row as text
+- **AND** the section has no "Customs document code" row and no Copy button
+
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
 **ID**: REQ-PLANTS-CYA-018
 The system MUST send the user to the notification list when they open the view of a notification that does not exist.
@@ -343,3 +352,36 @@ The system MUST send the user to the notification list when they open the view o
 - **GIVEN** a signed-in user
 - **WHEN** they open the view of a notification that does not exist
 - **THEN** the notification list is shown
+
+### Requirement: A draft's check answers is headed by its reference with a Draft tag, dated by its creation, and stays editable
+**ID**: REQ-PLANTS-CYA-019
+The system MUST head a draft's check answers with its reference number and a "Draft" tag, with no status bar, and MUST show "Date created: " and the UK day of creation under the header. The header MUST offer only a red "Delete notification" button, with no "Copy as new". The page MUST keep its Change links and error summary, and end with a continue action.
+
+#### Scenario: A draft's check answers is headed by its reference with a Draft tag and no status bar
+**ID**: SCN-PLANTS-CYA-019-A
+- **GIVEN** a draft notification
+- **WHEN** the user views its check answers
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a blue "Draft" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The date created is the UK day the notification was created
+**ID**: SCN-PLANTS-CYA-019-B
+- **GIVEN** a draft notification created at 23:30 UTC on 21 July 2026
+- **WHEN** the user views its check answers
+- **THEN** the header reads "Date created: 22 July 2026"
+
+#### Scenario: The header offers only Delete notification
+**ID**: SCN-PLANTS-CYA-019-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its check answers
+- **THEN** the header offers a red "Delete notification" button
+- **AND** the header offers no "Copy as new" and no "Amend this notification"
+
+#### Scenario: Change links, errors and Continue stay
+**ID**: SCN-PLANTS-CYA-019-D
+- **GIVEN** a draft notification with incomplete sections
+- **WHEN** the user views its check answers
+- **THEN** its cards keep their Change links
+- **AND** the error summary lists each incomplete section
+- **AND** the page ends with a continue action

@@ -6,7 +6,7 @@
 
 **Page**: notification-view
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification", and "Review before re-submitting" while an amendment's answers differ from the submitted version. A submitted notification's view is titled and headed by its reference number.
+The page on which a whole notification is read back before submission, and read again once submitted. An amendment's review is titled "Review your notification", or "Review before re-submitting" once an answer differs from the submitted version. A draft's review and a submitted notification's view are titled and headed by their notification reference.
 
 ## Requirements
 
@@ -108,7 +108,7 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 
 ### Requirement: A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard
 **ID**: REQ-CYA-003
-The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview or by its address, and to the dashboard when they opened it from a dashboard card. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
+The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview, and to the dashboard when they opened it from a dashboard card. With none of these, a draft's review MUST go back to the dashboard and an amendment's to Overview. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
 #### Scenario: The review's back link opens the contact address after Save and continue there
 **ID**: SCN-CYA-003-A
@@ -146,9 +146,15 @@ The system MUST return the user from the back link of a draft or amendment revie
 - **WHEN** the user follows a Change link, follows the back link on the page it opens, and then follows the back link on the review
 - **THEN** the dashboard is shown
 
-#### Scenario: A review with nothing saying where the user came from has a back link to Overview
+#### Scenario: A draft review with nothing saying where the user came from has a back link to the dashboard
 **ID**: SCN-CYA-003-G
-- **GIVEN** the review of a draft notification or of an amendment, opened by its address
+- **GIVEN** the review of a draft notification, opened by its address
+- **WHEN** the user follows the back link
+- **THEN** the dashboard is shown
+
+#### Scenario: An amendment review with nothing saying where the user came from has a back link to Overview
+**ID**: SCN-CYA-003-H
+- **GIVEN** the review of an amendment, opened by its address
 - **WHEN** the user follows the back link
 - **THEN** Overview is shown
 
@@ -174,22 +180,22 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
 - **THEN** they go on through the journey to the review
 
-### Requirement: A draft notification ends with a continue action and a red Delete
+### Requirement: A draft notification ends with a continue action, and its header offers Copy as new and a red Delete
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification, ending the review with a continue action and, beside it, a red "Delete" button that opens the notification's delete confirmation, and MUST NOT offer copy-as-new or cancel-amendment while it is still a draft.
+The system MUST invite the user to submit a draft notification, ending the review with a continue action alone, and MUST offer, in the draft's header, a "Copy as new" button then a red "Delete" button that opens the notification's delete confirmation. It MUST NOT offer cancel-amendment while the notification is still a draft.
 
-#### Scenario: The draft view ends with Continue and a red Delete
+#### Scenario: The draft view ends with Continue, and its header offers Copy as new and a red Delete
 **ID**: SCN-CYA-005-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** it invites them to submit the notification, offering a continue action
-- **AND** a red "Delete" button sits beside the continue action
-- **AND** no copy-as-new or cancel-amendment action is offered
+- **THEN** it invites them to submit the notification, ending with a continue action alone
+- **AND** the header offers "Copy as new" then a red "Delete" button
+- **AND** no cancel-amendment action is offered
 
 #### Scenario: Delete on a draft's review opens the delete confirmation
 **ID**: SCN-CYA-005-B
 - **GIVEN** a draft notification is open on check-your-answers
-- **WHEN** the user presses "Delete"
+- **WHEN** the user presses "Delete" in the header
 - **THEN** the notification's delete confirmation opens
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
@@ -303,7 +309,8 @@ The system MUST offer, in the header of a submitted notification's view, a prima
 **ID**: SCN-CYA-008-D
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** the review ends with "Continue" then "Delete", and offers no "Amend this notification"
+- **THEN** the header offers "Copy as new" then "Delete", and offers no "Amend this notification"
+- **AND** the review ends with "Continue"
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009
@@ -750,7 +757,7 @@ The system MUST give the Addresses card and the Contact address card no link but
 
 ### Requirement: A submitted notification's view is headed by its reference and status, and dated
 **ID**: REQ-CYA-029
-The system MUST head a submitted notification's view with its reference number and a "Submitted" tag, with no status bar, and title the page with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. A draft's or an amendment's review MUST keep its own heading, title and status bar.
+The system MUST head a submitted notification's view with its reference number and a "Submitted" tag, with no status bar, and title the page with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. An amendment's review MUST keep its own heading, title and status bar.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
 **ID**: SCN-CYA-029-A
@@ -760,12 +767,13 @@ The system MUST head a submitted notification's view with its reference number a
 - **AND** a green "Submitted" tag stands beside the heading
 - **AND** no status bar is shown above it
 
-#### Scenario: The submitted view is titled by its reference, and a draft keeps its review title
+#### Scenario: The submitted view and a draft's review are titled by their references, and an amendment keeps its review title
 **ID**: SCN-CYA-029-B
-- **GIVEN** a submitted notification, and a draft notification
+- **GIVEN** a submitted notification, a draft notification and an amendment
 - **WHEN** the user views each
 - **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
-- **AND** the draft's review is headed "Review your notification" with a "Draft" status bar
+- **AND** the draft's review is titled by its reference in the same way
+- **AND** the amendment's review is headed "Review your notification" with an "Amend" status bar
 
 #### Scenario: The date submitted is the UK day of the submission
 **ID**: SCN-CYA-029-C
@@ -779,9 +787,9 @@ The system MUST head a submitted notification's view with its reference number a
 - **WHEN** the user views it again later
 - **THEN** the header reads the same date submitted
 
-### Requirement: A submitted notification's view shows its import reference numbers as text to copy
+### Requirement: A notification's view shows its import reference numbers as text to copy
 **ID**: REQ-CYA-030
-The system MUST show, on a submitted notification's view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C640". The values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+The system MUST show, on a draft's review and on a submitted notification's view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C640". The values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
 
 #### Scenario: The section shows the warning and both rows
 **ID**: SCN-CYA-030-A
@@ -798,11 +806,12 @@ The system MUST show, on a submitted notification's view, an "Import reference n
 - **THEN** the section shows the warning and both values as text
 - **AND** the section shows no button
 
-#### Scenario: A draft's review shows no import reference numbers
+#### Scenario: A draft's review shows the warning, the reference and C640 as text
 **ID**: SCN-CYA-030-C
 - **GIVEN** a draft notification
 - **WHEN** the user views its review
-- **THEN** no "Import reference numbers" section is shown
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its "Notification reference" row reads the notification's reference number and its "Customs document code" row reads "C640", as text with no button
 
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
 **ID**: REQ-CYA-031
@@ -845,3 +854,40 @@ The system MUST view a notification submitted without its ITAHC read-only, with 
 - **GIVEN** a notification submitted without an ITAHC, and a browser with JavaScript off
 - **WHEN** the user selects Continue
 - **THEN** Overview opens with the notification's status shown as "Amend"
+
+### Requirement: A draft's review is headed by its reference with a Draft tag and dated by its creation, and stays editable
+**ID**: REQ-CYA-033
+The system MUST head a draft's review with its reference number and a "Draft" tag, with no status bar, and MUST show "Date created: " and the UK day of creation under the header. The review MUST keep a Change link on every card, show the error summary and each incomplete card's message under the header, and end with a continue action.
+
+#### Scenario: A draft's review opened from Overview is headed by its reference with a Draft tag
+**ID**: SCN-CYA-033-A
+- **GIVEN** a draft notification
+- **WHEN** the user opens its review with "Review and submit" on Overview
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a blue "Draft" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The date created is the UK day the notification was created
+**ID**: SCN-CYA-033-B
+- **GIVEN** a draft notification created at 23:30 UTC on 21 July 2026
+- **WHEN** the user views its review
+- **THEN** the header reads "Date created: 22 July 2026"
+
+#### Scenario: Every card on a draft's review keeps its Change link
+**ID**: SCN-CYA-033-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** each card offers a Change link to its question page
+
+#### Scenario: An incomplete draft's error summary and card messages show under the header
+**ID**: SCN-CYA-033-D
+- **GIVEN** a draft notification with incomplete sections
+- **WHEN** the user views its review
+- **THEN** a "There is a problem" error summary lists each incomplete section, each entry linking to its card
+- **AND** an error message shows under each incomplete card's heading
+
+#### Scenario: A draft's review ends with Continue
+**ID**: SCN-CYA-033-E
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** the review ends with a "Continue" button

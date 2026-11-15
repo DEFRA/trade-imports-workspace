@@ -155,7 +155,7 @@
     {
       "id": "REQ-CYA-003",
       "name": "A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-003-A",
@@ -212,10 +212,21 @@
         },
         {
           "id": "SCN-CYA-003-G",
-          "name": "A review with nothing saying where the user came from has a back link to Overview",
-          "coverage": "full",
+          "name": "A draft review with nothing saying where the user came from has a back link to the dashboard",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should fall back when %s", "strength": "full", "notes": "Probed: the draft fallback in check-answers/controller.js resolved to the dashboard turns the draft and amend cases red and restoring it turns them green" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should send a draft's review Back to the notification list", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should fall back when %s", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "sends Back to the notification list when opened without a trail", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-H",
+          "name": "An amendment review with nothing saying where the user came from has a back link to Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the overview from the review of a notification being amended", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should fall back when %s", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]
@@ -260,28 +271,30 @@
     },
     {
       "id": "REQ-CYA-005",
-      "name": "A draft notification ends with a continue action and a red Delete",
-      "coverage": "full",
+      "name": "A draft notification ends with a continue action, and its header offers Copy as new and a red Delete",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-005-A",
-          "name": "The draft view ends with Continue and a red Delete",
-          "coverage": "full",
+          "name": "The draft view ends with Continue, and its header offers Copy as new and a red Delete",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a warning Delete, with neither Copy as new nor Cancel amend", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue then a warning Delete in its last block, and nothing after it", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should end a draft review with Continue then a warning Delete to the delete path", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs and offer the delete path for an editable draft journey", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue alone, with no Cancel amend", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers a primary Copy as new then a warning Delete in its header, with no Amend this notification", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue alone in its last block, and nothing after it", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers a primary Copy as new then a warning Delete in its header, and no Amend this notification", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should end a draft review with Continue alone and offer a primary Copy as new then a warning Delete in its header", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs on a draft, with the header offering Delete and no Amend, and no foot Delete", "strength": "partial", "notes": "not probed red" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer the cancel-amend path only while amending", "strength": "partial", "notes": "not probed red; the draft arm proves no cancel-amend path" }
           ]
         },
         {
           "id": "SCN-CYA-005-B",
           "name": "Delete on a draft's review opens the delete confirmation",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete on a draft review opens the delete confirmation", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on a draft review opens the delete confirmation", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete in the header of a draft review opens the delete confirmation", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete in the header opens the delete confirmation", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]
@@ -421,7 +434,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Amend this notification, a secondary Copy as new and a warning Delete in its header", "strength": "partial", "notes": "not probed red" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer a submitted view Amend this notification, a secondary Copy as new and a warning Delete in its header, with no Continue form", "strength": "partial", "notes": "not probed red" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/submitted-header.test.js", "test": "Should point Amend and Copy as new at the notification actions and Delete at its delete page", "strength": "full", "notes": "red probe: pointing the Amend form action at the copy path fails it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should point Amend and Copy as new at the notification actions and Delete at its delete page", "strength": "full", "notes": "red probe: pointing the Amend form action at the copy path fails it" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Amend this notification, a secondary Copy as new and a warning Delete in its header", "strength": "partial", "notes": "not probed red; also asserts no Continue button" }
           ]
         },
@@ -439,7 +452,7 @@
           "name": "Delete opens the delete confirmation",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the submitted view opens the delete confirmation", "strength": "full", "notes": "red probe: point deleteButtonFor in check-answers/view-model/submitted-header.js at the copy page and the confirmation heading is not shown" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the submitted view opens the delete confirmation", "strength": "full", "notes": "red probe: point deleteButtonFor in check-answers/view-model/view-header.js at the copy page and the confirmation heading is not shown" }
           ]
         },
         {
@@ -447,9 +460,11 @@
           "name": "A draft's review offers no Amend this notification",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs and offer the delete path for an editable %s journey", "strength": "partial", "notes": "not probed red; asserts the draft and amendment views carry no submitted header" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue then a warning Delete in its last block, and nothing after it", "strength": "partial", "notes": "not probed red" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a warning Delete, with neither Copy as new nor Cancel amend", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs on a draft, with the header offering Delete and no Amend, and no foot Delete", "strength": "partial", "notes": "asserts a draft's header and its Amend-free actions" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should offer a primary Copy as new and Delete, and no Amend", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers a primary Copy as new then a warning Delete in its header, and no Amend this notification", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers a primary Copy as new then a warning Delete in its header, with no Amend this notification", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue alone, with no Cancel amend", "strength": "partial", "notes": "not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "renders the recorded answers in the numbered design sections", "strength": "partial", "notes": "not probed red; asserts the Draft header offers no Amend this notification" }
           ]
         }
@@ -1106,20 +1121,22 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a submitted view with its reference, a header and no strip", "strength": "full", "notes": "red probe: titling the view by the review title fails it" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/submitted-header.test.js", "test": "Should name the notification by its reference with a green Submitted tag", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should name the notification by its reference with a green Submitted tag", "strength": "partial", "notes": "not probed red" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a green Submitted tag beside it, no status bar and a title naming the reference", "strength": "partial", "notes": "not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with a green Submitted tag, no status bar and a title naming the reference", "strength": "partial", "notes": "not probed red" }
           ]
         },
         {
           "id": "SCN-CYA-029-B",
-          "name": "The submitted view is titled by its reference, and a draft keeps its review title",
+          "name": "The submitted view and a draft's review are titled by their references, and an amendment keeps its review title",
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a submitted view with its reference, a header and no strip", "strength": "full", "notes": "red probe: titling the view by the review title fails it" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft with its review title and the strip, and no submitted header", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft with its reference and a Draft tag in the header, and no strip", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title a draft by its reference whose answers change", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head an amendment with its review title and the strip, and no header", "strength": "partial", "notes": "not probed red" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a green Submitted tag beside it, no status bar and a title naming the reference", "strength": "partial", "notes": "not probed red" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue then a warning Delete in its last block, and nothing after it", "strength": "partial", "notes": "the draft's heading and title; not probed red" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a blue Draft tag beside it, no status bar and a title naming the reference", "strength": "partial", "notes": "not probed red" }
           ]
         },
         {
@@ -1127,7 +1144,7 @@
           "name": "The date submitted is the UK day of the submission",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/submitted-header.test.js", "test": "Should date the notification on the London day it was submitted, with the month in full", "strength": "full", "notes": "red probe: formatting the day in UTC fails it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should date the notification on the London day it was submitted, with the month in full", "strength": "full", "notes": "red probe: formatting the day in UTC fails it" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/review/notification-date.test.js", "test": "Should write the London day in full for an instant late in the UTC evening during summer time", "strength": "full", "notes": "red probe: formatting the day in UTC fails it" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "dates the notification under its header", "strength": "partial", "notes": "asserts the shape of the line, not the day; not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "dates the notification with the service day it was submitted", "strength": "partial", "notes": "not probed red" }
@@ -1146,7 +1163,7 @@
     },
     {
       "id": "REQ-CYA-030",
-      "name": "A submitted notification's view shows its import reference numbers as text to copy",
+      "name": "A notification's view shows its import reference numbers as text to copy",
       "coverage": "partial",
       "scenarios": [
         {
@@ -1154,7 +1171,7 @@
           "name": "The section shows the warning and both rows",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/submitted-header.test.js", "test": "Should show the notification reference and the customs document code as import reference numbers", "strength": "full", "notes": "red probe: changing the customs document code fails it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should show the notification reference and the customs document code as import reference numbers", "strength": "full", "notes": "red probe: changing the customs document code fails it" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the import reference numbers with the warning, the reference and the customs document code", "strength": "partial", "notes": "not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the import reference numbers as text with the warning and no Copy button", "strength": "partial", "notes": "not probed red" }
           ]
@@ -1169,10 +1186,12 @@
         },
         {
           "id": "SCN-CYA-030-C",
-          "name": "A draft's review shows no import reference numbers",
+          "name": "A draft's review shows the warning, the reference and C640 as text",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft with its review title and the strip, and no submitted header", "strength": "partial", "notes": "asserts a draft carries no submitted header, which holds the section; not probed red" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should show a draft's reference and the customs document code as import reference numbers", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the import reference numbers as text with the warning, the reference and the customs document code", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows a draft's import reference numbers as text with the warning and no Copy button", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]
@@ -1236,6 +1255,64 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Continue starts an amendment and opens the overview, with JavaScript off", "strength": "partial", "notes": "not probed red" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should amend a submitted notification and open its overview when the hub exit is posted", "strength": "partial", "notes": "not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue starts an amendment and opens the overview", "strength": "partial", "notes": "not probed red" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-033",
+      "name": "A draft's review is headed by its reference with a Draft tag and dated by its creation, and stays editable",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-033-A",
+          "name": "A draft's review opened from Overview is headed by its reference with a Draft tag",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft with its reference and a Draft tag in the header, and no strip", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a blue Draft tag beside it, no status bar and a title naming the reference", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows a blue Draft tag", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows no status bar", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is titled with an Error prefix while the draft has incomplete sections", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-033-B",
+          "name": "The date created is the UK day the notification was created",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should date a late-evening British Summer Time creation on the next London day", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "dates the notification by its creation under its header", "strength": "partial", "notes": "asserts the shape of the line, not the day; not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "dates the notification with the service day it was created", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-033-C",
+          "name": "Every card on a draft's review keeps its Change link",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs on a draft, with the header offering Delete and no Amend, and no foot Delete", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "keeps a Change link on every card", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows Change links for the recorded answers", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-033-D",
+          "name": "An incomplete draft's error summary and card messages show under the header",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "lists every unfinished card in the error summary, each linking to its card with its message on the card", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue: when the notification is unfinished, stays put and names what is left", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-033-E",
+          "name": "A draft's review ends with Continue",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with Continue", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue alone, with no Cancel amend", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]

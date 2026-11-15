@@ -58,6 +58,55 @@
           "notes": "No E2E that completes review while asserting a named N/A row was the reason it was not blocked."
         }
       ]
+    },
+    {
+      "id": "REQ-OB-SCOPE-005",
+      "name": "A mandatory obligation that applies holds the notification back from submission until it is answered",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-OB-SCOPE-005-A",
+          "name": "A notification without its main import reason is not ready to submit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold %s not submittable", "strength": "partial", "notes": "the 'without a reason' row proves the readiness; the card naming is proved for a fresh notification by the review's fit tests, not here" }
+          ]
+        },
+        {
+          "id": "SCN-OB-SCOPE-005-B",
+          "name": "A notification missing an answer its import reason calls for is not ready to submit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold %s not submittable", "strength": "partial", "notes": "the purpose, destination country and port of exit rows each probed red with the obligation made optional, with a complete counterpart held submittable; the card naming is not proved here" }
+          ]
+        },
+        {
+          "id": "SCN-OB-SCOPE-005-C",
+          "name": "A notification without what the animals are certified for is not ready to submit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold %s not submittable", "strength": "partial", "notes": "the 'without certified-for' row proves the readiness; not probed; the card naming is not proved here" }
+          ]
+        },
+        {
+          "id": "SCN-OB-SCOPE-005-D",
+          "name": "A cattle notification without the unweaned answer is not ready to submit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold %s not submittable", "strength": "partial", "notes": "probed red with the unweaned obligation made optional; the card naming is not proved here" }
+          ]
+        },
+        {
+          "id": "SCN-OB-SCOPE-005-E",
+          "name": "The main import reason, what the animals are certified for and the unweaned answer can be left blank and are named when the user continues",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "accepts the main import reason and additional details left blank by Save and return to overview, then names both cards when Continue is refused", "strength": "full", "notes": "probed: certified-for and the unweaned answer both made optional went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should still accept a Save and return to overview submit that names no reason at all", "strength": "partial", "notes": "the reason only; not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves both questions blank on Save and return to overview and persists the blank state", "strength": "partial", "notes": "certified-for and the unweaned answer only; not probed" }
+          ]
+        }
+      ]
     }
   ]
 }

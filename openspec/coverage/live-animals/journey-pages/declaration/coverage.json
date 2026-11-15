@@ -71,6 +71,15 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits a complete notification, redirects to confirmation and keeps the declaration", "strength": "full", "notes": "after submit, revisiting the declaration URL lands on confirmation" }
           ]
+        },
+        {
+          "id": "SCN-DECLARATION-004-B",
+          "name": "Declaring again from a declaration still open after another tab submitted shows the confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "shows the confirmation for the same notification when another tab submitted it first", "strength": "full", "notes": "probed: the already-submitted guard on the post removed went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should redirect a POST retry on a journey submitted %s its ITAHC to confirmation", "strength": "partial", "notes": "handler level; not probed" }
+          ]
         }
       ]
     },
@@ -149,7 +158,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses the submit and returns to the review when the notification changed after the declaration rendered", "strength": "full", "notes": "edits the internal reference in a second page, then asserts the review URL with the banner and the changed value" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should refuse the submit when the notification changed after the declaration rendered", "strength": "full", "notes": "asserts the redirect, that finalise is never called, and that the notification stays a draft" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should refuse the submit when the notification changed after the declaration rendered", "strength": "full", "notes": "asserts the redirect, that finalise is never called, and that the notification stays a draft" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/declare-stale-notification.spec.ts", "test": "declaration: when changed since it rendered, Submit returns to check your answers with the current content", "strength": "partial", "notes": "not probed against the stack" }
           ]
         },
         {
@@ -186,6 +196,46 @@
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldReturn409StaleConcurrencyToken_whenNotificationChangedSinceTokenWasRead", "strength": "full", "notes": "backend integration test against real Mongo (recorded as unit, the nearest type): a submit at a token an edit has moved past is refused 409, stays a draft, and writes no outbox event" },
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java", "test": "submitNotification_shouldSaveAtTheExpectedConcurrencyToken", "strength": "partial", "notes": "the save carries the caller's token, so @Version refuses it atomically" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review when an edit lands between the check and the submit", "strength": "partial", "notes": "the frontend's handling of the backend's 409, faked at fetch" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-008",
+      "name": "A declaration is not submitted while check your answers would refuse the notification",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-008-A",
+          "name": "A confirmed declaration on an unfinished notification returns to check your answers naming every unfinished card",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses a declaration ticked on an incomplete notification, and shows the review as a draft naming each unfinished card", "strength": "full", "notes": "probed: the review-refused guard and the readiness refusal at submit both inverted went red, restored went green; either alone stays green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/declaration.spec.ts", "test": "a declaration posted for an unfinished draft is refused back to the review, naming each unfinished card, and the notification stays a draft", "strength": "full", "notes": "probed against the stack: the same pair inverted went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should keep the not-ready outcome as a redirect to the review", "strength": "partial", "notes": "readiness stubbed" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-008-B",
+          "name": "A confirmed declaration on a notification with a document still being scanned returns to check your answers marking the document card",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses a declaration ticked on a document still being scanned, and shows the review as a draft naming that document", "strength": "full", "notes": "probed: the review-refused guard inverted went red, restored went green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-009",
+      "name": "A declaration the service cannot save is shown again, ready to retry",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-009-A",
+          "name": "A submission the service cannot save shows the declaration again with a message",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should re-render declaration at 500 with its checked value, the reviewed token, banner and retry form", "strength": "full", "notes": "backend refusal faked at fetch; probed: the fallback render removed went red, restored went green" }
           ]
         }
       ]

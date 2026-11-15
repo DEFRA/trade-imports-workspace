@@ -315,9 +315,9 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: The review marks each document card while a document is still being scanned or was found infected, and refuses to continue while it is
+### Requirement: The review marks each document card found infected as soon as it opens, and marks one still being scanned only once Continue is refused
 **ID**: REQ-CYA-010
-The system MUST mark each document card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown. The error summary MUST link to the first document card.
+The system MUST mark each document card on a draft's review as soon as it opens while a stored document has been found infected, and as still being scanned only once the user's continue has been refused for a document still being scanned. The infected message MUST come first, continuing MUST be refused while either holds, and the error summary MUST link to the first document card.
 
 #### Scenario: Continuing while a document is still being scanned is refused, marking each document card on the review
 **ID**: SCN-CYA-010-A
@@ -336,6 +336,19 @@ The system MUST mark each document card on a draft's review while any stored doc
 - **GIVEN** a ready draft notification is open on the review, with two documents, one of which is scanned or found infected
 - **WHEN** the user continues
 - **THEN** they are returned to the review, whose error summary link goes to the first document card, not the second
+
+#### Scenario: A draft holding an infected document marks each document card as soon as the review opens
+**ID**: SCN-CYA-010-D
+- **GIVEN** a draft notification holds a document that has been found infected
+- **WHEN** the user opens the review
+- **THEN** each document card is marked as holding an infected document
+- **AND** the error summary links to the first document card
+
+#### Scenario: A draft holding a document still being scanned leaves the document cards unmarked until the user continues
+**ID**: SCN-CYA-010-E
+- **GIVEN** a draft notification holds a document that is still being scanned
+- **WHEN** the user opens the review
+- **THEN** no document card is marked as still being scanned
 
 ### Requirement: Continuing is refused if the notification has changed since the review was shown
 **ID**: REQ-CYA-011
@@ -647,6 +660,14 @@ The system MUST show one card per selected commodity in "2. Description of the g
 - **GIVEN** a submitted notification
 - **WHEN** the user views it
 - **THEN** the commodity card and its species blocks have no Change link
+
+#### Scenario: Species under two commodity codes stand as two cards, each holding only its own species' blocks
+**ID**: SCN-CYA-024-F
+- **GIVEN** a notification with Bison bison and Bos taurus selected under commodity code 0102, and Felis catus under commodity code 01061900, each with a number of animals entered
+- **WHEN** the user views the review
+- **THEN** "2. Description of the goods" holds a card titled "0102" and then a card titled "01061900"
+- **AND** the "0102" card holds a "Bison Bison" block and a "Bos Taurus" block, and the "01061900" card holds a "Felis Catus" block alone
+- **AND** each block's "Number of animals" reads the number entered for its species
 
 ### Requirement: The review reads the county parish holding number back as its three parts separated by slashes
 **ID**: REQ-CYA-025

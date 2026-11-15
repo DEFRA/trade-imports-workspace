@@ -350,6 +350,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a brand-new draft with one entry per unfinished card, in page order", "strength": "partial", "notes": "no red probe run against this link; the three messages in the summary, in order" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "names the unfinished main import reason and additional details cards in the error summary and on each card", "strength": "partial", "notes": "no red probe run against this link; two of the three messages in a browser, linked to their cards" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "accepts the main import reason and additional details left blank by Save and return to overview, then names both cards when Continue is refused", "strength": "partial", "notes": "two of the three messages, after a refused Continue rather than on opening; probed: the blank refused by the choice validator went red, restored went green" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "partial", "notes": "no red probe run against this link; the main import reason message through the stack" }
           ]
         },
@@ -471,7 +472,7 @@
     },
     {
       "id": "REQ-CYA-010",
-      "name": "The review marks each document card while a document is still being scanned or was found infected, and refuses to continue while it is",
+      "name": "The review marks each document card found infected as soon as it opens, and marks one still being scanned only once Continue is refused",
       "coverage": "full",
       "scenarios": [
         {
@@ -480,7 +481,8 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name the Document 1 card as still scanning when Continue is refused with a pending document", "strength": "full", "notes": "drives Continue through the declaration, asserts the refused redirect, then the review card's still-scanning error" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should refuse a notification whose stored document is still being scanned", "strength": "partial", "notes": "the refusal verdict only, not what the review shows" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should refuse a notification whose stored document is still being scanned", "strength": "partial", "notes": "the refusal verdict only, not what the review shows" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "leaves the Document 1 card unmarked for a document still being scanned until Continue is refused", "strength": "partial", "notes": "the refused review's still-scanning message is asserted but not probed; the unmarked plain visit is probed" }
           ]
         },
         {
@@ -499,6 +501,24 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should link the error summary to the first of two document cards that both carry a scan error", "strength": "full", "notes": "seeds two rejected documents, drives the refused Continue, asserts the one summary link is the first card's anchor and the second card carries none; fails if the anchor moves to the second card" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-010-D",
+          "name": "A draft holding an infected document marks each document card as soon as the review opens",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "marks the Document 1 card as rejected as soon as the review opens, and links the error summary to it", "strength": "full", "notes": "probed: the rejected branch of the document scan card errors removed went red, restored went green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: the review marks the Document 1 card as rejected and links the error summary to it", "strength": "full", "notes": "probed against the stack: the same line removed went red, restored went green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-010-E",
+          "name": "A draft holding a document still being scanned leaves the document cards unmarked until the user continues",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "leaves the Document 1 card unmarked for a document still being scanned until Continue is refused", "strength": "full", "notes": "probed: the pending scan counted on a plain visit went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not name a still-scanning document on a plain visit to the review", "strength": "partial", "notes": "view model only; not probed" }
           ]
         }
       ]
@@ -938,6 +958,15 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification no Change action on the commodity cards, species blocks or identification details", "strength": "full", "notes": "probes: made the species block first-row action, then the commodity card header action, render on a submitted review; this test went red each time, restored green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-024-F",
+          "name": "Species under two commodity codes stand as two cards, each holding only its own species' blocks",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "reads one commodity card per code back, each holding only its own species blocks with the counts entered", "strength": "full", "notes": "probed: the commodity cards mapping only one species block went red, restored went green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the review reads one commodity card back per code, each holding only its own species blocks with the animal counts entered", "strength": "full", "notes": "probed against the stack: the same line went red, restored went green" }
           ]
         }
       ]

@@ -1919,7 +1919,11 @@
         "req-900",
         "req-2004"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Contract decision: submit, resubmit and cancel-amend in trade-imports-animals-backend now put SUBMITTED_ACTION_REQUIRED in the GBN-AG outbox events' exchangedDocument.notificationStatusCode (NotificationService.java:208-210, ExchangedDocument.java:32), but trade-imports-schemas gbn-ag-event-notification-submitted-v1, -submission-amended-v1 and -amendment-cancelled-v1 (line 26) set notificationStatusCode const SUBMITTED, and codelists/gbn-ag-notification-status.json lists only DRAFT, SUBMITTED, AMEND and DELETED. So the event fails its own schemaUrl and the dynamics gateway and PIMS get a value outside the contract. Option 1: add SUBMITTED_ACTION_REQUIRED to the schemas repo codelist and widen the three event schemas to an enum (needs the PIMS consumer to agree; fits the INS front door, which needs the status to reach ins-backend). Option 2: map it to SUBMITTED in ExchangedDocument and give ins-backend the finer status another way. Which contract? Raised by the engineering review blocker finding on NotificationService.java:210. NotificationIT now pins the field exactly at SUBMITTED_ACTION_REQUIRED, so whichever option is chosen changes that assertion.",
+        "For the designer: on a high-risk plants draft's check your answers, where does Delete notification sit? Ruling sam-2026-10-09-pm p3-046 (distil/extract/ruling-sam-2026-10-09-pm.part3.json) and the review-end-buttons row (inc-110) say \"Plants: Delete beside Continue on a draft\" - a red warning button with the existing Delete notification wording beside Continue. Ruling p3-056 and the draft view header row (inc-187) list \"the delete button\" as part of the draft's view header. The code puts it only in the header (trade-imports-plants-frontend check-answers/template.njk:34-53, view-model/view-header.js deleteButtonFor; controller.js:100-111 returns no foot button for a draft; check-answers.fit.spec.js asserts Continue then Save and return to overview at the foot). Options: header only (as built), beside Continue only, or both.",
+        "For the designer: on high-risk plants check your answers the party cards no longer show Telephone number or Email address (ruling sam-2026-10-09-pm p3-045, \"the cards drop telephone and email and read the address back line by line\"; inc-109). Nothing in the design source says where an error on a copied party's invalid telephone number or email shows. The code shows it above the Name row (trade-imports-plants-frontend check-answers/view-model/index.js:84 and 115-118, messagesFor(nameAndContactFields); controller.test.js \"Should show the telephone error above the name on a copy with an invalid telephone number\"), so the trader reads \"Enter a telephone number...\" with no telephone number on the card. Options: keep it above Name (as built), show the value on its own row only when it is in error, or show it only in the error summary linking to the party's edit page."
+      ],
       "notes": [
         "The Back link goes to the set's own notification list in the animals frontend (c-143), so it is observable the same way in every environment, and the import reference rows carry no Copy buttons (c-294; req-1986 waits on design). The header is drawn in the set's own review template with the strip switched off; the shared layout is not changed (afternoon ruling claims p2-061 and p2-062). Kept apart from the submitted-view header row (inc-111) because it reuses that row's header and the header-actions row's Copy as new, Delete and Import reference numbers (inc-112), so it follows both. The incomplete-card messages are the review cards row's (inc-101) and Continue is the review-ending row's (inc-110); this row shows they hold under the draft's header.",
         "req-2004 (plants' draft view header) sits here under the afternoon ruling's same-increment rule (claims p3-013 and p3-056).",
@@ -1948,10 +1952,11 @@
     },
     {
       "id": "inc-199",
-      "title": "Plants' customs document code on its import reference numbers, once plants' own code is confirmed",
-      "detail": "The plants view's 'Import reference numbers' section, built in the header-actions row, has no 'Customs document code' row, because C640 is the animals code and plants' own code is not confirmed. Once it is, the row is added with plants' own code.",
+      "title": "Plants' import reference numbers show its customs document code, C085",
+      "detail": "The plants view's 'Import reference numbers' section, built in the header-actions row, has no 'Customs document code' row, because C640 is the animals code. Sam confirmed plants' own code on 16 November: C085, the CHED-PP document code. The row is added with it, matching the animals row.",
       "acceptanceCriteria": [
-        "Plants' 'Import reference numbers' section has a 'Customs document code' row reading plants' own confirmed customs document code, as text the trader can select (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-052, ruling-sam-2026-10-09-pm-p3-053)"
+        "Plants' 'Import reference numbers' section has a 'Customs document code' row reading 'C085', laid out like the animals section's row, as text the trader can select (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-052, ruling-sam-2026-10-09-pm-p3-053; ruling:sam-2026-11-16 claim 1)",
+        "The animals section still reads C640 (ruling:sam-2026-11-16 claim 1)"
       ],
       "requirements": [
         "req-2002"
@@ -1960,6 +1965,10 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm-p3-052, p3-053"
+        },
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "claim 1"
         }
       ],
       "repos": [
@@ -1967,14 +1976,12 @@
         "tests"
       ],
       "kind": "feat",
-      "status": "blocked",
+      "status": "todo",
       "gate": null,
-      "openQuestions": [
-        "The plants policy or customs owner confirms plants' own customs document code (C640 is the animals code); the programme owner names who confirms it. Until then plants' section shows the notification reference only."
-      ],
       "notes": [
         "Blocked: req-2002 carries blockedBy on plants' own customs document code. Kept apart from the header-actions row so the rest of plants' view header is not held up.",
-        "Pre-flight 13 Nov: still blocked. The plants frontend on main has no customs document code anywhere, and no ruling has confirmed one."
+        "Pre-flight 13 Nov: still blocked. The plants frontend on main has no customs document code anywhere, and no ruling has confirmed one.",
+        "Unblocked 16 Nov: Sam confirmed C085 (ruling:sam-2026-11-16)."
       ],
       "theme": "overview-and-review",
       "dependsOn": []

@@ -5,17 +5,17 @@
   "requirements": [
     {
       "id": "REQ-PLANTS-CONTACT-SELECT-001",
-      "name": "The page offers the address book as a paged table, none chosen in advance",
+      "name": "The page offers the address book as a table, none chosen in advance",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONTACT-SELECT-001-A",
-          "name": "The page shows the first page of the address book, none preselected",
+          "name": "The page shows every address on one page, none preselected",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "asserts the count under the Select an address results heading, that only one page of rows is offered, that a last-page record is absent, and that a next-page link stands" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "lists every address for the role, and the role-less address, on one page", "strength": "full", "notes": "declared by describeAddressPicker; asserts the count under the Select an address results heading, and that every row is offered on one page" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "renders the heading, the description and the search box", "strength": "full", "notes": "the copy-on-select description and the search control" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "partial", "notes": "does not assert that no row is preselected on first open" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, lists every match on one page, and persists a row ticked, shown checked on reopening", "strength": "partial", "notes": "does not assert that no row is preselected on first open" }
           ]
         }
       ]
@@ -30,8 +30,8 @@
           "name": "Choosing a contact saves, opens check your answers, and persists on return",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "saves the chosen address, continues to the next page and shows it again on return", "strength": "full", "notes": "asserts the review page after Save and continue and the address still chosen on return" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "partial", "notes": "does not assert the saved address's details, only that the task is Completed" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "saves the chosen address, continues to the next page and shows it checked on return, with nothing between the search box and the results heading", "strength": "full", "notes": "asserts the review page after Save and continue and the address still chosen on return" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, lists every match on one page, and persists a row ticked, shown checked on reopening", "strength": "partial", "notes": "does not assert the saved address's details, only that the task is Completed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "chooses a contact, saves and continues and asserts the review URL; does not reopen the picker" }
           ]
         },
@@ -152,7 +152,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "narrows the results to the search term", "strength": "full", "notes": "asserts both halves: the match is offered and a non-match is gone" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "partial", "notes": "does not assert which records the search matches by name, only the count and that the target is off page one" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, lists every match on one page, and persists a row ticked, shown checked on reopening", "strength": "partial", "notes": "does not assert which records the search matches by name, only the count" }
           ]
         },
         {
@@ -167,27 +167,15 @@
     },
     {
       "id": "REQ-PLANTS-CONTACT-SELECT-007",
-      "name": "A row ticked on one page of results is carried across searching and paging",
+      "name": "A row ticked is carried across a further search",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONTACT-SELECT-007-A",
-          "name": "A ticked row is named after moving to another page of results",
+          "name": "A ticked row stays checked after a further search",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "carries a newly ticked address through the paging links", "strength": "full", "notes": "ticks a row without saving, then pages; probed: address-book-picker.js line 6 (the line setting the selected address on each paging link) inverted turns only this test red, restored green (workareas/shared/eudpa-774/logs/inc-032-probe-SCN-PLANTS-CONTACT-SELECT-007-A). Probing the client script's lines 27 and 32 broke the bundle build instead, so line 6 is the probed line" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/client/javascripts/components/address-book-picker.test.js", "test": "Should carry a newly ticked address through every pagination link", "strength": "partial", "notes": "proves the script rewrites the links but does not render the page" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "carries a saved address through the paging links", "strength": "full", "notes": "the already-saved arm of the same behaviour" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "keeps a ticked row while the search narrows the results", "strength": "full", "notes": "the searching arm, which the requirement names alongside paging" }
-          ]
-        },
-        {
-          "id": "SCN-PLANTS-CONTACT-SELECT-007-B",
-          "name": "A row ticked on a later page is the one that saves",
-          "coverage": "full",
-          "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "a row ticked on the second page saves, and re-entering shows it as the selected address", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "partial", "notes": "does not assert the saved record's details beyond its name in the selected-address inset" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "keeps a ticked row checked while the search narrows the results", "strength": "full", "notes": "declared by describeAddressPicker in fit/high-risk-plants-journey.js" }
           ]
         }
       ]

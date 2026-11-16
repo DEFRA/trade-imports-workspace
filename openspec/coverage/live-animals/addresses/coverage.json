@@ -4,6 +4,58 @@
   "specFile": "openspec/specs/live-animals/addresses/spec.md",
   "requirements": [
     {
+      "id": "REQ-ADDR-016",
+      "name": "Each role's list offers only the addresses saved for that role, and any saved with no role",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-016-A",
+          "name": "An address saved for one role is listed only on that role's list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should not return a record whose roles belong to another role", "strength": "full", "notes": "red-probed: fails when the role filter is removed from the reader" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "lists only addresses saved for the role; a record saved for two roles is listed on both", "strength": "partial", "notes": "red-probed: fails when the consignee-only record also appears on the importer picker; does not check the place of origin, consignor or place of destination pickers" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Place of origin picker lists only its own role's addresses and the role-less address, with its role-specific copy", "strength": "full", "notes": "red-probed: fails when a picker is bound to another party's role" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should give each spoke the stub records carrying its own role, with the role-less record, and nothing else", "strength": "full", "notes": "drives the real controller for every party and asserts the exact id list each returns against the stub book filtered by that party's role" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-016-B",
+          "name": "An address saved for two roles is listed on both",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should return a record carrying two roles when either is asked for", "strength": "full", "notes": "red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "lists only addresses saved for the role; a record saved for two roles is listed on both", "strength": "full", "notes": "same test proves both halves" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-016-C",
+          "name": "An address saved with no role is listed on every role's list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should return a record the book answers with an empty roles list, whatever role is asked for", "strength": "full", "notes": "red-probed: fails when the role-less arm of the rule is removed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Place of origin picker lists only its own role's addresses and the role-less address, with its role-specific copy", "strength": "full", "notes": "red-probed: fails when the role-less record is dropped from a role's list" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-017",
+      "name": "The list shows every address for the role on one page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-017-A",
+          "name": "The whole list is shown on one page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers every consignor address as one group named by the results heading, with no page links", "strength": "full", "notes": "red-probed: fails when a page link is rendered or the group holds fewer radios than the stub book's consignor-role count" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should render the results heading directly after the search field, with nothing between them", "strength": "full", "notes": "red-probed: fails when the inset restating the choice is rendered between the search box and the heading" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "REQ-ADDR-001",
       "name": "The journey reads the address book and never writes to it",
       "coverage": "partial",
@@ -297,7 +349,7 @@
     },
     {
       "id": "REQ-ADDR-006",
-      "name": "Choosing a role's address offers a search of the whole book, reporting how many matched",
+      "name": "Choosing a role's address offers a search of the role's list, reporting how many matched",
       "coverage": "full",
       "scenarios": [
         {
@@ -305,18 +357,18 @@
           "name": "Searching narrows the list and reports the count",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "asserts Showing 2 out of 2 results for a scoped search token" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "full", "notes": "asserts Showing 2 out of 2 results for a scoped search token" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should put the count in the paragraph straight after the results heading, outside the table", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-ADDR-006-B",
-          "name": "Clearing the search restores the whole book",
+          "name": "Clearing the search restores the role's whole list",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "clearing the search and searching with nothing entered lists the whole book again, paged as before", "strength": "full", "notes": "red with an empty search still filtering the stub book" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "clears the search and re-asserts the paginated Showing 5 out of N results" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "clearing the search and searching with nothing entered lists every consignor address again, on one page", "strength": "full", "notes": "red with an empty search still filtering the stub book" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "partial", "notes": "clears the search by searching for the chosen name, not an empty term" }
           ]
         },
         {
@@ -324,8 +376,7 @@
           "name": "Without JavaScript, Enter in the search box narrows the list",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "pressing Enter in the search box narrows the address book on the server", "strength": "full", "notes": "JavaScript off; asserts the count paragraph reads two out of two results" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "JavaScript on, presses the Search button, not Enter" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "pressing Enter in the search box narrows the address book on the server", "strength": "full", "notes": "JavaScript off; asserts the count paragraph reads two out of two results" }
           ]
         },
         {
@@ -333,9 +384,8 @@
           "name": "The listed addresses are one group named \"Select an address\"",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers its addresses as one group named by the results heading", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should hold the table in one fieldset named by a visually hidden legend, after the count", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "asserts the first page's radios sit inside the group" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers every consignor address as one group named by the results heading, with no page links", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should hold the table in one fieldset named by a visually hidden legend, after the count", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -417,11 +467,11 @@
         },
         {
           "id": "SCN-ADDR-009-B",
-          "name": "Back from View keeps the page and the chosen address while changing an answer",
+          "name": "Back from View keeps the chosen address checked while changing an answer",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts", "test": "a later picker page's View link, opened while changing an answer, Backs to that page with the chosen address still selected and the trail kept, and saving returns to the roles and addresses page carrying the trail from the review", "strength": "full", "notes": "opens the picker from the review page's roles and addresses Change link, chooses an address, pages to it, follows View and Back, and asserts Back keeps the origin, the pathname, page and the from trail, with the chosen address still selected, then the save returns to the review; red then green with the picker view model leaving the trail out of the View return; @compose, so it runs on the compose stack only" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return to the page being shown with its chosen address, carrying the trail, when the picker was opened from the review", "strength": "partial", "notes": "sets page 2, a chosen address and the review trail together and asserts the View link's return carries all three; red when the chosen address is left out of the expected return. Does not follow View or Back: that INS honours the return is proven with a search only (SCN-ADDR-009-A e2e), and that the list restores page and selection from it, and carries the trail, by the GET tests and the \"/consignors/select — the trail\" tests in the same file" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts", "test": "the picker's View link, opened while changing an answer, Backs to the same list with the chosen address still checked and the trail kept, and saving returns to the roles and addresses page carrying the trail from the review", "strength": "full", "notes": "opens the picker from the review page's roles and addresses Change link, chooses an address, follows View and Back, and asserts Back keeps the origin, the pathname and the from trail, with the chosen address still checked, then the save returns to the review; red then green with the picker view model leaving the trail out of the View return; @compose, so it runs on the compose stack only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return to the page being shown with its chosen address, carrying the trail, when the picker was opened from the review", "strength": "partial", "notes": "sets a chosen address and the review trail together and asserts the View link's return carries both; red when the chosen address is left out of the expected return. Does not follow View or Back: that INS honours the return is proven with a search only (SCN-ADDR-009-A e2e), and that the list restores the selection from it, and carries the trail, by the GET tests and the \"/consignors/select — the trail\" tests in the same file" }
           ]
         },
         {
@@ -446,41 +496,25 @@
       ]
     },
     {
-      "id": "REQ-ADDR-010",
-      "name": "Choosing a role's address is paged, and a choice made on any page is the one saved",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-ADDR-010-A",
-          "name": "A record found on a later page is chosen and saved",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
-          ]
-        }
-      ]
-    },
-    {
       "id": "REQ-ADDR-011",
-      "name": "Reopening the list names the address already chosen and keeps it on save",
+      "name": "Reopening the list shows the address already chosen checked, and keeps it on save",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ADDR-011-A",
-          "name": "Reopening the list names the saved choice and keeps it on save",
+          "name": "Reopening the list shows the saved choice checked, and keeps it on save",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Selected address names the later-page record on reopen, its row absent, then save keeps the section showing it" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "full", "notes": "asserts the chosen record's row is checked on reopen, then save keeps the section showing it" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "reopening the picker checks the previously chosen address, with nothing between the search box and the results heading", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-ADDR-011-B",
-          "name": "Reopening the list names nothing once the address is edited here or deleted from the book",
+          "name": "Reopening the list shows no row checked once the address is edited here or deleted from the book",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker", "strength": "partial", "notes": "deleted-record branch only: asserts no Selected address on reopen" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker", "strength": "partial", "notes": "deleted-record branch only: asserts no row checked on reopen" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "edited branch, first half: the edit save drops pickedFromId" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should open with nothing selected when the held copy has no record it was picked from", "strength": "partial", "notes": "edited branch, second half: no pickedFromId opens with nothing selected; no end-to-end test drives edit then reopen" }
           ]

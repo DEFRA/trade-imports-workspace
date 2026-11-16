@@ -4,21 +4,19 @@
 
 **Maturity**: exploring
 
-Asks which address-book record is the consignment's point of contact, from a searchable, paged table of the organisation's address book that copies the chosen name and address at selection. The page is titled "Contact address for consignment".
+Asks which address-book record is the consignment's point of contact, from a searchable table of the organisation's address book that copies the chosen name and address at selection. The page is titled "Contact address for consignment".
 
 ## Requirements
 
-### Requirement: The page offers the address book as a paged table, none chosen in advance
+### Requirement: The page offers the address book as a table, none chosen in advance
 **ID**: REQ-PLANTS-CONTACT-SELECT-001
-The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and a hint that selecting a contact copies their name and address into the notification. It MUST show one page at a time, reporting under the heading "Select an address" how many are shown out of the total and linking to the other pages, and MUST leave every address unchosen when first opened.
+The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and a hint that selecting a contact copies their name and address into the notification. It MUST show every address on one page, reporting under the heading "Select an address" how many are shown out of the total, and MUST leave every address unchosen when first opened.
 
-#### Scenario: The page shows the first page of the address book, none preselected
+#### Scenario: The page shows every address on one page, none preselected
 **ID**: SCN-PLANTS-CONTACT-SELECT-001-A
 - **GIVEN** the user has reached the contact page without answering it before
 - **WHEN** the page loads
-- **THEN** it shows the first page of the organisation's address book, reading "Showing 5 out of <total> results" under the heading "Select an address"
-- **AND** a record held on a later page is not among the options
-- **AND** a link to the next page of results is offered
+- **THEN** it shows every address the organisation holds, reading "Showing <total> out of <total> results" under the heading "Select an address"
 - **AND** no address is shown as chosen, and the copy-on-select hint is shown
 
 ### Requirement: The list can be searched, and a search matching nothing says so
@@ -37,21 +35,15 @@ The system MUST offer a labelled search over the address book, hinted with what 
 - **WHEN** they search for a term no address matches
 - **THEN** a message says no addresses match the search
 
-### Requirement: A row ticked on one page of results is carried across searching and paging
+### Requirement: A row ticked is carried across a further search
 **ID**: REQ-PLANTS-CONTACT-SELECT-007
-The system MUST keep a row the user has ticked as they move between pages of results or narrow the list by searching, naming the selected address on the page even once its own row is no longer among those shown, and MUST save the ticked row wherever in the results it was ticked.
+The system MUST keep a row the user has ticked checked across a further search, even once its own row is no longer among those shown, and MUST save the ticked row.
 
-#### Scenario: A ticked row is named after moving to another page of results
+#### Scenario: A ticked row stays checked after a further search
 **ID**: SCN-PLANTS-CONTACT-SELECT-007-A
-- **GIVEN** the user has ticked an address on the first page of results
-- **WHEN** they follow the link to the next page
-- **THEN** the selected address is still named on the page, though its own row is no longer among those shown
-
-#### Scenario: A row ticked on a later page is the one that saves
-**ID**: SCN-PLANTS-CONTACT-SELECT-007-B
-- **GIVEN** the user has moved to a later page of results and ticked an address there
-- **WHEN** they save
-- **THEN** that address is the one saved, and re-entering the page shows it as the selected address
+- **GIVEN** the user has ticked an address
+- **WHEN** they search again with a term that would not list that row
+- **THEN** the ticked address is still checked
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002

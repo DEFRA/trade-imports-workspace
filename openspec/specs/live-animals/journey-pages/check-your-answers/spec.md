@@ -280,6 +280,13 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **THEN** the error summary holds the single entry "Complete roles and addresses", linking to the Addresses card
 - **AND** no entry names the role
 
+#### Scenario: A main import reason missing a follow-up answer it asks gives one error summary entry for the main import reason card
+**ID**: SCN-CYA-007-J
+- **GIVEN** a draft notification complete except that its main import reason is answered and a follow-up answer that reason asks is missing
+- **WHEN** the user views the review
+- **THEN** the error summary holds the single entry "Complete main import reason", linking to the main import reason card
+- **AND** the missing answer is left blank
+
 ### Requirement: A submitted notification's view offers Amend this notification, Copy as new and Delete in its header
 **ID**: REQ-CYA-008
 The system MUST offer, in the header of a submitted notification's view, a primary "Amend this notification" button that starts an amendment, a secondary "Copy as new" button beside it, and a red "Delete" button that opens the delete confirmation. "Amend this notification" and "Copy as new" MUST each submit a form. The view MUST NOT offer cancel-amendment, or a submit or continue action to submit it again. A draft's review MUST NOT offer "Amend this notification".

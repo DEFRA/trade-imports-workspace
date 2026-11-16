@@ -160,6 +160,27 @@ The system MUST NOT submit a notification that check your answers would refuse, 
 - **THEN** the notification is not submitted and remains a draft
 - **AND** check your answers is shown with the document card and the error summary saying one or more documents are still being scanned
 
+#### Scenario: A confirmed declaration on a notification with no main import reason returns to check your answers naming the main import reason card
+**ID**: SCN-DECLARATION-008-C
+- **GIVEN** an otherwise complete draft notification whose main import reason was left unanswered, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete main import reason", with the main import reason left blank
+
+#### Scenario: A confirmed declaration on a notification with no certified-for answer returns to check your answers naming the additional details card
+**ID**: SCN-DECLARATION-008-D
+- **GIVEN** an otherwise complete draft notification whose answer to what the animals are certified for was left unanswered, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete additional details", with the certified for answer left blank
+
+#### Scenario: A confirmed declaration on a notification with no unweaned answer returns to check your answers naming the additional details card
+**ID**: SCN-DECLARATION-008-E
+- **GIVEN** an otherwise complete draft notification with a line that asks the unweaned question, whose unweaned answer was left unanswered, and whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete additional details", with the unweaned answer left blank
+
 ### Requirement: A declaration the service cannot save is shown again, ready to retry
 **ID**: REQ-DECLARATION-009
 The system MUST show the declaration again, still confirmed, under a message that the service could not save it, when it cannot save the submission, so the user can try again, and MUST NOT show the confirmation page.

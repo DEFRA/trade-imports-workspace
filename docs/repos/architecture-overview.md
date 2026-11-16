@@ -32,6 +32,7 @@ flowchart LR
   user([Browser]) --> AF[animals-frontend]
   user --> PF[plants-frontend]
   user --> IF[ins-frontend]
+  user --> RP[routing-proxy]
   staff([Internal user]) --> AA[animals-admin]
 
   AF --> AB[animals-backend]
@@ -58,7 +59,7 @@ flowchart LR
   AA -->|DLQ operations| GW
 
   RD --> MDM[MDM via stub locally]
-  AF & AA & IF & PF -.->|OIDC| DID[Defra ID or defra-id-stub]
+  AF & AA & IF & PF & RP -.->|OIDC| DID[Defra ID or defra-id-stub]
 ```
 
 ## Responsibilities at a glance
@@ -114,7 +115,8 @@ entry, and the animals frontend also for commodity search and species checks. re
 animals backend does not use it.
 
 **Sign-in.** The four UIs use Defra ID OIDC, or `trade-imports-defra-id-stub`
-locally. Sessions live in Redis.
+locally. `trade-imports-routing-proxy` signs in through `trade-imports-defra-id-stub`,
+in the workspace stack and in CDP dev and test. Sessions live in Redis.
 
 ## Target direction
 

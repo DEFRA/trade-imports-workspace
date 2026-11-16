@@ -69,7 +69,7 @@ carries, the wave it lands in, every count and the whole register come from the 
 
 Three things stop the build rather than being guessed:
 
-- the opening run in `journey.json` is compared against `RUN_STEPS` in the live animals frontend on `main`, so a page
+- the opening run in `journey.json` is compared against `sections` in the live animals frontend's flow on `main`, so a page
   reordered, added or dropped in the code fails here instead of leaving the map describing a journey nobody takes;
 - a theme that reaches no page and has no claim fails, rather than disappearing off the page;
 - a path whose prefix `pathPrefixes` does not know fails, rather than matching nothing in silence.

@@ -128,11 +128,10 @@ nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.
 
 The dimension values for the service come from its code. For
-reference-data, once moved to the dot-case names (it publishes the old
-ones until then: `METRICS.md` → "A service built the old way"):
-`dependency` is `mdm` or `trade-token`; `cache` is
-`MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `lookup.type` is `countries` or
-`ports-of-entry`. A service with a database has `dependency` `mongodb`,
+reference-data (dot-case names since EUDPA-674): `dependency` is `mdm`
+or `trade-token`; `cache` is `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`;
+`lookup.type` is `countries`, `ports-of-entry`, `commodity-search` or
+`species-check`. A service with a database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
 measured, an `operation` from a fixed set of command names, with every
 other command as `other` (`METRICS.md` → "A database").

@@ -493,7 +493,7 @@ void scanStatus_shouldRoundTripThroughJson() throws JsonProcessingException {
 }
 
 @Test
-void scanStatus_unknownValue_throwsInvalidFormatException() {
+void scanStatus_shouldThrowInvalidFormatException_whenTheValueIsUnknown() {
     assertThatThrownBy(() -> objectMapper.readValue("\"UNKNOWN\"", ScanStatus.class))
         .isInstanceOf(InvalidFormatException.class);
 }

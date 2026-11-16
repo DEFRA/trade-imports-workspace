@@ -318,30 +318,30 @@ The system MUST head a submitted notification's read-only view with its referenc
 - **WHEN** the user views it
 - **THEN** the header reads "Date submitted: 22 July 2026"
 
-### Requirement: A notification's view shows its notification reference as text to copy
+### Requirement: A notification's view shows its import reference numbers as text to copy
 **ID**: REQ-PLANTS-CYA-017
-The system MUST show, on a draft's check answers and on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row reading the reference number, with no "Customs document code" row. The value MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+The system MUST show, on a draft's check answers and on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C085". Both values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
 
-#### Scenario: The section shows the warning and the reference row
+#### Scenario: The section shows the warning, the reference row and the customs document code row
 **ID**: SCN-PLANTS-CYA-017-A
 - **GIVEN** a submitted notification
 - **WHEN** the user views it
 - **THEN** an "Import reference numbers" section shows the warning
-- **AND** its only row is "Notification reference", reading the notification's reference number
+- **AND** its rows are "Notification reference", reading the notification's reference number, and "Customs document code", reading "C085"
 
-#### Scenario: The value reads as text and no button shows without JavaScript
+#### Scenario: The values read as text and no button shows without JavaScript
 **ID**: SCN-PLANTS-CYA-017-B
 - **GIVEN** a submitted notification and a browser with JavaScript off
 - **WHEN** the user views it
-- **THEN** the section shows the warning and the reference as text
+- **THEN** the section shows the warning, the reference and "C085" as text
 - **AND** the section shows no button
 
-#### Scenario: A draft shows the warning and the notification reference only
+#### Scenario: A draft shows the warning, the notification reference and the customs document code
 **ID**: SCN-PLANTS-CYA-017-C
 - **GIVEN** a draft notification
 - **WHEN** the user opens its check answers
-- **THEN** the "Import reference numbers" section shows its warning and a "Notification reference" row as text
-- **AND** the section has no "Customs document code" row and no Copy button
+- **THEN** the "Import reference numbers" section shows its warning, a "Notification reference" row and a "Customs document code" row reading "C085" as text
+- **AND** the section has no Copy button
 
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
 **ID**: REQ-PLANTS-CYA-018

@@ -76,8 +76,8 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 |---|---|---|
 | `null` | No fix attempt yet. | Default before walker / hand-marking. |
 | `Not Done` | Queued for the implementor. | `review-mark.sh --disposition Fix` auto-sets this. |
-| `Done` | Fix landed (short SHA in `notes`). | `review-set-status.sh --status Done`. |
-| `Failed` | Implementor tried and failed. | `review-set-status.sh --status Failed`. |
+| `Done` | Fix landed (short SHA added to the end of `notes`, after any walk decision). | `review-set-status.sh --status Done --note "{short-sha}"`. |
+| `Failed` | Implementor tried and failed (reason added to the end of `notes`). | `review-set-status.sh --status Failed --note "{reason}"`. |
 | `—` | Status doesn't apply (Won't Fix / Auto-Resolved / Merged). | Auto-set by `review-mark.sh` for non-Fix dispositions. |
 
 ## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/review/`)
@@ -88,7 +88,7 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 | `review-items.sh` | Query items (filter by disposition / status; TSV or `--json` output) |
 | `review-add-item.sh` | Append a new item; auto-assigns `id`; returns the new ID |
 | `review-mark.sh` | Set `disposition` (auto-sets `status` per the table above) |
-| `review-set-status.sh` | Set `status` only |
+| `review-set-status.sh` | Set `status`; `--note` adds to the end of `notes` and never replaces them |
 | `review-counts.sh` | Breakdown by disposition + status |
 | `render-items.sh` | Emit the markdown `## Items` table view of `items.{repo}.json` |
 

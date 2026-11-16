@@ -441,7 +441,7 @@ void deleteByReferenceNumbers_shouldCascade() {
     notificationService.deleteByReferenceNumbers(List.of("REF-1"));
 
     verify(notificationRepository).deleteAllByReferenceNumberIn(List.of("REF-1"));
-    verify(documentService).deleteForNotificationRefs(List.of("REF-1"));
+    verify(documentService).deleteForNotificationReferenceNumbers(List.of("REF-1"));
 }
 
 // Correct — fails if children are deleted after parent (orphan-window bug)
@@ -450,7 +450,7 @@ void deleteByReferenceNumbers_shouldDeleteDocumentsBeforeNotifications() {
     notificationService.deleteByReferenceNumbers(List.of("REF-1"));
 
     InOrder inOrder = inOrder(documentService, notificationRepository);
-    inOrder.verify(documentService).deleteForNotificationRefs(List.of("REF-1"));
+    inOrder.verify(documentService).deleteForNotificationReferenceNumbers(List.of("REF-1"));
     inOrder.verify(notificationRepository).deleteAllByReferenceNumberIn(List.of("REF-1"));
 }
 ```

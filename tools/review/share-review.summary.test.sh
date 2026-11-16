@@ -41,6 +41,16 @@ check_contains() {
     fi
 }
 
+check_absent() {
+    local what="$1" file="$2" needle="$3"
+    if grep -qF -- "$needle" "$file"; then
+        echo "  FAIL  $what: '$needle' is in $file"
+        failures=$((failures + 1))
+    else
+        echo "  ok    $what"
+    fi
+}
+
 cleanup() { rm -rf "$REVIEW_DIR"; }
 trap cleanup EXIT
 
@@ -50,11 +60,12 @@ if [[ -e "$REVIEW_DIR" ]]; then
 fi
 mkdir -p "$REVIEW_DIR"
 
-# A verdict line, because the body carries it.
+# A notes line, because the body carries it.
 cat > "$REVIEW_DIR/review-index.md" <<'EOF'
 # Code Review: EUDPA-99999
 
-**Verdict:** PASS — fixture verdict for the summary test.
+**Verdict:** PASS — the index's verdict, which share-review does not post.
+**Notes:** fixture notes for the summary test.
 EOF
 
 cat > "$REVIEW_DIR/.review-meta.json" <<EOF
@@ -120,7 +131,9 @@ else
         failures=$((failures + 1))
     fi
 
-    check_contains "carries the verdict"        "$body" "fixture verdict for the summary test"
+    check_contains "carries the notes"          "$body" "**Notes:** fixture notes for the summary test."
+    check_contains "fails on an open Critical"  "$body" "**Verdict:** FAIL"
+    check_absent   "does not post the index's verdict" "$body" "the index's verdict"
     check_contains "carries the status table"   "$body" "| Status | Items |"
     check_contains "counts the closed items"    "$body" "| Done / Fix | 198 |"
     check_contains "counts the open items"      "$body" "| Not Done / Fix | 2 |"

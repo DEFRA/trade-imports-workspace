@@ -95,4 +95,6 @@ else
         "$target" > "$target.tmp" && mv "$target.tmp" "$target"
 fi
 
-echo "Marked #$ITEM in $REPO: Disposition=${DISPOSITION:-<null>}, Status=${STATUS:-<null>}${SET_NOTE:+, Notes set}"
+note_message=""
+[[ "$SET_NOTE" == "1" ]] && note_message=", Notes set"
+echo "Marked #$ITEM in $REPO: Disposition=${DISPOSITION:-<null>}, Status=${STATUS:-<null>}$note_message"

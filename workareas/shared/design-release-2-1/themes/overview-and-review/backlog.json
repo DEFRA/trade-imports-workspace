@@ -1503,7 +1503,8 @@
         "Salvage: backend 6dbcfcf, frontend df59fbde, insfrontend b64c5ae, tests ce36c8f on stale branch feat/EUDPA-696-design-release-2-1-overview-and-review; rebuild on a fresh branch from main.",
         "Design snagging merged to main 23 Oct: the declaration controller was restructured. Submission now runs in submitDeclaration through kit.recoverableSave(request, work, fallback), which returns { value, failure }, and render takes { errors, recoverableError }. Rebuild the stale declaration hunk (frontend df59fbde) on that shape. The confirmation outstanding bullet now reads 'upload the ITAHC and any other required documents', and confirmation and declaration show no status strip (showJourneyStrip: false). The review's documentScanCardErrors takes the request first.",
         "Pre-flight 13 Nov (req-898 changed since the split): the 'Import reference numbers' section — the warning, 'Notification reference' and 'Customs document code' C640 as selectable text, no Copy buttons — shows on a 'Submitted action required' view too, exactly as inc-112 builds it for Submitted. Build and prove that here, since this row creates the action-required view. The Completed half waits with inc-116.",
-        "ATTEMPT FAILED: red verification ladder, trade-imports-animals-backend verify (mvn exited 1); no merge was in progress so none was aborted; local commits none (no repo was ahead of origin); patches and unresolved paths at workareas/shared/design-release-2-1/themes/overview-and-review/logs/inc-113-preserve-*.patch and inc-113-preserve-*.unresolved.txt; stash stash@{0} (failed-inc-113) in backend, frontend, insfrontend and tests, and stash@{0} (failed-inc-113) in the workspace openspec; plants frontend was clean and not stashed"
+        "ATTEMPT FAILED: red verification ladder, trade-imports-animals-backend verify (mvn exited 1); no merge was in progress so none was aborted; local commits none (no repo was ahead of origin); patches and unresolved paths at workareas/shared/design-release-2-1/themes/overview-and-review/logs/inc-113-preserve-*.patch and inc-113-preserve-*.unresolved.txt; stash stash@{0} (failed-inc-113) in backend, frontend, insfrontend and tests, and stash@{0} (failed-inc-113) in the workspace openspec; plants frontend was clean and not stashed",
+        "16 Nov: its Submitted action required status is withdrawn (ruling:sam-2026-11-16 claim 2); inc-273 takes it out and keeps the submit date and outstanding items."
       ],
       "gate": null,
       "commit": "37be3f5fffa43bf1eba09f7383bfc91fd680cdd9 14b805e24130d4518a51886f11168a4172bc2dbf 806eb6c8f143352a3f64d9aee23742f623d04d10 1a7639ff257641c1bed945aab780c46ed9b6a951",
@@ -1629,19 +1630,16 @@
     },
     {
       "id": "inc-266",
-      "title": "Identifier-driven outstanding items: the action-required warnings, the inline per-species error and the confirmation bullet",
+      "title": "A notification with incomplete identifiers still submits, and its confirmation page lists the identifier item",
       "detail": "Design Release 2.1 drives outstanding items from the animal identifiers as well as from the health certificate: the action-required view's header warning names identifiers, on their own or beside the certificate; a species that needs identifiers and holds none shows an inline error in place of its content; and a notification that meets the submission minimum with incomplete identifiers still submits, carrying the identifier item on its confirmation page. The 9 October ruling closes DR1 inc-103 and settles what incomplete means: a record counts as identified once one identifier is filled, so a commodity line whose species asks for identifiers is incomplete while it holds fewer identified records than the animals it declares, the single-species consignment with none saved included (c-133). Today's frontend holds the confirmation bullet back on that decision, and that is the state this row changes.",
       "acceptanceCriteria": [
-        "An action-required notification missing both its animal identifiers and its ITAHC carries the header warning 'You need to complete animal identifiers and upload a health certificate' (prototype:dr2-1-source prototype-dr2-1-source-p11-031, prototype-dr2-1-source-p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-191; c-133)",
-        "An action-required notification missing only its animal identifiers carries the header warning 'You need to complete animal identifiers' (prototype:dr2-1-source prototype-dr2-1-source-p11-032, prototype-dr2-1-source-p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-191; c-133)",
-        "On an action-required notification, a species that needs identifiers and holds none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier' in place of its content, inline with no error summary, as section 4's 'Upload a valid health certificate' error is shown (prototype:dr2-1-source prototype-dr2-1-source-p11-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099; c-133)",
         "A notification whose identifiers are incomplete, meaning a commodity line whose species asks for identifiers holds fewer identified animal records than the animals it declares, a record counting as identified once one identifier is filled, but which meets the submission minimum, is submitted, and its confirmation page shows the outstanding item 'complete the animal identifier information in the notification' (prototype:dr2-1-source prototype-dr2-1-source-p11-147; document:dr1-parity-backlog document-dr1-parity-backlog-p8-060, document-dr1-parity-backlog-p8-065; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-191; c-133)",
         "A single-species consignment with no identifier saved is that same case: it submits and shows that outstanding item (document:dr1-parity-backlog document-dr1-parity-backlog-p8-062; c-133)",
-        "A notification whose identifiers are complete shows neither the identifier warning, the inline per-species error, nor the confirmation bullet (prototype:dr2-1-source prototype-dr2-1-source-p11-034, prototype-dr2-1-source-p11-147; c-133)"
+        "A notification whose identifiers are complete shows no identifier item on its confirmation page (prototype:dr2-1-source prototype-dr2-1-source-p11-147; c-133)"
       ],
       "dependsOn": [
-        "inc-113",
-        "inc-115"
+        "inc-115",
+        "inc-273"
       ],
       "theme": "overview-and-review",
       "status": "todo",
@@ -1685,7 +1683,8 @@
         "Depends on inc-113 for the action-required view, its header warning slot and the stored outstanding items, and on inc-115 for the confirmation page's outstanding bullets, which this row adds the identifier bullet to. The ITAHC half of the warning and the section 4 document error are inc-113's; this row adds only the identifier half and must leave the certificate wording as inc-113 built it.",
         "The fallback warning 'You need to complete missing information before import' (req-904, inc-119) stays dropped: with the identifier item built here, the only outstanding items the real service records are the certificate item and this one, each with its own warning, so nothing triggers the fallback.",
         "What counts as a species needing identifiers comes from the live-animals commodity service's identifier rules, which the identification-and-permanent-address theme also reads. Read that rule rather than restating the commodity list here.",
-        "Repo state is read from the 26 October extracts: the identification feature folder has moved since (EUDPA-734 f72a7a0e and 69a9715b on animals-frontend main), so check the current per-species card and error shape before planning rather than trusting repo-frontend-p14-045 and p14-046."
+        "Repo state is read from the 26 October extracts: the identification feature folder has moved since (EUDPA-734 f72a7a0e and 69a9715b on animals-frontend main), so check the current per-species card and error shape before planning rather than trusting repo-frontend-p14-045 and p14-046.",
+        "16 Nov: trimmed by ruling:sam-2026-11-16 claim 2 (no Submitted action required status). Its three action-required criteria (the two header warnings naming identifiers, and the inline per-species 'Enter a minimum of 1 identifier' error on an action-required view) are withdrawn until the banner-style alert design lands; what stays does not rest on the status. Runs after inc-273, which takes the status out."
       ],
       "gate": null
     },
@@ -2088,6 +2087,47 @@
       ],
       "theme": "overview-and-review",
       "dependsOn": []
+    },
+    {
+      "id": "inc-273",
+      "title": "A notification submitted without its health certificate is plain Submitted: the Submitted action required status comes out",
+      "detail": "Sam ruled on 16 November, with Syed Islam, that there is no new status for a notification submitted with work still to do: SUBMITTED covers it, and outstanding actions will be shown through a banner-style alert the dashboard designs are testing. inc-113 built SUBMITTED_ACTION_REQUIRED across the animals backend, the animals frontend and the INS dashboard links. This row takes the status, and everything a trader sees because of it, out again. What inc-113 also built stays: submitting records its date and the outstanding items left at that moment, on the stored record.",
+      "acceptanceCriteria": [
+        "Submitting a notification with no virus-checked health certificate attached records its status as SUBMITTED, as submitting any other notification does (ruling:sam-2026-11-16 claim 2)",
+        "Re-submitting an amendment with no health certificate records SUBMITTED, and cancelling an amendment returns the notification to SUBMITTED (ruling:sam-2026-11-16 claim 2)",
+        "Submitting still records the date the notification was submitted and the outstanding items left at that moment on the stored record, and the view's Date submitted still comes from it (ruling:sam-2026-11-16 claim 2; req-909)",
+        "The notification statuses are exactly those on main (DRAFT, SUBMITTED, AMEND, DELETED): no backend enum, frontend status mapping, stub, status strip copy or INS dashboard link names SUBMITTED_ACTION_REQUIRED, and every event the backend publishes carries SUBMITTED for such a notification (ruling:sam-2026-11-16 claim 2)",
+        "The view of a submitted notification missing its health certificate shows the Submitted status tag, with no action-required warning and no Continue button, and its review shows no 'Upload a valid health certificate' error in place of document cards (ruling:sam-2026-11-16 claim 2)",
+        "The Behaviour Spec says the same: no scenario describes a Submitted action required status, warning or error, and the tests linked to the ones removed or rewritten go with them (ruling:sam-2026-11-16 claim 2)"
+      ],
+      "requirements": [
+        "req-902",
+        "req-903",
+        "req-907",
+        "req-1987"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "claim 2"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "insfrontend",
+        "tests"
+      ],
+      "kind": "fix",
+      "status": "todo",
+      "gate": null,
+      "theme": "overview-and-review",
+      "dependsOn": [
+        "inc-113"
+      ],
+      "notes": [
+        "Added 16 Nov from ruling:sam-2026-11-16 claim 2. Undoes the new status inc-113 built; keeps its submit date and outstanding-items record."
+      ]
     }
   ]
 }

@@ -96,7 +96,7 @@ Add the method to
 the service's existing `MetricsConfig` in its `configuration` package,
 not to a new class in `metrics`. Keep that class's `TimedAspect` bean:
 `@Timed` records nothing without it. `@Counted` needs its
-`CountedAspect` bean, which dynamics-gateway's does not have yet. A
+`CountedAspect` bean; add it if the class lacks one. A
 service with no `MetricsConfig` gets one in its `configuration`
 package, with the `TimedAspect` and `CountedAspect` beans as in
 address-book.
@@ -105,7 +105,7 @@ address-book.
 
 | Class | What it does |
 |---|---|
-| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP. Measure at the transport, not in the calling service class, so every call is caught |
+| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP, an AWS SDK `ExecutionInterceptor` added to the client's `overrideConfiguration` for an AWS service (dynamics-gateway's `SqsCallMetrics`: one call per SDK execution, retries included, named after the SDK action in kebab case from a fixed set, anything else `other`). Measure at the transport, not in the calling service class, so every call is caught. A client with no hook (the Azure `ServiceBusSenderClient`) is timed where its one method is called (dynamics-gateway's `QueueMessageSender`) |
 | `DependencyAvailabilityMetrics` | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below) |
 | A business-metrics class (`AddressMetrics`) | One counter per agreed business metric, tagged by its dimension |
 | `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published |
@@ -158,6 +158,19 @@ address-book.
   names to the allowlist. Not Micrometer's cache binder: it publishes
   `cache.gets` under other names and tags, and as function counters,
   which `EmfMeterRegistry` does not publish.
+- **A gauge that reads a remote value** (dynamics-gateway's
+  `QueueDepthMetrics`, `sqs.queue.depth` from SQS `GetQueueAttributes`)
+  reads it in the gauge's function, so it is read once per publish with
+  no scheduler, and returns NaN (not published) when the read throws,
+  logging at warn. Call the read through the bean that owns it, not a
+  copy in the gauge. Register it with `.strongReference(true)`:
+  Micrometer holds a gauge's state object weakly, so a lambda held by
+  nothing else is collected and the gauge reads NaN.
+- **Delete a `logback-test.xml`** that sets a plain pattern or a root
+  above INFO. The integration test that reads the console line, and the
+  unit tests that capture INFO lines, need `logback-spring.xml` with
+  `EcsEventEncoder`. Run `mvn clean` after deleting it: a stale copy in
+  `target/test-classes` still wins.
 
 ### A service built the old way
 
@@ -168,7 +181,7 @@ names, not the dot-case names above (their `main`, checked 2026-11-06).
 
 | Service | Where | Publishes |
 |---|---|---|
-| `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+| `trade-imports-dynamics-gateway` (moved on `feat/EUDPA-674-dynamics-gateway-observability`, proven by its tests; still the old way on `main` until that merges) | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 | `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
 `trade-imports-animals-admin` publishes none of these metrics.

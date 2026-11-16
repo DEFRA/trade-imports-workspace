@@ -6,7 +6,7 @@
 
 The public entry point for the Import Notification Service (INS). It will serve the public INS URLs and forward each request to the INS service the path addresses, for example `/gbn-ag/...` to the animals journey frontend and `/auth/...` to the INS front door, setting `X-Forwarded-Prefix` on the way. See [02 INS Auth: Scenario 0](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6619005520).
 
-Today it is built from the CDP Node.js frontend template, plus a Defra ID sign-in that shows what the sign-in returned. The sign-in is a spike (EUDPA-801): it finds out how sign-in works in a deployed INS service. Forwarding comes in follow-up tickets.
+Today it is built from the CDP Node.js frontend template, plus a Defra ID sign-in against the Defra ID stub and a page that shows what the sign-in returned. Moving the sign-in onto the real Defra ID (IDM) and forwarding come in follow-up tickets.
 
 ## Responsibilities
 

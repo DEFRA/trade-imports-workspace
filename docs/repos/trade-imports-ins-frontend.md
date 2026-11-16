@@ -24,7 +24,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 - Address data (address-book), notification data (aggregated read model in ins-backend) or country reference data (reference-data). It has no database.
 - Notification creation or editing. Dashboard links deep-link to trade-imports-animals-frontend (`/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED). The dashboard rows link to live animals notifications only, because the ins-backend read model aggregates only the animals backend's events.
 - The address-book tenant check. This service must send the verified `Trade-Imports-Organisation-Id`; address-book trusts it.
-- Organisation scoping of the dashboard: `ins-backend-client` sends no organisation header and lists all aggregated notifications (deliberate, per a code comment).
+- Organisation scoping of the dashboard: the `ins-backend` service client sends the verified session's organisation on every `GET /notifications` via `Trade-Imports-Organisation-Id` (see `src/server/app/services/ins-backend/client.js`).
 - Role and permission lookup: `src/auth/get-permissions.js` uses simulated RPS and Siti Agri calls, and no caller was found.
 
 ## Integrations

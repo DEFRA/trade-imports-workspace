@@ -208,3 +208,30 @@ tools/theme-ticket/check-stale.sh --workarea shared/design-release-2-1
 
 Creation goes through `tim jira create --from <folder>/ticket.json`, a dry run
 until you pass `--confirm <planId>`.
+
+### Identification and permanent address — 69 scenarios, 7 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `identification-and-permanent-address-animals/` | [EUDPA-796](https://eaflood.atlassian.net/browse/EUDPA-796) | Live animals journey | 11 | 69 | 7 |
+
+69 scenarios in one domain and 7 files, so the per-domain totals are the
+theme's. Every row changed live animals alone, so there is no sibling ticket.
+The folder was `identification-and-permanent-address-stub/` until the WRITE
+flow filled it in, and `tickets.json` now records `animals` in place of
+`stub`.
+
+The theme holds 13 rows; 11 are in the ticket's table. inc-049 was dropped and
+inc-058 changed only the end-to-end test suite, so neither is attributed to
+the domain, and `derived.json` reports the first as an `excludedRow`. inc-045
+is in the table as **Not built**: it is blocked behind the templates theme,
+which is parked, and nothing else in the theme depends on it.
+
+Of the 69 scenarios, 54 are written out in the ticket. The other 15 are each a
+mirror, pair or boundary twin of one that is, named in a line beneath it — a
+full write-out came to 33,715 characters against Jira's 32,767 limit.
+
+Not yet merged. Three pull requests are open on
+`feat/EUDPA-796-design-release-2-1-identification-and-permanent-address`
+(frontend #476, backend #126, tests #100), all green. The ticket is `In Dev`
+and the MERGE flow moves it to `Deskcheck`.

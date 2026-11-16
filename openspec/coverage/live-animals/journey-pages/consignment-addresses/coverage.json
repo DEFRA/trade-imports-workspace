@@ -188,7 +188,7 @@
     {
       "id": "REQ-CONSIGN-ADDR-007",
       "name": "The page works without JavaScript and has no serious or critical accessibility violations",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-007-A",
@@ -205,6 +205,87 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "hub page has no serious or critical axe violations empty and complete, at desktop and phone width", "strength": "full", "notes": "the complete stage after picking all five, at 1280px and 375px" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-007-C",
+          "name": "The page with a \"Same as …\" control showing has no serious or critical accessibility violations",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "has no serious or critical axe violations with the same-as buttons showing, at desktop and phone width", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-007-D",
+          "name": "A section is filled from its paired party with JavaScript off",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "fills the consignor section from the place of origin when its same-as button is pressed", "strength": "partial", "notes": "JavaScript off; no red probe run in this change" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-009",
+      "name": "A party section with no address may offer a shortcut that fills it from a paired party's address",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-009-A",
+          "name": "Only a section with no address whose source has one offers the control, and only for the three stated pairs",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the consignor section a same-as control naming the place of origin, and offer the place of origin section none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the control to exactly the consignor, importer and place of destination sections, with the CPH and permanent address sections present but carrying none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should carry no control and still show the chosen address when the consignor already holds one", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/same-as-action.test.js", "test": "Should give the consignor, importer and place of destination a source party and no other party one", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows a same-as button naming its source in the Consignor, Importer and Place of destination sections, with the two consignee buttons each naming the section they fill, and none in the Place of origin or Consignee sections", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-B",
+          "name": "Pressing the control fills the target section from the source, with no success banner, and the control is gone",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should fill the consignor from the place of origin, redirect to the addresses page carrying the trail, and show no success banner on the following GET", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "pressing a same-as button fills its target section with the source address, with no success banner, and the pressed button gone", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-C",
+          "name": "The control fills the target even when the target's own address list would not offer that record",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "excludes the copied place-of-origin record from the consignor picker, with the Consignor section still showing it", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-D",
+          "name": "The filled party is an independent copy of the source",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "keeps the consignor showing the place-of-origin record it was filled from after the place of origin is changed to a different record", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-E",
+          "name": "The review shows the filled party's full details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the importer filled from the consignee on the review with the consignee record's full details", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-F",
+          "name": "A request to fill a section the page is not offering changes nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing when the target party has no paired source, logging the refusal", "strength": "full", "notes": "the pair that is not one of the three" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing when the source party holds no address, logging the refusal", "strength": "full", "notes": "the source with no address" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing and keep the target party showing the address it already held, logging the refusal", "strength": "full", "notes": "the section that already has an address" }
           ]
         }
       ]

@@ -12,7 +12,7 @@ Sets out each party role a notification needs an address for as its own headed s
 
 ### Requirement: The page sets out each party role the notification needs an address for as its own section
 **ID**: REQ-CONSIGN-ADDR-001
-The system MUST show a section for each party role a notification needs an address for — place of origin, consignor, consignee, importer, and place of destination — each with a heading, its hint and a link named for the role that adds an address, and MUST offer a continue action to leave the page.
+The system MUST show a section for each party role a notification needs an address for — place of origin, consignor, consignee, importer, and place of destination — each with a heading, its hint and, while it has no address, a link named for the role that adds an address and, where a paired source party already has one, a "Same as …" control that fills it from that source, and MUST offer a continue action to leave the page.
 
 #### Scenario: The page shows a headed section for each party role with a named link to add its address
 **ID**: SCN-CONSIGN-ADDR-001-A
@@ -20,7 +20,7 @@ The system MUST show a section for each party role a notification needs an addre
 - **WHEN** the page loads
 - **THEN** the paragraph "Add all the addresses that are involved in the consignment." is shown under the heading
 - **AND** a section is shown for each of Place of origin, Consignor, Consignee, Importer and Place of destination, each headed by the role and followed by its hint
-- **AND** the sections offer the links "Add a place of origin", "Add a consignor", "Add a consignee", "Add an importer" and "Add a place of destination"
+- **AND** the sections offer the links "Add a place of origin", "Add a consignor", "Add a consignee", "Add an importer" and "Add a place of destination", and no section offers a "Same as …" control, since no party yet has an address to copy
 - **AND** a continue action is offered
 
 #### Scenario: Following the consignor link opens the consignor picker
@@ -100,7 +100,7 @@ The system MUST warn the user, on the consignment addresses page, that providing
 
 ### Requirement: The page works without JavaScript and has no serious or critical accessibility violations
 **ID**: REQ-CONSIGN-ADDR-007
-The system MUST let the user add an address from the consignment addresses page with JavaScript off, and MUST show the page with no serious or critical accessibility violations, with no address chosen and with every address chosen, at desktop and at phone width.
+The system MUST let the user add an address from the consignment addresses page with JavaScript off, including filling a section from a paired party with the "Same as …" control, and MUST show the page with no serious or critical accessibility violations, with no address chosen, with a "Same as …" control showing and with every address chosen, at desktop and at phone width.
 
 #### Scenario: The empty page works without JavaScript and has no serious or critical accessibility violations
 **ID**: SCN-CONSIGN-ADDR-007-A
@@ -114,6 +114,18 @@ The system MUST let the user add an address from the consignment addresses page 
 - **GIVEN** the user has chosen an address for every party role
 - **WHEN** the consignment addresses page loads at desktop width and at phone width
 - **THEN** the page has no serious or critical accessibility violations
+
+#### Scenario: The page with a "Same as …" control showing has no serious or critical accessibility violations
+**ID**: SCN-CONSIGN-ADDR-007-C
+- **GIVEN** the user has chosen an address for the place of origin and for the consignee, and no address for the consignor, importer or place of destination
+- **WHEN** the consignment addresses page loads at desktop width and at phone width
+- **THEN** the page has no serious or critical accessibility violations
+
+#### Scenario: A section is filled from its paired party with JavaScript off
+**ID**: SCN-CONSIGN-ADDR-007-D
+- **GIVEN** the user has chosen an address for the place of origin and none for the consignor, with JavaScript off
+- **WHEN** they press "Same as place of origin" in the Consignor section
+- **THEN** the Consignor section shows the place of origin's name and address lines
 
 ### Requirement: The page also sets out a permanent address section when the notification carries a cat, dog or ferret
 **ID**: REQ-CONSIGN-ADDR-008
@@ -143,3 +155,46 @@ The system MUST show an additional section for the permanent address, alongside 
 - **GIVEN** every animal that needs a permanent address on the notification has one, and they are not all saved against the place of destination
 - **WHEN** the user views the consignment addresses page
 - **THEN** the permanent address section shows the one line "Permanent addresses added for N animals", N being the number of animals that need one, with a "Change" link to the permanent address page
+
+### Requirement: A party section with no address may offer a shortcut that fills it from a paired party's address
+**ID**: REQ-CONSIGN-ADDR-009
+The system MUST offer, in a party section that has no address and whose paired source party has one, a "Same as …" control that fills it from that source, for exactly these pairs: place of origin fills the consignor, and consignee fills both the importer and the place of destination; and MUST NOT offer one for any other section or pair. A request to fill a section the page is not offering a control for MUST leave every answer unchanged and show the consignment addresses page again.
+
+#### Scenario: Only a section with no address whose source has one offers the control, and only for the three stated pairs
+**ID**: SCN-CONSIGN-ADDR-009-A
+- **GIVEN** the user has chosen an address for the place of origin and for the consignee, and no address for the consignor, importer or place of destination
+- **WHEN** they view the consignment addresses page
+- **THEN** the Consignor section offers "Same as place of origin", and the Importer and Place of destination sections each offer "Same as consignee"
+- **AND** the Place of origin and Consignee sections offer no such control, and neither does the CPH number or permanent address section
+
+#### Scenario: Pressing the control fills the target section from the source, with no success banner, and the control is gone
+**ID**: SCN-CONSIGN-ADDR-009-B
+- **GIVEN** the Consignor section offers "Same as place of origin"
+- **WHEN** the user presses it
+- **THEN** the consignment addresses page is shown again with no success banner
+- **AND** the Consignor section shows the place of origin's name and address lines, with "Change" and "Edit details" links, and no longer offers the control
+
+#### Scenario: The control fills the target even when the target's own address list would not offer that record
+**ID**: SCN-CONSIGN-ADDR-009-C
+- **GIVEN** the place of origin is an address-book record held only against the place-of-origin role
+- **WHEN** the user presses "Same as place of origin" in the Consignor section
+- **THEN** the Consignor section shows that record's address
+- **AND** opening the consignor picker does not list that record
+
+#### Scenario: The filled party is an independent copy of the source
+**ID**: SCN-CONSIGN-ADDR-009-D
+- **GIVEN** the user has filled the Consignor section from the place of origin using the control
+- **WHEN** they change the place of origin to a different address
+- **THEN** the Consignor section still shows the first address
+
+#### Scenario: The review shows the filled party's full details
+**ID**: SCN-CONSIGN-ADDR-009-E
+- **GIVEN** the user has filled the Importer section from the consignee using the control
+- **WHEN** they view the review
+- **THEN** the importer's entry shows the consignee's name, address lines, country, phone number and email address
+
+#### Scenario: A request to fill a section the page is not offering changes nothing
+**ID**: SCN-CONSIGN-ADDR-009-F
+- **GIVEN** a section the page offers no "Same as …" control for, because the pair is not one of the three, because the source party has no address, or because the section already has one
+- **WHEN** a request arrives to fill it from that source
+- **THEN** every answer is left as it was and the consignment addresses page is shown again

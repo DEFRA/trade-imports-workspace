@@ -14,10 +14,10 @@ Today it is built from the CDP Node.js frontend template, plus a Defra ID sign-i
 - Serve `/health`, and static files under `/public` and `/favicon.ico`.
 - Sign a user in with Defra ID:
   - `/auth/sign-in` sends the browser to the identity provider.
-  - `/auth/sign-in-oidc` is the callback. It checks the ID token's signature against the provider's published keys, then keeps a description of the sign-in in the session.
+  - `/auth/sign-in-oidc` is the callback. It checks the ID token's signature against the provider's published keys, that the token has an expiry and has not expired, and that its issuer is the one the discovery document names. Then it keeps a description of the sign-in in the session.
   - `/auth/signed-in` shows every ID token claim, the access token's claims when it is a different token, and the token response's expiry, scope and whether a refresh token came back. It never shows the tokens. With no sign-in in the session, it starts one.
 - Every other page is public. The sign-in does not refresh tokens, sign out or switch organisation.
-- The token's audience is not checked: the Defra ID stub signs every token with a random one.
+- The callback does not check the ID token's audience: the Defra ID stub signs every token with a random one.
 - Not yet: forward requests to other INS services, or pass the user's identity to them.
 
 ## Integrations

@@ -332,18 +332,6 @@ The system MUST name the address-book record a role's address was chosen from wh
 - **WHEN** they reopen the list to change it
 - **THEN** the list opens with no address named as selected
 
-### Requirement: A hand-keyed address that is required only once begun must be completed once any part of it is filled
-**ID**: REQ-ADDR-012
-For an address entered by hand whose fields become mandatory only once one of them has been filled in, the system MUST require every mandatory field in that group once any one is filled in, and MUST block the save with an error naming what is missing until the address is complete.
-
-#### Scenario: A partially filled permanent address for an animal identifier blocks the save
-**ID**: SCN-ADDR-012-B
-- **GIVEN** the user is entering identifier details for an animal whose commodity requires a permanent address, and has filled in only the passport number and the owner's name
-- **WHEN** they try to save
-- **THEN** the save is blocked with an error naming the missing address field
-- **WHEN** they complete every mandatory field in the address
-- **THEN** the save succeeds and the record is added
-
 ### Requirement: The list spans the content column and shows each address on its own lines
 **ID**: REQ-ADDR-015
 The system MUST lay the list of addresses for a consignment role across the full width of the content column. It MUST show each address's street lines on their own lines, then its town or city, county and postcode together on one line, joined by commas, with blank parts left out. The country has its own column.

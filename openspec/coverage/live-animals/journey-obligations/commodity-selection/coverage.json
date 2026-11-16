@@ -126,7 +126,7 @@
     },
     {
       "id": "REQ-OB-COMMODITY-004",
-      "name": "A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one",
+      "name": "A line's commodity and species decide which identifiers its animals are asked for, and a commodity can call for more than one",
       "coverage": "partial",
       "scenarios": [
         {
@@ -134,34 +134,88 @@
           "name": "A commodity calling for particular identifiers asks only for those",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "partial", "notes": "for a domestic cat asserts passport and tattoo shown, ear tag and horse name hidden; does not assert the microchip field, so the spec's microchip + passport + tattoo example is not read in one place — a fit-level read of the identification page for Cat would close this" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for microchip, passport and tattoo, and its saved-animals table heads only those identifiers", "strength": "partial", "notes": "for a domestic cat asserts microchip, passport and tattoo shown together, ear tag and horse name hidden — the spec's microchip + passport + tattoo example is now read in one place; not probed red/green, so held at partial rather than full (e2e needs the workspace stack, run on each repo's pull request)" }
           ],
-          "notes": "spec text changed to the microchip+passport+tattoo example (Cat/Dog) since no current commodity produces the old passport+tattoo+ear-tag combination (see spec-refresh-evidence-2026-09-10.md). identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
+          "notes": "spec text uses the microchip+passport+tattoo example (Cat/Dog) because that is the pet code's own identifier set, distinct from cattle's ear-tag+passport+tattoo set, which a sibling commodity (0102) now also produces — the scenario's example names the pet code specifically rather than any commodity calling for exactly three identifiers. identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
         },
         {
           "id": "SCN-OB-COMMODITY-004-B",
-          "name": "A commodity calling for two identifiers asks for both together",
+          "name": "A commodity calling for two identifiers asks for both together, for the species both are listed for",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "Horse line: microchip and horse name both visible" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply horseName and passport for commodity code 0101", "strength": "partial", "notes": "horseName + passport for 0101" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply horseName for the horse species under 0101, and passport for either species under 0101", "strength": "full", "notes": "horseName for the horse species, passport for either species, under 0101; probed by inverting rules.js's HORSE_NAME_SPECIES constant" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "full", "notes": "horse line asks microchip, passport and horse name together; all three filled for the one horse" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-004-C",
+          "name": "Two species under one commodity code are asked for different identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "the 0101 Equus cabalus and 0101 Equus asinus rows of the MATRIX: the horse row carries horseName-0, the donkey row does not; probed by reverting fields.js's scopedFields to read the commodity code alone" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks the horse species on 0101 for a horse name and the donkey species on the same code for no horse name, while both are asked for a microchip and a passport", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a horse card is asked for a horse name and a donkey card on the same commodity code is not, while both are asked for a microchip and a passport", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-004-D",
+          "name": "A commodity that lists one identifier asks for that one alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/services/commodities/index.test.js", "test": "Should give each code its identifiers in the order it asks for them", "strength": "full", "notes": "asserts identifiersFor(SHEEP_CODE) and identifiersFor(GOAT_CODE) are each exactly ['animalIdentifierEarTag']; probed by removing the SHEEP_CODE or GOAT_CODE entry from COMMODITY_IDENTIFIERS" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-COMMODITY-008",
+      "name": "The commodities asked for a tattoo are cattle, pigs, and cats, dogs, ferrets and other live mammals, and no other served code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-COMMODITY-008-A",
+          "name": "A cattle line and a pig line are each asked for a tattoo",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply the tattoo for cattle and pigs as well as cats, dogs and ferrets", "strength": "full", "notes": "probed by removing the CATTLE_CODE/SWINE_CODE entries from COMMODITY_IDENTIFIERS" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and a tattoo, and heads its saved-animals table with Animal, Ear tag, Tattoo and a Remove action", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves an animal by its tattoo alone on a cattle line and on a pig line, and reads the tattoo back under the tattoo column", "strength": "full", "notes": "both species saved by tattoo alone, each read back under the tattoo column" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-008-B",
+          "name": "A line of a code not on the tattoo list is not asked for a tattoo",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should have the ${name} contain exactly the expected values", "strength": "full", "notes": "the tattoo list anti-drift pin: exactly 0102, 0103 and 01061900 — the horse code and every other served code are outside it" }
           ]
         }
       ]
     },
     {
       "id": "REQ-OB-COMMODITY-005",
-      "name": "A commodity with no identifier of its own is asked for no identifier at all",
+      "name": "A commodity with no identifier of its own is asked for identification details and a description instead",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OB-COMMODITY-005-A",
-          "name": "A commodity with no specific identifier is asked for nothing",
+          "name": "A commodity with no specific identifier is asked for the two free-text answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "fish card asserted absent (#identification-card-2 count 0), not merely stripped of typed fields" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks an unidentified commodity for identification details then description, each a labelled text input the same width as a typed identifier field with no hint", "strength": "full", "notes": "red when identifier/fields.js's fallbackIdentifierFields is emptied, restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put identificationDetails in scope for a unit under commodityCode = '01063300'", "strength": "full", "notes": "and the sibling description case; both pinned by the identified-code list → identificationDetails, description describe block" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-005-B",
+          "name": "A commodity declaring its own identifiers is not asked for the two free-text answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put identificationDetails in scope for a unit under commodityCode = '0102'", "strength": "full", "notes": "run for every identified code in the describe block's loop" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "partial", "notes": "not probed" }
           ]
         }
       ]
@@ -176,9 +230,8 @@
           "name": "A commodity requiring a permanent address asks for one for each animal",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "full", "notes": "permanent address fields mandatory once any part filled; save blocked until address complete" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address asks for eight fields and never for a country", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "partial", "notes": "nameOrOrganisationName count 0 on cattle line — negative for permanent address on non-cats/dogs" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "renders its chrome, the fraud warning, and a card per animal with its identifiers and both options", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a hand-entered address with a county and no second line in its own fields, a trimmed town or city, and the United Kingdom as the country, and the choice", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -186,7 +239,8 @@
           "name": "Another species under the same code is not asked for one",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddress in scope for the genus Felis under 01061900", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for a Felis line" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddress in scope for the genus Felis under 01061900", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for a Felis line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddressOrigin in scope for the genus Felis under 01061900", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for a Felis line" }
           ]
         },
         {
@@ -194,8 +248,42 @@
           "name": "A listed species under another code is not asked for one",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddress in scope for a listed species under another code", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for such a line" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should not apply permanentAddress for the species Felis catus under 0102", "strength": "partial", "notes": "gate value ['0102', 'Felis catus'] only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddress in scope for a listed species under another code", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for a Felis line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put permanentAddressOrigin in scope for a listed species under another code", "strength": "partial", "notes": "evaluator scope only; no fit test opens identification for a Felis line" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-006-D",
+          "name": "The choice of where the animal lives leaves scope together with the permanent address",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put permanentAddress in scope for a unit of Felis catus under 01061900", "strength": "full", "notes": "permanentAddress and permanentAddressOrigin each build their gate from the one shared permanentAddressPairGate predicate (obligations/sections/commodities/identifiers.js), so this case and its permanentAddressOrigin sibling prove the two leave and enter scope together" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put permanentAddressOrigin in scope for a unit of Felis catus under 01061900", "strength": "full", "notes": "asserts its own reasons carry the obligation.permanentAddressOrigin.applicable.becausePermanentAddressLine code and explanation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-COMMODITY-007",
+      "name": "The commodities asked for an ear tag are cattle, pigs, sheep and goats, and no other served code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-COMMODITY-007-A",
+          "name": "A pig, sheep or goat line is asked for an ear tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply the ear tag for pigs, sheep and goats as well as cattle", "strength": "full", "notes": "probed by removing the SWINE_CODE/SHEEP_CODE/GOAT_CODE entries from COMMODITY_IDENTIFIERS" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and a tattoo, and heads its saved-animals table with Animal, Ear tag, Tattoo and a Remove action", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-007-B",
+          "name": "A line of a code not on the ear-tag list is not asked for an ear tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should have the ${name} contain exactly the expected values", "strength": "full", "notes": "the ear-tag list anti-drift pin: exactly 0102, 0103, 010410 and 010420" }
           ]
         }
       ]

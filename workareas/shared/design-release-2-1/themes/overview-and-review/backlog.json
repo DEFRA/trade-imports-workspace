@@ -731,7 +731,7 @@
       "gate": null,
       "externalDependsOn": [
         {
-          "workarea": "shared/design-release-2-1",
+          "workarea": "shared/design-release-2-1/themes/identification-and-permanent-address",
           "id": "inc-054"
         }
       ]
@@ -1203,6 +1203,109 @@
         "The bullet wording, the 'view or change' copy and the new-tab links are built on main by design-snagging inc-217, which carries them as criteria; their requirements stay listed here as the pointer.",
         "Salvage: frontend 9fef3175 (confirmation controller.js redirect and outstandingItems(journey) hunks, outstanding.js's switch to journey.outstandingItems and OUTSTANDING_HEALTH_CERTIFICATE, and their controller.test.js and confirmation.fit.spec.js hunks), plantsfrontend 63b62cc, tests d4d2ccc (guard hunks: the plants review.spec.ts redirect and the animals confirmation spec's not-yet-submitted case) on stale branch feat/EUDPA-696-design-release-2-1-overview-and-review; rebuild on a fresh branch from main.",
         "Design snagging merged to main 23 Oct: the wording, 'view or change' copy and new-tab links are on main (confirmation copy and template). The confirmation controller still redirects an unsubmitted notification to Overview (hubPath): the declaration guard is this row's to build. Design snagging also put REQ-CONFIRM-002 (redirect to the overview) and REQ-CONFIRM-006 (no document at all) in openspec live-animals/journey-pages/confirmation. When this row lands, change them back to the declaration redirect and the ITAHC-or-health-certificate rule (deferred.md)."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-266",
+      "title": "Identifier-driven outstanding items: the action-required warnings, the inline per-species error and the confirmation bullet",
+      "detail": "Design Release 2.1 drives outstanding items from the animal identifiers as well as from the health certificate: the action-required view's header warning names identifiers, on their own or beside the certificate; a species that needs identifiers and holds none shows an inline error in place of its content; and a notification that meets the submission minimum with incomplete identifiers still submits, carrying the identifier item on its confirmation page. The 9 October ruling closes DR1 inc-103 and settles what incomplete means: a record counts as identified once one identifier is filled, so a commodity line whose species asks for identifiers is incomplete while it holds fewer identified records than the animals it declares, the single-species consignment with none saved included (c-133). Today's frontend holds the confirmation bullet back on that decision, and that is the state this row changes.",
+      "acceptanceCriteria": [
+        "An action-required notification missing both its animal identifiers and its ITAHC carries the header warning 'You need to complete animal identifiers and upload a health certificate' (prototype:dr2-1-source prototype-dr2-1-source-p11-031, prototype-dr2-1-source-p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-191; c-133)",
+        "An action-required notification missing only its animal identifiers carries the header warning 'You need to complete animal identifiers' (prototype:dr2-1-source prototype-dr2-1-source-p11-032, prototype-dr2-1-source-p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-191; c-133)",
+        "On an action-required notification, a species that needs identifiers and holds none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier' in place of its content, inline with no error summary, as section 4's 'Upload a valid health certificate' error is shown (prototype:dr2-1-source prototype-dr2-1-source-p11-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099; c-133)",
+        "A notification whose identifiers are incomplete, meaning a commodity line whose species asks for identifiers holds fewer identified animal records than the animals it declares, a record counting as identified once one identifier is filled, but which meets the submission minimum, is submitted, and its confirmation page shows the outstanding item 'complete the animal identifier information in the notification' (prototype:dr2-1-source prototype-dr2-1-source-p11-147; document:dr1-parity-backlog document-dr1-parity-backlog-p8-060, document-dr1-parity-backlog-p8-065; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-191; c-133)",
+        "A single-species consignment with no identifier saved is that same case: it submits and shows that outstanding item (document:dr1-parity-backlog document-dr1-parity-backlog-p8-062; c-133)",
+        "A notification whose identifiers are complete shows neither the identifier warning, the inline per-species error, nor the confirmation bullet (prototype:dr2-1-source prototype-dr2-1-source-p11-034, prototype-dr2-1-source-p11-147; c-133)"
+      ],
+      "dependsOn": [
+        "inc-113",
+        "inc-115"
+      ],
+      "theme": "overview-and-review",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-031, p11-032, p11-034, p11-090, p11-147"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-099"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062, p8-065, p8-065-m1"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p14-045, p14-046"
+        }
+      ],
+      "requirements": [
+        "req-905",
+        "req-906",
+        "req-908",
+        "req-931"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Placed by the pre-flight on 11 November: req-905, req-906, req-908 and req-931 were handed to this theme by the 2 November re-distil and sat in no row, so tim backlog split refused the programme. The theme's own rows already named this row as the missing one: inc-113's notes say 'the identifier-driven items are a separate row', inc-115's say 'the identifier bullet is the identifier row's', and dropped inc-119 names 'the identifier item' as the other half of the warning family. This is that row.",
+        "All four requirements carry c-133, which is resolved by precedence, not left open: the 9 October ruling ranks first, inc-103 is closed, one filled identifier identifies an animal, and the identifier-driven items are built now with no blocker. DR1's hold (p8-063, p8-064) and the parity notes' open question (p1-086) are overruled and must not be re-raised when this row is planned.",
+        "Depends on inc-113 for the action-required view, its header warning slot and the stored outstanding items, and on inc-115 for the confirmation page's outstanding bullets, which this row adds the identifier bullet to. The ITAHC half of the warning and the section 4 document error are inc-113's; this row adds only the identifier half and must leave the certificate wording as inc-113 built it.",
+        "The fallback warning 'You need to complete missing information before import' (req-904, inc-119) stays dropped: with the identifier item built here, the only outstanding items the real service records are the certificate item and this one, each with its own warning, so nothing triggers the fallback.",
+        "What counts as a species needing identifiers comes from the live-animals commodity service's identifier rules, which the identification-and-permanent-address theme also reads. Read that rule rather than restating the commodity list here.",
+        "Repo state is read from the 26 October extracts: the identification feature folder has moved since (EUDPA-734 f72a7a0e and 69a9715b on animals-frontend main), so check the current per-species card and error shape before planning rather than trusting repo-frontend-p14-045 and p14-046."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-267",
+      "title": "Submit is refused without a main import reason, the follow-up answers it calls for and what the animals are certified for",
+      "detail": "The policy page marks the reason-for-import field block, the certified-for answer and, where it is asked, the unweaned answer as mandatory to submit: a notification cannot be submitted without them, though the trader may move on past the pages that ask them. It also says the conditional fields a chosen reason brings in must be completed before the notification can be submitted. This row builds that gate on the submit path and reports each missing answer at the point the trader tries to submit, rather than when they leave the page. The pages that ask these questions are already built on main by the drained commodities-and-reason theme; this row adds only the check that submit makes.",
+      "acceptanceCriteria": [
+        "Trying to submit a notification with no reason for import is refused, and the missing reason is reported at that point (confluence:6497338582 confluence-6497338582-p3-002, confluence-6497338582-p3-005, confluence-6497338582-p3-010)",
+        "Trying to submit a notification that has a reason for import but is missing a follow-up answer that reason calls for is refused, and each missing follow-up answer is reported (confluence:6497338582 confluence-6497338582-p3-003, confluence-6497338582-p3-023, confluence-6497338582-p3-045, confluence-6497338582-p3-054, confluence-6497338582-p3-062)",
+        "Trying to submit a notification with no answer to what the animals are certified for is refused, and the missing answer is reported (confluence:6497338582 confluence-6497338582-p1-113)",
+        "Where the unweaned question is asked, trying to submit without the unweaned answer is refused, and the missing answer is reported (confluence:6497338582 confluence-6497338582-p1-122)",
+        "The trader can still leave the reason, certified-for and unweaned pages without answering them, and reaches the rest of the journey: only submit refuses (confluence:6497338582 confluence-6497338582-p3-010)",
+        "A notification holding all of these answers submits with none of them reported (confluence:6497338582 confluence-6497338582-p3-002, confluence-6497338582-p1-113)"
+      ],
+      "dependsOn": [
+        "inc-113"
+      ],
+      "theme": "overview-and-review",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "confluence-6497338582-p1-113, p1-122, p3-002, p3-003, p3-005, p3-010, p3-023, p3-045, p3-054, p3-062"
+        }
+      ],
+      "requirements": [
+        "req-2138"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Placed by the pre-flight on 11 November: req-2138 was handed to this theme by the 2 November re-distil and sat in no row, so tim backlog split refused the programme. Its own deltaNote says the review and declaration area owns the submit check itself and that the requirement names which answers that check must require, so a row in this theme is where it belongs. The identification theme's dropped inc-049 says the same from the other side: 'the submit refusal's place and wording belong to the review-and-submit area, which owns the submit gate and its messages'.",
+        "The reading taken on mandatory to proceed versus mandatory to submit, which the claims state differently: purpose in internal market (p3-023), destination country (p3-045), port of exit (p3-054) and exit date (p3-062) are each marked mandatory to proceed, so their own pages already refuse to be left unanswered, while req-2138 states them as blocking submit. Both hold, because a page can be never visited: EUDPA-774 lets Save and continue go on through the rest of the journey, and the 26 October ruling makes Save and return to overview run the same checks, so a trader can reach submit with a page untouched. This row builds the submit-time catch for that case and changes nothing about those pages' own mandatory-to-proceed checks. If a later ruling reads it otherwise, this note is the place it lands.",
+        "Depends on inc-113, which owns the declaration controller's submit path (submitDeclaration through kit.recoverableSave), so the two rows do not rewrite the same hunk in parallel. inc-113 records the date and the outstanding items; this row refuses the submit outright, which is a different outcome and must not be folded into the outstanding-items list.",
+        "The pages that ask these questions are on main already: commodities-and-reason is drained (15 done, 4 dropped), so this row needs no cross-theme dependency and should read the built pages for the field names rather than the 26 October extract.",
+        "Source freshness checked 11 November: the policy page has moved from version 210 to 221 and been renamed 'Live Animals & Germinals Data Dictionary'. Its six substantive changes are the removal of type selection, two numeric limits, the transporter rework, the means-of-transport enum and the removal of contact address. None of them touches the mandatory-to-submit markings this row rests on, so every claim cited here still holds at version 221."
       ],
       "gate": null
     },

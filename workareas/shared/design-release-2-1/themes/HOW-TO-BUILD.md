@@ -165,11 +165,12 @@ tim backlog check shared/design-release-2-1/themes/<theme>
 ## The business tickets, around every theme
 
 A theme's Jira tickets are filled in automatically from the development work by the `theme-ticket` skill — one Story
-per service domain, with acceptance criteria copied from `openspec/`. Run it at three points around the loop. It needs
+per service domain, with acceptance criteria copied from `openspec/`. Run it at four points around the loop. It needs
 no approval: the ticket is the thing the business reviews, so it is kept true rather than gated.
 
 | When | Say | What it does |
 |---|---|---|
+| As a theme is split off | "raise the theme stub for `<theme>`" | One Story for the theme, **Ready for Dev**. It carries no description worth reading: its job is to give the theme's branch a number. Miss it and `tim backlog split` names the branch `feat/NO_JIRA-…`, which then has to be renamed in `themes.json` and in both backlogs — as consignment-parties was on 16 November, before EUDPA-805. |
 | Before starting the loop on a theme | "the build loop is starting on `<theme>`" | Moves the theme's tickets to **In Dev**. Descriptions are left alone — openspec is written row by row, so a ticket regenerated mid-build describes a half-finished theme. |
 | Once the loop has drained the theme | "write the business tickets for `<theme>`" | Derives the theme's scenarios from the commits it produced, splits them by domain, updates the theme's existing ticket as one domain and creates the others. |
 | After the theme merges to `main` | "`<theme>` has merged" | Regenerates against `main` so the spec links do not point at a deleted branch, then moves each ticket to **Deskcheck**. |

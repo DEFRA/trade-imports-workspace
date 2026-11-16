@@ -49,10 +49,7 @@ It will forward to `trade-imports-ins-frontend` and the journey frontends.
 
 In the workspace stack it listens on port 3004 (`routing-proxy` label for `-e`) and signs in against the Defra ID stub. Open `http://localhost:3004`, choose **Sign in**, and use Government Gateway user ID `2100010101` with password `Password123`.
 
-```bash
-npm install
-npm run dev        # port 3000 unless PORT is set
-```
+To run it natively and sign in, follow [Signing in locally](https://github.com/DEFRA/trade-imports-routing-proxy#signing-in-locally) in its README.
 
 Docker:
 ```bash

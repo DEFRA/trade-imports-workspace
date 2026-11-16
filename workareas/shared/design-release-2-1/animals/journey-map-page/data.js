@@ -1,5 +1,5 @@
 window.DATA = {
-  "builtAt": "2026-11-10",
+  "builtAt": "2026-11-16",
   "scope": {
     "id": "animals",
     "title": "Animals Journey Page Map",
@@ -13,14 +13,14 @@ window.DATA = {
     "sources": "Themes, their rows and where each stands are read from the Design Release 2.1 backlogs: the root backlog.json plus one per split theme. The opening run's order is read from the live animals frontend on main, so a reordering there shows up here."
   },
   "summary": {
-    "themes": 22,
-    "rows": 214,
-    "pages": 24,
+    "themes": 23,
+    "rows": 222,
+    "pages": 25,
     "arriving": 4,
-    "landed": 86,
-    "ahead": 88,
-    "held": 12,
-    "aside": 28
+    "landed": 102,
+    "ahead": 82,
+    "held": 7,
+    "aside": 31
   },
   "themes": {
     "waiting-on-design": {
@@ -33,13 +33,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 0,
-        "held": 4,
+        "held": 1,
         "deferred": 1,
-        "dropped": 4,
+        "dropped": 7,
         "folded in": 1
       },
       "state": "waiting",
-      "stands": "4 held, 1 deferred, 4 dropped, 1 folded in"
+      "stands": "1 held, 1 deferred, 7 dropped, 1 folded in"
     },
     "germinal-products": {
       "id": "germinal-products",
@@ -58,24 +58,6 @@ window.DATA = {
       },
       "state": "part",
       "stands": "20 ahead, 1 held"
-    },
-    "identification-and-permanent-address": {
-      "id": "identification-and-permanent-address",
-      "name": "Identification and permanent address",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "4",
-      "rows": 12,
-      "counts": {
-        "landed": 0,
-        "ahead": 10,
-        "held": 1,
-        "deferred": 0,
-        "dropped": 1,
-        "folded in": 0
-      },
-      "state": "part",
-      "stands": "10 ahead, 1 held, 1 dropped"
     },
     "consignment-parties": {
       "id": "consignment-parties",
@@ -131,24 +113,6 @@ window.DATA = {
       "state": "part",
       "stands": "12 ahead, 2 held"
     },
-    "test-hygiene": {
-      "id": "test-hygiene",
-      "name": "Test hygiene",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "6",
-      "rows": 2,
-      "counts": {
-        "landed": 0,
-        "ahead": 1,
-        "held": 1,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "part",
-      "stands": "1 ahead, 1 held"
-    },
     "obligation-model": {
       "id": "obligation-model",
       "name": "Obligation model",
@@ -166,6 +130,24 @@ window.DATA = {
       },
       "state": "none",
       "stands": "1 of 1 dropped"
+    },
+    "identifiers-action-required": {
+      "id": "identifiers-action-required",
+      "name": "Identifiers that need action",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "6",
+      "rows": 2,
+      "counts": {
+        "landed": 0,
+        "ahead": 2,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "ahead",
+      "stands": "2 of 2 ahead"
     },
     "address-book": {
       "id": "address-book",
@@ -293,6 +275,24 @@ window.DATA = {
       "state": "landed",
       "stands": "6 landed, 1 dropped, 2 folded in"
     },
+    "identification-and-permanent-address": {
+      "id": "identification-and-permanent-address",
+      "name": "Identification and permanent address",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "4",
+      "rows": 13,
+      "counts": {
+        "landed": 11,
+        "ahead": 1,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 1,
+        "folded in": 0
+      },
+      "state": "ahead",
+      "stands": "11 landed, 1 ahead, 1 dropped"
+    },
     "journey-foundation": {
       "id": "journey-foundation",
       "name": "Journey foundation",
@@ -335,17 +335,17 @@ window.DATA = {
       "ticket": "EUDPA-696",
       "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-696",
       "wave": "5",
-      "rows": 20,
+      "rows": 22,
       "counts": {
         "landed": 0,
-        "ahead": 17,
+        "ahead": 19,
         "held": 1,
         "deferred": 0,
         "dropped": 2,
         "folded in": 0
       },
       "state": "part",
-      "stands": "17 ahead, 1 held, 2 dropped"
+      "stands": "19 ahead, 1 held, 2 dropped"
     },
     "reference-lists": {
       "id": "reference-lists",
@@ -364,6 +364,24 @@ window.DATA = {
       },
       "state": "landed",
       "stands": "3 of 3 landed"
+    },
+    "test-hygiene": {
+      "id": "test-hygiene",
+      "name": "Test hygiene",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "4",
+      "rows": 5,
+      "counts": {
+        "landed": 5,
+        "ahead": 0,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "landed",
+      "stands": "5 of 5 landed"
     },
     "transporters": {
       "id": "transporters",
@@ -617,9 +635,37 @@ window.DATA = {
           ]
         },
         {
+          "name": "Add the CPH number",
+          "slug": "cph-number",
+          "pin": "11",
+          "themes": [
+            "commodities-and-reason",
+            "consignment-parties"
+          ],
+          "note": "Back in the run, and skipped for a species whose commodity code is CPH-exempt.",
+          "paths": [
+            "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number",
+            "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js"
+          ]
+        },
+        {
+          "name": "Permanent address",
+          "slug": "permanent-address",
+          "pin": "12",
+          "themes": [
+            "commodities-and-reason",
+            "identification-and-permanent-address"
+          ],
+          "note": "One card per animal, with the choice of the same address as the destination.",
+          "paths": [
+            "frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address",
+            "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js"
+          ]
+        },
+        {
           "name": "Consignment addresses",
           "slug": "addresses",
-          "pin": "11",
+          "pin": "13",
           "themes": [
             "consignment-parties"
           ],
@@ -640,7 +686,7 @@ window.DATA = {
         {
           "name": "Contact address for consignment",
           "slug": "consignment/contact/select",
-          "pin": "12",
+          "pin": "14",
           "themes": [
             "consignment-parties"
           ],
@@ -652,8 +698,9 @@ window.DATA = {
         {
           "name": "Review your notification",
           "slug": "notification-view",
-          "pin": "13",
+          "pin": "15",
           "themes": [
+            "identifiers-action-required",
             "overview-and-review",
             "type-question-and-templates",
             "type-question"
@@ -671,7 +718,7 @@ window.DATA = {
         {
           "name": "Declaration",
           "slug": "declaration",
-          "pin": "14",
+          "pin": "16",
           "themes": [
             "overview-and-review"
           ],
@@ -683,8 +730,9 @@ window.DATA = {
         {
           "name": "Import notification submitted",
           "slug": "confirmation",
-          "pin": "15",
+          "pin": "17",
           "themes": [
+            "identifiers-action-required",
             "overview-and-review"
           ],
           "note": null,
@@ -698,25 +746,12 @@ window.DATA = {
       "band": "Opened from a page, not a step in the run",
       "pages": [
         {
-          "name": "Add the CPH number",
-          "slug": "cph-number",
-          "pin": "·",
-          "themes": [
-            "consignment-parties"
-          ],
-          "note": "Journey foundation has already taken this out of the opening run. It now opens only from its row on Consignment addresses.",
-          "paths": [
-            "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number"
-          ]
-        },
-        {
           "name": "Party pickers — consignor, consignee, importer, place of origin, place of destination",
           "slug": "addresses/{party}",
           "pin": "·",
           "themes": [
             "address-book",
-            "consignment-parties",
-            "test-hygiene"
+            "consignment-parties"
           ],
           "note": null,
           "paths": [
@@ -860,6 +895,10 @@ window.DATA = {
       {
         "theme": "obligation-model",
         "body": "The one folder that decides, for every page, whether an answer is required to go on and whether a section is complete. Changing it changes how every page judges its own answers, without changing what any page asks."
+      },
+      {
+        "theme": "test-hygiene",
+        "body": "The tests and helpers behind the pages, not the pages themselves: browser tests that proved a look by its class, the type-ahead helper, and the plants testing guides."
       },
       {
         "theme": "waiting-on-design",
@@ -1075,7 +1114,9 @@ window.DATA = {
         "Commodity details",
         "Identification details",
         "Additional details",
-        "Arrival details"
+        "Arrival details",
+        "Add the CPH number",
+        "Permanent address"
       ],
       "instead": null
     },
@@ -1131,22 +1172,43 @@ window.DATA = {
       "ticket": null,
       "ticketUrl": null,
       "wave": "4",
-      "rows": 12,
+      "rows": 13,
       "counts": {
-        "landed": 0,
-        "ahead": 10,
-        "held": 1,
+        "landed": 11,
+        "ahead": 1,
+        "held": 0,
         "deferred": 0,
         "dropped": 1,
         "folded in": 0
       },
-      "state": "part",
-      "stands": "10 ahead, 1 held, 1 dropped",
+      "state": "ahead",
+      "stands": "11 landed, 1 ahead, 1 dropped",
       "pages": [
         "Identification details",
+        "Permanent address",
         "Permanent address (new)"
       ],
       "instead": null
+    },
+    {
+      "id": "test-hygiene",
+      "name": "Test hygiene",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "4",
+      "rows": 5,
+      "counts": {
+        "landed": 5,
+        "ahead": 0,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "landed",
+      "stands": "5 of 5 landed",
+      "pages": [],
+      "instead": "The tests and helpers behind the pages, not the pages themselves: browser tests that proved a look by its class, the type-ahead helper, and the plants testing guides."
     },
     {
       "id": "transporters",
@@ -1213,9 +1275,9 @@ window.DATA = {
       "state": "ahead",
       "stands": "11 of 11 ahead",
       "pages": [
+        "Add the CPH number",
         "Consignment addresses",
         "Contact address for consignment",
-        "Add the CPH number",
         "Party pickers — consignor, consignee, importer, place of origin, place of destination"
       ],
       "instead": null
@@ -1226,21 +1288,44 @@ window.DATA = {
       "ticket": "EUDPA-696",
       "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-696",
       "wave": "5",
-      "rows": 20,
+      "rows": 22,
       "counts": {
         "landed": 0,
-        "ahead": 17,
+        "ahead": 19,
         "held": 1,
         "deferred": 0,
         "dropped": 2,
         "folded in": 0
       },
       "state": "part",
-      "stands": "17 ahead, 1 held, 2 dropped",
+      "stands": "19 ahead, 1 held, 2 dropped",
       "pages": [
         "Overview",
         "Review your notification",
         "Declaration",
+        "Import notification submitted"
+      ],
+      "instead": null
+    },
+    {
+      "id": "identifiers-action-required",
+      "name": "Identifiers that need action",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "6",
+      "rows": 2,
+      "counts": {
+        "landed": 0,
+        "ahead": 2,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "ahead",
+      "stands": "2 of 2 ahead",
+      "pages": [
+        "Review your notification",
         "Import notification submitted"
       ],
       "instead": null
@@ -1268,28 +1353,6 @@ window.DATA = {
         "Cancel this amendment?",
         "Copy as new",
         "Delete this notification?"
-      ],
-      "instead": null
-    },
-    {
-      "id": "test-hygiene",
-      "name": "Test hygiene",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "6",
-      "rows": 2,
-      "counts": {
-        "landed": 0,
-        "ahead": 1,
-        "held": 1,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "part",
-      "stands": "1 ahead, 1 held",
-      "pages": [
-        "Party pickers — consignor, consignee, importer, place of origin, place of destination"
       ],
       "instead": null
     },
@@ -1348,13 +1411,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 0,
-        "held": 4,
+        "held": 1,
         "deferred": 1,
-        "dropped": 4,
+        "dropped": 7,
         "folded in": 1
       },
       "state": "waiting",
-      "stands": "4 held, 1 deferred, 4 dropped, 1 folded in",
+      "stands": "1 held, 1 deferred, 7 dropped, 1 folded in",
       "pages": [],
       "instead": "The JavaScript enhancements held until a design question is answered: the commodity search, the CPH input, the confirmation dialog and live filtering. Each one only enhances a page that already works without it."
     },
@@ -1390,8 +1453,12 @@ window.DATA = {
     "transit-countries",
     "transporters",
     "accompanying-documents",
+    "cph-number",
+    "permanent-address",
     "addresses",
     "consignment/contact/select",
-    "notification-view"
+    "notification-view",
+    "declaration",
+    "confirmation"
   ]
 }

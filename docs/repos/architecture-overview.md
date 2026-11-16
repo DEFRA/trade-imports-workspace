@@ -71,7 +71,7 @@ flowchart LR
 | plants-frontend | High-risk plants UI, journey flow, validation, session | Persistence, reference data, addresses |
 | plants-backend | Plants notification aggregate and lifecycle, reference numbers, audit | Identity. No outbox or PIMS routing yet — planned, not yet built |
 | ins-frontend | Sign-in front door, notifications dashboard, address-book UI (a backend-for-frontend) | Any database |
-| routing-proxy | INS's public entry point, forwarding each request to the INS service its path addresses. Today it signs a user in with Defra ID and shows what the sign-in returned (a spike); forwarding is not built yet | Passing the user's identity on, any database |
+| routing-proxy | INS public entry point: it will forward each request to the INS service its path addresses, but forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned | Passing the user's identity on, any database |
 | ins-backend | Cross-journey notification read model, built from events | Writes to notifications; it is read-only over REST |
 | address-book | Organisation-scoped address records (system of record) | Authentication; trusts the `Trade-Imports-Organisation-Id` header |
 | reference-data | Read API for countries, ports of entry and live-animal commodity search and species checks, MDM token handling, caching | Holding data itself; it fetches from MDM |

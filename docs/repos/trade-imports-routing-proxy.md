@@ -6,13 +6,13 @@
 
 The public entry point for the Import Notification Service (INS). It will serve the public INS URLs and forward each request to the INS service the path addresses, for example `/gbn-ag/...` to the animals journey frontend and `/auth/...` to the INS front door, setting `X-Forwarded-Prefix` on the way. See [02 INS Auth: Scenario 0](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6619005520).
 
-Today it is built from the CDP Node.js frontend template, plus a Defra ID sign-in against the Defra ID stub and a page that shows what the sign-in returned. Moving the sign-in onto the real Defra ID (IDM) and forwarding come in follow-up tickets.
+Forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned. It is built from the CDP Node.js frontend template. Forwarding, and moving the sign-in onto the real Defra ID (IDM), come in follow-up tickets.
 
 ## Responsibilities
 
 - Serve the template's pages: home at `/`, `/about`, and `/cookies`, where a user views and saves their cookie settings.
 - Serve `/health`, and static files under `/public` and `/favicon.ico`.
-- Sign a user in with Defra ID:
+- Sign a user in through the Defra ID stub:
   - `/auth/sign-in` sends the browser to the identity provider.
   - `/auth/sign-in-oidc` is the callback. It checks the ID token's signature against the provider's published keys, that the token has an expiry and has not expired, and that its issuer is the one the discovery document names. Then it keeps a description of the sign-in in the session.
   - `/auth/signed-in` shows every ID token claim, the access token's claims when it is a different token, and the token response's expiry, scope and whether a refresh token came back. It never shows the tokens. With no sign-in in the session, it starts one.
@@ -24,7 +24,7 @@ Today it is built from the CDP Node.js frontend template, plus a Defra ID sign-i
 
 | Service | How |
 |---------|-----|
-| Defra ID (the `trade-imports-defra-id-stub` locally) | OIDC through `@hapi/bell`: discovery at start-up, then authorisation, token exchange and the published signing keys |
+| The Defra ID stub (`trade-imports-defra-id-stub`), in the workspace stack and in CDP dev and test | OIDC through `@hapi/bell`: discovery at start-up, then authorisation, token exchange and the published signing keys |
 
 It will forward to `trade-imports-ins-frontend` and the journey frontends.
 

@@ -123,7 +123,7 @@
       ],
       "dependsOn": [],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -192,7 +192,8 @@
       "openQuestions": [],
       "notes": [
         "Re-drafted on this re-distil from existing row inc-087; no frontend requirement behind it changed in substance. Combines role filtering in the pickers (each frontend asking by role, the role-less fallback, stub roles) with one-page listing and dropping the restatement of the choice, because c-094 rules they land together: one page is only sensible once it is one role's addresses, and the restatement only existed to carry a selection across pages. CHANGE ON THIS RE-DISTIL: req-611 (the address book holding roles on the record and listing an organisation's addresses for one role, unpaginated, excluding deleted records) has left this row. Its code is addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address, which the split-off address-book theme owns, and that theme's own row inc-059 already builds the typed record there (req-1256); main's Address.java is still documented as 'an untyped, organisation-owned address-book entry' and AddressRequest refuses a type. So req-611 is listed in this draft's splitOff for the address-book branch to pick up, the addressbook repo key has left this row's repos, and the criterion about the address book's own role-scoped list has gone with it. This row therefore waits on the address-book branch delivering roles and the role-scoped list: the combiner should record that as an externalDependsOn on shared/design-release-2-1/themes/address-book (the consignment-parties theme already depends on address-book, so the landing order holds). It also fixes the consignment-parties theme's wrong touch addressbook:.../addressbook/service, which holds only EmfMetricsPublisher.java: this row builds nothing in the address book, so that touch should go. The CDP wording of the role-less criterion has been narrowed to the compose stack and stub mode, the environments this row's repos actually run in; in CDP every record saved before roles land has no role, which is why the fallback matters, but a build cannot observe CDP. c-100: DR1's typed-record block is lifted, in the address book, not here. c-101: role-less records show on every picker until given a role, never filtered on a guess. Both frontends' address-book services stay read-only (c-106, req-618). Giving a record its roles through the INS address book's add and edit pages is the address-book and party-address-add-and-edit areas' work; the role-carrying records these criteria use are set-up for a one-page assertion, which the test rules allow. The animals stub book mirrors the tests repo's e2e address-book fixture record for record, so the fixture needs the same roles; that fixture (tests:domain/shared/fixtures/e2e-address-book.ts) is the address-book theme's code, so it is listed as shared. Kept apart from the 'View' link and address lines row: that one changes the row's last cell and the Address column, this one changes which rows there are and how many pages; each already has enough acceptance for one sitting. Main checked at origin/main: party-picker/_address-picker.njk still renders govukPagination and the inset, and plants' three pickers now share features/address-book-picker, so the plants half is one change there. The client module that carried a tick through the pagination links goes with the pagination. Theme: consignment-parties.",
-        "Re-distil 2 November: req-611 (a role on each address record, and a role-scoped, unpaginated list of an organisation's addresses) leaves this row. The address record and its list are the split-off address-book theme's code, so the requirement is handed to that branch to pick up; the frontend half, each picker asking for its own role, stays here."
+        "Re-distil 2 November: req-611 (a role on each address record, and a role-scoped, unpaginated list of an organisation's addresses) leaves this row. The address record and its list are the split-off address-book theme's code, so the requirement is handed to that branch to pick up; the frontend half, each picker asking for its own role, stays here.",
+        "Exporter clause of acceptance criterion 2 dropped by ruling:ian-2026-11-16. The clause rested on two prototype claims (prototype-dr2-1-source-p8-064 from app/routes.js, p8-137 from app/data/consignment-address-sections.js) that read the prototype's internal 'consignor-or-exporter' type vocabulary as a domain role. ruling:ian-2026-11-11 point 2 already bars a row resting on app/data/*.js, and ruling-sam-2026-10-09-p1-116 — cited on the same criterion — gives role shape to the address book service, not the prototype. There is no EXPORTER role and none is to be added. What the prototype means (one section covering both parties, headed Consignor) is the criterion's own second half, which this row satisfies. Row stays done; nothing rebuilt. Open question cleared."
       ],
       "gate": "Look at role filtering on the compose stack and in stub mode, in both frontends, before the rows that rest on it build: a role-carrying record appears only on its roles' pickers, a record with no role appears on every picker, the list is one page, and the server search narrows it. The same-as row, the live filter row and the germinal set's copy of the pickers build on this.",
       "externalDependsOn": [
@@ -203,6 +204,24 @@
         {
           "workarea": "shared/design-release-2-1/themes/address-book",
           "id": "inc-059"
+        }
+      ],
+      "commit": "b2063dbe b51df71 0ad43df",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/148",
+          "repo": "plantsfrontend",
+          "number": 148
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "tests",
+          "number": 114
         }
       ]
     },
@@ -263,7 +282,9 @@
         "req-579",
         "req-580"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: on a party section with no address, should the \"Same as ...\" control sit on the same line as the \"Add a ...\" link (as built), or stacked on its own line above it? Design Release 2.1 sets both for the same element. The prototype-source extract claim prototype-dr2-1-source-p8-033 (workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part8.json, ref roles-and-addresses.html:94-113) says the consignor row shows the \"Same as place of origin\" link-styled button BESIDE its \"Add a consignor\" link, and inc-088 acceptance criteria 1 and 2 copy that wording. The rendered-trace extract claims trace-prototype-dr2-1-p6-042, p6-043 and p6-044 (workareas/shared/design-release-2-1/distil/extract/trace-prototype-dr2-1.part6.json, confidence verbatim) say the button sits ABOVE each add link. The code follows \"beside\": repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:42-47 puts the button and the add link inside one <p class=\"govuk-body\">, and .app-link-button is display:inline (src/client/stylesheets/core/_main.scss:9-17), so they render on one line. No GDS guide rules either way. Options: (a) keep both in one paragraph, as built and as the prototype markup reads; (b) give the control its own <p class=\"govuk-body\"> before the add link, as the trace reads. Raised by review finding 7 on inc-088 (design, template.njk:44)."
+      ],
       "notes": [
         "Re-drafted on this re-distil from existing row inc-088; no requirement behind it changed in substance. Combines the three same-as buttons and their shared show and copy rules: one page form, one copy behaviour, one set of tests. 'Section' means the page's headed party section: on origin/main the roles and addresses page builds each section in addresses/controller.js sections() as a hubSection with an addLink or a chosen address, and template.njk renders them outside the page's form, which wraps only the save actions. So a 'Same as ...' button beside a section's add link needs the form widened to hold the sections, or a form of its own carrying the crumb and the concurrency token, and the button added through the section object rather than the template alone. c-100: DR1's collision block does not hold this back. The prototype's same-as action value is not adopted (req-1829, out of scope): the button posts the real service's own fields. Ruling sam-2026-10-09-pm leaves high-risk plants unchanged here: plants has no roles and addresses page to carry the shortcut. Order: build after the role-filtered pickers row, because the 'copies even when the target's picker does not offer it' criterion needs role-carrying records; on the compose stack that record is set-up for a one-page assertion, which the test rules allow. Main checked at origin/main: no same-as shortcut exists (addresses/controller.js partySectionBuilder). Theme: consignment-parties."
       ],
@@ -272,6 +293,19 @@
         {
           "workarea": "shared/design-release-2-1/themes/design-snagging",
           "id": "inc-213"
+        }
+      ],
+      "commit": "e240adccc5d2a5e1974ccd639ef3940c4dab9270 39ef21f7fab6b2604fed1b036be1f27ad967f1c4",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 114
         }
       ]
     },
@@ -712,7 +746,8 @@
           "workarea": "shared/design-release-2-1/themes/address-book",
           "id": "inc-080"
         }
-      ]
+      ],
+      "rigour": "full"
     },
     {
       "id": "inc-096",
@@ -966,7 +1001,8 @@
         "On main 27 Oct: addresses/fit/party-edit.fit.spec.js:20, addresses/fit/hub-picker.fit.spec.js:86, cph-number/cph-number.fit.spec.js:105-107, :121, :359-361.",
         "inc-091 rewrites the CPH number page, so this row waits on it."
       ],
-      "gate": null
+      "gate": null,
+      "rigour": "fast"
     },
     {
       "id": "inc-243",

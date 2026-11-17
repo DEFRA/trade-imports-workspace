@@ -7,23 +7,23 @@ The rules holding for every address a notification uses: how a consignment role'
 ## Requirements
 
 ### Requirement: Each role's list offers only the addresses saved for that role, and any saved with no role
-**ID**: REQ-ADDR-016
+**ID**: REQ-ADDR-018
 The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor.
 
 #### Scenario: An address saved for one role is listed only on that role's list
-**ID**: SCN-ADDR-016-A
+**ID**: SCN-ADDR-018-A
 - **GIVEN** an address is saved for the consignee role alone
 - **WHEN** the user opens any of the five consignment role lists
 - **THEN** the address is listed on the consignee list, and on none of the other four
 
 #### Scenario: An address saved for two roles is listed on both
-**ID**: SCN-ADDR-016-B
+**ID**: SCN-ADDR-018-B
 - **GIVEN** an address is saved for both the consignee and the importer roles
 - **WHEN** the user opens either role's list
 - **THEN** the address is listed on both
 
 #### Scenario: An address saved with no role is listed on every role's list
-**ID**: SCN-ADDR-016-C
+**ID**: SCN-ADDR-018-C
 - **GIVEN** an address is saved with no role at all
 - **WHEN** the user opens any of the five consignment role lists
 - **THEN** the address is listed on all five
@@ -307,7 +307,7 @@ The system MUST show an empty-state message in place of the results count when a
 
 ### Requirement: A listed address opens in the INS address book, whose Back returns to the same list
 **ID**: REQ-ADDR-009
-When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address name, that opens it in the INS address book. Its Back link MUST return the user to the same list of the same notification, with its search, page and chosen address, and, when opened to change an answer, saving MUST still return them where a change of answer does. In stub mode, the system MUST end each listed address at its country, with no 'View' link.
+When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address name, that opens it in the INS address book. Its Back link MUST return the user to the same list of the same notification, with its search, page and chosen address, and, when opened to change an answer, saving MUST still return them where a change of answer does.
 
 #### Scenario: View opens the address in the INS address book and Back returns to the list with its search
 **ID**: SCN-ADDR-009-A
@@ -328,12 +328,6 @@ When the address book service is available, the system MUST end each listed addr
 - **GIVEN** the user is choosing an address for a consignment role, and the address book service is available
 - **WHEN** the list is shown
 - **THEN** each address's last column holds a single 'View' link, announced with the address's name, and nothing else
-
-#### Scenario: Each address ends at its country, with no View link, in stub mode
-**ID**: SCN-ADDR-009-D
-- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
-- **WHEN** the list is shown
-- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link
 
 ### Requirement: Reopening the list shows the address already chosen checked, and keeps it on save
 **ID**: REQ-ADDR-011
@@ -375,3 +369,13 @@ The system MUST lay the list of addresses for a consignment role across the full
 - **GIVEN** the user is choosing an address for a consignment role
 - **WHEN** the list is shown
 - **THEN** it spans the full width of the content column
+
+### Requirement: In stub mode a listed address ends at its country, with no View link
+**ID**: REQ-ADDR-016
+When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
+
+#### Scenario: Each address ends at its country, with no View link, in stub mode
+**ID**: SCN-ADDR-016-A
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
+- **WHEN** the list is shown
+- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link

@@ -25,7 +25,7 @@ Stub of the Defra Identity (Defra ID, Azure B2C style OIDC) sign-in service for 
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-animals-frontend, trade-imports-animals-admin, trade-imports-ins-frontend, trade-imports-plants-frontend | OIDC (browser redirects plus server-side token and JWKS calls) | Sign-in. Each has `DEFRA_ID_*` config; the frontend default is `http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration`. Per-service usage beyond config was not checked for admin, ins and plants. |
+| Inbound | trade-imports-animals-frontend, trade-imports-animals-admin, trade-imports-ins-frontend, trade-imports-plants-frontend, trade-imports-routing-proxy | OIDC (browser redirects plus server-side token and JWKS calls) | Sign-in. Each has `DEFRA_ID_*` config; the frontend default is `http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration`. Per-service usage beyond config was not checked for admin, ins and plants. |
 | Outbound | Redis | ioredis (catbox) | Session cache when `REDIS_HOST` is set; otherwise not used (default host is null). Single-instance fallback is implied by `USE_SINGLE_INSTANCE_CACHE`. |
 | Outbound (optional) | AWS S3 (Floci locally) | AWS SDK v3 | Dataset files for the `/s3` admin routes, when `AWS_S3_ENABLED`. |
 | Outbound (optional) | Microsoft Entra ID | OIDC (Bell) | Only when `ENTRA_ENABLED`; protects the `/s3` routes. |

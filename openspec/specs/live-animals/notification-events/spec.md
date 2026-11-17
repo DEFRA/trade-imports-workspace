@@ -22,11 +22,11 @@ The system MUST record a distinctly named outbox event for each of the following
 - **WHEN** the outbox is checked
 - **THEN** a submission event exists for that notification, showing its status as submitted and carrying the submitted consignment detail, along with the identity of who submitted it
 
-#### Scenario: Submitting without an ITAHC records the submission event with status code SUBMITTED_ACTION_REQUIRED
+#### Scenario: Submitting without an ITAHC records the submission event with status code SUBMITTED
 **ID**: SCN-EVENTS-001-F
 - **GIVEN** a user submits a notification with no ITAHC uploaded
 - **WHEN** the outbox is checked
-- **THEN** a submission event exists for that notification, whose status code is SUBMITTED_ACTION_REQUIRED
+- **THEN** a submission event exists for that notification, whose status code is SUBMITTED
 
 #### Scenario: Starting and cancelling an amendment each record their own event
 **ID**: SCN-EVENTS-001-C

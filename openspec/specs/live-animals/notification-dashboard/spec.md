@@ -66,12 +66,6 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 - **WHEN** the user searches the dashboard for its reference number
 - **THEN** its card shows a "Submitted" status, offering view, amend, copy and delete actions
 
-#### Scenario: A notification submitted without its health certificate offers view, amend, copy and delete
-**ID**: SCN-DASH-004-D
-- **GIVEN** a notification was submitted without an ITAHC
-- **WHEN** the user searches the dashboard for its reference number
-- **THEN** its card shows a "Submitted action required" status, offering view, amend, copy and delete actions
-
 #### Scenario: A notification being amended offers resume and cancel-amendment
 **ID**: SCN-DASH-004-C
 - **GIVEN** an amendment has been started on a submitted notification

@@ -36,12 +36,6 @@ The system MUST redirect a request for the confirmation page to the notification
 - **WHEN** its confirmation page is requested directly
 - **THEN** it is sent to its declaration page in the same way
 
-#### Scenario: A notification submitted without its ITAHC still shows its confirmation
-**ID**: SCN-CONFIRM-002-B
-- **GIVEN** a notification was submitted without an ITAHC, so its status is "Submitted action required"
-- **WHEN** its confirmation page is requested
-- **THEN** the confirmation page is shown
-
 ### Requirement: The page tells the user how the consignment must be transported
 **ID**: REQ-CONFIRM-003
 The system MUST tell the user that the consignment must go directly to its place of destination on entry to Great Britain, that it may need to be inspected, and that if so the animals must stay at the place of destination for the time stated on the health certificate, or 48 hours where none is stated.
@@ -82,7 +76,7 @@ The system MUST offer the user routes to help — where to email about import no
 
 ### Requirement: The page tells the user they still owe the ITAHC when none was uploaded
 **ID**: REQ-CONFIRM-006
-The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC that passed its virus scan, as recorded at submission, whatever other documents were uploaded, and MUST NOT show it when an ITAHC was uploaded.
+The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC, whatever other documents were uploaded, and MUST NOT show it when an ITAHC was uploaded.
 
 #### Scenario: A submission with no documents carries the outstanding-work section
 **ID**: SCN-CONFIRM-006-A

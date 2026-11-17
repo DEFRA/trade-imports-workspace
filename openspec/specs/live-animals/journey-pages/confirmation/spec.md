@@ -76,7 +76,7 @@ The system MUST offer the user routes to help — where to email about import no
 
 ### Requirement: The page tells the user they still owe the ITAHC when none was uploaded
 **ID**: REQ-CONFIRM-006
-The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC, whatever other documents were uploaded, and MUST NOT show it when an ITAHC was uploaded.
+The system MUST show a "Before the consignment is imported" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC, whatever other documents were uploaded, and MUST NOT list that item when an ITAHC was uploaded.
 
 #### Scenario: A submission with no documents carries the outstanding-work section
 **ID**: SCN-CONFIRM-006-A
@@ -92,7 +92,7 @@ The system MUST show a "Before the consignment is imported" section, telling the
 
 #### Scenario: A submission with an ITAHC carries no outstanding-work section
 **ID**: SCN-CONFIRM-006-C
-- **GIVEN** a notification was submitted with an ITAHC uploaded
+- **GIVEN** a notification was submitted with an ITAHC uploaded and every animal its commodity lines declare identified
 - **WHEN** the user reads the confirmation page
 - **THEN** the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
 
@@ -106,3 +106,43 @@ The system MUST offer an action on the confirmation page that starts a fresh not
 - **WHEN** the user chooses to create a new notification from the confirmation page
 - **THEN** a new notification is started and its own entry page (origin of the import) is shown
 - **AND** the new notification has its own reference number, different from the one just submitted
+
+### Requirement: The page tells the user to complete the animal identifier information when a line holds fewer identified animals than it declares
+**ID**: REQ-CONFIRM-008
+The system MUST list 'complete the animal identifier information in the notification' in the "Before the consignment is imported" section, after any ITAHC item, whenever a commodity line whose species asks for identifiers holds fewer identified animal records than the animals it declares, an animal counting as identified once one identifier is filled. The system MUST NOT list it when every such line holds as many identified records as animals it declares.
+
+#### Scenario: A line declaring more animals than it has identified lists the identifier item
+**ID**: SCN-CONFIRM-008-A
+- **GIVEN** a notification was submitted with no ITAHC and a commodity line declaring 2 animals with one animal identified
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'upload the ITAHC and any other required documents' then 'complete the animal identifier information in the notification'
+
+#### Scenario: A single-species consignment with no identifier saved lists the identifier item
+**ID**: SCN-CONFIRM-008-B
+- **GIVEN** a notification was submitted with no ITAHC and one commodity line declaring 1 animal with no identifier saved
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'upload the ITAHC and any other required documents' then 'complete the animal identifier information in the notification'
+
+#### Scenario: A notification whose identifiers are complete lists no identifier item
+**ID**: SCN-CONFIRM-008-C
+- **GIVEN** a notification was submitted with no ITAHC and every animal its commodity lines declare identified
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'upload the ITAHC and any other required documents'
+
+#### Scenario: An ITAHC uploaded with identifiers incomplete lists only the identifier item
+**ID**: SCN-CONFIRM-008-D
+- **GIVEN** a notification was submitted with an ITAHC uploaded and a commodity line declaring more animals than it has identified
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'complete the animal identifier information in the notification'
+
+#### Scenario: A line whose species is not asked for identifiers lists no identifier item
+**ID**: SCN-CONFIRM-008-E
+- **GIVEN** a notification was submitted with no ITAHC and one commodity line, of a species not asked for identifiers, declaring 2 animals with none identified
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'upload the ITAHC and any other required documents'
+
+#### Scenario: A later line short of identified animals lists the identifier item
+**ID**: SCN-CONFIRM-008-F
+- **GIVEN** a notification was submitted with no ITAHC, a first commodity line with every animal identified, and a second line, of a species asked for identifiers, holding fewer identified records than it declares
+- **WHEN** the user reads the confirmation page
+- **THEN** the section lists exactly 'upload the ITAHC and any other required documents' then 'complete the animal identifier information in the notification'

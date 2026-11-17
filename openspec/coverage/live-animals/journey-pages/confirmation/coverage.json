@@ -130,7 +130,7 @@
           "name": "A submission with an ITAHC carries no outstanding-work section",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when an ITAHC has been uploaded", "strength": "full", "notes": "an exact empty list; red when the reminder is always listed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when an ITAHC has been uploaded and no commodity line is recorded","strength": "full", "notes": "an exact empty list; red when the reminder is always listed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js", "test": "Should show only the transport, view-or-amend and help sections when nothing is outstanding", "strength": "full", "notes": "the exact heading list; fails without the template's outstanding guard" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "shows only the transporting, view or amend and help sections once an ITAHC is uploaded", "strength": "partial", "notes": "submits with an ITAHC and asserts the exact level-2 heading list; not probed red" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "shows only the transporting, view or amend and help sections once an ITAHC is uploaded", "strength": "partial", "notes": "not probed red" }
@@ -149,6 +149,65 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "create-a-new-notification starts a fresh notification", "strength": "full", "notes": "asserts the origin heading loads and the new journey's reference differs from the submitted one" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONFIRM-008",
+      "name": "The page tells the user to complete the animal identifier information when a line holds fewer identified animals than it declares",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CONFIRM-008-A",
+          "name": "A line declaring more animals than it has identified lists the identifier item",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the identifier item after the certificate item when a line holds fewer identified animals than it declares", "strength": "partial", "notes": "exact two-item list; not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the identifier item when a line declaring 2 animals holds one identified record and one blank record", "strength": "full", "notes": "exact two-item list; red when the count includes a blank record (workareas/shared/design-release-2-1/themes/overview-and-review/logs/inc-266-fix-probe-red.log)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "lists the identifier item after the ITAHC when a line holds fewer identified animals than it declares", "strength": "partial", "notes": "not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-008-B",
+          "name": "A single-species consignment with no identifier saved lists the identifier item",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the identifier item when a single-animal line has no identifier saved", "strength": "partial", "notes": "exact two-item list; not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "lists the identifier item after the ITAHC when a single-animal line has no identifier saved", "strength": "partial", "notes": "not probed against the stack" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-008-C",
+          "name": "A notification whose identifiers are complete lists no identifier item",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list only the certificate item when every declared animal is identified", "strength": "partial", "notes": "exact one-item list; not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "lists the ITAHC as still to upload when no document was uploaded", "strength": "partial", "notes": "exact one-item list for a complete single-cattle notification; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-008-D",
+          "name": "An ITAHC uploaded with identifiers incomplete lists only the identifier item",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list only the identifier item when an ITAHC has been uploaded and a line is short of identified animals", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-008-E",
+          "name": "A line whose species is not asked for identifiers lists no identifier item",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list only the certificate item for a line whose species is not asked for identifiers", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-008-F",
+          "name": "A later line short of identified animals lists the identifier item",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the identifier item when only a later line is short of identified animals", "strength": "partial", "notes": "first line complete, second short; not probed red" }
           ]
         }
       ]

@@ -25,7 +25,9 @@ by copying `assets/alerts.template.md` and filling in:
   sets `readTimeout: 3000`, but the Feign clients have no
   `Request.Options`, so Feign's 60 second default applies. If
   dependencies differ, split "dependency slow" into one rule per
-  dependency, as the sheet says.
+  dependency, as the sheet says;
+- `<section-slow-ms>` and `<conflicts-per-hour>` for rules 4 and 5,
+  from the team, when the service publishes those metrics.
 
 The build sheet and the table below must agree; a change to one is a
 change to both.
@@ -65,6 +67,14 @@ agree, not tested values.
 | Database unavailable (which rules a service with a database gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal |
 | Dependency calls failing | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation` | Normal |
 | Dependency slow | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation` | Normal |
+| Section slow (a service publishing `http.server.requests`) | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `section` and `status.class` | Normal |
+| Concurrency conflicts (a service publishing `journey.concurrency.conflict`) | `journey.concurrency.conflict`, `Sum`, above a threshold the team sets over 60 minutes, with no dimensions | Normal |
+
+`[UNPROVEN]` The section and concurrency rules (4 and 5 in
+`assets/alerts.template.md`) have not been built or fired anywhere. They
+are built for the names `trade-imports-animals-frontend` publishes
+(`NODE.md`). CDP's own advanced HTTP alerts already cover the whole
+service's p95 and 5xx rate, so rule 4 adds only the split by section.
 
 **Query every call alert by `dependency` and `operation`.** Both
 external call metrics are published with that one dimension set

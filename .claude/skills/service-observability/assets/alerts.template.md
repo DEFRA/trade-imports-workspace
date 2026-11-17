@@ -103,6 +103,38 @@ config value: check the value is actually applied (a Feign client with
 no `Request.Options` uses Feign's 60 second default whatever the YAML
 says).
 
+## 4. <service> section slow
+
+`[UNPROVEN]` Not yet built or fired anywhere. Keep this section only if
+the service publishes `http.server.requests` (`references/NODE.md` →
+"Endpoint layer"). Duplicate rule 3, then set:
+
+| Field | Value |
+|---|---|
+| Rule name | `<service> section slow` |
+| Metric | `http.server.requests` |
+| Dimensions | `method` = `*`, `section` = `*`, `status.class` = `*`, with Match exact off |
+| Statistic | `p95` |
+| Period | `900` (15 minutes) |
+| Alert condition | `Last` `IS ABOVE` `<section-slow-ms>` (the team's threshold for a page) |
+| Summary | `{{ $labels.method }} {{ $labels.section }} {{ $labels.status.class }}: p95 above <section-slow-ms> ms over 15 minutes` |
+
+## 5. <service> concurrency conflicts
+
+`[UNPROVEN]` Not yet built or fired anywhere. Keep this section only if
+the service publishes `journey.concurrency.conflict`. Duplicate rule 2,
+then set:
+
+| Field | Value |
+|---|---|
+| Rule name | `<service> concurrency conflicts` |
+| Metric | `journey.concurrency.conflict` |
+| Dimensions | none, with Match exact on: the metric is published with no dimensions |
+| Statistic | `Sum` |
+| Period | `3600` (60 minutes) |
+| Alert condition | `Last` `IS ABOVE` `<conflicts-per-hour>` (the team's threshold) |
+| Summary | `More than <conflicts-per-hour> concurrency conflicts in the last hour` |
+
 ## Check
 
 The group holds `platform_managed_do_not_delete` and the rules built
@@ -119,6 +151,8 @@ A database's command metrics are the `external.call.*` meters
 `MongoCommandMetrics` records (`references/METRICS.md` → "A database").
 A heartbeat records none.
 
+Add rule 4 and rule 5 to the count when they are kept. A session store
+such as Redis is a database here: rule 1a with `<database>` = `redis`.
 Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule
 (More → Export → JSON) for Claude to check this sheet against.

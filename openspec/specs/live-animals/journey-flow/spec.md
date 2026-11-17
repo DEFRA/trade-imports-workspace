@@ -27,7 +27,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 
 ### Requirement: Saving and continuing goes to the next page that applies, whatever way the page was reached
 **ID**: REQ-FLOW-003
-The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on. A page's own required answer MUST be given before Save and continue goes on from it.
+The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on.
 
 #### Scenario: The CPH number page goes on to Consignment addresses
 **ID**: SCN-FLOW-003-A

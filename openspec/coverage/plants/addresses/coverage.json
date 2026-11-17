@@ -38,6 +38,45 @@
       ]
     },
     {
+      "id": "REQ-PLANTS-ADDR-014",
+      "name": "Each listed address shows its lines on their own lines and ends with a disclosure of its contact details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-014-A",
+          "name": "An address shows its street lines, then its town, county and postcode on one line",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.test.js", "test": "Should give each street line its own line, then town or city, county and postcode on one line, without the country", "strength": "full", "notes": "red-probed: made pickerAddressLines join every part into one line, saw this test fail, restored it" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/test-support.js", "test": "Should carry the country as its own column and leave it out of the address lines", "strength": "full", "notes": "red-probed: pointed the view model's row address field back at the one-line export, ran the three pickers' view-model suites, saw this case fail, restored it" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "reads the role's listed address as its street line then its town and postcode on one line, not one joined line", "strength": "partial", "notes": "the stub book holds one street line and no county, so this cannot show a second street line or a county on its own line" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-picker.spec.ts", "test": "place of destination: a record with two street lines and a county shows each street line on its own line, then its town, county and postcode on one line, and its \"View details\" disclosure opens in place and holds exactly that record's telephone number and email address", "strength": "partial", "notes": "the only link exercising a record with both street lines and a county through the real address book; no run that can invert a plants production line and re-verify runs the plants E2E suite, so no red probe backs it" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-014-B",
+          "name": "Blank parts are left out",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.test.js", "test": "Should give only the filled street line, then town or city and postcode on one line, with no blank line", "strength": "full", "notes": "red-probed: removed the blank-dropping filter from pickerAddressLines, saw this test fail, restored it" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should carry each row's address lines and contact lines from the record it lists", "strength": "full", "notes": "red-probed: pointed the view model's row address field back at the one-line export, ran the three pickers' controller suites, saw this case fail, restored it; the stub record it reads is exactly this shape (one street line, town, postcode)" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "reads the role's listed address as its street line then its town and postcode on one line, not one joined line", "strength": "full", "notes": "red-probed: returned the Address cell in table-rows.js to plain text, ran the place of destination FIT spec, saw this test fail, restored it; the stub record it reads is one street line, a town and a postcode" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-014-C",
+          "name": "A row's disclosure shows only the record's telephone number and email address",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.test.js", "test": "Should read out the telephone number then the email address, and nothing else", "strength": "full", "notes": "red-probed: gave contactLines the whole record again, saw this test fail, restored it" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/table-rows.test.js", "test": "Should give each address a checked radio for the field, its plain facts, its address lines with a break between each, and a details cell listing its contact lines", "strength": "full", "notes": "red-probed: pointed the disclosure macro's loop at a field the row no longer carries, saw this test fail, restored it" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "opens the row's \"View details\" disclosure in place and shows exactly that address's telephone number and email address", "strength": "full", "notes": "red-probed: gave contactLines the whole record again, ran the place of destination FIT spec, saw this test fail, restored it" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-picker.spec.ts", "test": "place of destination: a record with two street lines and a county shows each street line on its own line, then its town, county and postcode on one line, and its \"View details\" disclosure opens in place and holds exactly that record's telephone number and email address", "strength": "partial", "notes": "proves the disclosure against a record the test created rather than canned stub data; no run that can invert a plants production line and re-verify runs the plants E2E suite, so no red probe backs it" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "REQ-PLANTS-ADDR-001",
       "name": "A chosen address is copied onto the notification, and later changes to the address book never reach it",
       "coverage": "full",

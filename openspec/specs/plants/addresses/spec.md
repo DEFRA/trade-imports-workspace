@@ -28,6 +28,29 @@ The system MUST list, on the consignor picker, only the organisation's addresses
 - **WHEN** the user opens the consignment contact picker
 - **THEN** all of them are listed
 
+### Requirement: Each listed address shows its lines on their own lines and ends with a disclosure of its contact details
+**ID**: REQ-PLANTS-ADDR-014
+On the consignor, place of destination and consignment contact pickers, the system MUST show each listed address's street lines on their own lines, then its town or city, county and postcode together on one line, joined by commas, with blank parts left out; the country has its own column. Each row MUST end with a "View details" disclosure that opens in place and shows that record's telephone number and email address.
+
+#### Scenario: An address shows its street lines, then its town, county and postcode on one line
+**ID**: SCN-PLANTS-ADDR-014-A
+- **GIVEN** a listed address has two street lines, a town, a county and a postcode
+- **WHEN** the user finds it on a picker
+- **THEN** each street line shows on its own line, then the town, county and postcode on one line
+
+#### Scenario: Blank parts are left out
+**ID**: SCN-PLANTS-ADDR-014-B
+- **GIVEN** a listed address has no second street line and no county
+- **WHEN** it is shown on a picker
+- **THEN** it shows its street line, then its town and postcode on one line, with no blank line
+
+#### Scenario: A row's disclosure shows only the record's telephone number and email address
+**ID**: SCN-PLANTS-ADDR-014-C
+- **GIVEN** the user is on a picker
+- **WHEN** they open a row's "View details" disclosure
+- **THEN** it opens in place, without leaving the page, and shows that record's telephone number then its email address
+- **AND** the record's name, address lines and country are read from the row's own columns, not the disclosure
+
 ### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-PLANTS-ADDR-001
 The system MUST copy the chosen address-book record onto the notification when the user picks it for the consignor, the place of destination or the consignment contact address — name, address lines, town or city, county, postcode, country, telephone and email. A later edit or deletion of that record in the address book MUST NOT change what the notification shows or submits, whatever the notification's status.

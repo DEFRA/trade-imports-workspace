@@ -8,7 +8,7 @@ What the commodities on a notification bring into play — the largest set of ob
 
 ### Requirement: A commodity that calls for a County Parish Holding number brings it into play for the whole notification
 **ID**: REQ-OB-COMMODITY-001
-The system MUST ask the notification for a County Parish Holding number, as a mandatory answer, when any one of its commodity lines carries a commodity that calls for one, judged across every line rather than only the most recently added. Every commodity code calls for one except the codes let off — horses (0101) and cats, dogs, ferrets and other live mammals (01061900) — so a code new to the reference data is asked rather than let off.
+The system MUST ask the notification for a County Parish Holding number, as a mandatory answer, when any one of its commodity lines carries a commodity that calls for one — cattle, pigs, sheep, goats or poultry, whether day-old chicks, adult birds or hatching eggs — judged across every line rather than only the most recently added, and MUST NOT ask for it when no line carries one of those commodities.
 
 #### Scenario: Adding a commodity that calls for a CPH number brings it into play
 **ID**: SCN-OB-COMMODITY-001-A
@@ -22,11 +22,17 @@ The system MUST ask the notification for a County Parish Holding number, as a ma
 - **WHEN** the user works through the journey
 - **THEN** the County Parish Holding number is not asked for
 
-#### Scenario: A commodity code on no list of its own is asked for a CPH number
-**ID**: SCN-OB-COMMODITY-001-C
-- **GIVEN** a notification whose only commodity line carries a code that no other commodity rule names
+#### Scenario: A commodity not on the list is not asked for a CPH number
+**ID**: SCN-OB-COMMODITY-001-D
+- **GIVEN** a notification whose only commodity line carries a commodity the CPH list does not name, such as ostriches
 - **WHEN** the user works through the journey
-- **THEN** the County Parish Holding number is asked for
+- **THEN** the County Parish Holding number is not asked for
+
+#### Scenario: The commodities that call for a CPH number are cattle, pigs, sheep, goats and poultry
+**ID**: SCN-OB-COMMODITY-001-E
+- **GIVEN** a notification with one commodity line
+- **WHEN** that line's commodity is cattle, pigs, sheep, goats, or poultry as day-old chicks, adult birds or hatching eggs
+- **THEN** the County Parish Holding number is asked for, as a mandatory answer for the notification as a whole
 
 ### Requirement: A commodity that requires unweaned-animal tracking brings that question into play for the whole notification
 **ID**: REQ-OB-COMMODITY-002

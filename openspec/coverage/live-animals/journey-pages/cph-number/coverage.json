@@ -22,7 +22,17 @@
           "name": "The group carries one hint describing the whole number",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "describes the group with the hint", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "describes the group with the hint", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js", "test": "Should give an example in the real 2/3/4 grouping, with no punctuation", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "opens the help to its APHA-and-GOV.UK paragraph and the holding-details link, and gives the hint with no punctuation", "strength": "partial", "notes": "needs the workspace stack; not probed locally in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-001-C",
+          "name": "Each box turns off the browser's saved values and asks for a digit keypad",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "takes the number in three boxes sized to its parts", "strength": "full", "notes": "red when the county box's autocomplete/pattern attributes are removed from template.njk, restored green" }
           ]
         }
       ]
@@ -47,22 +57,6 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "full", "notes": "fills 12/345/6789, saves, revisits the page and asserts each box holds its own part" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-CPH-003",
-      "name": "Submitting the page untouched asks the whole question again, at the first box",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-CPH-003-A",
-          "name": "Submitting with every box empty names the whole question once",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "asks for the whole CPH number once in the error summary when submitted empty", "strength": "partial", "notes": "asserts the error summary holds the single 'Enter a CPH number' error; does not assert the county-focus specific" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: an untouched page asks the whole question at the first box", "strength": "full", "notes": "asserts the single cphRequired error, county box focused and still empty" }
           ]
         }
       ]
@@ -195,22 +189,32 @@
           "name": "The help text stays hidden until the expander is opened",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps the CPH help collapsed above the field until it is opened", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps the CPH help collapsed above the field until it is opened, then offers its GOV.UK link in the same tab", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-005-B",
+          "name": "The help's second paragraph links to the GOV.UK guidance on checking a holding's details",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps the CPH help collapsed above the field until it is opened, then offers its GOV.UK link in the same tab", "strength": "partial", "notes": "asserts the prefix text, the link's accessible name, its href and that it carries no target attribute; not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js", "test": "Should explain what a CPH number is and where to find one", "strength": "full", "notes": "red/green probe: dropped the '(APHA)' clause from copy.cy.js's whereToFindPrefix, test seen red, restored, test seen green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "opens the help to its APHA-and-GOV.UK paragraph and the holding-details link, and gives the hint with no punctuation", "strength": "partial", "notes": "needs the workspace stack; not probed locally in this increment" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CPH-006",
-      "name": "The back link returns to the consignment addresses page from the CPH section's add link, and to where the user came from otherwise",
-      "coverage": "full",
+      "name": "The back link always returns to the consignment addresses page, however the page was reached",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CPH-006-A",
-          "name": "The back link opens Overview when the page was not opened from the CPH section's add link",
-          "coverage": "full",
+          "name": "The back link returns to the consignment addresses page when the page was opened from Overview",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the overview when nothing says where the trader came from", "strength": "full", "notes": "red then green with Back's fallback in trailBackLink answering the dashboard (workareas/shared/eudpa-774/logs/inc-027-probe-trail-fallback-cph)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page carrying the trail, reached from the overview", "strength": "partial", "notes": "not probed in this increment" }
           ]
         },
         {
@@ -219,40 +223,109 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "back link returns to the consignment addresses page", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the addresses page carrying the trail when entered from its CPH section add link", "strength": "partial", "notes": "not seen failing" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "back link returns to the consignment addresses page with no trail, when opened by its own address", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page with no trail, reached from the section add link", "strength": "partial", "notes": "not probed in this increment" }
           ]
         },
         {
           "id": "SCN-CPH-006-C",
-          "name": "The back link opens the review when the page was opened from a Change link",
-          "coverage": "full",
+          "name": "The back link returns to the consignment addresses page when the page was opened from a Change link",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the review when entered from a review Change link", "strength": "full", "notes": "red then green with the CPH page's Back link no longer reading the trail (workareas/shared/eudpa-774/logs/inc-027-probe-cph-back)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page carrying the trail, reached from a review Change link", "strength": "partial", "notes": "not probed in this increment" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CPH-007",
-      "name": "Saving the CPH number returns to the consignment addresses page",
-      "coverage": "full",
+      "name": "Saving the CPH number returns to the consignment addresses page, except where a required earlier answer is still missing",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CPH-007-A",
-          "name": "Saving from the CPH section's add link returns to the consignment addresses page, showing the number",
+          "name": "Saving from the consignment addresses page's add link returns to it, showing the number",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "a saved CPH number shows as 123456789 on the addresses page, Change pre-fills county, parish and holding, and Back returns to the addresses page, whose Continue reaches the contact address", "strength": "full", "notes": "Add from the CPH section, save, back on the addresses page with the section reading 123456789" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "partial", "notes": "proves the return to the addresses page; the section's displayed digits are asserted in the e2e link" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save and return to the addresses page carrying the trail when entered from its CPH section add link", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page with no trail, without joining it, reached from the section add link", "strength": "partial", "notes": "not probed in this increment" }
           ]
         },
         {
           "id": "SCN-CPH-007-B",
-          "name": "Saving without the add link's context also returns to the consignment addresses page",
+          "name": "Saving from a review Change link also returns to the consignment addresses page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page carrying the trail, without joining it, reached from a review Change link", "strength": "partial", "notes": "not probed in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-007-C",
+          "name": "Saving from Overview also returns to the consignment addresses page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page carrying the trail, without joining it, reached from the overview", "strength": "partial", "notes": "not probed in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-007-D",
+          "name": "Saving while the country of origin is still missing opens the page that asks for it instead",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the page that asks for the country of origin, not the consignment addresses page, logging the landing once", "strength": "partial", "notes": "not probed in this increment" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-010",
+      "name": "Saving the page with every box empty is accepted, leaving the number to be added before submission",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-010-A",
+          "name": "Saving every box empty is accepted and the section reads as incomplete",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the consignment addresses page with the CPH page after the overview on the trail when entered from the overview", "strength": "full", "notes": "red then green with the save's next target changed to the review (workareas/shared/eudpa-774/logs/inc-027-probe-cph-next)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.test.js", "test": "Should accept an all-blank submission and commit it as an empty number", "strength": "full", "notes": "manually probed (the implementor cannot commit for tim build probe): the blank-submission branch restored in checks(), test seen red, line removed again, test seen green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should accept all three boxes empty, commit the number as empty and go to the consignment addresses page", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: saving an untouched page lands on the consignment addresses page, offering the add link again", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "saves the page blank and returns to Consignment addresses with the number not yet added", "strength": "partial", "notes": "needs the workspace stack; not probed locally in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-010-B",
+          "name": "Saving every box empty clears a number saved before",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should clear a number saved before when all three boxes are submitted empty", "strength": "partial", "notes": "not probed in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-010-C",
+          "name": "The review refuses to continue while the CPH number is missing",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "partial", "notes": "walks to roles and addresses without answering any party or the CPH number, so the refusal names roles and addresses generally rather than CPH specifically; needs the workspace stack, not probed locally in this increment" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-011",
+      "name": "The page cannot be opened for a consignment whose commodities do not call for the number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-011-A",
+          "name": "Opening the page for a consignment that does not call for the number shows the consignment addresses page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should answer the consignment addresses page, render nothing and log once on a GET", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save nothing and answer the consignment addresses page on a POST", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "shows the consignment addresses page when opened by its own address for a horses-only consignment", "strength": "full", "notes": "manually probed (the implementor cannot commit for tim build probe): the out-of-scope guard removed from the GET handler, test seen red, guard restored, test seen green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "partial", "notes": "needs the workspace stack; not probed locally in this increment" }
           ]
         }
       ]

@@ -389,7 +389,7 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 
 ### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-FLOW-018
-The system MUST send Back on every journey page to where the trader came from: the page they saved from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, but the origin page goes to where the notification was started, and Consignment addresses and Contact address go to Overview after an address book return. The trail holds 40 places.
+The system MUST send Back on every journey page to where the trader came from: the page saved from, Overview, the review's Change link or a dashboard card, surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview. The origin page, Consignment addresses, Contact address and the county parish holding number page (`live-animals/journey-pages/cph-number` REQ-CPH-006) are exceptions. The trail holds 40 places.
 
 #### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-FLOW-018-A

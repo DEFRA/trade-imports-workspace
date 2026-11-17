@@ -84,7 +84,7 @@ The system MUST show an additional section for the County Parish Holding (CPH) n
 
 #### Scenario: No CPH-eligible commodity leaves the section off the page
 **ID**: SCN-CONSIGN-ADDR-005-B
-- **GIVEN** none of the notification's commodity lines is one the service treats as requiring a CPH number
+- **GIVEN** none of the notification's commodity lines is one the service treats as requiring a CPH number, such as a consignment of only ostriches
 - **WHEN** the user views the consignment addresses page
 - **THEN** no CPH number section is shown
 

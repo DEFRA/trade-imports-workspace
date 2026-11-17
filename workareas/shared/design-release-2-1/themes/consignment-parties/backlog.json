@@ -56,6 +56,10 @@
     "plantsfrontend": {
       "path": "repos/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "perftests": {
+      "path": "repos/trade-imports-performance-tests",
+      "github": "DEFRA/trade-imports-performance-tests"
     }
   },
   "theme": "consignment-parties",
@@ -103,9 +107,33 @@
     "tests:tests/animals/e2e/pages/contact-address.spec.ts",
     "tests:tests/plants/e2e/features/contact.spec.ts",
     "tests:tests/plants/e2e/features/destination.spec.ts",
-    "tests:tests/plants/e2e/features/parties.spec.ts"
+    "tests:tests/plants/e2e/features/parties.spec.ts",
+    "perftests:src/lib/address-book.js",
+    "perftests:src/config/smoke.js"
   ],
   "increments": [
+    {
+      "id": "inc-272",
+      "title": "The performance-test address book holds every role the plants pickers filter by",
+      "detail": "The k6 smoke suite seeds one address book record, Perf Test Holding, and saves it with the single role PLACE_OF_ORIGIN. Since the plants party pickers began filtering by the role each party binds, that record is offered on no picker but place of origin, so the high-risk plants journey cannot answer its consignor, place of destination or consignment contact sections, the notification is incomplete at the declaration, and the submit never reaches the confirmation page. The smoke run's own high-risk-plants threshold then fails on the single check 'submitted through the declaration page' and takes every pull request in the family red with it. The seeded record is to carry every role the journey's pickers ask for, so the walker can answer each party section, and the suite is to keep working when a picker's role changes.",
+      "acceptanceCriteria": [
+        "The address the k6 suites seed is saved with every role the high-risk plants journey's pickers filter by, so each of its party sections can be answered from the address book.",
+        "The high-risk plants smoke scenario reaches the confirmation page, so the check 'submitted through the declaration page' passes and the checks{scenario:high-risk-plants} threshold is met.",
+        "The live animals smoke scenario still reaches its confirmation page, so widening the seeded record's roles breaks no other scenario.",
+        "The roles the suite seeds are derived from one place, so adding or renaming a picker's role does not need the same list edited twice."
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "dependsOn": [],
+      "status": "todo",
+      "rigour": "standard",
+      "notes": [
+        "Added 17 November after inc-088 stopped at ci-red. The build loop's own CI fixer diagnosed the failure precisely and refused to act, correctly, because trade-imports-performance-tests was not in this theme's envelope: 'it is the shared k6 e2e / smoke / Smoke run job, which fails the checks{scenario:high-risk-plants} threshold on the single check submitted through the declaration page'. The repo has since been added to the envelope so the theme can fix what it broke, per CLAUDE.md rule 6.",
+        "The fix reaches CI without merging to perf-tests main: .github/workflows/smoke.yml:33-42 probes trade-imports-performance-tests for a branch of the same name as the run's and uses it when one exists, falling back to main. So the theme branch carries the fix for its own pull requests.",
+        "Evidence the seeded record is the cause: src/lib/address-book.js:12 sets ADDED_ROLE to the single value PLACE_OF_ORIGIN, and src/lib/address-book.js:39-43 saves the record with it. Separately, main's own E2E has failed about 5 times in 30 runs since 13 November with two different signatures, one of them this smoke check and one a live-animals Playwright shard; that intermittency is older than this theme and is recorded in deferred.md as its own investigation."
+      ]
+    },
     {
       "id": "inc-087",
       "title": "Role-filtered party pickers on one page",
@@ -240,7 +268,8 @@
         "The same-as buttons work with JavaScript turned off, and every new string has a Welsh machine-draft counterpart (document:dr1-parity-backlog document-dr1-parity-backlog-p6-023; repo:frontend repo-frontend-p9-089)"
       ],
       "dependsOn": [
-        "inc-087"
+        "inc-087",
+        "inc-272"
       ],
       "theme": "consignment-parties",
       "status": "todo",

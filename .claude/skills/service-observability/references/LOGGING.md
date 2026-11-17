@@ -35,7 +35,10 @@ with query parameters in the line.
 
 The reference implementation is `ExternalCallRecorder.logCall` in
 `trade-imports-address-book` (the line and fields are the ones first
-proven on reference-data, below).
+proven on reference-data, below). For a Node service it is
+`external-call-metrics.js` in `trade-imports-animals-frontend`, which
+also writes `http.response.status_code` and a failure's `error.code`
+(`NODE.md` → "The log line").
 
 ### How to write the fields (Java)
 

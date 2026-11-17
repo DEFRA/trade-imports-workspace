@@ -68,8 +68,15 @@ every section collapsed.
 | `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
 | Caches | Cache hits and misses |
 | Business events | One panel per business metric |
+| Requests | Requests by section, Request time by section |
+| Journey events | Journey events, Validation failures by page |
+| Dependency connections | Connection errors and losses |
 | Dependency call logs | Slowest dependency calls |
 | Timers | One panel per `@Timed` name |
+
+`[UNPROVEN]` The Requests, Journey events and Dependency connections
+rows have not been imported or seen with data anywhere. They are built
+for the names `trade-imports-animals-frontend` publishes (`NODE.md`).
 
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
@@ -86,6 +93,11 @@ alone.
 | Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
 | Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
 | Business events | the service's own metric | `Sum` | its dimension |
+| Requests by section | `http.server.requests` | `SampleCount` | `method`, `section`, `status.class` |
+| Request time by section | `http.server.requests` | `p95`, `Maximum` | `method`, `section`, `status.class` |
+| Journey events | `journey.started`, `.submitted`, `.amended`, `.copied`, `.deleted`, `journey.concurrency.conflict`, `journey.entry.redirect` | `Sum` | none: each is published with no dimensions, so its query sets no dimension, with "match exact" on |
+| Validation failures by page | `journey.validation.failure` | `Sum` | `page` |
+| Connection errors and losses | `external.dependency.error`, `external.dependency.connection.lost` | `Sum` | `dependency` |
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
@@ -134,7 +146,9 @@ The dimension values for the service come from its code. For
 reference-data (dot-case names): `dependency` is `mdm`
 or `trade-token`; `cache` is `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`;
 `lookup.type` is `countries`, `ports-of-entry`, `commodity-search` or
-`species-check`. A service with a database has `dependency` `mongodb`,
+`species-check`. For animals-frontend: `dependency` is `animals-backend`,
+`address-book`, `reference-data`, `cdp-uploader`, `defra-id` or `redis`;
+`cache` is yar's session segment or `auth-sessions` (`NODE.md`). A service with a database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
 measured, an `operation` from a fixed set of command names, with every
 other command as `other` (`METRICS.md` → "A database").
@@ -164,7 +178,12 @@ Claude writes the service's dashboard to
    `label`), and laying the copies out two to a row under "Business
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
-   has no cache.
+   has no cache. Delete the Requests row and its panels if the service
+   publishes no `http.server.requests`, the Journey events row if it
+   publishes none of its metrics (drop the targets for any it does not
+   publish), and the Dependency connections row if it publishes neither
+   connection metric. Move every row and panel below a deleted row up by
+   its height: 9 for each of these three rows.
 6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No

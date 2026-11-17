@@ -23,6 +23,29 @@ way below; "A service built the old way" maps them:
 | `cache.hit`, `cache.miss` | count | `cache` | Is the cache doing its job? |
 | `lookup` | count | `lookup.type` | Demand on the service, by type |
 
+### Options any service can use
+
+Beyond its dependencies, a service can measure its own endpoints and its
+business events. First used on `trade-imports-animals-frontend`
+(`NODE.md`); a Java service has an equivalent for most.
+
+| Metric | Unit | Dimensions | Answers | Java equivalent |
+|---|---|---|---|---|
+| `http.server.requests` | ms | `method`, `section`, `status.class` | Which part of the service is slow or failing? | Spring Boot's own `http.server.requests` timer (tags `method`, `uri`, `status`, `outcome`, `exception`), let through the allowlist; or `@Timed("controller.<operation>.time")` per endpoint, as address-book does |
+| `journey.validation.failure` | count | `page` | Which questions do users get wrong? | None built yet: a counter in the controller that rejects the input |
+| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none | How much is the service used, by outcome? | A business-metrics class with one counter each, as address-book's `address.change` tagged `action` |
+| `journey.concurrency.conflict` | count | none | How often do two edits collide? | A counter where the service refuses a stale version (an `OptimisticLockingFailureException` handler) |
+| `journey.entry.redirect` | count | none | How often are users sent back to the start? | None: a frontend journey concern |
+| `cache.hit`, `cache.miss` | count | `cache` | Is the session store doing its job? | The Caffeine `StatsCounter` above ("Caches") |
+| `external.dependency.connection.lost`, `external.dependency.error` | count | `dependency` | Is a database connection flapping? | None built yet: count the driver's connection-closed and error events |
+
+Before tagging a request timer by route, count the routes and the
+CloudWatch metrics they make (method × route × status class). Each
+combination is a metric in every environment. animals-frontend's 84
+routes would make about 170, so it tags by section instead (`NODE.md` →
+"Endpoint layer"). A Java service tags Spring's timer by `uri`, the
+route template, which has the same cost.
+
 Rules that held:
 
 - **Name every metric and dimension in dot case:** lowercase words
@@ -201,18 +224,19 @@ These services write EMF directly and publish the older PascalCase
 names, not the dot-case names above (their `main`, checked 2026-11-06).
 `trade-imports-reference-data` and `trade-imports-dynamics-gateway`
 were among them and have moved; the tables below record how, as the
-worked example:
+worked example. `trade-imports-animals-frontend` has moved too
+(EUDPA-674, PR #488): `NODE.md` is the recipe it proved.
 
 | Service | Where | Publishes |
 |---|---|---|
-| `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+| `trade-imports-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
 `trade-imports-animals-admin` publishes none of these metrics.
 
 When this skill runs on one of them, move it to the new names first. A
-Java service moves to the one way above as well; a Node service renames
-the names in its helper (there is no Node recipe yet: `SKILL.md` →
-"What is proven"). The CloudWatch metrics then change name, so
+Java service moves to the one way above as well; a Node service follows
+`NODE.md`, which renames the helper's names and measures the calls it
+missed. The CloudWatch metrics then change name, so
 regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
 alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
 the old ones go quiet.
@@ -220,6 +244,7 @@ the old ones go quiet.
 | Old | New |
 |---|---|
 | `ExternalCallDuration`, `ExternalCallFailure` | `external.call.duration`, `external.call.failure` |
+| `BackendCalls`, `SessionResolutions`, dimension `RequestKind` (animals-frontend) | `page.request.backend.calls`, `page.request.session.resolutions`, dimension `request.kind` |
 | `DependencyAvailable` | `external.dependency.available` |
 | `CacheHit`, `CacheMiss` | `cache.hit`, `cache.miss` |
 | `Lookup` | `lookup` |

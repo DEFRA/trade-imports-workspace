@@ -787,39 +787,11 @@ spelling per value, and decide whether the event sends the frontend key or a cod
 
 ### 4. Person responsible
 
-The journey **already collects it.** The mandatory "Contact address for consignment" page
-(`features/contact/`, obligation `contactAddress`) is the design's "person responsible for the
-consignment from when it enters Great Britain until authorities complete their checks"
-(DR1 prototype intro). The trader picks an organisation address-book entry. The frontend sends it
-as `consignment` (`{ name, email, phone, address }`) and the backend stores it as
-`NotificationBase.consignment` (`ConsignmentParty`).
-
-**It stops there.** Nothing in `outbox/gbnag/` reads `getConsignment()`, and
-`ExchangedDocument.from` passes a literal `null` for `issuer`, pinned by `GbnAgMapperTest`
-("where it belongs on the event is still an open question… gap G1"). Because `issuer` is
-**required** by `gbn-ag-v1.schema.json`, every generic event breaks its own schema. The
-gateway reads `issuer` and deliberately drops it (`PimsExchangedDocument`,
-`PimsGbnAgDataMapperV2`: "deferred to its own follow-up ticket"), and the PIMS v0.2.0 schema
-has no `issuer` at all (`-changes.md`: "Explicitly not added"). That follow-up ticket was
-never raised.
-
-`TradeParty.from(ConsignmentParty)` already exists, so the backend change is small. Two
-gaps remain:
-
-- **No named person.** Address-book entries have no contact person, so `TradeParty`
-  deliberately never sets `definedContact[].personName`. `pims-data-mapping.md` (row 14)
-  puts the organisation in `name`/`postalAddress` and the person, phone and email in
-  `definedContact[]`. Email and phone can go in `definedContact[]` without a name.
-- **Two sources described, one built.** `pims-data-mapping.md` describes the organisation
-  half as the Defra ID organisation record, and "Contact Address" (row 30) as the signed-in
-  user's preferred gov.uk address, both landing in `issuer`. What's built is a
-  trader-picked address-book contact. Defra ID claims carry no address, and the only
-  identity that reaches PIMS is the event envelope's `actor` (`displayName`,
-  `organisationId`; no email, phone, organisation name or address).
-
-**Recommendation:** map the consignment contact into `issuer`, since that's what the
-design calls the person responsible and the data exists. Update rows 14 and 30 of
-`pims-data-mapping.md` to describe what's sent, rather than build the Defra ID route.
+The live animals journey no longer collects a consignment contact address. The frontend
+does not send `consignment`, the backend does not store it, and `exchangedDocument.issuer`
+is not on the internal GBN-AG schema or on PIMS v0.4.0. The gateway omits `issuer` on every
+PIMS stream (including v0.3.0) until policy needs the page again. The person who submits the
+notification remains on the event envelope as `actor`.
 
 ### 5. Document type
 

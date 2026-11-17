@@ -10,22 +10,22 @@ The page on which a whole notification is read back before submission, and read 
 
 ## Requirements
 
-### Requirement: The review draws six numbered sections, in order, whatever the notification holds, with each card directly under its section heading
+### Requirement: The review draws five numbered sections, in order, whatever the notification holds, with each card directly under its section heading
 **ID**: REQ-CYA-001
-The system MUST group the page under six numbered section headings, in order, however little the notification holds, and MUST stand every card directly under its section heading with no subsection heading between, titled one heading level below it. Which cards stand MAY depend on the notification, but no numbered section MUST be dropped.
+The system MUST group the page under five numbered section headings, in order, however little the notification holds, and MUST stand every card directly under its section heading with no subsection heading between, titled one heading level below it. Which cards stand MAY depend on the notification, but no numbered section MUST be dropped.
 
-#### Scenario: The review draws all six numbered sections in order
+#### Scenario: The review draws all five numbered sections in order
 **ID**: SCN-CYA-001-A
 - **GIVEN** the user has just started a notification and answered nothing beyond the entry page
 - **WHEN** they view the review
-- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents", "5. Addresses" and "6. Contact address", in that order
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents" and "5. Addresses", in that order
 
 #### Scenario: Every card is titled one heading level below its numbered section, with no subsection heading between
 **ID**: SCN-CYA-001-B
 - **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
 - **THEN** every card's title is a heading one level below its numbered section heading
-- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Consignment addresses" or "Contact address for this consignment"
+- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", or "Consignment addresses"
 - **AND** "1. About the consignment" holds the cards "Origin of import", "What are you importing?" and "Main import reason", in that order
 
 #### Scenario: The Uploaded documents section stands even when nothing has been uploaded
@@ -57,15 +57,13 @@ The system MUST group the page under six numbered section headings, in order, ho
 - **AND** an address in Great Britain reads "United Kingdom" as its country
 - **AND** its one header Change link opens the consignment addresses page
 
-#### Scenario: The reason, additional details and contact address answers stand on their own titled cards
+#### Scenario: The reason and additional details answers stand on their own titled cards
 **ID**: SCN-CYA-001-H
-- **GIVEN** the user has answered the reason for import, the additional details and the contact address
+- **GIVEN** the user has answered the reason for import and the additional details
 - **AND** the additional details page is part of the notification's journey
 - **WHEN** they view the review
 - **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason"
 - **AND** the additional details answers stand on the card titled "Additional details", whose Change link opens the additional details page
-- **AND** "6. Contact address" holds one card titled "Contact address", with a "Contact address" row
-- **AND** that row reads the contact address's name, address lines and country, each on its own line, with no telephone number or email address
 
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
 **ID**: SCN-CYA-001-G
@@ -116,11 +114,11 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 **ID**: REQ-CYA-003
 The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview, and to the dashboard when they opened it from a dashboard card. With none of these, a draft's review MUST go back to the dashboard and an amendment's to Overview. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
-#### Scenario: The review's back link opens the contact address after Save and continue there
+#### Scenario: The review's back link opens roles and addresses after Save and continue there
 **ID**: SCN-CYA-003-A
-- **GIVEN** the user selected "Save and continue" on the contact address page and reached the review
+- **GIVEN** the user selected "Save and continue" on the consignment addresses page and reached the review
 - **WHEN** they follow the back link
-- **THEN** the contact address page is shown
+- **THEN** the consignment addresses page is shown
 
 #### Scenario: The submitted view's back link opens the dashboard
 **ID**: SCN-CYA-003-B
@@ -173,12 +171,6 @@ The system MUST open the page that collects an answer when the user follows its 
 - **GIVEN** the user is on check-your-answers
 - **WHEN** they follow a Change link, edit the answer, and save and continue on each page that follows
 - **THEN** they arrive at check-your-answers, showing the new value
-
-#### Scenario: Changing the contact address from its card opens the contact address page, and Save and continue opens the review
-**ID**: SCN-CYA-004-B
-- **GIVEN** the user is on the review of a draft
-- **WHEN** they follow the Contact address card's Change link, choose a contact address and save and continue
-- **THEN** the contact address page opens, and after saving the review is shown with that address
 
 #### Scenario: Changing documents from a document card opens upload documents, and Save and continue goes on through the journey to the review
 **ID**: SCN-CYA-004-C
@@ -785,24 +777,15 @@ The system MUST head and title an amendment's review "Review your notification" 
 - **WHEN** the user views check-your-answers
 - **THEN** the page is headed and titled "Review your notification"
 
-### Requirement: The Consignment addresses card offers only its heading Change link, and the Contact address card adds Edit details for a chosen contact address
+### Requirement: The Consignment addresses card offers only its heading Change link
 **ID**: REQ-CYA-026
-The system MUST give the Consignment addresses card no link but the Change link in its heading: no party row carries a link. The system MUST give the Contact address card its heading Change link and, on an editable review (a draft or an amendment) with a chosen contact address, an "Edit details" link on the contact address row that opens that address's edit page and returns to the review. A submitted notification's view and an unanswered contact address MUST carry no "Edit details" link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
+The system MUST give the Consignment addresses card no link but the Change link in its heading: no party row carries a link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
 
-#### Scenario: The address cards carry only the links they offer
+#### Scenario: The address card carries only the link it offers
 **ID**: SCN-CYA-026-A
 - **GIVEN** a draft notification with every role answered
 - **WHEN** the user views the review
 - **THEN** the Consignment addresses card's only link is its heading Change link
-- **AND** the Contact address card's links are its heading Change link, then "Edit details" on its row
-
-#### Scenario: Saving or cancelling a contact address edit from the review returns to the review
-**ID**: SCN-CYA-026-C
-- **GIVEN** a draft notification with a chosen contact address
-- **WHEN** the user chooses "Edit details" on the Contact address card and saves a changed town
-- **THEN** the review opens showing the edited details
-- **WHEN** the user chooses "Edit details" again and cancels
-- **THEN** the review opens with the address as it was
 
 #### Scenario: A role whose copied address breaks the address-book rules is named in the error summary
 **ID**: SCN-CYA-026-B

@@ -6,9 +6,9 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ## Requirements
 
-### Requirement: Each consignment role's list offers only that role's addresses, the consignment contact's only branch addresses, and any address saved with no role is on all of them
+### Requirement: Each consignment role's list offers only that role's addresses, and any address saved with no role is on all of them
 **ID**: REQ-ADDR-018
-The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor. The consignment contact's list is the organisation's addresses saved as a branch address, together with any address saved with no role at all, and an address saved for a consignment role is not on it.
+The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor.
 
 #### Scenario: An address saved for one role is listed only on that role's list
 **ID**: SCN-ADDR-018-A
@@ -22,18 +22,11 @@ The system MUST list, for each consignment role, only the organisation's address
 - **WHEN** the user opens either role's list
 - **THEN** the address is listed on both
 
-#### Scenario: An address saved with no role is listed on every role's list and on the consignment contact page
+#### Scenario: An address saved with no role is listed on every role's list
 **ID**: SCN-ADDR-018-C
 - **GIVEN** an address is saved with no role at all
-- **WHEN** the user opens any of the five consignment role lists, or the consignment contact page
-- **THEN** the address is listed on all five, and on the consignment contact page
-
-#### Scenario: An address saved as a branch address is offered to the consignment contact and to none of the five consignment roles
-**ID**: SCN-ADDR-018-D
-- **GIVEN** an address is saved as a branch address
-- **WHEN** the user opens the consignment contact page, or any of the five consignment role lists
-- **THEN** the address is offered on the consignment contact page
-- **AND** the address is listed on none of the five consignment role lists
+- **WHEN** the user opens any of the five consignment role lists
+- **THEN** the address is listed on all five
 
 ### Requirement: The list shows every address for the role on one page
 **ID**: REQ-ADDR-017
@@ -55,12 +48,6 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **WHEN** they view the page
 - **THEN** no control to add a new address is offered
 
-#### Scenario: Choosing the consignment contact address offers no way to add one in stub mode
-**ID**: SCN-ADDR-001-B
-- **GIVEN** the user is choosing the consignment contact address, and the address book service is not available (stub mode)
-- **WHEN** they view the page
-- **THEN** no control to add a new address is offered
-
 #### Scenario: The create-address page is not served from the notification journey
 **ID**: SCN-ADDR-001-C
 - **GIVEN** a notification journey is in progress
@@ -69,11 +56,10 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 
 #### Scenario: Choosing an address links out to the address book's own service when it is available
 **ID**: SCN-ADDR-001-D
-- **GIVEN** the user is choosing an address for a consignment role or the consignment contact, and the address book service is available
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is available
 - **WHEN** they view the page
-- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading
-- **AND** for the consignment contact, the sentence "If the correct address is not shown, add a new branch address, then return to this page." is shown, with "add a new branch address" as the link, and it is the only way the page offers to add an address
-- **AND** either leads to the address book's own add-address page, and no add-address form is served within the journey itself
+- **THEN** a button named "Add a new address" is offered beside the page heading
+- **AND** it leads to the address book's own add-address page, and no add-address form is served within the journey itself
 
 #### Scenario: Saving with Save and select lands on the consignment addresses page with the address chosen for the role
 **ID**: SCN-ADDR-001-E
@@ -117,30 +103,9 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **THEN** the return is refused as a bad request
 - **AND** nothing is saved to the notification
 
-#### Scenario: The address book's own add-address page reached from the consignment contact page offers Back, Save and continue, and Cancel and return to address page
-**ID**: SCN-ADDR-001-K
-- **GIVEN** the user is on the consignment contact page
-- **WHEN** they follow the link to add a new address to the address book's own add-address page
-- **THEN** the page offers "Back", "Save and continue" and "Cancel and return to address page"
-
-#### Scenario: Saving an address added from the consignment contact page returns to the contact page with it chosen
-**ID**: SCN-ADDR-001-L
-- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
-- **WHEN** they save a new address there with "Save and continue"
-- **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book"
-- **AND** the address is chosen as the contact address
-- **AND** the new address is offered above the addresses that were already in the book
-
-#### Scenario: Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved
-**ID**: SCN-ADDR-001-M
-- **GIVEN** the user has followed the link to add a new address from the consignment contact page to the address book's own add-address page
-- **WHEN** they follow "Back" or "Cancel and return to address page"
-- **THEN** the consignment contact page opens
-- **AND** nothing is saved to the notification
-
 ### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-ADDR-002
-The system MUST copy the chosen address-book record onto the notification when the user picks it for a consignment role — consignor, consignee, importer, place of destination, place of origin, or the consignment contact — and MUST keep no link back to the record. A later edit or deletion of that record in the address book MUST NOT change what the notification shows or submits, whatever the notification's status.
+The system MUST copy the chosen address-book record onto the notification when the user picks it for a consignment role — consignor, consignee, importer, place of destination or place of origin — and MUST keep no link back to the record. A later edit or deletion of that record in the address book MUST NOT change what the notification shows or submits, whatever the notification's status.
 
 #### Scenario: Picking an address shows its full details on the notification
 **ID**: SCN-ADDR-002-C
@@ -165,7 +130,7 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: A copied address can be edited on the notification without changing the address book
 **ID**: REQ-ADDR-014
-The system MUST let the user edit the details of an address copied onto the notification, for each consignment role and the consignment contact, wherever that address is shown with its actions. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages.
+The system MUST let the user edit the details of an address copied onto the notification, for each consignment role, wherever that address is shown with its actions. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages.
 
 #### Scenario: Editing a copied address changes only this notification
 **ID**: SCN-ADDR-014-A
@@ -195,7 +160,7 @@ The system MUST let the user edit the details of an address copied onto the noti
 #### Scenario: A copied address offers both choosing another address and editing its details
 **ID**: SCN-ADDR-014-E
 - **GIVEN** a role's address has been chosen for a draft notification
-- **WHEN** the user views that role on the consignment addresses page, or views the contact address on the review
+- **WHEN** the user views that role on the consignment addresses page or the check-your-answers view
 - **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
 - **AND** a role with no address chosen offers only adding one
 

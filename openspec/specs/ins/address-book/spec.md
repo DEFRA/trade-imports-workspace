@@ -81,7 +81,7 @@ The system MUST ask for name, address line 1, town or city, postcode, country, p
 
 #### Scenario: The country field lists every country alphabetically, United Kingdom in its place
 **ID**: SCN-INS-ADDR-005-B
-- **GIVEN** the user opens the address book's add form after choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', the address book's edit form, or the add form reached from any of a notification's role pickers or its consignment contact page
+- **GIVEN** the user opens the address book's add form after choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', the address book's edit form, or the add form reached from any of a notification's role pickers
 - **WHEN** the country list is read in full
 - **THEN** after any placeholder it offers United Kingdom and every country the reference data service serves, by their served names, in alphabetical order
 
@@ -343,7 +343,7 @@ The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode 
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
-- **GIVEN** the user is adding an address on the address book's add form after choosing any address type, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user is adding an address on the address book's add form after choosing any address type, or on the add form reached from a notification's place of origin or consignor picker
 - **WHEN** they leave the name, postcode and phone number blank, with no country chosen (clearing the United Kingdom the address book's add form opens with), and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
@@ -356,7 +356,7 @@ The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode 
 
 #### Scenario: A country that is not offered is refused as if none were chosen
 **ID**: SCN-INS-ADDR-018-C
-- **GIVEN** the user is adding an address on the address book's add form after choosing 'Origin or Consignor', editing an address on the edit form, or adding one from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user is adding an address on the address book's add form after choosing 'Origin or Consignor', editing an address on the edit form, or adding one from a notification's place of origin or consignor picker
 - **WHEN** the form is saved with a country that is not one the list offers
 - **THEN** the save is blocked and 'Select a country' is shown
 
@@ -572,9 +572,9 @@ The system MUST show the edit form's Country select with no blank option and the
 - **THEN** the Country select opens on a blank option
 - **AND** no country is selected
 
-### Requirement: The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and from the consignee, importer and place of destination pickers, and no country chosen from the place of origin and consignor pickers and the consignment contact page
+### Requirement: The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and from the consignee, importer and place of destination pickers, and no country chosen from the place of origin and consignor pickers
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and open its Country select on a blank first option reading 'Select a country', selecting United Kingdom from the address book whatever type is chosen and from a notification's consignee, importer or place of destination picker, and none from its place of origin or consignor picker or its consignment contact page.
+The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and open its Country select on a blank first option reading 'Select a country', selecting United Kingdom from the address book whatever type is chosen and from a notification's consignee, importer or place of destination picker, and none from its place of origin or consignor picker.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -590,9 +590,9 @@ The system MUST label the add form's name 'Name or organisation', keep 'County (
 - **THEN** United Kingdom is selected
 - **AND** the Country select's blank first option reads 'Select a country'
 
-#### Scenario: The add form opened from the place of origin or consignor picker or the consignment contact page selects no country
+#### Scenario: The add form opened from the place of origin or consignor picker selects no country
 **ID**: SCN-INS-ADDR-027-D
-- **GIVEN** the user opens the add form from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user opens the add form from a notification's place of origin or consignor picker
 - **WHEN** the page is shown
 - **THEN** no country is selected
 - **AND** the Country select's blank first option reads 'Select a country'
@@ -867,7 +867,7 @@ The system MUST show every address and contact field, with no address search, on
 
 ### Requirement: The add page reached from a notification journey returns through the journey to the page each control names
 **ID**: REQ-INS-ADDR-036
-The system MUST, on the add page reached from a notification's role picker, offer 'Back' to that picker, a primary 'Save and select', a secondary 'Save and return to address page' and a 'Cancel and return to hub' link. From the consignment contact page it MUST offer 'Back', 'Save and continue' and a secondary 'Cancel and return to address page'. Each MUST return the user to the journey, and the address book's own success banner MUST NOT show.
+The system MUST, on the add page reached from a notification's role picker, offer 'Back' to that picker, a primary 'Save and select', a secondary 'Save and return to address page' and a 'Cancel and return to hub' link. Each MUST return the user to the journey, and the address book's own success banner MUST NOT show.
 
 #### Scenario: A role's add page offers Back, Save and select, Save and return to address page and Cancel and return to hub
 **ID**: SCN-INS-ADDR-036-A
@@ -893,16 +893,6 @@ The system MUST, on the add page reached from a notification's role picker, offe
 - **GIVEN** a trader on the add page reached from a notification's role picker who has typed an address
 - **WHEN** they follow 'Cancel and return to hub'
 - **THEN** the journey is handed back to the notification's hub, and the address book holds nothing new
-
-#### Scenario: The consignment contact's add page offers Back, Save and continue and Cancel and return to address page
-**ID**: SCN-INS-ADDR-036-E
-- **GIVEN** a trader on the consignment contact page
-- **WHEN** they choose to add a new address
-- **THEN** the add page offers a 'Back' link, a primary 'Save and continue' button and a secondary 'Cancel and return to address page' button
-- **WHEN** they save a valid address with 'Save and continue'
-- **THEN** the journey is handed the new address to select as the contact address
-- **WHEN** they choose 'Cancel and return to address page' instead
-- **THEN** the journey is handed back with no address
 
 #### Scenario: Save and return to address page makes the same checks as Save and select
 **ID**: SCN-INS-ADDR-036-F
@@ -1303,15 +1293,13 @@ The system MUST, on the add form opened from the address book, follow the contac
 
 ### Requirement: An address added from a notification journey is saved with the role of the party it is for
 **ID**: REQ-INS-ADDR-045
-The system MUST save an address added from a role's picker with that role and every other role on the role's side that the trader ticked, and an address added from the consignment contact page with the branch address role. The role a party implies is the same whichever notification journey the add came from.
+The system MUST save an address added from a role's picker with that role and every other role on the role's side that the trader ticked. The role a party implies is the same whichever notification journey the add came from.
 
-#### Scenario: An address added from a role's picker or the consignment contact page is saved with that party's role
+#### Scenario: An address added from a role's picker is saved with that party's role
 **ID**: SCN-INS-ADDR-045-A
 - **GIVEN** a trader on the add page reached from the place of origin, consignor, consignee, importer or place of destination picker
 - **WHEN** they save a valid address with nothing ticked
 - **THEN** the address is saved with exactly that role
-- **WHEN** a trader saves a valid address from the consignment contact page
-- **THEN** the address is saved with the branch address role
 
 #### Scenario: A role's save carries the other roles on its side that were ticked
 **ID**: SCN-INS-ADDR-045-B
@@ -1327,7 +1315,7 @@ The system MUST save an address added from a role's picker with that role and ev
 
 ### Requirement: The add page reached from a role picker asks what else the address should be used for, offering the other roles on its side
 **ID**: REQ-INS-ADDR-046
-The system MUST, on the add page reached from a role's picker, ask 'What else should this address be used for?' as a group of checkboxes after a visible section break, with a hint naming the role and offering only the other roles on the same side, none ticked. Ticking none MUST raise no error, and the ticked roles MUST stay ticked when the page is shown again with errors. The consignment contact page MUST NOT ask the question.
+The system MUST, on the add page reached from a role's picker, ask 'What else should this address be used for?' as a group of checkboxes after a visible section break, with a hint naming the role and offering only the other roles on the same side, none ticked. Ticking none MUST raise no error, and the ticked roles MUST stay ticked when the page is shown again with errors.
 
 #### Scenario: The place of origin side offers the other role on its side
 **ID**: SCN-INS-ADDR-046-A
@@ -1356,12 +1344,6 @@ The system MUST, on the add page reached from a role's picker, ask 'What else sh
 - **GIVEN** a trader on the add page reached from the consignee picker
 - **WHEN** they tick 'Importer', leave the postcode blank and save
 - **THEN** the page is shown again with the postcode error and 'Importer' still ticked
-
-#### Scenario: The consignment contact page asks no such question
-**ID**: SCN-INS-ADDR-046-E
-- **GIVEN** a trader on the consignment contact page
-- **WHEN** they choose to add a new address
-- **THEN** the add page shows the address fields and no roles question
 
 ### Requirement: The address book's pagination links the first, current, neighbouring and last pages, with an ellipsis for each gap
 **ID**: REQ-INS-ADDR-047

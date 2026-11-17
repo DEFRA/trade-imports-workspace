@@ -10,15 +10,15 @@ The page on which a whole notification is read back before submission, and read 
 
 ## Requirements
 
-### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
+### Requirement: The review draws the same five numbered sections as Overview, in order, whatever the notification holds
 **ID**: REQ-CYA-001
-The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST head every card with a subsection heading of its own. Which cards stand within a section MAY depend on the notification — the commodity group waits on a commodity line, the transit-countries group on an overland arrival — but the six numbered sections themselves MUST NOT be dropped.
+The system MUST group the page under the same five numbered section headings the Overview task list uses, MUST draw all five in that order however little the notification holds, and MUST head every card with a subsection heading of its own. Which cards stand within a section MAY depend on the notification — the commodity group waits on a commodity line, the transit-countries group on an overland arrival — but the five numbered sections themselves MUST NOT be dropped.
 
-#### Scenario: The review draws all six numbered sections in order
+#### Scenario: The review draws all five numbered sections in order
 **ID**: SCN-CYA-001-A
 - **GIVEN** the user has just started a notification and answered nothing beyond the entry page
 - **WHEN** they view the review
-- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties" and "6. Contact address", in that order
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents" and "5. Consignment parties", in that order
 
 #### Scenario: Commodity and consignment detail appear within a section, not as numbered sections
 **ID**: SCN-CYA-001-B
@@ -81,11 +81,11 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 **ID**: REQ-CYA-003
 The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview or by its address, and to the dashboard when they opened it from a dashboard card. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
-#### Scenario: The review's back link opens the contact address after Save and continue there
+#### Scenario: The review's back link opens roles and addresses after Save and continue there
 **ID**: SCN-CYA-003-A
-- **GIVEN** the user selected "Save and continue" on the contact address page and reached the review
+- **GIVEN** the user selected "Save and continue" on the consignment addresses page and reached the review
 - **WHEN** they follow the back link
-- **THEN** the contact address page is shown
+- **THEN** the consignment addresses page is shown
 
 #### Scenario: The submitted view's back link opens the dashboard
 **ID**: SCN-CYA-003-B
@@ -132,12 +132,6 @@ The system MUST open the page that collects an answer when the user follows its 
 - **GIVEN** the user is on check-your-answers
 - **WHEN** they follow a Change link, edit the answer, and save and continue on each page that follows
 - **THEN** they arrive at check-your-answers, showing the new value
-
-#### Scenario: Changing the contact address from its card opens the contact address page, and Save and continue opens the review
-**ID**: SCN-CYA-004-B
-- **GIVEN** the user is on the review of a draft
-- **WHEN** they follow the Contact address card's Change link, choose a contact address and save and continue
-- **THEN** the contact address page opens, and after saving the review is shown with that address
 
 #### Scenario: Changing documents from a document card opens upload documents, and Save and continue goes on through the journey to the review
 **ID**: SCN-CYA-004-C

@@ -42,7 +42,7 @@ The system MUST show a "Dashboard" caption immediately above the dashboard's own
 
 ### Requirement: The parts named in the caption are not the same grouping as the Overview sections
 **ID**: REQ-CAPTIONS-003
-The system MUST name the parts of the notification independently of the six numbered sections Overview groups its tasks under, and MUST NOT be assumed to match them. The caption's parts are finer: it keeps animal identification with the other consignment questions, where Overview files it with the commodity work, and it separates arrival, transit and adding a transporter, where Overview puts them together.
+The system MUST name the parts of the notification independently of the five numbered sections Overview groups its tasks under, and MUST NOT be assumed to match them. The caption's parts are finer: it keeps animal identification with the other consignment questions, where Overview files it with the commodity work, and it separates arrival, transit and adding a transporter, where Overview puts them together.
 
 #### Scenario: A page's caption does not name the Overview section its task sits under
 **ID**: SCN-CAPTIONS-003-A
@@ -52,10 +52,10 @@ The system MUST name the parts of the notification independently of the six numb
 
 ### Requirement: A page that is not part of the journey's questioning carries no caption
 **ID**: REQ-CAPTIONS-004
-The system MUST NOT caption a page that does not sit within a part of the notification — Overview, check your answers, the contact address page, the declaration and the confirmation open straight into their heading, and deleting a notification or cancelling an amendment are interruptions rather than steps.
+The system MUST NOT caption a page that does not sit within a part of the notification — Overview, check your answers, the declaration and the confirmation open straight into their heading, and deleting a notification or cancelling an amendment are interruptions rather than steps.
 
 #### Scenario: A page outside the questioning opens straight into its heading
 **ID**: SCN-CAPTIONS-004-A
-- **GIVEN** the user opens Overview, check your answers, the contact address page, the declaration or the confirmation
+- **GIVEN** the user opens Overview, check your answers, the declaration or the confirmation
 - **WHEN** the page is shown
 - **THEN** no part name is shown above its heading

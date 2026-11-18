@@ -23,8 +23,9 @@ forwarder into tim that stays.
    empties `scripts/`.
 4. **SonarCloud token and live check (P56).** Done 2026-11-18: all four
    checks passed once `SONAR_TOKEN` was set and `sonar-scanner` installed.
-5. **Allowlist test (P11).** `node workareas/shared/bash-to-tim/sam/5-allowlist-test.mjs`
-   walks two sessions and saves `p11-results.json`. P71 and P72 wait on it.
+5. **Allowlist test (P11).** Done 2026-11-18: a `*` inside a `:*` rule
+   matches nothing, so P71 allows one literal prefix per repo. Recorded in
+   `docs/agent-skills.md`.
 6. **Plants prototype.** `ins-address-book.test.js` fails because
    ins-frontend exports `addressTypeOfRole` and `keepRolesOfferedBy` and the
    prototype does not, so its pre-commit hook is red. Port ins-frontend's

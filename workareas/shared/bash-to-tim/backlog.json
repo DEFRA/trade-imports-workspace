@@ -518,14 +518,20 @@
       "dependsOn": [],
       "risk": "Low, but it needs Sam watching: a session cannot see its own permission prompts (agent-skills.md:164-168). Test `Bash(./tools/**)`, `Bash(tools/**)`, `Bash(git -C repos/*:*)`, `Bash(npm --prefix repos/*:*)` in a scratch settings.local.json.",
       "proof": "A table of pattern against typed command against prompt yes/no, recorded in docs/agent-skills.md. That table decides the form used in P72.",
-      "status": "person",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "results": "workareas/shared/bash-to-tim/p11-results.json",
+        "recordedIn": "docs/agent-skills.md, under Bash call hygiene",
+        "finding": "A * inside a :* rule matches nothing: git -C repos/*:*, npm --prefix repos/*:*, mvn -f repos/*:* and gh api repos/DEFRA/*/pulls/*/files:* all prompted with the rule in place. The literal npm --prefix tim:* did not. find, sed and awk did not prompt, but read-only commands can pass with no rule, so that is inconclusive.",
+        "caveat": "Sam answered round 2 (with the rules) one command at a time, so it is accurate. Round 1 (without) was answered from memory, so promptedWithout is not reliable.",
+        "forP71": "Allow one literal prefix per repo, generated from repos.json, in place of the canonical-path wildcard entries."
+      }
     },
     {
       "id": "P12",

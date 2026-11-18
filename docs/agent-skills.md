@@ -167,6 +167,23 @@ approve it. Never write that a command "did not prompt". When it matters,
 for example after changing a hook or before an unattended run, run the real
 command and ask the user whether it prompted.
 
+**A `*` inside a `:*` allow rule matches nothing.** Only the literal text
+before `:*` is a prefix. Tested on 18 November 2026, with the rule in
+`.claude/settings.local.json` and a person watching for prompts:
+
+| Allow rule | Command | Prompted |
+|---|---|---|
+| `Bash(npm --prefix tim:*)` | `npm --prefix tim ls --depth 0` | no |
+| `Bash(git -C repos/*:*)` | `git -C repos/trade-imports-schemas fetch --dry-run` | yes |
+| `Bash(npm --prefix repos/*:*)` | `npm --prefix repos/trade-imports-schemas ls --depth 0` | yes |
+| `Bash(mvn -f repos/*:*)` | `mvn -f repos/trade-imports-stub/pom.xml --version` | yes |
+| `Bash(gh api repos/DEFRA/*/pulls/*/files:*)` | `gh api repos/DEFRA/trade-imports-workspace/pulls/263/files --jq length` | yes |
+
+So allow one literal prefix per repo (`Bash(git -C repos/trade-imports-schemas:*)`),
+not a wildcard over `repos/`. The `find`, `sed` and `awk` rules tested did not
+prompt either, but read-only commands can run with no rule at all, so that
+test does not show the rules matched.
+
 **Quick reference:**
 
 | Anti-pattern | Use instead |

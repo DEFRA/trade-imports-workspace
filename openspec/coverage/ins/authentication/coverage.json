@@ -85,6 +85,150 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-AUTH-003",
+      "name": "A hidden sign-in through the real Defra ID shows what it returned, and leaves the service's own sign-in alone",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-AUTH-003-A",
+          "name": "Without IDM configured, the IDM sign-in pages do not exist",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should not serve %s",
+              "strength": "full",
+              "notes": "test.each over every IDM path; red-probed by serving the routes without a discovery URL"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-B",
+          "name": "The start page's button starts the sign-in at IDM",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show a start page whose button links to the route that goes to IDM",
+              "strength": "full",
+              "notes": "red-probed by pointing the button elsewhere"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should send the browser to the IDM authorize endpoint with the IDM client, service, policy and callback",
+              "strength": "full",
+              "notes": "against a mock IDM discovery document; red-probed by changing the policy. The real CP-Dev round trip is checked by hand"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-C",
+          "name": "A completed IDM sign-in shows the ID token claims, the access token claims and the token response",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the ID token claims and token response, and say the access token is the ID token",
+              "strength": "full",
+              "notes": "Bell's code exchange is replaced by injected credentials; the ID token is verified against served keys. Red-probed by dropping the ID token claim rows"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the access token claims when the access token is not the ID token",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/auth/verify-token.test.js",
+              "test": "Should resolve for a token issued to the IDM client when checked against IDM, and measure the key fetch as idm jwks",
+              "strength": "partial",
+              "notes": "proves the IDM token check passes for its own client and issuer; not the page"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-D",
+          "name": "The IDM identity never reaches the rest of the service",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should leave an existing service session in the cache and set or clear no service session cookie",
+              "strength": "full",
+              "notes": "red-probed by setting the service session cookie in the callback"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-E",
+          "name": "An error from IDM shows a generic page with a link to try again",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the unable to sign in page, linking back to the start page, when IDM returns an error",
+              "strength": "full",
+              "notes": "red-probed by dropping the start-page link target"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the unable to sign in page when the ID token is signed by a key IDM does not serve",
+              "strength": "partial",
+              "notes": "the unverifiable-token branch; not red-probed on its own"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-F",
+          "name": "The signed-in page with no IDM sign-in starts one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should send a visitor with no IDM sign-in from the signed-in page to the start page",
+              "strength": "full",
+              "notes": "red-probed by redirecting elsewhere"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-G",
+          "name": "The signed-out page needs no sign-in",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the signed-out page without a session",
+              "strength": "full",
+              "notes": "red-probed by changing the heading"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

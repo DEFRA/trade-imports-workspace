@@ -152,7 +152,12 @@ or `trade-token`; `cache` is `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`;
 `lookup.type` is `countries`, `ports-of-entry`, `commodity-search` or
 `species-check`. For animals-frontend: `dependency` is `animals-backend`,
 `address-book`, `reference-data`, `cdp-uploader`, `defra-id` or `redis`;
-`cache` is yar's session segment or `auth-sessions` (`NODE.md`). A service with a database has `dependency` `mongodb`,
+`cache` is yar's session segment or `auth-sessions` (`NODE.md`). Only
+`redis` publishes `external.dependency.available` there; the HTTP
+dependencies are judged by `external.call.failure` (`NODE.md` → "Not
+done on animals-frontend"), so Dependency status shows `redis` alone
+for a Node service built like animals-frontend. A service with a
+database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
 measured, an `operation` from a fixed set of command names, with every
 other command as `other` (`METRICS.md` → "A database").

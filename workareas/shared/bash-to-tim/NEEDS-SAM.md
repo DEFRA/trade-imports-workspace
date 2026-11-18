@@ -31,15 +31,26 @@ forwarder into tim that stays.
    #281 makes skills and docs type relative paths. A fresh clone at
    `~/git/defra/trade-imports-workspace-2` ran 12 typical commands with no
    prompt (`p73-results.json`).
-7. **Plants prototype.** `ins-address-book.test.js` fails because
-   ins-frontend exports `addressTypeOfRole` and `keepRolesOfferedBy` and the
-   prototype does not, so its pre-commit hook is red. Port ins-frontend's
-   typed address-book model, or stop the test tracking the sibling. Then an
-   agent fixes the prototype's three red CI checks (the `plants-working`
-   canary name, the joi audit, the font 404) and `README.md:300`.
+7. **Plants prototype.** Done 2026-11-18: prototype #27 squash-merged
+   (`6507801`) at Sam's request, and both `main` runs after it passed. It
+   ports ins-frontend's typed address-book model, fixes the three red
+   checks (release stylesheets load GOV.UK with the app's settings, the
+   canary makes `ci-canary`, joi and `@hapi/content` upgraded), points
+   `README.md` at `tim docker up`, and makes `scripts/designer/**` find the
+   workspace from the checkout. It also fixes `kit.test.js`, which searched
+   the real home folder and hung the pre-commit hook.
+
+The programme is done.
 
 ## Optional
 
 - Refresh the global tim link: `npm rm -g tim; npm --prefix tim link`.
+- The picomatch advisory allowlist entries (GHSA-fc5q-39xc-vjpf) expire on
+  2026-11-25 in every repo that has one, the prototype included. Renew or
+  remove them before then, or each repo's audit goes red.
+- The prototype's `AGENTS.md`, `docs/designers/**` and `.claude/rules/`
+  still write `~/git/defra/trade-imports-workspace/…`, and its
+  `suite.test.js` requires that form. Outside this programme's scope.
+- Delete the second clone, `~/git/defra/trade-imports-workspace-2`.
 - EUDPA-804, raised as the P26 test, is unassigned:
   `tim jira assign EUDPA-804 me --confirm`.

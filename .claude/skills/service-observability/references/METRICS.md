@@ -31,7 +31,7 @@ business events. First used on `trade-imports-animals-frontend`
 
 | Metric | Unit | Dimensions | Answers | Java equivalent |
 |---|---|---|---|---|
-| `http.server.requests` | ms | `method`, `section`, `status.class` | Which part of the service is slow or failing? | Spring Boot's own `http.server.requests` timer (tags `method`, `uri`, `status`, `outcome`, `exception`), let through the allowlist; or `@Timed("controller.<operation>.time")` per endpoint, as address-book does |
+| `http.server.requests` | ms | `method`, `section`, `status.class` | Which part of the service is slow or failing? | Spring Boot's own `http.server.requests` timer, let through the allowlist, with its tags changed to the same three (below); or, instead of this metric, `@Timed("controller.<operation>.time")` per endpoint, as address-book does |
 | `journey.validation.failure` | count | `page` | Which questions do users get wrong? | None built yet: a counter in the controller that rejects the input |
 | `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none | How much is the service used, by outcome? | A business-metrics class, as address-book's `AddressMetrics`: one counter `address.change` tagged `change` (`create`, `update`, `delete`) |
 | `journey.concurrency.conflict` | count | none | How often do two edits collide? | A counter where the service refuses a stale version (an `OptimisticLockingFailureException` handler) |
@@ -43,8 +43,21 @@ Before tagging a request timer by route, count the routes and the
 CloudWatch metrics they make (method × route × status class). Each
 combination is a metric in every environment. animals-frontend's 84
 routes would make about 170, so it tags by section instead (`NODE.md` →
-"Endpoint layer"). A Java service tags Spring's timer by `uri`, the
-route template, which has the same cost.
+"Endpoint layer").
+
+`http.server.requests` has one dimension set in every service,
+`method`, `section` and `status.class`, which the dashboard's Requests
+row and alert rule 4 query. Spring Boot's own timer is tagged `method`,
+`uri`, `status`, `outcome` and `exception`. That costs more than the
+section split: it is split by route, by exact status and by exception
+class, and the Requests row finds none of it. A Java service that
+publishes it changes the tags to the three above: a Micrometer
+`MeterFilter` whose `map` replaces the timer's tags with `method`, a
+`section` worked out from `uri` by the rule in `NODE.md` → "Endpoint
+layer", and a `status.class` from `status`, dropping `uri`, `status`,
+`outcome` and `exception`. `[UNPROVEN]` Not yet built on a Java
+service. A Java service that does not want it uses `@Timed` per
+endpoint instead, which the Timers row shows.
 
 Rules that held:
 

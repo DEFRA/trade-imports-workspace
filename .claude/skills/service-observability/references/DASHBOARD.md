@@ -199,7 +199,9 @@ Claude writes the service's dashboard to
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
    has no cache. Delete the Requests row and its panels if the service
-   publishes no `http.server.requests`, and the Dependency connections
+   publishes no `http.server.requests` tagged `method`, `section` and
+   `status.class` (`METRICS.md` → "Options any service can use"), and
+   the Dependency connections
    row if it publishes neither connection metric. In the Journey events
    row, treat each panel on its own: delete "Validation failures by
    page" if the service publishes no `journey.validation.failure`, and

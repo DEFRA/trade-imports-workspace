@@ -126,13 +126,14 @@
         "perftests"
       ],
       "dependsOn": [],
-      "status": "todo",
+      "status": "done",
       "rigour": "standard",
       "notes": [
         "Added 17 November after inc-088 stopped at ci-red. The build loop's own CI fixer diagnosed the failure precisely and refused to act, correctly, because trade-imports-performance-tests was not in this theme's envelope: 'it is the shared k6 e2e / smoke / Smoke run job, which fails the checks{scenario:high-risk-plants} threshold on the single check submitted through the declaration page'. The repo has since been added to the envelope so the theme can fix what it broke, per CLAUDE.md rule 6.",
         "The fix reaches CI without merging to perf-tests main: .github/workflows/smoke.yml:33-42 probes trade-imports-performance-tests for a branch of the same name as the run's and uses it when one exists, falling back to main. So the theme branch carries the fix for its own pull requests.",
         "Evidence the seeded record is the cause: src/lib/address-book.js:12 sets ADDED_ROLE to the single value PLACE_OF_ORIGIN, and src/lib/address-book.js:39-43 saves the record with it. Separately, main's own E2E has failed about 5 times in 30 runs since 13 November with two different signatures, one of them this smoke check and one a live-animals Playwright shard; that intermittency is older than this theme and is recorded in deferred.md as its own investigation."
-      ]
+      ],
+      "commit": "31e907f397fb5454aa3e27ea7e809792c31cf015"
     },
     {
       "id": "inc-087",
@@ -272,7 +273,7 @@
         "inc-272"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -328,7 +329,7 @@
       "prs": [
         {
           "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
-          "repo": "DEFRA/trade-imports-animals-frontend",
+          "repo": "trade-imports-animals-frontend",
           "number": 486
         },
         {
@@ -350,7 +351,7 @@
       ],
       "dependsOn": [],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -422,6 +423,24 @@
           "workarea": "shared/design-release-2-1/themes/design-snagging",
           "id": "inc-212"
         }
+      ],
+      "commit": "64cca4dcbeceb0741335afe18c111e716d5130d7 c63c04ede460ccb9e08d5756af609dff7a838b24",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/148",
+          "repo": "plantsfrontend",
+          "number": 148
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "tests",
+          "number": 114
+        }
       ]
     },
     {
@@ -440,7 +459,7 @@
       ],
       "dependsOn": [],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -507,7 +526,20 @@
         "Conflicts followed: c-357 (the Live Animals & Germinals Data Fields commodity list outranks the prototype's catch-all, so rabbits, camels, ostriches, parrots, reptiles, bees and fish no longer bring the question in), c-113 (a blank save moves on), c-114 (today's per-part format errors stay, req-715), c-115 (back and continue always to the addresses page), c-117 (GOV.UK guidance URL in place of the prototype's '#'), c-110 ('Save and continue' alone outside amend), c-358 (the stored number stays nine bare digits; only the display is slashed, in the next row).",
         "Still needed at frontend main ba85c222: the hint reads 'For example, 12/345/6789.' (cph-number/copy/copy.en.js:5), there is no GOV.UK link in the help, the boxes have no autocomplete off or pattern, a blank save still errors with 'Enter a CPH number' (cph-number/validate.js checks()), the back link reaches the addresses page only with ?return=addresses, and there is no out-of-scope guard. Design snagging inc-219 removed the boxes' maxlength and splits a whole number typed into County on save (validate.js isWholeNumberInCounty): keep both when adding the new attributes, and do not add maxlength back."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "7a5776f5d72ca217e796f7841024bb6faf12e665 0f41ac73ce2d76e0c724a730d3447c8a44d64427",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 114
+        }
+      ]
     },
     {
       "id": "inc-092",
@@ -522,7 +554,7 @@
         "inc-091"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -563,7 +595,9 @@
         "req-701",
         "req-722"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the review page's Addresses card — criterion 3 of this row asks for a Change link from the county parish holding row straight to the county parish holding number page, but the design source gives the card one Change link only, and the code builds it that way. Design source: trace:prototype-dr2-1 p11-074 — \"The review's Addresses card lists Place of origin, Consignor, Consignee, Importer, Place of destination and County parish holding (CPH) number, with a Change link to roles-and-addresses\" — and p13-151 — \"The review's Consignment addresses section shows one Addresses card with a single Change link\"; p13-154 shows the CPH value with no link of its own (read from workareas/shared/design-release-2-1/distil/extract/trace-prototype-dr2-1.part11.json and .part13.json). Criterion 3 cites p13-120, which is about the consignment addresses page, not the review. Code: src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js:64 builds the CPH row with key and value and no action, the card's one Change link sitting at :46-53; the set's own rule says the same — src/server/app/sets/live-animals/docs/page-design.md:82-84, \"Each card has one Change link, in its heading. Rows carry none\" — and check-answers.fit.spec.js:432-452 proves it, passing. Options: (a) keep the card-level Change link alone, as built and as the design source shows, and drop that clause from criterion 3; or (b) add per-row Change links — and if per-row, across every row of the review rather than this one row, since the page-design rule and that passing test currently forbid row actions. Raised by review finding 3 on inc-092."
+      ],
       "notes": [
         "Carried over from the existing row inc-092 and rewritten so every requirement it covers has a criterion: the old row named req-700 and req-722 in its notes as already on main but carried no criterion for either. Criterion 1 is the one added; the two display criteria are unchanged.",
         "c-358: the stored value stays nine bare digits; only the display is slashed, on the consignment addresses page and the review card, through one display formatter in both places.",
@@ -577,6 +611,19 @@
         {
           "workarea": "shared/design-release-2-1/themes/design-snagging",
           "id": "inc-213"
+        }
+      ],
+      "commit": "86054c894594cad57a69eeb675e36204887249d2 362076eaa649fcb3c075057a38c8b91399ed3433",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
         }
       ]
     },
@@ -667,7 +714,9 @@
         "req-774",
         "req-2187"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: repos/trade-imports-ins-frontend needs its copy-leaf check folded onto one mechanism with the other two frontends, as the duplication finding on frontend:src/server/app/engine/test-support.js:594. ins-frontend keeps a second home and a second name for the same check — src/server/app/shared/copy-leaves.test-support.js:10 exports itHoldsTextAtEveryLeaf({ en, cy }) while animals and plants export itHoldsCopyAtEveryLeaf(en, cy) from src/server/app/engine/test-support.js — and src/server/app/shared/copy.test.js:95 and :111 still loop over leaves() inline beside it. One concept, one name, across twin repos: pick one home and one name for the three frontends and delete the local loops."
+      ],
       "notes": [
         "Carried over from the existing row inc-094 and rewritten: the title and detail no longer carry the release name, criterion 1 no longer quotes the hint it replaces, criterion 6 states what the page shows instead of quoting the removed card and link, and criterion 2 and 5 state the end state positively.",
         "Criteria added for requirements the old row covered in a note but in no criterion: req-764 (criterion 7) and req-772 (criterion 9). A re-read of frontend main confirms neither is met: contact/validate.js uses oneOf, which allows the empty value, so a blank save passes today.",

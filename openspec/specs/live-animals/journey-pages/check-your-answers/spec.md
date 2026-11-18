@@ -395,3 +395,13 @@ The system MUST list on the roles-and-addresses card, after the county parish ho
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists no permanent address row
+
+### Requirement: The roles-and-addresses card shows the county parish holding number when the notification needs one
+**ID**: REQ-CYA-021
+The system MUST show, on the roles-and-addresses card, a row for the county parish holding number when the notification's commodities call for one, keyed as the copy keys it, reading the saved number in the slashed county/parish/holding form. The row carries no action of its own: the card's one Change link, in its heading, covers every row.
+
+#### Scenario: A saved county parish holding number reads in its slashed form
+**ID**: SCN-CYA-021-A
+- **GIVEN** a notification that needs a county parish holding number and has one saved
+- **WHEN** the user views check-your-answers
+- **THEN** the roles-and-addresses card's county parish holding row reads "12/345/6789"

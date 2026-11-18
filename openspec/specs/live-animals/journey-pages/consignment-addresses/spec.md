@@ -74,19 +74,27 @@ The system MUST show Overview's "Roles and addresses" task as Completed once eve
 
 ### Requirement: The page also sets out a CPH number section when a commodity on the notification requires one
 **ID**: REQ-CONSIGN-ADDR-005
-The system MUST show an additional section for the County Parish Holding (CPH) number, alongside the five party-role sections, only when at least one commodity line on the notification is one the service treats as requiring a CPH number, and MUST NOT show this section otherwise.
+The system MUST show an additional CPH number section, after the place of destination section, only when a commodity line on the notification needs a CPH number, offering the link "Add a CPH number" until one is saved and, once saved, showing it in the slashed county/parish/holding form with a "Change" link to the county parish holding number page.
 
 #### Scenario: A CPH-eligible commodity brings the CPH section into the page, empty
 **ID**: SCN-CONSIGN-ADDR-005-A
 - **GIVEN** the notification has a commodity line the service treats as requiring a CPH number
 - **WHEN** the user views the consignment addresses page
-- **THEN** a section headed "County parish holding (CPH) number" is shown, with no value yet added, offering the link "Add a CPH number"
+- **THEN** a section headed "County parish holding (CPH) number" is shown, described "The county parish holding (CPH) number identifies the holding where the animals will be kept.", with no value yet added, offering the link "Add a CPH number"
+- **AND** the section sits after the place of destination section
 
 #### Scenario: No CPH-eligible commodity leaves the section off the page
 **ID**: SCN-CONSIGN-ADDR-005-B
 - **GIVEN** none of the notification's commodity lines is one the service treats as requiring a CPH number, such as a consignment of only ostriches
 - **WHEN** the user views the consignment addresses page
 - **THEN** no CPH number section is shown
+
+#### Scenario: A saved CPH number shows in its slashed form with a Change link
+**ID**: SCN-CONSIGN-ADDR-005-C
+- **GIVEN** the notification has a saved county parish holding number
+- **WHEN** the user views the consignment addresses page
+- **THEN** the CPH number section shows the number as "12/345/6789"
+- **AND** the section offers "Change" into the county parish holding number page as its one link
 
 ### Requirement: The page warns that a false address is fraud
 **ID**: REQ-CONSIGN-ADDR-006

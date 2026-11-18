@@ -133,7 +133,7 @@ The system MUST keep every character typed or pasted into a box, and when the co
 - **GIVEN** the county box holds 123456789, 12/345/6789 or 12 345 6789 and the parish and holding boxes are empty
 - **WHEN** the user saves and continues
 - **THEN** the number is saved as 123456789
-- **AND** the consignment addresses page shows 123456789 in its CPH section
+- **AND** the consignment addresses page shows the number in its CPH section as "12/345/6789"
 
 #### Scenario: Pasting the whole number saves it the same as typing it
 **ID**: SCN-CPH-008-C
@@ -208,7 +208,7 @@ The system MUST return the user to the consignment addresses page after they sav
 - **GIVEN** the user opened the CPH number page from the consignment addresses page's 'Add a CPH number' link
 - **WHEN** they save a valid CPH number
 - **THEN** the consignment addresses page is shown
-- **AND** the CPH section shows the nine digits
+- **AND** the CPH section shows the number as "12/345/6789"
 
 #### Scenario: Saving from a review Change link also returns to the consignment addresses page
 **ID**: SCN-CPH-007-B

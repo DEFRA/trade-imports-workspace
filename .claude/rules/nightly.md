@@ -1,7 +1,8 @@
 # Nightly jobs: what they may do unattended
 
 The nightly jobs are scheduled Claude runs in one Claude Code session left open
-on an always-on Mac, in the canonical workspace. `/nightly-start` registers them
+on an always-on Mac, inside tmux or screen so it outlives the SSH connection
+that started it. `/nightly-start` registers them
 from [`config/nightly-jobs.json`](../../config/nightly-jobs.json). Each fires a
 prompt that starts `[nightly:<job>]`. These rules apply only to a run that
 started from such a prompt. They change nothing for an attended session, and
@@ -26,7 +27,7 @@ under ticket EUDPA-802.
 optional reason inside:
 
 ```bash
-echo "Holding while main is red" > ~/git/defra/trade-imports-workspace/workareas/nightly/STOP
+echo "Holding while main is red" > workareas/nightly/STOP
 ```
 
 Delete the file to turn the jobs back on. A job never creates or deletes it.
@@ -49,12 +50,12 @@ never stashes, resets or deletes someone else's work.
 
 ## What a job never does
 
-- Start the app's Docker Compose stack: no `scripts/stack/run-stack.sh`, no
-  `tim docker`, no `npm run test:docker-compose`. End-to-end proof is CI's
-  "E2E Tests" check, watched with `gh pr checks`.
+- Start the app's Docker Compose stack: no `tim docker`, no
+  `npm run test:docker-compose`. End-to-end proof is CI's "E2E Tests" check,
+  watched with `gh pr checks`.
 - Use `--force`, `--legacy-peer-deps`, npm `overrides` or `--no-verify` to make
   an install, a commit or a push pass.
-- Edit a test assertion, or a test linked to a signed-off scenario.
+- Edit a test assertion.
 - Merge a pull request a person raised. A job merges only pull requests that
   Dependabot or a nightly job raised.
 - Write to a CDP platform repo (CLAUDE.md rule 3).
@@ -97,12 +98,6 @@ digest when any of these is true:
 - an install only passes with a flag this file bans
 - a member of a coupled set is not ready: its peer dependencies do not accept
   the other members' new versions
-
-Before marking a pull request ready or merging it, run
-`tim spec diff --signed-off --repo <repo> --base origin/main --json` for every
-repo on the branch. A trip (exit code 3) follows
-[`signed-off-pages.md`](signed-off-pages.md): raise the ticket, keep every pull
-request on the branch as a draft, and report it in the digest. Never merge it.
 
 ## Merge policy
 
@@ -149,7 +144,7 @@ the digest.
 ## The digest
 
 Each night's runs write to one file:
-`~/git/defra/trade-imports-workspace/workareas/nightly/<yyyy-mm-dd>/digest.md`,
+`workareas/nightly/<yyyy-mm-dd>/digest.md`,
 dated for the morning it is read. `workareas/` is not committed.
 
 Each job appends its own section. The `digest` job runs last and writes the

@@ -4,7 +4,8 @@ description: 'Start, or restart, the scheduled nightly maintenance jobs in the a
 ---
 
 The nightly jobs run in one Claude Code session left open on an always-on Mac,
-in the canonical workspace. `CronCreate` registers them for this session only:
+inside tmux or screen so closing the SSH connection that started it does not
+end it. `CronCreate` registers them for this session only:
 they fire only while the session is idle, and a recurring cron expires after 7
 days. This skill sets them up in one command, so the weekly restart is one
 command too.
@@ -15,10 +16,7 @@ turns on. What each job may do once it fires is in
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/config/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~`
-automatically.
+Every path here is relative to the workspace root. Run Bash from there.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -46,7 +44,7 @@ tim nightly check --fetch --json
 ```
 
 If the shell cannot find `tim`, stop: tim is not on PATH. Tell the person to run
-`npm --prefix ~/git/defra/trade-imports-workspace/tim link` and restart the
+`npm --prefix tim link` from the workspace root and restart the
 session.
 
 `tim nightly check` fetches origin in the workspace and every cloned repo,
@@ -116,7 +114,7 @@ Then say:
 - the jobs fire only while this session is idle, so leave it open with no
   prompt running, and keep the Mac awake
 - the digest for each morning will be at
-  `~/git/defra/trade-imports-workspace/workareas/nightly/<yyyy-mm-dd>/digest.md`
+  `workareas/nightly/<yyyy-mm-dd>/digest.md`
 
 ## Stopping the jobs
 
@@ -124,7 +122,7 @@ Create the stop file. Every job checks it first and ends without doing
 anything:
 
 ```bash
-echo "Reason for stopping" > ~/git/defra/trade-imports-workspace/workareas/nightly/STOP
+echo "Reason for stopping" > workareas/nightly/STOP
 ```
 
 Delete the file to turn the jobs back on. To remove the crons as well, call

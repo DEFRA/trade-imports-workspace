@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath } from '../constants/repos.js'
+import { repoPath, rosterOf } from '../constants/repos.js'
 import { isTimError } from '../errors.js'
 import { readRepoStates } from '../commands/workspace/repo-state.js'
 import { readNightlyJobs, NIGHTLY_JOBS_FILE } from './jobs.js'
@@ -78,7 +78,10 @@ const loadJobs = (workspaceRoot) => {
 
 const checkoutsOf = (workspaceRoot) => [
   { key: 'workspace', path: workspaceRoot },
-  ...REPOS.map((repo) => ({ key: repo, path: repoPath(workspaceRoot, repo) }))
+  ...rosterOf(workspaceRoot).repos.map((repo) => ({
+    key: repo,
+    path: repoPath(workspaceRoot, repo)
+  }))
 ]
 
 const cleanCheckoutsCheck = (states) => {

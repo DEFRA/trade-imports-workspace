@@ -14,15 +14,17 @@ const WORKSPACE_ROOT = join(
 )
 const SKILL_DIR = join(WORKSPACE_ROOT, '.claude', 'skills', 'prototype')
 
-const CANONICAL_ROOT = '~/git/defra/trade-imports-workspace/'
+// A path the skill cites relative to the workspace root, in backticks. Only
+// these top-level folders count, so a path inside a repo (`docs/...` of the
+// prototype, say) has to name the repo first.
+const WORKSPACE_PATH_RE =
+  /`((?:docs|repos|openspec|workareas|\.claude|tim)\/[^\s`)*]+)/g
 
-// The canonical tilde path names this checkout wherever it lives (CI checks
-// the workspace out elsewhere), and repos/ is only there once cloned.
-const onDiskPath = (tildePath) =>
-  join(WORKSPACE_ROOT, tildePath.slice(CANONICAL_ROOT.length))
+const onDiskPath = (workspacePath) => join(WORKSPACE_ROOT, workspacePath)
 
-const isInUnclonedRepo = (tildePath) => {
-  const [top, repo] = tildePath.slice(CANONICAL_ROOT.length).split('/')
+// repos/ is only there once cloned.
+const isInUnclonedRepo = (workspacePath) => {
+  const [top, repo] = workspacePath.split('/')
   return top === 'repos' && !existsSync(join(WORKSPACE_ROOT, 'repos', repo))
 }
 
@@ -113,17 +115,15 @@ describe('prototype skill: prompt hygiene', () => {
     }
   )
 
-  it('house-conventions.md cites only tilde paths that resolve on disk', () => {
+  it('house-conventions.md cites only workspace paths that resolve on disk', () => {
     const text = readFileSync(
       join(SKILL_DIR, 'references', 'house-conventions.md'),
       'utf8'
     )
     const paths = [
       ...new Set(
-        [
-          ...text.matchAll(/~\/git\/defra\/trade-imports-workspace\/[^\s`)*]+/g)
-        ].map((match) =>
-          match[0]
+        [...text.matchAll(WORKSPACE_PATH_RE)].map((match) =>
+          match[1]
             .replace(/[).,]+$/, '')
             // A trailing glob (docs/best-practices/**, gds/*) names a
             // directory of files, not one file: check the directory.

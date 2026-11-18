@@ -2,7 +2,7 @@
 
 Long-running fan-out workers live as `references/<NAME>.md` prose inside
 the owning skill and are spawned as `general-purpose` Task subagents
-(`Follow ~/git/defra/trade-imports-workspace/.claude/skills/<owner>/references/<NAME>.md.`).
+(`Follow .claude/skills/<owner>/references/<NAME>.md.`).
 `general-purpose` carries `Tools: *` so workers can write the on-disk
 artifacts that downstream `tools/` scripts consume.
 

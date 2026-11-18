@@ -20,11 +20,11 @@ Trigger → prefix → suite table: [`references/SUITES.md`](references/SUITES.m
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~`
-automatically. Skill-internal references stay relative
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash runs from the
+workspace root. Skill-internal references stay relative
 (`references/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
@@ -143,5 +143,5 @@ Uncertain (left as-is): <list or none>
 
 Lint: clean
 Committed: <sha> — <files changed>
-Run: ~/git/defra/trade-imports-workspace/workareas/spec-catchup/<date>-<domain>/
+Run: workareas/spec-catchup/<date>-<domain>/
 ```

@@ -8,7 +8,7 @@ demand from the JSON.
 ## Location
 
 ```
-~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
+workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 ```
 
 One file per repo. Initial population: `tim npm discover`.

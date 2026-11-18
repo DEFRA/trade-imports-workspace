@@ -8,7 +8,7 @@ argument-hint: '<trigger phrase including skill name>'
 ---
 
 The meta-skill. Captures the 8-pattern checklist for workspace
-skills under `~/git/defra/trade-imports-workspace/.claude/skills/`
+skills under `.claude/skills/`
 and applies it two ways:
 
 - **CREATE** — interview the user, produce a full scaffold with
@@ -22,11 +22,11 @@ implementer prompt.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule table: [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -36,11 +36,11 @@ relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 Before either mode, Read these into context (the checklist must
 be live; anti-patterns drift over time):
 
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/patterns.md`
+- `docs/best-practices/skills/patterns.md`
   — the 8-pattern checklist (canonical reference).
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
+- `docs/best-practices/skills/anti-patterns.md`
   — known mis-applications. Grows over time.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/scaffold-template.md`
+- `docs/best-practices/skills/scaffold-template.md`
   — only Read in CREATE mode (the SKILL.md skeleton + decisions.md
   sidecar).
 
@@ -70,11 +70,11 @@ existing skill — edit the skill's `references/` folder directly.
 Spawn idiom for AUDITOR — prompt begins:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/references/AUDITOR.md.
+Follow the instructions in .claude/skills/skill-creator/references/AUDITOR.md.
 
 **Target skill:** <name>
-**SKILL.md path:** ~/git/defra/trade-imports-workspace/.claude/skills/<name>/SKILL.md
-**Output path:** ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md
+**SKILL.md path:** .claude/skills/<name>/SKILL.md
+**Output path:** workareas/skills-audit/<name>.md
 ```
 
 `general-purpose` carries `Tools: *` so the worker can Read /
@@ -161,11 +161,11 @@ target). Each spawn prompt:
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/references/AUDITOR.md.
+Follow the instructions in .claude/skills/skill-creator/references/AUDITOR.md.
 
 **Target skill:** <name>
-**SKILL.md path:** ~/git/defra/trade-imports-workspace/.claude/skills/<name>/SKILL.md
-**Output path:** ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md
+**SKILL.md path:** .claude/skills/<name>/SKILL.md
+**Output path:** workareas/skills-audit/<name>.md
 ```
 
 Wait for all workers to finish (the harness emits

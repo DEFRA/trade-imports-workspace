@@ -18,7 +18,7 @@ do not override classifications, do not touch source files.
 - `{branch}` — the ticket's shared branch, e.g. `chore/EUDPA-668-npm-security-sweep`.
 
 Repos default to the Node repos the skill lists under `## Repos`, all of them
-beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
+beneath `repos/`. Strategy defaults to
 `latest`.
 
 ---
@@ -64,7 +64,7 @@ hydrates anything marked partial/false.
 ### Spawn prompt template
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/PACKAGE_PLANNER.md.
+Follow the instructions in .claude/skills/npm-upgrade/references/PACKAGE_PLANNER.md.
 
 Run ID: {ticket}
 Repository: {repo}
@@ -74,7 +74,7 @@ Target: {target}
 Upgrade type: {upgrade_type}
 Dependency: {dependency_type}
 
-Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{ticket}/{repo}/.context/{normalized-package}/
+Context bundle: workareas/npm-upgrades/{ticket}/{repo}/.context/{normalized-package}/
   - package-meta.json (always present)
   - usages.txt (Grep over repos/{repo}/src — may be empty if no usages found)
   - changelog.md (present iff context_baked != false and "changelog" not in context_missing)
@@ -83,7 +83,7 @@ Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{tick
 context_baked: {context_baked}
 context_missing: {context_missing}
 
-Per-repo best practices: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{ticket}/{repo}/best-practices.md
+Per-repo best practices: workareas/npm-upgrades/{ticket}/{repo}/best-practices.md
 ```
 
 Where `{normalized-package}` substitutes `/` with `__` (so

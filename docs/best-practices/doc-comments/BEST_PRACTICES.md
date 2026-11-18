@@ -2,7 +2,7 @@
 
 A doc comment is a contract between the author and the caller of a public API. Anywhere else it is a second description of the code that nobody keeps up to date. A comment that no longer matches its function is actively misleading — worse than no comment at all.
 
-The house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` apply to every comment, doc comments included.
+The house rules in `.claude/rules/code-quality.md` apply to every comment, doc comments included.
 
 This guide covers the universal rules. For format and tag syntax, see the language-specific addenda:
 

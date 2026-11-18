@@ -350,12 +350,12 @@ They are board configuration, not constants, and a wrong one stops every
 increment at the start stage:
 
 ```bash
-tim jira transition <ANY-EXISTING-KEY> --list --workspace ~/git/defra/trade-imports-workspace
+tim jira transition <ANY-EXISTING-KEY> --list
 ```
 
 On EUDPA the working status is `In Dev` and the finished status is `Done`; the
 args use those names. The done stage closes each ticket with
-`tim jira transition <KEY> "<jiraDoneStatus>" --workspace ~/git/defra/trade-imports-workspace --json`,
+`tim jira transition <KEY> "<jiraDoneStatus>" --json`,
 which `Bash(tim:*)` allows.
 
 Do not take a status name from a command's `--help` text — that is example

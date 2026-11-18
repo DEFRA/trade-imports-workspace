@@ -5,6 +5,14 @@ import picomatch from 'picomatch'
 import { TimError } from '../../errors.js'
 
 const WORKSPACE_PREFIXES = ['~/git/defra/trade-imports-workspace/', '/']
+const SCOPE_ROOT_FOLDERS = [
+  '.claude/',
+  'docs/',
+  'openspec/',
+  'repos/',
+  'tim/',
+  'workareas/'
+]
 const FRONT_MATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 const LIST_ITEM_START_RE = /^-\s+(.*)$/
 const CONTINUATION_RE = /^\s+\S/
@@ -55,10 +63,13 @@ const workspacePathOf = (token) => {
   return prefix === undefined ? null : token.slice(prefix.length)
 }
 
+const isScopeRootPath = (token) =>
+  SCOPE_ROOT_FOLDERS.some((folder) => token.startsWith(folder))
+
 const resolveToken = (token, { topicDirRelative, scopeRootRelative }) => {
   const workspacePath = workspacePathOf(token)
   if (workspacePath !== null) return workspacePath
-  if (topicDirRelative) {
+  if (topicDirRelative && !isScopeRootPath(token)) {
     return joinRelative(topicDirRelative, token)
   }
   return joinRelative(scopeRootRelative, token)

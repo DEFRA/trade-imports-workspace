@@ -369,3 +369,26 @@ remove. `scripts/stack/` is gone.
 
 The stack-smoke check did not run, for the reason given under P61: the
 stack is up, started by hand, with no lease (`NEEDS-SAM.md` item 9).
+
+## P72
+
+Nothing deleted, so no allowlist entry names a removed script. Skill, rule
+and doc text no longer types `~/git/defra/trade-imports-workspace`, so P73
+can drop these from `.claude/settings.json` (as on `main` after #280):
+
+- `Bash(git -C ~/git/defra/trade-imports-workspace:*)`
+- `Bash(awk * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(sed * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(find ~/git/defra/trade-imports-workspace/*)`
+
+Left for a person, because agents do not edit hooks or permission config:
+
+- `.claude/hooks/guard-bash.sh` line 120: the deny message for a piped test
+  run still gives
+  `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > ~/git/defra/trade-imports-workspace/workareas/<area>/test.log 2>&1`
+  as its example. The relative form is
+  `npm --prefix repos/<repo> test > workareas/<area>/test.log 2>&1`.
+  `tim/src/skill-workflows/workspace-paths.test.js` allows that line; drop
+  its entry once the message changes.
+- Each service repo's `.claude/settings.json` hook still runs
+  `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`.

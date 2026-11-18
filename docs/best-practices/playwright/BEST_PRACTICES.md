@@ -213,7 +213,7 @@ Never skip E2E because the change is "test-only", "a pure refactor" or "slow". E
 Run the standard script from the tests repo, against a running stack, and send the output to a file:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-run.log 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-run.log 2>&1
 ```
 
 Use `test:docker-compose:<domain>` for one domain. The script list is in [`node/playwright.md` §12](../node/playwright.md#12-how-tests-run-in-this-project), and the tags and what each one selects are in [`node/playwright.md` §1](../node/playwright.md#1-project-structure). To run what a repo's pull request runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../../config/e2e-tests-pr-scope.json).
@@ -233,7 +233,7 @@ Do not diagnose from the last lines of the console output. They lose the asserti
 When you port specs from one version of a UI to another, for example when resolving a merge, run each ported spec and each spec that uses a page object you touched against the running app before you report it done. Run them one at a time:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose -- tests/animals/e2e/pages/origin.spec.ts --workers=1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose -- tests/animals/e2e/pages/origin.spec.ts --workers=1
 ```
 
 Adapt locators from the failure's `error-context.md` and the frontend's source, never from the old specs. Locators copied from the old UI look right and fail together.

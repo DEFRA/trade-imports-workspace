@@ -10,7 +10,7 @@ Say "your design release", not "set". Say "the check", not "the pipeline".
 ## What the check is
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id> [--quick|--full|--walk] [--json]
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id> [--quick|--full|--walk] [--json]
 ```
 
 runs, in order:
@@ -27,7 +27,7 @@ cause, fix and fixing reference, then the path of the full log under
 changes are the changed files it tidies with Prettier, which it names.
 
 Every error it can explain is listed in
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`,
+`repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`,
 with the same headings the check prints. Read that file when you need more
 than the check printed.
 
@@ -61,7 +61,7 @@ Read these before every run.
   decision (new words, a new question, a different layout), stop and offer
   the reference that makes that change.
 - **Only repair files the designer owns.** Before editing any file, run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`.
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <path>`.
   Repair only files it calls "Yours". A file that "Belongs to the real
   service" is never edited, whether the designer is on `main` or a
   `design/*` branch: explain, and offer "do it in your design release" or
@@ -108,7 +108,7 @@ this only happens when nothing has been changed yet.)
 Run:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status
+git -C repos/trade-imports-plants-prototype status
 ```
 
 Then choose:
@@ -127,7 +127,7 @@ run it before saying the work is ready.
 ## Step 3: Run the check
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --quick
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --quick
 ```
 
 (or `--full` or `--walk`). The full check takes several minutes because it
@@ -182,14 +182,14 @@ For each item under "What went wrong", in order:
 last 60 lines of `.cache/designer/commit.log` (inside the prototype repo):
 the pre-commit hook's own output (`format:check`, `lint`, `test`). Read those
 lines the same way. The quickest route to a plain explanation is to run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`,
+`npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`,
 which runs the same checks and translates each failure. A failing test under
 `scripts/` or `src/server/prototype-*` is not caused by a design change: it
 is the maintainer's, as above.
 
 When the designer pastes an error and asks "what does this error mean", find
 the matching heading in
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`
+`repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`
 and explain it the same way. If none matches, say what the first error line
 means in plain words and which file it names.
 
@@ -239,7 +239,7 @@ from an earlier run, or from a lower level than the change needs.
 When the check passes, show the change:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages changed --before
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages changed --before
 ```
 
 (For a words change, name the pages instead of `changed`: the change
@@ -259,12 +259,12 @@ team' and I will prepare a brief and a patch for the plants-frontend team."
 
 ## References
 
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`:
   the levels, the pre-commit hook and every error with its fix
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/check/translate.js`:
+- `repos/trade-imports-plants-prototype/scripts/designer/check/translate.js`:
   the table of failure signatures
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/prototype-checks/`:
+- `repos/trade-imports-plants-prototype/src/server/prototype-checks/`:
   the copy-shape and release-render tests that run inside the prototype's
   test suite
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/where-changes-go.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/where-changes-go.md`:
   whose files are whose

@@ -2,7 +2,7 @@
 
 Project baseline: Node >= 24, ESM modules throughout. These conventions apply across all Node.js repos in this workspace.
 
-The house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` apply on top of these 16 rules and win where they differ.
+The house rules in `.claude/rules/code-quality.md` apply on top of these 16 rules and win where they differ.
 
 ---
 
@@ -567,7 +567,7 @@ test('shows the region question with the health-certificate hint', ...)
 
 When a comment is stale, delete it. Do not reword it. When a comment explains a name, the name is the defect: rename, then delete the comment in the same change.
 
-The only doc comments allowed state the contract of an exported public API. See `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/jsdoc.md`.
+The only doc comments allowed state the contract of an exported public API. See `docs/best-practices/doc-comments/jsdoc.md`.
 
 ---
 

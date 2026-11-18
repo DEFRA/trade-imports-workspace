@@ -16,9 +16,9 @@ those two kinds of change.
   - a Kit view file: a path to the `.html` file, or the HTML pasted into the
     chat. For a file in the old prototype's clone, copy it (and its
     partials) with
-    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:kit -- copy <page> --release <release-id> --slug <new-slug>`.
+    `npm --prefix repos/trade-imports-plants-prototype run designer:kit -- copy <page> --release <release-id> --slug <new-slug>`.
     Save HTML pasted into the chat to
-    `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<new-slug>/source.html`
+    `repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<new-slug>/source.html`
     first.
   - a web address of the page on the old prototype (it may need a password,
     in which case ask for the `.html` file or a screenshot instead)
@@ -102,7 +102,7 @@ their words") and add `designerMandate: { id: "<the id it printed>" }` to
 logs them as gaps.
 
 It writes the inventory to
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<slug>/inventory.json`
+`repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<slug>/inventory.json`
 (working notes), the fidelity table to
 `src/server/app/sets/<release-id>/docs/fidelity-<slug>.md` (in the release, so
 it is saved and reaches reviewers and the hand-off brief) and any gap rows to
@@ -114,7 +114,7 @@ another.
 ### 1. Check it is yours
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<release-id>/set.js
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<release-id>/set.js
 ```
 
 Carry on only if the answer starts "Yours". For `high-risk-plants`, offer to
@@ -156,14 +156,14 @@ page with the recipe its kind needs:
 Place it straight after the page the designer named. Build the template with
 GOV.UK macros (`references/match-the-design/components-we-have.md` lists them
 with import lines) and follow
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
+`repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
 If the page adds a required answer, add it to the release's
 `journeys/linear/flow/fixtures/happy-path.json`.
 
 ### 4. Check it
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release-id> --full
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release-id> --full
 ```
 
 If it fails, fix what the port caused and run it again, at most 3 times. Then
@@ -174,7 +174,7 @@ the changes away).
 ### 5. Show it beside the original
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release-id> --pages <slug>,notification-view --reference <slug>=<picture of the old page> --errors --mobile --before
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release-id> --pages <slug>,notification-view --reference <slug>=<picture of the old page> --errors --mobile --before
 ```
 
 Leave out `--reference` when there is no picture of the old page. For a list

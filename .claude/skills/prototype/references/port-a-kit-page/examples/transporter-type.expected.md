@@ -106,9 +106,9 @@ Every "Nearest" row the designer cares about, and row 11, become rows in
 
 The port passes when:
 
-1. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set plants-working --full`
+1. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set plants-working --full`
    passes, so the release boots with the new page.
-2. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages transporter-type`
+2. `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages transporter-type`
    gives a screenshot of the new page with the radios and the warning.
 3. The workflow's report has a fidelity table with a verdict on every row.
 4. No file outside `src/server/app/sets/plants-working/` and

@@ -56,26 +56,26 @@ grep streaming output or re-run to check partial results.
 
 Unit tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created.
 
 E2E tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary. If failures exist,
 do NOT grep the console output — find and read the structured Playwright
 artifacts instead:
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
+find repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 ### Java repo (backend)
 Runs surefire (unit `*Test`) and failsafe (integration `*IT`,
 Testcontainers-backed) in one pass:
 ```bash
-mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created. Confirm both `Tests run:` totals
 (surefire and failsafe) and `BUILD SUCCESS`.
@@ -118,7 +118,7 @@ Process fixes in item-number order within each repo.
 For each item, spawn a `general-purpose` Task subagent. Spawn prompt:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/REVIEW_ITEM_FIXER.md.
+Follow the instructions in .claude/skills/review/references/REVIEW_ITEM_FIXER.md.
 
 **Ticket:** EUDPA-XXXXX
 **Item:** #{N}
@@ -158,7 +158,7 @@ running on a review-handoff branch (set up by `tim review share` during
 the reviewer's FRESH Step 7 for a PR the reviewer didn't author):
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace rev-parse --abbrev-ref HEAD
+git rev-parse --abbrev-ref HEAD
 ```
 
 If the branch name is exactly `chore/EUDPA-XXXXX` (matching this
@@ -221,11 +221,11 @@ On `Y` (default): switch the workspace back and delete the local
 branch.
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace checkout main
+git checkout main
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace branch -D chore/EUDPA-XXXXX
+git branch -D chore/EUDPA-XXXXX
 ```
 
 On `n`: skip both prompts.

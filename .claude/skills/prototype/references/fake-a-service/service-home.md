@@ -23,7 +23,7 @@ at `/`: the root is always the chooser.
 1. Make the set. `sample-journey` is the default, so:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run new:set -- plants-home --describe "Cross-commodity home page for research"
+   npm --prefix repos/trade-imports-plants-prototype run new:set -- plants-home --describe "Cross-commodity home page for research"
    ```
 
    It prints the new set's address, for example
@@ -94,8 +94,8 @@ Two design-gap rows in `src/server/app/sets/plants-home/design-gaps.md`:
 
 ## Check it
 
-1. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set plants-home --full`
-2. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set plants-home --pages welcome`
+1. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set plants-home --full`
+2. `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set plants-home --pages welcome`
    (the page keeps the placeholder's name, `welcome`, in
    `features/welcome/page.js`)
 3. Click every link on the page in the running prototype: each must open the

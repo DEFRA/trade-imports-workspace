@@ -16,11 +16,11 @@ for how a PR run uses them.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -133,7 +133,7 @@ For each domain, in its own Bash call, find the specs that use the service's fix
 and `security/` specs are never tagged:
 
 ```bash
-grep -rlE "<fixture1>|<fixture2>" ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/tests/<domain>/e2e
+grep -rlE "<fixture1>|<fixture2>" repos/trade-imports-ins-tests/tests/<domain>/e2e
 ```
 
 No hits and no indirect signal: nothing to tag and nothing to say. Otherwise:
@@ -204,24 +204,24 @@ tim service-tag specs --tag <@tag> --json
 - Keep each entry on one line, as the file does. Then check the JSON still parses:
 
   ```bash
-  jq empty ~/git/defra/trade-imports-workspace/config/e2e-tests-pr-scope.json
+  jq empty config/e2e-tests-pr-scope.json
   ```
 
 ## Step 4: Format and lint
 
 Adding `{ tag }` as a middle argument stops prettier keeping the test call on one line,
 so it rewraps the whole test body. The repo's commit hook rejects unformatted files, so
-format every spec you edited. Pass the files' `~/git/...` paths:
+format every spec you edited. Pass the files' paths relative to the workspace root:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests exec --no -- prettier --write <files>
+npm --prefix repos/trade-imports-ins-tests exec --no -- prettier --write <files>
 ```
 
 The raw diff then shows mostly indentation. `git diff -w` shows only the tag and the
 call wrapper; check that before moving on, and warn the user the plain diff is noisy.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run lint
+npm --prefix repos/trade-imports-ins-tests run lint
 ```
 
 Fix any failure before moving on. The lint also rejects a tag on a spec in a domain

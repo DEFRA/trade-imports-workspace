@@ -1,6 +1,6 @@
 # Phase 3 Manager — Implementation
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 **Job:** Apply every `todo`-classified version per repo in strict semver
 ascending order. Stop a repo on first failure.
@@ -29,7 +29,7 @@ If `Todo: 0 Failed: 0`: report "Nothing to implement. Phase 3 complete."
 Read the in-scope repo list from `.run-meta.json`:
 
 ```bash
-jq -r '.repos[]' ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
+jq -r '.repos[]' workareas/govuk-upgrades/{run-id}/.run-meta.json
 ```
 
 For each repo, list pending versions in semver order:
@@ -136,7 +136,7 @@ From the tests repo, run the docker-compose suite (cleans, then runs
 Playwright against the dockerised stack):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose
 ```
 
 (`test:docker-compose` is the local E2E entry point — the same script CI

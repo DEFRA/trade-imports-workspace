@@ -6,10 +6,11 @@ tim workspace setup     # clone all repos
 tim workspace install   # install dependencies in every repo
 ```
 
-Scripts under `tools/` reach the workspace at
-`~/git/defra/trade-imports-workspace/` — the path is hardcoded, so clone
-it there. A checkout under another name will not work.
-See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-canonical-clone-location)
+The default place to clone the workspace is
+`~/git/defra/trade-imports-workspace`. Any other folder works too: `tim`
+finds the workspace it runs in, and paths in skills and docs are relative
+to the workspace root.
+See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-clone-location)
 for the setup and for the JIRA / GitHub / Confluence credentials the tools
 still need.
 
@@ -29,8 +30,8 @@ in the Docker stack to keep in step with, and it never merges from
 **Designer prototyping (workspace-first):**
 ```bash
 tim prototype setup   # once per machine: CLAUDE.local.md designer note, upstream remote, install, auth readiness
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev            # run standalone on :3103, no stack
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream  # weekly-style sync from trade-imports-plants-frontend, overrides.json-aware
+npm --prefix repos/trade-imports-plants-prototype run dev            # run standalone on :3103, no stack
+npm --prefix repos/trade-imports-plants-prototype run sync:upstream  # weekly-style sync from trade-imports-plants-frontend, overrides.json-aware
 ```
 Then open Claude Code at the workspace root and say what you want — the
 `prototype` skill routes the request to the right reference and, for

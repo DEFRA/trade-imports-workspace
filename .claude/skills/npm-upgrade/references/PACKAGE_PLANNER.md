@@ -4,12 +4,12 @@ the canonical JSON state.
 Your prompt names the run, repo, package, current/target versions,
 upgrade type, dependency kind, and a context-bundle directory.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
-`find_workspace_root` helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Boundaries
 
@@ -26,7 +26,7 @@ classification, write `classification: manual`.
 - `context_baked` — `true`, `"partial"`, or `false`
 - `context_missing` — list of context fields the pre-bake couldn't
   resolve (e.g. `["changelog", "migration_guide"]`)
-- Context bundle: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
+- Context bundle: `workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
   where `/` in the package name becomes `__` (so `@hapi/hapi` →
   `@hapi__hapi`)
 
@@ -50,11 +50,11 @@ classification, write `classification: manual`.
    - `migration_guide` → search the changelog body and the project
      docs for migration / upgrade guides for the target version.
    - `usages` → one Bash `grep -rn` call (never the Grep tool, which is not allowlisted) over
-     `~/git/defra/trade-imports-workspace/repos/{repo}/src` for
+     `repos/{repo}/src` for
      `from ['"]{package}` and `require\(['"]{package}` patterns.
 3. **Read the per-repo best-practices bundle** if the package is
    framework-adjacent (Hapi, govuk-frontend, Vitest, Playwright).
-   Path: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/best-practices.md`.
+   Path: `workareas/npm-upgrades/{run-id}/{repo}/best-practices.md`.
 4. **Decide classification, risk, and whether the upgrade is safe to
    automate.** See Classification below.
 5. **Write the classification into JSON** via

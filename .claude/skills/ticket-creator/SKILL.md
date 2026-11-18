@@ -1,6 +1,6 @@
 ---
 name: ticket-creator
-description: 'Create a new Jira ticket (Bug/Story/Task) end-to-end — gathers requirements via GDS plain-English questions, drafts the ticket to ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md for user iteration, then creates it in Jira via `tim jira create` (dry run first, confirmed only on explicit approval). Use when the user wants to raise, file, log, open or otherwise create a new Jira ticket from scratch (triggers: "create ticket", "raise ticket", "new ticket", "file a bug", "log a story", "open a ticket", "flesh out ticket"). NOT for working an existing ticket (use the ticket skill), NOT for assessing whether an existing ticket is refinement-ready (use the ticket-refiner skill), and NOT for a change made in the plants prototype (use `prototype`, which raises its own story).'
+description: 'Create a new Jira ticket (Bug/Story/Task) end-to-end — gathers requirements via GDS plain-English questions, drafts the ticket to workareas/ticket-creation/<slug>/draft.md for user iteration, then creates it in Jira via `tim jira create` (dry run first, confirmed only on explicit approval). Use when the user wants to raise, file, log, open or otherwise create a new Jira ticket from scratch (triggers: "create ticket", "raise ticket", "new ticket", "file a bug", "log a story", "open a ticket", "flesh out ticket"). NOT for working an existing ticket (use the ticket skill), NOT for assessing whether an existing ticket is refinement-ready (use the ticket-refiner skill), and NOT for a change made in the plants prototype (use `prototype`, which raises its own story).'
 context: inline
 allowed-tools: [Bash, Read, Write, Edit]
 argument-hint: '[optional one-line summary]'
@@ -10,11 +10,11 @@ Role: Help create well-structured, actionable Jira tickets.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. `tim` finds the workspace it runs
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds the workspace it runs
 in by itself — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
@@ -45,18 +45,18 @@ offending rows. Do not offer a capability picker from a stale file.
 Then Read these references so they sit in context for the whole
 session:
 
-- `~/git/defra/trade-imports-workspace/workareas/ticket-creation/.prereqs/epics.txt`
+- `workareas/ticket-creation/.prereqs/epics.txt`
   — fresh `KEY — summary` for each open epic on board 13780.
-- `~/git/defra/trade-imports-workspace/workareas/ticket-creation/.prereqs/capabilities.txt`
+- `workareas/ticket-creation/.prereqs/capabilities.txt`
   — `CAP-X.X — Name [STATUS]` for each capability defined in the EUDP
   capability map. The `[STATUS]` suffix is omitted where a capability
   has no status recorded.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md`
+- `docs/best-practices/gds/writing.md`
   — GDS plain-English rules for ticket prose.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`
+- `docs/best-practices/jira/ticket-conventions.md`
   — Type / priority / AC / named-conventions guidance for the EUDPA
   project.
-- `~/git/defra/trade-imports-workspace/.claude/skills/ticket-creator/assets/known-labels.md`
+- `.claude/skills/ticket-creator/assets/known-labels.md`
   — accepted EUDPA-project Jira labels (camelCase canonical form).
 
 ## Workflow
@@ -65,7 +65,7 @@ session:
 1. Gather information
 2. Either create a placeholder ticket, continue a placeholder ticket, or create with a new ticket. If creating a placeholder ticket, get a title that encapsulates the work and a parent epic, then create the ticket without gathering more information, and skip the remaining steps. If continuing a placeholder ticket, get the ticket key from the user, refresh the draft from JIRA, and continue with the remaining steps. 
 3. Determine type and fields
-4. Draft ticket to `~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md`
+4. Draft ticket to `workareas/ticket-creation/<slug>/draft.md`
 5. Iterate on draft with user
 6. Create ticket from final draft
 
@@ -181,7 +181,7 @@ Skip this step entirely when no parent epic was supplied.
 
 camelCase canonical form (e.g. `technicalImprovement`, not
 `tech-improvement`). Pick from the catalogue at
-`~/git/defra/trade-imports-workspace/.claude/skills/ticket-creator/assets/known-labels.md`
+`.claude/skills/ticket-creator/assets/known-labels.md`
 — prefer reusing an existing label over coining a new one.
 
 ## Step 3: Write Description
@@ -214,7 +214,7 @@ Jira; preserve them verbatim.
 
 ## Step 4: Iterate on Draft
 
-Write the draft to `~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md`:
+Write the draft to `workareas/ticket-creation/<slug>/draft.md`:
 
 ```markdown
 # Ticket Draft: <slug>
@@ -238,7 +238,7 @@ DRAFT — awaiting user approval
 
 Show the draft path to the user, summarise what is in it, and ask:
 
-> Draft at `~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md`.
+> Draft at `workareas/ticket-creation/<slug>/draft.md`.
 > Review and tell me what to change, or say "create it" to proceed.
 
 Edit the file in place as the user gives feedback. Only move to Step 5 once
@@ -249,7 +249,7 @@ before creating.
 
 When the user asks to shorten the draft ("condense", "shorten this", "too
 long"), rewrite `draft.md` in place against the GDS rules in
-`~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md`.
+`docs/best-practices/gds/writing.md`.
 
 | Cut | Keep                                          |
 |-----|-----------------------------------------------|
@@ -279,7 +279,7 @@ itself consent.
 ### 5.1 Write the manifest
 
 Write two files under
-`~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/`:
+`workareas/ticket-creation/<slug>/`:
 
 - `description.jira.txt` — the approved wiki-markup description body from
   Step 3, verbatim.
@@ -311,7 +311,7 @@ Medium. Copy any screenshots or logs the user gave you
 ### 5.2 Dry run: show the plan
 
 ```bash
-tim jira create --from ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/ticket.json --json
+tim jira create --from workareas/ticket-creation/<slug>/ticket.json --json
 ```
 
 This sends no request — `tim` only reads the manifest and the files next to
@@ -326,7 +326,7 @@ value.
 
 Ask:
 
-> Draft at `~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md`.
+> Draft at `workareas/ticket-creation/<slug>/draft.md`.
 > This is the plan `tim jira create` will send. Say "raise it" to create the
 > ticket for real, or tell me what to change.
 
@@ -335,7 +335,7 @@ Ask:
 Only once the user's own message gives explicit go-ahead:
 
 ```bash
-tim jira create --from ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/ticket.json --confirm <planId> --json
+tim jira create --from workareas/ticket-creation/<slug>/ticket.json --confirm <planId> --json
 ```
 
 Use the exact `planId` 5.2 printed. If the manifest changed since (a fresh
@@ -394,13 +394,13 @@ direction Jira stored.
 ```
 Ticket created: EUDPA-XXXXX
 Link: ${JIRA_BASE_URL}/browse/EUDPA-XXXXX
-Draft retained at: ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md
+Draft retained at: workareas/ticket-creation/<slug>/draft.md
 ```
 
 ## References
 
 - AC style and examples — see
-  `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`
+  `docs/best-practices/jira/ticket-conventions.md`
   (free-form bullets; no Gherkin mandate).
 - Ticket body shape, open-items-only AC, investigation tickets, wiki
   markup and escaping, and Jira workflow facts (no sprints, no "Won't

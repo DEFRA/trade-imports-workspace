@@ -17,18 +17,18 @@ Install any that aren't already on your `PATH`:
 for cmd in curl jq gh; do command -v "$cmd" >/dev/null || brew install "$cmd"; done
 ```
 
-### 1. Canonical clone location
+### 1. Clone location
 
-Clone the workspace to `~/git/defra/trade-imports-workspace`:
+The default place to clone the workspace is `~/git/defra/trade-imports-workspace`:
 
 ```bash
 git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imports-workspace
 ```
 
-Every LLM-typed Bash command, every helper script, and the
-`.claude/settings.json` allowlist patterns hardcode that path. There is no env
-var to set and no symlink to maintain — the canonical path is the checkout, and
-a checkout under any other name will not work.
+Any other folder works too, and several clones can sit side by side. `tim`
+finds the workspace it runs in, and the paths in skills, rules and docs are
+relative to the workspace root, so open Claude Code there. There is no env var
+to set and no symlink to maintain.
 
 `repos/` is gitignored, so a fresh clone starts empty. Populate it with
 `tim workspace setup`, which clones each repo named in
@@ -284,8 +284,8 @@ Designers working on the high-risk plants prototype
 (`trade-imports-plants-prototype`) onboard the same way as everyone else in
 this workspace — there is no separate, prototype-only setup:
 
-1. **Clone the workspace to the canonical path** (step 1 above) — same
-   command, same path. The prototype does not stand alone with its own
+1. **Clone the workspace** (step 1 above) — same command, same default
+   path. The prototype does not stand alone with its own
    copy of the workspace tooling; it is cloned under `repos/` like every
    other repo (`tim workspace setup`).
 2. **Set `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY` and
@@ -303,8 +303,7 @@ this workspace — there is no separate, prototype-only setup:
    installs the prototype's dependencies with its pinned npm version, and
    reports Jira and Confluence readiness (for GitHub, run `gh auth status`). It never touches Jira and never pushes.
    Re-run it with `--remove` to take the note back out.
-4. **Open Claude Code at the workspace root**
-   (`~/git/defra/trade-imports-workspace`), not inside
+4. **Open Claude Code at the workspace root**, not inside
    `repos/trade-imports-plants-prototype`. The agent layer for a designer's
    requests — the `prototype` skill — only loads from the workspace root;
    see the routing row in the workspace [`CLAUDE.md`](../CLAUDE.md) and

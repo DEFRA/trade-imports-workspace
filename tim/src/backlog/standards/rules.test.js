@@ -299,6 +299,26 @@ describe('#extractPointers', () => {
     ])
   })
 
+  test('a pointer naming a top-level folder resolves against the scope root, not the Topic dir', () => {
+    const body = [
+      '- Always on: `.claude/rules/code-quality.md` holds the house rules.',
+      '- Topic dir: `docs/best-practices/node/`',
+      '- Key files: `code-style.md`.',
+      '- Additive: `docs/best-practices/doc-comments/jsdoc.md`.'
+    ].join('\n')
+
+    const { pointsTo, topicDirRelative } = extractPointers(body, {
+      scopeRootRelative: ''
+    })
+
+    expect(topicDirRelative).toBe('docs/best-practices/node/')
+    expect(pointsTo).toEqual([
+      '.claude/rules/code-quality.md',
+      'docs/best-practices/node/code-style.md',
+      'docs/best-practices/doc-comments/jsdoc.md'
+    ])
+  })
+
   test('a full-workspace pointer becomes workspace-relative', () => {
     const body =
       '- See `~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md`.'

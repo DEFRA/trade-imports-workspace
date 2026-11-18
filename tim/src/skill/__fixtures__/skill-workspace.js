@@ -18,7 +18,7 @@ const settingsFixture = {
   permissions: {
     allow: [
       'Bash(tim:*)',
-      'Bash(~/git/defra/trade-imports-workspace/tools/fanout-no-walker/*:*)',
+      'Bash(tools/fanout-no-walker/*:*)',
       'Read(//tmp/**)'
     ],
     deny: ['Bash(node:*)']

@@ -10,7 +10,7 @@ GOV.UK and MoJ honestly, build what they asked for well, and record why.
 
 **Read first**: `references/house-conventions.md`, "Release styles and
 scripts", and
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
+`repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
 
 ## Guard rails
 
@@ -92,7 +92,7 @@ the offer in "What to say back".
 ## 3. Record their words
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:mandate -- record --set <release> --words "<their words, verbatim>" --scope "<the pages they named>"
+npm --prefix repos/trade-imports-plants-prototype run designer:mandate -- record --set <release> --words "<their words, verbatim>" --scope "<the pages they named>"
 ```
 
 - Quote their message word for word. Do not tidy it.
@@ -154,7 +154,7 @@ form `src/client/stylesheets/application.scss` uses for the date picker.
 
 Make `src/server/app/sets/<release>/layout.njk` if the release has none,
 copied from
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/release-assets/fixtures/sets/alpha/layout.njk`
+`repos/trade-imports-plants-prototype/scripts/release-assets/fixtures/sets/alpha/layout.njk`
 with the release id swapped in. Keep only the lines the release needs.
 
 Change the first line of each page that uses the pattern to
@@ -182,7 +182,7 @@ Add one entry to `src/server/app/sets/<release>/patterns.md`, in the shape
 ## 6. Check it
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release>
 ```
 
 The "Release styles and scripts" step checks the prefix, the entry, the

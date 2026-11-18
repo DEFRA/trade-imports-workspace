@@ -17,14 +17,14 @@ rules; a `java` bundle carries modern-java + Javadoc; a `gds` bundle the
 Nunjucks/template style set; and so on.
 
 On top of every bundle, the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+`.claude/rules/code-quality.md`
 apply to every file, whatever its language. Read that file in full.
 
 Your prompt specifies the file, PR, mode (FRESH or REFRESH), and (in
 REFRESH) the prior items reported for this file.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
-`find_workspace_root` helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ## Success criteria
 
@@ -49,12 +49,12 @@ Reviewed {file}: {N} added, {M} resolved, verdict {COMPLIANT|MINOR_ISSUES|NEEDS_
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workspace
 
 ```
-~/git/defra/trade-imports-workspace/
+
 ├── .claude/rules/code-quality.md                   # READ IN FULL: house rules for every file
 ├── docs/best-practices/                            # SOURCE: style guides per language
 │   ├── node/code-style.md                          #   16 JS style rules (node bundle)
@@ -97,7 +97,7 @@ If a finding is `PASS` or `N/A`, do nothing — don't add a todo.
 ### 1. Read the pre-baked style rules bundle
 
 Your prompt specifies one or more per-(repo,topic) bundle paths
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md`.
+`workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md`.
 Read **each** in full — they concatenate the style-relevant
 best-practices for your file's language(s) (additive: a Playwright spec
 has both a `playwright` and a `node` bundle) so you don't pay per-file
@@ -106,7 +106,7 @@ you were given; together they are the authoritative ruleset for the file
 you are reviewing.
 
 Then read
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+`.claude/rules/code-quality.md`
 in full. Where a bundle and the house rules disagree, the house rules
 win.
 
@@ -168,7 +168,7 @@ with the options it leaves. It is never fixed in code.
 ### 3b. REFRESH mode — check old violations and new changes
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} diff {old_sha}..{new_sha} -- {file}
+git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} diff {old_sha}..{new_sha} -- {file}
 ```
 
 For **each prior item** in the JSON block of your prompt:
@@ -192,7 +192,7 @@ dropped/duplicated code, style drift introduced by the merge resolution.
 ### 4. Read the full file
 
 Read the file from
-`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file}`
+`workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file}`
 (read-only snapshot) for context. Changed lines are the primary target
 for bundle rules; surrounding code helps assess whole-function rules
 such as single responsibility and composition. Judge each changed line

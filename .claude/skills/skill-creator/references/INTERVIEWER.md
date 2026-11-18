@@ -21,11 +21,11 @@ Your job: fill in `answers.*` via
 
 If not already in context:
 
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/patterns.md`
+- `docs/best-practices/skills/patterns.md`
   — the 8-pattern checklist (used to phrase each question).
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
+- `docs/best-practices/skills/anti-patterns.md`
   — to call out mismatches as the user answers.
-- `~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/assets/interview-schema.md`
+- `.claude/skills/skill-creator/assets/interview-schema.md`
   — the JSON shape `tim skill answer` writes into.
 
 ## Workflow

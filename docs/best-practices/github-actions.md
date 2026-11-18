@@ -184,7 +184,7 @@ Every repo protects `main` with one repository ruleset, `Protect main branch`. I
 
 ## References
 
-- `~/git/defra/trade-imports-workspace/.github/workflows/e2e-tests.yml` — the publish source of truth
-- `~/git/defra/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml` — retention + history-truncation
+- `.github/workflows/e2e-tests.yml` — the publish source of truth
+- `.github/workflows/cleanup-e2e-reports.yml` — retention + history-truncation
 - `repos/trade-imports-animals-frontend/.github/workflows/lighthouse.yml` — second publisher (concurrency group must match the E2E publisher)
 - `peaceiris/actions-gh-pages` — <https://github.com/peaceiris/actions-gh-pages>

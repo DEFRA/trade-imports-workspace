@@ -36,7 +36,7 @@ report as the JSON envelope's `.result`.
 ## State model
 
 All per-package state is in `packages.{repo}.json` under
-`~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/`.
+`workareas/npm-upgrades/{run-id}/{repo}/`.
 Schema: `assets/packages-table.md`.
 
 There are no `.auto.md` / `.manual.md` plan files on disk — the
@@ -101,9 +101,9 @@ checked by the "Check audit allowlist" step in each repo's CI
 ## Workspace Layout
 
 ```
-~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/phase0.json
+workareas/npm-upgrades/{run-id}/phase0.json
                                     — every phase 0 run (schema in assets/packages-table.md)
-~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/
+workareas/npm-upgrades/{run-id}/{repo}/
   packages.{repo}.json              — canonical per-repo state (schema in assets/packages-table.md)
   allowlist.{repo}.json             — allowlist entries this run wrote
   overrides.{repo}.json             — phase 4 decision per override

@@ -22,7 +22,7 @@ You need:
 
 - a GitHub account in the DEFRA organisation, with write access to the
   prototype (ask the prototype maintainer)
-- the workspace cloned to `~/git/defra/trade-imports-workspace`
+- the workspace cloned (by default to `~/git/defra/trade-imports-workspace`)
 - Node.js 24
 - [Claude Code](https://claude.com/claude-code)
 
@@ -40,7 +40,7 @@ has every step in detail.
 
 ## Each time
 
-1. Open Claude Code in `~/git/defra/trade-imports-workspace`, not in the
+1. Open Claude Code in the workspace folder, not in the
    prototype's own folder.
 2. Say **"run the prototype"**.
 3. Open [http://localhost:3103](http://localhost:3103).

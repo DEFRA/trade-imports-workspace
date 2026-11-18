@@ -17,7 +17,7 @@ Every rule shares these settings:
 | Evaluation group | `<service>-advanced-alerts`, the existing one. `[UNPROVEN]` it evaluates every 5 minutes; the form shows its interval |
 | Data source | CloudWatch, Metric Search, Builder |
 | Namespace | `<service>` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off, for rules 1, 2 and 3. Rules 1a, 4 and 5 set their own, in their tables |
+| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off, for rules 1, 2 and 3. Rules 1a, 1b, 4 and 5 set their own, in their tables |
 | Time range | the same length as the rule's period |
 | Alert condition | the "WHEN QUERY `Last` IS ABOVE …" row under the query. The Advanced options toggle shows the same thing as Reduce and Threshold expressions; either works |
 | Pending period | None. Grafana refuses any pending period shorter than the group's evaluation interval ("Pending period must be greater than or equal to the evaluation interval") |
@@ -46,34 +46,43 @@ values.
 Before saving, Preview should show one row per dependency and operation.
 If it shows none, check Match exact is off and both dimensions are set.
 
-## 1a. <service> dependency reported unavailable
+## 1a. <service> <database> unavailable
 
-One series per dependency that publishes `external.dependency.available`:
-a database, from the driver's heartbeats; Redis, from the client's
-connection events; and an HTTP dependency, from the outcome of its most
-recent call, where the service publishes it (animals-frontend does:
-`references/METRICS.md` → "A database" and "Availability: passive or
-active", `references/NODE.md` → "Availability of an HTTP dependency"
-and "Redis"). Keep this section only if the service publishes it for
-some dependency. The table under "Check" says which of rules 1, 2 and 3
-are built beside it.
-
-An HTTP dependency's reading holds its last call's outcome, so one
-failed call with no call after it keeps this rule firing until a call
-succeeds (`references/ALERTS.md`).
+For a database, its availability comes from the driver's heartbeats
+(`references/METRICS.md` → "A database"). Keep this section only if the
+service has a database. The table under "Check" says which of rules 1, 2
+and 3 are built beside it.
 
 | Field | Value |
 |---|---|
-| Rule name | `<service> dependency reported unavailable` |
+| Rule name | `<service> <database> unavailable` |
 | Metric | `external.dependency.available` |
-| Dimensions | `dependency` = `*`, the only dimension, with Match exact off |
+| Dimensions | `dependency` = `<database>`, the only dimension, with Match exact off |
 | Statistic | `Maximum` |
 | Period | `300` (5 minutes) |
 | Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
-| Summary | `{{ $labels.dependency }} has been unavailable to every task for 5 minutes` |
+| Summary | `<database> has been unavailable to every task for 5 minutes` |
 
-Before saving, Preview should show one row per dependency that
-publishes it.
+## 1b. <service> Redis unavailable
+
+For a Node service whose session store is Redis. Its availability comes
+from the client's connection events (`references/NODE.md` → "Redis").
+Keep this section only if the service uses Redis. Duplicate rule 1a, or
+build it in full where there is no rule 1a, then set:
+
+| Field | Value |
+|---|---|
+| Rule name | `<service> Redis unavailable` |
+| Metric | `external.dependency.available` |
+| Dimensions | `dependency` = `redis`, the only dimension, with Match exact off |
+| Statistic | `Maximum` |
+| Period | `300` (5 minutes) |
+| Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
+| Summary | `Redis has been unavailable to every task for 5 minutes` |
+
+Never widen rule 1a or 1b to `dependency` = `*`: a Node service also
+publishes `external.dependency.available` for its HTTP dependencies, and
+those are not alerted on (see "Not alerted on").
 
 ## 2. <service> dependency calls failing
 
@@ -154,8 +163,9 @@ here, each Normal, none in Error:
 
 | The service has | Rules |
 |---|---|
-| No dependency publishing `external.dependency.available` | 1, 2 and 3 (three rules) |
-| A dependency publishing it (a database, Redis, or HTTP dependencies as on animals-frontend) and dependencies with call metrics | 1, 1a, 2 and 3 (four rules) |
+| No database and no Redis | 1, 2 and 3 (three rules) |
+| A database and other dependencies | 1, 1a, 2 and 3 (four rules) |
+| Redis (a Node service) and other dependencies | 1, 1b, 2 and 3 (four rules) |
 | A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules) |
 | A database as its only dependency, without its command metrics | 1a (one rule) |
 
@@ -165,8 +175,17 @@ database"). Redis records none: its commands are not timed
 (`references/NODE.md` → "Redis"). A heartbeat or a connection event
 records none either.
 
-Add rule 4 and rule 5 to the count when they are kept. A session store
-such as Redis is a database here: rule 1a covers it as `dependency`
-`redis`. Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
+Add rule 4 and rule 5 to the count when they are kept. Redis gets rule
+1b, not rule 1a. Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule
 (More → Export → JSON) for Claude to check this sheet against.
+
+## Not alerted on
+
+- `external.dependency.available` for an HTTP dependency. It is for the
+  dashboard only; rule 1 alerts on `external.call.failure` instead
+  (`references/METRICS.md` → "Availability: passive or active" says
+  why). On a Node service it holds the most recent call's outcome
+  (`references/NODE.md` → "Availability of an HTTP dependency"), so one
+  failed call on a quiet dependency would keep an alert firing until a
+  call succeeds.

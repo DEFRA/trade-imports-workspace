@@ -1,23 +1,19 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { execa } from 'execa'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
   JIRA_BASE,
   loadJiraFixture,
   mockJiraForEachTest
 } from '../../test-support/jira-mock.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import {
   runCreate,
   renderCreatePlan,
   renderCreated,
   CREATED_FILE
 } from './create.js'
-
-const here = dirname(fileURLToPath(import.meta.url))
-const cliPath = join(here, '..', '..', 'cli.js')
 
 const validManifest = (overrides = {}) => ({
   schema: 'tim-ticket/1',
@@ -324,25 +320,9 @@ describe('tim jira create --json (spawn)', () => {
       JSON.stringify(validManifest())
     )
 
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        cliPath,
-        'jira',
-        'create',
-        '--from',
-        join(cliWorkDir, 'ticket.json'),
-        '--json'
-      ],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'create', '--from', join(cliWorkDir, 'ticket.json'), '--json'],
+      { env: { JIRA_USER: '', JIRA_TOKEN: '', JIRA_BASE_URL: '' } }
     )
 
     expect(exitCode).toBe(0)

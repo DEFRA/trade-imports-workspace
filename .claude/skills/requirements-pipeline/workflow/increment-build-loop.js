@@ -992,8 +992,9 @@ const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
-const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
+const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).join('')
+const gateCommand = (phase, logs, repoKeys) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1004,8 +1005,8 @@ const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--det
   gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
   copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
   not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
-const gateCommandList = (phases, logs) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
+const gateCommandList = (phases, logs, repoKeys) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys)}\``).join('\n')
 
 const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
@@ -1055,14 +1056,14 @@ lease is still this run's and \`result.up\` is true, the check failed for a reas
 
 const BUILDER_PHASES = ['unit', 'fit']
 
-const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
+const builderGateRule = (id, stage, phases = BUILDER_PHASES, repoKeys) =>
   `${
     phases.length === 0
       ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
 yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
 repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-${gateCommandList(phases, gateLogs(id, stage))}
+${gateCommandList(phases, gateLogs(id, stage), repoKeys)}
 Each starts its gate and returns at once; the wait below prints the gate's one JSON line, and a red rung names its \`log\` —
 read that file once.
 ${GATE_WAIT_RULE}
@@ -1074,11 +1075,12 @@ never start or stop the workspace stack, and never pick a script by hand for a r
 The plan's sections 5 and 6 checks are yours to run as the plan writes them.
 ${RUN_STACK_RULE}`
 
-const codexGateUnit = (id, stage) =>
-  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"`
+const codexGateUnit = (id, stage, repoKeys) =>
+  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)}`
 
 const CODEX_NO_GATE = 'none'
-const codexGateBinding = (id, stage, phases) => (phases.includes('unit') ? codexGateUnit(id, stage) : CODEX_NO_GATE)
+const codexGateBinding = (id, stage, phases, repoKeys) =>
+  phases.includes('unit') ? codexGateUnit(id, stage, repoKeys) : CODEX_NO_GATE
 
 const GATE_RUNG_SCHEMA = {
   type: 'object',
@@ -6275,7 +6277,7 @@ ${baselineRungList(baseline)}`
 ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
 ${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty(rowRigour)}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
+        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases, repos) }
       })
     : await recoverRunStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You build the change the plan decides — you do not review it,
@@ -6318,7 +6320,7 @@ RULES:
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
-${builderGateRule(id, 'implement', builderPhases)}
+${builderGateRule(id, 'implement', builderPhases, repos)}
 
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
@@ -6681,7 +6683,7 @@ ${impl.notes || '(none)'}
 ${SPEC_SYNC_FIX_LINE}
 ${COMPLETION_LINES_FIX}${mergeNote}${workspaceRepoRule()}`,
       workingBranch: workBranch,
-      bindings: { gateUnit: codexGateBinding(id, stage, builderPhases) }
+      bindings: { gateUnit: codexGateBinding(id, stage, builderPhases, repos) }
     })
     if (!result) {
       results.push(
@@ -6721,7 +6723,7 @@ ${ruledFixes}
 ${treeDuty}${FIX_RULES}
 ${SPEC_SYNC_FIX_LINE}
 ${COMPLETION_LINES_FIX}
-${builderGateRule(id, stage, builderPhases)}
+${builderGateRule(id, stage, builderPhases, repos)}
 ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.

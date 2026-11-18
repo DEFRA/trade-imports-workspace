@@ -42,6 +42,8 @@ const expectedRun = ({ stderr, ...rest }) => ({
   stderr: asTimSaysIt(stderr)
 })
 
+const timeoutForRuns = (runCount) => Math.max(30_000, runCount * 5_000)
+
 const runTim = (staged, args) =>
   execa('node', [TIM_CLI_PATH, '--workspace', staged.root, 'skill', ...args], {
     reject: false,
@@ -64,28 +66,32 @@ let staged
 afterEach(() => staged?.remove())
 
 describe('tim skill start matches start-skill-creator.sh', () => {
-  test('Should print the recorded mode and payload for every trigger and leave the recorded decisions files', async () => {
-    staged = stageSkillWorkspace()
+  test(
+    'Should print the recorded mode and payload for every trigger and leave the recorded decisions files',
+    async () => {
+      staged = stageSkillWorkspace()
 
-    const runs = []
-    for (const { name, trigger } of startCases) {
-      runs.push({
-        case: name,
-        ...(await recordTimRun(staged, ['start', trigger]))
+      const runs = []
+      for (const { name, trigger } of startCases) {
+        runs.push({
+          case: name,
+          ...(await recordTimRun(staged, ['start', trigger]))
+        })
+      }
+
+      expect({
+        runs,
+        tree: recordTree(staged, [
+          'workareas/skill-creator',
+          'workareas/skills-audit'
+        ])
+      }).toEqual({
+        runs: golden.start.runs.map(expectedRun),
+        tree: golden.start.tree
       })
-    }
-
-    expect({
-      runs,
-      tree: recordTree(staged, [
-        'workareas/skill-creator',
-        'workareas/skills-audit'
-      ])
-    }).toEqual({
-      runs: golden.start.runs.map(expectedRun),
-      tree: golden.start.tree
-    })
-  })
+    },
+    timeoutForRuns(startCases.length)
+  )
 
   test('Should give the mode and payload as one envelope with --json', async () => {
     staged = stageSkillWorkspace()
@@ -115,33 +121,37 @@ describe('tim skill start matches start-skill-creator.sh', () => {
 })
 
 describe('tim skill answer matches interview-add-answer.sh', () => {
-  test('Should write each answer byte for byte as the script did and refuse the same values', async () => {
-    staged = stageSkillWorkspace()
-    await runTim(staged, ['start', `scaffold skill ${answerRunId}`])
+  test(
+    'Should write each answer byte for byte as the script did and refuse the same values',
+    async () => {
+      staged = stageSkillWorkspace()
+      await runTim(staged, ['start', `scaffold skill ${answerRunId}`])
 
-    const runs = []
-    for (const { name, args } of answerCases) {
-      const run = await recordTimRun(staged, [
-        'answer',
-        '--run-id',
-        answerRunId,
-        ...args
-      ])
-      runs.push({
-        case: name,
-        ...run,
-        tree: recordTree(staged, [`workareas/skill-creator/${answerRunId}`])
-      })
-    }
-    for (const { name, args } of answerRefusalCases) {
-      runs.push({
-        case: name,
-        ...(await recordTimRun(staged, ['answer', ...args]))
-      })
-    }
+      const runs = []
+      for (const { name, args } of answerCases) {
+        const run = await recordTimRun(staged, [
+          'answer',
+          '--run-id',
+          answerRunId,
+          ...args
+        ])
+        runs.push({
+          case: name,
+          ...run,
+          tree: recordTree(staged, [`workareas/skill-creator/${answerRunId}`])
+        })
+      }
+      for (const { name, args } of answerRefusalCases) {
+        runs.push({
+          case: name,
+          ...(await recordTimRun(staged, ['answer', ...args]))
+        })
+      }
 
-    expect(runs).toEqual(golden.answer.map(expectedRun))
-  })
+      expect(runs).toEqual(golden.answer.map(expectedRun))
+    },
+    timeoutForRuns(1 + answerCases.length + answerRefusalCases.length)
+  )
 
   test('Should give the field and value as the envelope result with --json', async () => {
     staged = stageSkillWorkspace()
@@ -170,19 +180,23 @@ describe('tim skill answer matches interview-add-answer.sh', () => {
 })
 
 describe('tim skill render matches render-interview.sh', () => {
-  test('Should print the recorded markdown for every decisions file', async () => {
-    staged = stageSkillWorkspace()
+  test(
+    'Should print the recorded markdown for every decisions file',
+    async () => {
+      staged = stageSkillWorkspace()
 
-    const runs = []
-    for (const { name, args } of renderCases) {
-      runs.push({
-        case: name,
-        ...(await recordTimRun(staged, ['render', ...args]))
-      })
-    }
+      const runs = []
+      for (const { name, args } of renderCases) {
+        runs.push({
+          case: name,
+          ...(await recordTimRun(staged, ['render', ...args]))
+        })
+      }
 
-    expect(runs).toEqual(golden.render.map(expectedRun))
-  })
+      expect(runs).toEqual(golden.render.map(expectedRun))
+    },
+    timeoutForRuns(renderCases.length)
+  )
 
   test('Should refuse a run id with a slash, which the script read as a path', async () => {
     staged = stageSkillWorkspace()
@@ -217,22 +231,26 @@ describe('tim skill render matches render-interview.sh', () => {
 })
 
 describe('tim skill scaffold matches scaffold-skill.sh', () => {
-  test('Should write the recorded tree, settings and summary for every case, run after run', async () => {
-    staged = stageSkillWorkspace()
+  test(
+    'Should write the recorded tree, settings and summary for every case, run after run',
+    async () => {
+      staged = stageSkillWorkspace()
 
-    const runs = []
-    for (const { name, args } of scaffoldCases) {
-      const run = await recordTimRun(staged, ['scaffold', ...args])
-      runs.push({
-        case: name,
-        ...run,
-        settings: recordSettings(staged),
-        tree: recordTree(staged, SCAFFOLD_WATCHED_FOLDERS)
-      })
-    }
+      const runs = []
+      for (const { name, args } of scaffoldCases) {
+        const run = await recordTimRun(staged, ['scaffold', ...args])
+        runs.push({
+          case: name,
+          ...run,
+          settings: recordSettings(staged),
+          tree: recordTree(staged, SCAFFOLD_WATCHED_FOLDERS)
+        })
+      }
 
-    expect(runs).toEqual(golden.scaffold.map(expectedRun))
-  })
+      expect(runs).toEqual(golden.scaffold.map(expectedRun))
+    },
+    timeoutForRuns(scaffoldCases.length)
+  )
 
   test('Should leave helper stubs executable', async () => {
     staged = stageSkillWorkspace()
@@ -261,10 +279,7 @@ describe('tim skill scaffold matches scaffold-skill.sh', () => {
         references: [],
         schema: null,
         helpers: [],
-        allowlist_entries: [
-          'Bash(~/git/defra/trade-imports-workspace/tools/prose-plain/*)',
-          'Bash(~/git/defra/trade-imports-workspace/tools/prose-plain/*:*)'
-        ]
+        allowlist_entries: ['Bash(tools/prose-plain/*)']
       })
     )
   })

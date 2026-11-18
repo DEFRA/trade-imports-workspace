@@ -21,16 +21,6 @@ const SKIPPED_FOLDERS = ['docs/analysis', 'docs/adr']
 // and it contains the given text.
 const ALLOWED = [
   {
-    file: '.claude/settings.json',
-    text: '~/git/defra/trade-imports-workspace',
-    why: 'permission rules, which only a person edits'
-  },
-  {
-    file: '.claude/hooks/guard-bash.sh',
-    text: 'npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test',
-    why: 'the guard hook, which only a person edits'
-  },
-  {
     file: 'CLAUDE.md',
     text: 'The default place to clone the workspace is `~/git/defra/trade-imports-workspace`',
     why: 'clone instructions'

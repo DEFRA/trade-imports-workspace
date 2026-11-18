@@ -25,7 +25,7 @@ const NO_VERIFY =
 const AMEND_PUSHED =
   'git commit --amend rewrites HEAD, but HEAD is already on a remote branch (pushed). Make a NEW commit instead of amending published history.'
 const LITERAL_USERS_PATH =
-  'Use ~/ instead of a literal /Users/<user>/ path — the permission matcher treats them as different prefixes, so /Users/ triggers avoidable prompts.'
+  'Type the path relative to the workspace root instead of a literal /Users/<user>/ path — the permission matcher compares literal strings, so an absolute path triggers avoidable prompts.'
 const RAW_PLAYWRIGHT =
   "Use the project wrapper 'npm run test:docker-compose' rather than raw 'npx playwright test' — the wrapper does setup the raw invocation skips."
 const CD_THEN_PUSH =

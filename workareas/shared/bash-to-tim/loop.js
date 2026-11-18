@@ -111,7 +111,7 @@ while (landed.length < MAX_ROWS) {
   )
   const row = state && nextRow(state.rows)
   if (!row) {
-    const left = (state?.rows ?? []).filter((r) => r.status !== 'done')
+    const left = (state?.rows ?? []).filter((r) => r.status !== 'done' && r.status !== 'dropped')
     onlyPersonWorkLeft = Boolean(state) && left.every((r) => r.status === 'person' || r.status === 'todo')
     stopReason = left.length
       ? `no buildable row left: ${left.map((r) => `${r.id} ${r.status}`).join(', ')}`

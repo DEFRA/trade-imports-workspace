@@ -12,13 +12,13 @@ The page on which a whole high-risk plants notification is read back before subm
 
 ### Requirement: Check-your-answers numbers three sections over the answers it renders
 **ID**: REQ-PLANTS-CYA-001
-The system MUST group the page under three numbered section headings — About the consignment, Arrival and destination, and Consignment parties — showing the entered values as cards under those headings.
+The system MUST group the page under three numbered section headings — About the consignment, Arrival and destination, and Addresses — showing the entered values as cards under those headings.
 
 #### Scenario: Check-your-answers shows the three numbered sections
 **ID**: SCN-PLANTS-CYA-001-A
 - **GIVEN** the user has completed every section of a potato notification
 - **WHEN** they view check-your-answers
-- **THEN** the numbered section headings read "1. About the consignment", "2. Arrival and destination" and "3. Consignment parties"
+- **THEN** the numbered section headings read "1. About the consignment", "2. Arrival and destination" and "3. Addresses"
 
 #### Scenario: A fully answered notification's check-your-answers reflects entered values
 **ID**: SCN-PLANTS-CYA-001-B
@@ -33,7 +33,7 @@ The system MUST omit the consignor card for a potatoes notification, and MUST sh
 #### Scenario: A potatoes notification omits the consignor card
 **ID**: SCN-PLANTS-CYA-002-A
 - **GIVEN** a potatoes notification is open on check-your-answers
-- **WHEN** the user reads the Consignment parties section
+- **WHEN** the user reads the Addresses section
 - **THEN** no "Consignor" card is shown
 
 #### Scenario: A plants-for-planting notification shows the consignor card

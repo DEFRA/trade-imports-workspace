@@ -64,13 +64,13 @@ The system MUST return the user, when they follow the back link from the consign
 
 ### Requirement: Overview's task for this page shows Completed once every role has an address
 **ID**: REQ-CONSIGN-ADDR-004
-The system MUST show Overview's "Roles and addresses" task as Completed once every party role on the consignment addresses page has been given an address.
+The system MUST show Overview's "Consignment addresses" task as Completed once every party role on the consignment addresses page has been given an address.
 
 #### Scenario: Answering every role marks the Overview task Completed
 **ID**: SCN-CONSIGN-ADDR-004-A
 - **GIVEN** the user has chosen an address for every party role on the consignment addresses page
 - **WHEN** they return to Overview
-- **THEN** the "Roles and addresses" task shows Completed
+- **THEN** the "Consignment addresses" task shows Completed
 
 ### Requirement: The page also sets out a CPH number section when a commodity on the notification requires one
 **ID**: REQ-CONSIGN-ADDR-005

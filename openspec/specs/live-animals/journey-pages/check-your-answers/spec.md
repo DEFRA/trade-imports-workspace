@@ -18,14 +18,14 @@ The system MUST group the page under six numbered section headings, in order, ho
 **ID**: SCN-CYA-001-A
 - **GIVEN** the user has just started a notification and answered nothing beyond the entry page
 - **WHEN** they view the review
-- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents", "5. Consignment addresses" and "6. Contact address", in that order
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents", "5. Addresses" and "6. Contact address", in that order
 
 #### Scenario: Every card is titled one heading level below its numbered section, with no subsection heading between
 **ID**: SCN-CYA-001-B
 - **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
 - **THEN** every card's title is a heading one level below its numbered section heading
-- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Roles and addresses" or "Contact address for this consignment"
+- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Consignment addresses" or "Contact address for this consignment"
 - **AND** "1. About the consignment" holds the cards "Origin of import", "What are you importing?" and "Main import reason", in that order
 
 #### Scenario: The Uploaded documents section stands even when nothing has been uploaded
@@ -53,9 +53,9 @@ The system MUST group the page under six numbered section headings, in order, ho
 **ID**: SCN-CYA-001-D
 - **GIVEN** the user has selected a party for each of the notification's address roles — place of origin, consignor, consignee, importer, and place of destination
 - **WHEN** they view check-your-answers
-- **THEN** the Addresses card, the one card under "5. Consignment addresses", lists all of them, each showing the selected party's name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line, with no telephone number or email address
+- **THEN** the Consignment addresses card, the one card under "5. Addresses", lists all of them, each showing the selected party's name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line, with no telephone number or email address
 - **AND** an address in Great Britain reads "United Kingdom" as its country
-- **AND** its one header Change link opens the roles and addresses page
+- **AND** its one header Change link opens the consignment addresses page
 
 #### Scenario: The reason, additional details and contact address answers stand on their own titled cards
 **ID**: SCN-CYA-001-H
@@ -273,11 +273,11 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **WHEN** the user views the review
 - **THEN** the error summary names no species
 
-#### Scenario: A role never answered gives one error summary entry for the Addresses card and none for the role
+#### Scenario: A role never answered gives one error summary entry for the Consignment addresses card and none for the role
 **ID**: SCN-CYA-007-I
 - **GIVEN** a draft notification complete except that one role was never answered
 - **WHEN** the user views the review
-- **THEN** the error summary holds the single entry "Complete roles and addresses", linking to the Addresses card
+- **THEN** the error summary holds the single entry "Complete consignment addresses", linking to the Consignment addresses card
 - **AND** no entry names the role
 
 #### Scenario: A main import reason missing a follow-up answer it asks gives one error summary entry for the main import reason card
@@ -404,13 +404,13 @@ While a notification is being amended, the system MUST show the review with no e
 
 ### Requirement: Ports, destination and transited countries and document types read back exactly as they were offered
 **ID**: REQ-CYA-013
-The system MUST show the port of entry, and the "Exit border control post" of a transit or the "Port of exit" of a temporary admission, on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>". It MUST name a territory chosen as the destination country, or among the transited countries, "<territory> (<country>)", as the lists offered it, and MUST name each document's type with the wording the upload documents page offered.
+The system MUST show the port of entry, and the "Port of exit" of a transit or of a temporary admission, on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>". It MUST name a territory chosen as the destination country, or among the transited countries, "<territory> (<country>)", as the lists offered it, and MUST name each document's type with the wording the upload documents page offered.
 
-#### Scenario: The exit border control post row reads the option the user chose
+#### Scenario: The port of exit row reads the option the user chose
 **ID**: SCN-CYA-013-A
-- **GIVEN** a transit notification whose exit border control post is Port of Dover
+- **GIVEN** a transit notification whose port of exit is Port of Dover
 - **WHEN** the user views the review
-- **THEN** the "Exit border control post" row reads "Port of Dover - GB DVR", the same text as the option they chose
+- **THEN** the "Port of exit" row reads "Port of Dover - GB DVR", the same text as the option they chose
 
 #### Scenario: The port of entry row reads the port's name, a dash and its code
 **ID**: SCN-CYA-013-B
@@ -486,13 +486,13 @@ The system MUST always show the Name, Address, Country, Approval number and Type
 
 ### Requirement: The review shows only the exit answers the main import reason asked for
 **ID**: REQ-CYA-016
-The system MUST show the exit rows on the review only for the import reasons that ask them: "Exit border control post" then "Destination country" for transit, "Exit date" then "Port of exit" for temporary admission horses, and none of them for a reason that asks none of them.
+The system MUST show the exit rows on the review only for the import reasons that ask them: "Port of exit" then "Destination country" for transit, "Exit date" then "Port of exit" for temporary admission horses, and none of them for a reason that asks none of them.
 
-#### Scenario: A transit notification shows its exit border control post then its destination country, and no exit date
+#### Scenario: A transit notification shows its port of exit then its destination country, and no exit date
 **ID**: SCN-CYA-016-A
-- **GIVEN** a notification whose main import reason is transit, with an exit border control post and a destination country saved
+- **GIVEN** a notification whose main import reason is transit, with a port of exit and a destination country saved
 - **WHEN** the user views the review
-- **THEN** the Main import reason card shows the "Exit border control post" row and then the "Destination country" row, each showing what was saved
+- **THEN** the Main import reason card shows the "Port of exit" row and then the "Destination country" row, each showing what was saved
 - **AND** no Port of exit or Exit date row is shown
 
 #### Scenario: A temporary admission shows its exit date and port of exit, and no destination country
@@ -506,7 +506,7 @@ The system MUST show the exit rows on the review only for the import reasons tha
 **ID**: SCN-CYA-016-C
 - **GIVEN** a notification whose main import reason is re-entry
 - **WHEN** the user views the review
-- **THEN** no Destination country, Exit date, Port of exit or Exit border control post row is shown
+- **THEN** no Destination country, Exit date or Port of exit row is shown
 
 ### Requirement: A species block's Identification details table heads only the identifiers asked of that line's species
 **ID**: REQ-CYA-017
@@ -532,15 +532,15 @@ The system MUST head a species block's identifier table "Identification details"
 - **THEN** the species block's Identification details has a Change link opening the animal identification page
 - **AND** a submitted notification's Identification details has none
 
-### Requirement: The Addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address
+### Requirement: The Consignment addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address
 **ID**: REQ-CYA-020
-The system MUST show on the Addresses card, after the county parish holding row, a subsection headed "Permanent address" with one entry for each animal that has a saved permanent address. Each entry MUST be keyed by the animal's species common name and number and hold its name, address lines and country, with no telephone number or email address. An animal with no saved address MUST have no entry, and the subsection MUST be absent when no animal has one.
+The system MUST show on the Consignment addresses card, after the county parish holding row, a subsection headed "Permanent address" with one entry for each animal that has a saved permanent address. Each entry MUST be keyed by the animal's species common name and number and hold its name, address lines and country, with no telephone number or email address. An animal with no saved address MUST have no entry, and the subsection MUST be absent when no animal has one.
 
 #### Scenario: The Permanent address subsection lists an entry for each animal that has a saved permanent address
 **ID**: SCN-CYA-020-A
 - **GIVEN** a cat line of two animals, one saved against the place of destination and one with a hand-entered address
 - **WHEN** the user views check-your-answers
-- **THEN** the Addresses card's "Permanent address" subsection lists an entry for each animal keyed by its species' common name and number
+- **THEN** the Consignment addresses card's "Permanent address" subsection lists an entry for each animal keyed by its species' common name and number
 - **AND** each entry holds that animal's name, address lines and country, with no telephone number or email address
 
 #### Scenario: An animal that still owes a permanent address has no entry, while commodity details are still reported outstanding
@@ -554,7 +554,7 @@ The system MUST show on the Addresses card, after the county parish holding row,
 **ID**: SCN-CYA-020-C
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
-- **THEN** the Addresses card has no "Permanent address" subsection
+- **THEN** the Consignment addresses card has no "Permanent address" subsection
 
 ### Requirement: The Origin of import card always shows its three rows
 **ID**: REQ-CYA-021
@@ -573,15 +573,15 @@ The system MUST show the Country of origin, Region of origin code and Internal r
 - **WHEN** the user views the review
 - **THEN** the Origin of import card's "Region of origin code" row reads "Not applicable"
 
-### Requirement: The Arrival details card dates the arrival at the destination and reads the transit countries inside it
+### Requirement: The Arrival details card dates the arrival at the port of entry and reads the transit countries inside it
 **ID**: REQ-CYA-022
-The system MUST key the arrival date row on the Arrival details card "Arrival date at destination". When transit countries apply, it MUST read them in that card under a "Transit countries" subsection, on a row keyed "Countries that the consignment will travel through", comma-separated in the order added, with its own Change link and no separate Transit countries card. A submitted notification's row MUST carry no Change link.
+The system MUST key the arrival date row on the Arrival details card "Arrival date at port of entry". When transit countries apply, it MUST read them in that card under a "Transit countries" subsection, on a row keyed "Countries that the consignment will travel through", comma-separated in the order added, with its own Change link and no separate Transit countries card. A submitted notification's row MUST carry no Change link.
 
-#### Scenario: The arrival date row is keyed at the destination
+#### Scenario: The arrival date row is keyed at the port of entry
 **ID**: SCN-CYA-022-A
 - **GIVEN** a notification with an arrival date
 - **WHEN** the user views the review
-- **THEN** the Arrival details card reads the date on a row keyed "Arrival date at destination"
+- **THEN** the Arrival details card reads the date on a row keyed "Arrival date at port of entry"
 
 #### Scenario: A road notification reads its transit countries inside the Arrival details card
 **ID**: SCN-CYA-022-B
@@ -685,13 +685,13 @@ The system MUST show one card per selected commodity in "2. Description of the g
 
 ### Requirement: The review reads the county parish holding number back as its three parts separated by slashes
 **ID**: REQ-CYA-025
-The system MUST show the county parish holding number on the Addresses card as its county, parish and holding parts separated by slashes, such as "12/345/6789". A stored value that is not nine digits MUST be shown as it is stored.
+The system MUST show the county parish holding number on the Consignment addresses card as its county, parish and holding parts separated by slashes, such as "12/345/6789". A stored value that is not nine digits MUST be shown as it is stored.
 
 #### Scenario: A stored county parish holding number reads with slashes
 **ID**: SCN-CYA-025-A
 - **GIVEN** a notification whose commodity asks for a county parish holding number, stored as nine digits
 - **WHEN** the user views the review
-- **THEN** the Addresses card's county parish holding row reads "12/345/6789"
+- **THEN** the Consignment addresses card's county parish holding row reads "12/345/6789"
 
 #### Scenario: A stored CPH number that is not nine digits reads exactly as stored
 **ID**: SCN-CYA-025-B
@@ -746,13 +746,13 @@ The system MUST head and title an amendment's review "Review your notification" 
 
 ### Requirement: The Addresses and Contact address cards offer only their heading Change link
 **ID**: REQ-CYA-026
-The system MUST give the Addresses card and the Contact address card no link but the Change link in each card's heading: no party row and no contact address row carries a link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
+The system MUST give the Consignment addresses card and the Contact address card no link but the Change link in each card's heading: no party row and no contact address row carries a link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
 
 #### Scenario: The address cards carry no link but their heading Change links
 **ID**: SCN-CYA-026-A
 - **GIVEN** a draft notification with every role answered
 - **WHEN** the user views the review
-- **THEN** the Addresses card's only link is its heading Change link
+- **THEN** the Consignment addresses card's only link is its heading Change link
 - **AND** the Contact address card's only link is its heading Change link
 
 #### Scenario: A role whose copied address breaks the address-book rules is named in the error summary

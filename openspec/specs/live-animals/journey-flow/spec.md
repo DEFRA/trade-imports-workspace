@@ -14,7 +14,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification being worked on
 - **WHEN** its pages are followed from the start
-- **THEN** they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, and finally check your answers, the declaration and the confirmation
+- **THEN** they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Consignment addresses, Contact address for this consignment, and finally check your answers, the declaration and the confirmation
 - **AND** Overview lists its tasks in the same order
 
 #### Scenario: The transport pages are offered in order
@@ -29,7 +29,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 **ID**: REQ-FLOW-003
 The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on.
 
-#### Scenario: The CPH number page goes on to Roles and addresses
+#### Scenario: The CPH number page goes on to Consignment addresses
 **ID**: SCN-FLOW-003-A
 - **GIVEN** the user is on the CPH number page
 - **WHEN** they save and continue
@@ -53,9 +53,9 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save a selection and continue
 - **THEN** Main import reason is shown
 
-#### Scenario: Roles and addresses goes on to Contact address, never the CPH number page, even when complete
+#### Scenario: Consignment addresses goes on to Contact address, never the CPH number page, even when complete
 **ID**: SCN-FLOW-003-D
-- **GIVEN** a consignment that needs a CPH number, every other task complete, and roles and addresses open
+- **GIVEN** a consignment that needs a CPH number, every other task complete, and consignment addresses open
 - **WHEN** the user saves and continues
 - **THEN** Contact address for this consignment is shown, not the CPH number page
 
@@ -72,7 +72,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** the user adds a document with "Save and add another"
 - **THEN** they stay on upload documents with the document listed
 - **WHEN** they save and continue
-- **THEN** Roles and addresses is shown
+- **THEN** Consignment addresses is shown
 
 #### Scenario: Commodity details goes on to identification details whenever the notification holds a commodity line
 **ID**: SCN-FLOW-003-H
@@ -93,7 +93,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 **ID**: SCN-FLOW-003-J
 - **GIVEN** the user has just created a notification from the dashboard
 - **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents, roles and addresses and the contact address, in that order
+- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents, consignment addresses and the contact address, in that order
 - **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
 
 #### Scenario: Arrival details goes on to transit countries only for rail or road
@@ -275,7 +275,7 @@ The system MUST keep the user on a collection page — one that holds several re
 - **WHEN** they add a further document
 - **THEN** they remain on the accompanying documents page, and the added document is shown there
 - **WHEN** they choose the page's finishing action
-- **THEN** roles and addresses is shown
+- **THEN** consignment addresses is shown
 
 ### Requirement: A journey sent to its first page goes on from there to the next page that applies
 **ID**: REQ-FLOW-011

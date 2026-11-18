@@ -18,7 +18,7 @@ The system MUST group the notification's tasks on the Overview page under four n
 **ID**: SCN-PLANTS-OVERVIEW-001-A
 - **GIVEN** a new notification has just been started
 - **WHEN** the user views Overview
-- **THEN** it shows four numbered section headings in order: "1. About the consignment", "2. Arrival and destination", "3. Consignment parties", "4. Check and submit"
+- **THEN** it shows four numbered section headings in order: "1. About the consignment", "2. Arrival and destination", "3. Addresses", "4. Check and submit"
 - **AND** each section lists that notification's always-present tasks (for example, "What are you importing?" under the first section, and "Check and submit" under the last)
 - **AND** a conditional task that is not applicable (for example, consignor on a potato notification with no type yet chosen) is not shown
 

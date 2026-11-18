@@ -18,7 +18,7 @@ For a notification, the system MUST group its tasks on the Overview page under s
 **ID**: SCN-OVERVIEW-001-A
 - **GIVEN** a new notification has just been started
 - **WHEN** the user views Overview
-- **THEN** it shows six numbered section headings in order: "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties", "6. Contact address"
+- **THEN** it shows six numbered section headings in order: "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Addresses", "6. Contact address"
 - **AND** each section lists that notification's always-present tasks (for example, "Where is this consignment coming from?" and "What are you importing?" under the first section)
 
 ### Requirement: Each task row shows one of two statuses, and Overview offers a review button open at any point
@@ -114,15 +114,15 @@ The system MUST show Commodity details as a task row of its own, separate from t
 - **WHEN** the user views Overview
 - **THEN** Commodity details reads Complete, and the other rows' statuses are unchanged
 
-### Requirement: Only the Roles and addresses row carries hint text
+### Requirement: Only the Consignment addresses row carries hint text
 **ID**: REQ-OVERVIEW-007
-The system MUST show every task row as a bare link with a status, except Roles and addresses, which alone MUST carry a hint naming the parties it collects.
+The system MUST show every task row as a bare link with a status, except Consignment addresses, which alone MUST carry a hint naming the parties it collects.
 
-#### Scenario: Roles and addresses is the only row with a hint
+#### Scenario: Consignment addresses is the only row with a hint
 **ID**: SCN-OVERVIEW-007-A
 - **GIVEN** the user views Overview
 - **WHEN** the task rows are examined
-- **THEN** only the Roles and addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination
+- **THEN** only the Consignment addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination
 
 ### Requirement: Main import reason completes on the reason's own answers, apart from Additional details
 **ID**: REQ-OVERVIEW-008
@@ -236,7 +236,7 @@ The system MUST mark the Additional details task To do while neither of its ques
 
 ### Requirement: Overview marks its commodity totals, task list and numbered sections as named regions for assistive technology
 **ID**: REQ-OVERVIEW-015
-The system MUST mark the Your commodities block, the task list and each numbered section as regions named by their own heading, and each of the two commodity totals as a region named Animals summary or Packages summary, and MUST describe each task link by its status, and Roles and addresses by its hint then its status.
+The system MUST mark the Your commodities block, the task list and each numbered section as regions named by their own heading, and each of the two commodity totals as a region named Animals summary or Packages summary, and MUST describe each task link by its status, and Consignment addresses by its hint then its status.
 
 #### Scenario: The two commodity totals are named regions inside the Your commodities region
 **ID**: SCN-OVERVIEW-015-A
@@ -248,11 +248,11 @@ The system MUST mark the Your commodities block, the task list and each numbered
 **ID**: SCN-OVERVIEW-015-B
 - **GIVEN** a fresh notification
 - **WHEN** the user views Overview
-- **THEN** a region named Notification tasklist holds six regions named 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties and 6. Contact address
+- **THEN** a region named Notification tasklist holds six regions named 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Addresses and 6. Contact address
 - **AND** the 1. About the consignment region holds the Main import reason task
 
 #### Scenario: A task link is described by its status
 **ID**: SCN-OVERVIEW-015-C
 - **GIVEN** an Overview showing every task
 - **WHEN** a screen reader reads a task link's description
-- **THEN** it reads the task's status, and for Roles and addresses its hint then its status
+- **THEN** it reads the task's status, and for Consignment addresses its hint then its status

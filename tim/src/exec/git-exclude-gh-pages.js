@@ -1,10 +1,6 @@
 import { run } from './exec.js'
 import { TimError } from '../errors.js'
 
-// gh-pages holds multi-GB published artifacts (17 GB on the frontend
-// repo vs 7 MB for main). These two config lines pin a clone's fetch
-// refspec so a bare `git fetch` / `git pull` can never drag it in —
-// exact parity with `tools/git/light-remote.sh --exclude-gh-pages`.
 export const ALL_HEADS_REFSPEC = '+refs/heads/*:refs/remotes/origin/*'
 export const EXCLUDE_GH_PAGES_REFSPEC = '^refs/heads/gh-pages'
 
@@ -86,10 +82,17 @@ export const excludeGhPagesFromFetch = async (dir) => {
     EXCLUDE_GH_PAGES_REFSPEC
   ])
   if (add.exitCode !== 0) return add
-  // Deleting the ref also deletes its reflog; failure just means the
-  // ref was never fetched, so the exit code is deliberately ignored.
-  await run('git', ['-C', dir, 'update-ref', '-d', GH_PAGES_REMOTE_REF])
+  await dropGhPagesRemoteRef(dir)
   return add
+}
+
+/**
+ * Delete the gh-pages remote-tracking ref and its reflog, so gc can
+ * reclaim the objects it held. A clone that never fetched gh-pages has
+ * no such ref; that failure is not reported.
+ */
+export const dropGhPagesRemoteRef = async (dir) => {
+  await run('git', ['-C', dir, 'update-ref', '-d', GH_PAGES_REMOTE_REF])
 }
 
 /**

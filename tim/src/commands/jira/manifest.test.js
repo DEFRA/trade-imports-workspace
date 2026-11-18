@@ -32,7 +32,7 @@ const writeManifestFile = (body) => {
 }
 
 describe('manifestSchema', () => {
-  test('accepts a well-formed manifest and defaults the array fields', () => {
+  test('accepts a well-formed manifest and defaults priority to Medium and the array fields to empty', () => {
     const result = manifestSchema.safeParse({
       schema: MANIFEST_SCHEMA,
       project: 'EUDPA',
@@ -41,6 +41,7 @@ describe('manifestSchema', () => {
       descriptionFile: 'description.txt'
     })
     expect(result.success).toBe(true)
+    expect(result.data.priority).toBe('Medium')
     expect(result.data.labels).toEqual([])
     expect(result.data.attachments).toEqual([])
     expect(result.data.relates).toEqual([])
@@ -54,12 +55,24 @@ describe('manifestSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  test('refuses a type outside Story, Task, Bug', () => {
+  test('accepts an Epic', () => {
     const result = manifestSchema.safeParse({
       ...validManifest(),
       type: 'Epic'
     })
-    expect(result.success).toBe(false)
+
+    expect(result.data.type).toBe('Epic')
+  })
+
+  test('refuses a type outside Story, Task, Bug, Epic', () => {
+    const result = manifestSchema.safeParse({
+      ...validManifest(),
+      type: 'Spike'
+    })
+
+    expect(result.error.issues[0].message).toBe(
+      'type must be one of Story, Task, Bug, Epic.'
+    )
   })
 
   test('refuses a summary over 255 characters', () => {
@@ -97,7 +110,10 @@ describe('loadManifest', () => {
   })
 
   test('throws USAGE with the first schema issue when validation fails', () => {
-    const manifestPath = writeManifestFile({ ...validManifest(), type: 'Epic' })
+    const manifestPath = writeManifestFile({
+      ...validManifest(),
+      type: 'Spike'
+    })
     expect(() => loadManifest(manifestPath)).toThrowError(
       expect.objectContaining({ code: 'USAGE' })
     )

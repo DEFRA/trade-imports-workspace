@@ -24,7 +24,7 @@ helper in `docs/agent-skills.md`.
 ## Required output
 
 Artefact: item outcomes written to the canonical JSON via
-`style-set-status.sh` / `style-mark.sh`, and one commit for the file.
+`tim style items status` / `tim style items mark`, and one commit for the file.
 
 Return a per-item summary — use whichever of these shapes matches the
 result, verbatim:
@@ -81,7 +81,7 @@ If `applicable_items` is empty (every item is already fixed):
 
 - For each item in `skipped_items`:
   ```bash
-  ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+  tim style items mark EUDPA-XXXXX --repo {repo} --item {id} \
     --disposition Auto-Resolved --note "violation not found"
   ```
 - Return: `{repo}/{file}: 0 done, {N} auto-resolved, 0 failed` and stop.
@@ -187,7 +187,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 - Revert the file: `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`
 - For each item in `applicable_items`:
   ```bash
-  ~/git/defra/trade-imports-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
+  tim style items status EUDPA-XXXXX --repo {repo} --item {id} \
     --status Failed --note "unit tests broke after change, reverted"
   ```
 - Return: `{repo}/{file}: 0 done, 0 auto-resolved, {N} failed`
@@ -252,14 +252,14 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse --short HEAD
 For each item in `applicable_items`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
+tim style items status EUDPA-XXXXX --repo {repo} --item {id} \
   --status Done --note "{short-sha}"
 ```
 
 For each item in `skipped_items`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+tim style items mark EUDPA-XXXXX --repo {repo} --item {id} \
   --disposition Auto-Resolved --note "violation not found"
 ```
 
@@ -276,6 +276,6 @@ note. Taste, "pre-existing", "out of scope", "a nearby file does it",
 the plan or an earlier decision is never a reason: fix it.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+tim style items mark EUDPA-XXXXX --repo {repo} --item {id} \
   --disposition "Won't Fix" --note "<one-line reason>"
 ```

@@ -35,17 +35,15 @@ Route a change to a frontend repo (today trade-imports-animals-frontend) (add a 
 
 ## 7. Helpers introduced
 
-One: `tools/frontend-change/openspec-validate.sh`, added by EUDPA-574 for
-Step 5.4. It exists because `npx` is not allowlisted in
-`.claude/settings.json` while `tools/frontend-change/*` already is, and
-because it pins the working directory to a named checkout — its `--root`
-flag — rather than relying on the OpenSpec CLI's upward search from the
-caller's cwd. `--root` is not a convenience: under `journey-builder` the
-spec write lands in a worktree, and without it the helper would validate
-the main checkout's copy of the same capability and pass green against a
-file the increment never wrote.
+None. Step 5.4 validates with `tim spec lint --root <spec root>
+--capability <capability-path>`, which runs `openspec validate --strict` at
+a pinned OpenSpec version and is allowlisted as `tim:*`. `tools/frontend-change/openspec-validate.sh`,
+added by EUDPA-574 for the same step, was retired for it. `--root` is not a
+convenience: under `journey-builder` the spec write lands in a worktree,
+and without it the check would validate the main checkout's copy of the
+same capability and pass green against a file the increment never wrote.
 
-Nothing else. The recipes in the frontend repo are the instructions; the
+The recipes in the frontend repo are the instructions; the
 ladder is plain npm scripts. The capability lookup is a read of the two
 tables in `references/SPEC_SYNC.md`, the leaf confirm is `ls`, and the
 new-capability gates are two `grep -c` calls against `AREAS.md` — all on
@@ -68,7 +66,7 @@ repo and `AREAS.md` already own (patterns.md §2 trap).
 **Choice:** hybrid — Step 5 writes `openspec/specs/**/spec.md` and
 `openspec/coverage/**/coverage.json` directly, using the merge technique
 carried in `references/SPEC_SYNC.md`, and validates the spec write with
-`openspec validate <path> --strict`.
+`tim spec lint --capability <path>`, which runs `openspec validate <path> --strict`.
 
 **Why:** the increment already has a planning record (the ticket's AC, or
 `journey-builder`'s `journey-spec.json`). Routing every increment through

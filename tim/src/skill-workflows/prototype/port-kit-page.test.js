@@ -9,8 +9,8 @@ const SCRIPT = readFileSync(
   'utf8'
 )
 
-const REPO =
-  '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
+const WORKSPACE = '~/clones/second-workspace'
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
 
 // The Workflow tool runs a script as the body of an async function with
 // `args`, `agent`, `log` and `phase` in scope. Run it the same way, with
@@ -26,6 +26,7 @@ const runWorkflow = (args, { agent, log = vi.fn(), phase = vi.fn() }) =>
   )(args, agent, log, phase)
 
 const ARGS = {
+  workspace: WORKSPACE,
   set: 'plants-working',
   source:
     '.claude/skills/prototype/references/port-a-kit-page/examples/transporter-type.kit.html',
@@ -143,7 +144,7 @@ describe('port-kit-page workflow', () => {
 
   it('Should name every missing key when args are absent', async () => {
     await expect(runWorkflow(undefined, { agent })).rejects.toThrow(
-      'missing required keys set, source, sourceKind, slug, after, reference'
+      'missing required keys workspace, set, source, sourceKind, slug, after, reference'
     )
     expect(agent).not.toHaveBeenCalled()
   })
@@ -166,7 +167,11 @@ describe('port-kit-page workflow', () => {
     [{ set: 'sample-journey' }, 'sample-journey is not a design release'],
     [{ sourceKind: 'pdf' }, 'sourceKind must be one of html, url, screenshot'],
     [{ slug: 'Transporter Type' }, 'slug must be lower-case words'],
-    [{ reference: 3 }, 'reference must be an image path or null']
+    [{ reference: 3 }, 'reference must be an image path or null'],
+    [
+      { workspace: '/home/someone/workspace' },
+      'workspace must be the root of the workspace clone this session runs in, as a tilde path'
+    ]
   ])('Should refuse %j before any agent', async (change, message) => {
     await expect(
       runWorkflow({ ...ARGS, ...change }, { agent })

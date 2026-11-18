@@ -48,8 +48,8 @@ field".
 
 `category` is one word from a fixed list, and its kind sets how triage
 treats the finding. The build loop's verifier uses the same list, and
-`tools/review/finding-categories.sh` holds it: `file-review-add-item.sh`
-and `review-add-item.sh` refuse any other word.
+`tim/src/review/finding-categories.js` holds it: `tim review file add`
+and `tim review items add` refuse any other word.
 
 | Kind | Category | Use for |
 |---|---|---|
@@ -73,18 +73,18 @@ is marked Discuss, for the designer.
 
 ## Lifecycle
 
-1. **Init** — `prepare-review.sh` (Fresh) or the refresh tooling
+1. **Init** — `tim review prepare` (Fresh) or the refresh tooling
    (List D coverage gap) seeds an empty placeholder via
-   `file-review-init.sh`. `verdict: null`, `todos: []`,
+   `tim review file init`. `verdict: null`, `todos: []`,
    `reviewed_at: null`.
 2. **Reviewer adds todos** — each finding goes in via
-   `file-review-add-item.sh` (auto-assigns next `id`, handles
+   `tim review file add` (auto-assigns next `id`, handles
    escaping).
 3. **Reviewer sets verdict** — final call via
-   `file-review-set-verdict.sh` (stamps `reviewed_at`).
-4. **Coverage gate** — `verify-coverage.sh` looks for
+   `tim review file verdict` (stamps `reviewed_at`).
+4. **Coverage gate** — `tim review verify files` looks for
    `.verdict != null` per file.
-5. **Aggregation** — `aggregate-file-reviews.sh` reads all JSONs
+5. **Aggregation** — `tim review aggregate` reads all JSONs
    for a repo and emits the markdown table rows used in
    `review.{repo}.md` (File Analysis Summary + consolidated `## Items`).
 6. **Refresh** — overwrites the JSON in place with the latest mode's

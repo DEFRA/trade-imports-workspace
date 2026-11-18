@@ -11,14 +11,14 @@ tickets (Java, GDS/Nunjucks, Playwright, k6, Node). The per-file reviewer
 persona (`references/STYLE_FILE_REVIEWER.md`) is written
 language-neutrally and takes its ruleset from the pre-baked
 per-(repo,topic) `style-rules.{repo}.{topic}.md` bundle(s) rather than an
-inlined catalogue. Discovery routes each file through `tools/style/file-topics.sh`, a thin
-jq reader of `assets/routing.json`'s path→topic map (java, node, gds,
+inlined catalogue. Discovery routes each file through `tim style topics`,
+which reads `assets/routing.json`'s path→topic map (java, node, gds,
 playwright, k6; additive, so a Playwright spec, and the tests repo's
 `flows/`, `page-objects/` and `domain/` TypeScript, gets both playwright
 and node); rule-bundling then reads the per-topic best-practice lists from
-the same file via `tools/style/bake-rules-bundle.sh`. `assets/routing.json`
+the same file via `tim style bundle`. `assets/routing.json`
 is the single source of truth for the file-type mapping; edit it, not
-the scripts, to add a topic.
+tim, to add a topic.
 
 Every reviewer also reads `.claude/rules/code-quality.md` in full. Its
 house rules on comments, ids, history and names apply to every file
@@ -32,9 +32,9 @@ the `review` skill and the build loop's verifier share; see
 
 Per-repo state lives in
 `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
-— canonical JSON, mutated only via `style-*.sh` helpers. The `## Items`
-markdown table in `style-review.{repo}.md` is a rendered view (via
-`render-items.sh`). See `assets/items-table.md` for the JSON schema
+— canonical JSON, mutated only via `tim style items` and the other
+`tim style` helpers. The `## Items` markdown table in
+`style-review.{repo}.md` is a rendered view (via `tim style items render`). See `assets/items-table.md` for the JSON schema
 and allowed Disposition/Status values.
 
 ## Path conventions
@@ -56,8 +56,8 @@ by name via the Task tool.
 
 | User intent | What to follow |
 |---|---|
-| "style review EUDPA-X" / "re-style review" / "style refresh" | this SKILL.md — FRESH + REFRESH (start-style.sh dispatches) |
-| "style review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-style.sh dispatches on `--local` |
+| "style review EUDPA-X" / "re-style review" / "style refresh" | this SKILL.md — FRESH + REFRESH (`tim style start` dispatches) |
+| "style review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); `tim style start` dispatches on `--local` |
 | "walk style EUDPA-X" / "triage style" | `Follow references/STYLE_WALKER.md` |
 | "fix style EUDPA-X" / "implement style fixes" | IMPLEMENTATION section below (or `Follow references/STYLE_IMPLEMENTOR.md` per group) |
 
@@ -69,10 +69,10 @@ Reviews a repo checkout under `repos/<repo>/` directly — no Jira ticket,
 no GitHub PR, no `gh` call of any kind.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/start-style.sh --local REPO BRANCH
+tim style start --local REPO BRANCH
 ```
 
-This always runs `prepare-style-local.sh` (there is no separate refresh
+This always runs `tim style prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
@@ -108,7 +108,7 @@ local-mode style check without a human ever saying "style review":
   (an explicit list — when given, scope is exactly those files, not the
   whole branch's git diff), `fix` (`true` — also run the IMPLEMENTATION
   flow on any Fix-disposition items found; `false` — report only).
-- **Call shape**: run Local mode above (`start-style.sh --local REPO
+- **Call shape**: run Local mode above (`tim style start --local REPO
   BRANCH [--files ...]`) through Steps 2-6; when `fix: true`, continue
   into IMPLEMENTATION for the files just reviewed.
 - **One-line return** to the calling skill:
@@ -129,7 +129,7 @@ write per-file JSONs, run the helper scripts and commit.
 | Persona | Used in | Artifact |
 |---|---|---|
 | `references/STYLE_FILE_REVIEWER.md` | FRESH Step 2 (parallel, up to 100); REFRESH Steps R2/R3/R4 | per-file `.style.json` (schema in `assets/file-style-schema.md`) |
-| `references/STYLE_WALKER.md` | `walk style EUDPA-X` triage trigger | item dispositions via `style-mark.sh` |
+| `references/STYLE_WALKER.md` | `walk style EUDPA-X` triage trigger | item dispositions via `tim style items mark` |
 | `references/STYLE_IMPLEMENTOR.md` | IMPLEMENTATION Step I3 (sequential, one group at a time) | source edits + commit |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
@@ -137,25 +137,47 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 
 ## Step 0: Start the review
 
+On a refresh (`.style-meta.json` already exists under
+`workareas/code-style-reviews/EUDPA-XXXXX/`), first write each PR's
+changed files again, so List D sees files added since the last run. Run
+one `gh api` per entry in the review's `.review-meta.json` `prs`, from
+the workspace root:
+
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/start-style.sh EUDPA-XXXXX
+gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/reviews/EUDPA-XXXXX/.prs/{repo}-{pr}.json
+```
+
+Then start the review:
+
+```bash
+tim style start EUDPA-XXXXX
 ```
 
 Single dispatch — detects FRESH vs REFRESH from workspace state and
-runs the appropriate first-step setup script.
+runs the appropriate first step.
+
+A fresh style review reads the review workspace at
+`workareas/reviews/EUDPA-XXXXX/`, including the `.prs/{repo}-{pr}.json`
+files the review skill's Step 1 writes with `gh api`. When the workspace
+is missing, `tim style start` stops and says so: prepare it with the
+`review` skill's Step 0 and Step 1 (`tim review start`, the `gh` saves,
+then `tim review prepare`), then run `tim style start` again. It also
+stops, naming the `gh api` command to run, when a PR's `.prs/` file is
+missing or lists no files for a PR that changes some.
 
 First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
-- `MODE: FRESH` → setup ran `prepare-style.sh`; go to Fresh Review,
+- `MODE: FRESH` → it ran `tim style prepare`; go to Fresh Review,
   Step 2.
-- `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
-  Refresh Review, Step R3.5.
+- `MODE: REFRESH` → it ran the equivalent of
+  `tim style scope EUDPA-XXXXX --write-snapshot --json` and printed its
+  JSON envelope after the `MODE:` line; go to Refresh Review, Step R3.5.
 
 IMPLEMENT and WALK are separate top-level triggers (Decision 3) — they
-do NOT route through start-style.sh.
+do NOT route through `tim style start`.
 
 **On Claude Code auto-backgrounding:** for fresh reviews the setup may
-shallow-clone repos via `prepare-review.sh`, which takes 30–90s. If the
+shallow-clone repos via `tim review prepare`, which takes 30–90s. If the
 Bash tool auto-backgrounds it, **wait for the harness's
 `task-notification` (status: completed) — do NOT poll the PID file or
 `tail` the output**.
@@ -166,7 +188,7 @@ Bash tool auto-backgrounds it, **wait for the harness's
 
 ## Step 1: Workspace prepared (by Step 0)
 
-`start-style.sh` ran `prepare-style.sh` which produced:
+`tim style start` ran `tim style prepare`, which produced:
 
 - `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/`
   with `.style-meta.json`, per-repo `file-reviews/{repo}/` subtrees,
@@ -208,17 +230,16 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/co
 ```
 
 The reviewer writes findings to the per-file JSON placeholder via the
-`file-style-add-item.sh` / `file-style-set-verdict.sh` helpers — no
+`tim style file add` / `tim style file verdict` helpers — no
 markdown, no placeholder path needed in the spawn prompt.
 
 ## Step 3: Verify Coverage
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/verify-style-coverage.sh EUDPA-XXXXX
+tim review verify style EUDPA-XXXXX
 ```
 
-(The script lives under `tools/review/` for cross-skill reasons but
-checks the JSON `.verdict != null` field.) **Do not proceed until 100%
+It checks the JSON `.verdict != null` field. **Do not proceed until 100%
 coverage.**
 
 ## Step 4: Aggregate to items.{repo}.json + render
@@ -226,7 +247,7 @@ coverage.**
 For each repo with source files:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --write-items
+tim style aggregate EUDPA-XXXXX --repo {repo} --write-items
 ```
 
 This rolls per-file `.style.json` todos into the canonical
@@ -240,8 +261,8 @@ For each repo, write
 `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --section file-summary
-~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+tim style aggregate EUDPA-XXXXX --repo {repo} --section file-summary
+tim style items render EUDPA-XXXXX --repo {repo}
 ```
 
 Skeleton:
@@ -254,25 +275,25 @@ Skeleton:
 **Files Reviewed:** {count}
 **Verdict:** [VERDICT — see Verdict Guidelines]
 
-<!-- paste output of `aggregate-file-reviews.sh ... --section file-summary` here -->
+<!-- paste output of `tim style aggregate ... --section file-summary` here -->
 
-<!-- paste output of `render-items.sh EUDPA-XXXXX --repo {repo}` here.
+<!-- paste output of `tim style items render EUDPA-XXXXX --repo {repo}` here.
      Full schema and `|` escape rules: assets/items-table.md.
      Disposition / Status / Notes start blank — walker fills them. -->
 ```
 
 After Step 5, `items.{repo}.json` is the canonical state. Walker /
-implementor / refresh tools mutate it via `style-*.sh`. The `## Items`
-markdown view is regenerated by `render-items.sh` whenever the JSON
+implementor / refresh tools mutate it via `tim style items`. The `## Items`
+markdown view is regenerated by `tim style items render` whenever the JSON
 changes.
 
 ## Step 6: Set Per-Repo Verdicts
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-counts.sh EUDPA-XXXXX --repo {repo} --json
+tim style items counts EUDPA-XXXXX --repo {repo} --json
 ```
 
-Use the breakdown to set the verdict line in the per-repo file header
+Use the breakdown in `result` to set the verdict line in the per-repo file header
 (see Verdict Guidelines below).
 
 ## Step 7: Done
@@ -285,8 +306,12 @@ Output the completion summary (see "Completion Output" below).
 
 ## Steps R1-R3: Refresh scope built (by Step 0)
 
-`start-style.sh` already ran `refresh/scope.sh --write-snapshot` and
-emitted a JSON object on stdout. Read it from there.
+`tim style start` already ran the equivalent of
+`tim style scope EUDPA-XXXXX --write-snapshot --json` and printed its
+JSON envelope after the `MODE:` line. The scope is the envelope's
+`result`. A warning on stderr names any PR whose `.prs/` file is missing,
+with the `gh api` command that writes it: List D leaves that PR out, so
+write it (Step 0) and run Step 0 again.
 
 Each `repos[]` entry has `prior_sha`, `current_sha`, `no_changes`,
 and `lists.{A,B,C,D}`:
@@ -302,17 +327,17 @@ since the last refresh and stop.
 ## Step R3.5: Load full item inventory
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --json
+tim style items list EUDPA-XXXXX --json
 ```
 
-Use this when reconciling agent results in R6:
+The items are `result`. Use them when reconciling agent results in R6:
 
 - `Won't Fix` / `Auto-Resolved` → carry forward; do NOT re-report.
 - `Fix` + `Done` → spot-check after refresh (reconciler emits a list).
 - `Fix` + `Not Done` and `Discuss` → still open.
 - Blank disposition → pending (walker will pick up; should appear in List B).
 
-Deleted files: mark their items as `Auto-Resolved` via `style-mark.sh`.
+Deleted files: mark their items as `Auto-Resolved` via `tim style items mark`.
 
 ## Step R4: Re-review files
 
@@ -357,7 +382,7 @@ Note in the prompt that the file is in PR diff but had no prior per-file
 review — this is a coverage gap, not a fresh PR.
 
 Workers write deltas (new findings + regressions) to their per-file
-`.style.json` exclusively — no direct `style-add-item.sh` calls. The
+`.style.json` exclusively — no direct `tim style items add` calls. The
 reconciler folds those deltas into `items.{repo}.json` in R5.
 
 ## Step R5: Reconcile and re-render
@@ -366,9 +391,11 @@ Once all refresh reviewers finish, fold their findings into the
 consolidated items file and re-render the markdown view:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/refresh/reconcile.sh EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
-~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+tim style reconcile EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
+tim style items render EUDPA-XXXXX --repo {repo}
 ```
+
+The summary is the envelope's `result`.
 
 The reconciler trusts the STYLE_FILE_REVIEWER persona contract: each
 refresh reviewer's `.style.json` contains **only deltas** — regressions
@@ -401,10 +428,10 @@ for E2E tests to pass.
 Group all open Fix items by `(repo, file)`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter fix --status not-done --by-file --json
+tim style items list EUDPA-XXXXX --filter fix --status not-done --by-file --json
 ```
 
-Output is `[{repo, file, items: [...]}, ...]`. Each group is one work
+Its `result` is `[{repo, file, items: [...]}, ...]`. Each group is one work
 unit for one implementor subagent.
 
 If the array is empty, output:
@@ -457,7 +484,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/co
 ### Handling Results
 
 The implementor itself updates each item's Status (or Disposition) via
-`style-set-status.sh` / `style-mark.sh`. Log the per-group outcome.
+`tim style items status` / `tim style items mark`. Log the per-group outcome.
 
 Each subagent returns a summary like:
 
@@ -565,30 +592,23 @@ Summary:
 Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
-## Scripts cheat-sheet
+## Commands cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/style/`:
-
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
-| `prepare-style.sh` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles |
-| `prepare-style-local.sh` | Local mode setup — no Jira/GitHub; reuses `prepare-review-local.sh` for changed-file discovery |
-| `file-topics.sh` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
-| `bake-rules-bundle.sh` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
-| `aggregate-file-reviews.sh` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |
-| `render-items.sh` | Render `items.{repo}.json` as the `## Items` markdown view |
-| `style-items.sh` | Walker / implementor / refresh — list items with filters |
-| `style-add-item.sh` | Append a new item to `items.{repo}.json`; auto-assigns `id`; returns the new ID |
-| `style-mark.sh` | Set Disposition (auto-sets Status) |
-| `style-set-status.sh` | Set Status only (after fix attempt) |
-| `style-counts.sh` | Breakdown by Disposition + Status — used in per-repo verdict |
-| `file-style-init.sh` / `file-style-add-item.sh` / `file-style-set-verdict.sh` | Per-file `.style.json` helpers used by the STYLE_FILE_REVIEWER persona |
-| `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
-| `refresh/reconcile.sh` | Refresh Step R5 — fold per-file `.style.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |
-
-Cross-domain script under `tools/review/`:
-
-| Script | Purpose |
-|---|---|
-| `verify-style-coverage.sh` | Fresh Step 3 coverage gate — checks `.verdict != null` on each per-file `.style.json` |
+| `tim style start` | Step 0 — detect FRESH/REFRESH and run the first step; `--local REPO BRANCH` for Local mode |
+| `tim style prepare` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles. `--local REPO BRANCH` runs `tim review prepare --local` first for changed-file discovery |
+| `tim style topics` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
+| `tim style bundle` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
+| `tim style file init` | Per-file `.style.json` placeholder, written by `tim style prepare` |
+| `tim style scope` | Refresh Steps R1-R3 — lists A/B/C/D; `--write-snapshot` records the window |
+| `tim review verify style` | Fresh Step 3 coverage gate — checks `.verdict != null` on each per-file `.style.json` |
+| `tim style aggregate` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |
+| `tim style items render` | Render `items.{repo}.json` as the `## Items` markdown view |
+| `tim style items list` | Walker / implementor / refresh — list items with filters; `--by-file` groups them |
+| `tim style items add` | Append a new item to `items.{repo}.json`; auto-assigns `id`; returns the new ID |
+| `tim style items mark` | Set Disposition (auto-sets Status) |
+| `tim style items status` | Set Status only (after fix attempt) |
+| `tim style items counts` | Breakdown by Disposition + Status — used in per-repo verdict |
+| `tim style file add` / `tim style file verdict` | Per-file `.style.json` helpers used by the STYLE_FILE_REVIEWER persona |
+| `tim style reconcile` | Refresh Step R5 — fold per-file `.style.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |

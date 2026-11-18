@@ -5,17 +5,18 @@ import {
   writeFileSync,
   chmodSync,
   rmSync,
-  readFileSync
+  readFileSync,
+  symlinkSync
 } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
-  stackScriptPath,
-  runStackScript,
-  runStackScriptToLog,
   stackContainers,
   stackContainerIds,
   writeStackLogs,
+  stackOwners,
+  otherCloneOwningStack,
+  isSameWorkspace,
   STACK_PROJECT
 } from './stack.js'
 
@@ -23,90 +24,10 @@ let workspace
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-stack-'))
-  mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
 })
 
 afterEach(() => {
   rmSync(workspace, { recursive: true, force: true })
-})
-
-const writeStackScript = (name, body) => {
-  const path = join(workspace, 'scripts', 'stack', name)
-  writeFileSync(path, `#!/usr/bin/env bash\n${body}\n`)
-  chmodSync(path, 0o755)
-  return path
-}
-
-describe('stackScriptPath', () => {
-  test('returns the absolute path to an existing script', () => {
-    writeStackScript('run-stack.sh', 'echo hi')
-    expect(stackScriptPath(workspace, 'run-stack.sh')).toBe(
-      join(workspace, 'scripts', 'stack', 'run-stack.sh')
-    )
-  })
-
-  test('throws TimError(USAGE) when the script is missing', () => {
-    expect(() => stackScriptPath(workspace, 'no-such.sh')).toThrowError(
-      /Cannot find no-such.sh/
-    )
-  })
-})
-
-describe('runStackScript', () => {
-  test('runs the script and returns its exit code', async () => {
-    writeStackScript('run-stack.sh', 'exit 0')
-    const result = await runStackScript({
-      workspaceRoot: workspace,
-      script: 'run-stack.sh',
-      env: answeringDocker()
-    })
-    expect(result.exitCode).toBe(0)
-  })
-
-  test('propagates a non-zero exit code from the script', async () => {
-    writeStackScript('run-stack.sh', 'exit 7')
-    const result = await runStackScript({
-      workspaceRoot: workspace,
-      script: 'run-stack.sh',
-      env: answeringDocker()
-    })
-    expect(result.exitCode).toBe(7)
-  })
-
-  test('passes args through to the script and surfaces them via the exit code', async () => {
-    // Script exits with the number of args it received
-    writeStackScript('run-stack.sh', 'exit $#')
-    const result = await runStackScript({
-      workspaceRoot: workspace,
-      script: 'run-stack.sh',
-      env: answeringDocker(),
-      args: ['-d', '-e', 'backend']
-    })
-    expect(result.exitCode).toBe(3)
-  })
-})
-
-describe('runStackScriptToLog', () => {
-  test("writes the script's output to the log instead of the terminal", async () => {
-    writeStackScript('run-stack.sh', 'echo "starting with $*"')
-    const logPath = join(workspace, 'logs', 'up.log')
-
-    const result = await runStackScriptToLog({
-      workspaceRoot: workspace,
-      script: 'run-stack.sh',
-      env: answeringDocker(),
-      args: ['-d'],
-      logPath
-    })
-
-    expect({
-      exitCode: result.exitCode,
-      body: readFileSync(logPath, 'utf8')
-    }).toEqual({
-      exitCode: 0,
-      body: expect.stringContaining('starting with -d')
-    })
-  })
 })
 
 const fakeDocker = (body) => {
@@ -116,9 +37,6 @@ const fakeDocker = (body) => {
   chmodSync(join(bin, 'docker'), 0o755)
   return { PATH: `${bin}:${process.env.PATH}` }
 }
-
-// Docker Desktop is running, so starting the stack has nothing to bring back.
-const answeringDocker = () => fakeDocker('echo 29.1.0')
 
 describe('stackContainers', () => {
   test("lists the workspace stack's running containers", async () => {
@@ -196,30 +114,6 @@ describe.runIf(process.platform === 'darwin')(
         message: expect.stringContaining('Docker Desktop would not open')
       })
     })
-
-    test('brings Docker Desktop back before running run-stack.sh', async () => {
-      const env = dockerThatQuit()
-      writeStackScript(
-        'run-stack.sh',
-        'if docker info >/dev/null 2>&1; then echo "docker answered"; else echo "docker down"; exit 1; fi'
-      )
-      const logPath = join(workspace, 'logs', 'up.log')
-
-      const result = await runStackScriptToLog({
-        workspaceRoot: workspace,
-        script: 'run-stack.sh',
-        logPath,
-        env
-      })
-
-      expect({
-        exitCode: result.exitCode,
-        body: readFileSync(logPath, 'utf8')
-      }).toEqual({
-        exitCode: 0,
-        body: expect.stringContaining('docker answered')
-      })
-    })
   }
 )
 
@@ -273,5 +167,86 @@ describe('stackContainerIds', () => {
     )
 
     expect(await stackContainerIds({ env })).toEqual(['a1b2c3', 'd4e5f6'])
+  })
+})
+
+const WORKING_DIR_FORMAT = '{{.Label "com.docker.compose.project.working_dir"}}'
+
+const dockerListingWorkingDirs = (...workingDirs) =>
+  fakeDocker(
+    `if [ "$1" = ps ] && [ "$3" = "label=com.docker.compose.project=trade-imports" ] && [ "$5" = '${WORKING_DIR_FORMAT}' ]; then printf '${workingDirs.map((dir) => `${dir}\\n`).join('')}'; fi`
+  )
+
+describe('stackOwners', () => {
+  test('names the clone each running container was started from, once each', async () => {
+    const env = dockerListingWorkingDirs(
+      '/clones/a/docker/stack',
+      '/clones/a/docker/stack',
+      '/clones/b/docker/stack'
+    )
+
+    expect(await stackOwners({ env })).toEqual(['/clones/a', '/clones/b'])
+  })
+
+  test('is empty when the stack is down', async () => {
+    const env = dockerListingWorkingDirs()
+
+    expect(await stackOwners({ env })).toEqual([])
+  })
+
+  test('is empty, without starting Docker, when the Docker daemon is not running', async () => {
+    const env = fakeDocker(
+      'echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1'
+    )
+
+    expect(await stackOwners({ env })).toEqual([])
+  })
+
+  test('throws UNKNOWN when docker cannot list containers for another reason', async () => {
+    const env = fakeDocker('echo "permission denied" >&2; exit 1')
+
+    await expect(stackOwners({ env })).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message: "Can't list the workspace stack's containers: permission denied"
+    })
+  })
+})
+
+describe('otherCloneOwningStack', () => {
+  test('names the other clone that started the running stack', async () => {
+    const env = dockerListingWorkingDirs('/clones/a/docker/stack')
+
+    expect(await otherCloneOwningStack({ workspaceRoot: workspace, env })).toBe(
+      '/clones/a'
+    )
+  })
+
+  test('is null when this clone started the running stack', async () => {
+    const env = dockerListingWorkingDirs(join(workspace, 'docker', 'stack'))
+
+    expect(
+      await otherCloneOwningStack({ workspaceRoot: workspace, env })
+    ).toBeNull()
+  })
+
+  test('is null when the stack is down', async () => {
+    const env = dockerListingWorkingDirs()
+
+    expect(
+      await otherCloneOwningStack({ workspaceRoot: workspace, env })
+    ).toBeNull()
+  })
+})
+
+describe('isSameWorkspace', () => {
+  test('treats a symlink to a clone as that clone', () => {
+    const link = join(workspace, 'link-to-clone')
+    symlinkSync(workspace, link)
+
+    expect(isSameWorkspace(link, workspace)).toBe(true)
+  })
+
+  test('tells two clones apart', () => {
+    expect(isSameWorkspace('/clones/a', '/clones/b')).toBe(false)
   })
 })

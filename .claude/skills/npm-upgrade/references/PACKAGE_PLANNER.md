@@ -58,7 +58,7 @@ classification, write `classification: manual`.
 4. **Decide classification, risk, and whether the upgrade is safe to
    automate.** See Classification below.
 5. **Write the classification into JSON** via
-   `packages-set-classification.sh`. There is no markdown plan file
+   `tim npm packages set-classification`. There is no markdown plan file
    to write — the JSON row is the plan.
 
 ---
@@ -66,7 +66,7 @@ classification, write `classification: manual`.
 ## Writing the classification
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-classification.sh \
+tim npm packages set-classification \
   --run-id {run-id} \
   --repo {repo} \
   --package {package} \
@@ -82,7 +82,7 @@ classification, write `classification: manual`.
 For a manual classification:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-classification.sh \
+tim npm packages set-classification \
   --run-id {run-id} \
   --repo {repo} \
   --package {package} \
@@ -170,10 +170,10 @@ whenever you can still classify conservatively.
 
 Reserve the failure shape below for when you genuinely cannot write a
 classification at all — the context bundle directory is missing, or
-`packages-set-classification.sh` rejects every call. Do **not** return an
+`tim npm packages set-classification` rejects every call. Do **not** return an
 empty or silent result: a silently-empty return leaves `classification`
 null, which is indistinguishable from an unprocessed package, and the
-classification coverage gate (`verify-classification-coverage.sh`, which
+classification coverage gate (`tim npm packages verify`, which
 fails iff any `classification == null`) will block the parent with no clue
 why.
 
@@ -187,5 +187,5 @@ FAILED: {package} — {what failed}; tried: {channels}; coverage gate will block
 Example:
 
 ```
-FAILED: @hapi/hapi — context bundle directory missing under .context/@hapi__hapi; tried: bundle read, npm registry WebFetch, packages-set-classification.sh; coverage gate will block.
+FAILED: @hapi/hapi — context bundle directory missing under .context/@hapi__hapi; tried: bundle read, npm registry WebFetch, tim npm packages set-classification; coverage gate will block.
 ```

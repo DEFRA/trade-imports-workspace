@@ -28,7 +28,7 @@ const routingSchema = z.object({
 const REFUSED_PATTERN_CHARS = /[[\]{}\\]/
 
 /**
- * Compile one `file-topics.sh`-style shell-case pattern to an anchored
+ * Compile one shell-case routing pattern to an anchored
  * RegExp: every regex metacharacter is escaped, `*` becomes `.*` and `?`
  * becomes `.`.
  *

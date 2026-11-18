@@ -64,7 +64,7 @@ existing skill — edit the skill's `references/` folder directly.
 
 | Persona | Loaded by | Spawn model | Artifact |
 |---|---|---|---|
-| `references/INTERVIEWER.md` | CREATE mode parent session | parent-loaded (no Task spawn) | populates `decisions.json` then invokes `scaffold-skill.sh` |
+| `references/INTERVIEWER.md` | CREATE mode parent session | parent-loaded (no Task spawn) | populates `decisions.json` then runs `tim skill scaffold` |
 | `references/AUDITOR.md` | AUDIT mode parent session | Task `subagent_type: general-purpose`, one per skill | per-skill plan at `workareas/skills-audit/<name>.md` |
 
 Spawn idiom for AUDITOR — prompt begins:
@@ -85,13 +85,16 @@ this SKILL.md (it has its own hygiene block at the top of
 ## Step 0: Dispatch
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/skill-creator/start-skill-creator.sh "<trigger phrase>"
+tim skill start "<trigger phrase>" --json
 ```
 
-The dispatcher writes `MODE: CREATE`, `MODE: AUDIT_ONE`, or
-`MODE: AUDIT_ALL` as the first stdout line, then prints a JSON
-payload with mode-specific parameters (`skill_name`, `targets[]`,
-`decisions_path`).
+The envelope's `result.mode` is `CREATE`, `AUDIT_ONE` or
+`AUDIT_ALL`, beside the mode's own fields: `name` and
+`decisions_path` for CREATE, `name`, `skill_md_path` and
+`output_path` for AUDIT_ONE, and `targets[]` for AUDIT_ALL.
+`decisions_path` sits in the workspace you run tim from. Without
+`--json` it prints `MODE: <mode>` and then the same fields as one
+line of JSON.
 
 Branch on the mode:
 
@@ -107,10 +110,10 @@ The parent session loads `references/INTERVIEWER.md` and follows
 it. The interviewer:
 
 1. Walks the 8 shape questions one at a time (serial, not batched).
-2. Records each answer atomically via `interview-add-answer.sh`
+2. Records each answer atomically via `tim skill answer`
    into `workareas/skill-creator/<name>/decisions.json`.
-3. When all 8 are answered, invokes
-   `scaffold-skill.sh --run-id <name>` which materialises the full
+3. When all 8 are answered, runs
+   `tim skill scaffold --run-id <name>`, which materialises the full
    scaffold (`.claude/skills/<name>/`, `tools/<name>/`, allowlist
    entries, `decisions.md` sidecar).
 4. Prints the artifact paths and a short list of TODO markers the
@@ -146,7 +149,7 @@ Next: open .claude/skills/<name>/SKILL.md and fill in the TODOs.
 
 `AUDIT_ONE` — targets is a single skill name from the trigger.
 
-`AUDIT_ALL` — `start-skill-creator.sh` already listed every
+`AUDIT_ALL` — `tim skill start` already listed every
 `.claude/skills/*/SKILL.md` (excluding `skill-creator` itself) in
 the JSON payload's `targets[]`.
 
@@ -199,13 +202,13 @@ Next: read each plan. Resolve Open Questions, then hand-write the
 implementer prompt (no auto-chaining audit → implement).
 ```
 
-## Scripts cheat-sheet
+## Commands cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/skill-creator/`:
+Each is a `tim skill` command; `tim skill <command> --help` gives its options.
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-skill-creator.sh` | Step 0 dispatcher — parses trigger, emits `MODE: ...` + JSON payload |
-| `scaffold-skill.sh` | CREATE step 3 — reads `decisions.json`, writes the scaffold + allowlist entries + `decisions.md` |
-| `interview-add-answer.sh` | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
-| `render-interview.sh` | CREATE — markdown view of `decisions.json` (used for `decisions.md` sidecar and mid-interview recaps) |
+| `tim skill start "<trigger>" [--json]` | Step 0 dispatcher — parses trigger, emits the mode and its fields |
+| `tim skill answer --run-id <name> --field <path> --value '<json>'` | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
+| `tim skill render --run-id <name>` | CREATE — markdown view of `decisions.json` (mid-interview recaps; the scaffold writes the same view as `decisions.md`) |
+| `tim skill scaffold --run-id <name> [--dry-run]` | CREATE step 3 — reads `decisions.json`, writes the scaffold + allowlist entries + `decisions.md` |

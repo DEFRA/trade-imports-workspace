@@ -6,12 +6,10 @@ CREATE mode records interview answers into:
 ~/git/defra/trade-imports-workspace/workareas/skill-creator/<name>/decisions.json
 ```
 
-The file is mutated atomically by
-`tools/skill-creator/interview-add-answer.sh` (one shape question
-per call). The final entry is consumed by
-`tools/skill-creator/scaffold-skill.sh` which materialises the
-skill directories under `.claude/skills/<name>/` and
-`tools/<name>/`.
+The file is mutated atomically by `tim skill answer` (one shape
+question per call). The final entry is consumed by
+`tim skill scaffold`, which materialises the skill directories
+under `.claude/skills/<name>/` and `tools/<name>/`.
 
 ## Schema
 
@@ -20,7 +18,7 @@ skill directories under `.claude/skills/<name>/` and
   "name": "skill-name",            // kebab-case, 1-64 chars
   "started_at": "2026-05-26T...",
   "answered_at": null,             // set when all 8 answered
-  "scaffolded_at": null,           // set when scaffold-skill.sh runs
+  "scaffolded_at": null,           // set when tim skill scaffold runs
   "answers": {
     "purpose": "One-line description of what the skill does.",
     "state_shape": "json",         // "json" | "prose"
@@ -32,8 +30,8 @@ skill directories under `.claude/skills/<name>/` and
     },
     "walker": false,               // boolean — N-item triage UX
     "helpers": [                   // names (no .sh suffix)
-      "start-skill-creator",
-      "scaffold-skill"
+      "start-ticket-notes",
+      "add-note"
     ],
     "triggers": {
       "phrases": ["scaffold skill", "skill-create"],
@@ -45,9 +43,10 @@ skill directories under `.claude/skills/<name>/` and
 
 ## Field rules
 
-- `name` — drives every generated path. Must match
-  `^[a-z][a-z0-9-]{0,63}$`. Validated by
-  `interview-add-answer.sh --field name`.
+- `name` — drives every generated path. It comes from the trigger
+  phrase: `tim skill start` takes lower-case letters, digits and
+  hyphens, not starting with a hyphen, and the later commands take
+  the same as `--run-id`.
 - `state_shape` — see [`docs/best-practices/skills/patterns.md`](../../../docs/best-practices/skills/patterns.md)
   pattern 1. `json` triggers an `assets/<name>-schema.md` stub and
   a `render-<name>.sh` stub.
@@ -59,8 +58,8 @@ skill directories under `.claude/skills/<name>/` and
   worker name; each becomes a `references/<NAME>.md` stub with a
   Bash-hygiene block at the top.
 - `walker` — see pattern 7. Only valid when `state_shape == "json"`
-  and there is a list of N items to triage. Validation in
-  `interview-add-answer.sh`.
+  and there is a list of N items to triage. The interviewer
+  enforces this at Q6; `tim skill answer` stores any value.
 - `helpers` — see pattern 6. Each becomes a `tools/<name>/<helper>.sh`
   stub with a one-line TODO header.
 - `triggers.disambiguation` — anti-pattern guard. The interview

@@ -24,7 +24,7 @@ Cross-workspace paths use the literal home-relative form —
 Mutate `questions.json` only via:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/question-add.sh \
+tim understanding-check question add \
     EUDPA-XXXXX \
     --category <architecture|implementation|scenario|debugging|test-coverage|operability|security> \
     --prompt "..." \
@@ -68,7 +68,7 @@ question; then drop the question and move on.
    questions must target one of these. They are the regions most
    likely to expose a gap.
 6. **Stop at the natural break.** 8 minimum, 12 maximum. The
-   `question-add.sh` helper enforces the 12 cap; you enforce the 8
+   `tim understanding-check question add` command enforces the 12 cap; you enforce the 8
    minimum by walking every category-with-findings before stopping.
 
 ## Rubric design — categorical, not hedged
@@ -91,7 +91,7 @@ Source analysis finding:
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/question-add.sh \
+tim understanding-check question add \
     EUDPA-XXXXX \
     --category implementation \
     --prompt "Why does the retry path skip the dead-letter queue when the exception is a 4xx?" \
@@ -117,7 +117,7 @@ Source analysis finding:
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/question-add.sh \
+tim understanding-check question add \
     EUDPA-XXXXX \
     --category security \
     --prompt "What stops an attacker from passing '../etc/passwd' as the uploaded CSV's path component?" \
@@ -143,7 +143,7 @@ Source analysis finding:
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/question-add.sh \
+tim understanding-check question add \
     EUDPA-XXXXX \
     --category implementation \
     --prompt "data-helper.js contains processData/handleItem/transformResponse — what domain concept does each correspond to in this codebase, and why aren't they named for it?" \

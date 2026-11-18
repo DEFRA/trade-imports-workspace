@@ -79,8 +79,8 @@ call waits on a permission prompt. Do not pipe the `grep`.
 ### If any files match patterns requiring changes → classify as `todo`
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk classify \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --classification todo \
   --summary "{one-line: what this version changes}"
 ```
@@ -88,8 +88,8 @@ call waits on a permission prompt. Do not pipe the `grep`.
 Then, for each file that needs editing:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-add-change.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk add-change \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --file {relative/path/to/file} \
   --why "{which changelog item requires this — quote the relevant line}" \
   --change "{specific, actionable description of what to change}"
@@ -100,13 +100,13 @@ Repeat for every file.
 ### If no files match any changelog patterns → classify as `noop`
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk classify \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --classification noop \
   --summary "{one-line: why no changes needed}"
 ```
 
-`version-classify.sh --classification noop` clears any stale `changes[]`
+`tim govuk classify --classification noop` clears any stale `changes[]`
 automatically — no further calls needed.
 
 ---

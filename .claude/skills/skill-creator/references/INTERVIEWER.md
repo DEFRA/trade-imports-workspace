@@ -1,21 +1,21 @@
 Walk the user through the 8 shape questions for a new workspace
 skill, record each answer atomically into `decisions.json`, then
-invoke `scaffold-skill.sh` to materialise the scaffold.
+run `tim skill scaffold` to materialise the scaffold.
 
 Parent-loaded — you inherit the SKILL.md's path conventions and
 hygiene rules. No fan-out, no Task spawn.
 
 ## Inputs
 
-The parent dispatcher (`start-skill-creator.sh`) has already:
+The parent dispatcher (`tim skill start`) has already:
 
 - Parsed `<name>` from the trigger phrase.
 - Created `workareas/skill-creator/<name>/decisions.json` with
   `name`, `started_at`, and an empty `answers` object.
-- Printed the path on `MODE: CREATE` line 2.
+- Printed the path as `decisions_path`.
 
 Your job: fill in `answers.*` via
-`interview-add-answer.sh`, one question at a time.
+`tim skill answer`, one question at a time.
 
 ## Read first
 
@@ -26,7 +26,7 @@ If not already in context:
 - `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
   — to call out mismatches as the user answers.
 - `~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/assets/interview-schema.md`
-  — the JSON shape `interview-add-answer.sh` writes into.
+  — the JSON shape `tim skill answer` writes into.
 
 ## Workflow
 
@@ -34,11 +34,10 @@ Ask each question on its own turn. Each answer informs the next.
 After every answer, call:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/skill-creator/interview-add-answer.sh \
-    --run-id <name> --field <field> --value '<value-json>'
+tim skill answer --run-id <name> --field <field> --value '<value-json>'
 ```
 
-The helper writes atomically (`jq ... > tmp; mv tmp file`).
+It writes atomically (temp file, then rename).
 
 ### Q1 — Purpose
 
@@ -130,31 +129,29 @@ Then ask:
 > `/init` and from neighbouring workspace skills?
 
 Save as `answers.triggers.disambiguation` (string). Required —
-`scaffold-skill.sh` refuses to run if this is empty.
+`tim skill scaffold` refuses to run if this is empty.
 
 ## After all 8 answered
 
 Show the user a recap:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/skill-creator/render-interview.sh \
-    --run-id <name>
+tim skill render --run-id <name>
 ```
 
 Ask:
 
 > Recap above. Anything to change before scaffolding?
 
-If yes, re-run `interview-add-answer.sh` for the changed field(s).
+If yes, re-run `tim skill answer` for the changed field(s).
 
 If no, scaffold:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/skill-creator/scaffold-skill.sh \
-    --run-id <name>
+tim skill scaffold --run-id <name>
 ```
 
-`scaffold-skill.sh` writes:
+`tim skill scaffold` writes:
 
 - `.claude/skills/<name>/SKILL.md` (from the template, with TODO
   markers).
@@ -162,7 +159,7 @@ If no, scaffold:
 - `.claude/skills/<name>/assets/<name>-schema.md` if Q2 was
   `json`.
 - `tools/<name>/<helper>.sh` per Q7 entry.
-- `.claude/settings.json` allowlist entries (atomic jq mutation).
+- `.claude/settings.json` allowlist entries (atomic rewrite).
 - `.claude/skills/<name>/decisions.md` sidecar (rendered from
   `decisions.json`).
 

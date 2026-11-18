@@ -54,6 +54,7 @@ cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:animals     # one domain: animals, animals-admin, ins or plants
 ```
+Only the clone that owns the stack (`tim docker owner`) runs local E2E. From any other clone the run stops before its first test; push and let GitHub Actions run it, or set `ALLOW_FOREIGN_STACK=1` to run anyway.
 To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json). How the suites and tags are applied: [`docs/testing/e2e-tests-gh-actions.md`](../testing/e2e-tests-gh-actions.md).
 
 **Run unit tests:**

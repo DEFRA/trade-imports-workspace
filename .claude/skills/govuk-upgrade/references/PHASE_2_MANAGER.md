@@ -18,16 +18,16 @@ evaluate changes, or touch source files.
 ## Step 1: List unplanned versions
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh \
-  --run-id {run-id} --filter unplanned --json
+tim govuk plans --run-id {run-id} --filter unplanned --json
 ```
 
-If the JSON `summary.unplanned == 0`: report "All versions already
-classified. Phase 2 complete (nothing to do)."
+If the envelope's `result.summary.unplanned == 0`: report "All versions
+already classified. Phase 2 complete (nothing to do)."
 
 ## Step 2: Spawn VERSION_PLANNER workers
 
-The Step 1 JSON has one entry per unplanned `{repo, version}` pair.
+The Step 1 envelope's `result.repos[].versions` has one entry per
+unplanned `{repo, version}` pair.
 Spawn one `general-purpose` Task subagent per pair concurrently
 (no cap — Decision 7). Spawn prompt:
 
@@ -47,8 +47,7 @@ Best-practices bundle: ~/git/defra/trade-imports-workspace/workareas/govuk-upgra
 Wait for all subagents to complete, then re-run the unplanned query:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh \
-  --run-id {run-id} --filter unplanned --json
+tim govuk plans --run-id {run-id} --filter unplanned --json
 ```
 
 If any remain, re-spawn `VERSION_PLANNER` workers for them once. Still
@@ -59,7 +58,7 @@ handles INCOMPLETE entries by surfacing them as `Discuss` by default
 ## Step 4: Report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh --run-id {run-id}
+tim govuk plans --run-id {run-id}
 ```
 
 ```

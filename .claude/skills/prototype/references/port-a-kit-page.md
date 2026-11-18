@@ -84,6 +84,7 @@ to 6 for you. Launch it by `scriptPath`, never by name, with every argument
 Workflow({
   scriptPath: ".claude/skills/prototype/workflow/port-kit-page.js",
   args: {
+    workspace: "<this clone's root, as a tilde path>",
     set: "<release-id>",
     source: "<path to the .html, the web address, or the screenshot path>",
     sourceKind: "html" | "url" | "screenshot",

@@ -20,6 +20,7 @@ log, samples and summary go to `workareas/machine-tuning/<time>/`.
 | `workers["<repo>/<rung>"]` | Worker count for that FIT or E2E rung, passed as `--workers=N` after the rung's `scope`. Playwright takes the last `--workers`, so it overrides the script's own. Unit rungs never take one. |
 | `parallelRepos` | Replaces `gates.json`'s: how many repos' unit and FIT rungs run at once. |
 | `stackAfterLocal` | Replaces `gates.json`'s: whether the stack starts only after unit and FIT finish. |
+| `e2e` | `"ci"` on a clone with no stack: the gate runs no E2E rung, takes no lease and starts no stack, and lists the rungs it left out in its result's `e2e.leftToCi`. Each pull request's E2E Tests check (`e2e-tests.yml`) is their evidence, and it follows `config/e2e-tests-pr-scope.json`, so it may run less than the local gate. `tim build gate --e2e local` or `--e2e ci` overrides it for one run. Leave it out, or set `"local"`, to run E2E against the local stack. |
 
 A machine with no file runs as `gates.json` and each script say: the
 frontends' `test:fit:ci` use `--workers=100%` (ins-frontend: Playwright's 50%),
@@ -141,7 +142,7 @@ so the scripts keep it.
   leave the Java services short.
 - To give the Mac more memory, start a smaller stack rather than shrinking the
   VM. `mssql` is the biggest container (1.1 GiB) and the dev-mode Java services
-  about 0.5 GiB each; `run-stack.sh --profile` and `-e <service>` drop the ones
+  about 0.5 GiB each; `tim docker up --profile` and `-e <service>` drop the ones
   a run does not need.
 
 ### What happened on 21 October

@@ -3,14 +3,20 @@ import { execa } from 'execa'
 import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
+import {
+  loadJiraFixture,
+  mockJiraForEachTest
+} from '../../test-support/jira-mock.js'
 import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
 import {
   runUpdate,
   renderUpdateResult,
   changedFields,
+  jiraFieldsOf,
   parseUpdateOptions
 } from './update.js'
+
+const bashPayloads = loadJiraFixture('update-bash-payloads.json')
 
 const ISSUE_PATH = '/rest/api/2/issue/EUDPA-200'
 
@@ -21,7 +27,12 @@ const TICKET = {
   type: 'Story',
   assignee: null,
   priority: 'Medium',
-  description: 'The old description'
+  parent: null,
+  labels: [],
+  updated: null,
+  description: 'The old description',
+  subtasks: [],
+  links: []
 }
 
 const jira = mockJiraForEachTest()
@@ -36,7 +47,9 @@ const ticketReads = (...tickets) =>
           summary: ticket.summary,
           status: { name: ticket.status },
           issuetype: { name: ticket.type },
-          priority: { name: ticket.priority },
+          priority: ticket.priority ? { name: ticket.priority } : null,
+          parent: ticket.parent ? { key: ticket.parent } : null,
+          labels: ticket.labels,
           description: ticket.description
         }
       })
@@ -226,10 +239,142 @@ describe('runUpdate', () => {
   })
 })
 
+const BASH_BEFORE = {
+  ...TICKET,
+  parent: 'EUDPA-100',
+  labels: ['existing-b', 'existing-a']
+}
+
+const ticketAfterWrite = (before, sentFields) => ({
+  ...before,
+  ...sentFields,
+  ...(sentFields.priority ? { priority: sentFields.priority.name } : {}),
+  ...('parent' in sentFields ? { parent: sentFields.parent?.key ?? null } : {})
+})
+
+describe('runUpdate sends the recorded Jira payload for each option', () => {
+  test.each([
+    ['summary', { summary: 'New summary' }],
+    ['description', { description: 'New description' }],
+    ['priority', { priority: 'High' }],
+    ['parent', { parent: 'EUDPA-215' }],
+    ['parentNone', { parent: 'none' }],
+    ['labels', { labels: 'alpha,beta' }],
+    ['addLabel', { addLabel: ['urgent', 'existing-b'] }],
+    ['labelsAndAddLabel', { labels: 'alpha', addLabel: ['urgent'] }]
+  ])('%s', async (bashCase, options) => {
+    const golden = bashPayloads[bashCase].put
+    ticketReads(BASH_BEFORE, ticketAfterWrite(BASH_BEFORE, golden.fields))
+    const sent = acceptsUpdate()
+
+    await runUpdate({ key: 'EUDPA-200', ...options, confirm: true })
+
+    expect(sent.body).toEqual(golden)
+  })
+})
+
+describe('runUpdate with priority, parent and labels', () => {
+  test('a dry run reports the merged labels and sends no write', async () => {
+    ticketReads(BASH_BEFORE)
+
+    const result = await runUpdate({
+      key: 'EUDPA-200',
+      addLabel: ['urgent'],
+      confirm: false
+    })
+
+    expect(result).toEqual({
+      mode: 'dry-run',
+      key: 'EUDPA-200',
+      fields: { labels: ['existing-a', 'existing-b', 'urgent'] },
+      before: BASH_BEFORE
+    })
+  })
+
+  test('leaves labels that differ only in order alone', async () => {
+    ticketReads(BASH_BEFORE)
+
+    const result = await runUpdate({
+      key: 'EUDPA-200',
+      labels: 'existing-a,existing-b',
+      confirm: true
+    })
+
+    expect(result.mode).toBe('unchanged')
+  })
+
+  test('leaves a ticket with no parent alone when asked to take the parent away', async () => {
+    ticketReads(TICKET)
+
+    const result = await runUpdate({
+      key: 'EUDPA-200',
+      parent: 'none',
+      confirm: true
+    })
+
+    expect(result.mode).toBe('unchanged')
+  })
+
+  test('fails when the read-back still shows the old parent', async () => {
+    ticketReads(BASH_BEFORE, BASH_BEFORE)
+    acceptsUpdate()
+
+    await expect(
+      runUpdate({ key: 'EUDPA-200', parent: 'EUDPA-215', confirm: true })
+    ).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message:
+        'Jira accepted the update, but EUDPA-200 still shows the old parent. Check the ticket in Jira.'
+    })
+  })
+
+  test('refuses an empty list of labels', async () => {
+    await expect(
+      runUpdate({ key: 'EUDPA-200', labels: '', confirm: false })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'The list of labels is empty. Give some text.'
+    })
+  })
+})
+
+describe('jiraFieldsOf', () => {
+  test('sends a priority by name, a parent by key and no parent as null', () => {
+    expect([
+      jiraFieldsOf({ priority: 'High', labels: ['a'] }),
+      jiraFieldsOf({ parent: 'EUDPA-215' }),
+      jiraFieldsOf({ parent: null })
+    ]).toEqual([
+      { priority: { name: 'High' }, labels: ['a'] },
+      { parent: { key: 'EUDPA-215' } },
+      { parent: null }
+    ])
+  })
+})
+
 describe('parseUpdateOptions', () => {
+  test('refuses a priority Jira does not have', () => {
+    expect(() => parseUpdateOptions({ priority: 'Urgent' })).toThrowError(
+      'Give a priority of Lowest, Low, Medium, High or Highest.'
+    )
+  })
+
+  test('refuses a parent that is neither a key nor none', () => {
+    expect(() => parseUpdateOptions({ parent: 'eudpa-1' })).toThrowError(
+      'Give the parent as a Jira ticket key, for example EUDPA-215, or none to take the parent away.'
+    )
+  })
+
+  test('accepts --add-label on its own', () => {
+    expect(parseUpdateOptions({ addLabel: ['urgent'] })).toEqual({
+      addLabel: ['urgent'],
+      confirm: false
+    })
+  })
+
   test('refuses a call that changes nothing', () => {
     expect(() => parseUpdateOptions({ confirm: false })).toThrowError(
-      'Give something to change: --summary, --description or --description-file.'
+      'Give something to change: --summary, --description, --description-file, --priority, --parent, --labels or --add-label.'
     )
   })
 
@@ -264,6 +409,29 @@ describe('renderUpdateResult', () => {
         '',
         'summary:',
         'A clearer title',
+        '',
+        'This is a dry run. No request has been sent. Add --confirm to write it for real.'
+      ].join('\n')
+    )
+  })
+
+  test('renders a dry run that takes the parent away and sets labels', () => {
+    expect(
+      renderUpdateResult({
+        mode: 'dry-run',
+        key: 'EUDPA-200',
+        fields: { parent: null, labels: ['alpha', 'beta'] },
+        before: BASH_BEFORE
+      })
+    ).toBe(
+      [
+        'Would change the parent and labels on EUDPA-200:',
+        '',
+        'parent:',
+        'none',
+        '',
+        'labels:',
+        'alpha, beta',
         '',
         'This is a dry run. No request has been sent. Add --confirm to write it for real.'
       ].join('\n')
@@ -308,6 +476,66 @@ describe('tim jira update (spawn)', () => {
         'EUDPA-200',
         '--summary',
         'A clearer title',
+        '--json'
+      ],
+      {
+        reject: false,
+        env: {
+          ...process.env,
+          JIRA_USER: '',
+          JIRA_TOKEN: '',
+          JIRA_BASE_URL: ''
+        }
+      }
+    )
+
+    expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
+      exitCode: 1,
+      payload: { ok: false, errors: [{ code: 'AUTH' }] }
+    })
+  })
+
+  test('emits a USAGE envelope for a priority Jira does not have', async () => {
+    const { stdout, exitCode } = await execa(
+      'node',
+      [
+        TIM_CLI_PATH,
+        'jira',
+        'update',
+        'EUDPA-200',
+        '--priority',
+        'Urgent',
+        '--json'
+      ],
+      { reject: false }
+    )
+
+    expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
+      exitCode: 2,
+      payload: {
+        ok: false,
+        errors: [
+          {
+            code: 'USAGE',
+            message: 'Give a priority of Lowest, Low, Medium, High or Highest.'
+          }
+        ]
+      }
+    })
+  })
+
+  test('gets past option checks to the Jira sign-in with only repeated --add-label', async () => {
+    const { stdout, exitCode } = await execa(
+      'node',
+      [
+        TIM_CLI_PATH,
+        'jira',
+        'update',
+        'EUDPA-200',
+        '--add-label',
+        'urgent',
+        '--add-label',
+        'triage',
         '--json'
       ],
       {

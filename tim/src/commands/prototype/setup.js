@@ -99,7 +99,7 @@ export const runPrototypeSetup = async (
   const cloned = existsSync(join(dir, '.git'))
 
   const upstream = cloned
-    ? await ensureUpstreamRemote(PROTOTYPE_REPO, dir)
+    ? await ensureUpstreamRemote(workspaceRoot, PROTOTYPE_REPO, dir)
     : { exitCode: 0, action: 'not-cloned' }
 
   const install = cloned

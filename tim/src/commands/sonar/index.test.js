@@ -1,6 +1,14 @@
 import { describe, test, expect } from 'vitest'
 import { execa } from 'execa'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import {
+  createCliWorkspace,
+  runTimInWorkspace,
+  TIM_CLI_PATH
+} from '../../test-support/tim-cli.js'
+import { stagePushedRepos } from '../../sonar/__fixtures__/sonar-hooks.js'
 import { renderIssues, renderGate } from './index.js'
 
 const PROJECT = 'DEFRA_trade-imports-plants-frontend'
@@ -251,5 +259,83 @@ describe('tim sonar gate', () => {
     expect(JSON.parse(run.stdout).errors).toEqual([
       { code: 'USAGE', message: '--pull-request must be a PR number.' }
     ])
+  })
+})
+
+describe('tim sonar pending record', () => {
+  test('Should record the pushed feature branch with the time it ran and exit 0', async () => {
+    const root = createCliWorkspace('tim-sonar-record-')
+    const pushed = await stagePushedRepos(root)
+    const before = Math.floor(Date.now() / 1000)
+
+    const run = await runTimInWorkspace(root, ['sonar', 'pending', 'record'])
+
+    const [branch, pushedAt] = readFileSync(
+      join(root, '.sonar-checks', `pending__${pushed.project}__${pushed.sha}`),
+      'utf8'
+    ).split('\n')
+    expect({
+      exitCode: run.exitCode,
+      stdout: run.stdout,
+      branch,
+      pushedNow: Number(pushedAt) >= before
+    }).toEqual({
+      exitCode: 0,
+      stdout: '',
+      branch: pushed.branch,
+      pushedNow: true
+    })
+    rmSync(root, { recursive: true, force: true })
+  }, 30_000)
+})
+
+describe('tim sonar pending check', () => {
+  test('Should print nothing and exit 0 when there are no pending checks', async () => {
+    const root = createCliWorkspace('tim-sonar-check-')
+
+    const run = await runTimInWorkspace(
+      root,
+      ['sonar', 'pending', 'check', '--event', 'SessionStart'],
+      { env: { SONAR_TOKEN: 'unused' } }
+    )
+
+    expect({ exitCode: run.exitCode, stdout: run.stdout }).toEqual({
+      exitCode: 0,
+      stdout: ''
+    })
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  test('Should print nothing and exit 0 when the workspace path is not a workspace', async () => {
+    const notAWorkspace = mkdtempSync(join(tmpdir(), 'tim-sonar-nowhere-'))
+
+    const run = await runTimInWorkspace(
+      notAWorkspace,
+      ['sonar', 'pending', 'check'],
+      { env: { SONAR_TOKEN: 'unused' } }
+    )
+
+    expect({ exitCode: run.exitCode, stdout: run.stdout }).toEqual({
+      exitCode: 0,
+      stdout: ''
+    })
+    rmSync(notAWorkspace, { recursive: true, force: true })
+  })
+
+  test('Should print nothing and exit 0 when given an unknown flag', async () => {
+    const root = createCliWorkspace('tim-sonar-check-flag-')
+
+    const run = await runTimInWorkspace(root, [
+      'sonar',
+      'pending',
+      'check',
+      '--no-such-flag'
+    ])
+
+    expect({ exitCode: run.exitCode, stdout: run.stdout }).toEqual({
+      exitCode: 0,
+      stdout: ''
+    })
+    rmSync(root, { recursive: true, force: true })
   })
 })

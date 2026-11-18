@@ -11,7 +11,11 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS, upstreamOf } from '../../constants/repos.js'
+import { upstreamOf } from '../../constants/repos.js'
+import { bundledRoster, timWorkspaceRoot } from '../../test-support/roster.js'
+
+const { repos: REPOS } = bundledRoster
+const upstreamOfRepo = (repo) => upstreamOf(timWorkspaceRoot, repo)
 import {
   createBareRepo,
   createFatClone
@@ -223,9 +227,9 @@ describe('tim workspace setup CLI', () => {
   }, 60_000)
 
   describe('upstream remote (repos.json "upstream" field)', () => {
-    const repoWithUpstream = REPOS.find((repo) => upstreamOf(repo))
-    const repoWithoutUpstream = REPOS.find((repo) => !upstreamOf(repo))
-    const upstreamTarget = upstreamOf(repoWithUpstream)
+    const repoWithUpstream = REPOS.find((repo) => upstreamOfRepo(repo))
+    const repoWithoutUpstream = REPOS.find((repo) => !upstreamOfRepo(repo))
+    const upstreamTarget = upstreamOfRepo(repoWithUpstream)
 
     test('adds the upstream remote on a fresh clone', async () => {
       await createBareRepo(fixturesDir, repoWithUpstream)

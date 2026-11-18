@@ -9,7 +9,7 @@ off to Phase 2.
 ## Boundaries
 
 Discover, fan out, gate. Do not read the migration content the
-PACKAGE_PLANNER produced (it's in JSON via `packages-set-classification.sh`),
+PACKAGE_PLANNER produced (it's in JSON via `tim npm packages set-classification`),
 do not override classifications, do not touch source files.
 
 ## Inputs
@@ -26,30 +26,31 @@ beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
 ## Step 1: Dispatcher — discover and pre-bake
 
 One call sets up everything: discovery, per-repo best-practices
-bundle, per-package context pre-bake, and emits a JSON spawn manifest.
+bundle, per-package context pre-bake, and gives the spawn manifest as
+the JSON envelope's `.result`.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch}
+tim npm upgrade {run-id} --phase 1 --branch {branch} --json
 ```
 
 Optionally narrow to a subset:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch} --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
+tim npm upgrade {run-id} --phase 1 --branch {branch} --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor --json
 ```
 
-Stdout shape (between sentinel lines):
+`.result` shape:
 
-```
-MANIFEST_BEGIN
-{"ticket":"EUDPA-X","repo":"...","package":"...","current":"...","target":"...","upgrade_type":"...","dependency_type":"...","context_baked":...,"context_missing":[...]}
-{"ticket":"EUDPA-X","repo":"...","package":"...",...}
-...
-MANIFEST_END
+```json
+[
+  {"ticket":"EUDPA-X","repo":"...","package":"...","current":"...","target":"...","upgrade_type":"...","dependency_type":"...","context_baked":...,"context_missing":[...]},
+  {"ticket":"EUDPA-X","repo":"...","package":"...",...}
+]
 ```
 
-Each manifest line is a complete spawn task for one PACKAGE_PLANNER
-subagent.
+Each entry is a complete spawn task for one PACKAGE_PLANNER subagent.
+A refusal (no green phase 0 covering every repo at its HEAD) gives
+`ok: false` with the reason in `errors[0].message`, and exit 1.
 
 ---
 
@@ -95,7 +96,7 @@ Where `{normalized-package}` substitutes `/` with `__` (so
 After all subagents return, run the gate:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/verify-classification-coverage.sh --run-id {run-id}
+tim npm packages verify --run-id {run-id}
 ```
 
 Exit 0 → every package has `classification != null`. Move to Step 4.
@@ -109,7 +110,7 @@ retry, list them in the Phase 1 report as INCOMPLETE and stop.
 ## Step 4: Report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id {run-id}
+tim npm packages counts --run-id {run-id}
 ```
 
 Format the operator-facing summary verbatim from that output, then
@@ -118,7 +119,7 @@ present:
 ```
 === PHASE 1 COMPLETE ===
 
-Counts (from packages-counts.sh):
+Counts (from tim npm packages counts):
   Total: {N}
   Auto:    {count}  → Phase 2
   Manual:  {count}  → Phase 3
@@ -135,8 +136,8 @@ By risk (manual side):
 ## Notes for the worker
 
 - PACKAGE_PLANNER writes its classification via
-  `packages-set-classification.sh`. There is no markdown plan file on
+  `tim npm packages set-classification`. There is no markdown plan file on
   disk to inspect.
-- `packages-list.sh --filter pending --json` answers "what's still
+- `tim npm packages list --filter pending --json` answers "what's still
   unclassified" if you need it between worker waves; the dispatcher
-  uses it inside `verify-classification-coverage.sh`.
+  uses it inside `tim npm packages verify`.

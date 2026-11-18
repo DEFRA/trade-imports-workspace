@@ -7,10 +7,9 @@ The Behaviour Spec lives in the **workspace** repo, not the target repo.
 Every path below is relative to the **spec root** Step 5 resolved:
 `<spec root>/openspec/`. `specs/<path>/spec.md` holds intended behaviour
 as Given/When/Then; `coverage/<path>/coverage.json` mirrors it
-file-for-file and records which tests witness each scenario. On a direct
-invocation the spec root is `~/git/defra/trade-imports-workspace`; under
-`journey-builder` it is the run's workspace worktree. Never hardcode the
-former — see Step 5's two-caller table.
+file-for-file and records which tests witness each scenario. The spec root
+is `~/git/defra/trade-imports-workspace` unless the caller names another
+checkout. Never hardcode the former — see Step 5.0.
 
 `openspec/config.yaml` is the authority on every convention below. Read it
 before the first write of a session. This file carries only what that one
@@ -78,9 +77,9 @@ ls <spec root>/openspec/specs/<namespace>/journey-pages/
 ls <spec root>/openspec/specs/<namespace>/journey-obligations/
 ```
 
-The spec root is `~/git/defra/trade-imports-workspace` on a direct
-invocation and the run's workspace worktree under `journey-builder` — the
-worktree is the one that has this run's earlier increments in it.
+The spec root is `~/git/defra/trade-imports-workspace` unless the caller
+names another checkout — the named one is the one that has the caller's
+earlier increments in it.
 
 Read the `spec.md` of any leaf that looks close — its Purpose records the
 page title. Then make the call explicitly, in one sentence you could be
@@ -121,13 +120,12 @@ only after the explicit judgement above. Four things land together:
    non-zero on a count of zero, so that exit code is the success case
    here, not a failure.
 
-   **Why the spec root and not the workspace checkout.** Under
-   `journey-builder`, rows minted by earlier increments of the same run
-   are committed on the run's branch in its worktree and are not in the
-   main checkout yet. Grepping the main checkout would miss exactly the
-   collision these gates exist to catch — and `AREAS.md` is a single
-   append-ordered registry, so the duplicate would surface as a merge
-   conflict at run end rather than here.
+   **Why the spec root and not the workspace checkout.** When the caller
+   names another spec root, rows minted by its earlier increments are
+   there and not in the main checkout yet. Grepping the main checkout
+   would miss exactly the collision these gates exist to catch — and
+   `AREAS.md` is a single append-ordered registry, so the duplicate would
+   surface as a merge conflict later rather than here.
 
 2. **An AREA code.** Derive a candidate from the leaf, prefixed to match
    the namespace's existing rows (`PLANTS-` inside `plants/`; unprefixed
@@ -345,9 +343,9 @@ reach instead for a link to a test that nearly covers it.
 
 ## What is validated, and what is not
 
-`spec.md` is validated: `tools/frontend-change/openspec-validate.sh`
-wraps `openspec validate <capability-path> --strict`, rooted at the spec
-root via `--root`. Non-zero is a halt.
+`spec.md` is validated: `tim spec lint --root <spec root> --capability
+<capability-path>` runs `openspec validate <capability-path> --strict` in
+its specs group, rooted at the spec root. Non-zero is a halt.
 
 `coverage.json` has **no** CLI validator — the OpenSpec root does not
 resolve against `openspec/coverage/`. Step 5's coverage self-check is its

@@ -1,13 +1,13 @@
 # Docker Compose — Best Practices
 
 All compose definitions live in the workspace stack — `docker/stack/` at the
-workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`) and
-the `scripts/stack/` wrappers it calls. No repo carries its own
+workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`).
+CI starts it with `tim docker up` too. No repo carries its own
 `compose.yml`. The rules for running it are in
 [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#rules-for-agents).
 
 Init scripts are owned by the service that needs them and staged into the
-stack by `scripts/stack/lib/init-scripts.sh`: the backend owns the Floci
+stack by `tim docker up`: the backend owns the Floci
 provisioning (`compose/start-floci.sh`) and the workspace owns the mongo
 replica-set init.
 
@@ -173,11 +173,11 @@ depends_on:
     condition: service_healthy
 ```
 
-**2. Bypassing the wrappers with hand-assembled `-f` chains**
-The stack is split across overlay files under `docker/stack/` and the wrappers
-compose them (plus profile flags and the staged init scripts) in one place.
+**2. Bypassing `tim docker` with hand-assembled `-f` chains**
+The stack is split across overlay files under `docker/stack/`, and `tim docker`
+composes them (plus profile flags and the staged init scripts) in one place.
 A hand-built `docker compose -f docker/stack/compose.yml ...` chain silently
-drops overlays or staging. Always go through `tim docker` or `scripts/stack/`.
+drops overlays or staging. Always go through `tim docker`.
 
 **3. Using `latest` and `:1.2` versions side-by-side**
 A mix produces unpredictable startup ordering on first pull. Pick one strategy per stack tier (see §4).
@@ -192,4 +192,4 @@ AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
 ```
 
 **5. Mounting source as a volume without rebuilding when dependencies change**
-`tim docker dev` mounts `src/` for hot-reload, but a dependency change (`package.json`, `pom.xml`) needs a rebuild: `./scripts/stack/dev-service.sh rebuild <service>`, or `tim docker dev` again. See [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#--dev-caveats).
+`tim docker dev` mounts `src/` for hot-reload, but a dependency change (`package.json`, `pom.xml`) needs a rebuild: `tim docker service rebuild <service>`, or `tim docker dev` again. See [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#--dev-caveats).

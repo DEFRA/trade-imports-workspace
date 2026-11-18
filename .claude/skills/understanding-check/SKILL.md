@@ -18,8 +18,8 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/tools/<domain>/`,
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+your home directory automatically. `tim understanding-check` finds the
+workspace it runs in, and `start` prints the check folder's path.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -41,11 +41,11 @@ JSON canonical:
 
 | File | Mutated by | Purpose |
 |---|---|---|
-| `.interview-meta.json` | `prepare-check.sh`, `finalize-verdict.sh` | run metadata + verdict + coverage gaps |
-| `analysis.{repo}.json` | `analysis-add-finding.sh`, `analysis-set-verdict.sh` | per-repo findings (evidence-anchored) |
-| `questions.json` | `question-add.sh`, `question-replace.sh`, `question-remove.sh` | combined question set (the plan-gate artifact) |
-| `transcript.json` | `transcript-record-answer.sh`, `transcript-add-score.sh` | per-question answer + score |
-| `report.md` | `render-report.sh` | rendered final report (regenerable from JSON) |
+| `.interview-meta.json` | `tim understanding-check prepare`, `tim understanding-check finalize` | run metadata + verdict + coverage gaps |
+| `analysis.{repo}.json` | `tim understanding-check analysis add-finding`, `tim understanding-check analysis complete` | per-repo findings (evidence-anchored) |
+| `questions.json` | `tim understanding-check question add`, `question replace`, `question remove` | combined question set (the plan-gate artifact) |
+| `transcript.json` | `tim understanding-check answer`, `tim understanding-check score` | per-question answer + score |
+| `report.md` | `tim understanding-check report` | rendered final report (regenerable from JSON) |
 
 Schemas live under `assets/`:
 [`analysis-schema.md`](assets/analysis-schema.md),
@@ -58,7 +58,7 @@ Schemas live under `assets/`:
 | Trigger | What to follow |
 |---------|----------------|
 | "interview EUDPA-X" / "check understanding EUDPA-X" / "understanding-check EUDPA-X" / "verify I understand EUDPA-X" | this SKILL.md — full workflow |
-| "resume understanding-check EUDPA-X" | this SKILL.md — `start-check.sh` emits `MODE: RESUME`, pick up where left off |
+| "resume understanding-check EUDPA-X" | this SKILL.md — `tim understanding-check start` emits `MODE: RESUME`, pick up where left off |
 
 NOT a code review (use `review`). NOT a style review (use `code-style`).
 NOT a refinement check (use `ticket-refiner`). Those judge **the code or
@@ -85,13 +85,13 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 ## Step 0: Start the check
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/start-check.sh EUDPA-XXXXX
+tim understanding-check start EUDPA-XXXXX
 ```
 
 First line of output is `MODE: FRESH` or `MODE: RESUME`. Branch on it:
 
-- `MODE: FRESH` → the dispatcher ran `prepare-check.sh`; go to Step 2
-  (Step 1 is now done).
+- `MODE: FRESH` → the output names the check folder and its raw folder;
+  go to Step 1.
 - `MODE: RESUME` → state already exists; read `.interview-meta.json` to
   see how far the prior run got. Jump to the next pending step:
   - no `analysis.{repo}.json` for any repo → Step 2.
@@ -101,19 +101,58 @@ First line of output is `MODE: FRESH` or `MODE: RESUME`. Branch on it:
   - transcript complete but scores missing → Step 6.
   - scores complete but verdict null → Step 7.
 
-## Step 1: Workspace prepared (by Step 0)
+## Step 1: Prepare the check
 
-`start-check.sh` already ran `prepare-check.sh` which:
+GitHub stays on `gh`; tim reads what `gh` saves. Use the raw folder
+`start` printed, written `<raw>` below. Run each command in its own
+Bash call.
 
-- Fetched the ticket via `tools/jira/ticket.sh`.
-- Found PRs via `tools/github/prs.sh`.
-- Cached each PR's diff at `.diffs/{repo}.diff` after **redaction**
-  (env-var / API-key / PEM-block patterns stripped; redaction count
-  logged to stderr, never the matched text).
-- Baked `best-practices/{repo}.md` per repo (mirrors
-  `tools/style/bake-rules-bundle.sh`).
-- Seeded `.interview-meta.json` with `verdict: null`,
-  `coverage_gaps: []`, and the head SHA per repo.
+1. Save the ticket's pull requests:
+
+   ```bash
+   gh search prs EUDPA-XXXXX --owner DEFRA --json number,title,repository,url,state,createdAt > <raw>/prs.json
+   ```
+
+2. List the pull request to fetch for each repo (an open one over any
+   other, then the newest). Each line is `<repo> <number>`:
+
+   ```bash
+   tim understanding-check prepare EUDPA-XXXXX --select
+   ```
+
+   It stops with `No PRs found` when `gh` found none.
+
+3. For each line, save the head commit and the diff. Do not skip a line:
+   a repo with no saved diff is left out of the check.
+
+   ```bash
+   gh pr view <number> --repo DEFRA/<repo> --json headRefOid --jq .headRefOid > <raw>/<repo>.sha
+   ```
+
+   ```bash
+   gh pr diff <number> --repo DEFRA/<repo> > <raw>/<repo>.diff
+   ```
+
+   If `gh pr diff` fails, delete `<raw>/<repo>.diff`, so `prepare`
+   reports the repo as not fetched rather than reading an empty diff.
+
+4. Prepare the check:
+
+   ```bash
+   tim understanding-check prepare EUDPA-XXXXX
+   ```
+
+   It reads `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`, and:
+
+   - writes `ticket.md` from the Jira ticket
+   - caches each diff at `.diffs/{repo}.diff`, cut to `--max-diff-bytes`
+     (default 200000, a cut adds a coverage gap) and **redacted** (key
+     assignments, API keys, tokens and private-key blocks; the count goes
+     to stderr, never the matched text)
+   - writes `best-practices/{repo}.md` from the review routing data
+   - seeds `analysis.{repo}.json` and `.interview-meta.json` with
+     `verdict: null`, the head SHA per repo and any coverage gaps
+   - removes the raw folder
 
 Read `ticket.md` to internalise the ticket summary before spawning
 analysts.
@@ -151,7 +190,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/un
 ```
 
 The generator reads every `analysis.{repo}.json`, emits 8-12 questions
-via `question-add.sh`. Constraints (enforced by the helper, not by the
+via `tim understanding-check question add`. Constraints (enforced by the helper, not by the
 persona's good intentions):
 
 - ≥1 question per category that has analysis findings; **categories
@@ -170,7 +209,7 @@ interview starts, render the question set + analysis summary as a
 preview and present it to the user:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX --preview
+tim understanding-check report EUDPA-XXXXX --preview
 ```
 
 Show the preview and prompt:
@@ -179,9 +218,9 @@ Show the preview and prompt:
 Question set is ready. Approve to start the interview, or list edits.
 
 Available edits:
-- `replace N` — replace question N with a new one (call question-replace.sh)
-- `remove N`  — drop question N (call question-remove.sh)
-- `add`       — add a new question (call question-add.sh)
+- `replace N` — replace question N with a new one (`tim understanding-check question replace`)
+- `remove N`  — drop question N (`tim understanding-check question remove`)
+- `add`       — add a new question (`tim understanding-check question add`)
 
 Type `go` to start the interview.
 ```
@@ -212,7 +251,7 @@ For each question in `questions.json`, in order:
      record `FAIL` with `missedConcepts: ["skipped"]`.
    - `quit` → finalise with a `coverage_gap` entry; verdict will be
      downgraded.
-4. Persist via `transcript-record-answer.sh EUDPA-XXXXX --question-id Q3 --answer-file /tmp/ans.txt`.
+4. Persist via `tim understanding-check answer EUDPA-XXXXX --question-id Q3 --answer-file /tmp/ans.txt`.
 
 Do NOT volunteer the answer between questions, even if the developer
 asks. The point is to find gaps, not to fill them.
@@ -234,7 +273,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/un
 ```
 
 Each scorer reads the question + rubric + answer + anchored diff hunk,
-then calls `transcript-add-score.sh`. The helper **requires** a
+then calls `tim understanding-check score`. The command **requires** a
 `--rubric-match "<quoted clause>"` argument; if the scorer can't quote
 the rubric clause that fired, the helper records `verdict: FAIL,
 missedConcepts: [unscorable]` (the categorical anchor that replaces
@@ -244,10 +283,10 @@ hedged "I'm not sure" judgements — see
 ## Step 7: Verify coverage and finalise
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/verify-coverage.sh EUDPA-XXXXX
+tim understanding-check verify EUDPA-XXXXX
 ```
 
-Gates the verdict step. Exits non-zero if:
+Gates the verdict step. Lists the gaps on stderr and exits 1 if:
 
 - Any question is missing an answer or a score.
 - Any analysis finding lacks evidence (shouldn't happen — helpers
@@ -256,18 +295,21 @@ Gates the verdict step. Exits non-zero if:
 Then apply the deterministic counting rule:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/finalize-verdict.sh EUDPA-XXXXX
+tim understanding-check finalize EUDPA-XXXXX
 ```
 
-The script reads `transcript.json`, applies
-[`assets/verdict-rule.md`](assets/verdict-rule.md), and stamps the
-verdict + exit code onto `.interview-meta.json`. Coverage gaps
+The command reads `transcript.json`, applies
+[`assets/verdict-rule.md`](assets/verdict-rule.md), stamps the
+verdict + exit code onto `.interview-meta.json` and exits with that
+code. A finalize that could not run also exits 1, so read the verdict
+from its `Verdict for` line (or `--json` `result.verdict`), not from the
+exit code alone. Coverage gaps
 recorded during the run automatically downgrade `pass` → `needs-review`.
 
 Then render the report:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX
+tim understanding-check report EUDPA-XXXXX
 ```
 
 `report.md` has 10 sections (header, ticket summary, change summary,
@@ -306,20 +348,22 @@ Section 10 of the report is a paste-ready PR comment.
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/understanding-check/`:
+The `tim` commands the steps run, and the `gh` calls Step 1 makes:
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-check.sh` | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
-| `prepare-check.sh` | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta |
-| `analysis-add-finding.sh` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence file:lines`) |
-| `analysis-set-verdict.sh` | ANALYST helper — mark per-repo analysis as `complete` |
-| `question-add.sh` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |
-| `question-replace.sh` | Plan-gate edit — replace question by id |
-| `question-remove.sh` | Plan-gate edit — drop a question by id (renumbers downstream ids) |
-| `transcript-record-answer.sh` | Interview helper — persist developer's answer for a question |
-| `transcript-add-score.sh` | SCORER helper — append a score (rubric-match required) |
-| `counts.sh` | Diagnostic — PASS/PARTIAL/FAIL by category |
-| `verify-coverage.sh` | Step 7 gate — every question scored, every finding has evidence |
-| `finalize-verdict.sh` | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
-| `render-report.sh` | Step 4 (`--preview`) and Step 7 — render markdown from JSON state |
+| `tim understanding-check start` | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
+| `gh search prs`, `gh pr view`, `gh pr diff` | Step 1 — save the pull requests, head commits and diffs into the raw folder |
+| `tim understanding-check prepare --select` | Step 1 — list the pull request to fetch for each repo |
+| `tim understanding-check prepare` | Step 1 — fetch the ticket, cache redacted diffs, bake best-practices, seed meta |
+| `tim understanding-check analysis add-finding` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence-file` and `--evidence-lines`) |
+| `tim understanding-check analysis complete` | ANALYST helper — mark per-repo analysis as `complete` |
+| `tim understanding-check question add` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |
+| `tim understanding-check question replace` | Plan-gate edit — replace question by id |
+| `tim understanding-check question remove` | Plan-gate edit — drop a question by id (renumbers downstream ids) |
+| `tim understanding-check answer` | Interview helper — persist developer's answer for a question |
+| `tim understanding-check score` | SCORER helper — append a score (rubric-match required) |
+| `tim understanding-check counts` | Diagnostic — PASS/PARTIAL/FAIL by category |
+| `tim understanding-check verify` | Step 7 gate — every question scored, every finding has evidence |
+| `tim understanding-check finalize` | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
+| `tim understanding-check report` | Step 4 (`--preview`) and Step 7 — render markdown from JSON state |

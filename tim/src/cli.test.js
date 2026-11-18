@@ -47,7 +47,6 @@ describe('tim CLI', () => {
     for (const cmd of [
       'hello',
       'workspace',
-      'link',
       'docker',
       'start',
       'auth',
@@ -67,6 +66,18 @@ describe('tim CLI', () => {
 
     expect(commandNames).not.toContain('github')
     expect(commandNames).not.toContain('gha')
+  })
+
+  test('--help lists no link command', async () => {
+    const { stdout } = await runTim(['--help'])
+
+    const commandNames = stdout
+      .split('\n')
+      .filter((line) => /^ {2}\S/.test(line))
+      .map((line) => line.trim().split(/\s+/)[0])
+
+    expect(commandNames).toContain('workspace')
+    expect(commandNames).not.toContain('link')
   })
 
   test('no args shows help instead of exiting silently', async () => {

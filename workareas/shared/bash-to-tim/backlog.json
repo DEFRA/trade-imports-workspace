@@ -518,14 +518,20 @@
       "dependsOn": [],
       "risk": "Low, but it needs Sam watching: a session cannot see its own permission prompts (agent-skills.md:164-168). Test `Bash(./tools/**)`, `Bash(tools/**)`, `Bash(git -C repos/*:*)`, `Bash(npm --prefix repos/*:*)` in a scratch settings.local.json.",
       "proof": "A table of pattern against typed command against prompt yes/no, recorded in docs/agent-skills.md. That table decides the form used in P72.",
-      "status": "person",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "results": "workareas/shared/bash-to-tim/p11-results.json",
+        "recordedIn": "docs/agent-skills.md, under Bash call hygiene",
+        "finding": "A * inside a :* rule matches nothing: git -C repos/*:*, npm --prefix repos/*:*, mvn -f repos/*:* and gh api repos/DEFRA/*/pulls/*/files:* all prompted with the rule in place. The literal npm --prefix tim:* did not. find, sed and awk did not prompt, but read-only commands can pass with no rule, so that is inconclusive.",
+        "caveat": "Sam answered round 2 (with the rules) one command at a time, so it is accurate. Round 1 (without) was answered from memory, so promptedWithout is not reliable.",
+        "forP71": "Allow one literal prefix per repo, generated from repos.json, in place of the canonical-path wildcard entries."
+      }
     },
     {
       "id": "P12",
@@ -3017,7 +3023,8 @@
           "tim-lint: npm run lint and npm run format:check both exit 0",
           "parity: golden recorded from tools/sonar/sonar-push-check.sh and scripts/sonar/sonar-push-gate.sh over 35 cases with fake mvn, npm, sonar-scanner, gh and zsh on PATH; tim matches it except for the deliberate changes listed in the commit message",
           "no-callers: no script was deleted in P56. .claude/settings.json, CLAUDE.md, docs/agent-onboarding.md and docs/reference/tools-index.md still name the two scripts, and P57 is the row that switches them to tim; no new ~/git/defra or $HOME/git/defra path, no new .sh file",
-          "live runs on address-book and animals-frontend: not run, because agents have no SONAR_TOKEN. The task is item 8 in workareas/shared/bash-to-tim/NEEDS-SAM.md, and the row says not to block on it"
+          "live runs on address-book and animals-frontend: not run, because agents have no SONAR_TOKEN. The task is item 8 in workareas/shared/bash-to-tim/NEEDS-SAM.md, and the row says not to block on it",
+          "live runs, by Sam on 2026-11-18 with sam/4-sonar-check.mjs, after setting SONAR_TOKEN and installing sonar-scanner: PASS tim sonar push-check on address-book (mvn verify plus the quality gate); PASS the workspace hook on animals-frontend (npm ci, format, lint, test, scanner); PASS it wrote .cache/prepush-verified with HEAD; PASS a formatting error made the hook exit 2 with \"Formatting check failed — push blocked\". A first run without sonar-scanner skipped the Node check entirely, as the Bash did."
         ],
         "deviations": [
           "Cherry-picked recoverable commit 20f4f81b as the evidence said. Three files conflicted with P55's sonar hooks, and I kept both sides in each: tim/src/commands/sonar/index.js imports and calls both registerHooks and registerPushCheck, with the description changed to 'Read SonarCloud gates and issues for a DEFRA project, run the pre-push check and run the SonarCloud Claude Code hooks'. tim/README.md keeps the pending, mcp-tidy and push-check sections. settings-followups.md keeps P55, P37, P33 and P56.",

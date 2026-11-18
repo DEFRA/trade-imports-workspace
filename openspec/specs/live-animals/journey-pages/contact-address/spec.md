@@ -6,13 +6,13 @@
 
 **Page**: consignment-contact-select
 
-Asks which address should be used as the consignment's point of contact, offering the organisation's own branch addresses as a plain list, newest added first, rather than the whole book, and outside stub mode says how to add a branch address, as `live-animals/addresses` describes. The page opens with a sentence saying whose address this is, and puts the choice under its own sub-heading. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
+Asks which address should be used as the consignment's point of contact, offering the organisation's own branch addresses as a plain list, newest added first, rather than the whole book, and outside stub mode says how to add a branch address, as `live-animals/addresses` describes. The page opens with a sentence saying whose address this is, and puts the choice under its own sub-heading. The page ends with its save-and-continue action beside a save-and-return control reading "Save and return to hub" and a link below them reading "Cancel and return to hub". Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
 
 ## Requirements
 
 ### Requirement: The page offers the organisation's branch addresses as a plain list, each option showing its address, with none chosen in advance
 **ID**: REQ-CONTACT-001
-The system MUST show, directly under the page heading, the sentence saying whose address this is, MUST ask the user to choose a contact address under its own sub-heading, offering the organisation's addresses held as branch addresses, newest added first, together with any address held with no role at all, as an option naming the record and showing its address ending at the postcode, with a save-and-continue action, and MUST leave every address unchosen when the page is first opened.
+The system MUST show, directly under the page heading, the sentence saying whose address this is, MUST ask the user to choose a contact address under its own sub-heading, offering the organisation's addresses held as branch addresses, newest added first, together with any address held with no role at all, as an option naming the record and showing its address ending at the postcode, with a save-and-continue action beside a save-and-return control reading "Save and return to hub" and, below them, a link reading "Cancel and return to hub", and MUST leave every address unchosen when the page is first opened.
 
 #### Scenario: The page presents its list with no address chosen
 **ID**: SCN-CONTACT-001-A
@@ -29,6 +29,13 @@ The system MUST show, directly under the page heading, the sentence saying whose
 - **WHEN** the user opens the contact address page
 - **THEN** the address held for the consignment role is not offered as an option
 - **AND** the same address is offered on that role's own address list
+
+#### Scenario: The page ends with Save and continue beside Save and return to hub, and Cancel and return to hub below them
+**ID**: SCN-CONTACT-001-C
+- **GIVEN** the user is on the contact address page
+- **WHEN** the page loads
+- **THEN** it shows "Save and continue" and "Save and return to hub" side by side
+- **AND** it shows "Cancel and return to hub" on its own line below them
 
 ### Requirement: A chosen contact address is copied onto the notification and shown chosen on return
 **ID**: REQ-CONTACT-002
@@ -55,10 +62,10 @@ The system MUST refuse to save the contact address page with no address chosen, 
 - **THEN** the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
 - **AND** the contact address page is shown again
 
-#### Scenario: Save and return to overview with nothing chosen is refused the same way
+#### Scenario: Save and return to hub with nothing chosen is refused the same way
 **ID**: SCN-CONTACT-003-B
 - **GIVEN** the user opened the contact address page, with no address chosen
-- **WHEN** they save and return to overview
+- **WHEN** they save and return to hub
 - **THEN** the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
 - **AND** the contact address page is shown again
 
@@ -83,7 +90,7 @@ The system MUST refuse to save a submitted value that does not match one of the 
 #### Scenario: An invalid selection from the secondary save control is rejected the same way
 **ID**: SCN-CONTACT-004-B
 - **GIVEN** the user submits a value that is not one of the addresses offered on the contact address page
-- **WHEN** they save and return to overview
+- **WHEN** they save and return to hub
 - **THEN** the save is refused, an error links to and focuses the option group
 - **AND** no option is shown as chosen
 

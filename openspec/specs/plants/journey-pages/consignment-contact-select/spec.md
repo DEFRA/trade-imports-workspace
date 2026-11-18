@@ -4,7 +4,7 @@
 
 **Maturity**: exploring
 
-Asks which address-book record is the consignment's point of contact, from a searchable table of the organisation's address book that copies the chosen name and address at selection. The page is titled "Contact address for consignment".
+Asks which address-book record is the consignment's point of contact, from a searchable table of the organisation's address book that copies the chosen name and address at selection. The page is titled "Contact address for consignment". It ends with its save-and-continue action, a save-and-return control reading "Save and return to hub" and a link below them reading "Cancel and return to hub".
 
 ## Requirements
 
@@ -18,6 +18,13 @@ The system MUST ask which contact address to use, offering the address book as a
 - **WHEN** the page loads
 - **THEN** it shows every address the organisation holds, reading "Showing <total> out of <total> results" under the heading "Select an address"
 - **AND** no address is shown as chosen, and the sentence saying whose address this is shows
+
+#### Scenario: The page ends with Save and continue beside Save and return to hub, and Cancel and return to hub below them
+**ID**: SCN-PLANTS-CONTACT-SELECT-001-B
+- **GIVEN** the user is on the contact page
+- **WHEN** the page loads
+- **THEN** it shows "Save and continue" and "Save and return to hub" side by side
+- **AND** it shows "Cancel and return to hub" on its own line below them
 
 ### Requirement: The list can be searched, and a search matching nothing says so
 **ID**: REQ-PLANTS-CONTACT-SELECT-006
@@ -47,7 +54,7 @@ The system MUST keep a row the user has ticked checked across a further search, 
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. Save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-003). Save-and-return-to-overview MUST save the address without continuing the journey.
+The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. Save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-003). The page's save-and-return control, "Save and return to hub", MUST save the address without continuing the journey.
 
 #### Scenario: Choosing a contact saves, opens check your answers, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
@@ -56,10 +63,10 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 - **THEN** they reach check your answers with the contact task Completed
 - **AND** returning to the page shows that address still chosen
 
-#### Scenario: Save and return to overview saves the address without continuing
+#### Scenario: Save and return to hub saves the address without continuing
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-B
 - **GIVEN** the user is on the contact page of a notification that is not being amended
-- **WHEN** they choose an address and select save-and-return-to-overview
+- **WHEN** they choose an address and select "Save and return to hub"
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
 
@@ -78,7 +85,7 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 
 ### Requirement: Saving with nothing chosen is allowed, keeping any contact already held
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). Save-and-return-to-overview MUST return to Overview, and save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-003).
+The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). The page's save-and-return-to-overview control, "Save and return to hub", MUST return to Overview, and save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-003).
 
 #### Scenario: A blank save opens check your answers
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
@@ -88,10 +95,10 @@ The system MUST allow the page to be saved with no address chosen, by either sav
 - **AND** the contact task shows not yet started
 - **AND** returning to the page still shows no address chosen
 
-#### Scenario: A blank save and return to overview opens Overview with the task not yet started
+#### Scenario: A blank save and return to hub opens Overview with the task not yet started
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-B
 - **GIVEN** the user is on the contact page of a notification that is not being amended, with no address chosen and no contact address held yet
-- **WHEN** they select save and return to overview
+- **WHEN** they select "Save and return to hub"
 - **THEN** Overview is shown with no error summary
 - **AND** the contact task shows not yet started
 - **AND** returning to the page still shows no address chosen
@@ -109,7 +116,7 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 
 ### Requirement: Cancel discards a new choice; the back link returns to identification numbers after Save and continue and on a draft opened from a Change link, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-The system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview, on a draft and while amending alike. The system MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017): identification numbers after Save and continue there, the review from a Change link on the review, and Overview otherwise.
+The system MUST reach Overview without saving a newly checked option on the page's cancel link, "Cancel and return to hub", on a draft and while amending alike. The system MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017): identification numbers after Save and continue there, the review from a Change link on the review, and Overview otherwise.
 
 #### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-D
@@ -120,7 +127,7 @@ The system MUST reach Overview without saving a newly checked option on cancel-a
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A
 - **GIVEN** a contact address is already saved on a notification that is not being amended
-- **WHEN** the user checks a different address and selects cancel-and-return-to-overview
+- **WHEN** the user checks a different address and selects "Cancel and return to hub"
 - **THEN** they reach Overview
 - **AND** returning to the page shows the previously saved address still chosen
 

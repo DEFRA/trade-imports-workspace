@@ -185,11 +185,15 @@ Claude writes the service's dashboard to
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
    has no cache. Delete the Requests row and its panels if the service
-   publishes no `http.server.requests`, the Journey events row if it
-   publishes none of its metrics (drop the targets for any it does not
-   publish), and the Dependency connections row if it publishes neither
-   connection metric. Move every row and panel below a deleted row up by
-   its height: 9 for each of these three rows.
+   publishes no `http.server.requests`, and the Dependency connections
+   row if it publishes neither connection metric. In the Journey events
+   row, treat each panel on its own: delete "Validation failures by
+   page" if the service publishes no `journey.validation.failure`, and
+   the "Journey events" panel if it publishes none of the journey
+   counters (drop the targets for any it does not publish). Delete the
+   row when both panels are gone; a panel left alone stays where it is.
+   Move every row and panel below a deleted row up by its height: 9 for
+   each of these three rows.
 6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No

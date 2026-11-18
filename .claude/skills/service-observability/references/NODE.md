@@ -89,8 +89,9 @@ Rules that held:
   `recordExternalCallInBackground`, so the backend is counted where it
   is timed.
 - **Interface ids** (`SYN-11`, `SYN-12`, `SYN-13` on the Defra ID calls)
-  are in the log line's message, `External call defra-id/jwks (SYN-12)
-  success in 3 ms`, not a dimension or a field: a field outside CDP's
+  are in the log line's message,
+  `External call defra-id/jwks (SYN-12) success in 3 ms`, not a
+  dimension or a field: a field outside CDP's
   ECS list is dropped. This replaces the `interface.id` field in the
   agreed list of 2026-11-11, to be recorded on EUDPA-674.
 - **A streamed response is timed to its headers.** The body is read
@@ -105,9 +106,9 @@ through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
   `reportRedisConnectionEvents(client)` publishes
   `external.dependency.available` `{dependency=redis}` as 1 on `ready`
   and 0 on `close` or `end`, on each change and every minute after
-  (nothing before the first event). It logs each change once: `Redis is
-  available` at info, `Redis is unavailable` at warn, and `Redis client
-  stopped reconnecting` at error on `end`. Every line is tagged
+  (nothing before the first event). It logs each change once:
+  `Redis is available` at info, `Redis is unavailable` at warn, and
+  `Redis client stopped reconnecting` at error on `end`. Every line is tagged
   `dependency` `redis`.
 - **Lost connections and errors**: each change from ready to closed
   counts `external.dependency.connection.lost`. Each client `error`

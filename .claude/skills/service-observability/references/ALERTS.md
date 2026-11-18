@@ -3,7 +3,7 @@ prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
 `SKILL.md` → "What is proven" says which parts have been done on a real
-service. `[UNPROVEN]` These dot-case rules, rule 1a among them, have not
+service. `[UNPROVEN]` These dot-case rules, rules 1a and 1b among them, have not
 been built or fired anywhere. Each fact that comes only from the CDP
 monitoring docs is marked `[UNPROVEN]`.
 
@@ -68,7 +68,8 @@ agree, not tested values.
 | Alert | Fires when | If there is no data |
 |---|---|---|
 | Dependency unavailable | `external.call.failure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `dependency` and `operation` | Normal |
-| Dependency reported unavailable (which rules a service gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), per `dependency`: every dependency that publishes it, a database, Redis or an HTTP dependency | Normal |
+| Database unavailable (which rules a service with a database gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal |
+| Redis unavailable (a Node service whose session store is Redis) | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = `redis` | Normal |
 | Dependency calls failing | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation` | Normal |
 | Dependency slow | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation` | Normal |
 | Section slow (a service publishing `http.server.requests`) | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `section` and `status.class` | Normal |
@@ -95,23 +96,28 @@ the label `status`, so it fails or renders blank. Write
 `{{ index $labels "status.class" }}`. A label with no dot reads as
 `{{ $labels.dependency }}`. `[UNPROVEN]` until rule 4 has fired.
 
-**The availability alert is the one exception: query it by `dependency`
+**The availability alerts are the exception: query them by `dependency`
 alone.** `external.dependency.available` is published with `dependency` as its only
 dimension, so adding `operation` to its query finds no data in the same
 way.
 
-**Alert on `external.dependency.available` for every dependency that
-publishes it, HTTP dependencies included.** The two "unavailable"
-alerts then cover an HTTP dependency from both sides: "Dependency
-unavailable" when every call in the window failed, and "Dependency
-reported unavailable" when its availability says down. An HTTP dependency's availability is passive,
-its last call's outcome (`METRICS.md` → "Availability: passive or
-active"), so it holds one failed call until the next call: on a quiet
-dependency a single failure keeps the rule firing until a call
-succeeds. Read `external.call.failure` on the dashboard to tell one
-failed call from an outage.
+**Do not alert on `external.dependency.available` for an HTTP dependency.** It is
+for the dashboard. The "Dependency unavailable" alert uses
+`external.call.failure` instead, which only reports calls that happened in
+the window. `METRICS.md` → "Availability: passive or active" says why,
+for a passive reading and an active probe both.
 
-**For a database it is the best signal.** A database's `external.dependency.available`
+**A Node service follows the same rule.** It publishes
+`external.dependency.available` for each HTTP dependency from its most
+recent call (`NODE.md` → "Availability of an HTTP dependency"), which
+holds a single failure until the next call: on a quiet dependency, one
+failed call would keep an alert firing until a call succeeds. Its HTTP
+dependencies are alerted on by rules 1, 2 and 3, and its Redis session
+store by its own rule, "Redis unavailable" (rule 1b in
+`assets/alerts.template.md`), never by an availability rule with
+`dependency` = `*`.
+
+**Do alert on it for a database, and for Redis.** A database's `external.dependency.available`
 comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
 database"), or for Redis from the client's connection events, published
 on each change and every minute (`NODE.md` → "Redis"), so it is fresh.
@@ -193,10 +199,10 @@ Portal and OpenSearch below. Claude gives the steps and records what
 they report.
 
 **The developer makes the calls.** The call alerts only see dependency
-calls that happened, and few happen on their own. So does rule 1a for an
-HTTP dependency, whose availability comes from its calls. Rule 1a for a
-database needs no calls: its gauge is published every minute once the
-driver has checked the database:
+calls that happened, and few happen on their own. Rules 1a and 1b need
+no calls: a database's gauge is published every minute once the driver
+has checked the database, and Redis's on each connection event and every
+minute after:
 
 - The service calls a dependency only on a cache miss: after a deploy,
   or once per cache lifetime (60 minutes for reference-data's MDM
@@ -233,11 +239,12 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   ordinary traffic breaks it, wait for Firing, check the summary shows
   the labels its rule names (not blanks), then put the threshold back
   and watch it return to Normal. The call rules' summaries show the
-  dependency and operation, and the availability rule's (1a) the
-  dependency. With no
+  dependency and operation. The database and Redis alerts' summaries
+  have no labels: they show the name as written in the rule. With no
   failures the failure metrics read 0, so use `IS ABOVE -1` for
-  "unavailable" and "calls failing", and `IS ABOVE 0` for "slow". An
-  available dependency reads 1, so use `IS BELOW 2` for rule 1a.
+  "unavailable" and "calls failing", and `IS ABOVE 0` for "slow". A
+  healthy database or Redis reads 1, so use `IS BELOW 2` for rules 1a
+  and 1b.
   Once Slack routing is in place, also check the alert arrives in
   `trade-imports-team-alerts-non-prod`.
 - **Dev, section slow (rule 4).** Open a few pages of the service, then
@@ -253,10 +260,11 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   holds the old concurrency token. Then lower the threshold to
   `IS ABOVE 0`. The summary has no labels: it shows the threshold as
   written in the rule.
-- **Dev, rule 1a for a database: no real failure.** Pointing the service at
+- **Dev, rules 1a and 1b: no real failure.** Pointing the service at
   a database that does not exist stops it starting (address-book needs
   its database to build indexes), so no task publishes the gauge and the
-  rule stays Normal on no data. The lowered threshold is enough.
+  rule stays Normal on no data. The lowered threshold is enough, for
+  Redis too.
 - **Dev, the call failure rules: a real failure.** Set the dependency's URL
   in the Portal (for reference-data's MDM, `MDM_SERVICE_URL`) to an
   address that does not exist, such as `https://mdm.invalid`, redeploy,
@@ -272,7 +280,7 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   the dependency, then call the service. This breaks the service for
   everyone using test while it runs. Agree the method and a time with
   the team and the testers first.
-- **Test, rule 1a for a database.** `[UNPROVEN]` A wrong database address
+- **Test, rules 1a and 1b.** `[UNPROVEN]` A wrong database address
   does not work here either: the service does not start, so no task
   publishes the gauge and the rule stays Normal. The database has to go
   away from a task that is already running, and this skill knows no way

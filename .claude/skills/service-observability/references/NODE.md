@@ -116,8 +116,9 @@ Passive, from the calls the service already makes, as on reference-data
   publishes nothing. Unlike Redis, a change is not published at once: it
   waits for the next minute.
 - The reading is as old as the dependency's last call, and holds a
-  single failure until the next call. `ALERTS.md` says what that means
-  for its "Dependency reported unavailable" alert.
+  single failure until the next call, so it is for the dashboard only:
+  no alert reads it (`ALERTS.md` → "A Node service follows the same
+  rule"). Rules 1, 2 and 3 alert on the HTTP dependencies' calls.
 
 ### Redis
 
@@ -132,7 +133,8 @@ through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
   (nothing before the first event). It logs each change once:
   `Redis is available` at info, `Redis is unavailable` at warn, and
   `Redis client stopped reconnecting` at error on `end`. Every line is tagged
-  `dependency` `redis`.
+  `dependency` `redis`. Its own alert, "Redis unavailable", reads it
+  (rule 1b in `assets/alerts.template.md`).
 - **Lost connections and errors**: each change from ready to closed
   counts `external.dependency.connection.lost`. Each client `error`
   event, and each `node error` a Cluster client reports, is logged at

@@ -290,7 +290,7 @@ function heading(slide, label, title) {
   s.background = { color: C.white };
   band(s);
   heading(s, "Hands on", "Running it locally");
-  s.addText("Can you actually build and run the whole stack? tim docker drives the stack, running the scripts under scripts/stack/ for you.", {
+  s.addText("Can you actually build and run the whole stack? tim docker drives the stack for you.", {
     x: M, y: 1.7, w: 11.8, h: 0.55, fontFace: FONT, fontSize: 15, color: C.grey, margin: 0,
   });
   {
@@ -331,7 +331,7 @@ function heading(slide, label, title) {
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.green } });
   heading(s, "Try it", "Get the stack running, end to end");
   const steps = [
-    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-workspace (symlink if elsewhere), then tim workspace setup and tim workspace install."],
+    ["1", "Clone & set up", "Clone the workspace, by default to ~/git/defra/trade-imports-workspace (any other folder works too), then tim workspace setup and tim workspace install."],
     ["2", "Bring the stack up", "tim docker dev to build from source, then tim docker logs to watch it."],
     ["3", "Run the E2E suite", "npm run test:docker-compose in the tests repo. Skim tim --help and CLAUDE.md while it runs."],
   ];

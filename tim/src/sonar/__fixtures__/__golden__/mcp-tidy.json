@@ -1,0 +1,47 @@
+[
+  {
+    "case": "removes the surplus beyond the live processes",
+    "exitCode": 0,
+    "stdout": "Removed 3 stale sonar MCP container(s).\n",
+    "stderr": "",
+    "files": {
+      "calls.log": "docker ps --filter label=io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server --format {{.ID}}\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c1\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c2\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c3\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c4\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c5\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c6\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c7\npgrep -f sonar run mcp --project DEFRA_trade-imports-animals-backend$\ndocker rm -f c2\ndocker rm -f c6\npgrep -f sonar run mcp --project DEFRA_trade-imports-animals-frontend$\ndocker rm -f c3\ndocker rm -f c5\npgrep -f sonar run mcp --project DEFRA_trade-imports-dynamics-gateway$\n"
+    }
+  },
+  {
+    "case": "keeps every container a live process owns",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "files": {
+      "calls.log": "docker ps --filter label=io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server --format {{.ID}}\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c1\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c2\npgrep -f sonar run mcp --project DEFRA_trade-imports-animals-frontend$\n"
+    }
+  },
+  {
+    "case": "leaves a container with no project key alone",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "files": {
+      "calls.log": "docker ps --filter label=io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server --format {{.ID}}\ndocker inspect -f {{range .Config.Env}}{{println .}}{{end}} c1\n"
+    }
+  },
+  {
+    "case": "does nothing when no MCP container runs",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "files": {
+      "calls.log": "docker ps --filter label=io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server --format {{.ID}}\n"
+    }
+  },
+  {
+    "case": "does nothing when docker is not running",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "files": {
+      "calls.log": "docker ps --filter label=io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server --format {{.ID}}\n"
+    }
+  }
+]

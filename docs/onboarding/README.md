@@ -133,9 +133,8 @@ The hands-on half is the day-one "can I actually build and run this" loop:
 `tim workspace setup` and `tim workspace install` once, then `tim docker
 dev` to build and run every service from your local `repos/`, `tim docker
 logs` to watch them, and the E2E suite in the tests repo to exercise the
-running stack. `tim docker` runs the scripts under `scripts/stack/` for
-you; the flags and profiles come from `tim docker dev --help`, not from
-the slides.
+running stack. The flags and profiles come from `tim docker dev --help`,
+not from the slides.
 
 ## The agent harness
 

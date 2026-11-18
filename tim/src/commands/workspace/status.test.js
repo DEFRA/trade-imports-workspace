@@ -5,7 +5,9 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS } from '../../constants/repos.js'
+import { bundledRoster } from '../../test-support/roster.js'
+
+const { repos: REPOS } = bundledRoster
 import { collectStatuses, renderText } from './status.js'
 
 const here = dirname(fileURLToPath(import.meta.url))

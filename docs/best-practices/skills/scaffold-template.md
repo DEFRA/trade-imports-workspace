@@ -30,8 +30,8 @@ tools/{{NAME}}/
 `.claude/settings.json` allowlist entries (pattern 8):
 
 ```
-Bash(~/git/defra/trade-imports-workspace/tools/{{NAME}}/*)
-Bash(~/git/defra/trade-imports-workspace/tools/{{NAME}}/*:*)
+Bash(tools/{{NAME}}/*)
+Bash(tools/{{NAME}}/*:*)
 ```
 
 ## SKILL.md template
@@ -47,11 +47,11 @@ description: '{{ONE_LINE_PURPOSE}} {{WHEN_TO_USE}} (triggers: "{{TRIGGER_1}}", "
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -73,7 +73,7 @@ NOT for {{OUT_OF_SCOPE}} — use the `{{OTHER_SKILL}}` skill.
      Otherwise list each persona, when it runs, and what it
      writes. Spawn idiom is `subagent_type: general-purpose`,
      prompt begins:
-     `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/{{NAME}}/references/<NAME>.md.` -->
+     `Follow the instructions in .claude/skills/{{NAME}}/references/<NAME>.md.` -->
 
 | Persona | Used in | Artifact |
 |---|---|---|
@@ -84,7 +84,7 @@ NOT for {{OUT_OF_SCOPE}} — use the `{{OTHER_SKILL}}` skill.
 <!-- TODO: drop this section if no dispatcher (pattern 2). -->
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/{{NAME}}/start-{{NAME}}.sh {{ARGS}}
+tools/{{NAME}}/start-{{NAME}}.sh {{ARGS}}
 ```
 
 First line of output is `MODE: <BRANCH>` — branch on it.
@@ -106,14 +106,14 @@ Summary:
 - {{KEY_METRIC_1}}
 - {{KEY_METRIC_2}}
 
-Artifacts: ~/git/defra/trade-imports-workspace/workareas/{{NAME}}/{{ID}}/...
+Artifacts: workareas/{{NAME}}/{{ID}}/...
 
 Next: {{NEXT_HINT}}
 ```
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/{{NAME}}/`:
+All under `tools/{{NAME}}/`:
 
 | Script | Purpose |
 |---|---|
@@ -170,6 +170,5 @@ delete entries (they explain the original judgment).
 
 ## 8. Allowlist entries added
 
-- `Bash(~/git/defra/trade-imports-workspace/tools/{{NAME}}/*)`
-- `Bash(~/git/defra/trade-imports-workspace/tools/{{NAME}}/*:*)`
+- `Bash(tools/{{NAME}}/*)`
 ```

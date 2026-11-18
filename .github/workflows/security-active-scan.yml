@@ -16,6 +16,8 @@ jobs:
   scan-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      TIM_NO_AUTO_PULL: '1'
     permissions:
       contents: write
     concurrency:
@@ -27,8 +29,19 @@ jobs:
         with:
           repository: DEFRA/trade-imports-workspace
 
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tim/package-lock.json
+
+      - name: Install tim
+        working-directory: tim
+        run: npm ci
+
       - name: Start stack
-        run: ./scripts/stack/run-stack.sh --branch main
+        run: node tim/src/cli.js docker up --workspace "$GITHUB_WORKSPACE" --branch main
 
       # Docker auto-creates a missing bind-mount source as root, and the
       # zap service (security.compose.yml) writes as its image's non-root
@@ -45,7 +58,7 @@ jobs:
       - name: Start ZAP (security profile)
         env:
           ZAP_REPORT_DIR: ${{ github.workspace }}/zap-report
-        run: ./scripts/stack/run-stack.sh --branch main --profile security
+        run: node tim/src/cli.js docker up --workspace "$GITHUB_WORKSPACE" --branch main --profile security
 
       - name: Assert stack
         run: |

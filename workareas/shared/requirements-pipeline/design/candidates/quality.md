@@ -1359,7 +1359,7 @@ the scripts prepend it to every Claude prompt. It is never given to Codex (the c
    confirmed, ladder rungs and results, acceptance verdicts per AC, diff size, and Claude agent counts.
 4. **Pass** when: reviewer job counts are equal; every AC is `met` in both; no confirmed high or critical
    finding exists in one run that the other run's diff also contains and missed; ladders green in both.
-5. Sam picks which branch (if either) to keep; the other is deleted with `tools/github/delete-remote-branch.sh`.
+5. Sam picks which branch (if either) to keep; the other is deleted with `gh api -X DELETE repos/DEFRA/<repo>/git/refs/heads/<branch>`.
 6. Repeat on one combined row before calling Codex mode done.
 
 ---

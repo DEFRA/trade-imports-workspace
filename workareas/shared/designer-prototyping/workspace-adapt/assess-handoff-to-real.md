@@ -144,7 +144,7 @@ Proposed surface:
 
 The skill keeps `ticket-creator`'s conventions:
 
-- The epic is always asked. Offer candidates from `tools/ticket-creator/prepare-ticket-creation.sh` → `epics.txt`. `prototype.json` can hold a default epic for the designer to confirm.
+- The epic is always asked. Offer candidates from `tim jira prereqs` → `epics.txt`. `prototype.json` can hold a default epic for the designer to confirm.
 - Labels come from `known-labels.md`.
 - A draft goes to `workareas/ticket-creation/<slug>/draft.md` with `Status: DRAFT`.
 - Creation happens only after an explicit "raise it" (ticket-creator Step 4, `SKILL.md:196-227`).

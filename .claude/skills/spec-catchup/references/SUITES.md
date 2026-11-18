@@ -112,7 +112,7 @@ npm run test:docker-compose -- --trace=on   # no path filter — all four domain
 ```
 
 Record its SHA once in a shared run directory —
-`~/git/defra/trade-imports-workspace/workareas/spec-catchup/<date>-e2e-all/shas.json`
+`workareas/spec-catchup/<date>-e2e-all/shas.json`
 — and have every domain's own run directory point at it instead of
 re-running the E2E leg. Each domain then judges only its own slice of
 that one report (spec paths under `tests/<domain>/`; trace directories
@@ -142,8 +142,8 @@ not enough to trust a report.
 
 ## Run directory
 
-- Catch-up: `~/git/defra/trade-imports-workspace/workareas/spec-catchup/<YYYY-MM-DD>-<domain>/`
-- Cover: `~/git/defra/trade-imports-workspace/workareas/spec-cover/<YYYY-MM-DD>-<domain>/`
+- Catch-up: `workareas/spec-catchup/<YYYY-MM-DD>-<domain>/`
+- Cover: `workareas/spec-cover/<YYYY-MM-DD>-<domain>/`
 
 Each holds `shas.json` (the SHAs the report was taken from), any
 `judge-*.json` written by fanned-out workers, and Playwright

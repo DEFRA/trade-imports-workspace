@@ -1,10 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { execa } from 'execa'
 import {
   loadJiraFixture,
   mockJiraForEachTest
 } from '../../test-support/jira-mock.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import { runLink, renderLinkResult, parseLinkOptions } from './link.js'
 
 const jira = mockJiraForEachTest()
@@ -248,18 +247,9 @@ describe('renderLinkResult', () => {
 
 describe('tim jira link (spawn)', () => {
   test('prints a --blocked-by dry run as JSON', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        TIM_CLI_PATH,
-        'jira',
-        'link',
-        'EUDPA-183',
-        '--blocked-by',
-        'EUDPA-181',
-        '--json'
-      ],
-      { reject: false, env: { ...process.env, JIRA_USER: '', JIRA_TOKEN: '' } }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'link', 'EUDPA-183', '--blocked-by', 'EUDPA-181', '--json'],
+      { env: { JIRA_USER: '', JIRA_TOKEN: '' } }
     )
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({

@@ -10,7 +10,7 @@ only means finding out later.
 ## Layer 1: deterministic (`designer:check`)
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release>
 ```
 
 This already includes: custom ESLint rules (`{param}` routes validate
@@ -25,19 +25,19 @@ and repairing a failure.
 
 ### When layer 2 runs
 
-Decide from the changed files (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --short`):
+Decide from the changed files (`git -C repos/trade-imports-plants-prototype status --short`):
 
 - **Only string values in `copy.en.js`/`copy.cy.js` changed** (a wording
   change, no key added or removed): skip layer 2. Layer 1 already checked
   the shape. The judgement check is the prototype's
   `.claude/rules/copy.md` and
-  `~/git/defra/trade-imports-workspace/docs/best-practices/gds/language.md`
+  `docs/best-practices/gds/language.md`
   (hint text, dates, error patterns): read both and fix what they flag.
 - **Only templates (`.njk`), or templates and copy, changed**: skip the
   code-style and review runs. Read
-  `~/git/defra/trade-imports-workspace/docs/best-practices/node/nunjucks.md`,
-  `~/git/defra/trade-imports-workspace/docs/best-practices/node/govuk-frontend.md`
-  and `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md`
+  `docs/best-practices/node/nunjucks.md`,
+  `docs/best-practices/node/govuk-frontend.md`
+  and `docs/best-practices/gds/components.md`
   against the changed template, and the prototype's `.claude/rules/templates.md`.
 - **Anything under the release's `assets/`, its `layout.njk` or its
   `patterns.md` changed**: do the release-pattern judgement below, then
@@ -47,7 +47,7 @@ Decide from the changed files (`git -C ~/git/defra/trade-imports-workspace/repos
 
 ### The release-pattern judgement
 
-Read `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md`
+Read `docs/best-practices/gds/components.md`
 "Stay in the GOV.UK toolbox" and the prototype's `.claude/rules/templates.md`,
 then check each changed pattern:
 
@@ -72,8 +72,8 @@ Once the deterministic layer is green, run the local modes of the
 prototype. These are the same personas fresh/refresh reviews use elsewhere
 in the workspace, reused through a branch-keyed local mode
 (`<repo>:<branch>`, state under
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/local/…`
-and `~/git/defra/trade-imports-workspace/workareas/reviews/local/…`), never
+`workareas/code-style-reviews/local/…`
+and `workareas/reviews/local/…`), never
 copied into this skill.
 
 1. Get the standards bundle for the files this part changed. Give each file
@@ -85,14 +85,13 @@ copied into this skill.
 
 2. Run the `code-style` skill's local mode with `fix: true` over the
    changed `.js`, `.njk` and `copy.*.js` files:
-   `~/git/defra/trade-imports-workspace/tools/style/start-style.sh --local trade-imports-plants-prototype <branch>`
-   (called by its tilde path, never through `bash <script>`). FIX items are
-   applied silently — never surface a FIX item to the designer by name or
-   line number.
+   `tim style start --local trade-imports-plants-prototype <branch>`.
+   FIX items are applied silently — never surface a FIX item to the
+   designer by name or line number.
 3. Re-run layer 1 (`designer:check`) once, so a style fix that changed
    behaviour is caught before it reaches the designer.
 4. Run the `review` skill's local mode
-   (`~/git/defra/trade-imports-workspace/tools/review/start-review.sh --local trade-imports-plants-prototype <branch>`)
+   (`tim review start --local trade-imports-plants-prototype <branch>`)
    over the changed service and controller files only (never templates or
    copy: the review skill judges code, not markup or wording).
 5. For every finding either skill returns:
@@ -107,20 +106,20 @@ copied into this skill.
 ### When the local modes cannot run
 
 The local modes fan out to Task subagents. When this session has no Task
-tool, or `start-style.sh`/`start-review.sh` fails to start (for example
-"Permission denied" on a prepare script), do the same judgement inline, file
+tool, or `tim style start`/`tim review start` fails to start (for example
+a branch the repo does not have), do the same judgement inline, file
 by file, with no subagent. Never fall back to `bash <script>`, and never skip
 layer 2 silently. Read the bundle from step 1, then check each changed `.js`
 file against:
 
-1. `~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md`:
+1. `docs/best-practices/node/code-style.md`:
    fat arrows, early returns, no magic numbers or strings, `const`, `??`
    over `||`, named exports, names that say what they hold.
-2. `~/git/defra/trade-imports-workspace/docs/best-practices/node/hapi.md`:
+2. `docs/best-practices/node/hapi.md`:
    a `{param}` route has Joi `params` whose `failAction` throws
    `Boom.notFound`; a POST that reads `request.payload` validates it with
    `validate(...)` from `lib/validate` and re-renders with a 400.
-3. `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/jsdoc.md`:
+3. `docs/best-practices/doc-comments/jsdoc.md`:
    a doc comment only where it earns its place, and every `@param` matches.
 4. A service folder: the real `index.js`/`client.js`/`stub.js` shape of
    `src/server/app/services/countries/` (`references/house-conventions.md`).

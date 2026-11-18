@@ -9,8 +9,8 @@ const SCRIPT = readFileSync(
   'utf8'
 )
 
-const REPO =
-  '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
+const WORKSPACE = '~/clones/second-workspace'
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
 
 // The Workflow tool runs a script as the body of an async function with
 // `args`, `agent`, `parallel`, `log` and `phase` in scope. Run it the same
@@ -39,6 +39,7 @@ const runWorkflow = (
   )(args, agent, parallel, log, phase)
 
 const ARGS = {
+  workspace: WORKSPACE,
   set: 'plants-working',
   sweeps: [
     {
@@ -153,7 +154,7 @@ describe('wording-sweep workflow: the args contract', () => {
   it('Should name every missing key when args are absent', async () => {
     const run = runWorkflow(undefined, { agent })
     await expect(run).rejects.toThrow(
-      'missing required keys set, sweeps, welsh, welshText'
+      'missing required keys workspace, set, sweeps, welsh, welshText'
     )
     expect(agent).not.toHaveBeenCalled()
   })
@@ -180,7 +181,11 @@ describe('wording-sweep workflow: the args contract', () => {
     [{ welsh: 'auto' }, 'welsh must be "mark"'],
     [{ welshText: ['Cyfeiriadau'] }, 'welshText must be null'],
     [{ welsh: 'given', welshText: null }, 'one Welsh string per sweep'],
-    [{ welsh: 'given', welshText: ['a', 'b'] }, 'one Welsh string per sweep']
+    [{ welsh: 'given', welshText: ['a', 'b'] }, 'one Welsh string per sweep'],
+    [
+      { workspace: '/home/someone/workspace' },
+      'workspace must be the root of the workspace clone this session runs in, as a tilde path'
+    ]
   ])('Should refuse %j before any agent', async (change, message) => {
     const run = runWorkflow({ ...ARGS, ...change }, { agent })
     await expect(run).rejects.toThrow(message)

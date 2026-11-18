@@ -1,19 +1,19 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { execa } from 'execa'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { JIRA_BASE, mockJiraForEachTest } from '../../test-support/jira-mock.js'
+import {
+  JIRA_BASE,
+  loadJiraFixture,
+  mockJiraForEachTest
+} from '../../test-support/jira-mock.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import {
   runCreate,
   renderCreatePlan,
   renderCreated,
   CREATED_FILE
 } from './create.js'
-
-const here = dirname(fileURLToPath(import.meta.url))
-const cliPath = join(here, '..', '..', 'cli.js')
 
 const validManifest = (overrides = {}) => ({
   schema: 'tim-ticket/1',
@@ -225,6 +225,67 @@ describe('runCreate — success', () => {
   })
 })
 
+describe('runCreate sends the recorded Jira payload for each manifest', () => {
+  const bashPayloads = loadJiraFixture('create-bash-payloads.json')
+
+  const acceptsCreate = () => {
+    const sent = { body: null }
+    jira()
+      .post('/rest/api/2/issue', (body) => {
+        sent.body = body
+        return true
+      })
+      .reply(201, {
+        id: '1',
+        key: 'EUDPA-999',
+        self: `${JIRA_BASE}/rest/api/2/issue/1`
+      })
+    return sent
+  }
+
+  test.each([
+    [
+      'defaults',
+      { description: '', manifest: { type: 'Task', summary: 'Fix login bug' } }
+    ],
+    [
+      'epic',
+      {
+        description: 'Epic body',
+        manifest: {
+          type: 'Epic',
+          summary: 'An epic',
+          priority: 'High',
+          labels: ['DevOps']
+        }
+      }
+    ],
+    [
+      'taskWithParentAndFile',
+      {
+        description: 'h2. Background\n\nBody line.\n\n\n',
+        manifest: {
+          type: 'Task',
+          summary: 'Upgrade govuk-frontend',
+          parent: 'EUDPA-144',
+          labels: ['DevOps', 'tech-improvement']
+        }
+      }
+    ]
+  ])('%s', async (bashCase, { description, manifest }) => {
+    const manifestPath = writeManifest({
+      description,
+      manifest: { labels: [], ...manifest }
+    })
+    const { planId } = await runCreate({ fromPath: manifestPath })
+    const sent = acceptsCreate()
+
+    await runCreate({ fromPath: manifestPath, confirmPlanId: planId })
+
+    expect(sent.body).toEqual(bashPayloads[bashCase].requests[0].body)
+  })
+})
+
 describe('renderCreated', () => {
   test('lists attachments and relates, and flags a partial failure', () => {
     const text = renderCreated({
@@ -259,25 +320,9 @@ describe('tim jira create --json (spawn)', () => {
       JSON.stringify(validManifest())
     )
 
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        cliPath,
-        'jira',
-        'create',
-        '--from',
-        join(cliWorkDir, 'ticket.json'),
-        '--json'
-      ],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'create', '--from', join(cliWorkDir, 'ticket.json'), '--json'],
+      { env: { JIRA_USER: '', JIRA_TOKEN: '', JIRA_BASE_URL: '' } }
     )
 
     expect(exitCode).toBe(0)

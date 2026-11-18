@@ -61,6 +61,22 @@ describe('#readMachineConfig', () => {
   })
 })
 
+describe('#readMachineConfig e2e', () => {
+  test('Should read where this machine runs its e2e rungs', () => {
+    const path = fileWith(JSON.stringify({ e2e: 'ci' }))
+
+    expect(readMachineConfig(path)).toEqual({ path, e2e: 'ci', workers: {} })
+  })
+
+  test('Should refuse an e2e setting other than local or ci, naming the field', () => {
+    const path = fileWith(JSON.stringify({ e2e: 'cloud' }))
+
+    expect(() => readMachineConfig(path)).toThrow(
+      'e2e: e2e must be one of: local, ci.'
+    )
+  })
+})
+
 describe('#withMachineWorkers', () => {
   test('Should give the named FIT rung its count and leave a refused one alone', () => {
     const machine = { workers: { 'frontend/fit': 4, 'tests/e2e': 3 } }

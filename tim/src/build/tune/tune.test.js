@@ -1,3 +1,8 @@
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import {
@@ -78,17 +83,17 @@ const workspaceWith = (cloned) => {
 
 const fakeStack = () => {
   const state = join(root, 'stack-state')
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo up > '${state}'`
-  )
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `rm -f '${state}'`
-  )
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    [
+      fakeComposeStartLines({
+        callsPath: join(root, 'stack-calls'),
+        onUp: `echo up > '${state}'`
+      }),
+      fakeComposeDownLine({ statePath: state }),
+      `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    ].join('\n')
   )
   return {
     state,
@@ -261,6 +266,14 @@ describe('#machineFileAfterTune', () => {
         'trade-imports-ins-tests/e2e': 3
       }
     })
+  })
+
+  test("Should keep the existing file's e2e setting", () => {
+    const file = machineFileAfterTune({ e2e: 'ci', workers: {} }, [
+      { key: 'trade-imports-animals-frontend/fit', workers: 3 }
+    ])
+
+    expect(file.e2e).toBe('ci')
   })
 
   test('Should hold only worker counts when the machine had no file', () => {

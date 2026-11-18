@@ -40,7 +40,7 @@ Page objects, flows and domain data follow the same split, under `page-objects/`
 
 ## Infrastructure dependencies
 
-Requires a running instance of the full stack to test against. For local runs, start the workspace stack first: `./scripts/stack/run-stack.sh` from the workspace root.
+Requires a running instance of the full stack to test against. For local runs, start the workspace stack first: `tim docker up` from the workspace root.
 
 ## How to run
 

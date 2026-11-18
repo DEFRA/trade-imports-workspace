@@ -18,10 +18,10 @@ last commit), not "set", "manifest" or "HEAD".
   prototype on a spare port (3203 or above), never port 3103, and writes only
   under `.cache/designer/` (inside the prototype repo), which git ignores.
   `git status` is the same before and after. Do not stop the designer's
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev`.
+  `npm --prefix repos/trade-imports-plants-prototype run dev`.
 - **This reference does not fix pages.** If a picture shows a problem,
   describe it and offer the reference that fixes it. That reference runs
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <path>`
   and checks `overrides.json` before any edit: anything not in its `ours`
   list belongs to the real service and is never edited, on `main` or a
   `design/*` branch alike.
@@ -139,7 +139,7 @@ each answer typed in, so the videos are watchable, not a blur — and builds
 the demo page plus the full technical report underneath it.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
+npm --prefix repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
 ```
 
 Tell the designer what the command itself says before it starts ("At a
@@ -158,7 +158,7 @@ plain words: a red story is reported, never a reason to stop.
 run it themselves when they want to look:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --show
+npm --prefix repos/trade-imports-plants-prototype run designer:walkthrough -- --show
 ```
 
 It opens the local demo page, `.cache/designer/walkthrough/site/index.html`
@@ -192,7 +192,7 @@ something before the show and tell": pick the first of these that holds.
    simpler than opening a pull request just to get a link.)
 4. **No web link yet** (Pages off, or no time for a pull request): zip the
    local site folder,
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/walkthrough/site/`
+   `repos/trade-imports-plants-prototype/.cache/designer/walkthrough/site/`
    (not `report/`), and send the zip. The person unzips it and opens
    `index.html` in a browser: the demo page, and every step, picture and
    video under `tests/`, work; only the trace needs the web link or
@@ -225,7 +225,7 @@ To answer a question in words, with no browser and no picture-taking, read
 the graph as data:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --json-only
+npm --prefix repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --json-only
 ```
 
 Read its `edges` and their `condition.text` to answer "what happens if they
@@ -235,7 +235,7 @@ words.
 To open the page itself:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --no-open
+npm --prefix repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --no-open
 ```
 
 Give the local path it prints
@@ -254,7 +254,7 @@ Tell the designer how long to expect: under a minute for a few pages, a few
 minutes for `--pages all`, `--before` or `--video`.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> <options from step 2>
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> <options from step 2>
 ```
 
 If npm says `Missing script: "designer:show"`, the designer tools are not on
@@ -268,7 +268,7 @@ What it can say instead of a gallery:
 | "There is no page called ..."                          | Use a name from the list it prints                                                                                                                                                  |
 | "There is no set called ..."                           | Use a set from the list it prints                                                                                                                                                  |
 | "Cannot find the reference image ..."                  | Ask for the right path                                                                                                                                                              |
-| "The browser designer:show uses is not installed"      | Run `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run playwright:install`, then run show again                                            |
+| "The browser designer:show uses is not installed"      | Run `npm --prefix repos/trade-imports-plants-prototype run playwright:install`, then run show again                                            |
 | "The prototype stopped before it was ready" with a log | The change stops the prototype starting: use `references/check-my-change.md`                                                                                                       |
 
 ## Step 4: Read the pictures
@@ -368,13 +368,13 @@ team' and I will prepare a brief and a patch for the plants-frontend team."
 
 ## References
 
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/seeing-your-change.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/seeing-your-change.md`:
   every option, reading the gallery, the pull request video
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/show/`:
+- `repos/trade-imports-plants-prototype/scripts/designer/show/`:
   how it works (`cli.js` is the entry point)
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/fit/designer-sets.fit.spec.js`:
+- `repos/trade-imports-plants-prototype/fit/designer-sets.fit.spec.js`:
   the walk every design release gets on every pull request
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/fit/walkthroughs/walkthroughs.walkthrough.spec.js`:
+- `repos/trade-imports-plants-prototype/fit/walkthroughs/walkthroughs.walkthrough.spec.js`:
   the walkthrough spec, generated at run time from each set's examples
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/walkthrough/`:
+- `repos/trade-imports-plants-prototype/scripts/designer/walkthrough/`:
   how `designer:walkthrough` works (`cli.js` is the entry point)

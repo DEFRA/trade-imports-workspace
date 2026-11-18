@@ -366,7 +366,6 @@ describe('planRefresh', () => {
 // A workspace repo with committed stack files and one other file.
 const committedWorkspace = async () => {
   writeFile(join(root, 'docker', 'stack', 'compose.yml'), 'name: trade\n')
-  writeFile(join(root, 'scripts', 'stack', 'run-stack.sh'), 'echo up\n')
   writeFile(join(root, 'README.md'), '# workspace\n')
   await git(root, 'init', '-q')
   await git(root, 'add', '.')
@@ -374,19 +373,20 @@ const committedWorkspace = async () => {
 }
 
 describe('stackFilesFingerprint', () => {
-  test('stays the same while no stack file changes', async () => {
+  test('stays the same while no stack file changes, ignoring staged init scripts and tim stack tests', async () => {
     await committedWorkspace()
     const before = await stackFilesFingerprint(root)
     writeFile(join(root, 'README.md'), '# edited\n')
     writeFile(join(root, 'docker', 'stack', '.staged', 'init.sh'), 'x\n')
+    writeFile(join(root, 'tim', 'src', 'stack', 'compose.test.js'), 'x\n')
 
     expect(await stackFilesFingerprint(root)).toBe(before)
   })
 
   test.each([
     ['an edited compose file', join('docker', 'stack', 'compose.yml')],
-    ['an edited stack script', join('scripts', 'stack', 'run-stack.sh')],
-    ['a new compose overlay', join('docker', 'stack', 'perf.compose.yml')]
+    ['a new compose overlay', join('docker', 'stack', 'perf.compose.yml')],
+    ['a new tim stack module', join('tim', 'src', 'stack', 'compose.js')]
   ])('changes with %s', async (_change, file) => {
     await committedWorkspace()
     const before = await stackFilesFingerprint(root)

@@ -22,11 +22,11 @@ Trigger → prefix → suite/repo table:
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~`
-automatically. Skill-internal references stay relative
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash runs from the
+workspace root. Skill-internal references stay relative
 (`references/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
@@ -121,7 +121,7 @@ tim spec lint --capability <prefix> --json
 Fix any coverage fallout yourself until this is clean.
 
 For a test in `trade-imports-ins-tests`, also run `npm --prefix
-~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run lint`.
+repos/trade-imports-ins-tests run lint`.
 Do not add a service tag by hand. Once the test is committed, if it
 exercises a service from another domain, run the `service-tag` skill for
 that service: lint rejects a service tag in a domain that service already
@@ -155,5 +155,5 @@ Probes: all red→green
 
 Lint: clean
 Committed: <workspace sha> (openspec/) · <service repo> <sha> (tests) — branch <branch>
-Run: ~/git/defra/trade-imports-workspace/workareas/spec-cover/<date>-<domain>/
+Run: workareas/spec-cover/<date>-<domain>/
 ```

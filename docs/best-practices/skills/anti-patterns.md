@@ -86,7 +86,7 @@ canonical.
 
 ## A7. Pre-bake helpers for context the workflow reads once
 
-**Symptom:** `prebake-context.sh` populates a workarea file the
+**Symptom:** a pre-bake step (`tim npm context prebake`, say) populates a workarea file the
 workflow opens exactly once, in the same session as the prebake.
 
 **Why it's wrong:** the pre-bake adds a script + a workarea path +
@@ -130,8 +130,9 @@ workspace workers. Use the persona path in the prompt.
 trips on `$VAR` in LLM-typed commands even when the var is
 allowlisted ([GH#51001](https://github.com/anthropics/claude-code/issues/51001)).
 
-**Correction:** literal `~/git/defra/trade-imports-workspace/...`
-paths. `~` expands transparently and doesn't trip the check.
+**Correction:** literal `repos/<repo>/...`, `docs/...`, `workareas/...`
+paths, relative to the workspace root. They hold nothing to expand, so
+they do not trip the check.
 
 ## A11. Cross-skill handoff claimed on one side only
 

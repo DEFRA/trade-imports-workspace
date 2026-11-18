@@ -6,8 +6,8 @@ goal, success criteria and workflow; this file holds the smell
 checklists, refactoring techniques, naming tables, quality checklist and
 the test-run commands it points at.
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/...`. Bash expands `~` automatically.
+Cross-workspace paths are relative to the workspace root —
+`repos/<repo>/...`, `docs/...`, `workareas/...`. Bash runs from the workspace root.
 
 ## Running tests
 
@@ -16,15 +16,15 @@ streaming output:
 
 ```bash
 # Java (backend / stub / reference-data)
-mvn -f ~/git/defra/trade-imports-workspace/repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # Node unit (frontend / admin)
-npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # E2E (only when changing tests repo or cross-cutting code)
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 
 Swap `pre` for `post` when re-running after a change.

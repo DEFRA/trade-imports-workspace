@@ -6,9 +6,9 @@ page to the address book", "address categories" or "sort addresses by what
 they are used for".
 
 **Before changing `ins-address-book`**, read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/services/address-book/`
+`repos/trade-imports-ins-frontend/src/server/app/services/address-book/`
 (the real service this one copies) and
-`~/git/defra/trade-imports-workspace/repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml`
+`repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml`
 (the locked API contract behind it), so a change here never invents a shape
 the real API does not have.
 
@@ -150,7 +150,7 @@ filled from `getAddress`, saving with `updateAddress(orgId, id, values)`.
 Give the `{addressId}` route an `addressIdParams` Joi object and a
 `failAction` that redirects back to the address book, following
 `redirectingRecordIdRouteOptions` in
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/record-id-params.js`,
+`repos/trade-imports-ins-frontend/src/server/app/features/address-book/record-id-params.js`,
 so a stale or made-up id never reaches the handler.
 
 **Find an address by postcode.** The old prototype had a lookup. There is no
@@ -169,7 +169,7 @@ per address type (`address-book-tabs.js`) and a Type filter that narrows the
 open tab to one role (`list/`). Every address holds at least one role, and
 `createAddress` sends the roles; the address type is only the pages'
 grouping of roles, worked out from them and never stored. All of these are under
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/`,
+`repos/trade-imports-ins-frontend/src/server/app/features/address-book/`,
 with their labels in its `copy/copy.en.js`.
 
 ## Step 3: "are you sure?" before deleting
@@ -191,11 +191,11 @@ export const copy = {
 
 ## Check it
 
-1. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`.
+1. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`.
 2. Picture the pages:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,consignors/select --url address-book --url address-book/add --url "address-book/northgate-trading-ag/delete" --url "address-book?added=northgate-trading-ag" --errors --mobile --before
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,consignors/select --url address-book --url address-book/add --url "address-book/northgate-trading-ag/delete" --url "address-book?added=northgate-trading-ag" --errors --mobile --before
    ```
 
    `--errors` pictures the add form sent empty. The banner picture uses a

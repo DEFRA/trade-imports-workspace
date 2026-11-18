@@ -150,7 +150,7 @@ const chosenCounts = (rungs) =>
  * The machine settings file after a tune: the existing file's settings,
  * with each rung the tune chose a count for set to that count.
  *
- * @param {{parallelRepos?: number, stackAfterLocal?: boolean, workers?: Record<string, number>}|null} existing
+ * @param {{parallelRepos?: number, stackAfterLocal?: boolean, e2e?: 'local'|'ci', workers?: Record<string, number>}|null} existing
  * @param {{key: string, workers: number|null}[]} rungs
  * @returns {object}
  */
@@ -162,6 +162,7 @@ export const machineFileAfterTune = (existing, rungs) => ({
   ...(existing?.stackAfterLocal === undefined
     ? {}
     : { stackAfterLocal: existing.stackAfterLocal }),
+  ...(existing?.e2e === undefined ? {} : { e2e: existing.e2e }),
   workers: { ...(existing?.workers ?? {}), ...chosenCounts(rungs) }
 })
 

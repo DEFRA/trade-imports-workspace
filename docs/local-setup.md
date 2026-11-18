@@ -35,9 +35,8 @@ Playwright tests (no port) ──▶ Animals frontend + Admin
 | `REDIS_HOST` | `host.docker.internal` | Session cache |
 | `MONGO_URI` | `mongodb://host.docker.internal:27017` | Backend → MongoDB |
 
-All compose definitions live in the workspace stack (`docker/stack/`), driven
-by the wrappers in `scripts/stack/`. Run them through `tim docker`, which
-takes the same flags. See `docker/stack/AGENTS.md` for the full flag
+All compose definitions live in the workspace stack (`docker/stack/`). Run
+it through `tim docker`. See `docker/stack/AGENTS.md` for the full flag
 reference and file layout.
 
 ---
@@ -130,7 +129,7 @@ Exclude the service you're developing from the stack and run it from source.
 Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
 `routing-proxy`, `ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
 `reference-data`, `address-book`, `gateway` (the authoritative list is the
-`services` array at the top of `scripts/stack/run-stack.sh`).
+`SERVICES` in `tim/src/stack/definition.js`).
 
 ```bash
 # Terminal 1 — everything except the backend
@@ -162,7 +161,7 @@ tim docker up --profile database --profile infrastructure --profile stubs
 
 ## The database
 
-The mongo init scripts are staged by `run-stack.sh` from their owning repos:
+The mongo init scripts are staged by `tim docker up` from their owning repos:
 the workspace owns the replica-set init and the backend owns the Floci
 provisioning (`compose/start-floci.sh`).
 

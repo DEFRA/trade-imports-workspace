@@ -17,15 +17,17 @@ Pull every item with Disposition=`Fix` and Status=`Not Done` (or
 `Failed` from a prior run that should be retried):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --filter fix --status not-done --json
+tim review items list EUDPA-XXXXX --filter fix --status not-done --json
 ```
+
+The items are the envelope's `result`.
 
 Apply any filters from the trigger:
 - `{repo}` — add `--repo {repo}`
 
 If the fix list is empty:
 ```
-No Fix-disposition items pending for EUDPA-XXXXX [{repo filter}]. Run `walk review EUDPA-XXXXX` first, or call `review-mark.sh --disposition Fix` directly for items you've already triaged.
+No Fix-disposition items pending for EUDPA-XXXXX [{repo filter}]. Run `walk review EUDPA-XXXXX` first, or call `tim review items mark --disposition Fix` directly for items you've already triaged.
 ```
 And stop.
 
@@ -54,26 +56,26 @@ grep streaming output or re-run to check partial results.
 
 Unit tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created.
 
 E2E tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary. If failures exist,
 do NOT grep the console output — find and read the structured Playwright
 artifacts instead:
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
+find repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 ### Java repo (backend)
 Runs surefire (unit `*Test`) and failsafe (integration `*IT`,
 Testcontainers-backed) in one pass:
 ```bash
-mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created. Confirm both `Tests run:` totals
 (surefire and failsafe) and `BUILD SUCCESS`.
@@ -116,7 +118,7 @@ Process fixes in item-number order within each repo.
 For each item, spawn a `general-purpose` Task subagent. Spawn prompt:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/REVIEW_ITEM_FIXER.md.
+Follow the instructions in .claude/skills/review/references/REVIEW_ITEM_FIXER.md.
 
 **Ticket:** EUDPA-XXXXX
 **Item:** #{N}
@@ -141,22 +143,22 @@ within the same repo may affect shared files or tests).
 
 | Result | Action |
 |--------|--------|
-| `DONE` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
-| `SKIPPED` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
-| `FAILED` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
-| `RED` | `review-set-status.sh ... --status Done --note "{short-sha}"` for the item, then fix the failing test as in Step 3 (fix first, then continue) before spawning the next fixer. |
-| `WON'T FIX` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
+| `DONE` | `tim review items status EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
+| `SKIPPED` | `tim review items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
+| `FAILED` | `tim review items status EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
+| `RED` | `tim review items status ... --status Done --note "{short-sha}"` for the item, then fix the failing test as in Step 3 (fix first, then continue) before spawning the next fixer. |
+| `WON'T FIX` | `tim review items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
 
 ---
 
 ## Step 4.5: Handoff branch detection
 
 Before the final report, check whether this implementor session is
-running on a review-handoff branch (set up by `share-review.sh` during
+running on a review-handoff branch (set up by `tim review share` during
 the reviewer's FRESH Step 7 for a PR the reviewer didn't author):
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace rev-parse --abbrev-ref HEAD
+git rev-parse --abbrev-ref HEAD
 ```
 
 If the branch name is exactly `chore/EUDPA-XXXXX` (matching this
@@ -192,7 +194,7 @@ Red tests fixed:
   [{repo}] {spec or test class} — {cause} ({short-sha})
   ...
 
-Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.
+Run `tim review items counts EUDPA-XXXXX` for the updated breakdown.
 
 Nothing is pushed or posted. Once you push these commits, post what
 they closed to the PRs (review SKILL.md, Step R7).
@@ -219,11 +221,11 @@ On `Y` (default): switch the workspace back and delete the local
 branch.
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace checkout main
+git checkout main
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace branch -D chore/EUDPA-XXXXX
+git branch -D chore/EUDPA-XXXXX
 ```
 
 On `n`: skip both prompts.
@@ -238,5 +240,5 @@ Default is **No** — the reviewer may still want to refer back to it.
 On `y`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/delete-remote-branch.sh trade-imports-workspace chore/EUDPA-XXXXX
+gh api -X DELETE repos/DEFRA/trade-imports-workspace/git/refs/heads/chore/EUDPA-XXXXX
 ```

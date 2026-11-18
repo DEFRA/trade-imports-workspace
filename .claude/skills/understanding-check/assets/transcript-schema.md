@@ -2,9 +2,9 @@
 
 Per-question answer + score record. Mutated by:
 
-- `tools/understanding-check/transcript-record-answer.sh` — persist
+- `tim understanding-check answer` — persist
   developer's answer (parent session, during the interview loop).
-- `tools/understanding-check/transcript-add-score.sh` — append SCORER's
+- `tim understanding-check score` — append SCORER's
   verdict (worker, during Step 6).
 
 ## Shape
@@ -38,7 +38,7 @@ Per-question answer + score record. Mutated by:
 | Field | Type | Notes |
 |---|---|---|
 | `entries[].question_id` | string | Matches `questions[].id`. |
-| `entries[].answered_at` | ISO8601 | Set when `transcript-record-answer.sh` ran. |
+| `entries[].answered_at` | ISO8601 | Set when `tim understanding-check answer` ran. |
 | `entries[].answer` | string | Verbatim developer answer. May be multi-line. |
 | `entries[].skipped` | boolean | True if user typed `skip`. Score auto-FAILs with `missed_concepts: ["skipped"]`. |
 | `entries[].score` | object \| `null` | Filled by SCORER after the interview. |
@@ -47,7 +47,7 @@ Per-question answer + score record. Mutated by:
 | `entries[].score.missed_concepts` | array of strings | Concept tags from `questions[].expectedConcepts` the answer did NOT touch. Aggregated into the "gaps" report section. |
 | `entries[].score.evidence_cited` | array of `{ file, lines }` | The diff hunks the scorer referenced when deciding. Helps the developer go re-read the relevant code. |
 | `entries[].score.follow_up` | `null` \| string | Optional one-liner the SCORER may add when verdict is `PARTIAL`. Not asked in this run (no adaptive regen); shown in the report's "Suggested follow-up learning" section. |
-| `entries[].score.scored_at` | ISO8601 | Set by `transcript-add-score.sh`. |
+| `entries[].score.scored_at` | ISO8601 | Set by `tim understanding-check score`. |
 
 ## Why rubric_match is mandatory
 

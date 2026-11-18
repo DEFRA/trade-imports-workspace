@@ -1,0 +1,227 @@
+[
+  {
+    "name": "rebuild two services",
+    "args": [
+      "rebuild",
+      "trade-imports-stub",
+      "trade-imports-reference-data"
+    ],
+    "env": {},
+    "fake": {},
+    "exitCode": 0,
+    "stdout": "Rebuilding from local source: trade-imports-stub trade-imports-reference-data\n",
+    "stderr": "",
+    "sequence": [
+      {
+        "tool": "docker",
+        "args": [
+          "version",
+          "--format",
+          "{{.Server.Arch}}"
+        ],
+        "env": {}
+      },
+      {
+        "tool": "docker",
+        "args": [
+          "compose",
+          "-f",
+          "<WORKSPACE>/docker/stack/compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/database.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/infrastructure.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/stubs.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/backend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/frontend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/security.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/monitoring.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/dev.compose.yml",
+          "--profile",
+          "database",
+          "--profile",
+          "infrastructure",
+          "--profile",
+          "servicebus",
+          "--profile",
+          "stubs",
+          "--profile",
+          "backend",
+          "--profile",
+          "frontend",
+          "up",
+          "--build",
+          "--no-deps",
+          "--wait",
+          "--detach",
+          "trade-imports-stub",
+          "trade-imports-reference-data"
+        ],
+        "env": {
+          "DEV_BUILD_PLATFORM": "linux/arm64"
+        }
+      }
+    ],
+    "concurrent": [],
+    "stagedInitFiles": []
+  },
+  {
+    "name": "restart two services",
+    "args": [
+      "restart",
+      "trade-imports-stub",
+      "trade-imports-reference-data"
+    ],
+    "env": {},
+    "fake": {},
+    "exitCode": 0,
+    "stdout": "Restarting: trade-imports-stub trade-imports-reference-data\n",
+    "stderr": "",
+    "sequence": [
+      {
+        "tool": "docker",
+        "args": [
+          "version",
+          "--format",
+          "{{.Server.Arch}}"
+        ],
+        "env": {}
+      },
+      {
+        "tool": "docker",
+        "args": [
+          "compose",
+          "-f",
+          "<WORKSPACE>/docker/stack/compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/database.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/infrastructure.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/stubs.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/backend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/frontend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/security.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/monitoring.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/dev.compose.yml",
+          "--profile",
+          "database",
+          "--profile",
+          "infrastructure",
+          "--profile",
+          "servicebus",
+          "--profile",
+          "stubs",
+          "--profile",
+          "backend",
+          "--profile",
+          "frontend",
+          "restart",
+          "trade-imports-stub",
+          "trade-imports-reference-data"
+        ],
+        "env": {
+          "DEV_BUILD_PLATFORM": "linux/arm64"
+        }
+      },
+      {
+        "tool": "docker",
+        "args": [
+          "compose",
+          "-f",
+          "<WORKSPACE>/docker/stack/compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/database.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/infrastructure.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/stubs.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/backend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/frontend.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/security.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/monitoring.compose.yml",
+          "-f",
+          "<WORKSPACE>/docker/stack/dev.compose.yml",
+          "--profile",
+          "database",
+          "--profile",
+          "infrastructure",
+          "--profile",
+          "servicebus",
+          "--profile",
+          "stubs",
+          "--profile",
+          "backend",
+          "--profile",
+          "frontend",
+          "up",
+          "--no-deps",
+          "--no-recreate",
+          "--wait",
+          "--detach",
+          "trade-imports-stub",
+          "trade-imports-reference-data"
+        ],
+        "env": {
+          "DEV_BUILD_PLATFORM": "linux/arm64"
+        }
+      }
+    ],
+    "concurrent": [],
+    "stagedInitFiles": []
+  },
+  {
+    "name": "an action with no services",
+    "args": [
+      "restart"
+    ],
+    "env": {},
+    "fake": {},
+    "exitCode": 2,
+    "stdout": "",
+    "stderr": "Usage: dev-service.sh rebuild|restart <service>...\n\nWorks on a running dev-mode stack (the one run-stack.sh -d starts). Touches\nonly the named services, then waits until they are healthy. Data is kept.\n\n  rebuild <service>...   Rebuild the image from local source and recreate\n                         the container.\n  restart <service>...   Restart the container as it is, for source changes\n                         the bind mount already carries.\n  -h, --help             Show this help.\n",
+    "sequence": [],
+    "concurrent": [],
+    "stagedInitFiles": []
+  },
+  {
+    "name": "an unknown action",
+    "args": [
+      "bogus",
+      "trade-imports-stub"
+    ],
+    "env": {},
+    "fake": {},
+    "exitCode": 2,
+    "stdout": "",
+    "stderr": "Usage: dev-service.sh rebuild|restart <service>...\n\nWorks on a running dev-mode stack (the one run-stack.sh -d starts). Touches\nonly the named services, then waits until they are healthy. Data is kept.\n\n  rebuild <service>...   Rebuild the image from local source and recreate\n                         the container.\n  restart <service>...   Restart the container as it is, for source changes\n                         the bind mount already carries.\n  -h, --help             Show this help.\n",
+    "sequence": [
+      {
+        "tool": "docker",
+        "args": [
+          "version",
+          "--format",
+          "{{.Server.Arch}}"
+        ],
+        "env": {}
+      }
+    ],
+    "concurrent": [],
+    "stagedInitFiles": []
+  }
+]

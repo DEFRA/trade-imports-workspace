@@ -1,7 +1,7 @@
 # The pull request body
 
 Copy this outline into
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md`
+`repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md`
 and fill every section from real output. Leave a section in with "None"
 rather than deleting it, so reviewers always find the same headings. Write
 for someone who has not seen the prototype.

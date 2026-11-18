@@ -64,6 +64,6 @@ export SPRING_PROFILES_ACTIVE=local MONGO_URI=mongodb://localhost:27017
 mvn spring-boot:run
 ```
 
-Workspace stack: `./scripts/stack/run-stack.sh` (`--profile database --profile infrastructure` for its dependencies only).
+Workspace stack: `tim docker up` (`--profile database --profile infrastructure` for its dependencies only).
 
 Port: **8089**. Health: `GET /health`. Swagger UI at `/swagger-ui.html` under the `local` profile.

@@ -4,12 +4,12 @@ for what (if anything) needs changing in the repo.
 Your spawn prompt names the run, repo, version, the pre-baked changelog
 file, and the pre-baked best-practices bundle.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
-helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Boundaries
 
@@ -21,11 +21,11 @@ attempt any implementation.
 ## Inputs (provided in the spawn prompt)
 
 - `{run-id}`, `{repo-name}`, `{repo-path}`, `{version}`
-- Pre-baked changelog: `~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/version__{version}.changelog.md`
-- Best-practices bundle: `~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/best-practices.md`
+- Pre-baked changelog: `workareas/govuk-upgrades/{run-id}/{repo-name}/version__{version}.changelog.md`
+- Best-practices bundle: `workareas/govuk-upgrades/{run-id}/{repo-name}/best-practices.md`
 
 Canonical state: `versions.{repo-name}.json` in the same directory.
-Schema: `~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/assets/version-state-schema.md`.
+Schema: `.claude/skills/govuk-upgrade/assets/version-state-schema.md`.
 
 ---
 
@@ -40,7 +40,7 @@ Schema: `~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/assets
 ## Step 1: Read the changelog section
 
 Use the Read tool on the pre-baked file
-`~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/version__{version}.changelog.md`.
+`workareas/govuk-upgrades/{run-id}/{repo-name}/version__{version}.changelog.md`.
 
 Focus on:
 
@@ -50,7 +50,7 @@ Focus on:
 
 Optionally Read the best-practices bundle when the changelog mentions
 component / pattern / accessibility / styles areas:
-`~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/best-practices.md`.
+`workareas/govuk-upgrades/{run-id}/{repo-name}/best-practices.md`.
 
 ---
 
@@ -68,7 +68,7 @@ the changelog, search the repo with one Bash `grep -rn` call per pattern.
 | `*.js`, `*.ts`, `*.mjs` | Import paths (`govuk-frontend`), class names, constructor calls, method names |
 | `package.json` | The `govuk-frontend` version constraint |
 
-For example `grep -rn --include="*.njk" govukHeader ~/git/defra/trade-imports-workspace/repos/{repo-name}/src`.
+For example `grep -rn --include="*.njk" govukHeader repos/{repo-name}/src`.
 Do not use the Grep or Glob tools: they are not on the allowlist, so each
 call waits on a permission prompt. Do not pipe the `grep`.
 
@@ -79,8 +79,8 @@ call waits on a permission prompt. Do not pipe the `grep`.
 ### If any files match patterns requiring changes → classify as `todo`
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk classify \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --classification todo \
   --summary "{one-line: what this version changes}"
 ```
@@ -88,8 +88,8 @@ call waits on a permission prompt. Do not pipe the `grep`.
 Then, for each file that needs editing:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-add-change.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk add-change \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --file {relative/path/to/file} \
   --why "{which changelog item requires this — quote the relevant line}" \
   --change "{specific, actionable description of what to change}"
@@ -100,13 +100,13 @@ Repeat for every file.
 ### If no files match any changelog patterns → classify as `noop`
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
-  --run-id {run-id} --repo {repo-name} --version {version} \
+tim govuk classify \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
   --classification noop \
   --summary "{one-line: why no changes needed}"
 ```
 
-`version-classify.sh --classification noop` clears any stale `changes[]`
+`tim govuk classify --classification noop` clears any stale `changes[]`
 automatically — no further calls needed.
 
 ---

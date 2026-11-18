@@ -26,7 +26,7 @@ import ErrorScreen from './common/screens/ErrorScreen.js'
  * @param {() => Promise<Array<{service: string, ok: boolean, [k: string]: any}>>} [props.probe] - Override `useAuthFeature` probe; defaults to `auth.probeAll`
  * @param {(id: string) => Promise<object>} [props.getTicket] - Override `useJiraFeature` ticket fetch; defaults to `jiraClient.getTicket`
  * @param {(id: string) => Promise<object>} [props.getPage] - Override `useConfluenceFeature` page fetch; defaults to `confluenceClient.getPage`
- * @param {(opts: {workspaceRoot: string, script: string, args: string[]}) => Promise<void>} [props.launchStackScript] - Override `useDockerFeature` stack launcher; defaults to unmount + `runStackScript` + `process.exit`
+ * @param {(opts: {workspaceRoot: string, command: string}) => Promise<void>} [props.launchStackCommand] - Override `useDockerFeature` stack launcher; defaults to unmount + `runStackCommand` + `process.exit`
  * @param {(opts: {workspaceRoot: string, service: string}) => Promise<void>} [props.launchService] - Override `useStartFeature` service launcher; defaults to unmount + `startService` + `process.exit`
  */
 const MainMenu = ({
@@ -35,7 +35,7 @@ const MainMenu = ({
   probe,
   getTicket,
   getPage,
-  launchStackScript,
+  launchStackCommand,
   launchService
 } = {}) => {
   const { exit } = useApp()
@@ -86,7 +86,7 @@ const MainMenu = ({
     setLoadingMessage,
     navigateToMain,
     workspaceRoot,
-    ...(launchStackScript ? { launchStackScript } : {})
+    ...(launchStackCommand ? { launchStackCommand } : {})
   })
 
   const start = useStartFeature({

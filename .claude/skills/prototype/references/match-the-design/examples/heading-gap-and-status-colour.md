@@ -13,7 +13,7 @@ The designer, working in their release `plants-working`, says:
 ## 1. Whose file is it?
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/plants-working/journeys/linear/features/dashboard/template.njk
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/plants-working/journeys/linear/features/dashboard/template.njk
 ```
 
 The answer starts "Yours: safe to change." Carry on. (Had it named
@@ -23,7 +23,7 @@ The answer starts "Yours: safe to change." Carry on. (Had it named
 ## 2. The starting pair
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages dashboard --reference dashboard=dashboard-v4.png
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages dashboard --reference dashboard=dashboard-v4.png
 ```
 
 ## 3. The differences, one row each
@@ -84,11 +84,11 @@ goes at the end of `src/server/app/sets/plants-working/design-gaps.md`
 ## 7. Check, show, tell
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set plants-working
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set plants-working
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages dashboard --reference dashboard=dashboard-v4.png
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set plants-working --pages dashboard --reference dashboard=dashboard-v4.png
 ```
 
 Then tell the designer, in plain words:
@@ -115,7 +115,7 @@ That is a mandate for a custom pattern, with its reason. Follow
 Record the words, verbatim:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:mandate -- record --set plants-working --words "We're testing whether navy reads as submitted in round 3, so can the tag really be navy?" --scope "dashboard"
+npm --prefix repos/trade-imports-plants-prototype run designer:mandate -- record --set plants-working --words "We're testing whether navy reads as submitted in round 3, so can the tag really be navy?" --scope "dashboard"
 ```
 
 It prints the id, say `m-2026-10-27-1`.

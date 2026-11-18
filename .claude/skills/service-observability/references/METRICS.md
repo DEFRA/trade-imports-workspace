@@ -33,7 +33,7 @@ business events. First used on `trade-imports-animals-frontend`
 |---|---|---|---|---|
 | `http.server.requests` | ms | `method`, `section`, `status.class` | Which part of the service is slow or failing? | Spring Boot's own `http.server.requests` timer (tags `method`, `uri`, `status`, `outcome`, `exception`), let through the allowlist; or `@Timed("controller.<operation>.time")` per endpoint, as address-book does |
 | `journey.validation.failure` | count | `page` | Which questions do users get wrong? | None built yet: a counter in the controller that rejects the input |
-| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none | How much is the service used, by outcome? | A business-metrics class with one counter each, as address-book's `address.change` tagged `action` |
+| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none | How much is the service used, by outcome? | A business-metrics class, as address-book's `AddressMetrics`: one counter `address.change` tagged `change` (`create`, `update`, `delete`) |
 | `journey.concurrency.conflict` | count | none | How often do two edits collide? | A counter where the service refuses a stale version (an `OptimisticLockingFailureException` handler) |
 | `journey.entry.redirect` | count | none | How often are users sent back to the start? | None: a frontend journey concern |
 | `cache.hit`, `cache.miss` | count | `cache` | Is the session store doing its job? | The Caffeine `StatsCounter` above ("Caches") |

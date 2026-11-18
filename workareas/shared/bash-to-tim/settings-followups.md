@@ -381,7 +381,51 @@ can drop these from `.claude/settings.json` (as on `main` after #280):
 - `Bash(sed * ~/git/defra/trade-imports-workspace/*)`
 - `Bash(find ~/git/defra/trade-imports-workspace/*)`
 
+Dropping them without replacements makes unattended agents stop at prompts,
+because the skill text now types these commands relative to the workspace
+root, and no allow rule matches them (on this branch or on `main` after
+#280):
+
+- `find repos/trade-imports-ins-tests/test-results -name "error-context.md"`
+  (`npm-upgrade/references/WALKER.md`, `review/references/REVIEW_ITEM_FIXER.md`,
+  `review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git rev-parse --abbrev-ref HEAD`, `git checkout main` and
+  `git branch -D <branch>` (`review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git add`, `git update-index --chmod=+x` and `git checkout -- <path>`
+  on `tools/<dir>/<script>.sh` (`docs/agent-skills.md`)
+- `awk`, `sed` and `find` on any relative workspace path, which
+  `docs/agent-skills.md` now says prompt
+
+So P73 adds these allow entries in the same change that drops the four
+tilde rules:
+
+- `Bash(find repos/*)`, `Bash(find workareas/*)`, `Bash(find tools/*)`,
+  `Bash(find docs/*)`, `Bash(find .claude/*)`, `Bash(find openspec/*)`
+- `Bash(awk * repos/*)`, `Bash(awk * workareas/*)`, and the same pair for
+  `sed` (the tilde `sed *` rule allowed `sed -i` too; keep or narrow that
+  on purpose)
+- `Bash(git rev-parse:*)`, `Bash(git checkout main)`,
+  `Bash(git checkout -- :*)`, `Bash(git branch -D:*)`, `Bash(git add:*)`,
+  `Bash(git update-index:*)`. The tilde `git -C` rule allowed every git
+  subcommand at the workspace root; `Bash(git:*)` is the equal of that,
+  and the existing `git push --force`/`-f` denies still apply.
+  `git -C repos/<repo>:*` is already allowed per repo on `main` (#280).
+
+Once the rules are in, change `docs/agent-skills.md` back: `awk`, `sed`
+and `find` are allowed on workspace-relative paths, and the "A
+relative-path `find` is not yet" line under "Read, search and find" says
+`find` is allowlisted.
+
 Left for a person, because agents do not edit hooks or permission config:
+
+- `.claude/hooks/guard-bash.sh` line 101: the deny message for a literal
+  `/Users/<user>/` path says "Use ~/ instead of a literal /Users/<user>/
+  path". That steers agents to `~/git/defra/trade-imports-workspace/...`,
+  against CLAUDE.md rule 1 and `docs/agent-skills.md`, which now say to
+  type paths relative to the workspace root. Suggested message: "Type the
+  path relative to the workspace root instead of a literal /Users/<user>/
+  path — the permission matcher compares literal strings, so an absolute
+  path triggers avoidable prompts."
 
 - `.claude/hooks/guard-bash.sh` line 120: the deny message for a piped test
   run still gives

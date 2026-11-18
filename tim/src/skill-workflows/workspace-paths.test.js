@@ -15,7 +15,7 @@ const FIXED_PATH = 'git/defra/trade-imports-workspace'
 
 const SCANNED = ['.claude', 'docs', 'CLAUDE.md']
 
-const SKIPPED_FOLDERS = ['docs/analysis', 'docs/adr', 'docs/confluence']
+const SKIPPED_FOLDERS = ['docs/analysis', 'docs/adr']
 
 // Lines that keep the path on purpose. A line passes when its file matches
 // and it contains the given text.
@@ -82,7 +82,12 @@ const ALLOWED = [
   },
   {
     file: '.claude/skills/requirements-pipeline/workflow/README.md',
-    text: '~/git/defra/trade-imports-workspace',
+    text: '| `workspace` | The workspace root as a tilde path, such as `~/git/defra/trade-imports-workspace`.',
+    why: 'an example of the workflow argument, which takes the clone as a tilde path'
+  },
+  {
+    file: '.claude/skills/requirements-pipeline/workflow/README.md',
+    text: "workspace: '~/git/defra/trade-imports-workspace',",
     why: 'an example of the workflow argument, which takes the clone as a tilde path'
   },
   {

@@ -242,10 +242,23 @@ regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
 alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
 the old ones go quiet.
 
+Change every reader of the old names in the same run, on a branch with
+the same name as the service's (CLAUDE.md rule 2). A reader left on an
+old name finds no data and says nothing:
+
+- the service's dashboard and alerts, above;
+- `trade-imports-performance-tests`, whose reports read the external
+  call metrics and their dependency and operation dimensions
+  (`src/config/external-calls.js`, `src/lib/external-calls.js`) and
+  the page-request counts and their request-kind dimension
+  (`src/config/call-ratios.js`). One reader serves every frontend, so
+  it reads each frontend by the names that frontend publishes until
+  they have all moved.
+
 | Old | New |
 |---|---|
 | `ExternalCallDuration`, `ExternalCallFailure` | `external.call.duration`, `external.call.failure` |
-| `BackendCalls`, `SessionResolutions`, dimension `RequestKind` (animals-frontend) | `page.request.backend.calls`, `page.request.session.resolutions`, dimension `request.kind` |
+| `BackendCalls`, `SessionResolutions`, dimension `RequestKind` (animals-frontend, plants-frontend) | `page.request.backend.calls`, `page.request.session.resolutions`, dimension `request.kind` |
 | `DependencyAvailable` | `external.dependency.available` |
 | `CacheHit`, `CacheMiss` | `cache.hit`, `cache.miss` |
 | `Lookup` | `lookup` |

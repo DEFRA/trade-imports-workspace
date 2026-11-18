@@ -4,38 +4,77 @@ Scheduled Claude jobs that keep npm packages, Node and documentation current
 across the trade-imports repos, the workspace and tim. First a hands-on
 catch-up, then small nightly runs.
 
-Written 13 Nov 2026.
+Written 13 Nov 2026. Updated 18 Nov 2026, after the tooling under `tools/`
+moved into tim.
 
 ## Shape
 
-- **Where it runs:** one Claude Code session left open in the canonical
-  workspace (`~/git/defra/trade-imports-workspace`). This machine does nothing
-  else, so the jobs own the checkout and its `repos/`. `CronCreate` registers
-  the jobs. Recurring jobs expire
-  after 7 days, so `/nightly-start` re-registers them all in one command. The
-  Mac must not sleep.
+- **Where it runs:** one Claude Code session on the always-on Mac Studio,
+  started inside tmux or screen so it outlives the SSH connection that opened
+  it. This machine does nothing else, so the jobs own the workspace clone and
+  its `repos/`. `CronCreate` registers the jobs. Recurring jobs expire after
+  7 days, so `/nightly-start` re-registers them all in one command.
 - **What triggers work:** Dependabot raises the PRs. The nightly job fixes
   them, decides whether to merge, and owns anything Dependabot cannot do:
   changelog-driven upgrades, sets that span several repos, and Node.
 - **Proof:** unit tests, lint, Testcontainers-backed tests and the local
   Sonar push gate run as normal. The one thing never started locally is the
-  app's Docker Compose stack (`run-stack.sh` / `tim docker`), so end-to-end
-  tests are left to CI's "E2E Tests" check. The job pushes, then watches
-  `gh pr checks`. For changelog-driven packages, CI going green is not
-  enough on its own. Each changelog item also needs evidence that it was
-  applied.
+  app's Docker Compose stack (`tim docker`, `npm run test:docker-compose`),
+  so end-to-end tests are left to CI's "E2E Tests" check. The job pushes,
+  then watches `gh pr checks`. For changelog-driven packages, CI going green
+  is not enough on its own. Each changelog item also needs evidence that it
+  was applied.
 - **Merge rule:** merge on green when every change was mechanical and every
   evidence row is clean. Otherwise leave a draft PR and report it in the
   morning digest.
+- **Tooling:** tim and `gh` only. The upgrade skills already run on
+  `tim govuk` and `tim npm`, so unattended mode is options and subcommands on
+  those, sharing one evidence and policy core in `tim/src/deps/`. No GitHub
+  calls go into tim (CLAUDE.md rule 8).
+
+## Running the session
+
+On the Mac Studio, over SSH:
+
+```bash
+tmux new -s nightly            # or: screen -S nightly
+cd ~/git/defra/trade-imports-workspace
+claude                         # auto mode
+/nightly-start
+# detach: Ctrl-b d (tmux) or Ctrl-a d (screen), then close the laptop
+```
+
+- Stop the Mac sleeping: `sudo pmset -a sleep 0`, or "Prevent automatic
+  sleeping" in Energy settings. Turn off automatic macOS update installs.
+- Stay signed in at the Studio's own screen (or auto-login), so the login
+  keychain that holds the Claude and `gh` sign-ins is unlocked.
+- Git remotes are HTTPS through `gh`, so pushes do not need the laptop's
+  SSH agent.
+- A reboot ends the session: start it again as above. Run `/nightly-start`
+  at least every 7 days.
 
 ## Phase 0: foundations (attended, workspace PRs)
 
+| # | Work | State |
+|---|---|---|
+| 0.1 | `.claude/rules/nightly.md`: what counts as mechanical, the stop conditions, the merge policy and the digest. CLAUDE.md rule 3 gets a named exception for the nightly jobs; rule 6's "ask" becomes "draft the PR and put it in the digest". | Done on the branch |
+| 0.2 | `config/dependency-sets.json` and `tim deps dependabot <repo> [--write\|--check]`, which generates each repo's Dependabot groups, ignores and cooldown. | Done on the branch. animals-frontend's generated config is on its own branch |
+| 0.3 | Unattended mode on `tim govuk` and `tim npm`. See 0.3 below. | To do |
+| 0.4 | `/nightly-start` and `tim nightly check\|stopped`. | Done on the branch |
+| 0.5 | `tim nightly check` refuses a session that is not inside tmux or screen, so a `/nightly-start` from a bare SSH shell does not die when the laptop closes. | To do |
+
+### 0.3 Unattended mode in tim
+
 | # | Work | Done when |
 |---|---|---|
-| 0.1 | `.claude/rules/nightly.md` covers what counts as mechanical (renames, import paths, config format, types), the stop conditions (behaviour change, test assertion edit, more than a few files, three push-and-watch cycles), and the digest format. CLAUDE.md rule 3 gets a named exception for the nightly jobs. Rule 6's "ask" becomes "draft the PR and put it in the digest". | Rules merged |
-| 0.2 | `config/dependency-sets.json` records each coupled set's members, its scope (one repo or across repos), its policy (`ci-is-enough` or `changelog-driven`) and why it exists. A `tim deps` command generates each repo's Dependabot groups, ignores and cooldown from it. | animals-frontend's Dependabot config is generated, not hand-edited |
-| 0.3 | An unattended mode for `govuk-upgrade` and `npm-upgrade`. Policy replaces the gates and walkers. The run ID accepts the job's ticket key or `NO_JIRA`. The local `test:docker-compose` E2E step is skipped in favour of CI's "E2E Tests" check. The job pushes and watches CI. Each PR description gets a changelog evidence table. Interactive mode stays as it is. | The govuk-frontend 6.6.0 run below completes in unattended mode |
-| 0.4 | `/nightly-start`: checks the session's environment (`SONAR_TOKEN` set, no stray `ANTHROPIC_API_KEY`), fetches every repo, then registers the crons. | The session starts and registers the crons with one command |
+| 0.3a | Shared core in `tim/src/deps/`: the merge policy for a package and version jump, read from `dependency-sets.json` (no entry: minor or patch is `ci-is-enough`, a major is `changelog-driven`; a 0.x minor and a prerelease are `changelog-driven`); evidence rows (count a pattern's hits in a repo's tracked files, record hits before and after with an outcome and reason, check that every row is clean, render the PR table). Commands: `tim deps policy`, `tim deps evidence count\|check\|render`. | Unit and CLI tests cover every policy case and every row verdict |
+| 0.3b | `tim govuk`: `start --unattended` takes the ticket key or `NO_JIRA` without asking and plans one version at a time; `add-evidence` records a row against a changelog item in `versions.<repo>.json`; `apply` refuses a `changelog-driven` version whose rows are not all clean under `--unattended`. | A test run seeds a workspace, plans, adds evidence, applies, and renders the table |
+| 0.3c | `tim npm`: `upgrade 1` records each package's policy in `packages.<repo>.json`; `add-evidence` and `check-evidence` work on a package; `run-auto --unattended` skips `npm run test:docker-compose`; `upgrade 3` lists the manual packages as the job's work rather than the walker's. | As above, for an npm run |
+| 0.3d | The govuk-upgrade and npm-upgrade skills each get an "Unattended mode" section that a nightly job follows, calling only tim and `gh`. Interactive mode stays as it is. | The skill text names only commands that exist |
+
+The bash version of this, on the local branch
+`chore/EUDPA-802-nightly-maintenance-bash`, is the reference for the
+behaviour: the evidence row verdicts and their tests port as they are.
 
 ## Phase 1: catch-up (hands-on, canary first)
 
@@ -44,15 +83,20 @@ ends with everything merged.
 
 | # | Work | Notes |
 |---|---|---|
-| 1.1 | Fix config drift | tim: `engines >=22` against Node 24 in CI, and no `.nvmrc`. schemas: no `.nvmrc`, and a literal `24.22.1` in two CI jobs. animals-backend: Dependabot set to `nuget`. Dependabot is missing in 10 repos. npm needs to be at least 11.10 for `min-release-age` (engines floor is 11.6.2). |
+| 1.1 | Fix config drift | tim: `engines >=22` against Node 24 in CI, and no `.nvmrc`. schemas: no `.nvmrc`, and a literal `24.22.1` in two CI jobs. animals-backend: Dependabot set to `nuget`. Dependabot is missing in 10 repos: generate each with `tim deps dependabot --write`. npm needs to be at least 11.10 for `min-release-age` (engines floor is 11.6.2). |
 | 1.2 | Drain the open Dependabot PRs | One each in animals-admin and ins-frontend. This is the first live test of fix-on-red. |
 | 1.3 | Node | Latest `defradigital/node` tag. Move `.nvmrc`, `engines`, Dockerfile `PARENT_VERSION`, schemas CI and workspace CI together, on one branch name. |
-| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos (1.63.0 in animals-frontend, 1.64.1 in ins-tests and tim). |
-| 1.5 | govuk-frontend to 6.6.0 | Most frontends are on 6.5.1. plants-frontend is on `^6.3.0`, so check its lockfile. routing-proxy is already on 6.6.0. The prototype syncs from plants-frontend. Run this in unattended mode while you watch, and compare its evidence table with what you would have done. This step decides whether 2.3 goes ahead. |
-| 1.6 | Full npm-upgrade | Every `npmUpgradeDefault` repo, plus tim. You walk the manual packages. Majors found here are entered into `dependency-sets.json`. |
-| 1.7 | Docs | Deterministic checks first: links, `tools-index.md` against `tools/`, `make-targets.md` against the Makefile. Then one repo's pages per pass (`docs/repos/<repo>.md`, README, AGENTS.md), across 17 repos, with you reviewing each one. |
+| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos. |
+| 1.5 | govuk-frontend to 6.6.0 | Run in unattended mode while you watch, and compare its evidence table with what you would have done. This step decides whether 2.3 goes ahead. Needs 0.3a and 0.3b. |
+| 1.6 | Full npm-upgrade | Every `npmUpgradeDefault` repo, plus tim. You walk the manual packages. Majors found here are entered into `dependency-sets.json`. Needs 0.3c. |
+| 1.7 | Docs | Deterministic checks first: links, `tools-index.md` against `tools/`, `tim/README.md` against `tim --help`. Then one repo's pages per pass (`docs/repos/<repo>.md`, README, AGENTS.md), across 17 repos, with you reviewing each one. |
+
+Steps 1.1 to 1.4 need none of 0.3 and can start now.
 
 ## Phase 2: nightly (one job at a time)
+
+Each job is a skill named in `config/nightly-jobs.json`, written when its
+step starts, and turned on there.
 
 | # | Job | Merges? |
 |---|---|---|
@@ -74,6 +118,8 @@ scheduling if the 7-day restart becomes a chore.
 
 ## Open decisions
 
-- Ticket key for job branches: a standing ticket per job, or `NO_JIRA`.
 - Whether the workspace root needs Dependabot for its GitHub Actions; it has
   no `package.json`.
+- Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also
+  stops their security updates. If it does, the nightly job must watch
+  advisories for them.

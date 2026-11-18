@@ -13,10 +13,8 @@ forwarder into tim that stays.
 
 1. **Stack check (P61, P62).** Done 2026-11-18: passed, all 21 containers
    started from local source and came down again.
-2. **Workspace sonar hooks (P55).** `node workareas/shared/bash-to-tim/sam/2-switch-hooks.mjs`
-   switches the workspace's push gate and four session hooks to tim and
-   commits to #263. Then an agent deletes `scripts/sonar/` and sets P55
-   done, before the merge.
+2. **Workspace sonar hooks (P55).** Done 2026-11-18: the hooks run tim,
+   a new session started clean, and `scripts/sonar/` is deleted.
 3. **Merge.** `node workareas/shared/bash-to-tim/sam/3-merge-prs.mjs`
    squash-merges the 12 green PRs, service repos first and the workspace
    last, leaving the plants prototype out. Then an agent deletes the four

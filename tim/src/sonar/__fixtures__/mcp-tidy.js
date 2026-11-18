@@ -106,15 +106,21 @@ const fakePgrep = (logFile, live) => {
 }
 
 /**
- * A staged workspace holding the Bash tidy script, with stand-in `docker`
- * and `pgrep` commands first on PATH that answer for one case and log
- * every call they get under {@link callLogFolder}.
+ * A staged workspace, holding the Bash tidy script when asked, with
+ * stand-in `docker` and `pgrep` commands first on PATH that answer for one
+ * case and log every call they get under {@link callLogFolder}.
  *
  * @param {keyof typeof mcpTidyCases} caseName
+ * @param {{ withBashTidy?: boolean }} [options]
  */
-export const stageMcpTidyWorkspace = (caseName) => {
+export const stageMcpTidyWorkspace = (
+  caseName,
+  { withBashTidy = false } = {}
+) => {
   const machine = mcpTidyCases[caseName]
-  const staged = stageBashWorkspace({ scripts: [mcpTidyScript] })
+  const staged = stageBashWorkspace({
+    scripts: withBashTidy ? [mcpTidyScript] : []
+  })
   markWorkspaceRoot(staged.root)
   mkdirSync(join(staged.root, 'repos'))
   const bin = join(staged.home, 'bin')

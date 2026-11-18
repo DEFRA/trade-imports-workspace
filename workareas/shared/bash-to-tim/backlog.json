@@ -2956,7 +2956,7 @@
       ],
       "risk": "Medium. If the reader and writer disagree on the state dir, findings stop surfacing silently. mcp-tidy runs docker rm -f, so keep the end-anchored process match.",
       "proof": "Golden stdout and state-dir diffs against bash with a stub sonar or docker on PATH. One manual SessionStart check on Sam's machine.",
-      "status": "person",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -2965,7 +2965,15 @@
       ],
       "evidence": {
         "landed": "d4ca6050 adds tim sonar pending record|check and mcp-tidy, which the verifier found sound.",
-        "forSam": "Switch the four sonar hooks in .claude/settings.json to tim (settings-switch-sonar-hooks.mjs, see NEEDS-SAM.md), run a SessionStart check by hand, then set this row to todo. The builder then deletes the three scripts under scripts/sonar/ and rewrites docs/agent-onboarding.md and the comment at scripts/sonar/sonar-push-gate.sh:26."
+        "forSam": "Switch the four sonar hooks in .claude/settings.json to tim (settings-switch-sonar-hooks.mjs, see NEEDS-SAM.md), run a SessionStart check by hand, then set this row to todo. The builder then deletes the three scripts under scripts/sonar/ and rewrites docs/agent-onboarding.md and the comment at scripts/sonar/sonar-push-gate.sh:26.",
+        "samCheck": "Sam ran sam/2-switch-hooks.mjs (70dc5a4b) on 2026-11-18 and opened a new session with no hook errors.",
+        "checks": [
+          "tim-unit: green, 429 files passed, 31 skipped; 6440 tests passed, 8 expected fail, 53 skipped (logs/P55-tim-test.log)",
+          "tim-lint: green, lint and format:check clean",
+          "parity: the Bash recorders now skip, as for earlier rows; the recorded goldens stay and tim matches them. stageMcpTidyWorkspace stages the Bash tidy only for the recorder (withBashTidy), since the tim run never needed it",
+          "no-callers: git grep for scripts/sonar and the four script names finds only the recorder fixtures under tim/src/sonar"
+        ],
+        "deleted": "scripts/sonar/ (all four scripts, the push gate included). docs/agent-onboarding.md, docs/reference/tools-index.md and CLAUDE.md now name the tim commands."
       }
     },
     {

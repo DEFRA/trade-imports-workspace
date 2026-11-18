@@ -110,8 +110,8 @@ It used to register all eight, but Claude Code starts every server in a project 
 at session start, and each one is an `mcp/sonarqube` docker container (roughly 400–800 MiB).
 Every workspace-root session therefore held about 5–6 GiB of Docker memory, enough to starve
 the testcontainers the Java integration suites start. Nothing automated needed them: the
-pre-push quality gate (`tim sonar push-check --hook`) and the pending-check hooks under
-`scripts/sonar/` call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
+pre-push quality gate (`tim sonar push-check --hook`) and the pending-check hooks
+(`tim sonar pending`) call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
 
 To query SonarCloud from a workspace-root session, use the `sonar` CLI (for example
 `sonar list issues --project DEFRA_<repo>`), or open a session inside the repo to get its
@@ -147,9 +147,9 @@ Two cooperating hooks bridge that gap without any long-lived process (an earlier
 async-`git push` hook that polled for CI was abandoned — Claude Code reaps async
 hooks when the session goes idle, so the multi-minute wait never completed):
 
-- `scripts/sonar/sonar-record-push.sh` — on `git push`, records a pending check
+- `tim sonar pending record` — on `git push`, records a pending check
   (`{project, sha}`) for each sonar repo at its pushed HEAD, then exits instantly.
-- `scripts/sonar/sonar-check-pending.sh` — on `UserPromptSubmit` and `SessionStart`,
+- `tim sonar pending check --event <name>` — on `UserPromptSubmit` and `SessionStart`,
   does one fast, non-blocking query per pending commit: if SonarCloud has analyzed
   it, inject any new BLOCKER/CRITICAL via `additionalContext` (each commit surfaced
   once); if clean, clear it; if not analyzed yet, leave it (dropped after 45 min).
@@ -161,17 +161,17 @@ robust shape. Add to `hooks`:
 ```json
 "PostToolUse": [
   { "matcher": "Bash", "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh\"", "if": "Bash(git push*)", "timeout": 10 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending record 2>/dev/null || true", "if": "Bash(git push*)", "timeout": 10 }
   ] }
 ],
 "UserPromptSubmit": [
   { "matcher": "*", "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" UserPromptSubmit", "timeout": 15 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event UserPromptSubmit 2>/dev/null || true", "timeout": 15 }
   ] }
 ],
 "SessionStart": [
   { "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" SessionStart", "timeout": 15 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event SessionStart 2>/dev/null || true", "timeout": 15 }
   ] }
 ]
 ```

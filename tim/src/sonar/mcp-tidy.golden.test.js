@@ -13,7 +13,7 @@ import {
 } from './__fixtures__/mcp-tidy.js'
 
 const recordBashTidy = async (caseName) => {
-  const staged = stageMcpTidyWorkspace(caseName)
+  const staged = stageMcpTidyWorkspace(caseName, { withBashTidy: true })
   try {
     const recording = await recordBashRun(staged, mcpTidyScript, [], {
       watch: callLogFolder,

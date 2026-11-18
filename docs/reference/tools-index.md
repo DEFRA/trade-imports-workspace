@@ -20,10 +20,6 @@ script.
 |---|---|---|
 | `tools/backlog/registry.json` | `tim backlog registry` | The registered programmes, their profiles and workareas. Data, not a script |
 | `tools/sonar/sonar-push-check.sh` | The `PreToolUse(Bash)` hook in each SonarCloud-integrated repo's `.claude/settings.json` | Forwarder: runs `tim sonar push-check --hook` from the workspace clone that holds it. Exits 0 when that clone has no `tim/node_modules` or `node` is missing. To run the check by hand, use `tim sonar push-check` in the repo |
-| `scripts/sonar/sonar-push-gate.sh` | The workspace root's `PreToolUse(Bash)` hook | Forwarder: runs `tim sonar push-check --hook` from the workspace clone that holds it. Exits 0 when that clone has no `tim/node_modules` or `node` is missing |
-| `scripts/sonar/sonar-record-push.sh` | The workspace root's `PostToolUse` hook on `git push` | Records a pending SonarCloud check for the pushed commit. Still Bash until the hook moves to `tim sonar pending record` |
-| `scripts/sonar/sonar-check-pending.sh` | The workspace root's `UserPromptSubmit` and `SessionStart` hooks | Reports the new BLOCKER and CRITICAL findings of a pending SonarCloud check once its analysis is in. Still Bash until the hook moves to `tim sonar pending check` |
-| `scripts/sonar/sonar-remove-stale-mcp-containers.sh` | The workspace root's `SessionStart` hook | Removes sonar MCP containers left by dead sessions. Still Bash until the hook moves to `tim sonar mcp-tidy` |
 
 ## Hooks (`.claude/hooks/`)
 

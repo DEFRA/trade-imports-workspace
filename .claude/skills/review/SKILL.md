@@ -46,8 +46,8 @@ schema and allowed Disposition/Status values.
 |---------|----------------|
 | "review EUDPA-X" / "re-review EUDPA-X" / "refresh review" / "check fixes" | this SKILL.md — Fresh + Refresh sections |
 | "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); `tim review start --local` |
-| "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` |
-| "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` |
+| "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` — **all programme PR repos** unless `{repo}` is named |
+| "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` — same programme scope as walk |
 
 NOT for JavaScript lint/format/style findings — use the `code-style`
 skill.

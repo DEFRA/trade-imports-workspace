@@ -9,6 +9,10 @@ run.
 **Trigger:** `"implement review EUDPA-XXXXX"` or `"implement review
 EUDPA-XXXXX {repo}"` (optional repo filter).
 
+**Programme scope (default):** Same as the walker — without `{repo}`,
+process **Fix** items in **every** `items.{repo}.json` for the ticket
+(all programme PRs). Only add `--repo` when the user named one repo.
+
 ---
 
 ## Step 1: Load the Fix List

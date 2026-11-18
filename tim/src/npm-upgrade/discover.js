@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { TimError } from '../errors.js'
 import { writeJsonAtomic } from '../review/store.js'
+import { looksLikeRunId } from './unattended/run.js'
 import {
   isFolder,
   packagesPath,
@@ -175,8 +176,6 @@ const metaText = (meta) => `{
 }
 `
 
-const TICKET_FORMAT = /^[A-Z]+-\d+$/
-
 /**
  * @param {object} opts
  * @param {string} [opts.runId]
@@ -198,7 +197,7 @@ export const checkDiscoverOptions = ({ runId, repoPath, strategy, warn }) => {
       'Repository path is required. Use --help for usage information'
     )
   }
-  if (!TICKET_FORMAT.test(runId)) {
+  if (!looksLikeRunId(runId)) {
     warn(
       `Warning: --run-id '${runId}' does not match expected Jira ticket format (e.g. PROJ-123)`
     )
@@ -225,10 +224,10 @@ const readManifest = (repoPath) => {
   return JSON.parse(readFileSync(manifestPath, 'utf8'))
 }
 
-const askNcu = async ({ runNcu, repoPath, strategy, log }) => {
+const askNcu = async ({ runNcu, repoPath, strategy, packages, log }) => {
   let upgrades
   try {
-    upgrades = await runNcu({ cwd: repoPath, target: strategy })
+    upgrades = await runNcu({ cwd: repoPath, target: strategy, packages })
   } catch (error) {
     throw new TimError(
       'UNKNOWN',
@@ -264,7 +263,8 @@ const prepareRepoFolder = ({ repoFolder, force, log }) => {
  * @param {string} opts.repoPath
  * @param {string} opts.strategy - latest, minor or patch
  * @param {boolean} [opts.force]
- * @param {(request: {cwd: string, target: string}) => Promise<Record<string, string> | undefined>} opts.runNcu
+ * @param {string[]} [opts.packages] - Only these packages, with * as a wildcard; every package when empty
+ * @param {(request: {cwd: string, target: string, packages: string[]}) => Promise<Record<string, string> | undefined>} opts.runNcu
  * @param {string} opts.ncuVersion
  * @param {(line: string) => void} opts.log - Progress lines
  * @returns {Promise<{repoName: string, repoFolder: string, packagesFile: string, counts: object, state: object}>}
@@ -276,6 +276,7 @@ export const discoverUpgrades = async ({
   repoPath: givenPath,
   strategy,
   force = false,
+  packages = [],
   runNcu,
   ncuVersion,
   log
@@ -286,7 +287,7 @@ export const discoverUpgrades = async ({
   const repoFolder = join(runFolder(workspaceRoot, runId), repoName)
   prepareRepoFolder({ repoFolder, force, log })
   log('Discovering outdated dependencies...')
-  const upgrades = await askNcu({ runNcu, repoPath, strategy, log })
+  const upgrades = await askNcu({ runNcu, repoPath, strategy, packages, log })
   log(`Writing packages.${repoName}.json...`)
   const packagesFile = packagesPath(runFolder(workspaceRoot, runId), repoName)
   const state = writePackagesFile({

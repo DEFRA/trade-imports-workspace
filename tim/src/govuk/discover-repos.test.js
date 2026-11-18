@@ -10,6 +10,7 @@ import {
 import {
   reposUsingGovuk,
   runMetaLines,
+  runTicket,
   writeRunMeta
 } from './discover-repos.js'
 
@@ -81,5 +82,49 @@ describe('#writeRunMeta', () => {
       '',
       `Wrote: ${join(staged.root, 'workareas/govuk-upgrades/EUDPA-500/.run-meta.json')}`
     ])
+  })
+
+  test('Should record the ticket and the unattended mode of an unattended run', () => {
+    staged = stageStartWorkspace()
+
+    const written = writeRunMeta({
+      workspaceRoot: staged.root,
+      runId: 'NO_JIRA-govuk-frontend-5.10.0',
+      ticket: 'NO_JIRA',
+      unattended: true,
+      branch: 'chore/NO_JIRA-govuk-frontend-5.10.0',
+      target: '5.10.0'
+    })
+
+    expect(JSON.parse(readFileSync(written.path, 'utf8'))).toEqual(
+      expect.objectContaining({
+        ticket: 'NO_JIRA',
+        mode: 'unattended',
+        branch: 'chore/NO_JIRA-govuk-frontend-5.10.0',
+        target_version: '5.10.0'
+      })
+    )
+  })
+})
+
+describe('#runTicket', () => {
+  test('Should give the ticket the run recorded', () => {
+    staged = stageStartWorkspace()
+    writeRunMeta({
+      workspaceRoot: staged.root,
+      runId: 'EUDPA-802-govuk-frontend-5.10.0',
+      ticket: 'EUDPA-802',
+      unattended: true
+    })
+
+    expect(runTicket(staged.root, 'EUDPA-802-govuk-frontend-5.10.0')).toBe(
+      'EUDPA-802'
+    )
+  })
+
+  test('Should give the run id when the run has no .run-meta.json', () => {
+    staged = stageStartWorkspace()
+
+    expect(runTicket(staged.root, 'EUDPA-264')).toBe('EUDPA-264')
   })
 })

@@ -35,6 +35,11 @@ const STALE_CHANGELOG = /^version__(.*)\.changelog\.md$/
 
 const silent = () => undefined
 
+const isTicketRunId = (runId) => /^[A-Z]+-[0-9]+$/.test(runId)
+
+const isUnattendedRunId = (runId) =>
+  /^([A-Z]+-[0-9]+|NO_JIRA)-govuk-frontend-/.test(runId)
+
 const refuse = (code, message, cause) =>
   new TimError(code, `Error: ${message}`, cause)
 
@@ -293,7 +298,7 @@ export const discoverVersions = async ({
   say = silent,
   warn = silent
 }) => {
-  if (!/^[A-Z]+-[0-9]+$/.test(runId)) {
+  if (!isTicketRunId(runId) && !isUnattendedRunId(runId)) {
     await warn(
       `Warning: --run-id '${runId}' does not match expected Jira ticket format (e.g. PROJ-123)`
     )

@@ -105,7 +105,8 @@ const heldOf = (packages) =>
  * Phase 3: the WALKER's handoff. Every manual package and every automatic
  * one that failed, the ones the walker deferred, every allowlist entry in
  * each repo's `audit-ci.jsonc` with what the run recorded about it, and
- * the first and latest phase 0 runs.
+ * the first and latest phase 0 runs. An unattended run's stderr points at
+ * the skill's unattended mode, not the walker.
  *
  * @param {object} request
  * @param {string} request.workspaceRoot
@@ -115,7 +116,7 @@ const heldOf = (packages) =>
  * @returns {Promise<{exitCode: number, result: object, text: string}>}
  */
 export const handoffPhase = async (request) => {
-  const { workspaceRoot, runId, repos, warn } = request
+  const { workspaceRoot, runId, repos, unattended = false, warn } = request
   await foldLeftoverClassifications(request)
   const manual = runPackages(request, { classification: 'manual' })
   const failedAuto = runPackages(request, {
@@ -135,9 +136,18 @@ export const handoffPhase = async (request) => {
     audit_after: audits.after
   }
   await warn('')
-  await warn('Phase 3 manifest emitted. Spawn the WALKER to triage:')
-  await warn(
-    `  Follow ${join(workspaceRoot, '.claude/skills/npm-upgrade/references/WALKER.md')} (run-id ${runId})`
-  )
+  for (const line of nextStepLinesOf({ workspaceRoot, runId, unattended })) {
+    await warn(line)
+  }
   return { exitCode: 0, result, text: jqText(result).trimEnd() }
 }
+
+const nextStepLinesOf = ({ workspaceRoot, runId, unattended }) =>
+  unattended
+    ? [
+        `Phase 3 manifest emitted. These packages are the unattended job's own work, not a walker's: follow "Unattended mode" in ${join(workspaceRoot, '.claude/skills/npm-upgrade/SKILL.md')} (run-id ${runId}).`
+      ]
+    : [
+        'Phase 3 manifest emitted. Spawn the WALKER to triage:',
+        `  Follow ${join(workspaceRoot, '.claude/skills/npm-upgrade/references/WALKER.md')} (run-id ${runId})`
+      ]

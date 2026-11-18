@@ -8,6 +8,7 @@ import {
   sortBySemver,
   stateFilesOfRun,
   versionCounts,
+  versionEvidence,
   versionFilter
 } from './state.js'
 
@@ -121,5 +122,53 @@ describe('#stateFilesOfRun', () => {
 
     expect(stateFilesOfRun({ folder, repo: 'alpha' })).toEqual([alpha])
     expect(stateFilesOfRun({ folder, repo: 'gamma' })).toEqual([])
+  })
+})
+
+describe('#versionEvidence', () => {
+  const appliedRow = {
+    item: 'Remove the old header class',
+    pattern: 'govuk-header__link--service-name',
+    hitsBefore: 2,
+    hitsAfter: 0,
+    outcome: 'applied',
+    reason: ''
+  }
+
+  test('Should give the rows a version holds', () => {
+    const found = {
+      path: 'versions.repo.json',
+      entry: { version: '6.5.0', evidence: [appliedRow] }
+    }
+
+    expect(versionEvidence(found)).toEqual([appliedRow])
+  })
+
+  test('Should give no rows for a version with no evidence', () => {
+    expect(
+      versionEvidence({
+        path: 'versions.repo.json',
+        entry: { version: '6.5.0' }
+      })
+    ).toEqual([])
+  })
+
+  test('Should refuse a row with an unknown outcome as a parse error naming the version and the field', () => {
+    const found = {
+      path: 'versions.repo.json',
+      entry: {
+        version: '6.5.0',
+        evidence: [{ ...appliedRow, outcome: 'maybe' }]
+      }
+    }
+
+    expect(() => versionEvidence(found)).toThrow(
+      expect.objectContaining({
+        code: 'PARSE',
+        message: expect.stringMatching(
+          /^The evidence for version 6\.5\.0 in versions\.repo\.json is not valid: evidence\.0\.outcome /
+        )
+      })
+    )
   })
 })

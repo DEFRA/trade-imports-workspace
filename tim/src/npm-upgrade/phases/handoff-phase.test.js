@@ -75,4 +75,22 @@ describe('#handoffPhase', () => {
       `  Follow ${join(staged.root, '.claude/skills/npm-upgrade/references/WALKER.md')} (run-id ${RUN_ID})`
     )
   })
+
+  test('Should point an unattended run at the skill unattended mode, not the WALKER', async () => {
+    const staged = stageStartUpgradeWorkspace({}, 'http://127.0.0.1:9')
+    staging.push(staged)
+    const lines = []
+
+    await handoffPhase({
+      workspaceRoot: staged.root,
+      runId: RUN_ID,
+      repos: [FRONTEND],
+      unattended: true,
+      warn: async (line) => lines.push(line)
+    })
+
+    expect(lines.at(-1)).toBe(
+      `Phase 3 manifest emitted. These packages are the unattended job's own work, not a walker's: follow "Unattended mode" in ${join(staged.root, '.claude/skills/npm-upgrade/SKILL.md')} (run-id ${RUN_ID}).`
+    )
+  })
 })

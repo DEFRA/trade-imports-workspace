@@ -8,6 +8,8 @@ import {
   renderDiscoverText
 } from '../../npm-upgrade/discover.js'
 import { ncuVersion, runNcu } from '../../npm-upgrade/ncu.js'
+import { readJson } from '../../npm-upgrade/state.js'
+import { recordPackagePolicies } from '../../npm-upgrade/unattended/policy.js'
 import { makeRunAction } from '../_run-action.js'
 
 const repoPathOf = ({ repoPathArgument, repo, workspaceRoot }) => {
@@ -18,6 +20,17 @@ const repoPathOf = ({ repoPathArgument, repo, workspaceRoot }) => {
     )
   }
   return repoPathArgument ?? (repo && join(workspaceRoot, 'repos', repo))
+}
+
+const appendValue = (value, values) => [...values, value]
+
+const withPoliciesRecorded = (workspaceRoot, runId, discovery) => {
+  const { path } = recordPackagePolicies({
+    workspaceRoot,
+    runId,
+    repo: discovery.repoName
+  })
+  return { ...discovery, state: readJson(path) }
 }
 
 const printLine = (line) => process.stdout.write(`${line}\n`)
@@ -47,6 +60,16 @@ export const registerDiscover = (npm, { timVersion }) =>
       'latest'
     )
     .option('--force', 'Say "Creating workspace" even when the folder exists')
+    .option(
+      '--package <name>',
+      'Only this package, with * as a wildcard; give it again for more',
+      appendValue,
+      []
+    )
+    .option(
+      '--record-policy',
+      "Record each package's merge policy from config/dependency-sets.json, as tim npm packages set-policy does"
+    )
     .addHelpText(
       'after',
       [
@@ -54,7 +77,8 @@ export const registerDiscover = (npm, { timVersion }) =>
         'Examples:',
         '  tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-500',
         '  tim npm discover repos/trade-imports-animals-frontend --run-id EUDPA-500 --strategy minor',
-        '  tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-500 --json'
+        '  tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-500 --json',
+        '  tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-802-vitest-4.2 --package vitest --package "@vitest/*" --record-policy'
       ].join('\n')
     )
     .action(function discoverAction(repoPathArgument, ...rest) {
@@ -73,19 +97,28 @@ export const registerDiscover = (npm, { timVersion }) =>
               workspaceRoot
             }),
             strategy: opts.strategy,
+            packages: opts.package,
+            recordPolicy: opts.recordPolicy === true,
             force: opts.force === true
           }
           checkDiscoverOptions({ ...parsed, warn: warnLine })
           return parsed
         },
-        run: async (_context, parsed) => {
+        run: async (_context, { recordPolicy, ...parsed }) => {
           const discovery = await discoverUpgrades({
             ...parsed,
             runNcu,
             ncuVersion: ncuVersion(),
             log: json ? () => undefined : printLine
           })
-          return json ? discovery.state : discovery
+          const recorded = recordPolicy
+            ? withPoliciesRecorded(
+                parsed.workspaceRoot,
+                parsed.runId,
+                discovery
+              )
+            : discovery
+          return json ? recorded.state : recorded
         },
         renderText: renderDiscoverText,
         renderErrorText: (error) => `Error: ${error.message}`,

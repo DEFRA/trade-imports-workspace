@@ -1,5 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { z } from 'zod'
+import { evidenceRowSchema } from '../deps/evidence/row.js'
 import { TimError } from '../errors.js'
 
 const STATE_FILE_NAME = /^versions\..*\.json$/
@@ -119,6 +121,28 @@ export const findVersion = ({
     throw new TimError('NOT_FOUND', `Version ${version} not found in ${path}`)
   }
   return { path, state, entry }
+}
+
+const versionEvidenceSchema = z.array(evidenceRowSchema)
+
+/**
+ * The evidence rows one version holds, checked against the evidence row
+ * schema. A version with no `evidence` holds none.
+ *
+ * @param {{path: string, entry: {version: string, evidence?: unknown}}} found - From {@link findVersion}
+ * @returns {object[]}
+ * @throws {TimError} PARSE when a row does not fit the schema
+ */
+export const versionEvidence = ({ path, entry }) => {
+  const parsed = versionEvidenceSchema.safeParse(entry.evidence ?? [])
+  if (!parsed.success) {
+    const [issue] = parsed.error.issues
+    throw new TimError(
+      'PARSE',
+      `The evidence for version ${entry.version} in ${path} is not valid: evidence.${issue.path.join('.')} ${issue.message}`
+    )
+  }
+  return parsed.data
 }
 
 /**

@@ -6,7 +6,7 @@
 
 A high-fidelity, designer-facing copy of `trade-imports-plants-frontend`, for making and trialling design changes to the high-risk plants journey before any of it is built for real. It runs the real journey engine and real GOV.UK components — work on one page and the next page is already there, because it is the real one — but needs no backend, no reference data, no address book and no Docker stack: every service is stubbed and the example notifications are made by replaying real pages.
 
-Designers work on it from a Claude Code session opened at this workspace root (`~/git/defra/trade-imports-workspace`), never from a session rooted in the prototype's own folder. The agent layer is the workspace's `prototype` skill (`.claude/skills/prototype/`), which reads the real `trade-imports-plants-frontend`, its recipes, the owning backends' contracts, `openspec/` and `docs/best-practices/` so a designer's request comes out in house style without them having to ask. See the routing row in this file's [`CLAUDE.md`](../../CLAUDE.md).
+Designers work on it from a Claude Code session opened at this workspace root, never from a session rooted in the prototype's own folder. The agent layer is the workspace's `prototype` skill (`.claude/skills/prototype/`), which reads the real `trade-imports-plants-frontend`, its recipes, the owning backends' contracts, `openspec/` and `docs/best-practices/` so a designer's request comes out in house style without them having to ask. See the routing row in this file's [`CLAUDE.md`](../../CLAUDE.md).
 
 ## Responsibilities
 
@@ -24,7 +24,7 @@ Does NOT own:
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-plants-frontend | `upstream` remote, declared by `"upstream": "trade-imports-plants-frontend"` in `repos.json` and set up by `tim workspace setup` and `tim prototype setup`: it fetches `main` only, carries no tags and cannot be pushed to (push URL `DISABLED`). `repos.json`'s `workspaceBranchSync: false` keeps `tim workspace reset\|branch\|update` from touching this repo unless named. Synced with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` | Weekly source sync: merges `upstream/main`, applies `overrides.json`'s rules (deleted paths stay deleted, `ours` paths always win, everything else merges normally), runs CI's checks, and opens a PR only with `--push` |
+| Inbound | trade-imports-plants-frontend | `upstream` remote, declared by `"upstream": "trade-imports-plants-frontend"` in `repos.json` and set up by `tim workspace setup` and `tim prototype setup`: it fetches `main` only, carries no tags and cannot be pushed to (push URL `DISABLED`). `repos.json`'s `workspaceBranchSync: false` keeps `tim workspace reset\|branch\|update` from touching this repo unless named. Synced with `npm --prefix repos/trade-imports-plants-prototype run sync:upstream` | Weekly source sync: merges `upstream/main`, applies `overrides.json`'s rules (deleted paths stay deleted, `ours` paths always win, everything else merges normally), runs CI's checks, and opens a PR only with `--push` |
 | None | trade-imports-defra-id-stub, Defra ID | — | Not used, locally or deployed: every run signs in with stub sign-in (`STUB_MODE`), a locally signed session with no identity provider behind it |
 | None | trade-imports-ins-frontend | — | The header's "Address book" link is deliberately dead everywhere. The address book belongs to the Import Notification Service, which the prototype does not include; the link's base URL is fixed at `https://address-book.invalid` with no env binding, so `TRADE_IMPORTS_INS_FRONTEND_URL` is ignored and no setting, locally or on CDP, can point it at a real one |
 | None | trade-imports-plants-backend, trade-imports-reference-data | — | Both are stubbed (`isStubDataMode()`); the prototype has no backend behind it at all, in dev or on CDP |
@@ -49,9 +49,9 @@ Does NOT own:
 **Standalone, no Docker stack, ever** — the stack is never needed to see a change:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev
+npm --prefix repos/trade-imports-plants-prototype run dev
 # or, for a clean-slate run that always starts from the seeded examples:
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:fresh
+npm --prefix repos/trade-imports-plants-prototype run designer:fresh
 ```
 
 It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or reference data. Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset) and the chooser and every set sit behind it, exactly as the real service's pages do, but stub sign-in signs you in straight away with no password. `/auth/stub-sign-in?organisationId=<id>` signs in as another organisation.

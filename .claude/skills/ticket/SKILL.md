@@ -24,12 +24,12 @@ reviewing someone's PR — use `review` (correctness across languages) or
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -42,7 +42,7 @@ by name via the Task tool.
 
 If the user asks to plan / scope / "how should I" an EUDPA ticket,
 follow `references/PLANNER.md`. Produces
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/plan.md`. No
+`workareas/ticket-planning/EUDPA-X/plan.md`. No
 implementation.
 
 The plan records decisions, homes and owners. It never writes names,
@@ -54,7 +54,7 @@ exists it is reviewed against `assets/plan-review-checklist.md`.
 If the user asks to build / implement / follow the plan, follow
 `references/IMPLEMENTOR.md`. Re-checks the plan against the checklist,
 makes the change under the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`,
+`.claude/rules/code-quality.md`,
 runs a delete-first comment pass over touched code, and raises a PR.
 Verifies with unit tests, lint, E2E and GitHub Actions. Between a green
 verification and the PR it syncs the behaviour spec, as below.
@@ -67,7 +67,7 @@ prove it (`coverage/`). A ticket that changes behaviour without it
 leaves drift for the next person to absorb.
 
 The steps are `frontend-change` Step 5, whatever the repo — read
-`~/git/defra/trade-imports-workspace/.claude/skills/frontend-change/SKILL.md`
+`.claude/skills/frontend-change/SKILL.md`
 → "Step 5: Sync the behaviour spec" and its `references/SPEC_SYNC.md`
 before the first write. In short:
 
@@ -121,13 +121,13 @@ reach other people, and neither is yours to trigger unprompted. It holds
 even when the work is finished and the comment would be accurate.
 
 When the user does ask, follow
-`~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`:
+`docs/best-practices/jira/ticket-conventions.md`:
 wiki markup with escaping, no "Won't Do" transition, no sprints, and
 the Blocks link direction. Check the render afterwards, as that file says.
 
 ## Shared tooling
 
-All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
+All under `tools/` per CC-3:
 
 | Domain | Used by | Purpose |
 |---|---|---|
@@ -146,7 +146,7 @@ sign-in with `gh auth status`, before fetching.
 ## Best practices
 
 PLANNER and IMPLEMENTOR cite a subset of
-`~/git/defra/trade-imports-workspace/docs/best-practices/` based on detected tech. The
+`docs/best-practices/` based on detected tech. The
 universe spans `gds/`, `java/`, `node/`, `playwright/`, `k6/`,
 `rest-api/`, `doc-comments/`, and `docker-compose.md`. Load only what
 applies to the repo being worked on.

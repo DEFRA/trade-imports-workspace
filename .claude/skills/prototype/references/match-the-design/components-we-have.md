@@ -16,7 +16,7 @@ A component is only fully usable when three things are true:
    (`references/custom-pattern.md`). Otherwise log it as a design gap.
 
 All three files are inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`.
+`repos/trade-imports-plants-prototype/`.
 
 ## What "Script NOT started" means on the page
 
@@ -64,7 +64,7 @@ takes the prototype's path as `--root` and is the one reference in this skill
 run with a bare `node` command:
 
 ```bash
-node ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --write --root ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype
+node .claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --write --root repos/trade-imports-plants-prototype
 ```
 
 Without `--write`, the command prints the list and changes nothing.
@@ -217,7 +217,7 @@ Installed: govuk-frontend 6.4.0, @ministryofjustice/frontend 10.0.1, accessible-
 ## Pieces every journey page shares
 
 These are not components but every journey template uses them. See
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/gov-uk/templates-in-this-prototype.md`
+`repos/trade-imports-plants-prototype/docs/designers/gov-uk/templates-in-this-prototype.md`
 for what each does.
 
 - `{% extends "shared/layout.njk" %}` (or `{% extends "<release>/layout.njk" %}`

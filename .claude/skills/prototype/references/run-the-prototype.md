@@ -10,7 +10,7 @@ page at `http://localhost:3103/` that lists every set), not "server", "set
 plugin" or "chooser".
 
 The prototype runs standalone: its `dev` script (or `designer:fresh`) inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`,
+`repos/trade-imports-plants-prototype/`,
 on its own stubs. **The docker stack is never needed to see a change** — do
 not start it, wait on it, or mention it unless the designer asks about a CDP
 deploy. It would not help the address-book link either (see below).
@@ -27,7 +27,7 @@ deploy. It would not help the address-book link either (see below).
 - **This reference changes no files.** It runs, installs and explains. If the
   designer then asks for a change, follow the reference for that change.
   Before editing any file, that reference runs
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <path>`
   and checks `overrides.json`: anything not in its `ours` list belongs to the
   real service and is never edited, on `main` or a `design/*` branch alike.
 
@@ -46,7 +46,7 @@ I start?" or "how does this work?":
 3. Run:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- list
    ```
 
    When any release's "Real journey changed since" column is above 0, say so
@@ -80,7 +80,7 @@ I start?" or "how does this work?":
    about it while `siteUrl` is not set.
 6. Then say: "You can also just describe what you want in your own words. If
    I seem lost, say 'use the prototype skill'." Point at
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`
+   `repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`
    for a guided first hour.
 
 When a newcomer also asks for a change in the same message, do steps 1 to 3,
@@ -90,7 +90,7 @@ the end of the report, before the hand-off line.
 ## Step 1: Check the computer
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:preflight
+npm --prefix repos/trade-imports-plants-prototype run designer:preflight
 ```
 
 It prints one line per check and changes nothing:
@@ -125,7 +125,7 @@ Do only what a `Needs doing` line asks, in this order:
    walkthroughs, but do it now so the first picture works:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run playwright:install
+   npm --prefix repos/trade-imports-plants-prototype run playwright:install
    ```
 
    On Linux this can ask for a password to install system libraries. If it
@@ -180,7 +180,7 @@ Start it in the background, so the conversation can carry on while it runs.
 In Claude Code, run this with the Bash tool's `run_in_background` option:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev
+npm --prefix repos/trade-imports-plants-prototype run dev
 ```
 
 For a research session or a demo that must start from the examples after
@@ -190,7 +190,7 @@ releases keep nothing across a restart.
 Then wait until it answers (up to two minutes):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:preflight -- --wait
+npm --prefix repos/trade-imports-plants-prototype run designer:preflight -- --wait
 ```
 
 It prints `The prototype is running: http://localhost:3103`, or says it did
@@ -215,7 +215,7 @@ newest set under `src/server/app/sets/` other than `high-risk-plants` and
 Print the example links:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
 ```
 
 Then give, as clickable links:
@@ -272,7 +272,7 @@ when the designer asks "where did my data go":
   computer it only asks when started with one. To see the password page
   before a session, the designer runs this in their own terminal (it sets
   the password for that one start, so it is theirs to run, not yours):
-  `PROTOTYPE_PASSWORD=try-me npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev`
+  `PROTOTYPE_PASSWORD=try-me npm --prefix repos/trade-imports-plants-prototype run dev`
   (or `run designer:fresh`).
 
 ## The INS address-book link
@@ -311,13 +311,13 @@ team' and I will prepare a brief and a patch for the plants-frontend team."
 
 ## References
 
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`:
   the designer's own guide to this
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/example-data.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/example-data.md`:
   example links, Reset, organisations
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/services-and-dashboards.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/services-and-dashboards.md`:
   what a design release keeps across restarts
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`:
   start-up errors explained
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/preflight/checks.js`:
+- `repos/trade-imports-plants-prototype/scripts/designer/preflight/checks.js`:
   the preflight rules

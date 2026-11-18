@@ -14,12 +14,12 @@ on its own after the upgrades.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -34,7 +34,7 @@ by name via the Task tool.
 | `references/MANUAL_UPGRADE_IMPLEMENTOR.md` | `references/WALKER.md` `I` keystroke — one per package the operator chooses to implement | source edits + commit + JSON status row update |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/<NAME>.md.`
+beginning `Follow the instructions in .claude/skills/npm-upgrade/references/<NAME>.md.`
 `general-purpose` carries `Tools: *` so workers can WebFetch
 changelogs, Grep the codebase, and (for the implementor) edit source
 files and run tests.
@@ -56,13 +56,13 @@ extension conventions, and global rules shared by all phases.
 ## Repos
 
 The workspace roster lives in one place —
-`~/git/defra/trade-imports-workspace/repos.json`. This skill covers the
+`repos.json`. This skill covers the
 entries flagged `npmUpgradeDefault`, all checked out under
-`~/git/defra/trade-imports-workspace/repos/`. `tim npm upgrade` reads
+`repos/`. `tim npm upgrade` reads
 the same flag, so ask the roster rather than a copied list:
 
 ```bash
-jq -r '.repos[] | select(.npmUpgradeDefault) | .name' ~/git/defra/trade-imports-workspace/repos.json
+jq -r '.repos[] | select(.npmUpgradeDefault) | .name' repos.json
 ```
 
 Pass `--repo <name>` to run against a different set. A repo with no
@@ -79,7 +79,7 @@ rule 2): `chore/EUDPA-N-<slug>`, or `feat/` or `fix/` for that kind of
 work. Read it from the ticket, or from a repo already on it:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend branch --show-current
+git -C repos/trade-imports-animals-frontend branch --show-current
 ```
 
 Parse `EUDPA-XXXXX` from the branch name (e.g.
@@ -99,27 +99,27 @@ it below would diverge from theirs.
 
 ```bash
 # Check local (separate Bash calls — no pipes)
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --list "{branch}"
+git -C repos/{repo-name} branch --list "{branch}"
 ```
 
 ```bash
 # Check remote
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --remotes --list "origin/{branch}"
+git -C repos/{repo-name} branch --remotes --list "origin/{branch}"
 ```
 
 ```bash
 # Switch if it exists locally
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout "{branch}"
+git -C repos/{repo-name} checkout "{branch}"
 ```
 
 ```bash
 # Exists only on the remote — create it tracking origin, never bare
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}" --track "origin/{branch}"
+git -C repos/{repo-name} checkout -b "{branch}" --track "origin/{branch}"
 ```
 
 ```bash
 # Missing in both — create it fresh
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}"
+git -C repos/{repo-name} checkout -b "{branch}"
 ```
 
 All repos must be on `{branch}` before continuing.

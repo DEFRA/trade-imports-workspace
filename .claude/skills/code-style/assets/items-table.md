@@ -8,7 +8,7 @@ truth.
 ## Location
 
 ```
-~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/items.{repo}.json
+workareas/code-style-reviews/EUDPA-XXXXX/items.{repo}.json
 ```
 
 One file per repo. Initial population: `tim style aggregate --write-items`

@@ -7,7 +7,7 @@ queries this JSON.
 ## Location
 
 ```
-~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/versions.{repo-name}.json
+workareas/govuk-upgrades/{run-id}/{repo-name}/versions.{repo-name}.json
 ```
 
 One file per repo. Initial population: `tim govuk start`. All
@@ -127,7 +127,7 @@ following values, derived from the two columns:
 `tim govuk start` also writes a small per-run metadata file:
 
 ```
-~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
+workareas/govuk-upgrades/{run-id}/.run-meta.json
 ```
 
 Shape:

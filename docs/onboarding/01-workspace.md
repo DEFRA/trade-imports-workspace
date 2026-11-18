@@ -151,9 +151,9 @@ live in `tim docker dev --help` and `docker/stack/AGENTS.md`.
 
 Before the next session, get the stack running end to end:
 
-1. Clone the workspace to the canonical location
-   (`~/git/defra/trade-imports-workspace`) — the tooling assumes
-   this path. If yours is elsewhere, symlink it; see
+1. Clone the workspace, by default to
+   `~/git/defra/trade-imports-workspace` — any other folder works
+   too; see
    [`agent-onboarding.md`](../agent-onboarding.md). Then run `tim workspace
    setup` and `tim workspace install`.
 2. Bring the stack up from source with `tim docker dev`, and watch it come

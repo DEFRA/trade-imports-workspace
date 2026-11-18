@@ -2,7 +2,7 @@
 
 The first phase of the `requirements-pipeline` skill. Sources in, one `backlog.json` out. Every row is a
 **requirement** (what, why, acceptance), never a recipe, and a **full-stack slice**, never one layer of one. The
-fields are defined in `~/git/defra/trade-imports-workspace/.claude/skills/requirements-pipeline/references/backlog.schema.json`,
+fields are defined in `.claude/skills/requirements-pipeline/references/backlog.schema.json`,
 and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both before you start. The BUILD phase ([`BUILD.md`](BUILD.md)) builds what this phase writes.
 
 ## Who does what

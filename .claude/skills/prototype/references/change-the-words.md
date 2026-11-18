@@ -43,7 +43,7 @@ passes.
 
 - **Only change files the designer owns.** In a design release that is
   `src/server/app/sets/<release>/**`. Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <file>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <file>`
   before you edit it. `overrides.json` is the list the weekly update follows:
   anything not in its `ours` list belongs to the real service.
 - **Never change the real journey outside a hand-off.** `high-risk-plants` is
@@ -74,7 +74,7 @@ passes.
 Run:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status
+git -C repos/trade-imports-plants-prototype status
 ```
 
 The first line names the branch.
@@ -84,7 +84,7 @@ The first line names the branch.
 - Otherwise the target is the designer's design release:
   1. If the designer named one, use it.
   2. If not, run
-     `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`
+     `npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`
      and pick the working release changed most recently. If there is exactly
      one working release, use it without asking. If two or more fit and
      nothing points to one, ask one question: which release.
@@ -110,10 +110,10 @@ branch, offer two routes in one message and default to the first:
 - "Do it in your design release" (default): continue with their working
   release. If they have none, make one as in 3 above.
 - "Prepare it for the real team" (upstream-bound): check the tree is clean
-  with `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status`.
+  with `git -C repos/trade-imports-plants-prototype status`.
   If it is not, ask them to save their work first (`references/share-my-change.md`).
   Then run
-  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c handoff/<short-slug> main`
+  `git -C repos/trade-imports-plants-prototype switch -c handoff/<short-slug> main`
   and continue in upstream-bound mode. Say that nothing is sent anywhere: the
   `references/hand-off.md` reference turns the branch into a brief and a patch
   later.
@@ -129,13 +129,13 @@ on someone else's branch (a `feat/*`, `chore/*` or trial branch) make one
 before editing:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
+git -C repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
 ```
 
 Then check who owns the release:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<release>/set.js
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<release>/set.js
 ```
 
 In a release it must say "Yours". Stop if it does not. In upstream-bound mode
@@ -147,7 +147,7 @@ branch, and the only place such an edit is allowed.
 For each phrase the designer wants changed, run:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- find "<the old words>" --set <release> --json
+npm --prefix repos/trade-imports-plants-prototype run designer:words -- find "<the old words>" --set <release> --json
 ```
 
 Read the JSON. It has:
@@ -177,10 +177,10 @@ If nothing matched, try fewer words once. Then decide which of these it is:
   paste the text exactly as the page shows it.
 - **The page or question they name does not exist** ("the hint on the reason
   for import question", and the journey has no such question). Check with
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- page <nearest page>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:words -- page <nearest page>`
   and the page list in `references/change-the-journey/page-id-places.md`,
   then look for why in the real journey's own spec:
-  `grep -n -i "<subject>" ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/spec/journey-spec.json`.
+  `grep -n -i "<subject>" repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/spec/journey-spec.json`.
   Tell the designer in plain words: the journey has no such page or
   question, what it has instead, and why when the spec says (quote it).
   Never invent the element, its options or its words to have somewhere to
@@ -225,12 +225,12 @@ upstream-bound way, on its own branch, where rule 10 in `SKILL.md` allows
    before and after, then bring you back to your branch. Nothing changes in
    your design release." Go on when they say yes (or already asked for it to
    be made real).
-2. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+2. `git -C repos/trade-imports-plants-prototype status --porcelain`
    must print nothing (save first with `references/share-my-change.md`
    otherwise). Then:
 
    ```bash
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c handoff/<short-slug> main
+   git -C repos/trade-imports-plants-prototype switch -c handoff/<short-slug> main
    ```
 
 3. Change the string in `src/server/app/shared/copy.en.js` and the same key in
@@ -241,7 +241,7 @@ high-risk-plants`; a shared string is also pinned by tests under
 4. Show it on the real journey, before and after:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set high-risk-plants --pages dashboard,task-list,notification-view --before
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set high-risk-plants --pages dashboard,task-list,notification-view --before
    ```
 
    (Add the pages the find listed for the words.) Open the pictures and
@@ -251,7 +251,7 @@ high-risk-plants`; a shared string is also pinned by tests under
 5. Save it on the hand-off branch (`references/share-my-change.md`, which
    saves any file on `handoff/*`), then `references/hand-off.md` writes the
    brief from it. Then
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch <the designer's branch>`
+   `git -C repos/trade-imports-plants-prototype switch <the designer's branch>`
    and say they are back, and that their design release still shows the old
    words until the real team merges the change and the weekly update brings
    it in.
@@ -286,13 +286,13 @@ one line what that page really shows and where it lives, for example:
 'Destination', from the destination caption section. Moving it into the
 Consignment parties section is a journey change (`references/change-the-journey.md`)."
 Run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- page <page> --set <release>`
+`npm --prefix repos/trade-imports-plants-prototype run designer:words -- page <page> --set <release>`
 to see every string a page shows. Do not change anything on those pages to
 make them match; carry on with the pages the find did list.
 
 **The designer names a page and an element, not the words** ("the hint on
 origin", "the button on arrival details"): run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- page <page> --set <release>`
+`npm --prefix repos/trade-imports-plants-prototype run designer:words -- page <page> --set <release>`
 and pick the string from its list (hints are keys ending `.hint`, labels
 `.label`, errors sit under `errors`). Say which string you picked, quoting
 its English.
@@ -335,7 +335,7 @@ notification-view (check your answers)     sections.parties               3. Con
 
 ## Step 5: Offer GOV.UK style suggestions, once
 
-Read `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/copy.md`.
+Read `repos/trade-imports-plants-prototype/.claude/rules/copy.md`.
 If the new words break one of its style essentials (for example "Please
 enter", Title Case, a date written "27/09/2026"), say so in one line with a
 suggestion. Then use the designer's words unless they take the suggestion.
@@ -343,7 +343,7 @@ Never block on style.
 
 Also check the new words still make sense where they land. For a task list
 group,
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- page task-list --set <release>`
+`npm --prefix repos/trade-imports-plants-prototype run designer:words -- page task-list --set <release>`
 lists each group with the tasks under it (never read the hub's JavaScript for
 this). When a renamed task list group or caption no longer matches what sits
 under it ("Consignment addresses" over a group with no address in it, say),
@@ -398,11 +398,11 @@ In upstream-bound mode (`handoff/*` branch, target `high-risk-plants`):
 3. Run, one at a time (from inside the prototype repo):
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run test:high-risk-plants
+   npm --prefix repos/trade-imports-plants-prototype run test:high-risk-plants
    ```
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype test
+   npm --prefix repos/trade-imports-plants-prototype test
    ```
 
 4. If a test still fails, read its message. It is usually one more pinned
@@ -414,7 +414,7 @@ In upstream-bound mode (`handoff/*` branch, target `high-risk-plants`):
 1. Check:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --quick
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --quick
    ```
 
    This formats the files, checks English and Welsh have the same keys, that
@@ -429,7 +429,7 @@ In upstream-bound mode (`handoff/*` branch, target `high-risk-plants`):
    "To picture every page these words are on". Use that list of pages:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages <the pages from the find> --before
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages <the pages from the find> --before
    ```
 
    Do not use `--pages changed` for words: a caption or task list file is
@@ -445,11 +445,11 @@ In upstream-bound mode use `--set high-risk-plants`.
 When the designer asks to see or review the Welsh, or after a sweep, run:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- report <release>
+npm --prefix repos/trade-imports-plants-prototype run designer:words -- report <release>
 ```
 
 It writes
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/words/<release>/index.html`:
+`repos/trade-imports-plants-prototype/.cache/designer/words/<release>/index.html`:
 every page's English and Welsh side by side, with `[Welsh needed]`, "Same as
 English" and "No Welsh" highlighted. Give the designer the path and the
 counts it printed. It is the only way to read the Welsh until the real
@@ -552,9 +552,9 @@ Run the conventions pass (`references/conventions-pass.md`) before
 
 ## References
 
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/copy.md`:
+- `repos/trade-imports-plants-prototype/.claude/rules/copy.md`:
   the copy rules and the GOV.UK style essentials
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/wording-and-welsh.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/wording-and-welsh.md`:
   the designer's guide to words and Welsh
 - `.claude/skills/prototype/workflow/wording-sweep.js`: the big sweep
 - `references/match-the-design/design-gaps.md`: the design gaps log

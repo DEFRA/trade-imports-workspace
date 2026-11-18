@@ -6,9 +6,9 @@ The load-bearing rules that agents must always honour are kept **inline** below.
 
 ## Load-bearing rules
 
-### 1. Canonical clone location
+### 1. Clone location and paths
 
-Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode that path, so a checkout under any other name will not work. No env var to set, and no symlink to maintain: the canonical path is the checkout.
+The default place to clone the workspace is `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-clone-location). Any other folder works, and several clones can work at once. Every path in skills, rules and docs is relative to the workspace root, so run Bash from there. A spawned agent may start in a sub-repo, so its brief names the workspace root.
 
 ### 2. Branches: naming, cross-repo parity and where to work
 
@@ -111,7 +111,7 @@ A correction about code, tests, tooling or process is an edit to its committed h
 | `repos/trade-imports-routing-proxy` | DEFRA/trade-imports-routing-proxy | INS public entry point: it will forward each request to the INS service its path addresses, but forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
-| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103 (its real twin's plus 100), by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |
+| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103 (its real twin's plus 100), by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |
 | `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
 
@@ -159,9 +159,9 @@ repos, so the workspace-wide install, lint and test skip it. Run its own
 scripts against it directly, with no `cd` needed:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim test
-npm --prefix ~/git/defra/trade-imports-workspace/tim run lint
-npm --prefix ~/git/defra/trade-imports-workspace/tim run format
+npm --prefix tim test
+npm --prefix tim run lint
+npm --prefix tim run format
 ```
 
 `npm ci` is the one exception: it needs the shell to be inside `tim`.
@@ -173,7 +173,7 @@ with the one each repo records traces with, so reach for this when that
 test fails:
 
 ```bash
-cd ~/git/defra/trade-imports-workspace/tim
+cd tim
 npm ci
 ```
 
@@ -240,7 +240,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md, github-actions.md, shell.md). Cited by SKILL.md files via
-  `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+  `docs/best-practices/<topic>/<file>`.
   Read [`shell.md`](docs/best-practices/shell.md) before any bulk rename: this
   workspace is macOS, so `sed`'s `\b` matches nothing and still exits 0, and BSD
   `grep` rejects the word-boundary syntax BSD `sed` accepts — a rename verified
@@ -279,7 +279,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 **Requires `SONAR_TOKEN`** in the environment (a personal SonarCloud token, works across all these repos) — set alongside the other credentials in `~/.zshrc`. If it isn't set, the hook skips gracefully rather than blocking pushes over a missing local prerequisite; CI's own SonarCloud Scan check is still the authoritative backstop either way. To run the same check manually (e.g. mid-investigation, or on a repo without an open PR yet):
 
 ```bash
-bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
+bash tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
 ```
 
 (the script reads its trigger command from that JSON on stdin, matching the real hook's contract) — or just invoke the underlying `mvn .../sonar:sonar` or `sonar-scanner` command the script runs, directly.

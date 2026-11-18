@@ -7,12 +7,12 @@ Your prompt names the run, repo, package, current/target versions,
 files-affected hint and required-changes summary, plus the
 context-bundle directory.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
-`find_workspace_root` helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Boundaries
 
@@ -28,7 +28,7 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 - `{run-id}`, `{repo}`, `{package}`, `{current}`, `{target}`
 - `files_affected` — list of paths the planner identified
 - `changes_required_summary` — one-line description from the planner
-- Context bundle: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
+- Context bundle: `workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
 - `{owner}`, `{expiry-days}` — who owns any allowlist entry Step 6a
   writes, and for how many days. 89 at most: the repo's CI rejects an
   expiry more than 3 calendar months away, and `tim npm audit allow`
@@ -49,7 +49,7 @@ tim npm packages set-status \
 ## Step 2: Pre-flight checks
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} status --porcelain -uno
+git -C repos/{repo} status --porcelain -uno
 ```
 
 If non-empty: stop. Return `CANNOT START: uncommitted changes`.
@@ -109,7 +109,7 @@ After editing Node.js files, run Prettier to avoid pre-commit hook
 failures:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
+npm --prefix repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 
 It formats the whole repo. Stage only the files you edited.
@@ -138,7 +138,7 @@ If unit tests fail, roll back. Restore from `HEAD`, not plain
 staged (Step 7's `git add`) would survive.
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
+git -C repos/{repo} checkout HEAD -- .
 ```
 
 ```bash
@@ -203,7 +203,7 @@ Whenever this step or Step 7 fails, roll back every file from `HEAD`
 reinstall:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
+git -C repos/{repo} checkout HEAD -- .
 ```
 
 ```bash
@@ -222,11 +222,11 @@ tim npm audit forget --run-id {run-id} --repo {repo} --ghsa {GHSA}
 ## Step 7: Commit
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} add package.json package-lock.json
+git -C repos/{repo} add package.json package-lock.json
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {each-edited-file}
+git -C repos/{repo} add {each-edited-file}
 ```
 
 (One add per edited file is fine — keeps the staged diff explicit.)
@@ -234,11 +234,11 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {each-edited-file}
 If Step 6a allowlisted anything, stage it in the same commit:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} add audit-ci.jsonc
+git -C repos/{repo} add audit-ci.jsonc
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} commit -m "Upgrade {package} {current} → {target}
+git -C repos/{repo} commit -m "Upgrade {package} {current} → {target}
 
 {short description of the API changes you made}
 
@@ -258,7 +258,7 @@ plain `checkout -- .` would keep them), mark failed with the hook's output as th
 Capture the short SHA:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse --short HEAD
+git -C repos/{repo} rev-parse --short HEAD
 ```
 
 Mark done:

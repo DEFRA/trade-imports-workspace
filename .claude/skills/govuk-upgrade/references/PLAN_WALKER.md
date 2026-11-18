@@ -12,7 +12,7 @@ underlying JSON: `assets/version-state-schema.md`.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 

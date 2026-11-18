@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs'
 import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -32,6 +32,15 @@ const folderHolding = (tool) =>
     .split(delimiter)
     .find((folder) => folder && existsSync(join(folder, tool)))
 
+const folderLinkingOnlyJq = (home) => {
+  const jqFolder = folderHolding('jq')
+  if (!jqFolder) return null
+  const folder = join(home, 'jq-only')
+  mkdirSync(folder, { recursive: true })
+  symlinkSync(join(jqFolder, 'jq'), join(folder, 'jq'))
+  return folder
+}
+
 const servedPullRequestsIn = (home, testCase) => {
   const servedPath = join(home, 'sonarcloud-pull-requests.json')
   writeFileSync(
@@ -45,9 +54,10 @@ const servedPullRequestsIn = (home, testCase) => {
 
 const forwardingEnv = (paths, testCase) => {
   const env = caseEnv(paths, testCase)
-  const nodeAndJq = [dirname(process.execPath), folderHolding('jq')].filter(
-    Boolean
-  )
+  const nodeAndJq = [
+    dirname(process.execPath),
+    folderLinkingOnlyJq(paths.home)
+  ].filter(Boolean)
   return {
     ...env,
     PATH: [paths.bin, ...nodeAndJq, env.PATH].join(delimiter),

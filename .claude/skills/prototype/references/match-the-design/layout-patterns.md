@@ -3,7 +3,7 @@
 Each pattern names a template that already does it. Copy from that file in
 your release (the same path with your release id in place of
 `high-risk-plants`), inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`.
+`repos/trade-imports-plants-prototype/`.
 
 ## A question page (two-thirds width)
 

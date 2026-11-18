@@ -92,14 +92,14 @@ they would to a change built from scratch.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/...`.
-Bash expands `~` automatically. Skill-internal references stay relative.
+Cross-workspace paths are relative to the workspace root —
+`repos/trade-imports-animals-frontend/...`.
+Bash runs from the workspace root. Skill-internal references stay relative.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
 For this repo that means `npm --prefix
-~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run <script>`
+repos/trade-imports-animals-frontend run <script>`
 — never `cd`.
 
 ## The architecture in one breath
@@ -125,7 +125,7 @@ the rules or the baseline.
 ## When to use
 
 All recipe/guide paths below are inside
-`~/git/defra/trade-imports-workspace/<target repo>/src/server/app/` —
+`<target repo>/src/server/app/` —
 `<target repo>` and the `sets/<set>` prefix substitute from the Targets table
 above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants,
 `sets/germinal-products` for germinal products).
@@ -164,7 +164,7 @@ planning (`ticket`), NOT for the plants prototype or a design release
    comments, a name that needs a comment to be understood, a ticket or
    ruling id, or any history narration. Where an exemplar breaks a house
    rule, follow the rule.
-4. Read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+4. Read `.claude/rules/code-quality.md`
    in full before writing any code. It loads by itself only when a matching
    file is read, so read it on purpose. A breach is a defect even when the
    ladder is green.
@@ -174,11 +174,11 @@ planning (`ticket`), NOT for the plants prototype or a design release
 Before editing, prove the ground is green so failures are yours:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants
+npm --prefix repos/trade-imports-plants-frontend run test:high-risk-plants
 ```
 
 **The repo path and the unit script are inputs, not constants.** The two
@@ -295,23 +295,23 @@ animals paths below are the worked example; swap in
 plants target.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend test
+npm --prefix repos/trade-imports-animals-frontend test
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run lint
+npm --prefix repos/trade-imports-animals-frontend run lint
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:fit:features
+npm --prefix repos/trade-imports-animals-frontend run test:fit:features
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:fit
+npm --prefix repos/trade-imports-animals-frontend run test:fit
 ```
 
 The Playwright suites self-host the app (stub mode) — no workspace stack
@@ -349,7 +349,7 @@ checkouts before writing anything.
 | Root | What it is | Default |
 |---|---|---|
 | **Target repo** | the checkout you just implemented and verified in | the caller's repo — `repos/<name>` unless the caller named another checkout |
-| **Spec root** | the checkout whose `openspec/` this increment writes | `~/git/defra/trade-imports-workspace` unless the caller named one |
+| **Spec root** | the checkout whose `openspec/` this increment writes | the workspace root unless the caller named one |
 
 When the caller names either checkout, resolve every path in this step,
 and the `--root` argument in 5.4, against the one it named. Hardcoding

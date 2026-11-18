@@ -2,17 +2,17 @@ Implement **one** fix from an EUDPA review items table. Verify the
 violation exists, make the change that makes the item's Must true,
 confirm tests are green, commit.
 
-Read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+Read `.claude/rules/code-quality.md`
 in full before you edit. What you write must meet it.
 
 Your prompt specifies the ticket, item, repo, file, line, issue, and fix.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
-helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Inputs (from spawn prompt)
 
@@ -33,7 +33,7 @@ helper in `docs/agent-skills.md`.
 Read the file from the live repo:
 
 ```
-~/git/defra/trade-imports-workspace/repos/{repo}/{file}
+repos/{repo}/{file}
 ```
 
 Check whether the specific violation described in the Issue is present
@@ -99,7 +99,7 @@ After editing Node.js files, run Prettier to avoid pre-commit hook
 failures:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
+npm --prefix repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 
 ---
@@ -113,46 +113,46 @@ streaming output or re-run to check partial results.
 
 Unit tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created.
 
 E2E tests (run after any change that could affect the user journey):
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary line only. If
 failures exist, do NOT grep the output — instead find and read the
 structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
+find repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what actually failed.
 
 ### Java repo
 ```bash
-mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml test > /tmp/backend-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f repos/trade-imports-animals-backend/pom.xml test > /tmp/backend-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created. Surefire also writes per-class
 reports to `target/surefire-reports/`.
 
 **If unit tests fail:**
-- Revert: `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`
+- Revert: `git -C repos/{repo} checkout -- {file}`
 - Return: `FAILED: #N — unit tests broke after change, reverted`
 
 **If E2E tests fail:**
 - Read `error-context.md` artifacts as above — do not try to diagnose from console tail
 - Prove whether your change caused it. Save your change first with
-  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} diff --output=/tmp/{repo}-item-{N}.patch -- {file} {every other file you edited}`,
+  `git -C repos/{repo} diff --output=/tmp/{repo}-item-{N}.patch -- {file} {every other file you edited}`,
   then revert only those files with
-  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file} {every other file you edited}`.
+  `git -C repos/{repo} checkout -- {file} {every other file you edited}`.
   Stash nothing. Run the failing spec again to a new file, and read it.
   - Green without your change: your change caused it. Return
     `FAILED: #N — E2E tests broke after change, reverted. Failure: [summary]`.
   - Still red without your change: re-apply your change with
-    `git -C ~/git/defra/trade-imports-workspace/repos/{repo} apply /tmp/{repo}-item-{N}.patch`, commit it
+    `git -C repos/{repo} apply /tmp/{repo}-item-{N}.patch`, commit it
     (Step 5), and return `RED` (below) so the batch implementor fixes
     the failure before the next item. Never call it flaky, unrelated
     or pre-existing and carry on.
@@ -164,21 +164,21 @@ reports to `target/surefire-reports/`.
 Each git operation is a separate Bash call — no `cd && git`.
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
+git -C repos/{repo} add {file}
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} commit -m "fix(EUDPA-XXXXX): [concise description of what was fixed]
+git -C repos/{repo} commit -m "fix(EUDPA-XXXXX): [concise description of what was fixed]
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 ```
 
 If the pre-commit hook fails due to Prettier:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
+npm --prefix repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
+git -C repos/{repo} add {file}
 ```
 Then retry the commit (a NEW commit; do NOT `--amend`).
 
@@ -213,7 +213,7 @@ Items table NOT updated. The batch implementor will mark Won't Fix.
 ```
 
 Your item is the one finding you fix. Every line you change still meets
-the house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`.
+the house rules in `.claude/rules/code-quality.md`.
 A breach elsewhere in the file that no item covers goes in your output as
 a new finding, with its file:line; another item's finding stays for that
 item.

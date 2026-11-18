@@ -35,7 +35,7 @@ verifier and judge apply the same defaults.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
@@ -155,7 +155,7 @@ For each item marked `D`, in input order:
 
 1. **Read the file** from the workspace copy:
    ```
-   ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
+   workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
    ```
    Use the Read tool with `offset` / `limit` to grab ~10 lines around
    the reported line.

@@ -20,11 +20,11 @@ You receive these parameters in your spawn prompt:
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/...`. Bash expands `~`.
+Cross-workspace paths are relative to the workspace root —
+`repos/<repo>/...`, `docs/...`, `workareas/...`. Bash runs from the workspace root.
 Skill-internal references stay relative to the skill folder.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Output contract
 

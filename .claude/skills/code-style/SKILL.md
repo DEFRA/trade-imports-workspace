@@ -31,7 +31,7 @@ the `review` skill and the build loop's verifier share; see
 `assets/file-style-schema.md` → "Category values".
 
 Per-repo state lives in
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
+`workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
 — canonical JSON, mutated only via `tim style items` and the other
 `tim style` helpers. The `## Items` markdown table in
 `style-review.{repo}.md` is a rendered view (via `tim style items render`). See `assets/items-table.md` for the JSON schema
@@ -39,12 +39,12 @@ and allowed Disposition/Status values.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` resolve the
-workspace path against the user's home directory internally — no env
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env
 var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
@@ -76,9 +76,9 @@ This always runs `tim style prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/local/REPO/BRANCH/`
+`workareas/code-style-reviews/local/REPO/BRANCH/`
 and the paired
-`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
+`workareas/reviews/local/REPO/BRANCH/`
 (changed-file discovery) — same shape as the ticket flow, same
 `.style-meta.json`, same per-(repo,topic) `style-rules.{repo}.{topic}.md`
 bundles.
@@ -91,9 +91,9 @@ Everything from here on (Step 2's spawn prompts, Step 3's coverage gate,
 Step 4's aggregation, `## Items` rendering) is the **same FRESH flow**
 described below — substitute the local id (`local/REPO/BRANCH`) for
 `EUDPA-XXXXX` everywhere, and the local snapshot path
-(`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/repos/{repo}/`
+(`workareas/reviews/local/REPO/BRANCH/repos/{repo}/`
 is not populated in local mode — read the file straight from
-`~/git/defra/trade-imports-workspace/repos/{repo}/{file}` instead, since
+`repos/{repo}/{file}` instead, since
 there is no PR-commit snapshot to clone). The STYLE_FILE_REVIEWER and
 STYLE_IMPLEMENTOR personas are **unchanged** — only the id and the
 snapshot-vs-live-repo read path differ, and both are supplied in the spawn
@@ -133,7 +133,7 @@ write per-file JSONs, run the helper scripts and commit.
 | `references/STYLE_IMPLEMENTOR.md` | IMPLEMENTATION Step I3 (sequential, one group at a time) | source edits + commit |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/<NAME>.md.`
+beginning `Follow the instructions in .claude/skills/code-style/references/<NAME>.md.`
 
 ## Step 0: Start the review
 
@@ -190,7 +190,7 @@ Bash tool auto-backgrounds it, **wait for the harness's
 
 `tim style start` ran `tim style prepare`, which produced:
 
-- `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/`
+- `workareas/code-style-reviews/EUDPA-XXXXX/`
   with `.style-meta.json`, per-repo `file-reviews/{repo}/` subtrees,
   per-file `.style.json` placeholders, and per-(repo,topic)
   `style-rules.{repo}.{topic}.md` bundles.
@@ -214,19 +214,19 @@ Emit ALL Task calls in a single assistant response — do NOT spawn one, await t
 ### Spawn prompt template
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
+Follow the instructions in .claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
 
 **Mode: FRESH**
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
 **Style rules bundle(s):** (one per topic in this file's `.style-meta.json#source_files[].topics`; a Playwright spec lists both its playwright and node bundle)
-- ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo-name].[topic].md
+- workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo-name].[topic].md
 
 **Your assigned file:**
 - Repository: [repo-name]
 - Path: [file-path]
 - Topics: [comma-separated topics for this file]
 - PR: #[pr-number]
-- Snapshot path (read-only): ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/[repo-name]/[file-path]
+- Snapshot path (read-only): workareas/reviews/EUDPA-XXXXX/repos/[repo-name]/[file-path]
 ```
 
 The reviewer writes findings to the per-file JSON placeholder via the
@@ -258,7 +258,7 @@ new work.
 ## Step 5: Write Per-Repo Summaries
 
 For each repo, write
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md`:
+`workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md`:
 
 ```bash
 tim style aggregate EUDPA-XXXXX --repo {repo} --section file-summary
@@ -344,19 +344,19 @@ Deleted files: mark their items as `Auto-Resolved` via `tim style items mark`.
 Spawn `general-purpose` Task subagents in parallel (up to 100), one per
 entry in List A (Mode=REFRESH), List C (Mode=MERGE_RESOLVED), and List D
 (Mode=FRESH; coverage gap). Each spawn prompt begins with
-`Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.`
+`Follow the instructions in .claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.`
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
 
 ### Spawn prompt — REFRESH (List A)
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
+Follow the instructions in .claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
 
 **Mode: REFRESH**
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
 **Style rules bundle(s):** (one per topic in this file's `.style-meta.json#source_files[].topics`; a Playwright spec lists both its playwright and node bundle)
-- ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo].[topic].md
+- workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo].[topic].md
 
 **Your assigned file:**
 - Repository: [repo]
@@ -462,7 +462,7 @@ then alphabetical by file):
 Spawn a `general-purpose` Task subagent. Spawn prompt:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_IMPLEMENTOR.md.
+Follow the instructions in .claude/skills/code-style/references/STYLE_IMPLEMENTOR.md.
 
 **Ticket:** EUDPA-XXXXX
 **Repo:** {repo}
@@ -574,7 +574,7 @@ Summary:
 - Total items: [X]
 - Files reviewed: [X] (verified 100% coverage)
 
-Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
+Per-repo files: workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
 **Refresh review:**
@@ -589,7 +589,7 @@ Summary:
 - Per-repo verdicts:
   - {repo}: [VERDICT] ({N} items)
 
-Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
+Per-repo files: workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
 ## Commands cheat-sheet

@@ -32,7 +32,7 @@ is observable behaviour for an end user, **Task** otherwise.
 Labels are camelCase by convention in this project — `technicalImprovement`,
 not `tech-improvement` or `technical_improvement`. The authoritative
 list of accepted EUDPA labels lives in
-[`~/git/defra/trade-imports-workspace/.claude/skills/ticket-creator/assets/known-labels.md`](../../../.claude/skills/ticket-creator/assets/known-labels.md).
+[`.claude/skills/ticket-creator/assets/known-labels.md`](../../../.claude/skills/ticket-creator/assets/known-labels.md).
 Prefer reusing an existing label over coining a new one.
 
 ## What a ticket says

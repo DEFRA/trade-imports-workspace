@@ -16,7 +16,7 @@ is no pre-veto walker on the auto side — Phase 2 just runs.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
@@ -139,7 +139,7 @@ commits, and we don't want two implementors racing on the same repo).
 Spawn prompt:
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
+Follow the instructions in .claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
 
 Run ID: EUDPA-XXXXX
 Repository: {repo}
@@ -147,7 +147,7 @@ Package: {package}
 Current: {current}
 Target: {target}
 
-Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
+Context bundle: workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
 Files affected (from planner): {files_affected}
 Required changes (from planner): {changes_required_summary}
 Allowlist owner: {owner}
@@ -186,14 +186,14 @@ repo (it has no unit suite — it IS the E2E suite), so this is the
 first chance to confirm the upgrades didn't break the test runner.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
 ```
 
 Read the log file you just created — summary line only. On failure,
 **do NOT grep the streaming output**. Find the structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
+find repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what broke. Surface the

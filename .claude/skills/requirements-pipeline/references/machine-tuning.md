@@ -47,8 +47,8 @@ at a time and nothing else.
 ```bash
 tim docker lease status
 tim docker lease acquire --holder "machine tuning" --json
-M=~/git/defra/trade-imports-workspace/workareas/machine-tuning
-R=~/git/defra/trade-imports-workspace/repos
+M=workareas/machine-tuning
+R=repos
 for w in 2 3 4 6; do
   tim build measure --label animals-fit-w$w --out $M --cwd $R/trade-imports-animals-frontend -- npm run test:fit:ci -- --workers=$w
 done

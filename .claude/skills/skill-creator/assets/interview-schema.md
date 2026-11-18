@@ -3,7 +3,7 @@
 CREATE mode records interview answers into:
 
 ```
-~/git/defra/trade-imports-workspace/workareas/skill-creator/<name>/decisions.json
+workareas/skill-creator/<name>/decisions.json
 ```
 
 The file is mutated atomically by `tim skill answer` (one shape

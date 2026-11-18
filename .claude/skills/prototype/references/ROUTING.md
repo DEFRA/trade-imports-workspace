@@ -30,9 +30,9 @@ name. For every request:
    the exact words: "overdue" is "late", "attach" is "upload", "the devs"
    are "the real team".
 4. **Check what already holds.** Look at the picture, or run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- orders <release> <pages>`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:release -- orders <release> <pages>`
    for a move, or
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <release> --json-only`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:service-map -- --set <release> --json-only`
    for the whole flow, branches included. Say which parts are already true and
    do only the rest.
 5. **Do the parts in order.** Follow each part's reference, one after
@@ -95,7 +95,7 @@ no row are two or three rows together.
   `references/fake-a-service.md`.
 - A part that names a page or question the journey does not have: never
   invent it. Check with
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- page <nearest page>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:words -- page <nearest page>`
   and `references/change-the-journey/page-id-places.md`, and read why in the
   release's `journeys/linear/flow/fixtures/happy-path.json` and the real
   journey's `spec/journey-spec.json`. Say in one line what the journey has
@@ -244,17 +244,17 @@ branches or on someone else's.
 ## How every change ends
 
 0. Before the first edit, take a plain picture of the pages it will touch:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages>`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages>`.
    That is the "before" for a release with no saved commit yet (a new
    release, or one a failed save never committed), where `--before` has
    nothing to compare with.
 1. Check it:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <id>`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <id>`
    and its plain-English result.
 2. Show it:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages it is on>`,
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages it is on>`,
    adding `--before` only when the release has a saved commit
-   (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format=%h -- src/server/app/sets/<id>`
+   (`git -C repos/trade-imports-plants-prototype log -1 --format=%h -- src/server/app/sets/<id>`
    prints one); otherwise put step 0's picture beside it. Give the gallery
    path and links to click. Open the key pictures yourself before
    describing them.
@@ -265,7 +265,7 @@ branches or on someone else's.
 ## The designer commands
 
 All run as
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run <name> -- <arguments>`:
+`npm --prefix repos/trade-imports-plants-prototype run <name> -- <arguments>`:
 
 - `designer:where` whose file is it · `designer:check` check a release ·
   `designer:fresh` runs like the prototype's `dev` script but keeps no release data across

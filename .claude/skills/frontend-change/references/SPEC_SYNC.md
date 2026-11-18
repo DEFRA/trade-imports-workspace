@@ -8,7 +8,7 @@ Every path below is relative to the **spec root** Step 5 resolved:
 `<spec root>/openspec/`. `specs/<path>/spec.md` holds intended behaviour
 as Given/When/Then; `coverage/<path>/coverage.json` mirrors it
 file-for-file and records which tests witness each scenario. The spec root
-is `~/git/defra/trade-imports-workspace` unless the caller names another
+is the workspace root unless the caller names another
 checkout. Never hardcode the former — see Step 5.0.
 
 `openspec/config.yaml` is the authority on every convention below. Read it
@@ -77,7 +77,7 @@ ls <spec root>/openspec/specs/<namespace>/journey-pages/
 ls <spec root>/openspec/specs/<namespace>/journey-obligations/
 ```
 
-The spec root is `~/git/defra/trade-imports-workspace` unless the caller
+The spec root is the workspace root unless the caller
 names another checkout — the named one is the one that has the caller's
 earlier increments in it.
 
@@ -306,7 +306,7 @@ the frontend's health URL. The probe waits for the restart before each run:
 ```bash
 tim build probe trade-imports-animals-frontend <file> --line <n> \
   --reload-url http://localhost:3000/health --json -- \
-  npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests \
+  npm --prefix repos/trade-imports-ins-tests \
   run test:docker-compose -- <spec file> -g '<test name>'
 ```
 

@@ -7,7 +7,7 @@ is a *rendered view* — never the source of truth.
 ## Location
 
 ```
-~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/items.{repo}.json
+workareas/reviews/EUDPA-XXXXX/items.{repo}.json
 ```
 
 One file per repo. Initial population: `tim review aggregate --write-items`

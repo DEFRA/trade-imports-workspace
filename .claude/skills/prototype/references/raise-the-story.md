@@ -7,7 +7,7 @@ workspace's own Jira write surface (`tim jira create`), the same one
 nothing is created without the designer's own yes.
 
 Use this once `references/hand-off.md` has written the folder
-(`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
+(`repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
 with its `ticket.json`). If there is no hand-off folder yet, go there first.
 
 ## Guard rails
@@ -29,7 +29,7 @@ with its `ticket.json`). If there is no hand-off folder yet, go there first.
 ## Step 1: Note any placeholders
 
 Read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/report.json`
+`repos/trade-imports-plants-prototype/handoffs/<folder>/report.json`
 and note `story.placeholders`. A designer's "change it, then raise a
 ticket" request rarely says who the story is for (As), what they need (I
 want) or why (So that), so expect some. Carry on to the dry run either way:
@@ -64,7 +64,7 @@ the Summary line and the rest of `brief.jira.txt` to paste themselves.
 ## Step 4: Dry run
 
 ```bash
-tim jira create --from ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --json
+tim jira create --from repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --json
 ```
 
 With no `--confirm`, this sends nothing: it prints the plan (every field,
@@ -99,7 +99,7 @@ ask again plainly if you are not sure.
 ## Step 5: Create it
 
 ```bash
-tim jira create --from ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --confirm <planId> --json
+tim jira create --from repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --confirm <planId> --json
 ```
 
 `<planId>` must be the exact id the dry run just printed: if anything about
@@ -107,7 +107,7 @@ the ticket changed since (the designer asked for a wording tweak, say), run
 step 4 again first, because a stale `planId` is refused with exit code 2. On
 success it creates the ticket, attaches every file, links `relates` where the
 manifest names one, and writes
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.created.json`.
+`repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.created.json`.
 It refuses to create again from a manifest that already has a
 `ticket.created.json`: that is the guard against a duplicate ticket from an
 accidental second yes.
@@ -117,7 +117,7 @@ accidental second yes.
 1. Update the hand-off's status:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- status --dir handoffs/<folder> --json
+   npm --prefix repos/trade-imports-plants-prototype run designer:handoff -- status --dir handoffs/<folder> --json
    ```
 
    This reads `ticket.created.json` and writes `Ticket: <EUDPA-N>` and
@@ -129,11 +129,11 @@ accidental second yes.
 2. Save it:
 
    ```bash
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add handoffs/<folder>
+   git -C repos/trade-imports-plants-prototype add handoffs/<folder>
    ```
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Raise <EUDPA-N> for the hand-off: <title>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Raise <EUDPA-N> for the hand-off: <title>"
    ```
 
 3. Tell the designer the ticket key, its link

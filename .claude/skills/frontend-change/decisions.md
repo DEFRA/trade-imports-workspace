@@ -93,7 +93,7 @@ differs:
 
 | Caller | Spec root | Committed by |
 |---|---|---|
-| Direct (a person, or the `ticket` skill) | `~/git/defra/trade-imports-workspace` | Nobody — written but uncommitted, named in the Completion output, the caller's to commit |
+| Direct (a person, or the `ticket` skill) | the workspace root | Nobody — written but uncommitted, named in the Completion output, the caller's to commit |
 | `journey-builder` | the run's workspace worktree | `commit-increment.sh`, per increment, on `spec/<run-id>`; one PR at run end |
 
 One rule cannot serve both. A single uncommitted-in-the-main-checkout rule

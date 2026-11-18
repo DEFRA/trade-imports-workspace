@@ -13,12 +13,12 @@ them in strict order with a commit per version.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -55,7 +55,7 @@ membership.
 | `references/VERSION_PLANNER.md` | `references/PHASE_2_MANAGER.md` Step 2 — one per unplanned version, parallel fan-out | `tim govuk classify` + `tim govuk add-change` against `versions.{repo}.json` |
 
 Spawn idiom inside Phase 2: Task tool with `subagent_type: general-purpose`
-and a prompt beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/references/VERSION_PLANNER.md.`
+and a prompt beginning `Follow the instructions in .claude/skills/govuk-upgrade/references/VERSION_PLANNER.md.`
 `general-purpose` carries `Tools: *` so the worker can Read the pre-baked
 changelog, Grep the repo, and call `tim govuk classify` and `tim govuk add-change`.
 
@@ -153,11 +153,11 @@ problem-solve. Wait for instruction.
 
 Best-practices (load when the changelog warrants):
 
-- `~/git/defra/trade-imports-workspace/docs/best-practices/node/govuk-frontend.md` — primary technical reference.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md` — GDS component rules.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/patterns.md` — question-page / task-list patterns.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/accessibility.md` — WCAG / a11y.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/styles.md` — typography + colour utilities.
+- `docs/best-practices/node/govuk-frontend.md` — primary technical reference.
+- `docs/best-practices/gds/components.md` — GDS component rules.
+- `docs/best-practices/gds/patterns.md` — question-page / task-list patterns.
+- `docs/best-practices/gds/accessibility.md` — WCAG / a11y.
+- `docs/best-practices/gds/styles.md` — typography + colour utilities.
 
 Phase 1, in tim:
 

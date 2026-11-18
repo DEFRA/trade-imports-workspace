@@ -11,12 +11,12 @@ languages.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -34,7 +34,7 @@ by name via the Task tool.
   (`Follow references/BATCH_IMPLEMENTOR.md`).
 
 Per-repo state lives in
-`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXX/items.{repo}.json`
+`workareas/reviews/EUDPA-XXX/items.{repo}.json`
 — canonical JSON, mutated only via `tim review` commands. The
 `## Items` markdown table in `review.{repo}.md` is a rendered view
 (via `tim review items render`). See `assets/items-table.md` for the JSON
@@ -106,7 +106,7 @@ This always runs `tim review prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
-`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
+`workareas/reviews/local/REPO/BRANCH/`
 — same shape as the ticket flow: `branch.md` in place of `ticket.md`,
 `.review-meta.json` (`"local": true`), `best-practices/{repo}.md` (via
 the same `tim review detect-tech` the ticket flow uses), and per-file
@@ -120,7 +120,7 @@ Everything from here on (Step 2's spawn prompts, coverage verification,
 Step 4's consistency review, `## Items` rendering) is the **same FRESH
 flow** described below — substitute the local id (`local/REPO/BRANCH`)
 for `EUDPA-XXXXX` everywhere, and read the file straight from
-`~/git/defra/trade-imports-workspace/repos/{repo}/{file}` (there is no
+`repos/{repo}/{file}` (there is no
 PR-commit snapshot to clone in local mode — the repo checkout IS the
 source). The FILE_REVIEWER, CONSISTENCY_REVIEWER and REVIEW_ITEM_FIXER
 personas are **unchanged** — only the id and the snapshot-vs-live-repo
@@ -161,7 +161,7 @@ subagents receive — so workers can write their on-disk artifacts.
 | `references/REVIEW_ITEM_FIXER.md` | `BATCH_IMPLEMENTOR.md` Step 4 (one per Fix-disposition item, sequential) | source edits + commit |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/<NAME>.md.`
+beginning `Follow the instructions in .claude/skills/review/references/<NAME>.md.`
 
 ## Step 0: Start the review
 
@@ -199,14 +199,14 @@ gh pr view {pr} --repo DEFRA/{repo} --json headRefOid --jq .headRefOid
 Then read the review clone's head:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} rev-parse HEAD
+git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} rev-parse HEAD
 ```
 
 If they differ, the clone is stale: on a fresh review run Step 1 again
 (prepare fetches the new head into the clone); on a refresh run Step 0
 again. Do this before any reviewer starts. Record the SHA you reviewed for each repo;
 Step 7 and the Completion Output state it. Local mode has no PR: record
-`git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse HEAD`
+`git -C repos/{repo} rev-parse HEAD`
 instead.
 
 **On Claude Code auto-backgrounding:** for fresh reviews
@@ -276,7 +276,7 @@ command in its own Bash call.
    links), clones each pull request's merge commit (or head, when open)
    into `repos/`, writes `best-practices/{repo}.md`, `.review-meta.json`
    (detected tech and best-practices paths under
-   `~/git/defra/trade-imports-workspace/docs/best-practices/`), a
+   `docs/best-practices/`), a
    `file-reviews/` placeholder for each changed file and the per-repo
    stubs, then removes the raw folder.
 
@@ -296,7 +296,7 @@ Emit ALL Task calls in a single assistant response — do NOT spawn one, await t
 #### Spawn prompt template
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
+Follow the instructions in .claude/skills/review/references/FILE_REVIEWER.md.
 
 **Mode:** FRESH
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
@@ -334,10 +334,10 @@ no PRs (Local mode) has nothing to check.
 Spawn one Task subagent with `subagent_type: general-purpose`. Spawn prompt:
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/CONSISTENCY_REVIEWER.md.
+Follow the instructions in .claude/skills/review/references/CONSISTENCY_REVIEWER.md.
 
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
-**Review workspace:** ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/
+**Review workspace:** workareas/reviews/EUDPA-XXXXX/
 
 Read .review-meta.json for all repos and PR numbers.
 Write _consistency-check.md for every repo listed.
@@ -353,7 +353,7 @@ tim review verify consistency EUDPA-XXXXX
 ## Step 5: Create Repository Summaries
 
 For each repository, write
-`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review.{repo}.md`.
+`workareas/reviews/EUDPA-XXXXX/review.{repo}.md`.
 Two sections are generated deterministically from the per-file JSONs
 via the aggregator; the rest is your synthesis from reading the
 per-file JSONs and the diff.
@@ -468,7 +468,7 @@ involved. Never skip `--write-items`, Step 5a or `tim review items render`.
 
 ## Step 6: Write Index
 
-Create `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md` —
+Create `workareas/reviews/EUDPA-XXXXX/review-index.md` —
 a thin navigation index only, no item rows:
 
 ```markdown
@@ -625,8 +625,8 @@ Summary:
 - Critical findings: [X]
 - Total todo items: [X]
 
-Index: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md
-Repo reviews: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review.{repo}.md (one per repo)
+Index: workareas/reviews/EUDPA-XXXXX/review-index.md
+Repo reviews: workareas/reviews/EUDPA-XXXXX/review.{repo}.md (one per repo)
 
 Commits reviewed:
   - {repo}#{pr} @ {sha}
@@ -713,14 +713,14 @@ Deleted files: mark their items as `Auto-Resolved` via `tim review items mark`.
 Spawn `general-purpose` Task subagents in parallel (up to 100), one per
 entry in List A (Mode=REFRESH), List C (Mode=MERGE_RESOLVED), and List D
 (Mode=FRESH; coverage gap). Each spawn prompt begins with
-`Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.`
+`Follow the instructions in .claude/skills/review/references/FILE_REVIEWER.md.`
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
 
 ### Spawn prompt — REFRESH (List A)
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
+Follow the instructions in .claude/skills/review/references/FILE_REVIEWER.md.
 
 **Mode:** REFRESH
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
@@ -736,7 +736,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/re
 ### Spawn prompt — MERGE_RESOLVED (List C)
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
+Follow the instructions in .claude/skills/review/references/FILE_REVIEWER.md.
 
 **Mode:** MERGE_RESOLVED
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
@@ -830,7 +830,7 @@ Then:
 1. Add `**Refreshed:** [today]` line near the top.
 2. Update the Repository Verdict if warranted.
 
-**Also update `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md`:**
+**Also update `workareas/reviews/EUDPA-XXXXX/review-index.md`:**
 
 1. Add `**Last Updated:** [today]` line.
 2. Update the Repositories table verdicts.
@@ -891,7 +891,7 @@ Summary:
 - Todo items resolved: [N] / [M]
 - New issues found: [N]
 
-Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md + review.{repo}.md files
+Updated: workareas/reviews/EUDPA-XXXXX/review-index.md + review.{repo}.md files
 
 PR comments posted (Step R7):
 - {repo}#{pr} → {url}

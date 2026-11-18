@@ -369,3 +369,89 @@ remove. `scripts/stack/` is gone.
 
 The stack-smoke check did not run, for the reason given under P61: the
 stack is up, started by hand, with no lease (`NEEDS-SAM.md` item 9).
+
+## P72
+
+Nothing deleted, so no allowlist entry names a removed script. Skill, rule
+and doc text no longer types `~/git/defra/trade-imports-workspace`, so P73
+can drop these from `.claude/settings.json` (as on `main` after #280):
+
+- `Bash(git -C ~/git/defra/trade-imports-workspace:*)`
+- `Bash(awk * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(sed * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(find ~/git/defra/trade-imports-workspace/*)`
+
+Dropping them without replacements makes unattended agents stop at prompts,
+because the skill text now types these commands relative to the workspace
+root, and no allow rule matches them (on this branch or on `main` after
+#280):
+
+- `find repos/trade-imports-ins-tests/test-results -name "error-context.md"`
+  (`npm-upgrade/references/WALKER.md`, `review/references/REVIEW_ITEM_FIXER.md`,
+  `review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git rev-parse --abbrev-ref HEAD`, `git checkout main` and
+  `git branch -D <branch>` (`review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git add`, `git update-index --chmod=+x` and `git checkout -- <path>`
+  on `tools/<dir>/<script>.sh` (`docs/agent-skills.md`)
+- `awk`, `sed` and `find` on any relative workspace path, which
+  `docs/agent-skills.md` now says prompt
+- `git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} diff ...` and
+  `... rev-parse HEAD`, typed by unattended file-reviewer agents
+  (`review/references/FILE_REVIEWER.md`,
+  `code-style/references/STYLE_FILE_REVIEWER.md`, `review/SKILL.md`). The
+  tilde `git -C` rule matched these; `main` after #280 has only
+  `git -C repos/<repo>:*` rules, which do not
+
+So P73 adds these allow entries in the same change that drops the four
+tilde rules:
+
+- `Bash(find repos/*)`, `Bash(find workareas/*)`, `Bash(find tools/*)`,
+  `Bash(find docs/*)`, `Bash(find .claude/*)`, `Bash(find openspec/*)`
+- `Bash(awk * repos/*)`, `Bash(awk * workareas/*)`, and the same pair for
+  `sed` (the tilde `sed *` rule allowed `sed -i` too; keep or narrow that
+  on purpose)
+- `Bash(git rev-parse:*)`, `Bash(git checkout main)`,
+  `Bash(git checkout -- :*)`, `Bash(git branch -D:*)`, `Bash(git add:*)`,
+  `Bash(git update-index:*)`. The tilde `git -C` rule allowed every git
+  subcommand at the workspace root; `Bash(git:*)` is the equal of that,
+  and the existing `git push --force`/`-f` denies still apply.
+  `git -C repos/<repo>:*` is already allowed per repo on `main` (#280).
+- `Bash(git -C workareas/:*)`, for the review clones under
+  `workareas/reviews/`. Without it (or `Bash(git:*)`), file-reviewer
+  agents stop at a permission prompt once the tilde `git -C` rule goes.
+
+Once the rules are in, change `docs/agent-skills.md` back: `awk`, `sed`
+and `find` are allowed on workspace-relative paths, and the "A
+relative-path `find` is not yet" line under "Read, search and find" says
+`find` is allowlisted.
+
+Left for a person, because agents do not edit hooks or permission config:
+
+- `.claude/hooks/guard-bash.sh` line 101: the deny message for a literal
+  `/Users/<user>/` path says "Use ~/ instead of a literal /Users/<user>/
+  path". That steers agents to `~/git/defra/trade-imports-workspace/...`,
+  against CLAUDE.md rule 1 and `docs/agent-skills.md`, which now say to
+  type paths relative to the workspace root. Suggested message: "Type the
+  path relative to the workspace root instead of a literal /Users/<user>/
+  path — the permission matcher compares literal strings, so an absolute
+  path triggers avoidable prompts."
+
+- `.claude/hooks/guard-bash.sh` line 120: the deny message for a piped test
+  run still gives
+  `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > ~/git/defra/trade-imports-workspace/workareas/<area>/test.log 2>&1`
+  as its example. The relative form is
+  `npm --prefix repos/<repo> test > workareas/<area>/test.log 2>&1`.
+  `tim/src/skill-workflows/workspace-paths.test.js` allows that line; drop
+  its entry once the message changes.
+- Each service repo's `.claude/settings.json` hook still runs
+  `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`.
+- `docs/onboarding/01-workspace.pptx` still says "Clone to
+  ~/git/defra/trade-imports-workspace (symlink if elsewhere)". Its
+  generator, `docs/onboarding/generator/build-deck.js`, now says the folder
+  is a default, so regenerate the deck from it.
+- `tim skill scaffold` still prints `allowlist_entries` in the tilde form,
+  `Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)`, and appends
+  them to `.claude/settings.json`. P72 left it alone: it is a change to a
+  command's output, not to text, and no check yet shows that the relative
+  form `Bash(tools/<name>/*)` matches a call. Change it in P73 or its own
+  row, once the relative `tools/` rules are proven.

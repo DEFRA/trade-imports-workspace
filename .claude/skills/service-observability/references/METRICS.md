@@ -36,7 +36,7 @@ business events. First used on `trade-imports-animals-frontend`
 | `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none | How much is the service used, by outcome? | A business-metrics class, as address-book's `AddressMetrics`: one counter `address.change` tagged `change` (`create`, `update`, `delete`) |
 | `journey.concurrency.conflict` | count | none | How often do two edits collide? | A counter where the service refuses a stale version (an `OptimisticLockingFailureException` handler) |
 | `journey.entry.redirect` | count | none | How often are users sent back to the start? | None: a frontend journey concern |
-| `cache.hit`, `cache.miss` | count | `cache` | Is the session store doing its job? | The Caffeine `StatsCounter` above ("Caches") |
+| `cache.hit`, `cache.miss` | count | `cache` | Is the session store doing its job? | The Caffeine `StatsCounter` (Rules → "Caches" below) |
 | `external.dependency.connection.lost`, `external.dependency.error` | count | `dependency` | Is a database connection flapping? | None built yet: count the driver's connection-closed and error events |
 
 Before tagging a request timer by route, count the routes and the

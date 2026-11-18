@@ -383,12 +383,12 @@ The system MUST list on the roles-and-addresses card, after the county parish ho
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
 
-#### Scenario: An animal that still owes a permanent address has no row, while the species card is still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no row, while the species and roles-and-addresses cards are both still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists a row for the answered animal alone
-- **AND** the error summary still names the species card as needing to be completed
+- **AND** the error summary names both the species card and the roles-and-addresses card as needing to be completed
 
 #### Scenario: A line needing a permanent address with no animal counted has no permanent address row
 **ID**: SCN-CYA-020-C

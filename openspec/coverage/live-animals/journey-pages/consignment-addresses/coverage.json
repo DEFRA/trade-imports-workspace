@@ -81,15 +81,49 @@
     },
     {
       "id": "REQ-CONSIGN-ADDR-004",
-      "name": "Overview's task for this page shows Completed once every role has an address",
-      "coverage": "full",
+      "name": "Overview's task for this page shows Completed once every answer the page asks for has been given",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-004-A",
-          "name": "Answering every role marks the Overview task Completed",
+          "name": "Answering every role marks the Overview task Completed when the page shows no CPH number or permanent address section",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "completing every party marks the hub task Complete", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "completing every party marks the hub task Complete for a consignment asked for no CPH number or permanent address", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-B",
+          "name": "A line needing a permanent address with an animal identified holds the Overview task to To do until the animal has one",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold the addresses row In progress while an identified animal that needs a permanent address has none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/addresses-task-completion.spec.ts", "test": "the Overview task reads To do with every party answered and no permanent address, and Complete once the permanent address is given", "strength": "partial", "notes": "needs the workspace stack; no red probe run in this stage" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-C",
+          "name": "The Overview task completes once every such animal has a permanent address",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the addresses row once every such animal has a permanent address", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/addresses-task-completion.spec.ts", "test": "the Overview task reads To do with every party answered and no permanent address, and Complete once the permanent address is given", "strength": "partial", "notes": "needs the workspace stack; no red probe run in this stage" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-D",
+          "name": "A consignment the page asks a CPH number of holds the Overview task to To do until the CPH number is given",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold the addresses row to its parties and CPH number for a consignment the page asks no permanent address of", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-E",
+          "name": "A line needing a permanent address with no animal identified yet does not hold the Overview task back",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the addresses row on its parties alone when a line needing a permanent address has an animal count but no animal identified", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
           ]
         }
       ]

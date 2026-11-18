@@ -62,14 +62,39 @@ The system MUST return the user, when they follow the back link from the consign
 - **WHEN** the user follows the Change link that opens the consignment addresses page and then the back link
 - **THEN** the review is shown
 
-### Requirement: Overview's task for this page shows Completed once every role has an address
+### Requirement: Overview's task for this page shows Completed once every answer the page asks for has been given
 **ID**: REQ-CONSIGN-ADDR-004
-The system MUST show Overview's "Roles and addresses" task as Completed once every party role on the consignment addresses page has been given an address.
+The system MUST NOT show Overview's "Roles and addresses" task as Completed while an answer the consignment addresses page asks for is missing: a party role with no address, a CPH number the consignment is in scope of and has not given, or an animal identified on a line that needs a permanent address and has none. A line that needs a permanent address with no animal identified yet is asked for no address, so it does not hold the task back.
 
-#### Scenario: Answering every role marks the Overview task Completed
+#### Scenario: Answering every role marks the Overview task Completed when the page shows no CPH number or permanent address section
 **ID**: SCN-CONSIGN-ADDR-004-A
-- **GIVEN** the user has chosen an address for every party role on the consignment addresses page
+- **GIVEN** the user has chosen an address for every party role on the consignment addresses page, and the page shows no CPH number or permanent address section
 - **WHEN** they return to Overview
+- **THEN** the "Roles and addresses" task shows Completed
+
+#### Scenario: A line needing a permanent address with an animal identified holds the Overview task to To do until the animal has one
+**ID**: SCN-CONSIGN-ADDR-004-B
+- **GIVEN** every party role has an address, and an animal identified on a line that needs a permanent address has none
+- **WHEN** the user returns to Overview
+- **THEN** the "Roles and addresses" task shows To do
+
+#### Scenario: The Overview task completes once every such animal has a permanent address
+**ID**: SCN-CONSIGN-ADDR-004-C
+- **GIVEN** every party role has an address, and every animal identified on a line that needs a permanent address has one
+- **WHEN** the user returns to Overview
+- **THEN** the "Roles and addresses" task shows Completed
+
+#### Scenario: A consignment the page asks a CPH number of holds the Overview task to To do until the CPH number is given
+**ID**: SCN-CONSIGN-ADDR-004-D
+- **GIVEN** every party role has an address, and the notification has a commodity line the service treats as requiring a CPH number, with no CPH number saved
+- **WHEN** the user returns to Overview
+- **THEN** the "Roles and addresses" task shows To do
+- **AND** it shows Completed once the CPH number is saved
+
+#### Scenario: A line needing a permanent address with no animal identified yet does not hold the Overview task back
+**ID**: SCN-CONSIGN-ADDR-004-E
+- **GIVEN** every party role has an address, and a commodity line that needs a permanent address carries an animal count but no animal identified
+- **WHEN** the user returns to Overview
 - **THEN** the "Roles and addresses" task shows Completed
 
 ### Requirement: The page also sets out a CPH number section when a commodity on the notification requires one

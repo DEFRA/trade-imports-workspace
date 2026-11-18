@@ -183,10 +183,16 @@ Claude writes the service's dashboard to
    row and panel after the last copy down by 17 for each dependency
    past the first.
 4. Make one copy of the `<business-metric> by <business-dimension>`
-   panel per business metric on the agreed list (Step 2), filling in the
+   panel per business metric on the agreed list (Step 2) that has no
+   panel of its own in the template. A metric with a fixed panel goes
+   only in that panel, never also in Business events: the `journey.*`
+   counters and `journey.validation.failure` in Journey events,
+   `http.server.requests` in Requests, the connection counts in
+   Dependency connections, `cache.hit` and `cache.miss` in Caches (step
+   5 keeps or deletes those). For each copy, fill in the
    metric and its dimension everywhere they appear in the panel (the
    title, description, `metricName`, `dimensions` and the legend
-   `label`), and laying the copies out two to a row under "Business
+   `label`), and lay the copies out two to a row under "Business
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
    has no cache. Delete the Requests row and its panels if the service

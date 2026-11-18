@@ -1,5 +1,4 @@
 import { describe, test, expect } from 'vitest'
-import { execa } from 'execa'
 import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -7,7 +6,7 @@ import {
   loadJiraFixture,
   mockJiraForEachTest
 } from '../../test-support/jira-mock.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import {
   runUpdate,
   renderUpdateResult,
@@ -466,27 +465,16 @@ describe('renderUpdateResult', () => {
 })
 
 describe('tim jira update (spawn)', () => {
+  const withoutJiraCredentials = {
+    JIRA_USER: '',
+    JIRA_TOKEN: '',
+    JIRA_BASE_URL: ''
+  }
+
   test('emits an AUTH envelope when no Jira credentials are set', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        TIM_CLI_PATH,
-        'jira',
-        'update',
-        'EUDPA-200',
-        '--summary',
-        'A clearer title',
-        '--json'
-      ],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'update', 'EUDPA-200', '--summary', 'A clearer title', '--json'],
+      { env: withoutJiraCredentials }
     )
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
@@ -496,19 +484,14 @@ describe('tim jira update (spawn)', () => {
   })
 
   test('emits a USAGE envelope for a priority Jira does not have', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        TIM_CLI_PATH,
-        'jira',
-        'update',
-        'EUDPA-200',
-        '--priority',
-        'Urgent',
-        '--json'
-      ],
-      { reject: false }
-    )
+    const { stdout, exitCode } = await runTim([
+      'jira',
+      'update',
+      'EUDPA-200',
+      '--priority',
+      'Urgent',
+      '--json'
+    ])
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
       exitCode: 2,
@@ -525,10 +508,8 @@ describe('tim jira update (spawn)', () => {
   })
 
   test('gets past option checks to the Jira sign-in with only repeated --add-label', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
+    const { stdout, exitCode } = await runTim(
       [
-        TIM_CLI_PATH,
         'jira',
         'update',
         'EUDPA-200',
@@ -538,15 +519,7 @@ describe('tim jira update (spawn)', () => {
         'triage',
         '--json'
       ],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+      { env: withoutJiraCredentials }
     )
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
@@ -556,12 +529,7 @@ describe('tim jira update (spawn)', () => {
   })
 
   test('shows the dry-run and --confirm forms in --help', async () => {
-    const { stdout } = await execa('node', [
-      TIM_CLI_PATH,
-      'jira',
-      'update',
-      '--help'
-    ])
+    const { stdout } = await runTim(['jira', 'update', '--help'])
 
     expect(stdout).toContain(
       [

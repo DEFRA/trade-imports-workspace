@@ -1,10 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { execa } from 'execa'
 import {
   loadJiraFixture,
   mockJiraForEachTest
 } from '../../test-support/jira-mock.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import { runAssign, renderAssignResult } from './assign.js'
 
 const ASSIGNEE_PATH = '/rest/api/2/issue/EUDPA-200?fields=assignee'
@@ -201,18 +200,9 @@ describe('renderAssignResult', () => {
 
 describe('tim jira assign (spawn)', () => {
   test('emits an AUTH envelope when no Jira credentials are set', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [TIM_CLI_PATH, 'jira', 'assign', 'EUDPA-200', 'me', '--json'],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'assign', 'EUDPA-200', 'me', '--json'],
+      { env: { JIRA_USER: '', JIRA_TOKEN: '', JIRA_BASE_URL: '' } }
     )
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
@@ -222,12 +212,7 @@ describe('tim jira assign (spawn)', () => {
   })
 
   test('shows the dry-run and --confirm forms in --help', async () => {
-    const { stdout } = await execa('node', [
-      TIM_CLI_PATH,
-      'jira',
-      'assign',
-      '--help'
-    ])
+    const { stdout } = await runTim(['jira', 'assign', '--help'])
 
     expect(stdout).toContain(
       [

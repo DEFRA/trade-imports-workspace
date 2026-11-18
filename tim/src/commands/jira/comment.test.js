@@ -2,9 +2,8 @@ import { describe, test, expect } from 'vitest'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { execa } from 'execa'
 import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import {
   parseCommentOptions,
   runComment,
@@ -222,18 +221,9 @@ describe('renderCommentResult', () => {
 
 describe('tim jira comment (spawn)', () => {
   test('emits an AUTH envelope when no Jira credentials are set', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [TIM_CLI_PATH, 'jira', 'comment', 'EUDPA-200', '--body', TEXT, '--json'],
-      {
-        reject: false,
-        env: {
-          ...process.env,
-          JIRA_USER: '',
-          JIRA_TOKEN: '',
-          JIRA_BASE_URL: ''
-        }
-      }
+    const { stdout, exitCode } = await runTim(
+      ['jira', 'comment', 'EUDPA-200', '--body', TEXT, '--json'],
+      { env: { JIRA_USER: '', JIRA_TOKEN: '', JIRA_BASE_URL: '' } }
     )
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
@@ -243,21 +233,16 @@ describe('tim jira comment (spawn)', () => {
   })
 
   test('exits 2 with a USAGE envelope when both --body and --file are given', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        TIM_CLI_PATH,
-        'jira',
-        'comment',
-        'EUDPA-200',
-        '--body',
-        TEXT,
-        '--file',
-        'c.txt',
-        '--json'
-      ],
-      { reject: false }
-    )
+    const { stdout, exitCode } = await runTim([
+      'jira',
+      'comment',
+      'EUDPA-200',
+      '--body',
+      TEXT,
+      '--file',
+      'c.txt',
+      '--json'
+    ])
 
     expect({ exitCode, payload: JSON.parse(stdout.trim()) }).toMatchObject({
       exitCode: 2,
@@ -274,12 +259,7 @@ describe('tim jira comment (spawn)', () => {
   })
 
   test('shows the dry-run and --confirm forms in --help', async () => {
-    const { stdout } = await execa('node', [
-      TIM_CLI_PATH,
-      'jira',
-      'comment',
-      '--help'
-    ])
+    const { stdout } = await runTim(['jira', 'comment', '--help'])
 
     expect(stdout).toContain(
       [

@@ -283,6 +283,52 @@ describe('runGate — unit and FIT rungs', () => {
     )
   })
 
+  test('runs only the repos --repo names, leaving the rest of the envelope alone', async () => {
+    const env = workspaceWith({
+      gates: {
+        ...unitOnly().gates,
+        backend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      },
+      repos: { ...unitOnly().repos, backend: { test: 'echo tested' } }
+    })
+
+    const outcome = await gate(env, { phase: 'unit', repoKeys: ['frontend'] })
+
+    expect({ green: outcome.green, rungs: outcomeOf(outcome.rungs) }).toEqual({
+      green: true,
+      rungs: ['frontend:format:pass', 'frontend:unit:pass']
+    })
+  })
+
+  test('runs every repo when no --repo is given', async () => {
+    const env = workspaceWith({
+      gates: {
+        ...unitOnly().gates,
+        backend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      },
+      repos: { ...unitOnly().repos, backend: { test: 'echo tested' } }
+    })
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(outcomeOf(outcome.rungs)).toEqual([
+      'frontend:format:pass',
+      'frontend:unit:pass',
+      'backend:unit:pass'
+    ])
+  })
+
+  test('refuses a --repo the envelope does not have', async () => {
+    const env = workspaceWith(unitOnly())
+
+    await expect(
+      gate(env, { phase: 'unit', repoKeys: ['backend'] })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'The backlog has no repo backend. It builds frontend.'
+    })
+  })
+
   test('fails a repo that gates.json has no rungs for', async () => {
     const env = workspaceWith({
       ...unitOnly(),

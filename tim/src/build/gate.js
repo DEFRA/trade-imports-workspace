@@ -12,7 +12,7 @@ import {
 import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
-import { readEnvelopeRepos } from './envelope-repos.js'
+import { readEnvelopeRepos, reposNamedBy } from './envelope-repos.js'
 import { installStaleDependencies } from './dependencies.js'
 import {
   loadGates,
@@ -608,6 +608,7 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
+ * @param {string[]} [args.repoKeys] - Envelope repo keys to gate; every repo when absent or empty
  * @param {boolean} [args.serial] - Run one rung at a time, phase after phase
  * @param {string} [args.logsDir]
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
@@ -620,6 +621,7 @@ export const runGate = async ({
   workspaceRoot,
   workarea,
   phase = 'all',
+  repoKeys,
   serial = false,
   logsDir,
   holder = defaultGateHolder(workarea),
@@ -628,7 +630,10 @@ export const runGate = async ({
   env
 }) => {
   const startedAt = performance.now()
-  const repos = readEnvelopeRepos(workspaceRoot, workarea)
+  const repos = reposNamedBy(
+    readEnvelopeRepos(workspaceRoot, workarea),
+    repoKeys
+  )
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
   const planned = withMachineWorkers(

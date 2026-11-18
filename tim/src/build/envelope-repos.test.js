@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { readEnvelopeRepos } from './envelope-repos.js'
+import { readEnvelopeRepos, reposNamedBy } from './envelope-repos.js'
 
 const withBacklog = (backlog, assertions) => {
   const root = mkdtempSync(join(tmpdir(), 'tim-envelope-'))
@@ -123,5 +123,45 @@ describe('readEnvelopeRepos', () => {
         errorFrom(() => readEnvelopeRepos(root, 'shared/programme')).code
       ).toBe('NOT_FOUND')
     })
+  })
+})
+
+describe('reposNamedBy', () => {
+  const repos = [
+    { key: 'frontend', folder: 'trade-imports-animals-frontend' },
+    { key: 'plantsfrontend', folder: 'trade-imports-plants-frontend' },
+    { key: 'tests', folder: 'trade-imports-ins-tests' }
+  ]
+
+  test('keeps only the repos the keys name', () => {
+    expect(reposNamedBy(repos, ['frontend', 'tests'])).toEqual([
+      repos[0],
+      repos[2]
+    ])
+  })
+
+  test("keeps the envelope's order, not the order the keys are given in", () => {
+    expect(
+      reposNamedBy(repos, ['tests', 'frontend']).map((r) => r.key)
+    ).toEqual(['frontend', 'tests'])
+  })
+
+  test('keeps every repo when no key is given, so an unscoped caller is unchanged', () => {
+    expect(reposNamedBy(repos, undefined)).toBe(repos)
+    expect(reposNamedBy(repos, [])).toBe(repos)
+  })
+
+  test('refuses a key the envelope does not have, naming what it does build', () => {
+    expect(errorFrom(() => reposNamedBy(repos, ['backend']))).toEqual({
+      code: 'USAGE',
+      message:
+        'The backlog has no repo backend. It builds frontend, plantsfrontend, tests.'
+    })
+  })
+
+  test('names every unknown key at once', () => {
+    expect(
+      errorFrom(() => reposNamedBy(repos, ['backend', 'stub'])).message
+    ).toContain('no repo backend, stub')
   })
 })

@@ -111,7 +111,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-push-gate.sh\"",
+            "command": "W=\"$CLAUDE_PROJECT_DIR\"; if [ -f \"$W/tim/src/cli.js\" ] && [ -d \"$W/tim/node_modules\" ]; then node \"$W/tim/src/cli.js\" sonar push-check --hook; fi",
             "timeout": 600
           }
         ]
@@ -143,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh\"",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending record 2>/dev/null || true",
             "if": "Bash(git push*)",
             "timeout": 10
           }
@@ -161,7 +161,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" UserPromptSubmit",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event UserPromptSubmit 2>/dev/null || true",
             "timeout": 15
           }
         ]
@@ -172,12 +172,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" SessionStart",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event SessionStart 2>/dev/null || true",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-remove-stale-mcp-containers.sh\"",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar mcp-tidy 2>/dev/null || true",
             "timeout": 30
           }
         ]

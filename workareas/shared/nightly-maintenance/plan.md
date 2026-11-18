@@ -118,6 +118,24 @@ scheduling if the 7-day restart becomes a chore.
 
 ## Open decisions
 
+- **E2E never runs on a Dependabot PR.** `.github/workflows/publish-branch.yml`
+  skips publishing when `github.actor` is `dependabot[bot]` (most likely
+  because Dependabot runs get no write secrets), so "E2E Tests" is skipped
+  and job 2.2 can never merge. Options: publish with a token Dependabot
+  can read (Dependabot secrets), have the nightly job push an empty commit
+  so a person-owned actor triggers the build, or accept CI without E2E for
+  `ci-is-enough` minors.
+- **stylelint is a coupled set.** `stylelint-config-gds` 3.0.0 needs
+  stylelint `^17.4.0`, so stylelint 18 cannot install yet (animals-admin
+  #91, ins-frontend #84). Add a `stylelint` set (`stylelint`,
+  `stylelint-config-*`) to `dependency-sets.json`, then regenerate the
+  Dependabot configs.
+- **The Sonar push gate blocks repos with no SonarCloud project.**
+  defra-id-stub and routing-proxy carry the CDP template's
+  `sonar-project.properties`, but SonarCloud has no project for them, so
+  every push fails. Create the projects, or have the gate skip a repo
+  whose project does not exist.
+
 - Whether the workspace root needs Dependabot for its GitHub Actions; it has
   no `package.json`.
 - Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also

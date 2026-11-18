@@ -211,14 +211,28 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
 
 - **Dev, every rule: lower the threshold.** Change the condition so
   ordinary traffic breaks it, wait for Firing, check the summary shows
-  the dependency and operation (not blanks), then put the threshold
-  back and watch it return to Normal. The database alert's summary has
-  no labels: it shows the database name as written in the rule. With
-  no failures the failure metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
-  failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
-  use `IS BELOW 2` for the database alert. Once Slack routing is in
-  place, also check the alert arrives in
+  the labels its rule names (not blanks), then put the threshold back
+  and watch it return to Normal. The call rules' summaries show the
+  dependency and operation. The database alert's summary has no
+  labels: it shows the database name as written in the rule. With no
+  failures the failure metrics read 0, so use `IS ABOVE -1` for
+  "unavailable" and "calls failing", and `IS ABOVE 0` for "slow". A
+  healthy database reads 1, so use `IS BELOW 2` for the database alert.
+  Once Slack routing is in place, also check the alert arrives in
   `trade-imports-team-alerts-non-prod`.
+- **Dev, section slow (rule 4).** Open a few pages of the service, then
+  lower the threshold to `IS ABOVE 0`: any page request's time is
+  above 0. Check the summary shows the method, section and status
+  class of each firing series, such as `GET dashboard 2xx`.
+- **Dev, concurrency conflicts (rule 5): a real conflict.**
+  `journey.concurrency.conflict` is published only when a save is
+  refused for a stale concurrency token, so with no conflict there is
+  no data, no data is Normal, and a lowered threshold never fires.
+  Make one: open the same page of one notification in two browser tabs,
+  save it in the first, then save it in the second, whose form still
+  holds the old concurrency token. Then lower the threshold to `IS
+  ABOVE 0`. The summary has no labels: it shows the threshold as
+  written in the rule.
 - **Dev, the database alert: no real failure.** Pointing the service at
   a database that does not exist stops it starting (address-book needs
   its database to build indexes), so no task publishes the gauge and the
@@ -248,6 +262,15 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   dev Firing from the lowered threshold, plus the same rule shown in
   test after promotion. Record it on the ticket as not fired in test,
   and why.
+- **Test, concurrency conflicts (rule 5).** `[UNPROVEN]` The rule is
+  read-only there, so make more stale saves than `<conflicts-per-hour>`
+  within an hour, two tabs at a time as in dev. A refused save writes
+  nothing: the service sends the browser back to the page.
+- **Test, section slow (rule 4).** `[UNPROVEN]` No practical real test:
+  making a page slower than the team's threshold means breaking it. The
+  evidence is the dev Firing from the lowered threshold, plus the same
+  rule shown in test after promotion. Record it on the ticket as not
+  fired in test, and why.
 - **Prod.** Proven by the first prod deploy that follows, not by
   breaking prod.
 

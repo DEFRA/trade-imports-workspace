@@ -14,7 +14,7 @@ To wait for a pull request's checks, run `gh pr checks <N> --repo DEFRA/<R>
 New tooling goes in `tim` as a command with its own tests, not in a shell
 script.
 
-## What is left under `tools/` and `scripts/`
+## What is left under `tools/`
 
 | File | Called by | Purpose |
 |---|---|---|

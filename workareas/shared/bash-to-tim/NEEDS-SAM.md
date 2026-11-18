@@ -15,11 +15,12 @@ forwarder into tim that stays.
    started from local source and came down again.
 2. **Workspace sonar hooks (P55).** Done 2026-11-18: the hooks run tim,
    a new session started clean, and `scripts/sonar/` is deleted.
-3. **Merge.** `node workareas/shared/bash-to-tim/sam/3-merge-prs.mjs`
-   squash-merges the 12 green PRs, service repos first and the workspace
-   last, leaving the plants prototype out. Then an agent deletes the four
-   E2E forwarders (`scripts/ci/*.sh`, `scripts/stack/run-stack.sh`), which
-   exist only because service repos call `e2e-tests.yml@main`.
+3. **Merge.** Done 2026-11-18, by Claude at Sam's request: the 12 PRs are
+   squash-merged, the workspace last (#263, `06b50173`). The blocked PRs
+   needed a no-op commit, and animals-admin and performance-tests needed
+   the picomatch advisory allowlisted (as animals-frontend already had,
+   expiring 2026-11-25). #278 deletes the four E2E forwarders, which
+   empties `scripts/`.
 4. **SonarCloud token and live check (P56).** `node workareas/shared/bash-to-tim/sam/4-sonar-check.mjs`
    says how to save `SONAR_TOKEN` if it is missing, else runs the check on
    address-book and the hook on animals-frontend, passing and blocked.

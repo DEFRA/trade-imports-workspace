@@ -236,8 +236,8 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   no data, no data is Normal, and a lowered threshold never fires.
   Make one: open the same page of one notification in two browser tabs,
   save it in the first, then save it in the second, whose form still
-  holds the old concurrency token. Then lower the threshold to `IS
-  ABOVE 0`. The summary has no labels: it shows the threshold as
+  holds the old concurrency token. Then lower the threshold to
+  `IS ABOVE 0`. The summary has no labels: it shows the threshold as
   written in the rule.
 - **Dev, the database alert: no real failure.** Pointing the service at
   a database that does not exist stops it starting (address-book needs

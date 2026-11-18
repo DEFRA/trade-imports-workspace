@@ -47,6 +47,25 @@ const anthropicApiKeyCheck = (env) =>
         detail: 'ANTHROPIC_API_KEY is not set'
       }
 
+const detachedSessionCheck = (env) => {
+  if (isSet(env.TMUX)) {
+    return { name: 'detached-session', ok: true, detail: 'Running inside tmux' }
+  }
+  if (isSet(env.STY)) {
+    return {
+      name: 'detached-session',
+      ok: true,
+      detail: 'Running inside screen'
+    }
+  }
+  return {
+    name: 'detached-session',
+    ok: false,
+    detail:
+      'This session is not running inside tmux or screen, so it ends when the SSH connection closes. Start claude inside tmux new -s nightly or screen -S nightly.'
+  }
+}
+
 const stopFileCheck = (stop) =>
   stop.stopped
     ? {
@@ -126,7 +145,7 @@ const repoSummaryOf = ({ key, cloned, branch = null, dirty = false }) => ({
 /**
  * Whether this session is ready to run the nightly jobs unattended, from
  * checks that need no GitHub: SONAR_TOKEN set, ANTHROPIC_API_KEY not set, the
- * stop file absent, `config/nightly-jobs.json` valid, and the workspace and
+ * session inside tmux (TMUX set) or screen (STY set), the stop file absent, `config/nightly-jobs.json` valid, and the workspace and
  * every cloned repo clean. With `fetch`, each fetches origin first and a
  * failed fetch fails the check.
  *
@@ -148,6 +167,7 @@ export const checkNightlyReadiness = async (
   const checks = [
     sonarTokenCheck(env),
     anthropicApiKeyCheck(env),
+    detachedSessionCheck(env),
     stopFileCheck(readStopFile(workspaceRoot)),
     jobsCheck,
     cleanCheckoutsCheck(states),

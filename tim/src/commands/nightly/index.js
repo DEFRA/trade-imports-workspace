@@ -49,7 +49,7 @@ const registerCheck = (nightly, { timVersion }) =>
   nightly
     .command('check')
     .description(
-      'Check that this session is ready to run the nightly jobs unattended: SONAR_TOKEN is set, ANTHROPIC_API_KEY is not, workareas/nightly/STOP is absent, config/nightly-jobs.json is valid, and the workspace and every cloned repo have no uncommitted changes. Lists every job with its cron. Checks nothing on GitHub: run gh auth status for that. Exits 0 when ready and 3 when not.'
+      'Check that this session is ready to run the nightly jobs unattended: SONAR_TOKEN is set, ANTHROPIC_API_KEY is not, the session runs inside tmux or screen, workareas/nightly/STOP is absent, config/nightly-jobs.json is valid, and the workspace and every cloned repo have no uncommitted changes. Lists every job with its cron. Checks nothing on GitHub: run gh auth status for that. Exits 0 when ready and 3 when not.'
     )
     .option(
       '--fetch',

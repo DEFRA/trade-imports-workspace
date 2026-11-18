@@ -1,6 +1,6 @@
 ---
 name: nightly-start
-description: 'Start, or restart, the scheduled nightly maintenance jobs in the always-on Claude Code session: check the session is ready (SONAR_TOKEN set, no ANTHROPIC_API_KEY, gh signed in, tim on PATH, the kill switch off, every checkout clean), fetch every repo, delete the nightly crons this session registered before, then register every job config/nightly-jobs.json turns on as a recurring session cron, and report when each runs next and when they all expire. Run it when the session starts and again every 7 days, because recurring crons expire after 7 days. Triggers: "/nightly-start", "start the nightly jobs", "restart the nightly jobs", "register the nightly crons". NOT for running a nightly job by hand (run that job''s own skill), NOT for changing what a job may do (edit .claude/rules/nightly.md), and NOT for adding a job or changing its schedule (edit config/nightly-jobs.json, then run this).'
+description: 'Start, or restart, the scheduled nightly maintenance jobs in the always-on Claude Code session: check the session is ready (SONAR_TOKEN set, no ANTHROPIC_API_KEY, inside tmux or screen, gh signed in, tim on PATH, the kill switch off, every checkout clean), fetch every repo, delete the nightly crons this session registered before, then register every job config/nightly-jobs.json turns on as a recurring session cron, and report when each runs next and when they all expire. Run it when the session starts and again every 7 days, because recurring crons expire after 7 days. Triggers: "/nightly-start", "start the nightly jobs", "restart the nightly jobs", "register the nightly crons". NOT for running a nightly job by hand (run that job''s own skill), NOT for changing what a job may do (edit .claude/rules/nightly.md), and NOT for adding a job or changing its schedule (edit config/nightly-jobs.json, then run this).'
 ---
 
 The nightly jobs run in one Claude Code session left open on an always-on Mac,
@@ -54,6 +54,7 @@ then checks:
 |---|---|
 | `sonar-token` | `SONAR_TOKEN` is not set, so the Sonar push gate would skip |
 | `no-anthropic-api-key` | `ANTHROPIC_API_KEY` is set, so the session would bill the API |
+| `detached-session` | neither `TMUX` nor `STY` is set, so the session is not inside tmux or screen and ends when the SSH connection closes |
 | `stop-file` | `workareas/nightly/STOP` exists |
 | `jobs-config` | `config/nightly-jobs.json` is missing or invalid |
 | `clean-checkouts` | the workspace or a cloned repo has uncommitted changes |

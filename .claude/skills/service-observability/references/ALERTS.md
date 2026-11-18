@@ -98,7 +98,9 @@ for a passive reading and an active probe both.
 
 **Do alert on it for a database.** A database's `external.dependency.available`
 comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
-database"), so it is fresh. And a database's outage barely shows in
+database"), or for Redis from the client's connection events, published
+on each change and every minute (`NODE.md` → "Redis"), so it is fresh.
+And a MongoDB outage barely shows in
 `external.call.failure`: only a command already sent when the
 connection drops is recorded as a failure. A command that cannot reach
 a server fails before it is sent and is not recorded. Use `Maximum`, so

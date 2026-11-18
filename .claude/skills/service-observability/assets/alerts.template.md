@@ -17,7 +17,7 @@ Every rule shares these settings:
 | Evaluation group | `<service>-advanced-alerts`, the existing one. `[UNPROVEN]` it evaluates every 5 minutes; the form shows its interval |
 | Data source | CloudWatch, Metric Search, Builder |
 | Namespace | `<service>` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off. Rule 1a is the one exception: `dependency` only |
+| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off, for rules 1, 2 and 3. Rules 1a, 4 and 5 set their own, in their tables |
 | Time range | the same length as the rule's period |
 | Alert condition | the "WHEN QUERY `Last` IS ABOVE …" row under the query. The Advanced options toggle shows the same thing as Reduce and Threshold expressions; either works |
 | Pending period | None. Grafana refuses any pending period shorter than the group's evaluation interval ("Pending period must be greater than or equal to the evaluation interval") |
@@ -48,8 +48,10 @@ If it shows none, check Match exact is off and both dimensions are set.
 
 ## 1a. <service> <database> unavailable
 
-For a database, its availability comes from the driver's heartbeats
-(`references/METRICS.md` → "A database"). Keep this section only if the
+For a database, its availability comes from the driver's heartbeats,
+or for Redis from the client's connection events
+(`references/METRICS.md` → "A database", `references/NODE.md` →
+"Redis"). Keep this section only if the
 service has a database. The table under "Check" says which of rules 1, 2
 and 3 are built beside it.
 
@@ -147,9 +149,10 @@ here, each Normal, none in Error:
 | A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules) |
 | A database as its only dependency, without its command metrics | 1a (one rule) |
 
-A database's command metrics are the `external.call.*` meters
-`MongoCommandMetrics` records (`references/METRICS.md` → "A database").
-A heartbeat records none.
+A database's command metrics are the `external.call.*` metrics
+`MongoCommandMetrics` records for MongoDB (`references/METRICS.md` → "A
+database"), or `MeasuredRedisEngine` for Redis (`references/NODE.md` →
+"Redis"). A heartbeat or a connection event records none.
 
 Add rule 4 and rule 5 to the count when they are kept. A session store
 such as Redis is a database here: rule 1a with `<database>` = `redis`.
@@ -162,5 +165,5 @@ Rule 3 counts once more for each extra per-dependency slow rule. Then prove each
 - `external.dependency.available` for an HTTP dependency. It is for the
   dashboard only; rule 1 alerts on `external.call.failure` instead
   (`references/METRICS.md` → "Availability: passive or active" says
-  why). A database's comes from the driver's heartbeats, and rule 1a
-  alerts on it.
+  why). A database's comes from the driver's heartbeats, or for Redis
+  the client's connection events, and rule 1a alerts on it.

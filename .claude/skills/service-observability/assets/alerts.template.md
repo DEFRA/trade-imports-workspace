@@ -119,7 +119,7 @@ the service publishes `http.server.requests` (`references/NODE.md` →
 | Statistic | `p95` |
 | Period | `900` (15 minutes) |
 | Alert condition | `Last` `IS ABOVE` `<section-slow-ms>` (the team's threshold for a page) |
-| Summary | `{{ $labels.method }} {{ $labels.section }} {{ $labels.status.class }}: p95 above <section-slow-ms> ms over 15 minutes` |
+| Summary | `{{ $labels.method }} {{ $labels.section }} {{ index $labels "status.class" }}: p95 above <section-slow-ms> ms over 15 minutes` |
 
 ## 5. <service> concurrency conflicts
 

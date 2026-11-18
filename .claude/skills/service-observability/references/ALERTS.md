@@ -85,6 +85,12 @@ alert would never fire and nobody would know. Each call alert has one
 series per dependency and operation, and the thresholds above apply to
 each series.
 
+**Read a dot-case label with `index` in a summary.** A summary is a Go
+template, where `{{ $labels.status.class }}` reads a field `class` of
+the label `status`, so it fails or renders blank. Write
+`{{ index $labels "status.class" }}`. A label with no dot reads as
+`{{ $labels.dependency }}`. `[UNPROVEN]` until rule 4 has fired.
+
 **The database alert is the one exception: query it by `dependency`
 alone.** `external.dependency.available` is published with `dependency` as its only
 dimension, so adding `operation` to its query finds no data in the same

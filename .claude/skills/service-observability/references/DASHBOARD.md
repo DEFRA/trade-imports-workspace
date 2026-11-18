@@ -75,6 +75,11 @@ every section collapsed.
 `[UNPROVEN]` The Requests, Journey events and Dependency connections
 rows have not been imported or seen with data anywhere. They are built
 for the names `trade-imports-animals-frontend` publishes (`NODE.md`).
+`[UNPROVEN]` The Requests row's legend labels read
+`${PROP('Dim.status.class')}`, the first label to read a dimension whose
+name holds a dot. When the row is first imported, check each series is
+labelled with its status class (`2xx`), not left blank, and record the
+result here.
 
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without

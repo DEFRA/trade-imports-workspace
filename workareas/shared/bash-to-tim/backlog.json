@@ -3975,18 +3975,22 @@
       ],
       "risk": "Medium. A missing pattern adds prompts mid-run. Also closes the prefix leak where `git -C ~/git/defra/trade-imports-workspace:*` matches -workspace-2.",
       "proof": "A session in a second clone runs one review, one build-loop row and one npm phase 0 with no permission prompt that the canonical clone would not get (Sam watching).",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "pr": "https://github.com/DEFRA/trade-imports-workspace/pull/280",
+        "done": "Sam ran sam/6-allowlist-repos.mjs (9891a46c): removed the 8 rules that match nothing (the four *-in-the-middle git -C, npm --prefix, mvn -f and find rules, and tools/**, scripts/**) and added npm --prefix tim:* plus a literal git -C repos/<repo>:* and npm --prefix or mvn -f rule per repo in repos.json, as P11 showed only literal prefixes match.",
+        "splitOut": "Dropping git -C ~/git/defra/trade-imports-workspace:* moved to P73, since skills still type that path until P72 lands."
+      }
     },
     {
       "id": "P72",
-      "title": "Skill, rules and docs text stop naming ~/git/defra/trade-imports-workspace",
+      "title": "Skill, rules and docs text stop naming ~/git/defra/trade-imports-workspace: one find-and-replace pass",
       "scripts": [
         ".claude/skills/** (114 files)",
         ".claude/rules/*.md (7 files)",
@@ -3996,19 +4000,17 @@
       "action": "convention",
       "timCommand": "",
       "callersToUpdate": [
-        "residual repos/ paths (about 470) become root-relative (git -C repos/<r>, npm --prefix repos/<r>) or tim commands",
-        "CLAUDE.md rule 1 and docs/agent-onboarding.md:22-31 become 'the default clone location'",
-        "docs/agent-skills.md:14-55,79-101,175-178 (new rationale: tim is path-free)",
-        "repos/trade-imports-plants-prototype/scripts/designer/handoff/brief.js:41, build.js:503, words/format.js:4, suite.test.js:76,368 (cross-repo, same branch name)",
-        "tools/skill-creator templates (already in tim after P35): new skills are taught tim-first, root-relative paths",
-        "a tim test (or lint) that fails on a new literal path outside docs/analysis and docs/adr"
+        "Every ~/git/defra/trade-imports-workspace path in .claude/ (skills, rules, agents), CLAUDE.md and docs/, made relative to the workspace root: git -C ~/git/defra/trade-imports-workspace/repos/<r> becomes git -C repos/<r>, npm --prefix ~/git/defra/trade-imports-workspace/<p> becomes npm --prefix <p>, mvn -f ~/git/defra/trade-imports-workspace/repos/<r>/pom.xml becomes mvn -f repos/<r>/pom.xml, and any other ~/git/defra/trade-imports-workspace/<path> becomes <path>. These match the literal allow rules P71 added.",
+        "Judgement, not a straight replace: CLAUDE.md rule 1 and docs/agent-onboarding.md keep saying where to clone, as the default location rather than a requirement. docs/agent-skills.md Workspace root resolution and Bash call hygiene say paths are relative to the workspace root, and that a spawned agent brief passes the root in (agents may start in a sub-repo). A bare ~/git/defra/trade-imports-workspace with no path after it becomes \"the workspace root\" where it reads as prose.",
+        "Leave alone: docs/analysis/** and docs/adr/** (history), binary files such as docs/onboarding/*.pptx, and workareas/.",
+        "A tim test that fails on a new literal ~/git/defra/trade-imports-workspace in .claude, CLAUDE.md or docs, outside docs/analysis, docs/adr and binary files, with its own allowlist for the lines that must keep the path (the clone instructions)."
       ],
       "tokens": [],
       "dependsOn": [
         "P71"
       ],
       "risk": "Medium: wide prose edit. Subagents may start in a sub-repo (agent-skills.md:16-21), so briefs must say 'paths are relative to the workspace root' or pass the root in.",
-      "proof": "`grep -rn 'git/defra/trade-imports-workspace' .claude CLAUDE.md docs` returns only history docs. One end-to-end run of review, ticket and the build loop from ~/git/defra/trade-imports-workspace-2 writes nothing under the canonical clone (checked with git status there).",
+      "proof": "git grep -n git/defra/trade-imports-workspace -- .claude CLAUDE.md docs returns only the allowlisted clone instructions, history docs and binaries. The new tim test passes, and fails when a path is added back. tim test and lint green. CI E2E green on the PR.",
       "status": "todo",
       "checks": [
         "tim-unit",
@@ -4016,7 +4018,8 @@
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": null,
+      "outOfScope": "repos/trade-imports-plants-prototype/scripts/designer/** (brief.js, build.js, words/format.js, suite.test.js): the prototype waits on Sam's port-or-untrack decision, so those go with that work."
     },
     {
       "id": "P19B",
@@ -4052,6 +4055,28 @@
       "evidence": {
         "droppedReason": "Out of scope: Sam set the scope as the scripts under tools/ and scripts/, not git hooks or Claude hooks. The guard hooks stay Bash."
       }
+    },
+    {
+      "id": "P73",
+      "title": "Allowlist: drop git -C ~/git/defra/trade-imports-workspace:*",
+      "scripts": [
+        ".claude/settings.json"
+      ],
+      "action": "convention",
+      "timCommand": "",
+      "callersToUpdate": [
+        ".claude/settings.json: remove Bash(git -C ~/git/defra/trade-imports-workspace:*), and the awk, sed and find rules under that path if P72 left nothing typing them",
+        "~/.claude/settings.json (Sam's user-level notes)"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P72"
+      ],
+      "risk": "Medium. A skill still typing the path would prompt. Closes the prefix leak into -workspace-2.",
+      "proof": "A session in a second clone runs one review, one build-loop row and one npm phase 0 with no prompt the canonical clone would not get (Sam watching).",
+      "status": "person",
+      "checks": [],
+      "evidence": null
     }
   ]
 }

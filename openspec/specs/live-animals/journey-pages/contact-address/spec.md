@@ -6,54 +6,76 @@
 
 **Page**: consignment-contact-select
 
-Asks which address should be used as the consignment's point of contact, offering the address book as a plain list rather than the searchable one the consignment roles get. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
+Asks which address should be used as the consignment's point of contact, offering the address book as a plain list rather than the searchable one the consignment roles get. The page opens with a sentence saying whose address this is, and puts the choice under its own sub-heading. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
 
 ## Requirements
 
 ### Requirement: The page offers the address book as a plain list, each option showing its address, with none chosen in advance
 **ID**: REQ-CONTACT-001
-The system MUST ask the user to choose a contact address, offering every address in the book as an option naming the address and showing its postal address alongside, with a save-and-continue action, and MUST leave every address unchosen when the page is first opened.
+The system MUST show, directly under the page heading, the sentence saying whose address this is, MUST ask the user to choose a contact address under its own sub-heading, offering every address in the book as an option naming the record and showing its address ending at the postcode, with a save-and-continue action, and MUST leave every address unchosen when the page is first opened.
 
 #### Scenario: The page presents its list with no address chosen
 **ID**: SCN-CONTACT-001-A
 - **GIVEN** the user has reached the contact address page without answering it before
 - **WHEN** the page loads
-- **THEN** it asks which contact address to use, offering every address in the book as an option naming it and showing its postal address, with a save-and-continue action
+- **THEN** it shows the sentence saying whose address this is directly under the page heading
+- **AND** under a sub-heading it asks which contact address to use, offering every address in the book as an option naming the record and showing its address ending at the postcode, with a save-and-continue action
 - **AND** no address is shown as chosen
 
-### Requirement: A chosen contact address is copied onto the notification and shown as the current contact
+### Requirement: A chosen contact address is copied onto the notification and shown chosen on return
 **ID**: REQ-CONTACT-002
-The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as the current contact address — with a way to edit its details on this notification — and still chosen in the list. Saving again MUST keep the current contact address.
+The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as chosen in the list, with no other card or way to edit it from this page. Saving again MUST keep the chosen contact address. The copy is shown on the review.
 
-#### Scenario: Choosing a contact address saves without error and is shown as the current contact on return
+#### Scenario: Choosing a contact address saves without error and is shown chosen on return
 **ID**: SCN-CONTACT-002-A
 - **GIVEN** the user is on the contact address page
 - **WHEN** they choose an address and save and continue
 - **THEN** the answer is saved and no error summary is shown
 - **WHEN** they return to the contact address page
-- **THEN** the same address is shown as the current contact address, with a way to edit its details
-- **AND** it is still shown chosen in the list
+- **THEN** the page shows only the options and the save controls under its two headings, with the same address shown chosen in the list
 - **WHEN** they save and continue again
-- **THEN** the current contact address is kept
+- **THEN** the chosen contact address is kept
 
-### Requirement: The contact address is optional, and saving without one is never refused
+### Requirement: A contact address must be chosen before either save control moves on
 **ID**: REQ-CONTACT-003
-The system MUST allow the contact address page to be saved with no address chosen, without an error, and saving MUST go to check your answers (`live-animals/journey-flow` REQ-FLOW-003).
+The system MUST refuse to save the contact address page with no address chosen, from either save control, showing the error that a contact address must be selected and saving nothing. A contact address already held by the notification MUST be kept unchanged when a save is refused.
 
-#### Scenario: Saving with no address chosen is allowed and goes to check your answers
+#### Scenario: Save and continue with nothing chosen is refused
 **ID**: SCN-CONTACT-003-A
 - **GIVEN** the user opened the contact address page, with no address chosen
 - **WHEN** they save and continue
-- **THEN** check your answers is shown, and no error summary is shown
+- **THEN** the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
+- **AND** the contact address page is shown again
+
+#### Scenario: Save and return to overview with nothing chosen is refused the same way
+**ID**: SCN-CONTACT-003-B
+- **GIVEN** the user opened the contact address page, with no address chosen
+- **WHEN** they save and return to overview
+- **THEN** the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
+- **AND** the contact address page is shown again
+
+#### Scenario: A held contact address is kept when a save is refused
+**ID**: SCN-CONTACT-003-C
+- **GIVEN** the notification already holds a chosen contact address
+- **WHEN** the user saves the contact address page again with nothing chosen
+- **THEN** the save is refused
+- **AND** the notification's contact address is unchanged
 
 ### Requirement: An invalid submitted option is refused without preserving it
 **ID**: REQ-CONTACT-004
-The system MUST refuse to save a submitted value that does not match one of the offered addresses, MUST link the resulting error to and focus the option group, and MUST NOT show any option as chosen once refused.
+The system MUST refuse to save a submitted value that does not match one of the offered addresses, from either save control, MUST link the resulting error to and focus the option group, and MUST NOT show any option as chosen once refused.
 
 #### Scenario: An invalid selection is rejected and not preserved
 **ID**: SCN-CONTACT-004-A
 - **GIVEN** the user submits a value that is not one of the addresses offered on the contact address page
 - **WHEN** they save and continue
+- **THEN** the save is refused, an error links to and focuses the option group
+- **AND** no option is shown as chosen
+
+#### Scenario: An invalid selection from the secondary save control is rejected the same way
+**ID**: SCN-CONTACT-004-B
+- **GIVEN** the user submits a value that is not one of the addresses offered on the contact address page
+- **WHEN** they save and return to overview
 - **THEN** the save is refused, an error links to and focuses the option group
 - **AND** no option is shown as chosen
 

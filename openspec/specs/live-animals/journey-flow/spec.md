@@ -27,7 +27,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 
 ### Requirement: Saving and continuing goes to the next page that applies, whatever way the page was reached
 **ID**: REQ-FLOW-003
-The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on.
+The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on. A page's own required answer MUST be given before Save and continue goes on from it.
 
 #### Scenario: The CPH number page goes on to Roles and addresses
 **ID**: SCN-FLOW-003-A
@@ -41,11 +41,14 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save and continue
 - **THEN** they are taken to the consignment addresses page
 
-#### Scenario: Contact address goes to check your answers whatever is owed
+#### Scenario: Contact address goes to check your answers whatever else is owed, once a contact address is chosen
 **ID**: SCN-FLOW-003-B
 - **GIVEN** a notification with tasks outstanding and the contact address page open
-- **WHEN** the user saves and continues, with or without a contact address chosen
+- **WHEN** the user chooses a contact address and saves and continues
 - **THEN** check your answers is shown, naming what is outstanding
+- **GIVEN** the contact address page open, with no contact address chosen
+- **WHEN** the user saves and continues
+- **THEN** the save does not go on, and the contact address page is shown again
 
 #### Scenario: What are you importing goes on to Main import reason
 **ID**: SCN-FLOW-003-C

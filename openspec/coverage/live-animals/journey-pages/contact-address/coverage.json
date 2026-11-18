@@ -13,44 +13,66 @@
           "name": "The page presents its list with no address chosen",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts the form and one option are visible, not the full list or the address-summary detail" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "heads the page with its own title, the intro directly under it, and the choice under its own sub-heading", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "renders the page controls, hinted with the address ending at the postcode", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "leaves the contact address unchecked on load", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the address-book contacts and feature copy", "strength": "full", "notes": "this is what surfaced the address-summary detail — asserts every option's name and postal-address text" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "heads the page with its own title, shows the intro directly below it, and puts the choice under a sub-heading with a hidden legend", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the address-book contacts, each hinted with its address ending at the postcode", "strength": "full", "notes": "Probed: dropping the postcode cut from addressSummaryEndingAtPostcode turns this case red and restoring it turns it green" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CONTACT-002",
-      "name": "A chosen contact address is copied onto the notification and shown as the current contact",
+      "name": "A chosen contact address is copied onto the notification and shown chosen on return",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONTACT-002-A",
-          "name": "Choosing a contact address saves without error and is shown as the current contact on return",
+          "name": "Choosing a contact address saves without error and is shown chosen on return",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a chosen contact address is shown as the current contact on return, still chosen, and saving again keeps it", "strength": "full" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a contact address saved by the secondary control is still chosen on return, with the page headings still exactly the two", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "accepts a valid contact address and goes on to check your answers", "strength": "partial", "notes": "proves the save and the landing on check your answers" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "selects a valid contact, redirects and shows it as the current contact, still selected, on return", "strength": "partial", "notes": "does not cover saving again" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "selects a valid contact, redirects and shows it chosen on return, with the page headings still exactly the two", "strength": "partial", "notes": "does not cover saving again" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should commit a copy of the picked address and show that option chosen on return", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CONTACT-003",
-      "name": "The contact address is optional, and saving without one is never refused",
-      "coverage": "partial",
+      "name": "A contact address must be chosen before either save control moves on",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONTACT-003-A",
-          "name": "Saving with no address chosen is allowed and goes to check your answers",
-          "coverage": "partial",
+          "name": "Save and continue with nothing chosen is refused",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go on from Contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "the next-page rule past the last step" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "contact address saved with no address chosen goes to check your answers, naming what is outstanding", "strength": "partial", "notes": "the landing on the review is red then green with the review no longer the end of the journey (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e); the review shows an error summary here" }
-          ],
-          "notes": "The Then 'no error summary is shown' cannot be witnessed: for the notification the test reaches the review is shown with an error summary naming what is outstanding, the contact address among it, as SCN-FLOW-003-B says. The landing on check your answers is proven."
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "Save and continue with nothing chosen keeps the trader on the page, naming the choice in the error summary and against the options", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and continue with nothing chosen keeps the trader on the page, naming the choice in the error summary and against the options", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 and re-render with the choice in error when nothing is selected, leaving a held contact address as it was", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/validate.test.js", "test": "Should raise \"select a contact address\" on a submission with no selection", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-003-B",
+          "name": "Save and return to overview with nothing chosen is refused the same way",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "Save and return to overview with nothing chosen does the same", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to overview with nothing chosen does the same and goes nowhere", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 with the choice in error and commit nothing when nothing is selected and no contact address is held", "strength": "partial", "notes": "the refusal and the empty commit; the secondary control itself is proved by the fit case" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-003-C",
+          "name": "A held contact address is kept when a save is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 and re-render with the choice in error when nothing is selected, leaving a held contact address as it was", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -65,6 +87,14 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "contact validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection", "strength": "full", "notes": "this test is what surfaced the requirement itself — a tampered/invalid value was previously undocumented; not exercised anywhere in E2E" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-004-B",
+          "name": "An invalid selection from the secondary save control is rejected the same way",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to overview with a value the book does not hold is refused the same way, with no option left chosen", "strength": "full", "notes": "follows the error summary link and proves the first radio in the group takes focus" }
           ]
         }
       ]

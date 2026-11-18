@@ -156,12 +156,15 @@ reference-data (dot-case names): `dependency` is `mdm`
 or `trade-token`; `cache` is `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`;
 `lookup.type` is `countries`, `ports-of-entry`, `commodity-search` or
 `species-check`. For animals-frontend: `dependency` is `animals-backend`,
-`address-book`, `reference-data`, `cdp-uploader`, `defra-id` or `redis`;
-`cache` is yar's session segment or `auth-sessions` (`NODE.md`). Only
-`redis` publishes `external.dependency.available` there; the HTTP
-dependencies are judged by `external.call.failure` (`NODE.md` → "Not
-done on animals-frontend"), so Dependency status shows `redis` alone
-for a Node service built like animals-frontend. A service with a
+`address-book`, `reference-data`, `cdp-uploader` or `defra-id`, each
+with a dependency row, or `redis`, which has no row: its commands are
+not timed, so it publishes no `external.call.*`, only its availability
+and its connection counts; `cache` is `session` (`NODE.md`). Every one
+of the six publishes `external.dependency.available`, so Dependency
+status shows all six: `redis` from the client's connection events, the
+HTTP dependencies from their most recent call, each once it has been
+called since the task started (`NODE.md` → "Availability of an HTTP
+dependency"). A service with a
 database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
 measured, an `operation` from a fixed set of command names, with every
@@ -177,8 +180,8 @@ Claude writes the service's dashboard to
    `aws.emf.namespace` is not its name, use the namespace in the
    `namespace` fields and the name everywhere else.
 3. Make one copy of the `<dependency>` row, with the four panels after
-   it, per `dependency` value the service publishes ("The dimension
-   values" above), replacing `<dependency>` everywhere in the copy (the row
+   it, per `dependency` value the service publishes `external.call.*`
+   for ("The dimension values" above), replacing `<dependency>` everywhere in the copy (the row
    title, each panel description and each `dependency` dimension). Put
    the copies one after another in `panels`. A dependency's section is
    17 high (the row's 1, then two panel rows of 8), so add 17 to every

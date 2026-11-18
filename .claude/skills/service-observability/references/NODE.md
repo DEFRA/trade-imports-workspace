@@ -28,7 +28,8 @@ These are the files a port writes or changes.
 | File | What it does |
 |---|---|
 | `src/server/common/helpers/metrics/publish-metrics.js` | `publishMetricsInBackground(dimensions, metrics)` writes one EMF document: the metrics given, all with the same dimensions, in the namespace `metrics.namespace` (`AWS_EMF_NAMESPACE`, default the service name). It does not make the caller wait, and logs a failed write at warn with its dimensions and metric names. `countEvent(name, dimensions)` publishes a count of 1. It copies the dimensions before handing them over: the EMF library writes to the object it is given, so a frozen one fails every publish |
-| `src/server/common/helpers/metrics/external-call-metrics.js` | The dependency layer. `measureExternalCall(externalCall, call)` and `measureExternalResponse(externalCall, send)`, where `externalCall` is the `{ dependency, operation }` descriptor and `call` or `send` the function that makes the call, time a call, judge its outcome ("Dependency layer" below) and pass it to `recordExternalCallInBackground`, which counts it against the request in progress, writes the log line and publishes `external.call.duration` and `external.call.failure` tagged `dependency` and `operation` |
+| `src/server/common/helpers/metrics/external-call-metrics.js` | The dependency layer. `measureExternalCall(externalCall, call)` and `measureExternalResponse(externalCall, send)`, where `externalCall` is the `{ dependency, operation }` descriptor and `call` or `send` the function that makes the call, time a call, judge its outcome ("Dependency layer" below) and pass it to `recordExternalCallInBackground`, which counts it against the request in progress, writes the log line, publishes `external.call.duration` and `external.call.failure` tagged `dependency` and `operation`, and passes the outcome to `recordDependencyCallOutcome` |
+| `src/server/common/helpers/metrics/dependency-availability.js` | `recordDependencyCallOutcome(dependency, failed)` keeps each dependency's most recent outcome and publishes it every minute ("Availability of an HTTP dependency" below). `publishDependencyAvailabilityInBackground(dependency, available)` is the one place `external.dependency.available` is written, for the HTTP dependencies and for Redis |
 | `src/server/common/helpers/metrics/request-metrics.js` | The endpoint layer. The `requestMetrics` hapi plugin, whose `response` listener (`publishFinishedPageRequestMetrics`) runs for every page request, with no handler changes: `recordRequestTimeInBackground` publishes `http.server.requests`, `countRefusedAnswerInBackground` counts `journey.validation.failure`, and when `callCounts.metrics.enabled` is on it publishes the request's counts through `page-request-metrics.js` |
 | `src/server/common/helpers/metrics/page-request-metrics.js` | `recordPageRequestInBackground(counts)` publishes `page.request.backend.calls` and `page.request.session.resolutions`, tagged `request.kind` `page` |
 | `src/server/common/helpers/call-counts/call-counts.js` | The `callCounts` hapi plugin: keeps each request's counts by dependency and operation (`countExternalCall`, called by `recordExternalCallInBackground`) and its session reads (`countSessionResolution`). `backendCallsOf(counts)` adds up its `animals-backend` calls. `call-count-totals.js` and `call-counts-routes.js` beside it serve the running totals at `/call-counts` |
@@ -38,8 +39,8 @@ These are the files a port writes or changes.
 | `src/server/common/helpers/redis-connection-events.js` | `reportRedisConnectionEvents(client)` reports the Redis client's events ("Redis" below) |
 | `src/server/common/helpers/redis-dependency.js` | `REDIS_DEPENDENCY`, the `dependency` value `redis` |
 | `src/server/common/helpers/redis-client.js` | `buildRedisClient` calls `reportRedisConnectionEvents` on the client it builds |
-| `src/server/common/helpers/session-cache/measured-redis-engine.js` | `MeasuredRedisEngine`, the catbox Redis engine with each `get`, `set` and `drop` measured |
-| `src/server/common/helpers/session-cache/cache-engine.js` | `getCacheEngine` returns a `MeasuredRedisEngine` when the session cache is Redis |
+| `src/server/common/helpers/session-cache/hit-counting-redis-engine.js` | `HitCountingRedisEngine`, the catbox Redis engine with each `get` counted as a cache hit or miss ("Redis" below) |
+| `src/server/common/helpers/session-cache/cache-engine.js` | `getCacheEngine` returns a `HitCountingRedisEngine` when the session cache is Redis |
 | `src/server/common/helpers/logging/logger-options.js` | `buildEcsPinoOptions({ level })`, the pino options a deployed line is written with, which the log-line tests use ("Tests" below) |
 | `src/server/app/engine/persistence/records.js` | The journey counters ("Engine layer" below) |
 | `src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js` | `journey.entry.redirect` ("Engine layer" below) |
@@ -59,7 +60,9 @@ site's caller:
 | `reference-data` | `requestReferenceData(operation, url, init)` (`src/server/app/services/reference-data/request.js`) | `get-countries`, `get-ports-of-entry`, `search-commodities`, `check-species` |
 | `cdp-uploader` | `measureExternalCall` in `src/server/app/services/cdp-uploader/real.js` | `initiate`, `status` |
 | `defra-id` | `measureExternalCall` around each Wreck call (`src/auth/get-oidc-config.js`, `verify-token.js`, `refresh-tokens.js`), with the descriptors in `src/auth/defra-id-calls.js`; Bell's token exchange through `src/auth/token-exchange-timer.js`, started by the provider's `token` in `src/plugins/auth.js` and recorded by `src/server/auth/controller.js` | `openid-configuration`, `jwks`, `token-exchange`, `token-refresh` |
-| `redis` | `MeasuredRedisEngine` (`src/server/common/helpers/session-cache/measured-redis-engine.js`) | `get`, `set`, `drop` |
+
+Redis commands are not timed, so `redis` has no choke point here and
+publishes no `external.call.*` ("Redis" below).
 
 A call that throws on a refusal names its operation in the error,
 `Failed to <operation>: <status> <status text>`
@@ -97,13 +100,33 @@ Rules that held:
 - **A streamed response is timed to its headers.** The body is read
   after the call is recorded.
 
+### Availability of an HTTP dependency
+
+Passive, from the calls the service already makes, as on reference-data
+(`METRICS.md` → "Availability: passive or active"). Nothing is probed.
+
+- `recordExternalCallInBackground` passes each call's outcome to
+  `recordDependencyCallOutcome`, so every call through
+  `measureExternalCall` or `measureExternalResponse`, and Bell's token
+  exchange, feeds it. The outcome is judged by the rule above: a 4xx
+  answer is a success, a 5xx answer or no answer a failure.
+- Every minute, each dependency called so far publishes
+  `external.dependency.available` `{dependency=<name>}`: 1 when its most
+  recent call succeeded, 0 when it failed. A dependency not yet called
+  publishes nothing. Unlike Redis, a change is not published at once: it
+  waits for the next minute.
+- The reading is as old as the dependency's last call, and holds a
+  single failure until the next call. `ALERTS.md` says what that means
+  for its "Dependency reported unavailable" alert.
+
 ### Redis
 
 The session store is a database by `METRICS.md` → "A database", reached
 through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
 
 - **Availability from the client's events**, not a probe:
-  `reportRedisConnectionEvents(client)` publishes
+  `reportRedisConnectionEvents(client)` publishes, through
+  `publishDependencyAvailabilityInBackground`,
   `external.dependency.available` `{dependency=redis}` as 1 on `ready`
   and 0 on `close` or `end`, on each change and every minute after
   (nothing before the first event). It logs each change once:
@@ -115,12 +138,15 @@ through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
   event, and each `node error` a Cluster client reports, is logged at
   error with `err` (`Redis connection error`) and counts
   `external.dependency.error`, both `{dependency=redis}`.
-- **Per-operation latency**: `MeasuredRedisEngine` extends the catbox
-  engine and wraps `get`, `set` and `drop` in `measureExternalCall`, so
-  each is a `redis` call with a log line. Small: three methods.
-- **Cache hits and misses**: each `get` counts `cache.hit` or
-  `cache.miss` tagged `cache` with the catbox segment it read (the
-  session segment and `auth-sessions` on animals-frontend).
+- **Commands are not timed**, as agreed on 2026-11-11: a `get`, `set`
+  or `drop` publishes no `external.call.duration` or
+  `external.call.failure` and writes no external-call line, and is not
+  in the call counts.
+- **Cache hits and misses**: `HitCountingRedisEngine` extends the
+  catbox engine and counts each `get` that returns as `cache.hit` or
+  `cache.miss` tagged `cache` `session`, the one cache it holds, for
+  every segment it reads (yar's `!yar` and `auth-sessions` on
+  animals-frontend). A `get` that throws counts neither.
 - Locally the memory engine is used and none of this is published.
 
 ## The log line
@@ -145,9 +171,9 @@ logger.info(
 ```
 
 A failure logs at warn, with `error: { type, message, code }` when it
-has a cause, and no stack trace. A Redis call adds `cache` with the
-catbox segment, from the descriptor's log-only `cache`, as an interface
-id comes from its `interfaceId`; neither is a metric dimension. Do not
+has a cause, and no stack trace. An interface id comes from the
+descriptor's log-only `interfaceId`, into the message only; it is not a
+metric dimension. Do not
 pass `err`: ECS pino
 writes its stack trace, and the caller logs that once where it handles
 the error. `trace.id` comes from the logger's `mixin`
@@ -219,13 +245,14 @@ Test paths are from the repo root.
 |---|---|
 | `src/server/common/helpers/metrics/publish-metrics.test.js` | The namespace; a count of 1 with exactly the dimensions given; frozen dimensions still published; the empty dimension set for a count with none; a document that cannot be written logged at warn with the error, its dimensions and the metric names |
 | `src/server/common/helpers/metrics/external-call-metrics.test.js` | The two metrics, their units and dimensions; under a controlled clock, a 41.6 ms call logged at info with the nested `event` and a duration of 41,600,000 ns, 42 ms in the message, and 41.6 ms published; a thrown error with no status rethrown, a failure, and logged at warn with `error` and no stack trace; a response of 404 or 499 a success and of 500 or 503 a failure, each logged with `http.response.status_code`; a thrown error carrying 404 a success and 503 a failure, rethrown and logged with its status; through Wreck, a 400 a success, a 502 a failure, and a timeout a failure logged with no status; `trace.id` from a request sent with the tracing header; the call counted against the route that made it; a measured call resolving before its publish settles |
+| `src/server/common/helpers/metrics/dependency-availability.test.js` | Through `measureExternalResponse` and `measureExternalCall`: nothing for a dependency before its first call, even after a minute, nor at the call; 1, tagged `dependency` alone with unit `None`, every minute after a success; 0 after a 5xx answer and 1 after a later 404; 0 after a call that throws with no answer; a failure then a success in one minute published once as 1; each dependency published apart |
 | `src/server/common/helpers/backend-client/backend-fetch.test.js` | One `animals-backend` call per use, under the operation named, timed from the first attempt when the connection is retried and counted once; a 5xx a failure, a 409 a success |
 | `src/server/app/services/dependency-operations.test.js` | Every HTTP call site (the backend records and document uploads, address-book, reference-data and cdp-uploader) recorded under its dependency and the operation in "Dependency layer" above, as a success on a 2xx and a failure on a 5xx |
 | `src/server/common/helpers/metrics/request-metrics.test.js` | `routeSection` and `routePage` for every route shape; a page request's time from received to completed tagged `method`, `section` and `status.class`; a request no route matches as `unmatched` `4xx`; a request the client aborts as `4xx`; health not published; a posted answer shown again with an error summary counted for its page, an accepted one and a page view not; the page-request counts tagged `request.kind` `page` when `callCounts.metrics.enabled` is on, and none when it is off |
 | `src/server/common/helpers/call-counts/call-counts.test.js` | A route's calls added up per page request; health and `/call-counts` never counted; `DELETE` clearing the totals |
 | `src/server/common/helpers/redis-connection-events.test.js` | Nothing before the first event, even after a minute; 1 once ready and again every minute; ready then closed gives 0, one lost connection and one log line per change; ready again gives 1, 0, 1; a client that stops reconnecting logged once at error; a client that never connected counts no lost connection; each client error and Cluster node error logged and counted |
 | `src/server/common/helpers/redis-client.test.js` | A client that connects is published as available and logged once |
-| `src/server/common/helpers/session-cache/measured-redis-engine.test.js` | A hit and a miss for the segment; a `set`, `get` and `drop` each one `redis` call with an external-call line naming the segment; a failed `get` rethrown, recorded as a failed `redis` `get` and counted as neither hit nor miss |
+| `src/server/common/helpers/session-cache/hit-counting-redis-engine.test.js` | A hit, and a miss in another segment, each counted once tagged `cache` `session`; a `set`, `get` and `drop` publishing no external call and writing no external-call line; a failed `get` rethrown and counted as neither hit nor miss |
 | `src/server/app/engine/persistence/records.test.js` | Each journey counter after its write; a stale save counted as a conflict and rethrown; a stale submit counted as a conflict and not as a submission |
 | `src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js` | A redirect counted once, a journey with an answer not counted |
 | The Defra ID tests: `src/auth/get-oidc-config.test.js`, `get-oidc-config-with-retry.test.js`, `verify-token.test.js`, `refresh-tokens.test.js`, `token-exchange-timer.test.js`, `src/plugins/auth.test.js` and `src/server/auth/controller.test.js` | Each Defra ID call, through `nock` and the real logger, recorded under its dot-case operation with its interface id in the line's message; a 5xx answer and a call not answered in time each a failure, a 400 refusal a success logged with its status; the token exchange timed from Bell's token lookup, a sign-in that did not authenticate a failed exchange, and nothing recorded when Bell never reached the token call |
@@ -235,8 +262,5 @@ Each was checked to go red without the change it covers. Run the repo's
 
 ## Not done on animals-frontend
 
-- `external.dependency.available` for the HTTP dependencies: alerts use
-  `external.call.failure` (`METRICS.md` → "Availability: passive or
-  active").
 - The other Node services still publish the old names: `METRICS.md` →
   "A service built the old way".

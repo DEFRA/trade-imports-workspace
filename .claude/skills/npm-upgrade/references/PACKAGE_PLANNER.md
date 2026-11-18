@@ -144,6 +144,82 @@ the operator decides it's safe.
 
 ---
 
+## Unattended mode
+
+Follow this section as well as the workflow above when your spawn
+prompt has the line `Mode: unattended`. Nobody reviews your plan before
+it is applied, so each item gets an evidence row that proves what
+happened to it. The prompt also gives `Policy:` (`ci-is-enough` or
+`changelog-driven`), `Set:`, and sometimes `Last failure:` (the error
+that demoted the package in Phase 2).
+
+### U1. Which items get a row
+
+| Policy | Rows |
+|---|---|
+| `changelog-driven` | Every item in the changelog for each version after `{current}` up to and including `{target}`: breaking changes, deprecations, new features and fixes. |
+| `ci-is-enough` | One row for each change this repo needs: each rename, import path, config change or type fix. None when it needs no change. |
+
+With `Last failure:`, the rows must explain that failure: read the
+failure, find the change in the changelog that caused it, and record it.
+
+### U2. Record each row
+
+```bash
+tim npm packages add-evidence \
+  --run-id {run-id} --repo {repo} --package {package} \
+  --item "{the changelog item's heading or first line}" \
+  --outcome applied|not-applicable|needs-a-person \
+  [--pattern "{the old form, as a fixed string}"] \
+  [--reason "{why it does not apply, or what a person has to decide}"]
+```
+
+It counts the pattern's hits in the repo's tracked files now and
+refuses an outcome the count contradicts: `applied` needs a pattern
+with hits, and a `not-applicable` pattern must have none. Choose a
+pattern that only the old form matches, such as an import path, an
+option name, a config key or a type name. `package.json` counts, so the
+package's own name is never a pattern. Check it first:
+
+```bash
+tim deps evidence count {repo} "{pattern}"
+```
+
+An item with several old forms gets one row per pattern.
+
+### U3. Choose the outcome
+
+| Outcome | When |
+|---|---|
+| `applied` | The change is mechanical, as `.claude/rules/nightly.md` defines it: a rename, an import path, a config file moving to a new format with the same settings, or a type fix, including a deprecation whose replacement the changelog names. The pattern is the old form and the repo contains it. The implementor makes the change. |
+| `not-applicable` | The repo does not use what the item changes: give the pattern, which must have no hits, and the reason. Or the item is internal to the package and changes nothing the repo uses: the reason says so, and no pattern is needed. |
+| `needs-a-person` | Anything else: a change in runtime behaviour or defaults, a new Node or peer dependency range the repo must follow, a hit inside a test assertion, a change of what users see, an item that asks you to check or consider something, or anything you are unsure of. The reason says what to decide. |
+
+When in doubt, choose `needs-a-person`.
+
+When you cannot find a changelog after trying every channel in step 2
+of the workflow, record one row:
+
+```bash
+tim npm packages add-evidence \
+  --run-id {run-id} --repo {repo} --package {package} \
+  --item "No changelog found for {current} to {target}" --outcome needs-a-person \
+  --reason "Find the release notes and record each item"
+```
+
+### U4. Classify from the rows
+
+- `auto` only when no row is `applied` or `needs-a-person`.
+- `manual` otherwise. `--files-affected` lists the files the `applied`
+  patterns hit, and `--changes-required` lists each `applied` row as
+  "old → new".
+- With `Last failure:`, also pass `--demoted-from-auto true`.
+
+Your return line adds the row counts:
+`DONE: {package} → {classification} (risk={RISK}; {A} applied, {P} not applicable, {Q} need a person)`.
+
+---
+
 ## Output
 
 Return one short line so the dispatcher's report can roll it up:

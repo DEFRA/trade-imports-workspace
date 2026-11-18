@@ -59,9 +59,9 @@ claude                         # auto mode
 |---|---|---|
 | 0.1 | `.claude/rules/nightly.md`: what counts as mechanical, the stop conditions, the merge policy and the digest. CLAUDE.md rule 3 gets a named exception for the nightly jobs; rule 6's "ask" becomes "draft the PR and put it in the digest". | Done on the branch |
 | 0.2 | `config/dependency-sets.json` and `tim deps dependabot <repo> [--write\|--check]`, which generates each repo's Dependabot groups, ignores and cooldown. | Done on the branch. animals-frontend's generated config is on its own branch |
-| 0.3 | Unattended mode on `tim govuk` and `tim npm`. See 0.3 below. | To do |
+| 0.3 | Unattended mode on `tim govuk` and `tim npm`. See 0.3 below. | Built and tested on the branch; proven live by step 1.5 |
 | 0.4 | `/nightly-start` and `tim nightly check\|stopped`. | Done on the branch |
-| 0.5 | `tim nightly check` refuses a session that is not inside tmux or screen, so a `/nightly-start` from a bare SSH shell does not die when the laptop closes. | To do |
+| 0.5 | `tim nightly check` refuses a session that is not inside tmux or screen, so a `/nightly-start` from a bare SSH shell does not die when the laptop closes. | Done on the branch |
 
 ### 0.3 Unattended mode in tim
 

@@ -65,11 +65,60 @@ state lives in `packages.{repo}.json`.
 
       // Set by tim npm context prebake.
       "context_baked": null,                  // null | true | false | "partial"
-      "context_missing": []                   // fields prebake couldn't resolve
+      "context_missing": [],                  // fields prebake couldn't resolve
+
+      // Unattended runs, or tim npm discover --record-policy. Set by
+      // tim npm packages set-policy.
+      "policy": "changelog-driven",           // "ci-is-enough" | "changelog-driven"
+      "set": "eslint",                        // the coupled set it belongs to, or null
+      "set_scope": "repo",                    // "repo" | "cross-repo" | null
+      "policy_reason": "..."                  // why that policy, in a sentence
     }
   ]
 }
 ```
+
+## Evidence (unattended mode)
+
+`tim npm packages add-evidence` writes each package's rows to its own
+file beside `packages.{repo}.json`, so planners can record at once. It
+is never folded into the packages file.
+
+```
+workareas/npm-upgrades/{run-id}/{repo}/evidence/{normalized-pkg}.json
+```
+
+```jsonc
+{
+  "package": "eslint",
+  "target": "10.0.0",                         // the target the rows were recorded for
+  "checked_at": "2026-11-14T02:30:00Z",       // set by check-evidence; null until then
+  "rows": [
+    {
+      "item": "Remove the no-old-rule rule",
+      "pattern": "no-old-rule",               // fixed string, or null
+      "outcome": "applied",                   // "applied" | "not-applicable" | "needs-a-person"
+      "reason": "",                           // needed for not-applicable and needs-a-person
+      "hitsBefore": 2,                        // counted by add-evidence; null with no pattern
+      "hitsAfter": 0                          // counted by check-evidence; null until then
+    }
+  ]
+}
+```
+
+`add-evidence` and `check-evidence` refuse rows recorded for another
+target: delete the file and record them again. `check-evidence` exits 1
+unless every row is clean.
+
+| `outcome` | Clean when |
+|---|---|
+| `applied` | its pattern has 0 hits after the change |
+| `not-applicable` | it has a reason, and its pattern, if any, still has 0 hits |
+| `needs-a-person` | never |
+
+`tim npm packages render-evidence` treats a package as clean when it is
+classified, has a policy recorded and is upgraded, and every evidence
+row is clean. A `changelog-driven` package also needs evidence.
 
 ## Classification values
 
@@ -100,6 +149,10 @@ state lives in `packages.{repo}.json`.
 | `tim npm packages counts` | Summary counts by classification + risk + status |
 | `tim npm packages aggregate` | Fold the per-package classification files into `packages.{repo}.json` |
 | `tim npm packages verify` | Phase 1 gate: aggregate, then exit 1 while any package is not classified |
+| `tim npm packages set-policy` | Set `policy`, `set`, `set_scope` and `policy_reason` on every row, from `config/dependency-sets.json` |
+| `tim npm packages add-evidence` | Unattended: append one evidence row to the package's `evidence/` file |
+| `tim npm packages check-evidence` | Unattended: count a package's evidence again and record `hitsAfter` |
+| `tim npm packages render-evidence` | Unattended: read-only packages and evidence tables, or `--json` with the clean flags |
 
 All mutations use `mktemp + mv` for atomicity. None of the helpers
 take the markdown plan body as input — there is no markdown plan.

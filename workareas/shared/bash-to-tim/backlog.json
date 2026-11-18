@@ -4011,14 +4011,44 @@
       ],
       "risk": "Medium: wide prose edit. Subagents may start in a sub-repo (agent-skills.md:16-21), so briefs must say 'paths are relative to the workspace root' or pass the root in.",
       "proof": "git grep -n git/defra/trade-imports-workspace -- .claude CLAUDE.md docs returns only the allowlisted clone instructions, history docs and binaries. The new tim test passes, and fails when a path is added back. tim test and lint green. CI E2E green on the PR.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null,
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "432b011cf0718ca7d6d223d397cd581dbbe6f632"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "bdbacb5d81b1896414776e0ead7ea8c97fa283d5"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "87ad63fadb24ff090a0b98df27326d6585c08b7d"
+          }
+        ],
+        "checks": [
+          "Verifier problem 1 is fixed. Under P72, settings-followups.md now lists the `git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} ...` commands from FILE_REVIEWER.md:167, STYLE_FILE_REVIEWER.md:171 and review/SKILL.md:202. It also names `Bash(git -C workareas/:*)` as an entry P73 must add (or `Bash(git:*)`), or the file-reviewer agents stop at a prompt.",
+          "Verifier problem 2 is fixed. docs/onboarding/generator/build-deck.js:334 now reads 'Clone the workspace, by default to ~/git/defra/trade-imports-workspace (any other folder works too)', and the workspace-paths allowlist entry matches that text. Probe: with the old 'Clone to ... (symlink if elsewhere)' wording put back, the workspace-paths test failed (exit 1) and named build-deck.js:334. With the new wording restored it passed. settings-followups.md records that 01-workspace.pptx needs regenerating by a person.",
+          "Verifier problem 3 is fixed by reverting the change. scaffold.js, scaffold.test.js, the __fixtures__/skill-workspace.js settings fixture and commands/skill/index.test.js are back to their versions at e06e976d. In the golden skill-creator-scripts.json, the allowlist strings and the settings sha256 values are back to the pre-row values (the four hashes match e06e976d one for one). The golden keeps P72's template text changes. The skill-creator AUDITOR.md and docs/best-practices/skills/patterns.md no longer name a relative `Bash(tools/<name>/*)` form. They point at the scaffold's own `allowlist_entries`. settings-followups.md records the scaffold output change for P73 or a separate row.",
+          "Verifier problem 4 is fixed. In prompt-hygiene.test.js the regex is renamed to BACKTICKED_WORKSPACE_ROOT_FOLDER_PATH_RE, and both rationale comments are deleted.",
+          "tim-unit: PASS. npm --prefix tim test: 430 test files and 6445 tests passed, 0 failed.",
+          "tim-lint: PASS. `run lint` exits 0. `run format:check` exits 0 after prettier reformatted prompt-hygiene.test.js.",
+          "No new .sh file. No new fixed workspace path outside the allowlist. The workspace-paths test is green."
+        ],
+        "deviations": [
+          "I added a third commit (87ad63fa) and did not amend, because the guard hook denies amending.",
+          "`tim skill scaffold` still emits tilde-form allowlist entries. I reverted that output change and did not record it as a deviation, because no evidence shows the relative form matches. It is recorded in settings-followups.md for P73 or its own row.",
+          "docs/onboarding/01-workspace.pptx was not regenerated, because `node` is denied to agents. A note in settings-followups.md asks a person to regenerate it from build-deck.js.",
+          "No change to .claude/settings.json. The new allow entry is recorded in settings-followups.md for P73 and Sam."
+        ]
+      },
       "outOfScope": "repos/trade-imports-plants-prototype/scripts/designer/** (brief.js, build.js, words/format.js, suite.test.js): the prototype waits on Sam's port-or-untrack decision, so those go with that work."
     },
     {

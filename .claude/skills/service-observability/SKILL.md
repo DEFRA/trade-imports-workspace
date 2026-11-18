@@ -152,7 +152,8 @@ Node service: follow `references/NODE.md`, with the names from
 `references/METRICS.md` → "Work out the list" and the log line from
 `references/LOGGING.md` → "The line". Copy the helpers from
 `trade-imports-animals-frontend`. A service with the old
-`external-call-metrics.js` moves to the dot-case names first
+`src/server/common/helpers/external-call-metrics.js` replaces it with
+these helpers, and its dashboard and alerts are rebuilt
 (`references/METRICS.md` → "A service built the old way").
 
 Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.

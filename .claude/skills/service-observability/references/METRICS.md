@@ -234,9 +234,10 @@ worked example. `trade-imports-animals-frontend` has moved too
 `trade-imports-animals-admin` publishes none of these metrics.
 
 When this skill runs on one of them, move it to the new names first. A
-Java service moves to the one way above as well; a Node service follows
-`NODE.md`, which renames the helper's names and measures the calls it
-missed. The CloudWatch metrics then change name, so
+Java service moves to the one way above as well. A Node service replaces
+its old `src/server/common/helpers/external-call-metrics.js` with the
+helpers `NODE.md` names, which publish the new names and measure the
+calls it missed. The CloudWatch metrics then change name, so
 regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
 alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
 the old ones go quiet.

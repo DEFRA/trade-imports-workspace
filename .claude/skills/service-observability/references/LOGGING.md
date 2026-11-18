@@ -25,17 +25,17 @@ after the operation,
 
 This table is the one list of the line's fields, for both languages:
 
-| Field | Value | Written by | Example |
-|---|---|---|---|
-| `event.category` | Always `external-call` | Every service | `external-call` |
-| `event.action` | `<dependency>/<operation>` | Every service | `mdm/get-countries` |
-| `event.outcome` | `success` or `failure` | Every service | `success` |
-| `event.duration` | Nanoseconds | Every service | `2882625` |
-| `http.response.status_code` | The HTTP status the dependency answered with, when it answered | Node, on every answered HTTP call; reference-data, on a failure of 400 or over | `503` |
-| `error.type` | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service | `com.mongodb.MongoCommandException` |
-| `error.message` | A failure with a cause only: the cause's message | Every service | — |
-| `error.code` | A failure only: the cause's `cause.code`, when it has one | Node | `ECONNREFUSED` |
-| `trace.id` | Set by the request filter or the logger's mixin, not by this code | Every service | — |
+| Field                       | Value                                                                           | Written by                                                                     | Example                             |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| `event.category`            | Always `external-call`                                                          | Every service                                                                  | `external-call`                     |
+| `event.action`              | `<dependency>/<operation>`                                                      | Every service                                                                  | `mdm/get-countries`                 |
+| `event.outcome`             | `success` or `failure`                                                          | Every service                                                                  | `success`                           |
+| `event.duration`            | Nanoseconds                                                                     | Every service                                                                  | `2882625`                           |
+| `http.response.status_code` | The HTTP status the dependency answered with, when it answered                  | Node, on every answered HTTP call; reference-data, on a failure of 400 or over | `503`                               |
+| `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service                                                                  | `com.mongodb.MongoCommandException` |
+| `error.message`             | A failure with a cause only: the cause's message                                | Every service                                                                  | —                                   |
+| `error.code`                | A failure only: the cause's `cause.code`, when it has one                       | Node                                                                           | `ECONNREFUSED`                      |
+| `trace.id`                  | Set by the request filter or the logger's mixin, not by this code               | Every service                                                                  | —                                   |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
 field that is not on the list is dropped.
@@ -110,7 +110,7 @@ reaches OpenSearch flat.
   `event.*` fields. The nested key-value-pair version above replaced it.
 - **The nested version reaches OpenSearch.** Seen in dev on 2026-10-21
   (reference-data 0.27.0): `event.category:"external-call" AND
-  service.name:"<service>"` finds the lines, and Grafana's "Slowest
+service.name:"<service>"` finds the lines, and Grafana's "Slowest
   dependency calls" panel shows them sorted by `event.duration` as a
   number. `[UNPROVEN]` that CDP's "Log Ingestion Errors" alert stays
   quiet for the service.
@@ -138,12 +138,12 @@ reaches OpenSearch flat.
 
 ### Tests
 
-| Test | Proves |
-|---|---|
-| Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; with a throwable, its `error.*` fields written instead of the `error.*` key-value pairs; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
-| Unit test with a capturing log appender, a successful call (address-book's `ExternalCallRecorderTest`) | One INFO line per call, with the four `event.*` key-value pairs, the duration a `Long`, and no throwable |
-| Unit test with a capturing log appender, a failed call (address-book's `ExternalCallRecorderTest`) | One WARN line per call, with `event.outcome` `failure`, `error.type` and `error.message` from the cause, and no throwable |
-| Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then parsing the console line with the given `event.action` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace` |
+| Test                                                                                                                                                                                                         | Proves                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON                                                                         | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; with a throwable, its `error.*` fields written instead of the `error.*` key-value pairs; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
+| Unit test with a capturing log appender, a successful call (address-book's `ExternalCallRecorderTest`)                                                                                                       | One INFO line per call, with the four `event.*` key-value pairs, the duration a `Long`, and no throwable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Unit test with a capturing log appender, a failed call (address-book's `ExternalCallRecorderTest`)                                                                                                           | One WARN line per call, with `event.outcome` `failure`, `error.type` and `error.message` from the cause, and no throwable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then parsing the console line with the given `event.action` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace`                                                                                                                                                                                                                                                                                                                                                                                |
 
 The integration test is the one that fails if `logback-spring.xml` is
 left on the plain ECS encoder. The unit tests alone would still pass.
@@ -170,4 +170,4 @@ Record it; do not fix it here.
 
 Note for Java services: on reference-data the header is forwarded on
 `RestClient` calls only. Calls made through Feign do not carry it. That
-does not stop a request being followed *through* the service.
+does not stop a request being followed _through_ the service.

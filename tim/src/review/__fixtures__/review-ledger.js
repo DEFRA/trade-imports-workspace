@@ -891,6 +891,79 @@ export const ledgerCases = [
     ]
   },
   {
+    name: 'items status with a note, on an item that has notes',
+    steps: [
+      step(
+        'items status',
+        ticketReviewId,
+        ...backend,
+        '--item',
+        '5',
+        '--status',
+        'Done',
+        '--note',
+        'f00d123'
+      )
+    ]
+  },
+  {
+    name: 'items status with a note the item already holds',
+    steps: [
+      step(
+        'items status',
+        ticketReviewId,
+        ...backend,
+        '--item',
+        '3',
+        '--status',
+        'Done',
+        '--note',
+        'abc1234'
+      )
+    ]
+  },
+  {
+    name: 'items status twice with different notes',
+    steps: [
+      step(
+        'items status',
+        ticketReviewId,
+        ...backend,
+        '--item',
+        '4',
+        '--status',
+        'Done',
+        '--note',
+        'beef123'
+      ),
+      step(
+        'items status',
+        ticketReviewId,
+        ...backend,
+        '--item',
+        '4',
+        '--status',
+        'Failed',
+        '--note',
+        'Tests went red again'
+      )
+    ]
+  },
+  {
+    name: 'items status without a note, on an item that has notes',
+    steps: [
+      step(
+        'items status',
+        ticketReviewId,
+        ...backend,
+        '--item',
+        '4',
+        '--status',
+        'Not Done'
+      )
+    ]
+  },
+  {
     name: 'items status it does not know',
     steps: [
       step(

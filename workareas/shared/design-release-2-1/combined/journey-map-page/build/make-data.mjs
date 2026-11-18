@@ -230,9 +230,11 @@ function themesOn(paths) {
 
 /**
  * The opening run's ordered page slugs, read from the frontend's own flow. The
- * run is a list of page objects, each exported from its feature's page.js with
- * an id and a slug, so the two shapes together give the order without running
- * the app.
+ * flow is a list of sections, each naming the page objects it runs in order,
+ * and each page is exported from its feature's page.js with a slug, so the two
+ * shapes together give the order without running the app. The journey's own
+ * root — the page whose slug is empty — is left out: it is where a trader picks
+ * a notification up, and the map shows it in its own band rather than as a step.
  */
 function openingRunSlugs() {
   const checkout = path.join(workspace, journey.set.checkout)
@@ -249,10 +251,18 @@ function openingRunSlugs() {
   }
 
   const run = fs.readFileSync(path.join(checkout, journey.set.run), 'utf8')
-  const steps = run.slice(run.indexOf('RUN_STEPS'))
-  return [...steps.matchAll(/id:\s*(\w+)\.id/g)]
-    .map(([, name]) => slugOfPage.get(name))
+  const marker = 'export const sections'
+  if (!run.includes(marker)) {
+    throw new Error(
+      `${journey.set.run} holds no ${marker}. The flow has been renamed or reshaped in the frontend; follow it here rather than leaving the map describing a journey nobody takes.`
+    )
+  }
+  const steps = run.slice(run.indexOf(marker))
+  return [...steps.matchAll(/pages:\s*\[([^\]]*)\]/g)]
+    .flatMap(([, names]) => names.split(','))
+    .map((name) => slugOfPage.get(name.trim()))
     .filter((slug) => slug !== undefined)
+    .filter((slug) => slug !== '')
 }
 
 /** Every page.js under a feature tree. */
@@ -295,13 +305,15 @@ const everyPage = [...bands.flatMap((band) => band.pages), ...arriving]
 const themesOnAPage = new Set(everyPage.flatMap((page) => page.themes))
 
 /**
- * The band journey.json marks as the opening run has to be the opening run the
- * service actually walks. A page reordered, added or dropped in the frontend's
- * flow otherwise leaves the map quietly describing a journey nobody takes.
+ * The bands journey.json marks as the opening run have to be the opening run
+ * the service actually walks. A page reordered, added or dropped in the
+ * frontend's flow otherwise leaves the map quietly describing a journey nobody
+ * takes. More than one band may carry the run: the map breaks it where a
+ * heading helps a reader, and they are read here in the order they are written.
  */
-const runBand = journey.bands.find((band) => band.runOrder)
-if (runBand && runSlugs) {
-  const declared = runBand.pages.map((page) => page.slug)
+const runBands = journey.bands.filter((band) => band.runOrder)
+if (runBands.length > 0 && runSlugs) {
+  const declared = runBands.flatMap((band) => band.pages.map((page) => page.slug))
   if (declared.join(' > ') !== runSlugs.join(' > ')) {
     throw new Error(
       'the opening run in journey.json is not the one ' + journey.set.run + ' runs.\n' +

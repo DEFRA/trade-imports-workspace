@@ -14,7 +14,7 @@ export const registerShare = (review, { timVersion }) =>
     .command('share')
     .argument('[ticket]', 'The ticket whose review to share')
     .description(
-      "Render a review's PR comment, one body file per PR in .review-meta.json, for gh pr comment <pr> --repo DEFRA/<repo> --body-file <file> to post. Without --comment-only it is a handoff: it copies the review to workareas/shared/<ticket> without repos/ and .diffs/, commits that to the handoff branch (chore/<ticket> unless --branch), pushes it without forcing, and returns to the branch you were on. It refuses when the workspace has changes outside workareas/shared/. A body over GitHub's 65536-character limit stops it; --summary posts counts in place of the item table. --dry-run renders and copies only."
+      "Render a review's PR comment, one body file per PR in .review-meta.json, for gh pr comment <pr> --repo DEFRA/<repo> --body-file <file> to post. Without --comment-only it is a handoff: it copies the review to workareas/shared/<ticket> without repos/ and .diffs/, commits that to the handoff branch (chore/<ticket> unless --branch), pushes it without forcing, and returns to the branch you were on. It refuses when the workspace has changes outside workareas/shared/. A body over GitHub's 65536-character limit stops it; --summary posts counts in place of the item table. Each PR's verdict comes from its own repo's items, and names any other PR in the ticket that is not APPROVED as a possible blocker. The **Notes:** line of review-index.md is posted as written; its **Verdict:** is not. --dry-run renders and copies only."
     )
     .option(
       '--repo <repo>',
@@ -29,6 +29,14 @@ export const registerShare = (review, { timVersion }) =>
       '--summary',
       "Counts in place of the full item table: the verdict, a status and severity breakdown for the repo, and where the detail is. A large review needs this to fit GitHub's limit"
     )
+    .option(
+      '--refresh',
+      "A refresh review's outcome: the --summary counts under a re-review heading, naming the commit first reviewed and the commit the latest re-review read. Refuses a repo with no re-review recorded"
+    )
+    .option(
+      '--head <sha>',
+      "With --summary or --refresh, --repo and --pr: the PR's head. When it is past the commit last reviewed, the body says the later commits have not been reviewed"
+    )
     .option('--branch <name>', 'The handoff branch (default chore/<ticket>)')
     .option(
       '--reviewer <login>',
@@ -40,7 +48,7 @@ export const registerShare = (review, { timVersion }) =>
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --summary --dry-run'
+      '\nExamples:\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --summary --dry-run\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --refresh --head 1a2b3c4d --reviewer "$(gh api user --jq .login)"'
     )
     .action(
       makeRunAction({

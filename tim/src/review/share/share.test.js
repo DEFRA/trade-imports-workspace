@@ -54,7 +54,7 @@ describe('#shareReview', () => {
         staged.root,
         'workareas/reviews/EUDPA-203/review-index.md'
       )
-      writeFileSync(index, `**Verdict:** ${'long '.repeat(14000)}\n`)
+      writeFileSync(index, `**Notes:** ${'long '.repeat(14000)}\n`)
 
       const error = await shareReview({
         workspaceRoot: staged.root,
@@ -67,7 +67,7 @@ describe('#shareReview', () => {
       const bodyPath = leftBodyPath(error.message)
       expect(error.message.split('\n').slice(0, 2)).toEqual([
         `Comment body for trade-imports-animals-frontend#1 is ${Buffer.byteLength(readFileSync(bodyPath, 'utf8'))} characters; GitHub accepts 65536.`,
-        'Already summarising. Shorten the verdict in review-index.md, or post the detail as an attachment on the ticket.'
+        'Already summarising. Shorten the notes in review-index.md, or post the detail as an attachment on the ticket.'
       ])
       rmSync(bodyPath)
     })

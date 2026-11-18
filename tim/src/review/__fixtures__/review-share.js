@@ -77,6 +77,25 @@ const bigItems = Array.from({ length: 200 }, (_, index) => ({
   notes: 'deadbeef'
 }))
 
+const closedMajor = item(1, { status: 'Done', notes: 'abc1234' })
+
+const itemsVaryingOn = (severity, status) => [
+  closedMajor,
+  item(2, { severity, status, notes: null })
+]
+
+const refreshItems = [
+  closedMajor,
+  item(2, { severity: 'Minor', notes: null }),
+  item(3, { disposition: "Won't Fix", status: '—', notes: 'no evidence' }),
+  item(4, {
+    severity: 'Minor',
+    disposition: null,
+    status: null,
+    notes: null
+  })
+]
+
 const reviews = 'workareas/reviews'
 const shared = 'workareas/shared'
 
@@ -86,10 +105,14 @@ const shared = 'workareas/shared'
  * one with nothing open, a repo with only a summary, and the clones and
  * diffs a handoff leaves behind. EUDPA-202 has one PR and nothing else.
  * EUDPA-203 has 200 long items, enough to pass GitHub's comment limit.
+ * EUDPA-204 has three PRs: one failing, one with only a Minor item open and
+ * one with nothing open. EUDPA-205 has nothing open anywhere, a Merged item
+ * and a repo with one item. EUDPA-206 has two re-reviews of one repo and
+ * none of the other.
  */
 export const shareReviewFiles = {
   [`${reviews}/EUDPA-201/review-index.md`]:
-    '# Code Review: EUDPA-201\n\n**Verdict:**   CONCERNS — two items open.\n\n**Verdict:** a second verdict line\n',
+    '# Code Review: EUDPA-201\n\n**Verdict:**   CONCERNS — two items open.\n**Notes:**   the index notes, posted as written.\n\n**Verdict:** a second verdict line\n**Notes:** a second notes line\n',
   [`${reviews}/EUDPA-201/.review-meta.json`]: jsonText({
     id: 'EUDPA-201',
     ticket: 'EUDPA-201',
@@ -127,8 +150,112 @@ export const shareReviewFiles = {
   }),
   [`${reviews}/EUDPA-203/items.${FRONTEND}.json`]: jsonText({
     items: bigItems
+  }),
+  [`${reviews}/EUDPA-204/review-index.md`]:
+    '# Code Review: EUDPA-204\n\n**Verdict:** FAIL\n**Notes:** fixture notes.\n',
+  [`${reviews}/EUDPA-204/.review-meta.json`]: jsonText({
+    id: 'EUDPA-204',
+    prs: [
+      { repo: BACKEND, pr: 123, commit: 'aaaaaaaa', state: 'open' },
+      { repo: STUB, pr: 14, commit: 'bbbbbbbb', state: 'open' },
+      { repo: FRONTEND, pr: 209, commit: 'cccccccc', state: 'open' }
+    ]
+  }),
+  [`${reviews}/EUDPA-204/items.${BACKEND}.json`]: jsonText({
+    items: itemsVaryingOn('Major', 'Not Done')
+  }),
+  [`${reviews}/EUDPA-204/items.${STUB}.json`]: jsonText({
+    items: [
+      closedMajor,
+      item(2, { severity: 'Minor', disposition: null, status: null })
+    ]
+  }),
+  [`${reviews}/EUDPA-204/items.${FRONTEND}.json`]: jsonText({
+    items: itemsVaryingOn('Minor', 'Done')
+  }),
+  [`${reviews}/EUDPA-205/.review-meta.json`]: jsonText({
+    id: 'EUDPA-205',
+    prs: [
+      { repo: FRONTEND, pr: 209, commit: 'cccccccc', state: 'open' },
+      { repo: BACKEND, pr: 5, commit: 'dddddddd', state: 'open' }
+    ]
+  }),
+  [`${reviews}/EUDPA-205/items.${FRONTEND}.json`]: jsonText({
+    items: [
+      ...itemsVaryingOn('Minor', 'Done'),
+      item(3, {
+        severity: 'Minor',
+        disposition: 'Merged',
+        status: '—',
+        notes: 'merged into #1'
+      })
+    ]
+  }),
+  [`${reviews}/EUDPA-205/items.${BACKEND}.json`]: jsonText({
+    items: [closedMajor]
+  }),
+  [`${reviews}/EUDPA-206/review-index.md`]:
+    '# Code Review: EUDPA-206\n\n**Verdict:** FAIL — the index verdict, which is not posted.\n**Notes:** fixture notes for the refresh cases.\n',
+  [`${reviews}/EUDPA-206/.review-meta.json`]: jsonText({
+    id: 'EUDPA-206',
+    prs: [
+      { repo: FRONTEND, pr: 1, commit: 'aaaaaaaa11111111', state: 'open' },
+      { repo: BACKEND, pr: 2, commit: 'dddddddd44444444', state: 'open' }
+    ],
+    re_reviews: [
+      {
+        changes: [
+          {
+            repo: FRONTEND,
+            pr: 1,
+            reviewed_commit: 'aaaaaaaa11111111',
+            current_commit: 'bbbbbbbb22222222'
+          }
+        ]
+      },
+      {
+        changes: [
+          {
+            repo: FRONTEND,
+            pr: 1,
+            reviewed_commit: 'bbbbbbbb22222222',
+            current_commit: 'cccccccc33333333'
+          }
+        ]
+      }
+    ]
+  }),
+  [`${reviews}/EUDPA-206/items.${FRONTEND}.json`]: jsonText({
+    items: refreshItems
+  }),
+  [`${reviews}/EUDPA-206/items.${BACKEND}.json`]: jsonText({
+    items: refreshItems
   })
 }
+
+const commentOnlySummaryOf = (ticket, repo, pr, ...more) => [
+  ticket,
+  '--repo',
+  repo,
+  '--pr',
+  pr,
+  '--comment-only',
+  '--summary',
+  ...more,
+  '--dry-run'
+]
+
+const commentOnlyRefreshOf = (repo, pr, ...more) => [
+  'EUDPA-206',
+  '--repo',
+  repo,
+  '--pr',
+  pr,
+  '--comment-only',
+  '--refresh',
+  ...more,
+  '--dry-run'
+]
 
 /**
  * The dry-run cases: the Bash takes `args`, tim takes `review share`
@@ -235,6 +362,106 @@ export const dryRunCases = [
       '1',
       '--comment-only',
       '--summary',
+      '--dry-run'
+    ]
+  },
+  {
+    name: 'a PR with nothing open beside two PRs that are not approved',
+    args: commentOnlySummaryOf('EUDPA-204', FRONTEND, '209')
+  },
+  {
+    name: 'a PR with a Major item open beside one that is not approved',
+    args: commentOnlySummaryOf('EUDPA-204', BACKEND, '123')
+  },
+  {
+    name: 'a PR with only an unwalked Minor item open',
+    args: commentOnlySummaryOf('EUDPA-204', STUB, '14')
+  },
+  {
+    name: 'every PR of a ticket with PRs of each verdict, as a handoff',
+    args: ['EUDPA-204', '--dry-run']
+  },
+  {
+    name: 'a summary with nothing open anywhere and a Merged item',
+    args: commentOnlySummaryOf('EUDPA-205', FRONTEND, '209')
+  },
+  {
+    name: 'a summary of a repo with one item',
+    args: commentOnlySummaryOf('EUDPA-205', BACKEND, '5')
+  },
+  {
+    name: 'a summary told a head past the reviewed commit',
+    args: commentOnlySummaryOf(
+      'EUDPA-205',
+      FRONTEND,
+      '209',
+      '--head',
+      'dddddddd44444444'
+    )
+  },
+  {
+    name: 'a summary told the reviewed commit as its head',
+    args: commentOnlySummaryOf(
+      'EUDPA-205',
+      FRONTEND,
+      '209',
+      '--head',
+      'cccccccc'
+    )
+  },
+  {
+    name: 'a re-review',
+    args: commentOnlyRefreshOf(FRONTEND, '1')
+  },
+  {
+    name: 'a re-review told a head past the re-reviewed commit',
+    args: commentOnlyRefreshOf(FRONTEND, '1', '--head', 'eeeeeeee55555555')
+  },
+  {
+    name: 'a re-review told the re-reviewed commit as its head',
+    args: commentOnlyRefreshOf(FRONTEND, '1', '--head', 'cccccccc33333333')
+  },
+  {
+    name: 'a re-review handoff',
+    args: [
+      'EUDPA-206',
+      '--repo',
+      FRONTEND,
+      '--pr',
+      '1',
+      '--refresh',
+      '--dry-run'
+    ],
+    watch: `${shared}/EUDPA-206`
+  },
+  {
+    name: 'a re-review of a repo with none recorded',
+    args: commentOnlyRefreshOf(BACKEND, '2')
+  },
+  {
+    name: 'a head with no PR named',
+    args: [
+      'EUDPA-206',
+      '--repo',
+      FRONTEND,
+      '--comment-only',
+      '--refresh',
+      '--head',
+      'eeeeeeee',
+      '--dry-run'
+    ]
+  },
+  {
+    name: 'a head with neither a summary nor a re-review',
+    args: [
+      'EUDPA-206',
+      '--repo',
+      FRONTEND,
+      '--pr',
+      '1',
+      '--comment-only',
+      '--head',
+      'eeeeeeee',
       '--dry-run'
     ]
   },

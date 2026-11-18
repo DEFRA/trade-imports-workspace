@@ -6,17 +6,27 @@
 
 The public entry point for the Import Notification Service (INS). It will serve the public INS URLs and forward each request to the INS service the path addresses, for example `/gbn-ag/...` to the animals journey frontend and `/auth/...` to the INS front door, setting `X-Forwarded-Prefix` on the way. See [02 INS Auth: Scenario 0](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6619005520).
 
-Today it is a skeleton from the CDP Node.js frontend template, enough to show the service is up (EUDPA-797). Forwarding and auth come in follow-up tickets.
+Forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned. It is built from the CDP Node.js frontend template. Forwarding, and moving the sign-in onto the real Defra ID (IDM), come in follow-up tickets.
 
 ## Responsibilities
 
 - Serve the template's pages: home at `/`, `/about`, and `/cookies`, where a user views and saves their cookie settings.
 - Serve `/health`, and static files under `/public` and `/favicon.ico`.
-- Not yet: forward requests to other INS services, or take part in sign-in.
+- Sign a user in through the Defra ID stub:
+  - `/auth/sign-in` sends the browser to the identity provider.
+  - `/auth/sign-in-oidc` is the callback. It checks the ID token's signature against the provider's published keys, that the token has an expiry and has not expired, and that its issuer is the one the discovery document names. Then it keeps a description of the sign-in in the session.
+  - `/auth/signed-in` shows every ID token claim, the access token's claims when it is a different token, and the token response's expiry, scope and whether a refresh token came back. It never shows the tokens. With no sign-in in the session, it starts one.
+- Every other page is public. The sign-in does not refresh tokens, sign out or switch organisation.
+- The callback does not check the ID token's audience: the Defra ID stub signs every token with a random one.
+- Not yet: forward requests to other INS services, or pass the user's identity to them.
 
 ## Integrations
 
-None yet. It will forward to `trade-imports-ins-frontend` and the journey frontends.
+| Service | How |
+|---------|-----|
+| The Defra ID stub (`trade-imports-defra-id-stub`), in the workspace stack and in CDP dev and test | OIDC through `@hapi/bell`: discovery at start-up, then authorisation, token exchange and the published signing keys |
+
+It will forward to `trade-imports-ins-frontend` and the journey frontends.
 
 ## Stack
 
@@ -33,15 +43,13 @@ None yet. It will forward to `trade-imports-ins-frontend` and the journey fronte
 | Dependency | Purpose |
 |-----------|---------|
 | Redis | Session cache. The workspace stack sets `SESSION_CACHE_ENGINE=redis`, so the proxy connects to Redis when it starts there |
+| Defra ID | Sign-in. The proxy fetches the discovery document at start-up and does not start without it. Config: `DEFRA_ID_OIDC_CONFIGURATION_URL`, `DEFRA_ID_CLIENT_ID`, `DEFRA_ID_CLIENT_SECRET`, `DEFRA_ID_SERVICE_ID`, `DEFRA_ID_POLICY`, `DEFRA_ID_REDIRECT_URL` |
 
 ## How to run
 
-In the workspace stack it listens on port 3004 (`routing-proxy` label for `-e`).
+In the workspace stack it listens on port 3004 (`routing-proxy` label for `-e`) and signs in against the Defra ID stub. Open `http://localhost:3004`, choose **Sign in**, and use Government Gateway user ID `2100010101` with password `Password123`.
 
-```bash
-npm install
-npm run dev        # port 3000 unless PORT is set
-```
+To run it natively and sign in, follow [Signing in locally](https://github.com/DEFRA/trade-imports-routing-proxy#signing-in-locally) in its README.
 
 Docker:
 ```bash

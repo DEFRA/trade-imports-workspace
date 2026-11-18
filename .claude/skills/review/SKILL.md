@@ -478,6 +478,7 @@ a thin navigation index only, no item rows:
 **Reviewer:** Claude Code Agent
 **Date:** [Date]
 **Verdict:** PASS / PASS WITH NOTES / CONCERNS / FAIL
+**Notes:** [What a reader of each PR needs beyond the verdict, such as a config change or a manual step before the change is live. One line; omit when there is none.]
 
 ## Summary
 [2-3 sentences]
@@ -526,8 +527,11 @@ set, not within one diff.
 ## Step 7: Post the review (FRESH only)
 
 Post the review to every PR in `.review-meta.json` as a PR comment.
-This runs after Step 6 because the comment carries the verdict from
-`review-index.md`. Who authored each PR decides the shape of the post.
+This runs after Step 6 because the comment carries the **Notes:** line
+from `review-index.md`. Each PR's verdict is not the index's: the script
+works it out from that repo's items and names any other PR in the ticket
+that is not APPROVED as a possible blocker. Who authored each PR decides
+the shape of the post.
 
 Look up the `gh` user once:
 
@@ -833,6 +837,41 @@ Then:
 3. Update the top-level Verdict if warranted.
 4. Update the AC Check table if any AC status has changed.
 
+## Step R7: Post the re-review
+
+The PR still carries the fresh review's comment and verdict, so post
+the refresh's outcome to every PR whose repo it re-reviewed. Skip a PR
+whose `changes[]` entry in the latest `re_review` has `changed: false`.
+
+Post only to heads that are on GitHub. A refresh of local, unpushed
+commits posts nothing: say so in the Completion Output, and post once
+they are pushed. The batch implementor's commits are local too, so after
+the user pushes them, run this step again to report what they closed.
+
+Before each post, read the PR's head:
+
+```bash
+gh pr view {pr} --repo DEFRA/{repo} --json headRefOid --jq .headRefOid
+```
+
+Then render the counts, naming that head, and post the body file it
+prints:
+
+```bash
+tim review share EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only --refresh --head {headRefOid} --reviewer {login}
+gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}
+```
+
+For a PR someone else authored, drop `--comment-only` only if they are
+walking the review from the handoff branch; otherwise keep it. The
+comment names the commit first reviewed, the commit re-reviewed and,
+when the head is past it, says the later commits have not been
+re-reviewed. Update the **Notes:** line in `review-index.md` (Step R6)
+before posting: the comment carries it. The verdict comes from the items,
+so record every item's status first.
+
+Capture each comment URL for the Completion Output.
+
 ## Refresh Verdict Guidelines
 
 | Verdict | Criteria |
@@ -853,6 +892,10 @@ Summary:
 - New issues found: [N]
 
 Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md + review.{repo}.md files
+
+PR comments posted (Step R7):
+- {repo}#{pr} → {url}
+(or: not posted, the re-reviewed heads are not pushed)
 ```
 
 ## Scripts cheat-sheet
@@ -862,7 +905,7 @@ Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/revie
 | `tim review start EUDPA-XXXXX` | Step 0 — say MODE: FRESH (raw folder ready) or MODE: REFRESH (refresh scope built); `--local REPO BRANCH [--files ...]` for Local mode |
 | `tim review prepare EUDPA-XXXXX [--select]` | Fresh Step 1 — `--select` lists the PR per repo to save with gh; then it builds the workspace from what gh saved, seeding best-practices from `assets/routing.json`. `--branch B [--desc D]` for a branch with no ticket |
 | `tim review prepare --local REPO BRANCH [--files F1,F2]` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
-| `tim review share EUDPA-XXXXX --repo R --pr N --reviewer LOGIN` | Fresh Step 7 — render the PR comment body for `gh pr comment` to post; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote; `--summary` for counts in place of the item table |
+| `tim review share EUDPA-XXXXX --repo R --pr N --reviewer LOGIN` | Fresh Step 7 — render the PR comment body for `gh pr comment` to post; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote; `--summary` for counts in place of the item table. Refresh Step R7 — `--refresh --head SHA` renders the re-review's counts |
 
 The refresh helpers go through `tim review refresh` (`--json` puts the
 output in the envelope's `result`):

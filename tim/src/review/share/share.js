@@ -5,7 +5,13 @@ import { join } from 'node:path'
 import { readJsonFile } from '../../backlog/io.js'
 import { TimError } from '../../errors.js'
 import { itemsFilePath, reviewDir } from '../paths.js'
-import { shareBody, verdictOf } from './body.js'
+import {
+  APPROVED,
+  notesOf,
+  repoVerdict,
+  shareBody,
+  verdictLine
+} from './body.js'
 import { pushHandoffBranch } from './handoff.js'
 import { copyReviewWithoutClones } from './shared-copy.js'
 
@@ -15,7 +21,7 @@ const UNKNOWN_REVIEWER = '(unknown)'
 const SHORT_SHA_LENGTH = 8
 
 const USAGE =
-  'Usage: tim review share EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary] [--branch B] [--reviewer LOGIN] [--dry-run] [--json]'
+  'Usage: tim review share EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary] [--refresh] [--head SHA] [--branch B] [--reviewer LOGIN] [--dry-run] [--json]'
 
 const prsInScope = ({ meta, repo, pr }) => {
   const wantedPr = pr === undefined ? undefined : Number(pr)
@@ -36,12 +42,22 @@ const prsInScope = ({ meta, repo, pr }) => {
   return prs
 }
 
-const readMeta = (folder) => {
-  const metaPath = join(folder, '.review-meta.json')
+const metaPathOf = (folder) => join(folder, '.review-meta.json')
+
+const readMeta = (metaPath) => {
   if (!existsSync(metaPath)) {
     throw new TimError('NOT_FOUND', `No .review-meta.json at ${metaPath}`)
   }
   return readJsonFile(metaPath)
+}
+
+const refuseHeadWithoutOnePr = ({ head, summary, repo, pr }) => {
+  if (!head) return
+  if (summary && repo !== undefined && pr !== undefined) return
+  throw new TimError(
+    'USAGE',
+    '--head needs --summary or --refresh, and --repo and --pr: a head belongs to one PR.'
+  )
 }
 
 const readRepoItems = (artefactDir, repo) => {
@@ -54,15 +70,42 @@ const readRepoItems = (artefactDir, repo) => {
   return items
 }
 
-const readVerdict = (artefactDir) => {
+const readNotes = (artefactDir) => {
   const indexPath = join(artefactDir, 'review-index.md')
-  return existsSync(indexPath) ? verdictOf(readFileSync(indexPath, 'utf8')) : ''
+  return existsSync(indexPath) ? notesOf(readFileSync(indexPath, 'utf8')) : ''
 }
 
-const reviewedShaOf = (prs, repo) => {
-  const commit = prs.find((entry) => entry.repo === repo)?.commit
-  return typeof commit === 'string' ? commit.slice(0, SHORT_SHA_LENGTH) : ''
+const shortSha = (commit) =>
+  typeof commit === 'string' ? commit.slice(0, SHORT_SHA_LENGTH) : ''
+
+const reviewedShaOf = (prs, repo) =>
+  shortSha(prs.find((entry) => entry.repo === repo)?.commit)
+
+const reReviewedShaOf = ({ meta, metaPath, repo }) => {
+  const commit = (meta.re_reviews ?? [])
+    .flatMap(({ changes }) => changes ?? [])
+    .findLast((change) => change.repo === repo)?.current_commit
+  const sha = shortSha(commit)
+  if (sha === '') {
+    throw new TimError(
+      'NOT_FOUND',
+      `No re-review recorded for ${repo} in ${metaPath}. Run a refresh review first.`
+    )
+  }
+  return sha
 }
+
+const blockersOf = ({ allPrs, artefactDir, repo, pr }) =>
+  allPrs
+    .filter((other) => !(other.repo === repo && other.pr === pr))
+    .filter((other) => {
+      const items = readRepoItems(artefactDir, other.repo)
+      return items !== null && repoVerdict(items) !== APPROVED
+    })
+    .map((other) => `DEFRA/${other.repo}#${other.pr}`)
+
+const verdictFor = ({ items, ...pull }) =>
+  items === null ? '' : verdictLine(repoVerdict(items), blockersOf(pull))
 
 const writeBodyFile = ({ ticket, pr, body }) => {
   const path = join(
@@ -81,7 +124,7 @@ const refuseOverLimit = ({ repo, pr, file, body, summary }) => {
     [
       `Comment body for ${repo}#${pr} is ${size} characters; GitHub accepts ${GITHUB_COMMENT_LIMIT}.`,
       summary
-        ? 'Already summarising. Shorten the verdict in review-index.md, or post the detail as an attachment on the ticket.'
+        ? 'Already summarising. Shorten the notes in review-index.md, or post the detail as an attachment on the ticket.'
         : 'Re-run with --summary to post counts instead of the full item table.',
       `Rendered body left at: ${file}`
     ].join('\n')
@@ -91,21 +134,38 @@ const refuseOverLimit = ({ repo, pr, file, body, summary }) => {
 const renderBodyFiles = ({
   ticket,
   prs,
+  meta,
+  metaPath,
   artefactDir,
   branch,
   reviewer,
-  summary
+  summary,
+  refresh,
+  head
 }) => {
-  const verdict = readVerdict(artefactDir)
+  const notes = readNotes(artefactDir)
   return prs.map(({ repo, pr }) => {
+    const reReviewedSha = refresh
+      ? reReviewedShaOf({ meta, metaPath, repo })
+      : null
+    const items = readRepoItems(artefactDir, repo)
     const body = shareBody({
       ticket,
       repo,
-      verdict,
+      verdict: verdictFor({
+        items,
+        allPrs: meta.prs ?? [],
+        artefactDir,
+        repo,
+        pr
+      }),
+      notes,
       reviewer,
       reviewedSha: reviewedShaOf(prs, repo),
+      reReviewedSha,
+      headSha: shortSha(head),
       branch,
-      items: readRepoItems(artefactDir, repo),
+      items,
       hasSummaryFile: existsSync(join(artefactDir, `review.${repo}.md`)),
       summary
     })
@@ -129,11 +189,13 @@ const renderBodyFiles = ({
  * @param {string} [args.pr] - Only pull requests with this number
  * @param {boolean} [args.commentOnly] - No shared copy and no handoff branch
  * @param {boolean} [args.summary] - Counts in place of the full item table
+ * @param {boolean} [args.refresh] - A re-review's counts, naming the commit first reviewed and the commit the latest re-review read; implies `summary`
+ * @param {string} [args.head] - The PR's head, with `summary` or `refresh` and one PR: a head past the commit last reviewed is named as not reviewed
  * @param {string} [args.branch] - The handoff branch; defaults to chore/<ticket>
  * @param {string} [args.reviewer] - The login the bodies name; defaults to (unknown)
  * @param {boolean} [args.dryRun] - Render only: no commit and no push
  * @returns {Promise<{dry_run: boolean, ticket: string, mode: string, branch: string | null, reviewer: string, body_files: {repo: string, pr: number, file: string}[], prs: object[], committed?: boolean}>}
- * @throws {TimError} USAGE with no ticket or a body over GitHub's comment limit; NOT_FOUND with no review or no pull request in scope; DIRTY_TREE when a handoff finds changes outside workareas/shared/
+ * @throws {TimError} USAGE with no ticket, a head without one PR and a summary, or a body over GitHub's comment limit; NOT_FOUND with no review, no pull request in scope, or no re-review recorded for a repo in a refresh; DIRTY_TREE when a handoff finds changes outside workareas/shared/
  */
 export const shareReview = async ({
   workspaceRoot,
@@ -142,23 +204,33 @@ export const shareReview = async ({
   pr,
   commentOnly = false,
   summary = false,
+  refresh = false,
+  head,
   branch,
   reviewer = UNKNOWN_REVIEWER,
   dryRun = false
 }) => {
   if (!ticket?.startsWith(TICKET_PREFIX)) throw new TimError('USAGE', USAGE)
+  const summarising = summary || refresh
+  refuseHeadWithoutOnePr({ head, summary: summarising, repo, pr })
   const reviewFolder = reviewDir(workspaceRoot, ticket)
-  const prs = prsInScope({ meta: readMeta(reviewFolder), repo, pr })
+  const metaPath = metaPathOf(reviewFolder)
+  const meta = readMeta(metaPath)
+  const prs = prsInScope({ meta, repo, pr })
   const handoffBranch = commentOnly ? null : (branch ?? `chore/${ticket}`)
   const sharedDir = join(workspaceRoot, 'workareas', 'shared', ticket)
   if (!commentOnly) copyReviewWithoutClones(reviewFolder, sharedDir)
   const bodyFiles = renderBodyFiles({
     ticket,
     prs,
+    meta,
+    metaPath,
     artefactDir: commentOnly ? reviewFolder : sharedDir,
     branch: handoffBranch,
     reviewer,
-    summary
+    summary: summarising,
+    refresh,
+    head
   })
   const shared = {
     dry_run: dryRun,

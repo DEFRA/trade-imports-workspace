@@ -665,6 +665,7 @@ const HOUSE_RULES = `**Comments**
 - When a comment is stale, delete it. Do not reword it.
 - A marker that a test or tool reads is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
+- Config files (\`application*.yml\`, \`.env\`, compose files) are the exception to keeping rationale in \`docs/\`: a short comment may say why a value is set, or warn against changing it, when the key cannot say so. It must be true of the lines below it, and the full reasoning still lives in \`docs/\`.
 - Bad: \`// Hapi validates the full payload before route handlers run, so the token is guaranteed present.\` Good: no comment. The route's \`validate.payload\` schema already says it.
 
 **Ids and history**
@@ -1007,8 +1008,9 @@ const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
-const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
+const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).join('')
+const gateCommand = (phase, logs, repoKeys) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1019,8 +1021,8 @@ const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--det
   gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
   copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
   not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
-const gateCommandList = (phases, logs) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
+const gateCommandList = (phases, logs, repoKeys) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys)}\``).join('\n')
 
 const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
@@ -1070,14 +1072,14 @@ lease is still this run's and \`result.up\` is true, the check failed for a reas
 
 const BUILDER_PHASES = ['unit', 'fit']
 
-const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
+const builderGateRule = (id, stage, phases = BUILDER_PHASES, repoKeys) =>
   `${
     phases.length === 0
       ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
 yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
 repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-${gateCommandList(phases, gateLogs(id, stage))}
+${gateCommandList(phases, gateLogs(id, stage), repoKeys)}
 Each starts its gate and returns at once; the wait below prints the gate's one JSON line, and a red rung names its \`log\` —
 read that file once.
 ${GATE_WAIT_RULE}
@@ -1089,11 +1091,12 @@ never start or stop the workspace stack, and never pick a script by hand for a r
 The plan's sections 5 and 6 checks are yours to run as the plan writes them.
 ${RUN_STACK_RULE}`
 
-const codexGateUnit = (id, stage) =>
-  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"`
+const codexGateUnit = (id, stage, repoKeys) =>
+  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)}`
 
 const CODEX_NO_GATE = 'none'
-const codexGateBinding = (id, stage, phases) => (phases.includes('unit') ? codexGateUnit(id, stage) : CODEX_NO_GATE)
+const codexGateBinding = (id, stage, phases, repoKeys) =>
+  phases.includes('unit') ? codexGateUnit(id, stage, repoKeys) : CODEX_NO_GATE
 
 const GATE_RUNG_SCHEMA = {
   type: 'object',
@@ -2092,6 +2095,16 @@ const CHANGE_MAKES_FALSE_RULE = `WHAT THE CHANGE MAKES FALSE is in scope. A comm
 change makes false is a \`comments\` finding, whether or not the diff touches its line. Its fix is to delete it.
 `
 
+const SPEC_IS_THE_CONTRACT = `THE BEHAVIOUR SPEC SETTLES WHAT THE CODE SHOWS. Before you raise a finding whose fix would change any
+user-visible string, label, copy, page title, row key, error message or behaviour — including one that unifies two
+spellings of what looks like the same thing — read the page's spec under ${TILDE}/openspec/specs/ and quote the line
+you are relying on. The spec sets different wording in different places on purpose: the same animal is titled by its
+scientific name on one page, keyed by its common name on another, and given its full species label on a third. Two
+spellings the spec sets are not duplication, and "one concept, one name" never overrides them. A finding that would
+make the code contradict its spec is not a finding; where you judge the spec itself wrong, say so as a finding
+against the spec, quoting it, and never as a code fix.
+`
+
 const OUTSIDE_THE_DIFF = `a rule the change alters that a doc, recipe, JSDoc or test name OUTSIDE the diff still states the old way. Grep the
 changed repos for the behaviour's own words, not only its identifiers. Each one is in scope: report it at its file:line,
 and its fix is to update it or delete it`
@@ -2173,6 +2186,11 @@ code in \`quote\`, with its file:line. A refutation with no quote leaves the fin
 "out of the increment's scope", "a comparable file does it", "feature folders are independent" and the like are never
 grounds to refute one. A tool call that failed is not evidence: when you could not read the code, the finding is real.
 A house-rule breach is never taste and never out of scope, whatever its kind.
+One more thing refutes a code-quality finding: the behaviour spec. When its fix would change a user-visible string,
+label, copy, page title, row key, error message or behaviour, read the page's spec under \`${TILDE}/openspec/specs/\`
+before you judge it. The spec sets different wording in different places on purpose, so two spellings it sets are not
+duplication and "one concept, one name" does not reach them. Quote the spec line in \`reasoning\` and set real:false.
+Not finding a spec for the page is not a refutation, and not a confirmation: say which you looked for.
 DESIGN (${quotedList(DESIGN_CATEGORIES)}): read the design source the finding cites, and the row's \`sources\` and the
 workarea's \`sources.json\` when it cites none. The finding is real when the source does set what it says and a guide
 rule does disagree, when the source sets two different things for one element, or when the source does not show the
@@ -3475,7 +3493,7 @@ const CHECK_COMMAND_SPAN =
 const CHECK_COMMAND_LINE = /^([-*]|\d+\.|\|)?\s*(\$\s*)?(grep|rg|jq|tim|npm|npx|node|git|mvn|curl|docker|bash)\s/
 
 const EXISTING_TEST_REFERENCE =
-  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?[`:]*\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
 
 const DICTATED_TITLE = new RegExp(
   `\\b(rename|renames|renamed|renaming|retitle|retitles|retitled|retitling)\\b[^.;"“]{0,80}?\\s*:?\\s*${OPEN_QUOTE}|\\b(new|added)\\b[^.;"“]{0,40}?\\b(titled|named|called)\\b|\\b(should|must|will|to) be (titled|named|called)\\b`,
@@ -5446,7 +5464,7 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
-${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
+${CHANGE_MAKES_FALSE_RULE}${SPEC_IS_THE_CONTRACT}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
 one a fix, and a concrete failure scenario or, for a code-quality finding, the house rule it breaks. If the theme changed nothing here, or its change is clean, return an empty
 findings array.
 Return the structured output only.`
@@ -5466,7 +5484,7 @@ you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKI
 language's bundle once.
 SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
 security belong to the theme's engineering reviewer; do not duplicate them.
-${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${SPEC_IS_THE_CONTRACT}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
 ONLY real findings, each with a concrete fix and the rule it breaks. If the theme changed nothing here, or its change
 is clean, return an empty findings array.
 Return the structured output only.`
@@ -6318,7 +6336,7 @@ ${baselineRungList(baseline)}`
 ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
 ${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty(rowRigour)}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
+        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases, repos) }
       })
     : await recoverRunStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You build the change the plan decides — you do not review it,
@@ -6361,7 +6379,7 @@ RULES:
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
-${builderGateRule(id, 'implement', builderPhases)}
+${builderGateRule(id, 'implement', builderPhases, repos)}
 
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
@@ -6724,7 +6742,7 @@ ${impl.notes || '(none)'}
 ${SPEC_SYNC_FIX_LINE}
 ${COMPLETION_LINES_FIX}${mergeNote}${workspaceRepoRule()}`,
       workingBranch: workBranch,
-      bindings: { gateUnit: codexGateBinding(id, stage, builderPhases) }
+      bindings: { gateUnit: codexGateBinding(id, stage, builderPhases, repos) }
     })
     if (!result) {
       results.push(
@@ -6764,7 +6782,7 @@ ${ruledFixes}
 ${treeDuty}${FIX_RULES}
 ${SPEC_SYNC_FIX_LINE}
 ${COMPLETION_LINES_FIX}
-${builderGateRule(id, stage, builderPhases)}
+${builderGateRule(id, stage, builderPhases, repos)}
 ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.

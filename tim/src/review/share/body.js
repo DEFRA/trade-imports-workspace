@@ -2,39 +2,93 @@ import { renderItemsTable } from '../items-table.js'
 
 const NOT_DONE = 'Not Done'
 const SEVERITIES = ['Critical', 'Major', 'Minor']
+const BLOCKING_SEVERITIES = ['Critical', 'Major']
+export const APPROVED = 'APPROVED'
 
 const isAbsent = (value) =>
   value === null || value === undefined || value === false
 
 const orDefault = (value, fallback) => (isAbsent(value) ? fallback : value)
 
+const isUnwalked = (item) =>
+  item.disposition === null || item.disposition === undefined
+
 const byCodePoint = (left, right) => (left < right ? -1 : left > right ? 1 : 0)
 
 /**
- * The text after the first `**Verdict:**` line's label in a review index,
+ * The text after the first `**Notes:**` line's label in a review index,
  * or empty when there is none.
  *
  * @param {string} indexText - review-index.md
  * @returns {string}
  */
-export const verdictOf = (indexText) => {
+export const notesOf = (indexText) => {
   const line = indexText
     .split('\n')
-    .find((candidate) => candidate.startsWith('**Verdict:**'))
-  return line === undefined ? '' : line.replace(/^\*\*Verdict:\*\*\s*/, '')
+    .find((candidate) => candidate.startsWith('**Notes:**'))
+  return line === undefined ? '' : line.replace(/^\*\*Notes:\*\*\s*/, '')
 }
+
+/**
+ * Whether an item is still open: Not Done, or nobody has walked it.
+ *
+ * @param {object} item
+ * @returns {boolean}
+ */
+export const isOpenItem = (item) => isUnwalked(item) || item.status === NOT_DONE
 
 /**
  * @param {object[]} items
  * @returns {number}
  */
-export const openItemCount = (items) =>
-  items.filter((item) => item.status === NOT_DONE).length
+export const openItemCount = (items) => items.filter(isOpenItem).length
+
+/**
+ * A repo's verdict from its own items: FAIL while a Critical or Major item
+ * is open, APPROVED WITH CHANGES while only Minor ones are, else APPROVED.
+ *
+ * @param {object[]} items
+ * @returns {'FAIL' | 'APPROVED WITH CHANGES' | 'APPROVED'}
+ */
+export const repoVerdict = (items) => {
+  const open = items.filter(isOpenItem)
+  if (open.some((item) => BLOCKING_SEVERITIES.includes(item.severity))) {
+    return 'FAIL'
+  }
+  return open.length > 0 ? 'APPROVED WITH CHANGES' : APPROVED
+}
+
+const joinedForSentence = (refs) =>
+  refs.length === 1
+    ? refs[0]
+    : `${refs.slice(0, -1).join(', ')} and ${refs.at(-1)}`
+
+/**
+ * A pull request's verdict line: its own verdict, then the other pull
+ * requests in the ticket that are not APPROVED, named as possible
+ * blockers.
+ *
+ * @param {string} ownVerdict - From {@link repoVerdict}
+ * @param {string[]} blockers - GitHub references such as `DEFRA/repo#12`
+ * @returns {string}
+ */
+export const verdictLine = (ownVerdict, blockers) => {
+  if (blockers.length === 0) return ownVerdict
+  const named = joinedForSentence(blockers)
+  return ownVerdict === 'FAIL'
+    ? `FAIL. Also potentially blocked by ${named}.`
+    : `${ownVerdict}, potentially blocked by ${named}. Merge this PR with caution.`
+}
+
+const statusKey = (item) =>
+  isUnwalked(item)
+    ? 'Not walked'
+    : `${orDefault(item.status, '—')} / ${item.disposition}`
 
 const statusRows = (items) => {
   const counts = new Map()
   for (const item of items) {
-    const key = `${orDefault(item.status, '—')} / ${orDefault(item.disposition, 'none')}`
+    const key = statusKey(item)
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   return [...counts.entries()]
@@ -55,6 +109,11 @@ const severityRows = (items) =>
     .filter(({ total }) => total > 0)
     .map(({ severity, open, total }) => `| ${severity} | ${open} | ${total} |`)
 
+const itemCountSentence = (count, itemsFileName) =>
+  count === 1
+    ? `_1 item in this repo. Its issue, what it must satisfy and the commit that closed it are in \`${itemsFileName}\`._`
+    : `_${count} items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`${itemsFileName}\`._`
+
 /**
  * One repo's items as counts: a status and disposition table, a severity
  * table of open and total, and the items file that holds the detail.
@@ -72,20 +131,54 @@ export const itemCountLines = (items, itemsFileName) => [
   '|---|---|---|',
   ...severityRows(items),
   '',
-  `_${items.length} items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`${itemsFileName}\`._`
+  itemCountSentence(items.length, itemsFileName)
 ]
 
-const headerLines = ({ ticket, verdict, reviewer, reviewedSha, branch }) => [
-  branch === null
-    ? `# Code review — ${ticket}`
-    : `# Code review handoff — ${ticket}`,
-  '',
-  ...(verdict === '' ? [] : [`**Verdict:** ${verdict}`]),
-  `**Reviewer:** @${reviewer}`,
-  ...(reviewedSha === '' ? [] : [`**Reviewed at:** \`${reviewedSha}\``]),
-  ...(branch === null
+const headLines = ({ headSha, readSha, unreviewedWords }) =>
+  headSha === '' || headSha === readSha
     ? []
-    : [`**Handoff branch:** \`${branch}\` (workspace repo)`]),
+    : [
+        `**PR head:** \`${headSha}\`. The commits after \`${readSha}\` are counted below by the items they closed, but have not been ${unreviewedWords}.`
+      ]
+
+const commitLines = ({ reviewedSha, reReviewedSha, headSha }) => {
+  if (reReviewedSha !== null) {
+    return [
+      ...(reviewedSha === ''
+        ? []
+        : [`**First reviewed at:** \`${reviewedSha}\``]),
+      `**Re-reviewed at:** \`${reReviewedSha}\``,
+      ...headLines({
+        headSha,
+        readSha: reReviewedSha,
+        unreviewedWords: 're-reviewed'
+      })
+    ]
+  }
+  if (reviewedSha === '') return []
+  return [
+    `**Reviewed at:** \`${reviewedSha}\``,
+    ...headLines({ headSha, readSha: reviewedSha, unreviewedWords: 'reviewed' })
+  ]
+}
+
+const titleLine = ({ ticket, branch, reReviewedSha }) => {
+  if (reReviewedSha !== null) return `# Code re-review — ${ticket}`
+  return branch === null
+    ? `# Code review — ${ticket}`
+    : `# Code review handoff — ${ticket}`
+}
+
+const headerLines = (args) => [
+  titleLine(args),
+  '',
+  ...(args.verdict === '' ? [] : [`**Verdict:** ${args.verdict}`]),
+  ...(args.notes === '' ? [] : [`**Notes:** ${args.notes}`]),
+  `**Reviewer:** @${args.reviewer}`,
+  ...commitLines(args),
+  ...(args.branch === null
+    ? []
+    : [`**Handoff branch:** \`${args.branch}\` (workspace repo)`]),
   ''
 ]
 
@@ -113,24 +206,35 @@ const detailLines = ({
   return []
 }
 
-const statusLine = ({ ticket, items }) => {
+const allDoneLine = ({ items, summary }) => {
+  if (!summary) {
+    return 'All tracked **Fix** items for this repo are **Done** on this branch (see the Status and Notes columns above). **Merged** rows are sub-findings folded into those Fix items.'
+  }
+  const everyFixDone =
+    'Every **Fix** item for this repo is **Done** on this branch.'
+  return items.some((item) => item.disposition === 'Merged')
+    ? `${everyFixDone} **Merged** items are sub-findings folded into those Fix items.`
+    : everyFixDone
+}
+
+const statusLine = ({ ticket, items, summary }) => {
   if (items === null) {
     return `_Review detail: \`workareas/reviews/${ticket}/\` on the author's machine._`
   }
   const open = openItemCount(items)
   return open === 0
-    ? 'All tracked **Fix** items for this repo are **Done** on this branch (see the Status and Notes columns above). **Merged** rows are sub-findings folded into those Fix items.'
-    : `**${open}** item(s) remain **Not Done** in the table above. The author applies them on this PR branch; local tracker: \`workareas/reviews/${ticket}/\`.`
+    ? allDoneLine({ items, summary })
+    : `**${open}** item(s) remain open. The author applies them on this PR branch; local tracker: \`workareas/reviews/${ticket}/\`.`
 }
 
-const commentOnlyFooterLines = ({ ticket, items }) => [
+const commentOnlyFooterLines = (args) => [
   '## Status',
   '',
-  statusLine({ ticket, items }),
+  statusLine(args),
   '',
   '---',
   '',
-  `_Generated by the \`review\` skill (${ticket})._`
+  `_Generated by the \`review\` skill (${args.ticket})._`
 ]
 
 const handoffFooterLines = ({ ticket, branch }) => [
@@ -169,14 +273,19 @@ const handoffFooterLines = ({ ticket, branch }) => [
 /**
  * One pull request's review comment, in markdown, ending with a newline.
  * A handoff (a `branch`) tells the author how to walk the review from the
- * branch; a comment-only post (`branch` null) says what is still open.
+ * branch; a comment-only post (`branch` null) says what is still open. A
+ * re-review (a `reReviewedSha`) names the commit first reviewed and the
+ * commit the latest re-review read.
  *
  * @param {object} args
  * @param {string} args.ticket
  * @param {string} args.repo
- * @param {string} args.verdict - Empty for none
+ * @param {string} args.verdict - From {@link verdictLine}; empty for none
+ * @param {string} args.notes - The index's notes; empty for none
  * @param {string} args.reviewer - The login named as reviewer
- * @param {string} args.reviewedSha - The first 8 characters of the commit reviewed; empty for none
+ * @param {string} args.reviewedSha - The first 8 characters of the commit first reviewed; empty for none
+ * @param {string | null} args.reReviewedSha - The first 8 characters of the commit the latest re-review read, or null for a review that is not a re-review
+ * @param {string} args.headSha - The first 8 characters of the PR's head; empty for none
  * @param {string | null} args.branch - The handoff branch, or null for a comment-only post
  * @param {object[] | null} args.items - The repo's items, or null when it has no items file
  * @param {boolean} args.hasSummaryFile - Whether the repo has a review.<repo>.md

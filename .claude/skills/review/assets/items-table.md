@@ -76,8 +76,8 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 |---|---|---|
 | `null` | No fix attempt yet. | Default before walker / hand-marking. |
 | `Not Done` | Queued for the implementor. | `tim review items mark --disposition Fix` auto-sets this. |
-| `Done` | Fix landed (short SHA in `notes`). | `tim review items status --status Done`. |
-| `Failed` | Implementor tried and failed. | `tim review items status --status Failed`. |
+| `Done` | Fix landed (short SHA added to the end of `notes`, after any walk decision). | `tim review items status --status Done --note "{short-sha}"`. |
+| `Failed` | Implementor tried and failed (reason added to the end of `notes`). | `tim review items status --status Failed --note "{reason}"`. |
 | `—` | Status doesn't apply (Won't Fix / Auto-Resolved / Merged). | Auto-set by `tim review items mark` for non-Fix dispositions. |
 
 ## Helpers
@@ -88,7 +88,7 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 | `tim review items list` | Query items (filter by disposition / status; TSV, or the items as `result` with `--json`) |
 | `tim review items add` | Append a new item; auto-assigns `id`; returns the new ID |
 | `tim review items mark` | Set `disposition` (auto-sets `status` per the table above) |
-| `tim review items status` | Set `status` only |
+| `tim review items status` | Set `status`; `--note` adds to the end of `notes` and never replaces them |
 | `tim review items counts` | Breakdown by disposition + status |
 | `tim review items render` | Emit the markdown `## Items` table view of `items.{repo}.json` |
 

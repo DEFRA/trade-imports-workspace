@@ -145,12 +145,15 @@ const registerRender = (items, { timVersion }) =>
 const registerStatus = (items, { timVersion }) =>
   withReviewId(items.command('status'))
     .description(
-      "Set an item's status and leave its disposition. An empty or missing status clears it."
+      "Set an item's status and leave its disposition, and add a note to its notes. An empty or missing status clears it."
     )
     .option('--repo <repo>', 'The repo whose items file holds the item')
     .option('--item <id>', "The item's id")
     .option('--status <status>', '"Not Done", Done, Failed, —, or "" to clear')
-    .option('--note <text>', 'Replaces the notes; "" clears them')
+    .option(
+      '--note <text>',
+      'Added after the notes there, separated by "; ", unless they already hold it. "" changes nothing. To replace or clear the notes, use tim review items mark --note'
+    )
     .addHelpText(
       'after',
       '\nExamples:\n  tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note "abc1234"\n  tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Failed --note "Tests went red"'

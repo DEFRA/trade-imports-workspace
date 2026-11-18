@@ -703,17 +703,38 @@ export const replayUpgradeCase = async (command, fixtureCase) => {
         stripFinalNewline: false
       }
     )
-    return recordUpgradeRun(staged, fixtureCase, result)
+    return withCommitsNamed(recordUpgradeRun(staged, fixtureCase, result))
   } finally {
     staged.remove()
   }
+}
+
+const COMMIT_LINE = /^([0-9a-f]{7,40}) /gm
+
+/**
+ * A run with each commit in its repo's log named `<COMMIT n>`, newest
+ * first, wherever its short hash appears. An allowlist entry's expiry is a
+ * day counted from today, so the commit that holds it hashes differently
+ * on each day the case runs.
+ *
+ * @param {{repo: {log: string}}} run
+ * @returns {object}
+ */
+export const withCommitsNamed = (run) => {
+  const hashes = [...run.repo.log.matchAll(COMMIT_LINE)].map(([, hash]) => hash)
+  const named = hashes.reduce(
+    (text, hash, index) => text.replaceAll(hash, `<COMMIT ${index + 1}>`),
+    JSON.stringify(run)
+  )
+  return JSON.parse(named)
 }
 
 const TILDE_REPOS = '~/git/defra/trade-imports-workspace/repos/'
 
 /**
  * The Bash's recording of a case as tim gives it: the next-step hints of
- * `run-auto` name the repo by its full path, not under `~`.
+ * `run-auto` name the repo by its full path, not under `~`, and each
+ * commit is named as {@link withCommitsNamed} names it.
  *
  * @param {string} command
  * @param {string} caseName
@@ -723,11 +744,11 @@ export const expectedRunOf = (command, caseName) => {
   const recorded = readUpgradeGolden()[command].find(
     (run) => run.case === caseName
   )
-  return {
+  return withCommitsNamed({
     ...recorded,
     stdout: recorded.stdout.replaceAll(
       TILDE_REPOS,
       '<HOME>/git/defra/trade-imports-workspace/repos/'
     )
-  }
+  })
 }

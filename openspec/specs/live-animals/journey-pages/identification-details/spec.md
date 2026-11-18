@@ -50,7 +50,7 @@ The system MUST show, above the identification sections, a summary table with on
 
 ### Requirement: The page asks for one animal's identifiers per species card, and the card's save button says what is left on the line
 **ID**: REQ-IDENT-002
-The system MUST ask the user for the identifiers of a single animal on a card scoped to one species within its commodity section, and MUST label the card's own save button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
+The system MUST ask the user for the identifiers of a single animal on a card scoped to one species within its commodity section, with the card's own save button the last thing the card asks for, and MUST label that button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
 
 #### Scenario: A line of several animals offers add-another, then finish on the last
 **ID**: SCN-IDENT-002-A
@@ -65,6 +65,12 @@ The system MUST ask the user for the identifiers of a single animal on a card sc
 - **WHEN** the page loads
 - **THEN** it asks for that animal's identifiers, with no save-and-add-another or save-and-finish action on the card
 - **AND** the page's own Save and continue is offered, and saves the record
+
+#### Scenario: A card ends with the identifier fields and its save control, asking nothing else
+**ID**: SCN-IDENT-002-C
+- **GIVEN** the user has reached the identification details page for a cat, dog or ferret line
+- **WHEN** the page loads
+- **THEN** the card asks only for that commodity's identifier fields, ending with its save control
 
 ### Requirement: Each card offers a way to change that species' declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
@@ -84,15 +90,21 @@ The system MUST offer, on every species card, a Change number of animals link, n
 - **THEN** commodity selection opens
 - **AND** saving there returns to identification details
 
-### Requirement: The identifier fields start empty for each new record
+### Requirement: The identifier fields start empty for each new record, and a saved record's answers show again when the notification is reopened
 **ID**: REQ-IDENT-004
-The system MUST leave the identifier fields empty when the page is opened for a new record, so a previous animal's details are never carried into the next.
+The system MUST leave the identifier fields empty when the page is opened for a new record, so a previous animal's details are never carried into the next, and MUST show a saved record's answers again when the notification is reopened at the page.
 
 #### Scenario: A new identifier record opens with empty fields
 **ID**: SCN-IDENT-004-A
 - **GIVEN** the user has reached the identification details page for a new record
 - **WHEN** the page loads
 - **THEN** the identifier fields are empty
+
+#### Scenario: Reopening the notification shows a saved record's free-text answers again
+**ID**: SCN-IDENT-004-B
+- **GIVEN** a commodity line with no identifier of its own has a saved record holding both Identification details and Description
+- **WHEN** the user reopens the notification at the identification details page
+- **THEN** the saved-animals table shows both values for that record
 
 ### Requirement: A valid identifier is accepted
 **ID**: REQ-IDENT-005
@@ -104,22 +116,35 @@ The system MUST accept an identifier record once a valid identifier has been ent
 - **WHEN** they enter a valid identifier and save, with Save and continue on a line of one animal or the card's save-and-finish on the last of several
 - **THEN** the record is saved and no error summary is shown
 
-### Requirement: The identifier fields offered for an animal depend on its commodity, and a commodity with none of its own gets no panel
+### Requirement: The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own is asked for identification details and a description
 **ID**: REQ-IDENT-006
-The system MUST show only the identifier fields that a given commodity supports, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
+The system MUST show only the identifier fields that a given commodity and species support, in the order that commodity asks for them, and MUST show "Identification details" then "Description" instead for a commodity with none of its own.
 
 #### Scenario: A commodity with typed identifiers shows only its own identifier fields
 **ID**: SCN-IDENT-006-A
-- **GIVEN** the user is entering identifier details for a commodity with its own typed identifiers and a permanent-address requirement (for example, cats)
+- **GIVEN** the user is entering identifier details for a commodity with its own typed identifiers (for example, cats)
 - **WHEN** they view the entry form
-- **THEN** only that commodity's identifier fields are shown, along with a permanent-address field with no country field
+- **THEN** only that commodity's identifier fields are shown
 - **AND** identifier fields belonging to other commodities are not shown
 
-#### Scenario: A commodity with no identifier of its own earns no panel
+#### Scenario: A commodity with no identifier of its own is asked for identification details then description
 **ID**: SCN-IDENT-006-B
 - **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, ostriches)
 - **WHEN** the user views the identification details page
-- **THEN** that line has no identification card at all — no typed fields and no free-text fields
+- **THEN** that line has an identification card asking for "Identification details" then "Description"
+
+#### Scenario: Two species under one commodity code are offered different identifier fields
+**ID**: SCN-IDENT-006-C
+- **GIVEN** the user is entering identifier details for two species that share one commodity code, one of them the species the commodity's horse name is listed for
+- **WHEN** they view each species' entry form
+- **THEN** the listed species' form offers the horse name field as well as the fields the code lists for every species
+- **AND** the other species' form offers only the fields the code lists for every species, with no horse name field
+
+#### Scenario: A cattle card's identifier fields are shown in the order cattle asks for them
+**ID**: SCN-IDENT-006-D
+- **GIVEN** the user is entering identifier details for a cattle line
+- **WHEN** they view the entry form
+- **THEN** the fields are shown in the order Ear tag, then Passport, then Tattoo
 
 ### Requirement: Identifier records for a species are capped at its declared animal count
 **ID**: REQ-IDENT-007
@@ -144,11 +169,17 @@ The system MUST let the user add identifier records up to the declared number of
 
 ### Requirement: Every animal record must carry at least one identifier
 **ID**: REQ-IDENT-008
-The system MUST require each animal record to carry at least one of the identifiers open to it — a microchip, passport, tattoo, ear tag or horse name — and MUST leave the Identification details task on Overview reading "To do" while any record carries none.
+The system MUST require each animal record to carry at least one of the identifiers open to it — a microchip, passport, tattoo, ear tag or horse name, or for a commodity with none of its own, identification details or description — and MUST leave the Identification details task on Overview reading "To do" while any record carries none.
 
 #### Scenario: A record carrying no identifier leaves the Identification details task To do
 **ID**: SCN-IDENT-008-A
 - **GIVEN** a notification holds an animal record carrying none of the identifiers open to it
+- **WHEN** the user opens Overview
+- **THEN** the Identification details task reads "To do"
+
+#### Scenario: A record on a commodity with no identifier of its own, carrying neither free-text answer, leaves the task To do
+**ID**: SCN-IDENT-008-B
+- **GIVEN** a notification holds an animal record on a commodity with no identifier of its own, carrying neither Identification details nor Description
 - **WHEN** the user opens Overview
 - **THEN** the Identification details task reads "To do"
 
@@ -164,9 +195,29 @@ The system MUST refuse a card's save button when every identifier field on that 
 - **WHEN** they follow the resulting error
 - **THEN** that species' first identifier field is focused, and remains empty
 
+#### Scenario: A species' own refusal does not depend on another species' card holding a value
+**ID**: SCN-IDENT-009-B
+- **GIVEN** one species' card holds a filled identifier field and another species' card holds none
+- **WHEN** the blank card's own save button is pressed
+- **THEN** that card's save is refused, with that species' first identifier field focused when the resulting error is followed
+- **AND** the filled card has no animal saved and its identifier field is shown empty again
+
+#### Scenario: A page with every identifier blank passes Save and continue and Save and return to overview
+**ID**: SCN-IDENT-009-C
+- **GIVEN** every identifier field on the page is blank
+- **WHEN** the user presses Save and continue or Save and return to overview
+- **THEN** no refusal is shown and the user is taken on
+- **AND** no animal record is saved
+
+#### Scenario: A blank save on a species' last animal still to enter is refused and that animal stays to enter
+**ID**: SCN-IDENT-009-D
+- **GIVEN** a species whose earlier animals are saved and whose card offers "Save and finish" for its last animal still to enter, with every identifier field on that card blank
+- **WHEN** the user presses "Save and finish"
+- **THEN** the save is refused, the species' first identifier field carries the error, and that animal is still to enter with its saved animals unchanged
+
 ### Requirement: A typed identifier value has a maximum length
 **ID**: REQ-IDENT-010
-The system MUST reject a typed identifier value of more than 58 characters in a form that a save submits, with the message "<identifier> must be 58 characters or less" naming Microchip, Passport, Tattoo, Ear tag or Horse name, MUST link the resulting error to and focus the field, MUST preserve the over-length value, and MUST save a value of 58 characters typed with spaces around it without them.
+The system MUST reject a typed identifier value of more than 58 characters in a form that a save submits, with the message "<identifier> must be 58 characters or less" naming Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details or Description, MUST link the resulting error to and focus the field, MUST preserve the over-length value, and MUST save a value of 58 characters typed with spaces around it without them.
 
 #### Scenario: An over-length identifier value blocks the save with the value preserved
 **ID**: SCN-IDENT-010-A
@@ -181,60 +232,47 @@ The system MUST reject a typed identifier value of more than 58 characters in a 
 - **WHEN** they press the card's save button
 - **THEN** the record is saved with no error, and the saved identifier carries no surrounding spaces
 
-### Requirement: The permanent address asks for eight named fields, six mandatory and two optional
-**ID**: REQ-IDENT-011
-The system MUST ask for name or organisation name, address line 1, address line 2, town or city, county, postal or zip code, telephone number and email address, with only address line 2 and county optional, and MUST hint that an international telephone number should include its country code.
+#### Scenario: An over-length free-text fallback value blocks the save, and 58 characters saves
+**ID**: SCN-IDENT-010-C
+- **GIVEN** a commodity line with no identifier of its own
+- **WHEN** the user types a value of more than 58 characters into Identification details or Description and tries to save
+- **THEN** the save is blocked and the error summary and the field read "Identification details must be 58 characters or less" or "Description must be 58 characters or less", linking to and focusing that field
+- **WHEN** they replace it with a value of 58 characters and save
+- **THEN** the record is saved with no error
 
-#### Scenario: Every field is asked for, with two marked optional
-**ID**: SCN-IDENT-011-A
-- **GIVEN** the user is entering a permanent address for an animal identifier
-- **WHEN** the form is shown
-- **THEN** all eight fields are asked for, with address line 2 and county alone marked optional
-- **AND** the telephone number field hints that an international number should include its country code
-
-### Requirement: The permanent address warns that a false address is fraud, and that it may be checked
-**ID**: REQ-IDENT-012
-The system MUST warn the user, on the permanent-address form, that giving a false address is fraud, and that the Animal and Plant Health Agency may check it.
-
-#### Scenario: The permanent-address form carries the fraud warning
-**ID**: SCN-IDENT-012-A
-- **GIVEN** the user is entering a permanent address for an animal identifier
-- **WHEN** the form is shown
-- **THEN** it warns that a false address is fraud, and that the address may be checked
-
-### Requirement: A blank mandatory permanent-address field is refused, and an over-length one is rejected, without losing the rest of the record
-**ID**: REQ-IDENT-013
-The system MUST refuse a save that submits a permanent address with a mandatory field left blank, MUST reject a field whose value exceeds its maximum length, and in both cases MUST link the resulting error to and focus the field at fault while preserving every other field already entered on the record, including its identifiers.
-
-#### Scenario: A blank mandatory address field blocks the save without losing the identifier already entered
-**ID**: SCN-IDENT-013-A
-- **GIVEN** the user has entered a valid identifier and a permanent address with one mandatory field left blank
-- **WHEN** they try to save
-- **THEN** the save is blocked, an error links to and focuses the blank field
-- **AND** the identifier already entered is still shown
-
-#### Scenario: An over-length address field blocks the save with its value preserved
-**ID**: SCN-IDENT-013-B
-- **GIVEN** the user enters a value exceeding an address field's maximum length
-- **WHEN** they try to save
-- **THEN** the save is blocked, an error links to and focuses that field, with the over-length value still shown
-- **AND** the identifier already entered is still shown
-
-### Requirement: The saved-animals table is headed by every identifier the commodity declares, whether or not a given record filled it in
+### Requirement: The saved-animals table is headed by every identifier asked of that species, whether or not a given record filled it in
 **ID**: REQ-IDENT-014
-The system MUST head the saved-animals table with a column for every identifier the commodity declares, not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, and MUST place it below the entry form and the card button while the species still has animals to enter.
+The system MUST head the saved-animals table with a column for every identifier asked of that species, not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, MUST place it below the entry form and the card button while the species still has animals to enter, and MUST limit its columns to the animal column, one column per identifier the species is asked for, and the remove action.
 
-#### Scenario: The table heads every identifier the commodity declares
+#### Scenario: The table heads every identifier asked of that species
 **ID**: SCN-IDENT-014-A
-- **GIVEN** the user has saved one record for a commodity that declares more than one identifier
+- **GIVEN** the user has saved one record for a species asked for more than one identifier
 - **WHEN** they view the saved-animals table
-- **THEN** it is headed with a column for every identifier that commodity declares, not only the one the saved record used
+- **THEN** it is headed with a column for every identifier asked of that species, not only the one the saved record used
 
 #### Scenario: The saved-animals table sits below the entry form and the card button
 **ID**: SCN-IDENT-014-B
 - **GIVEN** a species has more animals to enter and one record saved
 - **WHEN** the user views its card
 - **THEN** the entry form and the card button come first and the saved-animals table follows below them
+
+#### Scenario: A species asked for one identifier has a saved-animals table of that one column
+**ID**: SCN-IDENT-014-C
+- **GIVEN** a species is asked for one identifier only
+- **WHEN** the user saves a record for it
+- **THEN** its saved-animals table is headed with an Animal column, that one identifier's column and a Remove action, and no other identifier column
+
+#### Scenario: A species that needs a permanent address has a saved-animals table of its own identifiers alone
+**ID**: SCN-IDENT-014-D
+- **GIVEN** a species whose commodity and species pair needs a permanent address (for example, cats or ferrets)
+- **WHEN** the user saves a record for it
+- **THEN** its saved-animals table is headed by the animal column, each identifier the pair is asked for, and a Remove action
+
+#### Scenario: A commodity with no identifier of its own has a saved-animals table of identification details and description
+**ID**: SCN-IDENT-014-E
+- **GIVEN** a commodity line with no identifier of its own
+- **WHEN** the user saves a record for it
+- **THEN** its saved-animals table is headed by the animal column, Identification details, Description and a Remove action
 
 ### Requirement: A record can be removed from the saved-animals table
 **ID**: REQ-IDENT-015
@@ -291,19 +329,19 @@ The system MUST return the user, when they follow the back link from the identif
 - **WHEN** the user follows the Change link that opens the identification details page and then the back link
 - **THEN** the review is shown
 
-### Requirement: A consignment with nothing to identify never shows the page
+### Requirement: A notification with no commodity line never shows the page
 **ID**: REQ-IDENT-019
-The system MUST pass the user on, without showing the identification details page, when no commodity on the notification carries an identifier of its own.
+The system MUST pass the user on, without showing the identification details page, when the notification holds no commodity line.
 
-#### Scenario: A consignment of ostriches alone carries on past the page
+#### Scenario: A notification with no commodity line carries on past the page
 **ID**: SCN-IDENT-019-A
-- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, ostriches)
+- **GIVEN** the notification holds no commodity line
 - **WHEN** the identification details page is requested directly
-- **THEN** Additional details is shown instead, and the page itself is never rendered
+- **THEN** commodity selection is shown instead, and the page itself is never rendered
 
 ### Requirement: Identification is shown as one section per commodity holding one card per species
 **ID**: REQ-IDENT-020
-The system MUST show identification as one section per commodity code, headed with the code, holding one card per selected species that has identifier fields and a number of animals, in the order their species are listed for selection, each headed by the species label with a Change number of animals link, and MUST show no card for a species with no number of animals.
+The system MUST show identification as one section per commodity code, headed with the code, holding one card per selected species that has a number of animals, in the order their species are listed for selection, each headed by the species label with a Change number of animals link, and MUST show no card for a species with no number of animals.
 
 #### Scenario: A commodity with two species shows one section holding two cards
 **ID**: SCN-IDENT-020-A
@@ -350,9 +388,16 @@ The system MUST, when a card's button is pressed, validate and save only its spe
 - **THEN** nothing is saved and the field shows its error
 - **AND** the over-length value stays in the field
 
-### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag and Horse name, with no hint text
+#### Scenario: Enter in a species that already has a saved animal leaves every other species' saved animals listed
+**ID**: SCN-IDENT-021-E
+- **GIVEN** one species with more than one animal already has one animal saved, and a second such species also already has one animal saved
+- **WHEN** a valid identifier is typed into the first species' form and Enter is pressed in that field
+- **THEN** the first species' saved-animals table lists both its original animal and the new one
+- **AND** the second species' saved-animals table still lists only its own original animal, unchanged
+
+### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, with no hint text
 **ID**: REQ-IDENT-022
-The system MUST label the identifier fields Microchip, Passport, Tattoo, Ear tag and Horse name, and MUST show no hint text under them.
+The system MUST label the identifier fields Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, and MUST show no hint text under them.
 
 #### Scenario: The identifier fields carry their names and no hint
 **ID**: SCN-IDENT-022-A
@@ -360,3 +405,26 @@ The system MUST label the identifier fields Microchip, Passport, Tattoo, Ear tag
 - **WHEN** they view the entry form
 - **THEN** the fields are labelled "Microchip", "Passport" and "Tattoo"
 - **AND** none of them shows hint text
+
+#### Scenario: The free-text fallback fields carry their names and no hint
+**ID**: SCN-IDENT-022-B
+- **GIVEN** the user is entering identifier details for a commodity with no identifier of its own
+- **WHEN** they view the entry form
+- **THEN** the fields are labelled "Identification details" and "Description"
+- **AND** neither shows hint text
+
+### Requirement: Identification details and Description are each optional
+**ID**: REQ-IDENT-023
+The system MUST accept a record on a commodity with no identifier of its own whichever one of Identification details and Description the user fills in, saving the animal either way.
+
+#### Scenario: Filling Identification details alone saves the animal
+**ID**: SCN-IDENT-023-A
+- **GIVEN** a commodity line with no identifier of its own
+- **WHEN** the user fills in Identification details, leaves Description blank, and saves
+- **THEN** the animal is saved
+
+#### Scenario: Filling Description alone saves the animal
+**ID**: SCN-IDENT-023-B
+- **GIVEN** a commodity line with no identifier of its own
+- **WHEN** the user fills in Description, leaves Identification details blank, and saves
+- **THEN** the animal is saved

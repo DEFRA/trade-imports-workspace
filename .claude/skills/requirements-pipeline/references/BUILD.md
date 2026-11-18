@@ -435,8 +435,11 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    ladder each run it once with `--phase all`, which runs the phases side by side,
    into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`. A
    branch-lifecycle row that owes only some phases runs those one per call. The
-   implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts. How hard the gate drives this machine
+   implementor and fixer run its unit and FIT phases to check themselves, with
+   `--repo` for each of the row's own repos, so proving their own work does not
+   re-run the suites of repos the row changes nothing in. The baseline and the
+   ladder pass no `--repo`, so they still prove the whole tree, and so does a
+   theme's engineering review. No agent picks a repo's test scripts. How hard the gate drives this machine
    (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
    the machine's own gitignored `config/machine.json`, never from `gates.json`;
    `tim build tune` writes it once per machine: see

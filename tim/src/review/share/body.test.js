@@ -1,25 +1,94 @@
 import { describe, expect, test } from 'vitest'
-import { itemCountLines, shareBody, verdictOf } from './body.js'
+import {
+  itemCountLines,
+  notesOf,
+  repoVerdict,
+  shareBody,
+  verdictLine
+} from './body.js'
 
-describe('#verdictOf', () => {
-  test('Should give the first verdict line without its label and leading spaces', () => {
+const item = (severity, disposition, status) => ({
+  severity,
+  disposition,
+  status
+})
+
+describe('#notesOf', () => {
+  test('Should give the first notes line without its label and leading spaces', () => {
     const index =
-      '# Review\n\n**Verdict:**   PASS — fine.\n**Verdict:** later\n'
+      '# Review\n\n**Verdict:** FAIL\n**Notes:**   two open.\n**Notes:** later\n'
 
-    expect(verdictOf(index)).toBe('PASS — fine.')
+    expect(notesOf(index)).toBe('two open.')
   })
 
-  test('Should give an empty verdict when the index has no verdict line', () => {
-    expect(verdictOf('# Review\n\nVerdict: PASS\n')).toBe('')
+  test('Should give empty notes when the index has no notes line', () => {
+    expect(notesOf('# Review\n\n**Verdict:** PASS\n')).toBe('')
+  })
+})
+
+describe('#repoVerdict', () => {
+  test('Should fail while a Major item is Not Done', () => {
+    const items = [
+      item('Major', 'Fix', 'Done'),
+      item('Major', 'Fix', 'Not Done')
+    ]
+
+    expect(repoVerdict(items)).toBe('FAIL')
+  })
+
+  test('Should fail while a Critical item nobody has walked is open', () => {
+    expect(repoVerdict([item('Critical', null, null)])).toBe('FAIL')
+  })
+
+  test('Should approve with changes while only Minor items are open', () => {
+    const items = [item('Major', 'Fix', 'Done'), item('Minor', null, null)]
+
+    expect(repoVerdict(items)).toBe('APPROVED WITH CHANGES')
+  })
+
+  test('Should approve when every item is done or declined', () => {
+    const items = [
+      item('Critical', 'Fix', 'Done'),
+      item('Major', "Won't Fix", '—')
+    ]
+
+    expect(repoVerdict(items)).toBe('APPROVED')
+  })
+})
+
+describe('#verdictLine', () => {
+  test('Should give the verdict alone when no other PR may block it', () => {
+    expect(verdictLine('APPROVED', [])).toBe('APPROVED')
+  })
+
+  test('Should name one blocker of an approved PR and warn about merging', () => {
+    expect(verdictLine('APPROVED WITH CHANGES', ['DEFRA/a#1'])).toBe(
+      'APPROVED WITH CHANGES, potentially blocked by DEFRA/a#1. Merge this PR with caution.'
+    )
+  })
+
+  test('Should join three blockers with commas and a final and', () => {
+    expect(
+      verdictLine('APPROVED', ['DEFRA/a#1', 'DEFRA/b#2', 'DEFRA/c#3'])
+    ).toBe(
+      'APPROVED, potentially blocked by DEFRA/a#1, DEFRA/b#2 and DEFRA/c#3. Merge this PR with caution.'
+    )
+  })
+
+  test('Should put a failing PR first and name its blockers after', () => {
+    expect(verdictLine('FAIL', ['DEFRA/a#1', 'DEFRA/b#2'])).toBe(
+      'FAIL. Also potentially blocked by DEFRA/a#1 and DEFRA/b#2.'
+    )
   })
 })
 
 describe('#itemCountLines', () => {
-  test('Should order the status rows by count, then by key, with absent values as — and none', () => {
+  test('Should order the status rows by count, then by key, with unwalked items counted as open', () => {
     const items = [
-      { status: 'Done', disposition: 'Fix', severity: 'Minor' },
-      { status: 'Not Done', disposition: 'Fix', severity: 'Major' },
-      { status: 'Not Done', disposition: 'Fix', severity: 'Major' },
+      item('Minor', 'Fix', 'Done'),
+      item('Major', 'Fix', 'Not Done'),
+      item('Major', 'Fix', 'Not Done'),
+      item('Minor', "Won't Fix", null),
       { severity: 'Minor' }
     ]
 
@@ -30,34 +99,75 @@ describe('#itemCountLines', () => {
       '|---|---|',
       '| Not Done / Fix | 2 |',
       '| Done / Fix | 1 |',
-      '| — / none | 1 |',
+      '| Not walked | 1 |',
+      "| — / Won't Fix | 1 |",
       '',
       '| Severity | Open | Total |',
       '|---|---|---|',
       '| Major | 2 | 2 |',
-      '| Minor | 0 | 2 |',
+      '| Minor | 1 | 3 |',
       '',
-      '_4 items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in `items.stub.json`._'
+      '_5 items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in `items.stub.json`._'
     ])
+  })
+
+  test('Should count one item in the singular', () => {
+    const lines = itemCountLines(
+      [item('Major', 'Fix', 'Done')],
+      'items.stub.json'
+    )
+
+    expect(lines.at(-1)).toBe(
+      '_1 item in this repo. Its issue, what it must satisfy and the commit that closed it are in `items.stub.json`._'
+    )
   })
 })
 
 describe('#shareBody', () => {
+  const commentOnly = {
+    ticket: 'EUDPA-1',
+    repo: 'trade-imports-stub',
+    verdict: '',
+    notes: '',
+    reviewer: 'someone',
+    reviewedSha: '',
+    reReviewedSha: null,
+    headSha: '',
+    branch: null,
+    items: null,
+    hasSummaryFile: false,
+    summary: false
+  }
+
   test('Should point a comment-only post with no items or summary at the author machine', () => {
-    const body = shareBody({
-      ticket: 'EUDPA-1',
-      repo: 'trade-imports-stub',
-      verdict: '',
-      reviewer: 'someone',
-      reviewedSha: '',
-      branch: null,
-      items: null,
-      hasSummaryFile: false,
-      summary: false
-    })
+    const body = shareBody(commentOnly)
 
     expect(body).toBe(
       "# Code review — EUDPA-1\n\n**Reviewer:** @someone\n\n## Repository: `trade-imports-stub`\n\n## Status\n\n_Review detail: `workareas/reviews/EUDPA-1/` on the author's machine._\n\n---\n\n_Generated by the `review` skill (EUDPA-1)._\n"
     )
+  })
+
+  test('Should head a re-review with the commits it read and the head it did not', () => {
+    const body = shareBody({
+      ...commentOnly,
+      verdict: 'APPROVED',
+      notes: 'all closed',
+      reviewedSha: 'aaaaaaaa',
+      reReviewedSha: 'cccccccc',
+      headSha: 'eeeeeeee',
+      items: [item('Major', 'Fix', 'Done')],
+      summary: true
+    })
+
+    expect(body.split('\n').slice(0, 8)).toEqual([
+      '# Code re-review — EUDPA-1',
+      '',
+      '**Verdict:** APPROVED',
+      '**Notes:** all closed',
+      '**Reviewer:** @someone',
+      '**First reviewed at:** `aaaaaaaa`',
+      '**Re-reviewed at:** `cccccccc`',
+      '**PR head:** `eeeeeeee`. The commits after `cccccccc` are counted below by the items they closed, but have not been re-reviewed.'
+    ])
   })
 })

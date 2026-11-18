@@ -645,7 +645,12 @@ tim review items counts EUDPA-1234
   tab-separated line per item (repo, id, file, line, severity, category,
   issue, fix, disposition, status, notes); `add` prints the new id, with
   the line stored as text; `mark` and `status` print one confirmation
-  line.
+  line, ending `, Notes set` (`mark`) or `, Note added` (`status`) only
+  when given a note.
+- `mark --note` replaces the notes. `status --note` adds the note after
+  the notes there, separated by `; `, so a walk's decision stays beside
+  the fix's commit. It skips a note the notes already hold, and an empty
+  note changes nothing.
 - `--json` gives the envelope: the items for `list`, the review id, repo,
   breakdown and total for `counts`, and the item written for the others.
 - Every refusal exits 1, as the scripts they replace did.
@@ -752,6 +757,18 @@ gh pr comment 42 --repo DEFRA/trade-imports-stub --body-file <the file share pri
 - A body over GitHub's 65536-character limit stops it and names the
   file it left. `--summary` posts status and severity counts in place of
   the item table. `--dry-run` renders and copies only.
+- Each PR's verdict comes from its own repo's items: FAIL while a
+  Critical or Major item is open, APPROVED WITH CHANGES while only Minor
+  ones are, else APPROVED. An item nobody has walked counts as open. Any
+  other PR in the ticket that is not APPROVED is named as a possible
+  blocker. The `**Notes:**` line of `review-index.md` is posted as
+  written; its `**Verdict:**` is not.
+- `--refresh` posts a refresh review's counts under a re-review heading,
+  naming the commit first reviewed and the commit the latest re-review in
+  `.review-meta.json` read. It refuses a repo with no re-review.
+- `--head <sha>`, with `--summary` or `--refresh` and one PR, names the
+  PR's head and, when it is past the commit last reviewed, says the
+  later commits have not been reviewed.
 
 ### `tim style` — the code-style skill's helpers
 

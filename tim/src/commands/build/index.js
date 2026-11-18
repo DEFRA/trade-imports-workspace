@@ -59,6 +59,7 @@ const gateOptionsSchema = z.object({
   }),
   logs: z.string().trim().min(1).optional(),
   result: z.string().trim().min(1).optional(),
+  repo: z.array(z.string().trim().min(1)).optional(),
   holder: z
     .string()
     .trim()
@@ -370,6 +371,11 @@ const registerGate = (build, timVersion) =>
     )
     .option('--phase <phase>', 'unit, fit, e2e or all', 'all')
     .option(
+      '--repo <key>',
+      'Gate only this repo of the backlog envelope, by its key. Repeat for more than one. Use it where a stage proves its own work and the row changes nothing in the other repos; the baseline and the ladder leave it out, so they still prove the whole tree (default: every repo)',
+      (key, keys = []) => [...keys, key]
+    )
+    .option(
       '--logs <dir>',
       'Where each rung writes its log (default: logs/ beside the backlog)'
     )
@@ -395,11 +401,11 @@ const registerGate = (build, timVersion) =>
       'Start the gate in its own background process and return at once, printing its process id. The gate keeps running when the shell that started it ends. Wait for it with `tim build gate-wait`; its own output goes to the result file plus `.out`'
     )
     .description(
-      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, tim/src/stack) changed, when the whole stack starts again. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Before any rung, a repo whose installed direct dependencies differ from its package-lock.json gets `npm ci`, and then, when it uses Playwright, the browsers that version needs; each writes its own log, and a repo whose install fails has its npm rungs fail with the reason. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), parallelRepos and stackAfterLocal in place of gates.json's, and e2e: \"ci\" on a clone with no stack. With --e2e ci, or that setting, the gate runs no E2E rung, takes no lease and starts no stack: it lists those rungs in the result's e2e.leftToCi, and each pull request's E2E Tests check (e2e-tests.yml, scoped by config/e2e-tests-pr-scope.json, so it may run less) is their evidence. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. On a Mac the gate stops the machine sleeping until it ends (caffeinate -s -i): a Mac left to sleep keeps waking for a few seconds and sleeping again, which freezes the stack and its tests. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time, at most gates.json's parallelRepos at once; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted, unless the workspace’s own stack files (docker/stack, tim/src/stack) changed, when the whole stack starts again. By default it runs every repo in the backlog envelope, whether the work being proved changed that repo or not; --repo narrows it to the repos named. A rung with a cwd runs in that folder of its repo. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Before any rung, a repo whose installed direct dependencies differ from its package-lock.json gets `npm ci`, and then, when it uses Playwright, the browsers that version needs; each writes its own log, and a repo whose install fails has its npm rungs fail with the reason. This machine's own settings, when it has them, come from TIM_MACHINE_CONFIG or the workspace's gitignored config/machine.json (written by `tim build tune --write`): a worker count for each FIT and E2E rung it names (passed as --workers after the rung's scope), parallelRepos and stackAfterLocal in place of gates.json's, and e2e: \"ci\" on a clone with no stack. With --e2e ci, or that setting, the gate runs no E2E rung, takes no lease and starts no stack: it lists those rungs in the result's e2e.leftToCi, and each pull request's E2E Tests check (e2e-tests.yml, scoped by config/e2e-tests-pr-scope.json, so it may run less) is their evidence. A machine without the file runs as gates.json and each script say. See .claude/skills/requirements-pipeline/references/machine-tuning.md. On a Mac the gate stops the machine sleeping until it ends (caffeinate -s -i): a Mac left to sleep keeps waking for a few seconds and sleeping again, which freezes the stack and its tests. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --e2e ci --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json --detach'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --phase unit --repo frontend --repo tests --json\n  tim build gate shared/my-programme --e2e ci --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json --detach'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -410,6 +416,7 @@ const registerGate = (build, timVersion) =>
           phase: opts.phase,
           logs: opts.logs,
           result: opts.result,
+          repo: opts.repo?.length ? opts.repo : undefined,
           holder: opts.holder,
           e2e: opts.e2e,
           serial: opts.serial === true
@@ -439,6 +446,7 @@ const registerGate = (build, timVersion) =>
           workspaceRoot,
           workarea: parsed.workarea,
           phase: parsed.phase,
+          repoKeys: parsed.repo,
           serial: parsed.serial,
           logsDir,
           ...(parsed.e2e ? { e2e: parsed.e2e } : {}),

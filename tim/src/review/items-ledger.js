@@ -429,7 +429,7 @@ const nullWhenEmpty = (text) => (text === '' ? null : text)
  * @param {object} args
  * @param {string} args.itemsPath
  * @param {string} args.item - The item's id, as JSON text
- * @param {object} args.changes - Fields to set on the item
+ * @param {object | ((item: object) => object)} args.changes - Fields to set on the item, or a function from the item as it is to those fields
  * @returns {{path: string, item: object}} The item as written
  * @throws {TimError} NOT_FOUND when the items file or the item is missing; USAGE when the id is not JSON
  */
@@ -442,8 +442,9 @@ export const updateLedgerItem = ({ itemsPath, item, changes }) => {
   if (!ledger.items.some((entry) => entry.id === id)) {
     throw new TimError('NOT_FOUND', `Item #${item} not found in ${itemsPath}`)
   }
+  const changesTo = typeof changes === 'function' ? changes : () => changes
   const items = ledger.items.map((entry) =>
-    entry.id === id ? { ...entry, ...changes } : entry
+    entry.id === id ? { ...entry, ...changesTo(entry) } : entry
   )
   writeJsonAtomic(itemsPath, { ...ledger, items })
   return { path: itemsPath, item: items.find((entry) => entry.id === id) }
@@ -470,6 +471,27 @@ export const dispositionChange = (disposition) => ({
  */
 export const noteChange = (note) =>
   note === undefined ? {} : { notes: nullWhenEmpty(note) }
+
+const NOTE_SEPARATOR = '; '
+
+const notesWithNote = (notes, note) => {
+  if (note === undefined || note === '') return notes ?? null
+  if (isAbsent(notes) || notes === '') return note
+  if (notes.split(NOTE_SEPARATOR).includes(note)) return notes
+  return `${notes}${NOTE_SEPARATOR}${note}`
+}
+
+/**
+ * The notes change a status `--note` makes to an item: the note added
+ * after the notes there, separated by `; `. A missing or empty note, or
+ * one the notes already hold, leaves the notes as they are.
+ *
+ * @param {string | undefined} note
+ * @returns {(item: {notes?: string | null}) => {notes: string | null}}
+ */
+export const addedNoteChange = (note) => (item) => ({
+  notes: notesWithNote(item.notes, note)
+})
 
 /**
  * The fields a status sets: the status, null when it is empty.
@@ -529,12 +551,15 @@ export const markReviewItem = ({
     item,
     changes: { ...dispositionChange(disposition), ...noteChange(note) }
   })
-  return { repo, ...updated }
+  return { repo, ...updated, noteGiven: note !== undefined }
 }
 
 /**
  * Sets an item's status and leaves its disposition. A note, when given,
- * replaces the item's notes; an empty note clears them.
+ * goes after the item's notes, separated by `; `, so a walk's decision
+ * stays beside a fix's commit or a failure's reason. A note the notes
+ * already hold is not added again, and an empty note changes nothing. To
+ * replace or clear the notes, use {@link markReviewItem}.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -543,7 +568,7 @@ export const markReviewItem = ({
  * @param {string} [args.item] - The item's id, as JSON text
  * @param {string} [args.status] - One of {@link STATUSES}, or empty to clear
  * @param {string} [args.note]
- * @returns {{repo: string, path: string, item: object}}
+ * @returns {{repo: string, path: string, item: object, noteAdded: boolean}}
  * @throws {TimError} USAGE for a missing or invalid option; NOT_FOUND when the items file or the item is missing
  */
 export const setReviewItemStatus = ({
@@ -568,9 +593,12 @@ export const setReviewItemStatus = ({
   const updated = updateLedgerItem({
     itemsPath: reviewItemsPath({ workspaceRoot, reviewId, repo }),
     item,
-    changes: { ...statusChange(status), ...noteChange(note) }
+    changes: (entry) => ({
+      ...statusChange(status),
+      ...addedNoteChange(note)(entry)
+    })
   })
-  return { repo, ...updated }
+  return { repo, ...updated, noteAdded: note !== undefined && note !== '' }
 }
 
 /**
@@ -585,12 +613,12 @@ export const shownOrNull = (value) => (isAbsent(value) ? '<null>' : value)
  * @param {ReturnType<typeof markReviewItem>} marked
  * @returns {string}
  */
-export const renderMarkedText = ({ repo, item }) =>
-  `Marked #${item.id} in ${repo}: Disposition=${shownOrNull(item.disposition)}, Status=${shownOrNull(item.status)}, Notes set`
+export const renderMarkedText = ({ repo, item, noteGiven }) =>
+  `Marked #${item.id} in ${repo}: Disposition=${shownOrNull(item.disposition)}, Status=${shownOrNull(item.status)}${noteGiven ? ', Notes set' : ''}`
 
 /**
  * @param {ReturnType<typeof setReviewItemStatus>} updated
  * @returns {string}
  */
-export const renderStatusText = ({ repo, item }) =>
-  `Updated #${item.id} in ${repo}: Status=${shownOrNull(item.status)}, Notes set`
+export const renderStatusText = ({ repo, item, noteAdded }) =>
+  `Updated #${item.id} in ${repo}: Status=${shownOrNull(item.status)}${noteAdded ? ', Note added' : ''}`

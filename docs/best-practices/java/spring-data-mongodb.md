@@ -471,14 +471,14 @@ public MongoTransactionManager transactionManager(MongoDatabaseFactory factory) 
 // Wrong — non-atomic, leaves orphans on partial failure
 public void deleteByReferenceNumbers(List<String> refs) {
     notificationRepository.deleteAllByReferenceNumberIn(refs);
-    documentService.deleteForNotificationRefs(refs);  // crash here = orphans
+    documentService.deleteForNotificationReferenceNumbers(refs);  // crash here = orphans
 }
 
 // Correct
 @Transactional
 public void deleteByReferenceNumbers(List<String> refs) {
     notificationRepository.deleteAllByReferenceNumberIn(refs);
-    documentService.deleteForNotificationRefs(refs);
+    documentService.deleteForNotificationReferenceNumbers(refs);
 }
 ```
 

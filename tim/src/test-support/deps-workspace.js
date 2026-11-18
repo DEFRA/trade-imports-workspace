@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execa } from 'execa'
 import { createCliWorkspace } from './tim-cli.js'
 
 export const CHECKOUT_WORKSPACE_ROOT = fileURLToPath(
@@ -47,3 +48,75 @@ export const createDepsWorkspace = ({
   for (const repo of cloned) mkdirSync(join(root, 'repos', repo))
   return root
 }
+
+const writeFiles = (folder, files) => {
+  for (const [path, contents] of Object.entries(files)) {
+    mkdirSync(dirname(join(folder, path)), { recursive: true })
+    writeFileSync(join(folder, path), contents)
+  }
+}
+
+/**
+ * Make `repos/<repo>` in a workspace a git repo whose index holds the
+ * `tracked` files, with the `untracked` files beside them. Nothing is
+ * committed.
+ *
+ * @param {string} workspaceRoot
+ * @param {string} repo
+ * @param {object} files
+ * @param {Record<string, string>} files.tracked - Contents by relative path
+ * @param {Record<string, string>} [files.untracked]
+ * @returns {Promise<string>} The repo's path
+ */
+export const createEvidenceRepo = async (
+  workspaceRoot,
+  repo,
+  { tracked, untracked = {} }
+) => {
+  const repoPath = join(workspaceRoot, 'repos', repo)
+  mkdirSync(repoPath, { recursive: true })
+  await execa('git', ['init', '--quiet'], { cwd: repoPath })
+  writeFiles(repoPath, tracked)
+  await execa('git', ['add', '--', ...Object.keys(tracked)], {
+    cwd: repoPath
+  })
+  writeFiles(repoPath, untracked)
+  return repoPath
+}
+
+export const EVIDENCE_REPO = 'trade-imports-animals-frontend'
+export const OLD_HEADER_CLASS = 'govuk-header__link--service-name'
+
+export const layoutUsing = (linkClass) =>
+  '{% from "govuk/components/header/macro.njk" import govukHeader %}\n' +
+  `<a class="${linkClass}">One</a>\n<a class="${linkClass}">Two</a>\n`
+
+/**
+ * A workspace whose `repos/trade-imports-animals-frontend` tracks a layout
+ * using the old header class on two lines, and two `package-lock.json`
+ * files naming it, with an untracked file naming it too.
+ *
+ * @returns {Promise<{root: string, repoPath: string}>}
+ */
+export const createHeaderEvidenceWorkspace = async () => {
+  const root = createDepsWorkspace({ cloned: [] })
+  const lockfile = `{ "packages": { "${OLD_HEADER_CLASS}": {} } }\n`
+  const repoPath = await createEvidenceRepo(root, EVIDENCE_REPO, {
+    tracked: {
+      'src/layout.njk': layoutUsing(OLD_HEADER_CLASS),
+      'package-lock.json': lockfile,
+      'nested/package-lock.json': lockfile
+    },
+    untracked: { 'untracked.txt': `${OLD_HEADER_CLASS}\n` }
+  })
+  return { root, repoPath }
+}
+
+/**
+ * Overwrite files in a repo made by `createEvidenceRepo`, as an edit
+ * would, without staging them.
+ *
+ * @param {string} repoPath
+ * @param {Record<string, string>} files - Contents by relative path
+ */
+export const editEvidenceRepo = (repoPath, files) => writeFiles(repoPath, files)

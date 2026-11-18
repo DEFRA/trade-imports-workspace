@@ -46,24 +46,34 @@ values.
 Before saving, Preview should show one row per dependency and operation.
 If it shows none, check Match exact is off and both dimensions are set.
 
-## 1a. <service> <database> unavailable
+## 1a. <service> dependency reported unavailable
 
-For a database, its availability comes from the driver's heartbeats,
-or for Redis from the client's connection events
-(`references/METRICS.md` → "A database", `references/NODE.md` →
-"Redis"). Keep this section only if the
-service has a database. The table under "Check" says which of rules 1, 2
-and 3 are built beside it.
+One series per dependency that publishes `external.dependency.available`:
+a database, from the driver's heartbeats; Redis, from the client's
+connection events; and an HTTP dependency, from the outcome of its most
+recent call, where the service publishes it (animals-frontend does:
+`references/METRICS.md` → "A database" and "Availability: passive or
+active", `references/NODE.md` → "Availability of an HTTP dependency"
+and "Redis"). Keep this section only if the service publishes it for
+some dependency. The table under "Check" says which of rules 1, 2 and 3
+are built beside it.
+
+An HTTP dependency's reading holds its last call's outcome, so one
+failed call with no call after it keeps this rule firing until a call
+succeeds (`references/ALERTS.md`).
 
 | Field | Value |
 |---|---|
-| Rule name | `<service> <database> unavailable` |
+| Rule name | `<service> dependency reported unavailable` |
 | Metric | `external.dependency.available` |
-| Dimensions | `dependency` = `<database>`, the only dimension, with Match exact off |
+| Dimensions | `dependency` = `*`, the only dimension, with Match exact off |
 | Statistic | `Maximum` |
 | Period | `300` (5 minutes) |
 | Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
-| Summary | `<database> has been unavailable to every task for 5 minutes` |
+| Summary | `{{ $labels.dependency }} has been unavailable to every task for 5 minutes` |
+
+Before saving, Preview should show one row per dependency that
+publishes it.
 
 ## 2. <service> dependency calls failing
 
@@ -144,26 +154,19 @@ here, each Normal, none in Error:
 
 | The service has | Rules |
 |---|---|
-| No database | 1, 2 and 3 (three rules) |
-| A database and other dependencies | 1, 1a, 2 and 3 (four rules) |
+| No dependency publishing `external.dependency.available` | 1, 2 and 3 (three rules) |
+| A dependency publishing it (a database, Redis, or HTTP dependencies as on animals-frontend) and dependencies with call metrics | 1, 1a, 2 and 3 (four rules) |
 | A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules) |
 | A database as its only dependency, without its command metrics | 1a (one rule) |
 
 A database's command metrics are the `external.call.*` metrics
 `MongoCommandMetrics` records for MongoDB (`references/METRICS.md` → "A
-database"), or `MeasuredRedisEngine` for Redis (`references/NODE.md` →
-"Redis"). A heartbeat or a connection event records none.
+database"). Redis records none: its commands are not timed
+(`references/NODE.md` → "Redis"). A heartbeat or a connection event
+records none either.
 
 Add rule 4 and rule 5 to the count when they are kept. A session store
-such as Redis is a database here: rule 1a with `<database>` = `redis`.
-Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
+such as Redis is a database here: rule 1a covers it as `dependency`
+`redis`. Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule
 (More → Export → JSON) for Claude to check this sheet against.
-
-## Not alerted on
-
-- `external.dependency.available` for an HTTP dependency. It is for the
-  dashboard only; rule 1 alerts on `external.call.failure` instead
-  (`references/METRICS.md` → "Availability: passive or active" says
-  why). A database's comes from the driver's heartbeats, or for Redis
-  the client's connection events, and rule 1a alerts on it.

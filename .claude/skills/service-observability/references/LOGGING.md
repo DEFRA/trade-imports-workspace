@@ -18,11 +18,10 @@ External call mdm/get-countries success in 2 ms
 ```
 
 The message is `External call <dependency>/<operation> <outcome> in
-<ms> ms`. A Node line may name the call in brackets after the
-operation: an interface id, `External call defra-id/jwks (SYN-12)
-success in 3 ms`, or a Redis call's catbox segment, `External call
-redis/get (cache session) success in 1 ms` (`NODE.md` → "Dependency
-layer").
+<ms> ms`. A Node line may name the call's interface id in brackets
+after the operation,
+`External call defra-id/jwks (SYN-12) success in 3 ms` (`NODE.md` →
+"Dependency layer").
 
 This table is the one list of the line's fields, for both languages:
 
@@ -36,7 +35,6 @@ This table is the one list of the line's fields, for both languages:
 | `error.type` | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service | `com.mongodb.MongoCommandException` |
 | `error.message` | A failure with a cause only: the cause's message | Every service | — |
 | `error.code` | A failure only: the cause's `cause.code`, when it has one | Node | `ECONNREFUSED` |
-| `cache` | A Redis call only: the catbox segment, also in the message. Not an ECS field: `[UNPROVEN]` whether CDP keeps it | Node | `session` |
 | `trace.id` | Set by the request filter or the logger's mixin, not by this code | Every service | — |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A

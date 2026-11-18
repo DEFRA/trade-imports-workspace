@@ -298,9 +298,11 @@ service has apply to that service.
 `external.dependency.available` can come from a probe the service sends, or from
 the outcome of the calls it already makes.
 
-- **Passive (used on reference-data).** Report the outcome of the most
-  recent real call, kept in `LastCallOutcomes` ("A service built the
-  old way"). No extra traffic. The cost: the value is as old as
+- **Passive (used on reference-data and animals-frontend).** Report the
+  outcome of the most recent real call, kept in `LastCallOutcomes` ("A
+  service built the old way"), or in Node in
+  `recordDependencyCallOutcome` (`NODE.md` → "Availability of an HTTP
+  dependency"). No extra traffic. The cost: the value is as old as
   the last call, and nothing is published until the first call after
   start-up. Where a cache sits in front of the dependency, that can be
   as long as the cache lifetime.
@@ -308,13 +310,14 @@ the outcome of the calls it already makes.
   where a probe is free and harmless. Do not probe a dependency whose
   calls are rate-limited or cost a real token request.
 
-For an HTTP dependency, alert on `external.call.failure` over a time
-window, per `dependency` and `operation` (`ALERTS.md`), not on
-`external.dependency.available`. A passive reading lags by up to the cache
-lifetime and holds a single failure until the next success; an active
-probe is itself a call, so it records `external.call.failure` too. A
-database is the exception: its availability comes from the driver's
-heartbeats, which are fresh, so alert on it (below).
+The "Dependency reported unavailable" alert reads `external.dependency.available`
+for every dependency that publishes it, HTTP dependencies included
+(`ALERTS.md`). For an HTTP dependency, keep the `external.call.failure`
+alerts beside it: a passive reading lags by up to the cache lifetime
+and holds a single failure until the next call, while
+`external.call.failure` reports only the calls in its window. A
+database's availability comes from the driver's heartbeats, which are
+fresh (below).
 
 ### A database
 

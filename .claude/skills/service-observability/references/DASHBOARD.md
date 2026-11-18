@@ -78,9 +78,13 @@ for the names `trade-imports-animals-frontend` publishes (`NODE.md`).
 
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
-listing the values. The one exception is `dependency` in a dependency's
-row, which is set to that dependency, so the row shows its operations
-alone.
+listing the values. Two exceptions:
+
+- `dependency` in a dependency's row is set to that dependency, so the
+  row shows its operations alone.
+- The Journey events panel's metrics are published with no dimensions,
+  so each of its queries sets none, with "match exact" on (its row in
+  the table below).
 
 | Panel | Metric | Statistic | Split by |
 |---|---|---|---|

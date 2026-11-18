@@ -14,15 +14,11 @@ const WORKSPACE_ROOT = join(
 )
 const SKILL_DIR = join(WORKSPACE_ROOT, '.claude', 'skills', 'prototype')
 
-// A path the skill cites relative to the workspace root, in backticks. Only
-// these top-level folders count, so a path inside a repo (`docs/...` of the
-// prototype, say) has to name the repo first.
-const WORKSPACE_PATH_RE =
+const BACKTICKED_WORKSPACE_ROOT_FOLDER_PATH_RE =
   /`((?:docs|repos|openspec|workareas|\.claude|tim)\/[^\s`)*]+)/g
 
 const onDiskPath = (workspacePath) => join(WORKSPACE_ROOT, workspacePath)
 
-// repos/ is only there once cloned.
 const isInUnclonedRepo = (workspacePath) => {
   const [top, repo] = workspacePath.split('/')
   return top === 'repos' && !existsSync(join(WORKSPACE_ROOT, 'repos', repo))
@@ -122,12 +118,13 @@ describe('prototype skill: prompt hygiene', () => {
     )
     const paths = [
       ...new Set(
-        [...text.matchAll(WORKSPACE_PATH_RE)].map((match) =>
-          match[1]
-            .replace(/[).,]+$/, '')
-            // A trailing glob (docs/best-practices/**, gds/*) names a
-            // directory of files, not one file: check the directory.
-            .replace(/\/\*+$/, '')
+        [...text.matchAll(BACKTICKED_WORKSPACE_ROOT_FOLDER_PATH_RE)].map(
+          (match) =>
+            match[1]
+              .replace(/[).,]+$/, '')
+              // A trailing glob (docs/best-practices/**, gds/*) names a
+              // directory of files, not one file: check the directory.
+              .replace(/\/\*+$/, '')
         )
       )
     ]

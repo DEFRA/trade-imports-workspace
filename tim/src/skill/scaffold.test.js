@@ -132,7 +132,7 @@ describe('#scaffoldSkill', () => {
     })
 
     expect(recordSettings(staged).added).toEqual([
-      'Bash(tools/fanout-no-walker/*)'
+      'Bash(~/git/defra/trade-imports-workspace/tools/fanout-no-walker/*)'
     ])
   })
 

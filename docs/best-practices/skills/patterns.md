@@ -155,15 +155,11 @@ approval is right.
 ## 8. Allowlist coverage
 
 **Question:** Does the skill introduce new `tools/<name>/` scripts?
-If yes, add:
-
-```
-Bash(tools/<name>/*)
-Bash(tools/<name>/*:*)
-```
-
-to `.claude/settings.json`. CREATE mode generates the entries as
-part of scaffolding; AUDIT mode checks for missing entries.
+If yes, `.claude/settings.json` needs two allow entries for
+`tools/<name>/*`, plain and `:*`. CREATE mode generates them as part
+of scaffolding (the `allowlist_entries` of
+`tim skill scaffold --run-id <name> --dry-run --json`); AUDIT mode checks for missing
+entries.
 
 ## Pattern 9 (companion): Prose hygiene
 

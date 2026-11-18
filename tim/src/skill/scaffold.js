@@ -127,8 +127,8 @@ const writeTextAtomic = (path, text) => {
 }
 
 const allowlistEntriesFor = (name) => [
-  `Bash(tools/${name}/*)`,
-  `Bash(tools/${name}/*:*)`
+  `Bash(~/git/defra/trade-imports-workspace/tools/${name}/*)`,
+  `Bash(~/git/defra/trade-imports-workspace/tools/${name}/*:*)`
 ]
 
 /**

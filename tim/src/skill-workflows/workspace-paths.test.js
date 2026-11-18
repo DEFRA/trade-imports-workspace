@@ -62,7 +62,7 @@ const ALLOWED = [
   },
   {
     file: 'docs/onboarding/generator/build-deck.js',
-    text: 'Clone to ~/git/defra/trade-imports-workspace',
+    text: 'Clone the workspace, by default to ~/git/defra/trade-imports-workspace (any other folder works too)',
     why: 'clone instructions in the onboarding deck'
   },
   {

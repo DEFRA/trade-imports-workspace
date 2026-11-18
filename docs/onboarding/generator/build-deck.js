@@ -331,7 +331,7 @@ function heading(slide, label, title) {
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.green } });
   heading(s, "Try it", "Get the stack running, end to end");
   const steps = [
-    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-workspace (symlink if elsewhere), then tim workspace setup and tim workspace install."],
+    ["1", "Clone & set up", "Clone the workspace, by default to ~/git/defra/trade-imports-workspace (any other folder works too), then tim workspace setup and tim workspace install."],
     ["2", "Bring the stack up", "tim docker dev to build from source, then tim docker logs to watch it."],
     ["3", "Run the E2E suite", "npm run test:docker-compose in the tests repo. Skim tim --help and CLAUDE.md while it runs."],
   ];

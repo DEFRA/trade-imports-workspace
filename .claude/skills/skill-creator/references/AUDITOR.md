@@ -128,9 +128,9 @@ For each helper in `tools/<name>/`:
 
 ### 8. Allowlist coverage
 
-- Does `.claude/settings.json` contain
-  `Bash(tools/<name>/*)`
-  + `:*` entries?
+- Does `.claude/settings.json` contain the two `tools/<name>/*` entries
+  (plain and `:*`), in the form the `allowlist_entries` of
+  `tim skill scaffold --run-id <name> --dry-run --json` gives?
 - If missing, flag as a hard gap (skill is unusable without it).
 
 ### 9. Prose hygiene (companion)

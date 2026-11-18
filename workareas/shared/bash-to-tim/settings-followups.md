@@ -395,6 +395,12 @@ root, and no allow rule matches them (on this branch or on `main` after
   on `tools/<dir>/<script>.sh` (`docs/agent-skills.md`)
 - `awk`, `sed` and `find` on any relative workspace path, which
   `docs/agent-skills.md` now says prompt
+- `git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} diff ...` and
+  `... rev-parse HEAD`, typed by unattended file-reviewer agents
+  (`review/references/FILE_REVIEWER.md`,
+  `code-style/references/STYLE_FILE_REVIEWER.md`, `review/SKILL.md`). The
+  tilde `git -C` rule matched these; `main` after #280 has only
+  `git -C repos/<repo>:*` rules, which do not
 
 So P73 adds these allow entries in the same change that drops the four
 tilde rules:
@@ -410,6 +416,9 @@ tilde rules:
   subcommand at the workspace root; `Bash(git:*)` is the equal of that,
   and the existing `git push --force`/`-f` denies still apply.
   `git -C repos/<repo>:*` is already allowed per repo on `main` (#280).
+- `Bash(git -C workareas/:*)`, for the review clones under
+  `workareas/reviews/`. Without it (or `Bash(git:*)`), file-reviewer
+  agents stop at a permission prompt once the tilde `git -C` rule goes.
 
 Once the rules are in, change `docs/agent-skills.md` back: `awk`, `sed`
 and `find` are allowed on workspace-relative paths, and the "A
@@ -436,3 +445,13 @@ Left for a person, because agents do not edit hooks or permission config:
   its entry once the message changes.
 - Each service repo's `.claude/settings.json` hook still runs
   `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`.
+- `docs/onboarding/01-workspace.pptx` still says "Clone to
+  ~/git/defra/trade-imports-workspace (symlink if elsewhere)". Its
+  generator, `docs/onboarding/generator/build-deck.js`, now says the folder
+  is a default, so regenerate the deck from it.
+- `tim skill scaffold` still prints `allowlist_entries` in the tilde form,
+  `Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)`, and appends
+  them to `.claude/settings.json`. P72 left it alone: it is a change to a
+  command's output, not to text, and no check yet shows that the relative
+  form `Bash(tools/<name>/*)` matches a call. Change it in P73 or its own
+  row, once the relative `tools/` rules are proven.

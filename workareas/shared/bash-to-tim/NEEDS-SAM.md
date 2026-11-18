@@ -11,9 +11,8 @@ scripts. So P19B (the guard hooks) is dropped, and the 8 service repos
 keep their hook calling `tools/sonar/sonar-push-check.sh`, a one-line
 forwarder into tim that stays.
 
-1. **Stack check (P61, P62).** `node workareas/shared/bash-to-tim/sam/1-stack-check.mjs`
-   takes the hand-started stack down, starts it from local source through
-   tim and takes it down again.
+1. **Stack check (P61, P62).** Done 2026-11-18: passed, all 21 containers
+   started from local source and came down again.
 2. **Workspace sonar hooks (P55).** `node workareas/shared/bash-to-tim/sam/2-switch-hooks.mjs`
    switches the workspace's push gate and four session hooks to tim and
    commits to #263. Then an agent deletes `scripts/sonar/` and sets P55

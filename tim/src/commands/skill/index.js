@@ -103,7 +103,7 @@ const registerScaffold = (skill, { timVersion }) =>
   skill
     .command('scaffold')
     .description(
-      "Build a new skill from a run's answers: SKILL.md, worker references, a state schema, helper script stubs and decisions.md, and add its two allowlist entries to .claude/settings.json. Refuses while any answer is missing."
+      "Build a new skill from a run's answers: SKILL.md, worker references, a state schema, helper script stubs and decisions.md, and add its allowlist entry to .claude/settings.json. Refuses while any answer is missing."
     )
     .option('--run-id <name>', 'The skill name the run is for')
     .option('--dry-run', 'Show what it would write and change nothing')

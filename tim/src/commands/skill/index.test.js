@@ -261,10 +261,7 @@ describe('tim skill scaffold matches scaffold-skill.sh', () => {
         references: [],
         schema: null,
         helpers: [],
-        allowlist_entries: [
-          'Bash(~/git/defra/trade-imports-workspace/tools/prose-plain/*)',
-          'Bash(~/git/defra/trade-imports-workspace/tools/prose-plain/*:*)'
-        ]
+        allowlist_entries: ['Bash(tools/prose-plain/*)']
       })
     )
   })

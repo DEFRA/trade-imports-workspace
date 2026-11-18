@@ -171,5 +171,4 @@ delete entries (they explain the original judgment).
 ## 8. Allowlist entries added
 
 - `Bash(tools/{{NAME}}/*)`
-- `Bash(tools/{{NAME}}/*:*)`
 ```

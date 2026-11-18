@@ -82,7 +82,8 @@ Rules that held:
 - **Interface ids** (`SYN-11`, `SYN-12`, `SYN-13` on the Defra ID calls)
   are in the log line's message, `External call defra-id/jwks (SYN-12)
   success in 3 ms`, not a dimension or a field: a field outside CDP's
-  ECS list is dropped.
+  ECS list is dropped. This replaces the `interface.id` field in the
+  agreed list of 2026-11-11, to be recorded on EUDPA-674.
 - **A streamed response is timed to its headers.** The body is read
   after the call is recorded.
 
@@ -161,7 +162,7 @@ them under `/live-animals/notifications/{journeyId}/`. Tagged by route
 template that is up to 84 method and route pairs times the status
 classes each returns, about 170 metrics in each environment. The team
 chose to tag by section (2026-11-17): 37 sections, 56 method and section
-pairs, about 115 metrics. Recorded on EUDPA-674.
+pairs, about 115 metrics. To be recorded on EUDPA-674.
 
 `journey.validation.failure`, a count tagged `page` (the route's literal
 segments after its first path parameter, such as

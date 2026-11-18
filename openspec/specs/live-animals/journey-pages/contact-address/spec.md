@@ -6,21 +6,29 @@
 
 **Page**: consignment-contact-select
 
-Asks which address should be used as the consignment's point of contact, offering the address book as a plain list rather than the searchable one the consignment roles get. The page opens with a sentence saying whose address this is, and puts the choice under its own sub-heading. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
+Asks which address should be used as the consignment's point of contact, offering the organisation's own branch addresses as a plain list, newest added first, rather than the whole book, and outside stub mode says how to add a branch address, as `live-animals/addresses` describes. The page opens with a sentence saying whose address this is, and puts the choice under its own sub-heading. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
 
 ## Requirements
 
-### Requirement: The page offers the address book as a plain list, each option showing its address, with none chosen in advance
+### Requirement: The page offers the organisation's branch addresses as a plain list, each option showing its address, with none chosen in advance
 **ID**: REQ-CONTACT-001
-The system MUST show, directly under the page heading, the sentence saying whose address this is, MUST ask the user to choose a contact address under its own sub-heading, offering every address in the book as an option naming the record and showing its address ending at the postcode, with a save-and-continue action, and MUST leave every address unchosen when the page is first opened.
+The system MUST show, directly under the page heading, the sentence saying whose address this is, MUST ask the user to choose a contact address under its own sub-heading, offering the organisation's addresses held as branch addresses, newest added first, together with any address held with no role at all, as an option naming the record and showing its address ending at the postcode, with a save-and-continue action, and MUST leave every address unchosen when the page is first opened.
 
 #### Scenario: The page presents its list with no address chosen
 **ID**: SCN-CONTACT-001-A
 - **GIVEN** the user has reached the contact address page without answering it before
 - **WHEN** the page loads
 - **THEN** it shows the sentence saying whose address this is directly under the page heading
-- **AND** under a sub-heading it asks which contact address to use, offering every address in the book as an option naming the record and showing its address ending at the postcode, with a save-and-continue action
+- **AND** under a sub-heading it asks which contact address to use, offering the organisation's addresses held as branch addresses as options naming the record and showing its address ending at the postcode, with a save-and-continue action
+- **AND** the addresses are offered newest added first
 - **AND** no address is shown as chosen
+
+#### Scenario: An address held for a consignment role is not offered here
+**ID**: SCN-CONTACT-001-B
+- **GIVEN** the organisation's address book holds an address for a consignment role, such as consignor, and a separate address held as a branch address
+- **WHEN** the user opens the contact address page
+- **THEN** the address held for the consignment role is not offered as an option
+- **AND** the same address is offered on that role's own address list
 
 ### Requirement: A chosen contact address is copied onto the notification and shown chosen on return
 **ID**: REQ-CONTACT-002
@@ -78,6 +86,14 @@ The system MUST refuse to save a submitted value that does not match one of the 
 - **WHEN** they save and return to overview
 - **THEN** the save is refused, an error links to and focuses the option group
 - **AND** no option is shown as chosen
+
+#### Scenario: An address held for a consignment role is refused the same way
+**ID**: SCN-CONTACT-004-C
+- **GIVEN** the user submits an address the book holds for a consignment role, not the contact role
+- **WHEN** they save and continue
+- **THEN** the save is refused, an error links to and focuses the option group
+- **AND** no option is shown as chosen
+- **AND** nothing is saved
 
 ### Requirement: The back link returns to where the user came from
 **ID**: REQ-CONTACT-005

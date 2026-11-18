@@ -5,8 +5,8 @@
   "requirements": [
     {
       "id": "REQ-CONTACT-001",
-      "name": "The page offers the address book as a plain list, each option showing its address, with none chosen in advance",
-      "coverage": "full",
+      "name": "The page offers the organisation's branch addresses as a plain list, each option showing its address, with none chosen in advance",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONTACT-001-A",
@@ -16,8 +16,21 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "heads the page with its own title, the intro directly under it, and the choice under its own sub-heading", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "renders the page controls, hinted with the address ending at the postcode", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "leaves the contact address unchecked on load", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "offers the organisation's branch addresses newest added first, and does not offer one held for a consignment role", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "the INS add page reached from the contact address page asks no roles question, and Save and continue saves the address as a branch address, selects it and lists it above both branch addresses already in the book, with the added banner", "strength": "partial", "notes": "witnesses the newest-added-first ordering through the add hand-back; it reaches the page already answered, so it does not prove this scenario's unanswered-page given — not red-probed, this run held no workspace stack" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "heads the page with its own title, shows the intro directly below it, and puts the choice under a sub-heading with a hidden legend", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the address-book contacts, each hinted with its address ending at the postcode", "strength": "full", "notes": "Probed: dropping the postcode cut from addressSummaryEndingAtPostcode turns this case red and restoring it turns it green" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the branch-listed address-book contacts, each hinted with its address ending at the postcode, and offers no other party from the book", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should offer only the organisation's branch addresses, each hinted with its address ending at the postcode, and no other party from the book", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-001-B",
+          "name": "An address held for a consignment role is not offered here",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "offers the organisation's branch addresses newest added first, and does not offer one held for a consignment role", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the branch-listed address-book contacts, each hinted with its address ending at the postcode, and offers no other party from the book", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should offer only the organisation's branch addresses, each hinted with its address ending at the postcode, and no other party from the book", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" }
           ]
         }
       ]
@@ -79,7 +92,7 @@
     {
       "id": "REQ-CONTACT-004",
       "name": "An invalid submitted option is refused without preserving it",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONTACT-004-A",
@@ -95,6 +108,14 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to overview with a value the book does not hold is refused the same way, with no option left chosen", "strength": "full", "notes": "follows the error summary link and proves the first radio in the group takes focus" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-004-C",
+          "name": "An address held for a consignment role is refused the same way",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 and commit nothing when the picked address is held for a consignment role, not the contact role", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" }
           ]
         }
       ]

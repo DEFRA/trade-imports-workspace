@@ -6,9 +6,9 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ## Requirements
 
-### Requirement: Each role's list offers only the addresses saved for that role, and any saved with no role
+### Requirement: Each consignment role's list offers only that role's addresses, the consignment contact's only branch addresses, and any address saved with no role is on all of them
 **ID**: REQ-ADDR-018
-The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor.
+The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor. The consignment contact's list is the organisation's addresses saved as a branch address, together with any address saved with no role at all, and an address saved for a consignment role is not on it.
 
 #### Scenario: An address saved for one role is listed only on that role's list
 **ID**: SCN-ADDR-018-A
@@ -22,11 +22,18 @@ The system MUST list, for each consignment role, only the organisation's address
 - **WHEN** the user opens either role's list
 - **THEN** the address is listed on both
 
-#### Scenario: An address saved with no role is listed on every role's list
+#### Scenario: An address saved with no role is listed on every role's list and on the consignment contact page
 **ID**: SCN-ADDR-018-C
 - **GIVEN** an address is saved with no role at all
-- **WHEN** the user opens any of the five consignment role lists
-- **THEN** the address is listed on all five
+- **WHEN** the user opens any of the five consignment role lists, or the consignment contact page
+- **THEN** the address is listed on all five, and on the consignment contact page
+
+#### Scenario: An address saved as a branch address is offered to the consignment contact and to none of the five consignment roles
+**ID**: SCN-ADDR-018-D
+- **GIVEN** an address is saved as a branch address
+- **WHEN** the user opens the consignment contact page, or any of the five consignment role lists
+- **THEN** the address is offered on the consignment contact page
+- **AND** the address is listed on none of the five consignment role lists
 
 ### Requirement: The list shows every address for the role on one page
 **ID**: REQ-ADDR-017
@@ -64,7 +71,8 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 **ID**: SCN-ADDR-001-D
 - **GIVEN** the user is choosing an address for a consignment role or the consignment contact, and the address book service is available
 - **WHEN** they view the page
-- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading; for the consignment contact, a link is offered
+- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading
+- **AND** for the consignment contact, the sentence "If the correct address is not shown, add a new branch address, then return to this page." is shown, with "add a new branch address" as the link, and it is the only way the page offers to add an address
 - **AND** either leads to the address book's own add-address page, and no add-address form is served within the journey itself
 
 #### Scenario: Saving with Save and select lands on the consignment addresses page with the address chosen for the role
@@ -121,6 +129,7 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **WHEN** they save a new address there with "Save and continue"
 - **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book"
 - **AND** the address is chosen as the contact address
+- **AND** the new address is offered above the addresses that were already in the book
 
 #### Scenario: Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved
 **ID**: SCN-ADDR-001-M

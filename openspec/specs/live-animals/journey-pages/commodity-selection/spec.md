@@ -368,22 +368,22 @@ The system MUST offer each tally entry a control whose accessible name is "Remov
 - **WHEN** the page next renders
 - **THEN** that entry's remove control has the accessible name "Remove", the species' Latin name, "from" and its commodity heading, such as "Remove Bos taurus from Cattle (0102)"
 
-### Requirement: Without JavaScript, an Update selected control brings the tally up to date
+### Requirement: Without JavaScript, an Add selection control brings the tally up to date
 **ID**: REQ-COMMODITY-SELECT-019
-Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. With JavaScript on, it MUST NOT show the control, because a tick brings the tally up to date itself.
+Without JavaScript, the system MUST offer an "Add selection" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. With JavaScript on, it MUST NOT show the control, because a tick brings the tally up to date itself.
 
-#### Scenario: With JavaScript off, Update selected brings the tally up to date with the ticks on screen
+#### Scenario: With JavaScript off, Add selection brings the tally up to date with the ticks on screen
 **ID**: SCN-COMMODITY-SELECT-019-A
 - **GIVEN** the user has JavaScript turned off, has searched, and has ticked a species in the results
-- **WHEN** they use the Update selected control
+- **WHEN** they use the Add selection control
 - **THEN** the tally shows that species as chosen
 - **AND** the search term and its results are still shown
 
-#### Scenario: With JavaScript on, no Update selected control is shown
+#### Scenario: With JavaScript on, no Add selection control is shown
 **ID**: SCN-COMMODITY-SELECT-019-B
 - **GIVEN** the user has JavaScript turned on and a search lists results
 - **WHEN** the results are shown
-- **THEN** there is no Update selected control
+- **THEN** there is no Add selection control
 
 ### Requirement: With JavaScript, a typed search announces how many species it lists
 **ID**: REQ-COMMODITY-SELECT-020

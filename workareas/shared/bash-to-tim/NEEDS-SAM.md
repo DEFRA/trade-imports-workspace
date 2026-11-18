@@ -26,7 +26,12 @@ forwarder into tim that stays.
 5. **Allowlist test (P11).** Done 2026-11-18: a `*` inside a `:*` rule
    matches nothing, so P71 allows one literal prefix per repo. Recorded in
    `docs/agent-skills.md`.
-6. **Plants prototype.** `ins-address-book.test.js` fails because
+6. **Relative allow rules and a second clone (P71 to P73).** Done
+   2026-11-18: #280 and #283 replace every rule naming the fixed path, and
+   #281 makes skills and docs type relative paths. A fresh clone at
+   `~/git/defra/trade-imports-workspace-2` ran 12 typical commands with no
+   prompt (`p73-results.json`).
+7. **Plants prototype.** `ins-address-book.test.js` fails because
    ins-frontend exports `addressTypeOfRole` and `keepRolesOfferedBy` and the
    prototype does not, so its pre-commit hook is red. Port ins-frontend's
    typed address-book model, or stop the test tracking the sibling. Then an

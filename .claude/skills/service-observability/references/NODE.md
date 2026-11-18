@@ -1,12 +1,10 @@
 Publish a Node (hapi) service's metrics and log each dependency call.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
-The reference implementation is `trade-imports-animals-frontend`
-(EUDPA-674, branch `feat/EUDPA-674-node-observability`). Read it before
-writing anything. Proven there by tests, which check the EMF documents
-and the ECS JSON written, not that a function was called. `[UNPROVEN]`
-in dev CloudWatch and dev OpenSearch until that release is checked
-there.
+The reference implementation is `trade-imports-animals-frontend`, on
+its `main`. Read it before writing anything. Its tests check the EMF
+documents and the ECS JSON written, not that a function was called.
+`SKILL.md` → "What is proven" says how far it is proven.
 
 The names are the ones in `METRICS.md` → "Work out the list", and the
 log line is the one in `LOGGING.md` → "The line". What differs from Java

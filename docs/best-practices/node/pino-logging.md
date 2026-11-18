@@ -201,10 +201,9 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 ```js
 // Bad
 logger.warn({ integration, durationMs }, 'External call failed')
-
-// Good
-logger.warn({ err, integration, status: err.status, durationMs }, 'External call failed')
 ```
+
+Good: the house external-call line, which carries the cause as `error` and the status as `http.response.status_code`. Its fields are listed once, in [`service-observability/references/LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "The line"; the Node form is in [`references/NODE.md`](../../../.claude/skills/service-observability/references/NODE.md) → "The log line".
 
 **A warning without the thing it warns about.** A Java port-type fallback (`PortType`) warns inside the enum, where the port code is not in scope, so the line cannot say which port. Log where the code is in scope, or pass the code in. In pino:
 

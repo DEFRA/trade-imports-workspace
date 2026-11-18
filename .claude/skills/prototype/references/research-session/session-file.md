@@ -2,7 +2,7 @@
 
 The tasks for a research round, kept in the research release at
 `src/server/app/sets/<set-id>/research-session.json` (inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`).
+`repos/trade-imports-plants-prototype/`).
 `designer:research -- sheet <set-id>` reads it to make the participant sheet.
 It is an ordinary file in the release: save it with
 `references/share-my-change.md` like any other change. It is **not** part of
@@ -45,4 +45,4 @@ name from the release's `patterns.md`, for example
 facilitator which hypothesis the task is for.
 
 Check each `example` id is real with
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>`.
+`npm --prefix repos/trade-imports-plants-prototype run designer:examples -- links <set-id>`.

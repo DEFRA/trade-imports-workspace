@@ -1,6 +1,6 @@
 # Deterministic verdict rule + report layout
 
-`finalize-verdict.sh` reads `transcript.json` and applies the table
+`tim understanding-check finalize` reads `transcript.json` and applies the table
 below. The rule is deterministic — no LLM judging the final verdict.
 That's intentional: LLM-scored individual answers (advisory) + a
 counting rule on top (deterministic) is the gate.
@@ -26,11 +26,10 @@ Then, in evaluation order (first match wins):
 
 `coverage_gaps[]` is appended to by:
 
-- `prepare-check.sh` if the diff exceeds `--max-diff-bytes` and gets
+- `tim understanding-check prepare` if the diff exceeds `--max-diff-bytes` and gets
   truncated.
 - The parent session if the developer types `quit` mid-interview.
 - The SCORER persona if the helper records `FAIL/unscorable`.
-- `verify-coverage.sh` if it finds a missing answer or score.
 
 ## Why this shape
 
@@ -49,7 +48,7 @@ Per
 
 ## Report layout — `report.md`
 
-Produced by `render-report.sh EUDPA-XXXXX` (no `--preview` flag). Ten
+Produced by `tim understanding-check report EUDPA-XXXXX` (no `--preview` flag). Ten
 sections, in this order:
 
 1. **Header** — ticket id, base ref, head SHA per repo, model + skill
@@ -68,7 +67,7 @@ sections, in this order:
 8. **Suggested follow-up learning** — bullets. Each names a concept
    tag and points to one file:lines in the diff.
 9. **Coverage gaps** — `.interview-meta.json.coverage_gaps[]`, one per
-   line, plus the redaction-count summary `prepare-check.sh` logged
+   line, plus the redaction-count summary `tim understanding-check prepare` logged
    (not the matched secrets, ever).
 10. **PR comment block** — fenced markdown, ≤1500 chars, paste-ready.
     Ends with the canonical disclaimer:

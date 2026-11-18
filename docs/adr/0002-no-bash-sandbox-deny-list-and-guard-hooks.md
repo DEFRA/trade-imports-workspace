@@ -45,7 +45,28 @@ names the allowed route.
 - The development loop runs unchanged: `npm --prefix`, Maven, Docker and `gh`
   all work from the workspace root.
 - Protection depends on the deny list and hooks being kept up to date. A new
-  risky command needs a new hook check or deny entry, with a test.
+  risky command needs a new hook check or deny entry, with a test. The tests
+  are `tim/src/guard-hooks/guard-bash.test.js` and `guard-edits.test.js`: one
+  golden case per allow and deny branch, run by `tim`'s own test suite. They
+  spawn each hook with hook JSON on stdin, so moving a hook to another
+  language changes only its command in `tim/src/test-support/guard-hook.js`.
+  The case that the piped-test-run deny message names the clone in use is
+  marked `test.fails`: `guard-bash.sh` still names the canonical clone. The
+  change that makes the hook name `$CLAUDE_PROJECT_DIR` turns it into a plain
+  `test.each`.
+- The guard hooks stay self-contained scripts under `.claude/hooks/`, called
+  by `$CLAUDE_PROJECT_DIR`. They do not move into `tim`, for four reasons:
+  - Self-protection: `guard-edits.sh` stops agents editing `.claude/hooks/**`.
+    Code under `tim/src/` is open to agent edits, so an agent could disarm a
+    guard kept there.
+  - Failing closed: a hook that errors without a deny decision lets the
+    command through. A hook that needs `tim/node_modules` would turn every
+    guard off on a fresh clone or a stale install. The hooks need no install
+    step.
+  - The right clone: `tim` on `PATH` can resolve to another clone. Calling the
+    hook by `$CLAUDE_PROJECT_DIR` runs the copy in the clone in use.
+  - Speed: `guard-bash.sh` runs before every Bash command. Loading `tim` and
+    its dependencies each time would slow every call.
 - Reads of secret files are blocked by hooks rather than by the operating
   system, so a command the hooks do not recognise is not stopped.
 - Do not try the sandbox again without a new reason, such as a sandbox release

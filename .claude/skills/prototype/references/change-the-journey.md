@@ -24,7 +24,7 @@ passes.
 
 - **Only change files the designer owns.** In a design release, that is
   `src/server/app/sets/<release>/**`. Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <paths>`
   on every path before you edit it (step 4). If a path "belongs to the real
   service", do not edit it. `overrides.json` is the list the weekly update
   follows: anything not in its `ours` list is overwritten or clashes when the
@@ -61,7 +61,7 @@ passes.
 Run:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status
+git -C repos/trade-imports-plants-prototype status
 ```
 
 The first line names the branch.
@@ -75,7 +75,7 @@ In release mode, work out which release:
 
 1. If the designer named one, use it.
 2. If not, run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`
    and pick the working release changed most recently. If two or more fit and
    nothing points to one, ask the designer one question: which release.
 3. If there is no working release at all (only `high-risk-plants` and
@@ -104,7 +104,7 @@ someone else's branch (a `feat/`, `chore/` or trial branch) make one for the
 change before editing:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
+git -C repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
 ```
 
 ## Step 2: Pick the recipe
@@ -121,11 +121,11 @@ change. Do not ask for approval unless the request is unclear.
 Before editing anything, look at how the pages are now:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages <the pages the request names>
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages <the pages the request names>
 ```
 
 Open the pictures, and for a move run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- orders <release> <pages>`.
+`npm --prefix repos/trade-imports-plants-prototype run designer:release -- orders <release> <pages>`.
 List each part of the request and whether it already holds. For example "the
 reference number is already in a green panel" on the confirmation page, or
 "place of destination already comes before the consignor". Tell the designer
@@ -150,7 +150,7 @@ proof. That is a complete run.
 List every file you plan to create or change, then run:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path> <path> <path>
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- <path> <path> <path>
 ```
 
 In release mode, every path must say "Yours". If one does not, do not edit
@@ -164,7 +164,7 @@ Before editing, make sure the release is green, so any failure afterwards is
 yours:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release>
 ```
 
 If it fails before you have changed anything, stop. Say "your release was
@@ -192,7 +192,7 @@ As you go:
 Then format what you changed:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format
+npm --prefix repos/trade-imports-plants-prototype run designer:format
 ```
 
 ## Step 7: Check and show it
@@ -202,27 +202,27 @@ Run these one at a time. Each must pass before the next.
 1. If the example data changed, or a required question was added:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <release>
+   npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <release>
    ```
 
 2. The check. If the page order, a branch or a new page changed, run the walk
    (it runs the full check first, so do not run `--full` as well):
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --walk
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --walk
    ```
 
    Otherwise:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full
    ```
 
 3. Show it, always with `--before`, so the designer gets a before and after
    pair. For a change to one or two pages:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages changed --errors --before
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages changed --errors --before
    ```
 
    `--errors` pictures each page with a form sent empty. A page with no form
@@ -244,7 +244,7 @@ Run these one at a time. Each must pass before the next.
 4. For a branch, get one example that takes it and one that does not:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <release>
+   npm --prefix repos/trade-imports-plants-prototype run designer:examples -- links <release>
    ```
 
    The add-a-branch recipe adds the second example in the same run.
@@ -254,7 +254,7 @@ Run these one at a time. Each must pass before the next.
    page is the picture:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <release> --json-only
+   npm --prefix repos/trade-imports-plants-prototype run designer:service-map -- --set <release> --json-only
    ```
 
    Read the `edges` for the pages you changed and their `condition.text`. If
@@ -338,7 +338,7 @@ Run the conventions pass (`references/conventions-pass.md`) before
   named, and the pages in the journey today
 - `references/change-the-journey/errors-explained.md`: what each refusal
   means and the step it points to
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/recipes/`:
+- `repos/trade-imports-plants-prototype/docs/designers/recipes/`:
   the designer recipes, with a README index
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/`:
+- `repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/`:
   the real-service recipes (read only)

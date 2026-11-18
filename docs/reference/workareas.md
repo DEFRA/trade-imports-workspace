@@ -13,28 +13,29 @@ workareas/reviews/local/{repo}/{branch}/           → same shape as EUDPA-X abo
 workareas/code-style-reviews/EUDPA-X/              → .style-meta.json, items.{repo}.json, style-review.{repo}.md, style-rules.{repo}.md
 workareas/code-style-reviews/EUDPA-X/file-reviews/{repo}/ → {file}.style.json
 workareas/code-style-reviews/local/{repo}/{branch}/ → same shape as EUDPA-X above, keyed on repo:branch — no ticket, no PR
-workareas/ticket-creation/.prereqs/                → epics.txt, capabilities.txt, meta.json (refreshed by prepare-ticket-creation.sh)
+workareas/ticket-creation/.prereqs/                → epics.txt, capabilities.txt, meta.json (refreshed by `tim jira prereqs`)
 workareas/ticket-creation/<slug>/                  → draft.md, ticket.json (tim-ticket/1 manifest: project, type, summary, descriptionFile, parent, labels, priority, attachments, relates), ticket.description.jira.txt, ticket.created.json (the `tim jira create` receipt, once confirmed)
 workareas/ticket-planning/EUDPA-X/                 → ticket.md, plan.md, .plan-meta.json, .implement-meta.json, best-practices/{repo}.md, .diffs/{repo}.diff
-workareas/ticket-refinement/EUDPA-X/               → ticket.md, review.md, .refinement-meta.json
+workareas/ticket-refinement/EUDPA-X/               → ticket.md, review.md, .refinement-meta.json (tim refine)
 workareas/npm-upgrades/EUDPA-X/{repo}/             → packages.{repo}.json, .upgrades-meta.json, best-practices.md, .context/{pkg}/
 workareas/govuk-upgrades/EUDPA-X/                  → .run-meta.json
 workareas/govuk-upgrades/EUDPA-X/{repo}/           → versions.{repo}.json, CHANGELOG.md, version__{v}.changelog.md, best-practices.md
 workareas/shared/EUDPA-X/                          → review handoff artifacts (tracked; committed to chore/EUDPA-X-review-handoff)
 workareas/skill-creator/<name>/                    → decisions.json (CREATE-mode interview state)
 workareas/skills-audit/<name>.md                   → AUDIT-mode plan document (per skill)
-workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md
-workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; canonical build-loop state)
-workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; provenance — pins, captures, resolved citations)
+workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md; .raw/ (prs.json, {repo}.sha, {repo}.diff as gh saved them) only between `tim understanding-check start` and `prepare`
+workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; historical, read-only: the retired journey-builder skill wrote them)
+workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; historical, read-only provenance — pins, captures, resolved citations)
 workareas/<programme>/traces/<app>/<sha>/          → Playwright traces, manifest.json and coverage.json (written by `tim capture`)
+workareas/stack-logs/                              → lease-acquire.log, lease-release.log (the stack script output `tim docker lease` and `tim docker perf` write when no --logs is given)
 ```
 
 ## What is tracked under `workareas/`, and why
 
 Eight files, each because it outlives the run that made it:
 
-- `journey-builder/*/backlog.json` — the executable definition of a body of
-  work. Judgement, not cache.
+- `journey-builder/*/backlog.json` — the record of a body of work the retired
+  journey-builder skill built. Judgement, not cache.
 - `journey-builder/*/deferred.json` — leads found but not yet verified to
   backlog standard.
 - `journey-builder/*/.corpus-meta.json` — which commit each side is pinned at

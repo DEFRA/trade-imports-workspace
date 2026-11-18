@@ -4,15 +4,15 @@ Identify patterns present in some repos but absent in others. Produce
 one `_consistency-check.md` per repo, using the 0-byte stub as a
 tracking gate.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
-helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workspace
 
 ```
-~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/
+workareas/reviews/EUDPA-XXXXX/
 ├── ticket.md              # READ: change intent and AC
 ├── .review-meta.json      # READ: repos, PR numbers, commits
 └── file-reviews/{repo}/
@@ -24,17 +24,17 @@ helper in `docs/agent-skills.md`.
 ### 1. Read context
 
 ```bash
-cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.review-meta.json
-cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
+cat workareas/reviews/EUDPA-XXXXX/.review-meta.json
+cat workareas/reviews/EUDPA-XXXXX/ticket.md
 ```
 
 ### 2. Read all diffs (from the workspace cache)
 
-`prepare-review.sh` already cached the full PR diff for every repo
+The review skill's Step 1 already cached the full PR diff for every repo
 at:
 
 ```
-~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.diffs/{repo-name}.diff
+workareas/reviews/EUDPA-XXXXX/.diffs/{repo-name}.diff
 ```
 
 Read those files directly — no need to call `gh pr diff` or
@@ -73,14 +73,14 @@ Run this for every repo, including a single-repo review.
    default the change alters. Write each as a search term: the old
    name, the old literal, the old route, the old wording.
 2. In the pinned review clone
-   `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/`,
+   `workareas/reviews/EUDPA-XXXXX/repos/{repo}/`,
    search for each term outside the changed lines, in:
    - the repo's recipes and docs: `**/docs/add-a-*.md`,
      `src/server/app/docs/*.md`, `**/docs/*.md`, `AGENTS.md`,
      `CLAUDE.md`, `README.md`
    - JSDoc and Javadoc blocks, and line comments
    - test titles (`test(`, `it(`, `describe(`, `@DisplayName`)
-   - `~/git/defra/trade-imports-workspace/docs/best-practices/` and
+   - `docs/best-practices/` and
      `openspec/specs/` when the rule is one they state
 3. Every hit that still states the old way is a finding. Record the
    file, the line, the old statement, and what is now true.
@@ -99,7 +99,7 @@ For **every** repo in `.review-meta.json`, write to the existing 0-byte
 stub:
 
 ```
-~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/_consistency-check.md
+workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/_consistency-check.md
 ```
 
 Use this template:
@@ -167,7 +167,7 @@ The status is `SINGLE REPO` when both are empty, otherwise
 ## Output
 
 Every `_consistency-check.md` stub must be written (non-empty) before
-`verify-consistency.sh` will pass.
+`tim review verify consistency` will pass.
 
-The parent review skill runs `verify-consistency.sh` afterwards —
+The parent review skill runs `tim review verify consistency` afterwards —
 empty = pending, non-empty = reviewed.

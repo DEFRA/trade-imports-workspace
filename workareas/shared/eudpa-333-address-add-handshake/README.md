@@ -51,7 +51,7 @@ Then replace the attachment. **Three steps, and the third is not optional:**
 TOOLS=~/git/defra/trade-imports-workspace/tools/jira
 $TOOLS/attach-file.sh EUDPA-333 /tmp/happy-path.png        # 1. attach the new file
 $TOOLS/update-ticket.sh EUDPA-333 -d - < description.wiki  # 2. re-push the description
-$TOOLS/delete-attachment.sh EUDPA-333 happy-path.png --all # 3. remove the old copy
+tim jira detach EUDPA-333 happy-path.png --all --confirm   # 3. remove the old copy
 ```
 
 Why this order, and why step 2 exists:
@@ -65,7 +65,7 @@ Why this order, and why step 2 exists:
 - **Delete last**, with `--all`, because by then two files share the name — step 1
   added one rather than replacing.
 
-`delete-attachment.sh EUDPA-333 --list` shows what the ticket currently holds. Without
+`tim jira detach EUDPA-333 --list` shows what the ticket currently holds. Without
 `--all` the delete refuses when several share a filename and lists them instead, so
 you can pick with `--id`.
 

@@ -4,7 +4,11 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { JIRA_BASE, mockJiraForEachTest } from '../../test-support/jira-mock.js'
+import {
+  JIRA_BASE,
+  loadJiraFixture,
+  mockJiraForEachTest
+} from '../../test-support/jira-mock.js'
 import {
   runCreate,
   renderCreatePlan,
@@ -222,6 +226,67 @@ describe('runCreate — success', () => {
       code: 'USAGE',
       message: expect.stringContaining('EUDPA-500')
     })
+  })
+})
+
+describe('runCreate sends the recorded Jira payload for each manifest', () => {
+  const bashPayloads = loadJiraFixture('create-bash-payloads.json')
+
+  const acceptsCreate = () => {
+    const sent = { body: null }
+    jira()
+      .post('/rest/api/2/issue', (body) => {
+        sent.body = body
+        return true
+      })
+      .reply(201, {
+        id: '1',
+        key: 'EUDPA-999',
+        self: `${JIRA_BASE}/rest/api/2/issue/1`
+      })
+    return sent
+  }
+
+  test.each([
+    [
+      'defaults',
+      { description: '', manifest: { type: 'Task', summary: 'Fix login bug' } }
+    ],
+    [
+      'epic',
+      {
+        description: 'Epic body',
+        manifest: {
+          type: 'Epic',
+          summary: 'An epic',
+          priority: 'High',
+          labels: ['DevOps']
+        }
+      }
+    ],
+    [
+      'taskWithParentAndFile',
+      {
+        description: 'h2. Background\n\nBody line.\n\n\n',
+        manifest: {
+          type: 'Task',
+          summary: 'Upgrade govuk-frontend',
+          parent: 'EUDPA-144',
+          labels: ['DevOps', 'tech-improvement']
+        }
+      }
+    ]
+  ])('%s', async (bashCase, { description, manifest }) => {
+    const manifestPath = writeManifest({
+      description,
+      manifest: { labels: [], ...manifest }
+    })
+    const { planId } = await runCreate({ fromPath: manifestPath })
+    const sent = acceptsCreate()
+
+    await runCreate({ fromPath: manifestPath, confirmPlanId: planId })
+
+    expect(sent.body).toEqual(bashPayloads[bashCase].requests[0].body)
   })
 })
 

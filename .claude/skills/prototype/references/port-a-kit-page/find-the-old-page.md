@@ -13,7 +13,7 @@ folder, and skips folders it cannot read.
 ## 1. Find a clone
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:kit -- find
+npm --prefix repos/trade-imports-plants-prototype run designer:kit -- find
 ```
 
 It prints the clone it will use (the one changed most recently, or the one
@@ -24,7 +24,7 @@ notification prototype? A folder path, or I can use a page you paste in or a
 screenshot." Then give it the path, which it remembers for next time:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:kit -- find --clone <the folder>
+npm --prefix repos/trade-imports-plants-prototype run designer:kit -- find --clone <the folder>
 ```
 
 Never clone the old prototype yourself without asking: it is a separate
@@ -47,7 +47,7 @@ List its pages to match the designer's name ("the transporter page" is
 `-private` variants):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:kit -- pages
+npm --prefix repos/trade-imports-plants-prototype run designer:kit -- pages
 ```
 
 If the designer says "the DR2 version" or "the one from research", add
@@ -59,11 +59,11 @@ One command copies the page to the port's working folder, with every partial
 it includes (and theirs):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:kit -- copy <page> --release <release-id> --slug <new-slug>
+npm --prefix repos/trade-imports-plants-prototype run designer:kit -- copy <page> --release <release-id> --slug <new-slug>
 ```
 
 It writes
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<new-slug>/source.html`
+`repos/trade-imports-plants-prototype/.cache/designer/port/<release-id>/<new-slug>/source.html`
 and the partials under `included/` beside it, and prints the paths. Never
 retype a page with the Write tool. Pass `source.html` to the workflow as
 `source` with `sourceKind: "html"`, and read the partials it lists with the

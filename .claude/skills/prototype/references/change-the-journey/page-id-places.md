@@ -24,7 +24,7 @@ and why.
 
 In this file "the journey folder" means
 `src/server/app/sets/<release>/journeys/linear/` inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`.
+`repos/trade-imports-plants-prototype/`.
 
 ## The places, in the order to check them
 

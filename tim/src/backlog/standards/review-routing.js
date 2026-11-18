@@ -217,9 +217,6 @@ export const evalCondition = (condition, context) => {
 export const detectTechnologies = ({ routing, repoDir, repoFiles }) => {
   const context = { repoDir, manifestDirs: routing.manifestDirs, repoFiles }
 
-  // Matches `detect-tech.sh`'s own concatenation exactly (no interior
-  // dedup) — G-5 proves tim agrees with the bash golden byte-for-byte.
-  // Global dedup happens once, at `standards.js`'s top-level `standards[]`.
   return routing.technologies.reduce(
     (acc, tech) => {
       if (tech.requires && !acc.technologies.includes(tech.requires)) {

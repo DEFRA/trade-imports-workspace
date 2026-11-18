@@ -8,30 +8,42 @@ that say what the code returns and changes. Verify assumptions, adapt
 as needed, document deviations.
 
 Every line you write or touch meets the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`.
+`.claude/rules/code-quality.md`.
 Read that file before you start.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Before You Start
 
 One dispatch — asserts the plan exists, re-validates detect-tech per
-repo, caches the PR diff if a prior PR for the ticket exists, and emits
-`.implement-meta.json`:
+repo, and emits `.implement-meta.json`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-implement.sh EUDPA-XXXXX
+tim ticket prepare-implement EUDPA-XXXXX
+```
+
+Then look for a prior PR for the ticket:
+
+```bash
+gh search prs EUDPA-XXXXX --owner DEFRA --json number,repository,state
+```
+
+For each PR it lists, cache its diff beside the plan (from the workspace
+root, after `mkdir -p workareas/ticket-planning/EUDPA-XXXXX/.diffs`):
+
+```bash
+gh pr diff <number> --repo DEFRA/<repo> > workareas/ticket-planning/EUDPA-XXXXX/.diffs/<repo>.diff
 ```
 
 Then read in this order:
 
-1. `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md`
-2. `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/ticket.md`
-3. `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/.implement-meta.json` (tech list per repo)
-4. `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/best-practices/<repo>.md` (pre-baked at plan time)
-5. `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` (house rules)
+1. `workareas/ticket-planning/EUDPA-XXXXX/plan.md`
+2. `workareas/ticket-planning/EUDPA-XXXXX/ticket.md`
+3. `workareas/ticket-planning/EUDPA-XXXXX/.implement-meta.json` (tech list per repo)
+4. `workareas/ticket-planning/EUDPA-XXXXX/best-practices/<repo>.md` (pre-baked at plan time)
+5. `.claude/rules/code-quality.md` (house rules)
 6. Check the plan against
-   `~/git/defra/trade-imports-workspace/.claude/skills/ticket/assets/plan-review-checklist.md`.
+   `.claude/skills/ticket/assets/plan-review-checklist.md`.
    If an item fails, fix the plan first and note the change under
    `## Implementation Notes`.
 7. Verify `[ASSUMPTION]` and `[NEEDS VERIFICATION]` items in the plan
@@ -45,15 +57,15 @@ Redirect output to a tmp file and read the file once — don't grep streaming ou
 
 ```bash
 # Java (backend / stub / reference-data)
-mvn -f ~/git/defra/trade-imports-workspace/repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # Node unit (frontend / admin)
-npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # E2E (only when changing tests repo or cross-cutting code)
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 
 ## Implementation
@@ -67,7 +79,7 @@ helper produces `<type>/EUDPA-XXXXX-<slug>`, where `--type` is `feat`
 repo the ticket touches.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
+tim ticket branch EUDPA-XXXXX --repo <repo-name> --slug <description> --type feat
 ```
 
 Optional `--base <branch>` if branching from anything other than `main`.
@@ -104,7 +116,7 @@ you write or touch. In short:
   `getMessage()`. No request or response bodies at INFO.
 - A test title states what its assertions prove, and the test fails
   without the change it covers.
-- Follow tech-specific best practices at `~/git/defra/trade-imports-workspace/docs/best-practices/`: `gds/`, `java/`, `node/`, `playwright/`, `k6/`, `rest-api/`, `doc-comments/`, `docker-compose.md`. Where a nearby file breaks a house rule, do not copy it.
+- Follow tech-specific best practices at `docs/best-practices/`: `gds/`, `java/`, `node/`, `playwright/`, `k6/`, `rest-api/`, `doc-comments/`, `docker-compose.md`. Where a nearby file breaks a house rule, do not copy it.
 
 ### Comment pass: delete first
 
@@ -195,7 +207,7 @@ cross-cutting code, or a behaviour whose E2E cover you added or
 changed:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose
 ```
 
 Otherwise name the existing spec that covers the behaviour, say that it
@@ -231,14 +243,22 @@ running the step.
 ## GitHub Actions Verification
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github-actions/trigger-workflow.sh <repo-name> ci.yml <branch-name>
-~/git/defra/trade-imports-workspace/tools/github-actions/wait-for-run.sh <repo-name> <run-id> 1800
+gh workflow run ci.yml --repo DEFRA/<repo-name> --ref <branch-name>
+gh run list --repo DEFRA/<repo-name> --workflow ci.yml --branch <branch-name> --event workflow_dispatch --limit 1 --json databaseId,url,status
+gh run watch <run-id> --repo DEFRA/<repo-name> --exit-status
 ```
+
+Give GitHub a few seconds after `gh workflow run` before `gh run list`, or
+it can return the previous run. Start `gh run watch` as a background task:
+it has no time limit, exits 0 when the run passes and non-zero when it does
+not, and stops on a GitHub API error, so re-run it if it ends without the
+run finishing. Read a failure with
+`gh run view <run-id> --repo DEFRA/<repo-name> --log-failed`.
 
 A red e2e check on the PR comes from the repo's `e2e-tests.yml`, which runs
 after Publish Branch Image, not from `ci.yml`. Read it against the repo's
-entry in `~/git/defra/trade-imports-workspace/config/e2e-tests-pr-scope.json`
-and `~/git/defra/trade-imports-workspace/docs/testing/e2e-tests-gh-actions.md`.
+entry in `config/e2e-tests-pr-scope.json`
+and `docs/testing/e2e-tests-gh-actions.md`.
 PR runs leave out `@a11y`, `@active` and `@dynamics`.
 
 ## Completion Checklist

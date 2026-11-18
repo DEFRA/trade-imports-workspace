@@ -98,10 +98,39 @@ describe('resolveWorkspaceRoot', () => {
     const resolved = resolveWorkspaceRoot({
       cwd: tmpdir(),
       env: '',
-      canonical: workspace
+      canonical: workspace,
+      warn: () => {}
     })
 
     expect(resolved).toBe(workspace)
+  })
+
+  test('warns once, naming TIM_WORKSPACE, when it falls back to the canonical path', () => {
+    const warnings = []
+
+    resolveWorkspaceRoot({
+      cwd: tmpdir(),
+      env: '',
+      canonical: workspace,
+      warn: (message) => warnings.push(message)
+    })
+
+    expect(warnings).toEqual([
+      `Warning: you are not inside a workspace clone, so tim is using ${workspace}. Set TIM_WORKSPACE or pass --workspace to choose a clone.`
+    ])
+  })
+
+  test('does not warn when the walk-up finds a workspace', () => {
+    const warnings = []
+
+    resolveWorkspaceRoot({
+      cwd: inside,
+      env: '',
+      canonical: workspace,
+      warn: (message) => warnings.push(message)
+    })
+
+    expect(warnings).toEqual([])
   })
 
   test('prefers a workspace found by walking up over the canonical path', () => {
@@ -116,7 +145,7 @@ describe('resolveWorkspaceRoot', () => {
     }
   })
 
-  test('CANONICAL_WORKSPACE_PATH is the location tools/ scripts hardcode', () => {
+  test('CANONICAL_WORKSPACE_PATH is the default clone location', () => {
     expect(CANONICAL_WORKSPACE_PATH).toBe(
       join(homedir(), 'git', 'defra', 'trade-imports-workspace')
     )

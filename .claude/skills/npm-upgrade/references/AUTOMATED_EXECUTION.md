@@ -27,17 +27,17 @@ operator's attention.
 One call runs all repos in parallel and aggregates exit codes:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2 --branch {branch} --allowlist-owner "{owner}" --expiry-days {expiry-days}
+tim npm upgrade {run-id} --phase 2 --branch {branch} --allowlist-owner "{owner}" --expiry-days {expiry-days} --json
 ```
 
 For each package, in a repo that has `audit-ci.jsonc`,
-`upgrade-one-package.sh` audits the tree before the install (red there
+`tim npm upgrade-one` audits the tree before the install (red there
 marks the package failed as a repo issue, without demoting it) and
 again after the tests pass:
 
 - green: commit.
 - red only on new advisories with no fixed version: each is allowlisted
-  with `audit-allowlist-add.sh` (owner and expiry from the flags above)
+  with `tim npm audit allow` (owner and expiry from the flags above)
   and `audit-ci.jsonc` goes in the upgrade's commit.
 - red on an advisory with a fix, or no owner given: roll back
   `package.json`, `package-lock.json` and `audit-ci.jsonc`, and demote
@@ -48,7 +48,7 @@ audit and the tests) also rolls back and demotes, with the hook's
 output as the reason.
 
 At the end of each repo's batch, even one with no auto packages,
-`run-automated-upgrades.sh` calls `refresh-lockfile.sh`: `npm update`
+`tim npm run-auto` calls `tim npm refresh-lockfile`: `npm update`
 within the existing ranges (`package.json` untouched), then test, lint
 and audit, then a "Refresh transitive dependencies" commit. This is how
 fixed transitive releases arrive; ncu only sees direct dependencies. A
@@ -57,7 +57,7 @@ failure rolls the refresh back and is reported in the runner's log
 upgrades stay committed. In trade-imports-ins-tests the E2E gate runs
 after the refresh.
 
-Stdout is one JSON object:
+The JSON envelope's `.result` is one object:
 
 ```json
 {
@@ -82,7 +82,7 @@ Stdout is one JSON object:
 ## Step 2: Report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id {run-id}
+tim npm packages counts --run-id {run-id}
 ```
 
 ```
@@ -100,16 +100,17 @@ Total auto attempted: {N}
 ```
 
 Pull the per-repo `{done}` / `{demoted}` numbers from
-`packages-list.sh`:
+`tim npm packages list`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification auto --status done --json
+tim npm packages list --run-id {run-id} --classification auto --status done --json
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification manual --json
+tim npm packages list --run-id {run-id} --classification manual --json
 ```
 
+Each prints a tim JSON envelope; the rows are its `.result` array.
 (Filter the latter for `demoted_from_auto: true` if you want the
 "demoted just now" subset specifically.)
 
@@ -117,7 +118,7 @@ Pull the per-repo `{done}` / `{demoted}` numbers from
 
 ## Notes
 
-- Demotion is automatic inside `upgrade-one-package.sh` — when an
+- Demotion is automatic inside `tim npm upgrade-one` — when an
   install, test, audit or commit fails, the row's classification flips to `manual`
   with `demoted_from_auto: true` and a populated `failure_reason`.
   Phase 3 picks these up alongside the natively-manual packages.

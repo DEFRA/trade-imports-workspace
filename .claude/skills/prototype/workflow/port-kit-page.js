@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Re-create one old Prototype Kit page in a design release with real GOV.UK components, then check it, show it and grade how closely it matches',
   whenToUse:
-    "From references/port-a-kit-page.md. Launch by scriptPath with args {set, source, sourceKind, slug, after, reference}; every key is required. Optional: designerMandate ({ id }) when the skill has recorded the designer's own permission, with designer:mandate record, to rebuild the old page's own look or behaviour as a release pattern.",
+    "From references/port-a-kit-page.md. Launch by scriptPath with args {workspace, set, source, sourceKind, slug, after, reference}; every key is required. Optional: designerMandate ({ id }) when the skill has recorded the designer's own permission, with designer:mandate record, to rebuild the old page's own look or behaviour as a release pattern.",
   phases: [
     {
       title: 'Preflight',
@@ -53,6 +53,7 @@ const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolv
 
 const WORKFLOW_NAME = meta.name
 const REQUIRED_KEYS = [
+  'workspace',
   'set',
   'source',
   'sourceKind',
@@ -71,16 +72,21 @@ const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*(\/[a-z0-9]+(-[a-z0-9]+)*)*$/
 const MANDATE_ID = /^m-\d{4}-\d{2}-\d{2}-\d+$/
 const MAX_REPAIRS = 3
 
-// This workflow lives in the workspace, but every command it runs must act on
-// the prototype's own checkout, never on the workspace repo a bare command
-// would otherwise touch.
-const REPO = '~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype'
-const npm = (script) => `npm --prefix ${REPO} run ${script}`
-const inRepo = (relativePath) => `${REPO}/${relativePath}`
-
 const refuse = (reason) => {
   throw new Error(`${WORKFLOW_NAME}: ${reason}`)
 }
+
+if (typeof config.workspace !== 'string' || !config.workspace.startsWith('~/')) {
+  refuse(`workspace must be the root of the workspace clone this session runs in, as a tilde path. A /Users/... path is denied in Bash. Got ${JSON.stringify(config.workspace)}`)
+}
+const WORKSPACE = config.workspace.replace(/\/+$/, '')
+const SKILL_DIR = `${WORKSPACE}/.claude/skills/prototype`
+// This workflow lives in the workspace, but every command it runs must act on
+// the prototype's own checkout, never on the workspace repo a bare command
+// would otherwise touch.
+const REPO = `${WORKSPACE}/repos/trade-imports-plants-prototype`
+const npm = (script) => `npm --prefix ${REPO} run ${script}`
+const inRepo = (relativePath) => `${REPO}/${relativePath}`
 
 if (!SOURCE_KINDS.includes(config.sourceKind)) {
   refuse(`sourceKind must be one of ${SOURCE_KINDS.join(', ')}`)
@@ -136,7 +142,7 @@ const mandateRails = (mandate) => [
   `- DESIGNER'S MANDATE ${mandate.id}. The designer gave this permission in their own session, and ${SET_DIR}/mandates.md records it:`,
   `  Words: "${mandate.words}"`,
   `  Scope: ${mandate.scope}`,
-  `- Within that scope you may rebuild the old page's own look or behaviour as a release pattern, following ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/custom-pattern.md: change ${REPO}/${SET_DIR}/assets/**, ${REPO}/${SET_DIR}/layout.njk and ${REPO}/${SET_DIR}/patterns.md, and use app-${config.set}- classes. Never copy the Kit's Sass or JavaScript as it is.`,
+  `- Within that scope you may rebuild the old page's own look or behaviour as a release pattern, following ${SKILL_DIR}/references/custom-pattern.md: change ${REPO}/${SET_DIR}/assets/**, ${REPO}/${SET_DIR}/layout.njk and ${REPO}/${SET_DIR}/patterns.md, and use app-${config.set}- classes. Never copy the Kit's Sass or JavaScript as it is.`,
   '- Climb the ladder first: GOV.UK Frontend, then MoJ Frontend. Rebuild a custom pattern only when neither does the job, and give one line per rung you checked in notes.',
   `- Every patterns.md entry you write says Asked by: "${mandate.words}" (${mandate.id}), with those words exactly. A need or hypothesis you wrote yourself ends "(proposed: confirm)", and the entry's Status is Option, for the designer to choose.`,
   '- No script checks the scope, so keep to it yourself.',
@@ -456,7 +462,7 @@ const build = (inventory, context) =>
       fenced(inventory),
       `The new page's slug is "${config.slug}". It comes straight after the page "${config.after}" in the release's flow.`,
       `Its kind is "${inventory.pageKind}", so register it with ${RECIPES[inventory.pageKind]}.`,
-      'Read first, in this order (all in the workspace, at ~/git/defra/trade-imports-workspace/.claude/skills/prototype/):',
+      `Read first, in this order (all in the workspace, at ${SKILL_DIR}/):`,
       '1. references/port-a-kit-page/kit-to-prototype.md (how Kit habits map to this prototype)',
       '2. references/change-the-journey.md, and for a list page references/fake-a-service.md. Follow the recipe they route to, in release mode: skip every step that creates a *.test.js or *.fit.spec.js file.',
       `3. ${inRepo('.claude/rules/templates.md')} and references/match-the-design/components-we-have.md`,
@@ -568,8 +574,8 @@ const gradeFidelity = (inventory, built, shown) =>
       '- built: what the new page has',
       '- verdict: "matched" (same thing with a GOV.UK macro or class), "pattern" (rebuilt as a release pattern with a patterns.md entry, on the designer\'s mandate), "nearest" (the nearest GOV.UK option, visibly different) or "gap" (not built, such as a change to the shared header, or custom styles the designer has not asked for)',
       '- why: one plain sentence',
-      'Use ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/nearest-equivalent.md to judge what the nearest option is.',
-      `Then, for every "nearest" and "gap" row whose difference would show on screen, write one gap row in the exact format of ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/design-gaps.md, with Page "${config.slug}" and Frame "${config.source}". Return them in gapRows as whole markdown table lines.`,
+      `Use ${SKILL_DIR}/references/match-the-design/nearest-equivalent.md to judge what the nearest option is.`,
+      `Then, for every "nearest" and "gap" row whose difference would show on screen, write one gap row in the exact format of ${SKILL_DIR}/references/match-the-design/design-gaps.md, with Page "${config.slug}" and Frame "${config.source}". Return them in gapRows as whole markdown table lines.`,
       'Change nothing.'
     ].join('\n'),
     withModel('judge', {
@@ -603,7 +609,7 @@ const writeRecords = (graded, table) =>
       graded.gapRows.length === 0
         ? `2. There are no design gap rows. Do not touch ${config.set}/design-gaps.md.`
         : [
-            `2. Append these rows, exactly, to ${inRepo(`${SET_DIR}/design-gaps.md`)}. If the file does not exist, first create it with the heading and table header given in ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/design-gaps.md.`,
+            `2. Append these rows, exactly, to ${inRepo(`${SET_DIR}/design-gaps.md`)}. If the file does not exist, first create it with the heading and table header given in ${SKILL_DIR}/references/match-the-design/design-gaps.md.`,
             '<<<',
             ...graded.gapRows,
             '>>>'

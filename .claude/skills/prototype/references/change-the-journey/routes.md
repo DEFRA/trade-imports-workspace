@@ -7,12 +7,12 @@ Two kinds of recipe exist:
 
 - **Real-service recipes.** The plants team wrote these for the real journey.
   They live in
-  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/`.
+  `repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/`.
   A design release does not carry copies of them: its `docs/` folder holds
   only a one-line `README.md` pointing back there. So always read them from
   high-risk-plants. Never edit them: they belong to the real service.
 - **Designer recipes.** These live in
-  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/recipes/`.
+  `repos/trade-imports-plants-prototype/docs/designers/recipes/`.
   They cover the changes designers make most often that the real-service
   recipes do not.
 
@@ -64,7 +64,7 @@ Match the request to the first line that fits.
     recipe **validation-rules** (`docs/designers/recipes/validation-rules.md`).
 
 The designer-recipe paths above are relative to
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`.
+`repos/trade-imports-plants-prototype/`.
 
 ### Where a new question goes
 
@@ -95,9 +95,9 @@ rule 6). A list of notes, or four or more changes, goes to the
 
 When the obligation model is involved (a new field, a branch, a list), also
 read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/obligation-model.md`
+`repos/trade-imports-plants-prototype/src/server/app/sets/high-risk-plants/docs/obligation-model.md`
 and the platform guide
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/docs/validation.md`.
+`repos/trade-imports-plants-prototype/src/server/app/docs/validation.md`.
 For any change to the page order, also read
 `.../high-risk-plants/docs/journey-flow-and-gates.md`.
 
@@ -117,7 +117,7 @@ Other names to swap:
   `'<release>/journeys/linear'`. Import it; never type the prefix by hand.
 - The prototype's `test:high-risk-plants` script does not cover a release.
   Use
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release>`
   wherever a recipe says to run it.
 
 ### Steps to skip in a release
@@ -165,7 +165,7 @@ page. Update `src/server/app/sets/<release>/journeys/linear/flow/fixtures/happy-
 - add a step for any new page, in journey order, with its `slug` and `fields`
 
 Then run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <release>`.
+`npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <release>`.
 Every example must say it was reached.
 
 ### Where the real-service recipes are out of date
@@ -203,7 +203,7 @@ On a `handoff/<slug>` branch, and only there, the target set is
   or task-row change: the flow, task-row and hub tests it names)
 - run the ladder from `.../high-risk-plants/docs/testing.md`, one command at
   a time, each as
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run <script>`:
+  `npm --prefix repos/trade-imports-plants-prototype run <script>`:
   `test:high-risk-plants`, the plain `test` script, `test:fit:features`,
   `lint`, and `test:fit:journeys` for any change to page order or the happy
   path.

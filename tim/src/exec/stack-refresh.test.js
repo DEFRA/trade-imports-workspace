@@ -11,6 +11,10 @@ import {
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
+import {
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../test-support/fake-docker.js'
 import { refreshLeasedStack } from './stack-refresh.js'
 import {
   DEV_OVERLAY_PATH,
@@ -93,26 +97,40 @@ const overlay = (refreshWith = {}) =>
   ].join('\n')
 
 // A workspace whose dev overlay builds two repos, a running stack whose
-// containers live in one state file, and a dev-service.sh that records each
-// call: a rebuild recreates every container (new ids); a restart keeps them;
-// FAIL_REBUILD makes a rebuild fail.
-const workspace = async ({ rebuildFails = false, refreshWith = {} } = {}) => {
+// containers live in one state file, and a docker that records each compose
+// call after its files and profiles: a build recreates every container (new
+// ids); a restart keeps them; rebuildFails makes a build fail.
+const workspace = async ({
+  rebuildFails = false,
+  refreshWith = {},
+  stackStartLines = ''
+} = {}) => {
   for (const service of SERVICES) await committedRepo(service)
   writeFile(join(root, DEV_OVERLAY_PATH), overlay(refreshWith))
   writeFileSync(statePath(), 'c1\nc2\n')
   writeExecutable(
-    join(root, 'scripts', 'stack', 'dev-service.sh'),
-    [
-      `echo "dev-service.sh $*" >> '${callsPath()}'`,
-      `if [ "$1" = rebuild ]; then printf 'c3\\nc4\\n' > '${statePath()}'; ${rebuildFails ? 'exit 7;' : ''} fi`
-    ].join('\n')
-  )
-  writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ]; then cat '${statePath()}'; fi`
+    [
+      stackStartLines,
+      `if [ "$1" = ps ]; then cat '${statePath()}'; exit 0; fi`,
+      'if [ "$1" != compose ]; then exit 0; fi',
+      'shift',
+      'while [ "$1" = -f ] || [ "$1" = --profile ]; do shift 2; done',
+      `echo "compose $*" >> '${callsPath()}'`,
+      `if [ "$2" = --build ]; then printf 'c3\\nc4\\n' > '${statePath()}'; ${rebuildFails ? 'exit 7;' : ''} fi`
+    ].join('\n')
   )
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
+
+const rebuildCalls = (...services) => [
+  `compose up --build --no-deps --wait --detach ${services.join(' ')}`
+]
+
+const restartCalls = (...services) => [
+  `compose restart ${services.join(' ')}`,
+  `compose up --no-deps --no-recreate --wait --detach ${services.join(' ')}`
+]
 
 const writeLease = (lease) => {
   writeFile(
@@ -198,10 +216,22 @@ describe('refreshLeasedStack', () => {
         left: ['api'],
         reason: null
       },
-      calls: ['dev-service.sh restart web'],
+      calls: restartCalls('web'),
       containers: ['c1', 'c2'],
       restartLog: logPaths().restart
     })
+  })
+
+  test('writes the service command and its heading to the restart log, uncoloured', async () => {
+    const env = await workspace()
+    const lease = await leaseWithCurrentFingerprints()
+    writeFileSync(join(root, 'repos', 'web', 'src', 'index.js'), 'export {}\n')
+
+    await refresh(env, lease)
+
+    expect(readFileSync(logPaths().restart, 'utf8')).toBe(
+      `$ tim docker service restart web\n# in ${root}\n\nRestarting: web\n`
+    )
   })
 
   test('rebuilds only the service whose build inputs changed, and records its new containers', async () => {
@@ -224,7 +254,7 @@ describe('refreshLeasedStack', () => {
         left: ['web'],
         reason: null
       },
-      calls: ['dev-service.sh rebuild api'],
+      calls: rebuildCalls('api'),
       containers: ['c3', 'c4'],
       rebuildLog: logPaths().rebuild
     })
@@ -245,7 +275,7 @@ describe('refreshLeasedStack', () => {
         left: [],
         reason: null
       },
-      calls: ['dev-service.sh rebuild api', 'dev-service.sh restart web']
+      calls: [...rebuildCalls('api'), ...restartCalls('web')]
     })
   })
 
@@ -279,7 +309,7 @@ describe('refreshLeasedStack', () => {
       fingerprints: Object.keys(leaseOnDisk().fingerprints)
     }).toEqual({
       rebuilt: ['web', 'api'],
-      calls: ['dev-service.sh rebuild web api'],
+      calls: rebuildCalls('web', 'api'),
       fingerprints: ['web', 'api']
     })
   })
@@ -301,7 +331,7 @@ describe('refreshLeasedStack', () => {
         rebuilt: ['api'],
         restarted: [],
         left: ['web'],
-        reason: `Rebuilding api failed (dev-service.sh exited 7). Read ${logPaths().rebuild}.`
+        reason: `Rebuilding api failed (docker compose exited 7). Read ${logPaths().rebuild}.`
       },
       containers: ['c3', 'c4'],
       fingerprints: ['web']
@@ -309,19 +339,17 @@ describe('refreshLeasedStack', () => {
   })
 })
 
-// The workspace as a git checkout of its own stack files, with a
-// run-stack.sh that records each call and starts new containers;
-// FAIL_RESTACK makes it fail.
+// The workspace as a git checkout of its own stack files, with a docker
+// whose start of the stack records each start and starts new containers;
+// restackFails makes that start fail.
 const stackWorkspace = async ({ restackFails = false } = {}) => {
-  const env = await workspace()
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    [
-      `echo "run-stack.sh $*" >> '${callsPath()}'`,
-      `printf 'c5\\nc6\\n' > '${statePath()}'`,
-      restackFails ? 'exit 3' : ''
-    ].join('\n')
-  )
+  const env = await workspace({
+    stackStartLines: fakeComposeStartLines({
+      callsPath: callsPath(),
+      onUp: `printf 'c5\\nc6\\n' > '${statePath()}'${restackFails ? '; exit 3' : ''}`
+    })
+  })
+  writeStackInitSources(root)
   writeFile(
     join(root, '.gitignore'),
     'repos/\nfake-bin/\nstate/\nlogs/\nstack-*\n'
@@ -374,7 +402,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
       ok: true,
       restacked: true,
       restackLog: restackLog(),
-      calls: ['run-stack.sh -d'],
+      calls: ['tim docker dev'],
       containers: ['c5', 'c6'],
       stackFiles: await stackFilesFingerprint(root),
       fingerprints: await serviceFingerprints(root)
@@ -396,7 +424,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
     }).toEqual({
       restacked: false,
       left: ['web', 'api'],
-      calls: ['run-stack.sh -d']
+      calls: ['tim docker dev']
     })
   })
 
@@ -408,7 +436,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
 
     expect({ restacked: outcome.restacked, calls: calls() }).toEqual({
       restacked: true,
-      calls: ['run-stack.sh -d']
+      calls: ['tim docker dev']
     })
   })
 
@@ -425,7 +453,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
       fingerprints: leaseOnDisk().fingerprints
     }).toEqual({
       restacked: true,
-      calls: ['run-stack.sh'],
+      calls: ['tim docker up'],
       fingerprints: {}
     })
   })
@@ -447,7 +475,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
       fingerprints: leaseOnDisk().fingerprints
     }).toEqual({
       restacked: true,
-      calls: ['run-stack.sh --perf'],
+      calls: ['tim docker up --perf'],
       fingerprints: {}
     })
   })
@@ -466,7 +494,7 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
       stackFilesKept: leaseOnDisk().stackFiles === lease.stackFiles
     }).toEqual({
       ok: false,
-      reason: `The workspace's stack files changed since the stack was started, and starting it again failed (run-stack.sh exited 3). Read ${restackLog()}.`,
+      reason: `The workspace's stack files changed since the stack was started, and starting it again failed (tim docker dev exited 3). Read ${restackLog()}.`,
       containers: ['c5', 'c6'],
       stackFilesKept: true
     })

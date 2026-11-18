@@ -28,7 +28,7 @@ pages that changed and give links.
   words, every time. Pull requests go to the prototype repository only
   (`DEFRA/trade-imports-plants-prototype`), never to plants-frontend.
 - **Check ownership before saving.** Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where`
   and follow it. On `main` or a `design/*` branch, never save a file that "belongs to
   the real service" or is "removed", and never save a change inside a frozen
   release. Check `overrides.json` if in doubt: only files matching its
@@ -36,20 +36,20 @@ pages that changed and give links.
   maintainer's `chore/*` branch, every file may be saved.
 
 All git and npm commands below run against the prototype repo, with
-`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype`
+`git -C repos/trade-imports-plants-prototype`
 and
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype`.
+`npm --prefix repos/trade-imports-plants-prototype`.
 
 ## Share
 
 ### 1. Find out what changed
 
-1. Run `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype branch --show-current`.
-2. Run `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`.
+1. Run `git -C repos/trade-imports-plants-prototype branch --show-current`.
+2. Run `git -C repos/trade-imports-plants-prototype status --porcelain`.
    If it prints nothing, say "There is nothing new to save." and stop.
-3. Run `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype diff`
+3. Run `git -C repos/trade-imports-plants-prototype diff`
    (and read any new files `status` lists with `??`).
-4. Run `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- --changed`.
+4. Run `npm --prefix repos/trade-imports-plants-prototype run designer:where -- --changed`.
 5. Work out the design release: the `src/server/app/sets/<set-id>/` folder the
    changes are in. If the changes are in more than one set, ask which to save
    first and save one set per commit.
@@ -100,7 +100,7 @@ saying so.
   change, in lower case with hyphens:
 
   ```
-  git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/plants-working-consignment-addresses
+  git -C repos/trade-imports-plants-prototype switch -c design/plants-working-consignment-addresses
   ```
 
   Unsaved changes come with it, so the new branch starts from the current
@@ -117,16 +117,16 @@ saying so.
 ### 4. Format and check
 
 1. Run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:format`.
    Then run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+   `git -C repos/trade-imports-plants-prototype status --porcelain`
    again: if format changed files that were not in step 1's list, do not save
    them, and mention them as "tidied by the formatter, not part of your
    change".
 2. Run the conventions pass (`references/conventions-pass.md`) if it has not
    already run on this change in this conversation.
 3. Run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --full`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --full`.
    This runs the same checks as the save itself, so a save after a green
    result passes first time. If it fails, explain each failure in plain
    words and fix it with the reference `references/check-my-change.md`
@@ -143,7 +143,7 @@ saying so.
 1. Stage each file from step 1 that passed step 2, one `git add` per path:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/app/sets/plants-working/journeys/linear/flow/section-captions/copy/copy.en.js
+   git -C repos/trade-imports-plants-prototype add src/server/app/sets/plants-working/journeys/linear/flow/section-captions/copy/copy.en.js
    ```
 
 2. Write the message from the change, following
@@ -159,7 +159,7 @@ saying so.
 3. Save it (the second `-m` is the body: pages, recipe used, design gaps):
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "<first line>" -m "<body>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "<first line>" -m "<body>"
    ```
 
    It commits what is staged. The pre-commit checks run and take a few
@@ -173,7 +173,7 @@ saying so.
    staging area, which the checks' own git tests trip over).
 
 4. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --stat`
+   `git -C repos/trade-imports-plants-prototype log -1 --stat`
    and tell the designer what was saved, in one sentence.
 
 ### 6. Send it to GitHub (only when asked)
@@ -197,9 +197,9 @@ Which route:
   So a later push from `main` cannot carry the kept-off commit there by
   surprise, point the local `main` back at GitHub's once the branch is
   made — every commit it had is on the new branch, so nothing is lost:
-  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
+  `git -C repos/trade-imports-plants-prototype fetch origin main`,
   then
-  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype branch -f main origin/main`.
+  `git -C repos/trade-imports-plants-prototype branch -f main origin/main`.
 - On `main` otherwise: **On `main`** below.
 - On a `design/*` branch: **On a `design/*` branch** below, even if they
   said "push it" — a designer who wants it on `main` instead says "merge my
@@ -209,15 +209,15 @@ Which route:
 this is the direct route.
 
 ```
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push origin main
+git -C repos/trade-imports-plants-prototype push origin main
 ```
 
 If git refuses (`Permission denied`, `403`, `could not read Username`, or
 `main` has moved on and it is rejected as non-fast-forward), stop and say
 plainly what happened: either this computer cannot send to the prototype yet
 (see below), or `main` has changed since — offer to bring it in
-(`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
-then `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`, settling
+(`git -C repos/trade-imports-plants-prototype fetch origin main`,
+then `git -C repos/trade-imports-plants-prototype merge --no-edit origin/main`, settling
 any clash as in `references/design-release.md` section G) and push again.
 Read `siteUrl` from `scripts/designer/prototype.json` (in the prototype
 repo) and tell the designer: "This is on `main` now. The deployed prototype
@@ -234,7 +234,7 @@ without touching `main` — `references/ROUTING.md`, "Branches"): push the
 branch and open a **draft** pull request, so others can see and comment on
 it before it reaches `main`.
 
-1. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push -u origin <branch>`
+1. `git -C repos/trade-imports-plants-prototype push -u origin <branch>`
 
    If git refuses (`Permission denied`, `403`, `could not read Username`),
    stop and say plainly: this computer cannot send to the prototype on GitHub
@@ -265,7 +265,7 @@ it before it reaches `main`.
    nothing stops the designer asking for it to be marked ready when it is):
 
    ```
-   gh pr create --repo DEFRA/trade-imports-plants-prototype --base main --head <branch> --draft --title "<first line>" --body-file ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md
+   gh pr create --repo DEFRA/trade-imports-plants-prototype --base main --head <branch> --draft --title "<first line>" --body-file repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md
    ```
 
    `--repo` tells `gh` which repository to open the pull request against, so
@@ -325,7 +325,7 @@ request", "why is my pull request red?" or "merge my pull request":
      one, run `gh pr checks --repo DEFRA/trade-imports-plants-prototype <branch>`,
      then reproduce it locally with `references/check-my-change.md`, fix,
      save (step 5) and send
-     (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push`,
+     (`git -C repos/trade-imports-plants-prototype push`,
      step 6.1, asking first as always). A red "Walkthroughs" check is a
      crash, not a red story: treat it like any other failed check.
    - The demo page comment (its body starts
@@ -335,9 +335,9 @@ request", "why is my pull request red?" or "merge my pull request":
      warning on the demo page, never a reason the merge is blocked.
    - `mergeStateStatus` `DIRTY`: `main` has moved on in the same lines. Offer
      to bring `main` in
-     (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
+     (`git -C repos/trade-imports-plants-prototype fetch origin main`,
      then
-     `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`)
+     `git -C repos/trade-imports-plants-prototype merge --no-edit origin/main`)
      and settle the clash: a clash in `overrides.json` or
      `src/server/prototype-sets/` is settled by `references/design-release.md`,
      section G; any other clash is settled with the designer. Never force
@@ -357,9 +357,9 @@ request", "why is my pull request red?" or "merge my pull request":
 ## Undo
 
 First run
-`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+`git -C repos/trade-imports-plants-prototype status --porcelain`
 and
-`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format="%h %s"`.
+`git -C repos/trade-imports-plants-prototype log -1 --format="%h %s"`.
 Then work out which it is:
 
 - **Unsaved edits.** The change references do not save, so "undo that"
@@ -385,7 +385,7 @@ commit whether or not the change was saved.
 ### Unsaved edits ("undo that", "throw away what I just did")
 
 1. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+   `git -C repos/trade-imports-plants-prototype status --porcelain`
    and list the changed files in plain words (page and what kind of file).
 2. Take the files of the change being undone: all of them when every
    unsaved file came from that change, otherwise only the ones it made (the
@@ -398,17 +398,17 @@ commit whether or not the change was saved.
    other save:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype revert --no-commit HEAD
+   git -C repos/trade-imports-plants-prototype revert --no-commit HEAD
    ```
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<first line of the change>\"" -m "Undone at the designer's request straight after it was made."
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<first line of the change>\"" -m "Undone at the designer's request straight after it was made."
    ```
 
 5. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+   `git -C repos/trade-imports-plants-prototype status --porcelain`
    (none of those files is listed) and
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -2 --oneline`
+   `git -C repos/trade-imports-plants-prototype log -2 --oneline`
    (the change, then its `Revert`). Tell the designer what was undone, and
    that it can come back: "say 'bring back the change I undid' and I will
    undo the undo".
@@ -420,22 +420,22 @@ save this change, so I put it aside rather than deleting it. Say 'bring back
 what you put aside' and I will put it back."
 
 ```
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype stash push --include-untracked -m "undone: <what the change was>" -- <path> <path>
+git -C repos/trade-imports-plants-prototype stash push --include-untracked -m "undone: <what the change was>" -- <path> <path>
 ```
 
-(`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype stash list`,
+(`git -C repos/trade-imports-plants-prototype stash list`,
 then
-`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype stash pop stash@{<n>}`
+`git -C repos/trade-imports-plants-prototype stash pop stash@{<n>}`
 for the matching one, brings it back.)
 
 ### The last saved change ("undo my last change", "go back")
 
 1. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`.
+   `git -C repos/trade-imports-plants-prototype status --porcelain`.
    If it lists anything, ask whether to save it or put it aside first. Undo
    needs a clean start.
 2. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format="%h %s"`
+   `git -C repos/trade-imports-plants-prototype log -1 --format="%h %s"`
    and tell the designer what that change was.
 3. If it is a merge (the weekly update, or a merged pull request), a
    `Start design release …` or `Freeze design release …` commit, or a
@@ -448,17 +448,17 @@ for the matching one, brings it back.)
    save:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype revert --no-commit HEAD
+   git -C repos/trade-imports-plants-prototype revert --no-commit HEAD
    ```
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<its first line>\""
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<its first line>\""
    ```
 
 5. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+   `git -C repos/trade-imports-plants-prototype status --porcelain`
    (it must print nothing) and
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -2 --oneline`
+   `git -C repos/trade-imports-plants-prototype log -2 --oneline`
    (the newest line starts `Revert`).
 
 ### A named change ("undo the confirmation panel change")
@@ -466,13 +466,13 @@ for the matching one, brings it back.)
 1. Find it by its message:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log --oneline -20 -i --grep "<a word from the change>"
+   git -C repos/trade-imports-plants-prototype log --oneline -20 -i --grep "<a word from the change>"
    ```
 
    Or list the release's recent changes:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log --oneline -20 -- src/server/app/sets/<set-id>
+   git -C repos/trade-imports-plants-prototype log --oneline -20 -- src/server/app/sets/<set-id>
    ```
 
 2. One match: undo it. Several: show them in plain words and ask which one.
@@ -480,16 +480,16 @@ for the matching one, brings it back.)
 3. With a clean `status`:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype revert --no-commit <commit>
+   git -C repos/trade-imports-plants-prototype revert --no-commit <commit>
    ```
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<its first line>\"" -m "This reverts commit <commit>."
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Revert \"<its first line>\"" -m "This reverts commit <commit>."
    ```
 
 4. If git reports a conflict at the `revert` step, a later change touched the
    same lines. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype revert --abort`
+   `git -C repos/trade-imports-plants-prototype revert --abort`
    (this puts everything back as it was), explain that, and offer to undo the
    later change first or to make the change back by hand.
 
@@ -501,22 +501,22 @@ the branch is already on GitHub, offer to send the undo too (ask first).
 
 ## Verify
 
-1. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+1. `git -C repos/trade-imports-plants-prototype status --porcelain`
    prints nothing after a save or an undo (apart from anything the designer
    chose to leave unsaved).
-2. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format="%s"`
+2. `git -C repos/trade-imports-plants-prototype log -1 --format="%s"`
    shows the message you wrote, or `Revert "..."`.
 3. After an undo, run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id>`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id>`
    and
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <the pages it touched>`,
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <the pages it touched>`,
    read the key PNGs yourself, and describe what the pages look like now.
    After a revert commit, add `--before-commit HEAD~1` to picture the
    version before the undo beside it (plain `--before` would compare with the
    undo commit itself, so both pictures would match).
    Never claim a visual result you have not looked at.
 4. After a direct push to `main`,
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format="%H" origin/main`
+   `git -C repos/trade-imports-plants-prototype log -1 --format="%H" origin/main`
    matches the commit just pushed.
 5. After a pull request,
    `gh pr view --repo DEFRA/trade-imports-plants-prototype <branch>` shows it

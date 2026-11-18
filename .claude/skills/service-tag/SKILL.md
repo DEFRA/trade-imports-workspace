@@ -16,11 +16,11 @@ for how a PR run uses them.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -54,11 +54,11 @@ a service runs by path — that is a hand edit to `suites` in the scope file.
 2. Run the dispatcher:
 
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/service-tag/start-service-tag.sh
+   tim service-tag start --json
    ```
 
-   Add `--service <name>` (short or full) for a one-service run. The first stdout line
-   is `MODE: READY`; the JSON after it has each repo's branch and uncommitted files,
+   Add `--service <name>` (short or full) for a one-service run. The envelope's
+   `result` has each repo's branch and uncommitted files,
    the scope entries (each with the `dependents` that call it directly, read from the
    stack's compose wiring), the tag map, and an `alignment` list.
 
@@ -105,7 +105,7 @@ ask the user for its fixtures.
 any domain:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/service-tag/list-specs.sh --tag <@tag>
+tim service-tag specs --tag <@tag> --json
 ```
 
 Read each one and re-judge it now by the rules below; do not rely on an earlier run or on
@@ -133,7 +133,7 @@ For each domain, in its own Bash call, find the specs that use the service's fix
 and `security/` specs are never tagged:
 
 ```bash
-grep -rlE "<fixture1>|<fixture2>" ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/tests/<domain>/e2e
+grep -rlE "<fixture1>|<fixture2>" repos/trade-imports-ins-tests/tests/<domain>/e2e
 ```
 
 No hits and no indirect signal: nothing to tag and nothing to say. Otherwise:
@@ -143,7 +143,7 @@ No hits and no indirect signal: nothing to tag and nothing to say. Otherwise:
 2. List the domain's specs to see their tags:
 
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/service-tag/list-specs.sh --domain <domain> --type e2e
+   tim service-tag specs --domain <domain> --type e2e --json
    ```
 
 3. Read the specs that matched and judge each by the rules below. Show the user the
@@ -161,7 +161,7 @@ No hits and no indirect signal: nothing to tag and nothing to say. Otherwise:
   reaches more than about five specs, pause and ask whether each earns its place.
 - **Skip any spec carrying `@a11y`, `@active` or `@dynamics`.** The PR run
   (`test:docker-compose:ci` in the tests repo's `package.json`) filters those out, so a
-  service tag on them never runs. Check the `tags` field `list-specs.sh` prints. This
+  service tag on them never runs. Check each spec's `tags` in the `result` list `tim service-tag specs` prints. This
   includes `@dynamics` specs that sit under `e2e/` (for example `animals/e2e/journeys/dynamics/`).
   Report each one skipped for this reason as a near-miss. `@compose` specs **do** run on
   PRs, so they are fine to tag. If `package.json` changes that filter, follow it.
@@ -192,7 +192,7 @@ then reformats the file.
 After tagging a service, list its tag across the suite:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/service-tag/list-specs.sh --tag <@tag>
+tim service-tag specs --tag <@tag> --json
 ```
 
 - Specs carry the tag and the entry has no `tags`: add `"tags": ["<@tag>"]`.
@@ -204,24 +204,24 @@ After tagging a service, list its tag across the suite:
 - Keep each entry on one line, as the file does. Then check the JSON still parses:
 
   ```bash
-  jq empty ~/git/defra/trade-imports-workspace/config/e2e-tests-pr-scope.json
+  jq empty config/e2e-tests-pr-scope.json
   ```
 
 ## Step 4: Format and lint
 
 Adding `{ tag }` as a middle argument stops prettier keeping the test call on one line,
 so it rewraps the whole test body. The repo's commit hook rejects unformatted files, so
-format every spec you edited. Pass the files' `~/git/...` paths:
+format every spec you edited. Pass the files' paths relative to the workspace root:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests exec --no -- prettier --write <files>
+npm --prefix repos/trade-imports-ins-tests exec --no -- prettier --write <files>
 ```
 
 The raw diff then shows mostly indentation. `git diff -w` shows only the tag and the
 call wrapper; check that before moving on, and warn the user the plain diff is noisy.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run lint
+npm --prefix repos/trade-imports-ins-tests run lint
 ```
 
 Fix any failure before moving on. The lint also rejects a tag on a spec in a domain
@@ -272,11 +272,9 @@ Landed: <uncommitted files | commit hashes per repo>
 Next: <review the diff | open a PR for each repo>
 ```
 
-## Scripts cheat-sheet
+## Commands cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/service-tag/`:
-
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-service-tag.sh [--service <name>]` | Read-only. Repos' branches and uncommitted files, scope entries (default skipped), the tag map, and the alignment findings |
-| `list-specs.sh [--domain <d>] [--type <t>] [--tag <@t>]` | Every spec with its tags as JSON, via `playwright test --list`; filter by domain, test type or tag |
+| `tim service-tag start [--service <name>] --json` | Read-only. Repos' branches and uncommitted files, scope entries (default skipped), the tag map, and the alignment findings |
+| `tim service-tag specs [--domain <d>] [--type <t>] [--tag <@t>] --json` | Every spec with its tags, via `playwright test --list`; filter by domain, test type or tag |

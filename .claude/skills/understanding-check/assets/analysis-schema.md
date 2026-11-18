@@ -2,8 +2,8 @@
 
 Per-repo analysis state, one file per repo in scope. Mutated only by:
 
-- `tools/understanding-check/analysis-add-finding.sh` — append a finding.
-- `tools/understanding-check/analysis-set-verdict.sh` — mark per-repo
+- `tim understanding-check analysis add-finding` — append a finding.
+- `tim understanding-check analysis complete` — mark per-repo
   analysis complete.
 
 **Provenance rule** — every entry in every findings array carries an
@@ -89,7 +89,7 @@ evidence. See
 | `ticket` | string | `EUDPA-XXXXX`. |
 | `pr` | number | GitHub PR number for this repo. |
 | `commit` | string | Head SHA captured at prepare time. |
-| `verdict` | `null` \| `"complete"` | Set by `analysis-set-verdict.sh`. |
+| `verdict` | `null` \| `"complete"` | Set by `tim understanding-check analysis complete`. |
 | `completed_at` | `null` \| ISO8601 | Set when verdict flips to `complete`. |
 | `changeSummary` | `null` \| string (≤300 chars) | One-paragraph summary. |
 | `whyItChanged` | `null` \| string (≤300 chars) | Cite ticket goals. |

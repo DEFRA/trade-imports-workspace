@@ -1,0 +1,199 @@
+[
+  {
+    "case": "a new branch after main moved on origin",
+    "input": [
+      "EUDPA-1",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "new-thing"
+    ],
+    "exitCode": 0,
+    "stdout": "→ fetch origin (trade-imports-stub)\n→ checkout main\n→ pull\n→ checkout -b feat/EUDPA-1-new-thing\n\nBranch ready: feat/EUDPA-1-new-thing\nRepo: <HOME>/git/defra/trade-imports-workspace/repos/trade-imports-stub\nHEAD: 4cedef8a735ae9a085f4c86f82e530c87e52e122\n",
+    "stderr": "",
+    "repo": {
+      "branch": "feat/EUDPA-1-new-thing",
+      "upstream": null,
+      "head": "4cedef8a735ae9a085f4c86f82e530c87e52e122",
+      "subject": "upstream work"
+    }
+  },
+  {
+    "case": "a branch already here, as fix",
+    "input": [
+      "EUDPA-2",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "existing",
+      "--type",
+      "fix"
+    ],
+    "exitCode": 0,
+    "stdout": "→ fetch origin (trade-imports-stub)\n→ checkout main\n→ pull\n→ checkout existing fix/EUDPA-2-existing\n\nBranch ready: fix/EUDPA-2-existing\nRepo: <HOME>/git/defra/trade-imports-workspace/repos/trade-imports-stub\nHEAD: 9a32046a7ccf9c604b0cd182bf776061c8bff94f\n",
+    "stderr": "",
+    "repo": {
+      "branch": "fix/EUDPA-2-existing",
+      "upstream": null,
+      "head": "9a32046a7ccf9c604b0cd182bf776061c8bff94f",
+      "subject": "local work"
+    }
+  },
+  {
+    "case": "a branch only on origin, as chore with no ticket",
+    "input": [
+      "NO_JIRA",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "remote-only",
+      "--type",
+      "chore"
+    ],
+    "exitCode": 0,
+    "stdout": "→ fetch origin (trade-imports-stub)\n→ checkout main\n→ pull\n→ checkout chore/NO_JIRA-remote-only tracking origin/chore/NO_JIRA-remote-only\n\nBranch ready: chore/NO_JIRA-remote-only\nRepo: <HOME>/git/defra/trade-imports-workspace/repos/trade-imports-stub\nHEAD: 9f073f136fe413f2ec867a2f5c158f8bfee3b09c\n",
+    "stderr": "",
+    "repo": {
+      "branch": "chore/NO_JIRA-remote-only",
+      "upstream": "origin/chore/NO_JIRA-remote-only",
+      "head": "9f073f136fe413f2ec867a2f5c158f8bfee3b09c",
+      "subject": "work on chore/NO_JIRA-remote-only"
+    }
+  },
+  {
+    "case": "a base other than main, with the options first",
+    "input": [
+      "--base",
+      "release",
+      "--slug",
+      "from-release",
+      "--repo",
+      "trade-imports-stub",
+      "EUDPA-3"
+    ],
+    "exitCode": 0,
+    "stdout": "→ fetch origin (trade-imports-stub)\n→ checkout release\n→ pull\n→ checkout -b feat/EUDPA-3-from-release\n\nBranch ready: feat/EUDPA-3-from-release\nRepo: <HOME>/git/defra/trade-imports-workspace/repos/trade-imports-stub\nHEAD: 9f8c4a7e6ce9fa96d029906b6714de89ee1dcf8d\n",
+    "stderr": "",
+    "repo": {
+      "branch": "feat/EUDPA-3-from-release",
+      "upstream": null,
+      "head": "9f8c4a7e6ce9fa96d029906b6714de89ee1dcf8d",
+      "subject": "work on release"
+    }
+  },
+  {
+    "case": "a main that cannot fast-forward",
+    "input": [
+      "EUDPA-4",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "diverged"
+    ],
+    "exitCode": 128,
+    "stdout": "→ fetch origin (trade-imports-stub)\n→ checkout main\n→ pull\n",
+    "stderr": "hint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config set advice.diverging false\"\nfatal: Not possible to fast-forward, aborting.\n",
+    "repo": {
+      "branch": "main",
+      "upstream": "origin/main",
+      "head": "359b69f1287e56c57afbb32489db1cd2a08d5ded",
+      "subject": "local work on main"
+    }
+  },
+  {
+    "case": "a new branch, as JSON",
+    "input": [
+      "EUDPA-9",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "as-json",
+      "--json"
+    ],
+    "exitCode": 0,
+    "stdout": "{\n    \"ticket\": \"EUDPA-9\",\n    \"repo\": \"trade-imports-stub\",\n    \"branch\": \"feat/EUDPA-9-as-json\",\n    \"base\": \"main\",\n    \"head\": \"6427a33d2d2f6a13972e89e78c30d1b410ac8e68\"\n}\n",
+    "stderr": "",
+    "repo": {
+      "branch": "feat/EUDPA-9-as-json",
+      "upstream": null,
+      "head": "6427a33d2d2f6a13972e89e78c30d1b410ac8e68",
+      "subject": "initial commit"
+    }
+  },
+  {
+    "case": "a repo not in the workspace",
+    "input": [
+      "EUDPA-5",
+      "--repo",
+      "trade-imports-gone",
+      "--slug",
+      "nowhere"
+    ],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Error: repo not found or not a git checkout: <HOME>/git/defra/trade-imports-workspace/repos/trade-imports-gone\n",
+    "repo": {
+      "branch": "main",
+      "upstream": "origin/main",
+      "head": "6427a33d2d2f6a13972e89e78c30d1b410ac8e68",
+      "subject": "initial commit"
+    }
+  },
+  {
+    "case": "a --type the skill does not use",
+    "input": [
+      "EUDPA-6",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "docs",
+      "--type",
+      "docs"
+    ],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "--type must be feat, fix or chore, not \"docs\".\n",
+    "repo": {
+      "branch": "main",
+      "upstream": "origin/main",
+      "head": "6427a33d2d2f6a13972e89e78c30d1b410ac8e68",
+      "subject": "initial commit"
+    }
+  },
+  {
+    "case": "a ticket from another project",
+    "input": [
+      "ABC-7",
+      "--repo",
+      "trade-imports-stub",
+      "--slug",
+      "other"
+    ],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Unknown argument: ABC-7\n",
+    "repo": {
+      "branch": "main",
+      "upstream": "origin/main",
+      "head": "6427a33d2d2f6a13972e89e78c30d1b410ac8e68",
+      "subject": "initial commit"
+    }
+  },
+  {
+    "case": "no slug",
+    "input": [
+      "EUDPA-8",
+      "--repo",
+      "trade-imports-stub"
+    ],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Usage: <HOME>/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-XXXXX|NO_JIRA --repo REPO --slug SLUG [--type feat|fix|chore] [--base BRANCH] [--json]\n",
+    "repo": {
+      "branch": "main",
+      "upstream": "origin/main",
+      "head": "6427a33d2d2f6a13972e89e78c30d1b410ac8e68",
+      "subject": "initial commit"
+    }
+  }
+]

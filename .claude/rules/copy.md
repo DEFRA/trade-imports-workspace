@@ -10,7 +10,7 @@ Editing a locale copy module. Every string here reaches a user, so GDS content
 rules apply even though the file is JavaScript — these layer on top of the Node
 conventions.
 
-- Topic dir: `~/git/defra/trade-imports-workspace/docs/best-practices/gds/`
+- Topic dir: `docs/best-practices/gds/`
 - Key file: `language.md` — plain English, active voice, capitalisation, dates
   and numbers, contractions, inclusive language.
 - Situational: `accessibility.md` for error and hint wording, `components.md`

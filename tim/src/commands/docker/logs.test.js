@@ -17,16 +17,6 @@ import { serviceLabels } from './logs.js'
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
 
-const RUN_STACK_SERVICES = `services=(
-  "frontend|trade-imports-animals-frontend|TRADE_IMPORTS_ANIMALS_FRONTEND"
-  "backend|trade-imports-animals-backend|TRADE_IMPORTS_ANIMALS_BACKEND"
-  "gateway|trade-imports-dynamics-gateway|TRADE_IMPORTS_DYNAMICS_GATEWAY"
-)
-sidecars=(
-  "frontend|animals-frontend-nginx|host port 3000 is the natively-run frontend's"
-)
-`
-
 let workspace
 
 const writeExecutable = (path, body) => {
@@ -64,10 +54,6 @@ beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-docker-logs-'))
   mkdirSync(join(workspace, 'repos'))
   mkdirSync(join(workspace, '.git'))
-  writeExecutable(
-    join(workspace, 'scripts', 'stack', 'run-stack.sh'),
-    RUN_STACK_SERVICES
-  )
 })
 
 afterEach(() => {
@@ -75,22 +61,24 @@ afterEach(() => {
 })
 
 describe('#serviceLabels', () => {
-  test('Should map each run-stack.sh label to its compose service, leaving out sidecars', () => {
-    const labels = serviceLabels(workspace)
+  test('Should map each repo-backed service label to its compose service, leaving out sidecars', () => {
+    const labels = serviceLabels()
 
     expect(Object.fromEntries(labels)).toEqual({
       frontend: 'trade-imports-animals-frontend',
       backend: 'trade-imports-animals-backend',
-      gateway: 'trade-imports-dynamics-gateway'
+      admin: 'trade-imports-animals-admin',
+      'ins-frontend': 'trade-imports-ins-frontend',
+      'routing-proxy': 'trade-imports-routing-proxy',
+      stub: 'trade-imports-stub',
+      'defra-id-stub': 'trade-imports-defra-id-stub',
+      'reference-data': 'trade-imports-reference-data',
+      'address-book': 'trade-imports-address-book',
+      gateway: 'trade-imports-dynamics-gateway',
+      'ins-backend': 'trade-imports-ins-backend',
+      'plants-frontend': 'trade-imports-plants-frontend',
+      'plants-backend': 'trade-imports-plants-backend'
     })
-  })
-
-  test('Should give no labels when the workspace has no run-stack.sh', () => {
-    rmSync(join(workspace, 'scripts'), { recursive: true })
-
-    const labels = serviceLabels(workspace)
-
-    expect(labels.size).toBe(0)
   })
 })
 

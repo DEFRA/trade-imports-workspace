@@ -8,7 +8,7 @@ that `designer:check` prints the path of.
 This file covers the refusals a journey change causes. For every other error
 (formatting, Welsh copy shape, a port in use, a missing browser), use
 `references/check-my-change.md`: its translator covers them, and
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`
+`repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`
 lists them for the designer.
 
 For each message: what it means in plain English, the step you missed, and the
@@ -191,7 +191,7 @@ step for a new page. Field keys are the field names.
 ## When none of these match
 
 The failure may not be caused by this change. Run
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- --changed`
+`npm --prefix repos/trade-imports-plants-prototype run designer:where -- --changed`
 to see what changed. If the failing file is not one you touched, say "this is
 not caused by your change: tell the maintainer", and stop. Never edit a file
 the real service owns to make a check pass.

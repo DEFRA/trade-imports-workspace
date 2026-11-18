@@ -14,7 +14,7 @@ pointer, so there is nothing to walk.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## What it walks, and the default for each kind
 

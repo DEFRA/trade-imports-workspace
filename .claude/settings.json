@@ -60,10 +60,6 @@
       "Read(**/.netrc)"
     ],
     "allow": [
-      "Bash(~/git/defra/trade-imports-workspace/tools/**)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/**:*)",
-      "Bash(~/git/defra/trade-imports-workspace/scripts/**)",
-      "Bash(~/git/defra/trade-imports-workspace/scripts/**:*)",
       "Bash(jq:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
@@ -79,18 +75,45 @@
       "Bash(awk * ~/git/defra/trade-imports-workspace/*)",
       "Bash(sed * ~/git/defra/trade-imports-workspace/*)",
       "Bash(find ~/git/defra/trade-imports-workspace/*)",
-      "Bash(find ~/git/defra/trade-imports-workspace/*:*)",
-      "Bash(git -C ~/git/defra/trade-imports-workspace/*:*)",
       "Bash(git -C ~/git/defra/trade-imports-workspace:*)",
-      "Bash(npm --prefix ~/git/defra/trade-imports-workspace/*:*)",
-      "Bash(mvn -f ~/git/defra/trade-imports-workspace/*:*)",
       "Bash(tim:*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/frontend-change/*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/frontend-change/*:*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/service-tag/*)",
-      "Bash(~/git/defra/trade-imports-workspace/tools/service-tag/*:*)"
+      "Bash(gh api user:*)",
+      "Bash(gh pr view:*)",
+      "Bash(npm --prefix tim:*)",
+      "Bash(git -C repos/trade-imports-animals-frontend:*)",
+      "Bash(npm --prefix repos/trade-imports-animals-frontend:*)",
+      "Bash(git -C repos/trade-imports-animals-backend:*)",
+      "Bash(mvn -f repos/trade-imports-animals-backend/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-animals-admin:*)",
+      "Bash(npm --prefix repos/trade-imports-animals-admin:*)",
+      "Bash(git -C repos/trade-imports-stub:*)",
+      "Bash(mvn -f repos/trade-imports-stub/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-reference-data:*)",
+      "Bash(mvn -f repos/trade-imports-reference-data/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-defra-id-stub:*)",
+      "Bash(npm --prefix repos/trade-imports-defra-id-stub:*)",
+      "Bash(git -C repos/trade-imports-dynamics-gateway:*)",
+      "Bash(mvn -f repos/trade-imports-dynamics-gateway/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-address-book:*)",
+      "Bash(mvn -f repos/trade-imports-address-book/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-ins-frontend:*)",
+      "Bash(npm --prefix repos/trade-imports-ins-frontend:*)",
+      "Bash(git -C repos/trade-imports-routing-proxy:*)",
+      "Bash(npm --prefix repos/trade-imports-routing-proxy:*)",
+      "Bash(git -C repos/trade-imports-ins-backend:*)",
+      "Bash(mvn -f repos/trade-imports-ins-backend/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-ins-tests:*)",
+      "Bash(npm --prefix repos/trade-imports-ins-tests:*)",
+      "Bash(git -C repos/trade-imports-plants-frontend:*)",
+      "Bash(npm --prefix repos/trade-imports-plants-frontend:*)",
+      "Bash(git -C repos/trade-imports-plants-prototype:*)",
+      "Bash(npm --prefix repos/trade-imports-plants-prototype:*)",
+      "Bash(git -C repos/trade-imports-plants-backend:*)",
+      "Bash(mvn -f repos/trade-imports-plants-backend/pom.xml:*)",
+      "Bash(git -C repos/trade-imports-performance-tests:*)",
+      "Bash(npm --prefix repos/trade-imports-performance-tests:*)",
+      "Bash(git -C repos/trade-imports-schemas:*)",
+      "Bash(npm --prefix repos/trade-imports-schemas:*)"
     ]
   },
   "enabledMcpjsonServers": [
@@ -115,7 +138,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-push-gate.sh\"",
+            "command": "W=\"$CLAUDE_PROJECT_DIR\"; if [ -f \"$W/tim/src/cli.js\" ] && [ -d \"$W/tim/node_modules\" ]; then node \"$W/tim/src/cli.js\" sonar push-check --hook; fi",
             "timeout": 600
           }
         ]
@@ -147,7 +170,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh\"",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending record 2>/dev/null || true",
             "if": "Bash(git push*)",
             "timeout": 10
           }
@@ -165,7 +188,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" UserPromptSubmit",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event UserPromptSubmit 2>/dev/null || true",
             "timeout": 15
           }
         ]
@@ -176,12 +199,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" SessionStart",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event SessionStart 2>/dev/null || true",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-remove-stale-mcp-containers.sh\"",
+            "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar mcp-tidy 2>/dev/null || true",
             "timeout": 30
           }
         ]

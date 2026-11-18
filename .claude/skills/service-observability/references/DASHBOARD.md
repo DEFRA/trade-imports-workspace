@@ -139,7 +139,7 @@ other command as `other` (`METRICS.md` → "A database").
 ## Generate
 
 Claude writes the service's dashboard to
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/dashboard.json`:
+`workareas/ticket-planning/<ticket>/grafana/dashboard.json`:
 
 1. Copy `assets/dashboard.template.json`.
 2. Replace every `<service>` with the service name. If the service's

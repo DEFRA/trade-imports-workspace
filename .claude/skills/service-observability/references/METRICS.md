@@ -315,5 +315,5 @@ address-book's tests are the ones to copy.
 Run the repo's full build before pushing:
 
 ```bash
-mvn -f ~/git/defra/trade-imports-workspace/repos/<service>/pom.xml verify
+mvn -f repos/<service>/pom.xml verify
 ```

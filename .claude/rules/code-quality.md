@@ -86,11 +86,11 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 
 ## Where the detail lives
 
-- Names, nesting and comments in Node: `~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md` §6, §10 and §15.
-- Names and comments in Java: `~/git/defra/trade-imports-workspace/docs/best-practices/java/modern-java.md` §18.
-- Doc comments: `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/BEST_PRACTICES.md`, then `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/jsdoc.md` or `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/javadoc.md`.
-- Logging: `~/git/defra/trade-imports-workspace/docs/best-practices/node/pino-logging.md` §4a and `~/git/defra/trade-imports-workspace/docs/best-practices/java/spring-boot.md` §15.
-- Node tests and test support: `~/git/defra/trade-imports-workspace/docs/best-practices/node/testing/frontend.md`.
-- Java tests: `~/git/defra/trade-imports-workspace/docs/best-practices/java/testing/unit.md`.
-- Playwright specs, seeding and test data: `~/git/defra/trade-imports-workspace/docs/best-practices/playwright/BEST_PRACTICES.md`.
-- Templates and front-end behaviour: `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md` "Stay in the GOV.UK toolbox", including its one exception for a plants-prototype design release.
+- Names, nesting and comments in Node: `docs/best-practices/node/code-style.md` §6, §10 and §15.
+- Names and comments in Java: `docs/best-practices/java/modern-java.md` §18.
+- Doc comments: `docs/best-practices/doc-comments/BEST_PRACTICES.md`, then `docs/best-practices/doc-comments/jsdoc.md` or `docs/best-practices/doc-comments/javadoc.md`.
+- Logging: `docs/best-practices/node/pino-logging.md` §4a and `docs/best-practices/java/spring-boot.md` §15.
+- Node tests and test support: `docs/best-practices/node/testing/frontend.md`.
+- Java tests: `docs/best-practices/java/testing/unit.md`.
+- Playwright specs, seeding and test data: `docs/best-practices/playwright/BEST_PRACTICES.md`.
+- Templates and front-end behaviour: `docs/best-practices/gds/components.md` "Stay in the GOV.UK toolbox", including its one exception for a plants-prototype design release.

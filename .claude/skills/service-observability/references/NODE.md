@@ -124,8 +124,9 @@ through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
 
 ## The log line
 
-`LOGGING.md` → "The line" gives the fields. In Node, pass them to the
-module logger as nested objects; ECS pino writes them as given:
+`LOGGING.md` → "The line" is the one list of the line's fields and its
+message. In Node, pass them to the module logger as nested objects;
+ECS pino writes them as given:
 
 ```js
 logger.info(
@@ -142,9 +143,11 @@ logger.info(
 )
 ```
 
-A failure logs at warn with `error: { type, message, code }` (the
-error's `name`, its message, and its `cause.code` when it has one, such
-as `ECONNREFUSED`), and no stack trace. Do not pass `err`: ECS pino
+A failure logs at warn, with `error: { type, message, code }` when it
+has a cause, and no stack trace. A Redis call adds `cache` with the
+catbox segment, from the descriptor's log-only `cache`, as an interface
+id comes from its `interfaceId`; neither is a metric dimension. Do not
+pass `err`: ECS pino
 writes its stack trace, and the caller logs that once where it handles
 the error. `trace.id` comes from the logger's `mixin`
 (`@defra/hapi-tracing`), not from this code. ECS pino also writes the

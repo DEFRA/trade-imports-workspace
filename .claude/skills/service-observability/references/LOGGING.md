@@ -17,15 +17,27 @@ measured call has one. It does not depend on `aws.emf.enabled`.
 External call mdm/get-countries success in 2 ms
 ```
 
-| Field | Value | Example |
-|---|---|---|
-| `event.category` | Always `external-call` | `external-call` |
-| `event.action` | `<dependency>/<operation>` | `mdm/get-countries` |
-| `event.outcome` | `success` or `failure` | `success` |
-| `event.duration` | Nanoseconds | `2882625` |
-| `error.type` | A failure only: the cause's class name | `com.mongodb.MongoCommandException` |
-| `error.message` | A failure only: the cause's message | — |
-| `trace.id` | Set by the request filter, not by this code | — |
+The message is `External call <dependency>/<operation> <outcome> in
+<ms> ms`. A Node line may name the call in brackets after the
+operation: an interface id, `External call defra-id/jwks (SYN-12)
+success in 3 ms`, or a Redis call's catbox segment, `External call
+redis/get (cache session) success in 1 ms` (`NODE.md` → "Dependency
+layer").
+
+This table is the one list of the line's fields, for both languages:
+
+| Field | Value | Written by | Example |
+|---|---|---|---|
+| `event.category` | Always `external-call` | Every service | `external-call` |
+| `event.action` | `<dependency>/<operation>` | Every service | `mdm/get-countries` |
+| `event.outcome` | `success` or `failure` | Every service | `success` |
+| `event.duration` | Nanoseconds | Every service | `2882625` |
+| `http.response.status_code` | The HTTP status the dependency answered with, when it answered | Node, on every answered HTTP call; reference-data, on a failure of 400 or over | `503` |
+| `error.type` | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service | `com.mongodb.MongoCommandException` |
+| `error.message` | A failure with a cause only: the cause's message | Every service | — |
+| `error.code` | A failure only: the cause's `cause.code`, when it has one | Node | `ECONNREFUSED` |
+| `cache` | A Redis call only: the catbox segment, also in the message. Not an ECS field: `[UNPROVEN]` whether CDP keeps it | Node | `session` |
+| `trace.id` | Set by the request filter or the logger's mixin, not by this code | Every service | — |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
 field that is not on the list is dropped.
@@ -36,8 +48,7 @@ with query parameters in the line.
 The reference implementation is `ExternalCallRecorder.logCall` in
 `trade-imports-address-book` (the line and fields are the ones first
 proven on reference-data, below). For a Node service it is
-`external-call-metrics.js` in `trade-imports-animals-frontend`, which
-also writes `http.response.status_code` and a failure's `error.code`
+`external-call-metrics.js` in `trade-imports-animals-frontend`
 (`NODE.md` → "The log line").
 
 ### How to write the fields (Java)
@@ -123,8 +134,9 @@ reaches OpenSearch flat.
 - **The exception's type and message are logged, but not the HTTP
   status.** When a call throws, the line carries `error.type` and
   `error.message`. A call that returns a failure status with no
-  exception has only `event.outcome:failure`. Add `event.reason` if the
-  team wants more.
+  exception has only `event.outcome:failure`. A Java service that
+  wants the status adds `http.response.status_code`, as reference-data
+  and the Node line do.
 
 ### Tests
 

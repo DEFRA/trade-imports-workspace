@@ -4,8 +4,8 @@
 
 This page records the runs the CDP Portal triggers after each deployment and on a
 [schedule](#scheduled-runs). Each run is one `PROFILE` of the
-`trade-imports-ins-tests` test suite: `default` (the e2e suite), `a11y`,
-`dynamics`, `cross-browser` or `security`, run for every domain, or `<domain>:<suite>` (for
+`trade-imports-ins-tests` test suite: `default` or `e2e` (the e2e suite), `a11y`,
+`dynamics`, `cross-browser`, `browserstack` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
 [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#running-tests-via-cdp-portal).
 For the runs that happen on every PR instead, see [E2E tests: GitHub Actions](e2e-tests-gh-actions.md).

@@ -33,11 +33,11 @@ see data, redeploy the service and call its endpoints directly
 
 ## Where and what to call it
 
-| Thing | Value |
-|---|---|
-| Grafana | `https://metrics.dev.cdp-int.defra.cloud/` |
-| Folder | `Playground/<service>-monitoring`. Seen on reference-data: `trade-imports-reference-data-monitoring` (uid `afkd0b2ef9m9se`) in `Playground` (uid `afgzyqk5orl6oc`) |
-| Name | `<service> (custom)` |
+| Thing   | Value                                                                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Grafana | `https://metrics.dev.cdp-int.defra.cloud/`                                                                                                                         |
+| Folder  | `Playground/<service>-monitoring`. Seen on reference-data: `trade-imports-reference-data-monitoring` (uid `afkd0b2ef9m9se`) in `Playground` (uid `afgzyqk5orl6oc`) |
+| Name    | `<service> (custom)`                                                                                                                                               |
 
 `[UNPROVEN]` The name may only use letters, numbers, spaces, hyphens and
 brackets. CDP will not promote a dashboard whose name has other characters, such
@@ -62,17 +62,17 @@ its queries; saving the dashboard keeps rows as they were left. Only
 "Dependency status" sits above the first row, so it stays in view with
 every section collapsed.
 
-| Row | Panels |
-|---|---|
-| (none, always shown) | Dependency status, every dependency |
+| Row                                    | Panels                                       |
+| -------------------------------------- | -------------------------------------------- |
+| (none, always shown)                   | Dependency status, every dependency          |
 | `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
-| Caches | Cache hits and misses |
-| Business events | One panel per business metric |
-| Requests | Requests by section, Request time by section |
-| Journey events | Journey events, Validation failures by page |
-| Dependency connections | Connection errors and losses |
-| Dependency call logs | Slowest dependency calls |
-| Timers | One panel per `@Timed` name |
+| Caches                                 | Cache hits and misses                        |
+| Business events                        | One panel per business metric                |
+| Requests                               | Requests by section, Request time by section |
+| Journey events                         | Journey events, Validation failures by page  |
+| Dependency connections                 | Connection errors and losses                 |
+| Dependency call logs                   | Slowest dependency calls                     |
+| Timers                                 | One panel per `@Timed` name                  |
 
 `[UNPROVEN]` The Requests, Journey events and Dependency connections
 rows have not been imported or seen with data anywhere. They are built
@@ -93,20 +93,20 @@ listing the values. Two exceptions:
   so each of its queries sets none, with "match exact" on (its row in
   the table below).
 
-| Panel | Metric | Statistic | Split by |
-|---|---|---|---|
-| Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
-| Calls | `external.call.duration` | `SampleCount` | `operation`, with `dependency` set to the row's |
-| Failed calls | `external.call.failure` | `Sum` | `operation`, with `dependency` set to the row's |
-| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's |
-| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
-| Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
-| Business events | the service's own metric | `Sum` | its dimension |
-| Requests by section | `http.server.requests` | `SampleCount` | `method`, `section`, `status.class` |
-| Request time by section | `http.server.requests` | `p95`, `Maximum` | `method`, `section`, `status.class` |
-| Journey events | `journey.started`, `.submitted`, `.amended`, `.copied`, `.deleted`, `journey.concurrency.conflict`, `journey.entry.redirect` | `Sum` | none: each is published with no dimensions, so its query sets no dimension, with "match exact" on |
-| Validation failures by page | `journey.validation.failure` | `Sum` | `page` |
-| Connection errors and losses | `external.dependency.error`, `external.dependency.connection.lost` | `Sum` | `dependency` |
+| Panel                                        | Metric                                                                                                                       | Statistic                              | Split by                                                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Dependency status, one value per dependency  | `external.dependency.available`                                                                                              | `Minimum`                              | `dependency`                                                                                      |
+| Calls                                        | `external.call.duration`                                                                                                     | `SampleCount`                          | `operation`, with `dependency` set to the row's                                                   |
+| Failed calls                                 | `external.call.failure`                                                                                                      | `Sum`                                  | `operation`, with `dependency` set to the row's                                                   |
+| Failure rate                                 | `external.call.failure`                                                                                                      | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's                                                   |
+| Call time: average, 95th percentile, slowest | `external.call.duration`                                                                                                     | `Average`, `p95`, `Maximum`            | `operation`, with `dependency` set to the row's                                                   |
+| Cache hits and misses                        | `cache.hit`, `cache.miss`                                                                                                    | `Sum`                                  | `cache`                                                                                           |
+| Business events                              | the service's own metric                                                                                                     | `Sum`                                  | its dimension                                                                                     |
+| Requests by section                          | `http.server.requests`                                                                                                       | `SampleCount`                          | `method`, `section`, `status.class`                                                               |
+| Request time by section                      | `http.server.requests`                                                                                                       | `p95`, `Maximum`                       | `method`, `section`, `status.class`                                                               |
+| Journey events                               | `journey.started`, `.submitted`, `.amended`, `.copied`, `.deleted`, `journey.concurrency.conflict`, `journey.entry.redirect` | `Sum`                                  | none: each is published with no dimensions, so its query sets no dimension, with "match exact" on |
+| Validation failures by page                  | `journey.validation.failure`                                                                                                 | `Sum`                                  | `page`                                                                                            |
+| Connection errors and losses                 | `external.dependency.error`, `external.dependency.connection.lost`                                                           | `Sum`                                  | `dependency`                                                                                      |
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
@@ -124,10 +124,10 @@ endpoint and public service method). `EmfMeterRegistry` publishes each
 timer as the metric `<name>`, one value per call in milliseconds, with
 the `@Timed` tags `class`, `method` and `exception` as dimensions.
 
-| Panel title | Series | Query |
-|---|---|---|
+| Panel title    | Series                | Query                                            |
+| -------------- | --------------------- | ------------------------------------------------ |
 | `<timed-name>` | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
-| | Calls | `<timed-name>`, `SampleCount`, on the right axis |
+|                | Calls                 | `<timed-name>`, `SampleCount`, on the right axis |
 
 Every query sets all three dimensions, `class`, `method` and
 `exception`, each to `*`, as the template does: a query missing one finds
@@ -139,9 +139,9 @@ and set the dimensions to that timer's tags, each to `*`.
 
 One panel reads logs, not metrics:
 
-| Panel | Data source | Query |
-|---|---|---|
-| Slowest dependency calls | OpenSearch | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
+| Panel                    | Data source | Query                                                                                                                                                                                        |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slowest dependency calls | OpenSearch  | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
 
 Grafana queries OpenSearch with Lucene, not DQL: to change the query,
 the developer builds it in OpenSearch Dashboards with DQL switched off,

@@ -38,10 +38,10 @@ change to both.
 The developer does everything in this section in Grafana. Claude only
 writes the build sheet.
 
-| Thing | Value |
-|---|---|
-| Folder | `Playground/<service>-monitoring` (seen on reference-data; see `DASHBOARD.md`) |
-| Evaluation group | `<service>-advanced-alerts` |
+| Thing            | Value                                                                          |
+| ---------------- | ------------------------------------------------------------------------------ |
+| Folder           | `Playground/<service>-monitoring` (seen on reference-data; see `DASHBOARD.md`) |
+| Evaluation group | `<service>-advanced-alerts`                                                    |
 
 The folder and evaluation group already exist, holding one alert named
 `platform_managed_do_not_delete` (seen 2026-10-15 for reference-data and
@@ -65,15 +65,15 @@ What the form does, seen building reference-data's alerts on
 Starting alerts. The thresholds are a first guess for the team to
 agree, not tested values.
 
-| Alert | Fires when | If there is no data |
-|---|---|---|
-| Dependency unavailable | `external.call.failure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `dependency` and `operation` | Normal |
-| Database unavailable (which rules a service with a database gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal |
-| Redis unavailable (a Node service whose session store is Redis) | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = `redis` | Normal |
-| Dependency calls failing | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation` | Normal |
-| Dependency slow | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation` | Normal |
-| Section slow (a service publishing `http.server.requests`) | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `section` and `status.class` | Normal |
-| Concurrency conflicts (a service publishing `journey.concurrency.conflict`) | `journey.concurrency.conflict`, `Sum`, above a threshold the team sets over 60 minutes, with no dimensions | Normal |
+| Alert                                                                                                    | Fires when                                                                                                                                | If there is no data |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Dependency unavailable                                                                                   | `external.call.failure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `dependency` and `operation`         | Normal              |
+| Database unavailable (which rules a service with a database gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal              |
+| Redis unavailable (a Node service whose session store is Redis)                                          | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = `redis`      | Normal              |
+| Dependency calls failing                                                                                 | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation`                                               | Normal              |
+| Dependency slow                                                                                          | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation`           | Normal              |
+| Section slow (a service publishing `http.server.requests`)                                               | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `section` and `status.class`               | Normal              |
+| Concurrency conflicts (a service publishing `journey.concurrency.conflict`)                              | `journey.concurrency.conflict`, `Sum`, above a threshold the team sets over 60 minutes, with no dimensions                                | Normal              |
 
 `[UNPROVEN]` The section and concurrency rules (4 and 5 in
 `assets/alerts.template.md`) have not been built or fired anywhere. They
@@ -153,10 +153,10 @@ proof the dependency is up.
 
 The team's channels are shared across services:
 
-| Environment | Channel |
-|---|---|
-| dev, test | `trade-imports-team-alerts-non-prod` |
-| prod | `trade-imports-team-alerts-prod` |
+| Environment | Channel                              |
+| ----------- | ------------------------------------ |
+| dev, test   | `trade-imports-team-alerts-non-prod` |
+| prod        | `trade-imports-team-alerts-prod`     |
 
 1. Check both channels exist and are public.
 2. Ask #cdp-support to route the service's alerts, default and custom,

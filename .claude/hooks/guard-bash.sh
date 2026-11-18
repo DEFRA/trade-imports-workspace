@@ -98,7 +98,7 @@ if printf '%s' "$CMD" | grep -Eq 'git[[:space:]]+commit\b[^|;&]*--amend'; then
 fi
 
 if printf '%s' "$CMD" | grep -Eq '/Users/[A-Za-z0-9._-]+/'; then
-  deny "Use ~/ instead of a literal /Users/<user>/ path — the permission matcher treats them as different prefixes, so /Users/ triggers avoidable prompts."
+  deny "Type the path relative to the workspace root instead of a literal /Users/<user>/ path — the permission matcher compares literal strings, so an absolute path triggers avoidable prompts."
 fi
 
 if printf '%s' "$CMD" | grep -Eq 'npx[[:space:]].*playwright[[:space:]]+test'; then
@@ -117,7 +117,7 @@ fi
 TEST_RUN='(^|[[:space:](])(npm[[:space:]]([^|;]*[[:space:]])?(test|t|run[[:space:]]+test[^[:space:]|;]*)|([^[:space:]|;]*/)?vitest|([^[:space:]|;]*/)?playwright|([^[:space:]|;]*/)?mvnw?)'
 PIPED_INTO_TRIMMER='([[:space:]][^|;]*)?\|&?[[:space:]]*(tail|head|grep|egrep|fgrep|rg)([[:space:]]|$)'
 if printf '%s' "$CMD_UNQUOTED" | grep -Eq -- "$TEST_RUN$PIPED_INTO_TRIMMER"; then
-  deny "Do not pipe a test run into tail, head or grep. The pipeline returns the trimmer's exit code, so a failed run reports exit 0, and the failure summary is cut off. Redirect the whole run to a file instead (for example: npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > ~/git/defra/trade-imports-workspace/workareas/<area>/test.log 2>&1), then read the file."
+  deny "Do not pipe a test run into tail, head or grep. The pipeline returns the trimmer's exit code, so a failed run reports exit 0, and the failure summary is cut off. Redirect the whole run to a file instead (for example: npm --prefix repos/<repo> test > workareas/<area>/test.log 2>&1), then read the file."
 fi
 
 COMMAND_SUBSTITUTION_BODIES=$(printf '%s' "$CMD" \

@@ -73,8 +73,17 @@ Rules that held:
   from the URL: a URL holds ids, and each value is a CloudWatch metric.
 - **A 4xx is the dependency answering, so a success.** A 404 for a
   missing address, a 409 for a stale concurrency token, are outcomes the
-  code handles. A call fails when it throws or the response is 5xx. The
-  status is on the log line as `http.response.status_code`.
+  code handles. A call fails when the dependency answers 5xx, or when
+  it throws with no answer at all (a refused connection, a timeout). The
+  rule holds whether the status comes back on a response
+  (`measureExternalResponse`) or on a thrown error: `measureExternalCall`
+  judges an error carrying the status the dependency answered with
+  (`error.status`, as `failedResponse` sets for cdp-uploader, or a Wreck
+  response error's `data.res.statusCode` for Defra ID) by the same
+  rule, and always rethrows it. The status is on the log line as
+  `http.response.status_code`. Bell's token exchange is the exception:
+  Bell hides the response, so it is a failure when the sign-in did not
+  authenticate, with no status.
 - **Count a call once.** The per-request counts (`/call-counts`,
   `page.request.backend.calls`) come from the same
   `recordExternalCallInBackground`, so the backend is counted where it
@@ -205,7 +214,7 @@ Test paths are from the repo root.
 | Test | Proves |
 |---|---|
 | `src/server/common/helpers/metrics/publish-metrics.test.js` | The namespace; a count of 1 with exactly the dimensions given; frozen dimensions still published; the empty dimension set for a count with none; a document that cannot be written logged at warn with the error, its dimensions and the metric names |
-| `src/server/common/helpers/metrics/external-call-metrics.test.js` | The two metrics, their units and dimensions; a thrown error, a 5xx and a 4xx; the log line's nested `event` with an integral duration, no flat `event.category`, `error` with no stack trace, `http.response.status_code`, and `trace.id` from a request sent with the tracing header |
+| `src/server/common/helpers/metrics/external-call-metrics.test.js` | The two metrics, their units and dimensions; under a controlled clock, a 41.6 ms call logged at info with the nested `event` and a duration of 41,600,000 ns, 42 ms in the message, and 41.6 ms published; a thrown error with no status rethrown, a failure, and logged at warn with `error` and no stack trace; a response of 404 or 499 a success and of 500 or 503 a failure, each logged with `http.response.status_code`; a thrown error carrying 404 a success and 503 a failure, rethrown and logged with its status; through Wreck, a 400 a success, a 502 a failure, and a timeout a failure logged with no status; `trace.id` from a request sent with the tracing header; the call counted against the route that made it; a measured call resolving before its publish settles |
 | `src/server/common/helpers/backend-client/backend-fetch.test.js` | One `animals-backend` call per use, under the operation named, timed from the first attempt when the connection is retried and counted once; a 5xx a failure, a 409 a success |
 | `src/server/app/services/dependency-operations.test.js` | Every HTTP call site (the backend records and document uploads, address-book, reference-data and cdp-uploader) recorded under its dependency and the operation in "Dependency layer" above, as a success on a 2xx and a failure on a 5xx |
 | `src/server/common/helpers/metrics/request-metrics.test.js` | `routeSection` and `routePage` for every route shape; a page request's time from received to completed tagged `method`, `section` and `status.class`; a request no route matches as `unmatched` `4xx`; a request the client aborts as `4xx`; health not published; a posted answer shown again with an error summary counted for its page, an accepted one and a page view not; the page-request counts tagged `request.kind` `page` when `callCounts.metrics.enabled` is on, and none when it is off |

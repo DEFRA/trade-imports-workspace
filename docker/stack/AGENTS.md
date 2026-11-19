@@ -423,10 +423,18 @@ cache, which covers every `extends`, `include` and `import`, and
 `@hapi/vision`'s cache of the top-level view named in `h.view()`. Both follow
 `NUNJUCKS_NO_CACHE`. `frontend.compose.yml` defaults it to `false`, so
 published images cache, which saves about a third of E2E time.
-`dev.compose.yml` sets `NUNJUCKS_NO_CACHE=true` and `NUNJUCKS_WATCH=false`.
-The two files disagree on purpose.
+`dev.compose.yml` sets `NUNJUCKS_WATCH=false` for every frontend, and
+`NUNJUCKS_NO_CACHE=true` for each one except the plants frontend, which gets
+`false`. The two files disagree on purpose.
 
-- **Dev mode turns the cache off rather than watching it.** The nunjucks
+- **The plants frontend caches in dev mode.** Its nodemon restarts the app on
+  every `.njk` save, which rebuilds both caches, so a cached template is never
+  stale. With the cache off, every GOV.UK macro call re-reads and recompiles
+  its `template.njk`. Its address-book pickers list every record on one page,
+  each row with its own `govukRadios`, so with the cache off one picker with a
+  few hundred records costs half a second of the event loop. That load,
+  growing as the E2E run adds records, timed out the plants amendment specs.
+- **Dev mode otherwise turns the cache off rather than watching it.** The nunjucks
   watcher clears only nunjucks' cache. vision reads the top-level view itself,
   so with cache on and watch on, partials refresh while `h.view()` templates
   go stale, and a stale page looks like a broken edit. With the cache off a

@@ -2263,6 +2263,103 @@
           "number": 112
         }
       ]
+    },
+    {
+      "id": "inc-275",
+      "title": "A submitted notification stores no unread list of outstanding items, and whether an amendment changed any answers is always yes or no, on the backend and the local stub alike",
+      "detail": "Sam's 19 November ruling on the theme's engineering review. Submitting no longer stores the list of items still owed, which nothing reads now the action-required status is gone; it comes back with the outstanding-actions banner. Whether an open amendment's answers differ from the submitted version is a plain yes or no, never empty. The animals frontend's local stub keeps that answer the way the backend does and reads it back, so the amend review behaves the same on the stub as against the backend.",
+      "acceptanceCriteria": [
+        "Submitting a live animals notification records the date it was submitted, and the notification's stored record holds no list of outstanding items, whether or not its health certificate is uploaded (ruling:sam-2026-11-19 orchestrator's call 1; review:engineering-2026-11-19 'Outstanding items are saved but nothing reads them', 'A business rule is put on an enum')",
+        "A submitted notification with no health certificate still shows the status 'Submitted', and its view and dashboard read as they did before this change (ruling:sam-2026-11-16 claim 2; ruling:sam-2026-11-19 orchestrator's call 1)",
+        "The notification fulfilment view the animals backend serves always says yes or no to whether the answers differ from the submitted version: no for a draft, a submitted notification and an amendment just started, yes once a saved answer differs, and no again once every changed answer is put back (ruling:sam-2026-11-19 orchestrator's call 2; review:engineering-2026-11-19 'The answers changed flag can be yes, no or empty')",
+        "A notification stored before this change, with no answer recorded for whether its answers differ, reads back as no (ruling:sam-2026-11-19 orchestrator's call 2)",
+        "Run against the local stub store, an amendment's review is titled 'Review your notification' until an answer is changed, 'Review before re-submitting' once one is, and 'Review your notification' again after the change is put back, resubmitted or the amendment cancelled, just as it is against the animals backend (ruling:sam-2026-11-19 orchestrator's call 3; review:engineering-2026-11-19 'Stub storage now compares answers using the real backend mapper')",
+        "The Behaviour Spec says the same about what submitting records and when an amendment counts as changed (ruling:sam-2026-11-19)"
+      ],
+      "requirements": [],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-11-19",
+          "ref": "orchestrator's calls 1-3 (outstanding items and their enum rule, non-null answers-changed flag, stub takes the flag from the backend's shape)"
+        },
+        {
+          "source": "review:engineering-2026-11-19",
+          "ref": "animals-backend breaks 1-3 and animals-frontend 'Stub storage now compares answers using the real backend mapper'. https://claude.ai/artifact/TrAdrBupdoyCP4YJmXjuJL"
+        },
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "claim 2 (status stays Submitted; its 'what stays: outstanding items' is replaced by ruling:sam-2026-11-19)"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend"
+      ],
+      "kind": "fix",
+      "status": "todo",
+      "gate": null,
+      "theme": "overview-and-review",
+      "dependsOn": [
+        "inc-273"
+      ],
+      "notes": [
+        "Added 19 Nov from ruling:sam-2026-11-19, answering the theme's engineering review (https://claude.ai/artifact/TrAdrBupdoyCP4YJmXjuJL).",
+        "Review evidence, branch file:line. Outstanding items stored with no reader: animals backend NotificationAggregate.java:57-58 (field), NotificationService.java:212-214 (only writer), docs/design-notes.md:28 ('stored but not sent on the API'); only tests read it (NotificationIT, NotificationServiceTest, OutstandingItemTest). Pattern on main: every hidden aggregate field (expireAt, preAmendNotification, preAmendFulfilments, origin/main NotificationAggregate.java:57-67) has a reader.",
+        "Business rule on an enum: OutstandingItem.java:8-19. Every enum on main is a plain list of values (DocumentType, ScanStatus, FileStatus, NotificationStatus, MeansOfTransport, OutboxEventType); rules live in services. Sam's call: remove the enum's rule with the stored list, and re-add both with the future banner.",
+        "Nullable answers-changed flag: NotificationAggregate.java:73, NotificationFulfilmentsView.java:21, NotificationService.java:277,316. Pattern on main: the only stored flag is a primitive boolean with a default (AccompanyingDocument.claimed, origin/main AccompanyingDocument.java:59). The frontend's real marshal guards with '=== true' (animals frontend services/persistence/records/real/marshal/document.js:14), which a non-null flag no longer needs.",
+        "Stub works the flag out itself: animals frontend services/persistence/records/stub/marshal/document.js:13 compares the amendment with its submitted snapshot through the real backend mapper (fulfilmentToNotification), which origin/main never used under records/stub. Sam's call: the stub keeps the flag as the backend does (false when an amendment starts, worked out on each save, cleared on resubmit or cancel) and reads it back.",
+        "Kept by the ruling, not in scope: the backend unit tests that build a real DocumentService on stubbed repositories (NotificationServiceTest.java:106,124; OutboxServiceTest.java:52-65) follow the house rule of not mocking the service's own modules."
+      ]
+    },
+    {
+      "id": "inc-276",
+      "title": "The notification view header, review page and overview follow the service's own patterns in live animals and plants, and their tests find the page the same way",
+      "detail": "Sam's 19 November ruling on the theme's engineering review. Plants shows the 'Notification task list' heading on its overview as live animals does, and both say 'task list' as two words. Each header action on the notification view stands alone, not sharing a form. The review page gives Identification details a real heading under its species, names its cards for screen readers the way the service's other cards are named, and shows the standard page not found for a notification that does not exist. The tests find live animals review cards by GOV.UK structure and role as plants does, the review page object has one heading again, and the shared test helpers lose the overloads that worked round it. The plants lifecycle spec gets its missing blank line.",
+      "acceptanceCriteria": [
+        "The live animals and plants overview each show a visible 'Notification task list' heading above the task list, with a Welsh draft beside it (ruling:sam-2026-11-19 claim 1; review:engineering-2026-11-19 'The overview's Notification tasklist label is for screen readers only')",
+        "On the notification view header, in live animals and plants, Amend and Copy as new each post from a form of their own, carrying only what that action needs, and Delete opens the delete confirmation page without being part of either form; every action still works without JavaScript (ruling:sam-2026-11-19 claim 2; review:engineering-2026-11-19 'Notification header's Amend and Copy buttons share one form')",
+        "On the live animals review, 'Identification details' is a GOV.UK heading styled as one, one level below the species heading it sits under (ruling:sam-2026-11-19 orchestrator's call 4; review:engineering-2026-11-19 'Identification details heading is styled as bold body text')",
+        "Each summary card on the live animals review is a region a screen reader announces by the card's own title, named the same way as the service's other summary cards (ruling:sam-2026-11-19 orchestrator's call 5; review:engineering-2026-11-19 'Review cards get their screen-reader names a new way')",
+        "Opening the review page for a notification that does not exist shows the service's standard page not found, with the same status and wording as every other journey page (ruling:sam-2026-11-19 orchestrator's call 6; review:engineering-2026-11-19 'Review page catches notification not found itself')",
+        "The end-to-end tests find each live animals review card by its GOV.UK summary card structure and its title, as the plants tests do, so no test depends on a section caption such as '2. Description of the goods' (ruling:sam-2026-11-19 claim 3; review:engineering-2026-11-19 'Animals review cards are found by XPath')",
+        "The live animals and plants review page objects each expose one page heading that the shared resume and save-and-continue helpers wait on, as every other page object does, and those helpers take no alternative heading to wait for (ruling:sam-2026-11-19 claim 3; review:engineering-2026-11-19 'The review page object no longer has the standard page heading')",
+        "The Behaviour Spec says what each changed page now shows, and every scenario heading in the plants notification lifecycle spec follows a blank line (ruling:sam-2026-11-19 orchestrator's call 7; review:engineering-2026-11-19 'One plants requirement runs straight into its first scenario')"
+      ],
+      "requirements": [],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-11-19",
+          "ref": "claims 1-3 and orchestrator's calls 4-8"
+        },
+        {
+          "source": "review:engineering-2026-11-19",
+          "ref": "animals-frontend breaks (one form, card names, Identification heading, not found), plants-frontend 'tasklist label', ins-tests breaks 1-2, workspace 'blank line'. https://claude.ai/artifact/TrAdrBupdoyCP4YJmXjuJL"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "kind": "fix",
+      "status": "todo",
+      "gate": null,
+      "theme": "overview-and-review",
+      "dependsOn": [
+        "inc-274"
+      ],
+      "notes": [
+        "Added 19 Nov from ruling:sam-2026-11-19, answering the theme's engineering review (https://claude.ai/artifact/TrAdrBupdoyCP4YJmXjuJL). Does not wait for inc-275: nothing here reads what that row changes.",
+        "Task list heading: plants hub/template.njk:8 and hub/copy/copy.en.js:3 (taskListRegionLabel 'Notification tasklist', screen readers only; Welsh 'Rhestr dasgau’r hysbysiad' in copy.cy.js:4). Live animals shows taskListHeading visibly (animals hub/copy/copy.en.js:18, copy.cy.js:19; test copy.test.js:111). Both read 'Notification tasklist' today.",
+        "One form per action: animals check-answers/template.njk:40-56 is one form posting to Copy with a hidden copyOrigin; Amend reroutes it with formaction (:48) and the Delete link-button sits inside it. Plants check-answers/template.njk:38-53 wraps Amend and the Delete link-button in Amend's form. Pattern on main: one inline form per posting action, class app-form-inline (dashboard/template.njk:85; the old review header, origin/main check-answers/template.njk:34); formaction only on the upload page's file buttons. Delete is a link (view-model/view-header.js:18-22, href to the delete confirmation), so the orchestrator's reading of claim 2 keeps it a link outside both forms.",
+        "Identification details heading: animals check-answers/template.njk:101 uses bold body text. Pattern on main: headings inside cards use govuk-heading-s.",
+        "Card accessible names: animals check-answers/template.njk:7, :82, :86 name cards through govukAttributes, unused anywhere under src on main. Pattern on main: <section aria-labelledby=\"<id>-title\"> (commodities/animal-identification/_identification-card.njk:6, permanent-address/template.njk:23, documents/template.njk:70).",
+        "Not found: animals check-answers/controller.js:258, :274 and flow/entry-guard.js:58 catch the missing notification. Pattern on main: currentJourney throws Boom.notFound (engine/journey.js:92) and no controller under sets/ catches it; the shared error page answers.",
+        "Tests: ins-tests page-objects/animals/notification-view-page.ts:16-28 (heading renamed amendReviewHeading, anyReviewHeading added; plants page object likewise), flows/animals/seeded-journey.ts:137-152 (resumeInUi overloads), page-objects/shared/journey-checks.ts:32-61 (expectSaveAndContinueWalk overloads). No overloads exist in flows/ or page-objects/ on main. Card lookups by XPath: page-objects/animals/notification-view-page.ts:50-52, 74-78, 113, 121-123; plants finds .govuk-summary-card filtered by heading (page-objects/plants/notification-view-page.ts:28, 33-35).",
+        "Plants spec blank line: openspec/specs/plants/notification-lifecycle/spec.md:141-142 (REQ-PLANTS-LIFECYCLE-008 runs into SCN-PLANTS-LIFECYCLE-008-A).",
+        "Pages here are not signed off: live animals check your answers and overview are 'detailing', plants' are 'exploring'. Test helpers are shared, so the signed-off check at theme end may still see a linked test change.",
+        "Not in scope, by the ruling: the plants journey spec ruling deleted rather than superseded (journey-spec.json:599,603,607), the tests repo docs note on Cancel amend (docs/animals-journey.md:54-60), and the local stack's file uploader restart (docker/stack/infrastructure.compose.yml:26). The three reworded signed-off upload-documents scenarios (review workspace break 1) are the open question on inc-274, not this row."
+      ]
     }
   ]
 }

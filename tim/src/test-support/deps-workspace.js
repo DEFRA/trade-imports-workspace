@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { createCliWorkspace } from './tim-cli.js'
+import { prettierJson } from '../deps/json-layout.js'
 
 export const CHECKOUT_WORKSPACE_ROOT = fileURLToPath(
   new URL('../../../', import.meta.url)
@@ -12,8 +13,34 @@ const FIXTURE_PATH = fileURLToPath(
   new URL('../deps/fixtures/dependency-sets.json', import.meta.url)
 )
 
+export const fixtureDependencySetsText = () =>
+  readFileSync(FIXTURE_PATH, 'utf8')
+
 export const fixtureDependencySets = () =>
-  JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'))
+  JSON.parse(fixtureDependencySetsText())
+
+export const AXE_HOLD = {
+  package: '@axe-core/playwright',
+  versions: '4.14.x',
+  repos: ['trade-imports-animals-frontend'],
+  reason:
+    "axe 4.14 flags govuk-frontend's enhanced file upload button, which no govuk-frontend release fixes yet.",
+  failingTest: 'FIT accessibility tests (label-content-name-mismatch)',
+  clashesWith: 'govuk-frontend',
+  link: 'https://github.com/DEFRA/trade-imports-animals-frontend/pull/492',
+  since: '2026-11-19'
+}
+
+/**
+ * The fixture dependency sets with these holds.
+ *
+ * @param {object[]} holds
+ * @returns {object}
+ */
+export const fixtureDependencySetsHolding = (holds) => ({
+  ...fixtureDependencySets(),
+  holds
+})
 
 const REPOS_JSON = {
   reposDir: 'repos',
@@ -31,18 +58,20 @@ const REPOS_JSON = {
  *
  * @param {object} [options]
  * @param {object} [options.dependencySets]
+ * @param {string} [options.dependencySetsText] - The file's text byte for byte, in place of `dependencySets`
  * @param {string[]} [options.cloned]
  * @returns {string} The workspace root
  */
 export const createDepsWorkspace = ({
   dependencySets = fixtureDependencySets(),
+  dependencySetsText = prettierJson(dependencySets),
   cloned = ['trade-imports-animals-frontend']
 } = {}) => {
   const root = createCliWorkspace('tim-deps-')
   mkdirSync(join(root, 'config'))
   writeFileSync(
     join(root, 'config', 'dependency-sets.json'),
-    JSON.stringify(dependencySets)
+    dependencySetsText
   )
   writeFileSync(join(root, 'repos.json'), JSON.stringify(REPOS_JSON))
   for (const repo of cloned) mkdirSync(join(root, 'repos', repo))

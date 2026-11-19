@@ -60,17 +60,45 @@ const ignoredSetLines = ({ name, reason, members }) => [
   ...members.map((member) => `      - dependency-name: ${quoted(member)}`)
 ]
 
-const npmIgnores = (crossRepoSets) => {
+const liftWhen = ({ package: packageName, clashesWith }) =>
+  clashesWith
+    ? `Lift it with tim deps lift when a newer ${packageName} or ${clashesWith} clears it.`
+    : `Lift it with tim deps lift when a newer ${packageName} clears it.`
+
+const heldPackageLines = (hold) => [
+  `      # held: ${hold.package}, since ${hold.since}`,
+  ...[
+    hold.reason,
+    `Failing test: ${hold.failingTest}`,
+    liftWhen(hold),
+    ...(hold.link ? [hold.link] : [])
+  ].flatMap((text) => wrapComment(text, '      ')),
+  `      - dependency-name: ${quoted(hold.package)}`,
+  ...listOf('versions', [hold.versions], '        ')
+]
+
+const ignoreComment = (ignoredSets, repoHolds) => [
+  ...(ignoredSets.length > 0
+    ? [
+        'The nightly job moves these sets in every repo at once, on one branch name, so Dependabot leaves them alone.'
+      ]
+    : []),
+  ...(repoHolds.length > 0
+    ? [
+        'A held package stays at its current version: Dependabot does not propose the versions it breaks.'
+      ]
+    : [])
+]
+
+const npmIgnores = (crossRepoSets, repoHolds) => {
   const ignoredSets = crossRepoSets.filter((set) => set.members.length > 0)
-  if (ignoredSets.length === 0) return []
+  if (ignoredSets.length === 0 && repoHolds.length === 0) return []
   return [
     '',
-    ...wrapComment(
-      'The nightly job moves these sets in every repo at once, on one branch name, so Dependabot leaves them alone.',
-      '    '
-    ),
+    ...wrapComment(ignoreComment(ignoredSets, repoHolds).join(' '), '    '),
     '    ignore:',
-    ...ignoredSets.flatMap(ignoredSetLines)
+    ...ignoredSets.flatMap(ignoredSetLines),
+    ...repoHolds.flatMap(heldPackageLines)
   ]
 }
 
@@ -91,14 +119,17 @@ const scheduleLines = ({ interval, time, timezone }) => [
   `      timezone: ${quoted(timezone)}`
 ]
 
-const npmUpdate = ({ defaults, sets }) => [
+const npmUpdate = (repo, { defaults, sets, holds }) => [
   '  # Update npm packages',
   '  - package-ecosystem: npm',
   '    directory: /',
   `    open-pull-requests-limit: ${defaults.dependabot.openPullRequestsLimit}`,
   '',
   ...npmGroups(sets.filter((set) => set.scope === 'repo')),
-  ...npmIgnores(sets.filter((set) => set.scope === 'cross-repo')),
+  ...npmIgnores(
+    sets.filter((set) => set.scope === 'cross-repo'),
+    holds.filter((hold) => hold.repos.includes(repo))
+  ),
   '',
   ...cooldownLines(defaults.cooldownDays),
   '',
@@ -134,8 +165,8 @@ const githubActionsUpdate = ({ defaults }) => [
  * text, so a file can be compared with it byte for byte.
  *
  * @param {object} args
- * @param {string} args.repo - Named in the header's regenerate command
- * @param {{defaults: object, sets: object[]}} args.dependencySets - From `loadDependencySets`
+ * @param {string} args.repo - Named in the header's regenerate command; only the holds that list it are ignored
+ * @param {{defaults: object, sets: object[], holds: object[]}} args.dependencySets - From `loadDependencySets`
  * @returns {string}
  */
 export const renderDependabotConfig = ({ repo, dependencySets }) =>
@@ -146,7 +177,7 @@ export const renderDependabotConfig = ({ repo, dependencySets }) =>
     'version: 2',
     '',
     'updates:',
-    ...npmUpdate(dependencySets),
+    ...npmUpdate(repo, dependencySets),
     '',
     ...githubActionsUpdate(dependencySets),
     ''

@@ -10,8 +10,10 @@ import { join } from 'node:path'
 import { syncDependabotConfig } from './dependabot-file.js'
 import { renderDependabotConfig } from './dependabot.js'
 import {
+  AXE_HOLD,
   createDepsWorkspace,
-  fixtureDependencySets
+  fixtureDependencySets,
+  fixtureDependencySetsHolding
 } from '../test-support/deps-workspace.js'
 
 const REPO = 'trade-imports-animals-frontend'
@@ -109,6 +111,39 @@ describe('#syncDependabotConfig', () => {
     }).toEqual({ upToDate: false, onDisk: handEdited })
   })
 
+  test('Should report a file that lacks a hold on the repo as out of date in check mode', () => {
+    root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([AXE_HOLD])
+    })
+    seedConfig(generated())
+
+    const result = syncDependabotConfig({
+      workspaceRoot: root,
+      repo: REPO,
+      mode: 'check'
+    })
+
+    expect(result.upToDate).toBe(false)
+  })
+
+  test('Should report a file that still carries a lifted hold as out of date in check mode', () => {
+    root = createDepsWorkspace()
+    seedConfig(
+      renderDependabotConfig({
+        repo: REPO,
+        dependencySets: fixtureDependencySetsHolding([AXE_HOLD])
+      })
+    )
+
+    const result = syncDependabotConfig({
+      workspaceRoot: root,
+      repo: REPO,
+      mode: 'check'
+    })
+
+    expect(result.upToDate).toBe(false)
+  })
+
   test('Should refuse a repo the sets do not cover, listing the repos they do', () => {
     root = createDepsWorkspace({ cloned: ['trade-imports-animals-backend'] })
 
@@ -126,6 +161,27 @@ describe('#syncDependabotConfig', () => {
       })
     )
   })
+
+  test.each(['write', 'check'])(
+    'Should refuse a config whose hold covers a repo out of scope in %s mode, naming the hold and the repo',
+    (mode) => {
+      root = createDepsWorkspace({
+        dependencySets: fixtureDependencySetsHolding([
+          { ...AXE_HOLD, repos: ['trade-imports-animals-bakend'] }
+        ])
+      })
+
+      expect(() =>
+        syncDependabotConfig({ workspaceRoot: root, repo: REPO, mode })
+      ).toThrow(
+        expect.objectContaining({
+          code: 'USAGE',
+          message:
+            'config/dependency-sets.json: the hold on @axe-core/playwright covers a repo out of scope. trade-imports-animals-bakend is not in scope for the dependency sets. Repos in scope: tim, trade-imports-animals-frontend.'
+        })
+      )
+    }
+  )
 
   test('Should refuse a repo in scope that is not cloned under repos/', () => {
     root = createDepsWorkspace({ cloned: [] })

@@ -1,18 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { TimError } from '../errors.js'
-import { loadDependencySets, reposInScope } from './dependency-sets.js'
+import {
+  assertHoldsInScope,
+  assertReposInScope,
+  loadDependencySets,
+  reposInScope
+} from './dependency-sets.js'
 import { renderDependabotConfig } from './dependabot.js'
 
 export const DEPENDABOT_MODES = ['print', 'write', 'check']
 
 const assertRepoCanTakeConfig = (workspaceRoot, repo, inScope) => {
-  if (!inScope.includes(repo)) {
-    throw new TimError(
-      'USAGE',
-      `${repo} is not in scope for the dependency sets. Repos in scope: ${inScope.join(', ')}.`
-    )
-  }
+  assertReposInScope([repo], inScope)
   if (!existsSync(join(workspaceRoot, 'repos', repo))) {
     throw new TimError(
       'NOT_FOUND',
@@ -35,15 +35,13 @@ const readCurrent = (path) =>
  * @returns {{repo: string, path: string, mode: string, upToDate: boolean, written: boolean, content: string}}
  *   `path` is relative to the workspace root. `upToDate` says whether the
  *   file matched the generated text before anything was written.
- * @throws {TimError} USAGE when the repo is not in scope, NOT_FOUND when it is not cloned
+ * @throws {TimError} USAGE when the repo, or a repo a hold covers, is not in scope; NOT_FOUND when the repo is not cloned
  */
 export const syncDependabotConfig = ({ workspaceRoot, repo, mode }) => {
   const dependencySets = loadDependencySets(workspaceRoot)
-  assertRepoCanTakeConfig(
-    workspaceRoot,
-    repo,
-    reposInScope(workspaceRoot, dependencySets)
-  )
+  const inScope = reposInScope(workspaceRoot, dependencySets)
+  assertHoldsInScope(dependencySets.holds, inScope)
+  assertRepoCanTakeConfig(workspaceRoot, repo, inScope)
   const path = join('repos', repo, '.github', 'dependabot.yml')
   const absolutePath = join(workspaceRoot, path)
   const content = renderDependabotConfig({ repo, dependencySets })

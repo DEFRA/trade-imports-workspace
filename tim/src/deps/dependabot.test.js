@@ -1,7 +1,11 @@
 import { describe, test, expect } from 'vitest'
 import yaml from 'js-yaml'
 import { renderDependabotConfig } from './dependabot.js'
-import { fixtureDependencySets } from '../test-support/deps-workspace.js'
+import {
+  AXE_HOLD,
+  fixtureDependencySets,
+  fixtureDependencySetsHolding
+} from '../test-support/deps-workspace.js'
 
 const renderParsed = (dependencySets = fixtureDependencySets()) =>
   yaml.load(
@@ -70,6 +74,108 @@ describe('#renderDependabotConfig', () => {
     const config = renderParsed(repoSetsOnly)
 
     expect(npmUpdate(config)).not.toHaveProperty('ignore')
+  })
+
+  test('Should ignore the held versions of a package in a repo the hold lists, after the cross-repo sets', () => {
+    const config = renderParsed(fixtureDependencySetsHolding([AXE_HOLD]))
+
+    expect(npmUpdate(config).ignore).toEqual([
+      { 'dependency-name': 'playwright' },
+      { 'dependency-name': 'playwright-core' },
+      { 'dependency-name': '@playwright/*' },
+      { 'dependency-name': 'govuk-frontend' },
+      { 'dependency-name': '@axe-core/playwright', versions: ['4.14.x'] }
+    ])
+  })
+
+  test('Should keep a hold beside the ignore a cross-repo set gives the same package', () => {
+    const govukHold = {
+      ...AXE_HOLD,
+      package: 'govuk-frontend',
+      versions: '6.7.x'
+    }
+
+    const config = renderParsed(fixtureDependencySetsHolding([govukHold]))
+
+    expect(
+      npmUpdate(config).ignore.filter(
+        (entry) => entry['dependency-name'] === 'govuk-frontend'
+      )
+    ).toEqual([
+      { 'dependency-name': 'govuk-frontend' },
+      { 'dependency-name': 'govuk-frontend', versions: ['6.7.x'] }
+    ])
+  })
+
+  test('Should leave a repo the hold does not list unchanged', () => {
+    const elsewhere = { ...AXE_HOLD, repos: ['tim'] }
+
+    const text = renderDependabotConfig({
+      repo: 'trade-imports-animals-frontend',
+      dependencySets: fixtureDependencySetsHolding([elsewhere])
+    })
+
+    expect(text).toBe(
+      renderDependabotConfig({
+        repo: 'trade-imports-animals-frontend',
+        dependencySets: fixtureDependencySets()
+      })
+    )
+  })
+
+  test('Should write the ignore list for a hold when no cross-repo set has members', () => {
+    const dependencySets = fixtureDependencySetsHolding([AXE_HOLD])
+    const repoSetsOnly = {
+      ...dependencySets,
+      sets: dependencySets.sets.filter((set) => set.scope === 'repo')
+    }
+
+    const config = renderParsed(repoSetsOnly)
+
+    expect(npmUpdate(config).ignore).toEqual([
+      { 'dependency-name': '@axe-core/playwright', versions: ['4.14.x'] }
+    ])
+  })
+
+  test("Should write a hold's package, date, reason, failing test, what clears it and link as comments above its entry", () => {
+    const text = renderDependabotConfig({
+      repo: 'trade-imports-animals-frontend',
+      dependencySets: fixtureDependencySetsHolding([AXE_HOLD])
+    })
+
+    expect(text).toContain(
+      [
+        '      # held: @axe-core/playwright, since 2026-11-19',
+        "      # axe 4.14 flags govuk-frontend's enhanced file upload button, which no",
+        '      # govuk-frontend release fixes yet.',
+        '      # Failing test: FIT accessibility tests (label-content-name-mismatch)',
+        '      # Lift it with tim deps lift when a newer @axe-core/playwright or',
+        '      # govuk-frontend clears it.',
+        '      # https://github.com/DEFRA/trade-imports-animals-frontend/pull/492',
+        "      - dependency-name: '@axe-core/playwright'",
+        '        versions:',
+        "          - '4.14.x'",
+        ''
+      ].join('\n')
+    )
+  })
+
+  test('Should say only the held package clears a hold with no clashesWith, and write no link line without a link', () => {
+    const { clashesWith, link, ...plainHold } = AXE_HOLD
+
+    const text = renderDependabotConfig({
+      repo: 'trade-imports-animals-frontend',
+      dependencySets: fixtureDependencySetsHolding([plainHold])
+    })
+
+    expect(text).toContain(
+      [
+        '      # Failing test: FIT accessibility tests (label-content-name-mismatch)',
+        '      # Lift it with tim deps lift when a newer @axe-core/playwright clears',
+        '      # it.',
+        "      - dependency-name: '@axe-core/playwright'"
+      ].join('\n')
+    )
   })
 
   test('Should keep the npm schedule, limit, versioning strategy and direct-only allow', () => {

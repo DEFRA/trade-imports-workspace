@@ -281,4 +281,32 @@ describe('#refuseUncleanEvidence', () => {
 
     await expect(refusalOf('5.6.0')).resolves.toBeUndefined()
   })
+
+  test('Should refuse a version a hold on the repo covers, even with clean evidence', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.5.0', absentNotApplicable)
+    const setsPath = join(staged.root, 'config', 'dependency-sets.json')
+    const sets = JSON.parse(readFileSync(setsPath, 'utf8'))
+    writeFileSync(
+      setsPath,
+      JSON.stringify({
+        ...sets,
+        holds: [
+          {
+            package: 'govuk-frontend',
+            versions: '5.5.x',
+            repos: [EVIDENCE_REPO],
+            reason: 'It breaks the header.',
+            failingTest: 'FIT header tests',
+            since: '2026-11-19'
+          }
+        ]
+      })
+    )
+
+    await expect(refusalOf('5.5.0')).rejects.toMatchObject({
+      code: 'REFUSED',
+      message: `Can't apply ${EVIDENCE_REPO}@5.5.0 unattended: govuk-frontend 5.5.0 is in the range 5.5.x held since 2026-11-19. It breaks the header. Run tim deps holds to see the hold.`
+    })
+  })
 })

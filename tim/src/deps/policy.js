@@ -3,6 +3,7 @@ import { TimError } from '../errors.js'
 
 const CHANGELOG_DRIVEN = 'changelog-driven'
 const CI_IS_ENOUGH = 'ci-is-enough'
+const HELD = 'held'
 
 const memberMatcher = (member) => {
   const escaped = member.replace(/[.+?^${}()|[\]\\/]/g, '\\$&')
@@ -40,6 +41,19 @@ const jumpOf = (from, to) => {
   return 'patch'
 }
 
+const holdOn = ({ holds, packageName, version, repo }) =>
+  holds.find(
+    (hold) =>
+      hold.package === packageName &&
+      (repo === undefined || hold.repos.includes(repo)) &&
+      semver.satisfies(version, hold.versions)
+  )
+
+const heldPolicy = ({ package: packageName, versions, since, reason }, to) => ({
+  policy: HELD,
+  reason: `${packageName} ${to} is in the range ${versions} held since ${since}. ${reason} Run tim deps holds to see the hold.`
+})
+
 const isZeroMinor = (from, jump) => jump === 'minor' && semver.major(from) === 0
 
 const policyOfJump = ({ packageName, from, to, jump, set, majorPolicy }) => {
@@ -75,19 +89,27 @@ const policyOfJump = ({ packageName, from, to, jump, set, majorPolicy }) => {
 
 /**
  * The merge policy for moving one package from one version to another.
- * A prerelease target and a 0.x minor are `changelog-driven`, a major takes
+ * A target in a hold's `versions` range is `held`. Otherwise a prerelease
+ * target and a 0.x minor are `changelog-driven`, a major takes
  * `defaults.majorPolicy`, anything else takes its set's policy, and a
  * package in no set is `ci-is-enough`.
  *
  * @param {object} args
- * @param {{defaults: {majorPolicy: string}, sets: object[]}} args.dependencySets - From `loadDependencySets`
+ * @param {{defaults: {majorPolicy: string}, sets: object[], holds: object[]}} args.dependencySets - From `loadDependencySets`
  * @param {string} args.packageName
  * @param {string} args.from - An exact version, with or without a leading v
  * @param {string} args.to - An exact version later than `from`
- * @returns {{package: string, from: string, to: string, jump: 'major'|'minor'|'patch'|'prerelease', set: string|null, scope: string|null, policy: 'ci-is-enough'|'changelog-driven', reason: string}}
+ * @param {string} [args.repo] - Only the holds covering this repo count; every hold counts when it is left out
+ * @returns {{package: string, from: string, to: string, jump: 'major'|'minor'|'patch'|'prerelease', set: string|null, scope: string|null, hold: object|null, policy: 'ci-is-enough'|'changelog-driven'|'held', reason: string}}
  * @throws {TimError} USAGE when a version is not exact, or `to` is not later than `from`
  */
-export const mergePolicyFor = ({ dependencySets, packageName, from, to }) => {
+export const mergePolicyFor = ({
+  dependencySets,
+  packageName,
+  from,
+  to,
+  repo
+}) => {
   const fromVersion = exactVersion('--from', from)
   const toVersion = exactVersion('--to', to)
   if (!semver.gt(toVersion, fromVersion)) {
@@ -98,14 +120,22 @@ export const mergePolicyFor = ({ dependencySets, packageName, from, to }) => {
   }
   const jump = jumpOf(fromVersion, toVersion)
   const set = setOfPackage(dependencySets.sets, packageName)
-  const { policy, reason } = policyOfJump({
+  const hold = holdOn({
+    holds: dependencySets.holds,
     packageName,
-    from: fromVersion,
-    to: toVersion,
-    jump,
-    set,
-    majorPolicy: dependencySets.defaults.majorPolicy
+    version: toVersion,
+    repo
   })
+  const { policy, reason } = hold
+    ? heldPolicy(hold, toVersion)
+    : policyOfJump({
+        packageName,
+        from: fromVersion,
+        to: toVersion,
+        jump,
+        set,
+        majorPolicy: dependencySets.defaults.majorPolicy
+      })
   return {
     package: packageName,
     from: fromVersion,
@@ -113,6 +143,7 @@ export const mergePolicyFor = ({ dependencySets, packageName, from, to }) => {
     jump,
     set: set?.name ?? null,
     scope: set?.scope ?? null,
+    hold: hold ?? null,
     policy,
     reason
   }

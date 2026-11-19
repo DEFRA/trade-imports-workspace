@@ -107,18 +107,19 @@ export const checkVersionEvidence = async ({
   return { message: checkMessage({ repo, version }, verdict), ...verdict }
 }
 
-const isChangelogDriven = ({ workspaceRoot, from, to }) =>
-  mergePolicyFor({
-    dependencySets: loadDependencySets(workspaceRoot),
-    packageName: PACKAGE,
-    from,
-    to
-  }).policy === 'changelog-driven'
+const refuseHeldVersion = ({ repo, version }, { policy, reason }) => {
+  if (policy !== 'held') return
+  throw new TimError(
+    'REFUSED',
+    `Can't apply ${repo}@${version} unattended: ${reason}`
+  )
+}
 
 /**
- * Refuses a version an unattended apply may not make: one whose move from
- * the repo's current version is `changelog-driven` and whose evidence,
- * counted again now, is not all clean. Writes nothing.
+ * Refuses a version an unattended apply may not make: one a hold on the
+ * repo covers, or one whose move from the repo's current version is
+ * `changelog-driven` and whose evidence, counted again now, is not all
+ * clean. Writes nothing.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -126,7 +127,7 @@ const isChangelogDriven = ({ workspaceRoot, from, to }) =>
  * @param {string} args.version
  * @param {{path: string, state: {current_version: string}, entry: object}} args.found - From `findVersion`
  * @returns {Promise<void>}
- * @throws {TimError} REFUSED when the evidence is not all clean; NOT_FOUND or PARSE when config/dependency-sets.json is missing or not valid; PARSE when the version's evidence is not valid
+ * @throws {TimError} REFUSED when the version is held or the evidence is not all clean; NOT_FOUND or PARSE when config/dependency-sets.json is missing or not valid; PARSE when the version's evidence is not valid
  */
 export const refuseUncleanEvidence = async ({
   workspaceRoot,
@@ -135,7 +136,15 @@ export const refuseUncleanEvidence = async ({
   found
 }) => {
   const from = found.state.current_version
-  if (!isChangelogDriven({ workspaceRoot, from, to: version })) return
+  const mergePolicy = mergePolicyFor({
+    dependencySets: loadDependencySets(workspaceRoot),
+    packageName: PACKAGE,
+    from,
+    to: version,
+    repo
+  })
+  refuseHeldVersion({ repo, version }, mergePolicy)
+  if (mergePolicy.policy !== 'changelog-driven') return
   const recounted = await recountEvidenceRows(
     repoPath(workspaceRoot, repo),
     versionEvidence(found)

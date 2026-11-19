@@ -2,15 +2,19 @@ import { readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 import {
+  AXE_HOLD,
   createDepsWorkspace,
-  fixtureDependencySets
+  fixtureDependencySets,
+  fixtureDependencySetsHolding
 } from '../../test-support/deps-workspace.js'
 import { writeJsonAtomic } from '../../review/store.js'
 import { packagesPath, runFolder } from '../state.js'
 import {
+  heldPackageLines,
   packagePolicyOf,
   recordedPolicyOf,
   recordPackagePolicies,
+  removeHeldPackages,
   renderPoliciesText
 } from './policy.js'
 
@@ -94,6 +98,91 @@ describe('#packagePolicyOf', () => {
       set_scope: 'repo',
       policy_reason:
         'tim cannot compare 4.x with 5.x, so read the changelog before you merge it.'
+    })
+  })
+})
+
+describe('#packagePolicyOf with a hold', () => {
+  test('Should make a target a hold on the repo covers held, naming the hold', () => {
+    const fields = packagePolicyOf(
+      fixtureDependencySetsHolding([AXE_HOLD]),
+      row(AXE_HOLD.package, '4.13.0', '4.14.0'),
+      REPO
+    )
+
+    expect(fields).toEqual({
+      policy: 'held',
+      set: null,
+      set_scope: null,
+      policy_reason: `@axe-core/playwright 4.14.0 is in the range 4.14.x held since 2026-11-19. ${AXE_HOLD.reason} Run tim deps holds to see the hold.`
+    })
+  })
+
+  test('Should leave a repo the hold does not cover to its usual policy', () => {
+    const { policy } = packagePolicyOf(
+      fixtureDependencySetsHolding([AXE_HOLD]),
+      row(AXE_HOLD.package, '4.13.0', '4.14.0'),
+      'tim'
+    )
+
+    expect(policy).toBe('ci-is-enough')
+  })
+})
+
+describe('#removeHeldPackages', () => {
+  test('Should take the held rows out of the packages file and give them back', () => {
+    const root = createDepsWorkspace({
+      dependencySets: fixtureDependencySetsHolding([
+        { ...AXE_HOLD, package: 'lodash', versions: '4.17.x' }
+      ])
+    })
+    workspaces.push(root)
+    const path = packagesPath(runFolder(root, RUN_ID), REPO)
+    writeJsonAtomic(path, {
+      ticket: RUN_ID,
+      repo: REPO,
+      packages: [
+        row('eslint', '9.39.0', '9.40.0'),
+        row('lodash', '4.17.20', '4.17.21')
+      ]
+    })
+    recordPackagePolicies({ workspaceRoot: root, runId: RUN_ID, repo: REPO })
+
+    const held = removeHeldPackages({
+      workspaceRoot: root,
+      runId: RUN_ID,
+      repo: REPO
+    })
+
+    expect({
+      lines: heldPackageLines(held),
+      left: JSON.parse(readFileSync(path, 'utf8')).packages.map(
+        ({ package: name }) => name
+      )
+    }).toEqual({
+      lines: [
+        `Skipping lodash 4.17.21: lodash 4.17.21 is in the range 4.17.x held since 2026-11-19. ${AXE_HOLD.reason} Run tim deps holds to see the hold.`
+      ],
+      left: ['eslint']
+    })
+  })
+
+  test('Should leave the packages file as it is when nothing is held', () => {
+    const { root, path } = workspaceWithPackages([
+      row('lodash', '4.17.20', '4.17.21')
+    ])
+    recordPackagePolicies({ workspaceRoot: root, runId: RUN_ID, repo: REPO })
+    const before = readFileSync(path, 'utf8')
+
+    const held = removeHeldPackages({
+      workspaceRoot: root,
+      runId: RUN_ID,
+      repo: REPO
+    })
+
+    expect({ held, text: readFileSync(path, 'utf8') }).toEqual({
+      held: [],
+      text: before
     })
   })
 })

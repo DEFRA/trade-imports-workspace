@@ -8,7 +8,11 @@ import {
   stageStartUpgradeWorkspace,
   startFixtureRegistry
 } from '../../npm-upgrade/__fixtures__/npm-start-upgrade-workspace.js'
-import { fixtureDependencySets } from '../../test-support/deps-workspace.js'
+import {
+  AXE_HOLD,
+  fixtureDependencySets,
+  fixtureDependencySetsHolding
+} from '../../test-support/deps-workspace.js'
 
 const cliPath = fileURLToPath(new URL('../../cli.js', import.meta.url))
 const TICKET = 'EUDPA-800'
@@ -31,13 +35,16 @@ afterEach(() => {
   staging.splice(0).forEach((staged) => staged.remove())
 })
 
-const stage = (registryUrl = UNUSED_REGISTRY) => {
+const stage = (
+  registryUrl = UNUSED_REGISTRY,
+  dependencySets = fixtureDependencySets()
+) => {
   const staged = stageStartUpgradeWorkspace({}, registryUrl)
   staging.push(staged)
   mkdirSync(join(staged.root, 'config'), { recursive: true })
   writeFileSync(
     join(staged.root, 'config', 'dependency-sets.json'),
-    JSON.stringify(fixtureDependencySets())
+    JSON.stringify(dependencySets)
   )
   return staged
 }
@@ -211,8 +218,8 @@ describe('An unattended npm upgrade run', () => {
       'Patch fix only'
     ])
 
-  const stageThroughPhase1 = async () => {
-    const staged = stage(registry.url)
+  const stageThroughPhase1 = async (dependencySets) => {
+    const staged = stage(registry.url, dependencySets)
     await withOriginAtItself(staged, FRONTEND)
     await gitIn(staged, FRONTEND, ['checkout', '--quiet', '-b', 'spike/local'])
     const phase0 = await upgrade(staged, unattended('0'))
@@ -260,6 +267,34 @@ describe('An unattended npm upgrade run', () => {
         set: null
       }
     ])
+  })
+
+  test('Should leave a held package out of the run in phase 1, with a line naming the hold', async () => {
+    const lodashHold = {
+      ...AXE_HOLD,
+      package: 'lodash',
+      versions: '4.17.x',
+      repos: [FRONTEND]
+    }
+    const { staged, phase1 } = await stageThroughPhase1(
+      fixtureDependencySetsHolding([lodashHold])
+    )
+
+    const tasks = JSON.parse(phase1.stdout).result
+
+    expect({
+      tasks: tasks.map(({ package: name }) => name),
+      rows: packagesFileOf(staged).packages.map(({ package: name }) => name),
+      skipped: phase1.stderr
+        .split('\n')
+        .filter((line) => line.startsWith('Skipping '))
+    }).toEqual({
+      tasks: ['date-fns'],
+      rows: ['date-fns'],
+      skipped: [
+        `Skipping lodash 4.17.21: lodash 4.17.21 is in the range 4.17.x held since 2026-11-19. ${AXE_HOLD.reason} Run tim deps holds to see the hold.`
+      ]
+    })
   })
 
   test('Should record each package policy in the packages file in phase 1', async () => {

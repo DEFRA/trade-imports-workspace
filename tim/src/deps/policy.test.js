@@ -1,6 +1,10 @@
 import { describe, test, expect } from 'vitest'
 import { mergePolicyFor, setOfPackage } from './policy.js'
-import { fixtureDependencySets } from '../test-support/deps-workspace.js'
+import {
+  AXE_HOLD,
+  fixtureDependencySets,
+  fixtureDependencySetsHolding
+} from '../test-support/deps-workspace.js'
 
 const policyOf = (packageName, from, to) =>
   mergePolicyFor({
@@ -77,6 +81,7 @@ describe('#mergePolicyFor', () => {
       jump: 'minor',
       set: null,
       scope: null,
+      hold: null,
       policy: 'ci-is-enough',
       reason: 'lodash is in no set, and a minor upgrade needs only green CI.'
     })
@@ -116,6 +121,47 @@ describe('#mergePolicyFor', () => {
     expect(policyOf('vitest', '4.1.0', '4.2.0').reason).toBe(
       'vitest is in the vitest set. @vitest/coverage-v8 and the other @vitest packages pin the exact vitest version they were released with.'
     )
+  })
+
+  describe('with a hold on @axe-core/playwright 4.14.x in the animals frontend', () => {
+    const heldPolicyOf = (to, repo) =>
+      mergePolicyFor({
+        dependencySets: fixtureDependencySetsHolding([AXE_HOLD]),
+        packageName: AXE_HOLD.package,
+        from: '4.13.0',
+        to,
+        repo
+      })
+
+    test('Should make a target in the held range held, naming the hold', () => {
+      const { hold, policy, reason } = heldPolicyOf(
+        '4.14.1',
+        'trade-imports-animals-frontend'
+      )
+
+      expect({ hold, policy, reason }).toEqual({
+        hold: AXE_HOLD,
+        policy: 'held',
+        reason: `@axe-core/playwright 4.14.1 is in the range 4.14.x held since 2026-11-19. ${AXE_HOLD.reason} Run tim deps holds to see the hold.`
+      })
+    })
+
+    test('Should count the hold when no repo is given', () => {
+      expect(heldPolicyOf('4.14.0').policy).toBe('held')
+    })
+
+    test('Should leave a target past the held range to its usual policy', () => {
+      const { hold, policy } = heldPolicyOf(
+        '4.15.0',
+        'trade-imports-animals-frontend'
+      )
+
+      expect({ hold, policy }).toEqual({ hold: null, policy: 'ci-is-enough' })
+    })
+
+    test('Should leave a repo the hold does not cover to its usual policy', () => {
+      expect(heldPolicyOf('4.14.0', 'tim').policy).toBe('ci-is-enough')
+    })
   })
 
   test('Should accept versions with a leading v', () => {

@@ -83,6 +83,8 @@ A job may only make mechanical changes. A mechanical change is one of:
 - an import path
 - a config file moving to a new format with the same settings
 - a type fix
+- keeping one package of a Dependabot group at its current version, in
+  `package.json` and the lockfile, with a hold recorded by `tim deps hold`
 
 It does not change what the code does at runtime.
 
@@ -98,6 +100,48 @@ digest when any of these is true:
 - an install only passes with a flag this file bans
 - a member of a coupled set is not ready: its peer dependencies do not accept
   the other members' new versions
+- a Dependabot group pull request is red and no single package explains it
+
+## Hold back one package
+
+When a Dependabot group pull request is red and one package explains it, the
+job does not wait for a person. Holding the package back is a mechanical
+change (see "A mechanical change"). The job works in this order:
+
+1. It records the hold with `tim deps hold`: the version range held, the
+   repos, the reason, the failing test and any package it clashes with.
+2. It regenerates each affected repo's Dependabot config with
+   `tim deps dependabot <repo> --write`.
+3. It raises the hold as one change on one branch name, such as
+   `chore/EUDPA-802-hold-axe-core-playwright-4.14`: a pull request in this
+   workspace for `config/dependency-sets.json`, and one in each affected repo
+   for `.github/dependabot.yml`. It merges the workspace one first, then each
+   repo's one, each on green.
+4. It comments `@dependabot recreate` on the group pull request, so
+   Dependabot rebuilds it without the held versions, and merges it on green
+   under the merge policy.
+5. Only if the recreated pull request still moves the held package does it
+   keep that package at its current version in `package.json` and the
+   lockfile on Dependabot's branch, in a commit that says it is the fallback
+   for the hold.
+6. It lists the hold under "Waiting" in the digest.
+
+`tim npm upgrade --unattended` leaves a held package out of its run, and
+`tim deps policy <package> --repo <repo>` reports a held version as `held`.
+
+The hold's `versions` range stops Dependabot proposing any release in it,
+patches included, so the job checks for a fix itself, at most once a night
+for each hold:
+
+1. When `npm view <package> versions` lists a release the hold has not been
+   tried against, or the package it clashes with has a new release, the job
+   opens a draft nightly pull request on `chore/EUDPA-802-<package>-<version>`
+   that moves only that package, and watches CI with `gh pr checks`.
+2. When the check the hold's `failingTest` names is green, it lifts the hold
+   with `tim deps lift`, regenerates each repo's Dependabot config and raises
+   the lift the way the hold was raised: one branch name, the workspace pull
+   request merged first, then each repo's.
+3. Otherwise it closes the draft pull request and leaves the hold.
 
 ## Merge policy
 

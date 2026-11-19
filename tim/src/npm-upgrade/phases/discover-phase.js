@@ -5,7 +5,9 @@ import { ncuVersion, runNcu } from '../ncu.js'
 import { prebakeContext } from '../prebake.js'
 import { packagesPath, readJson, runFolder } from '../state.js'
 import {
+  heldPackageLines,
   recordPackagePolicies,
+  removeHeldPackages,
   renderPoliciesText
 } from '../unattended/policy.js'
 import { requireGreenPhase0 } from './audit-phase.js'
@@ -52,6 +54,8 @@ const recordPoliciesOf = async ({ workspaceRoot, runId, repo, warn }) => {
     await warn(
       renderPoliciesText(recordPackagePolicies({ workspaceRoot, runId, repo }))
     )
+    const held = removeHeldPackages({ workspaceRoot, runId, repo })
+    for (const line of heldPackageLines(held)) await warn(line)
   } catch (error) {
     await stopWithError(warn, error)
   }
@@ -102,7 +106,8 @@ const plannerTaskOf =
  * outdated packages, bake its best-practice bundle and pre-bake each
  * unclassified package's context. The result is one PACKAGE_PLANNER task
  * per unclassified package. An unattended run also records each package's
- * merge policy, and each task carries its mode, policy and set.
+ * merge policy, takes out each package a hold covers with a line naming
+ * the hold, and gives each task its mode, policy and set.
  *
  * @param {object} request
  * @param {string} request.workspaceRoot

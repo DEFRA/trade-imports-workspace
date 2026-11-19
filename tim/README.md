@@ -544,10 +544,11 @@ tim npm packages render-evidence --run-id EUDPA-802-eslint-10 --json
   evidence commands below.
 - `set-policy` records each package's merge policy on its row of
   `packages.<repo>.json`, from `config/dependency-sets.json`: `policy`
-  (`ci-is-enough` or `changelog-driven`, as `tim deps policy` decides
-  it), `set`, `set_scope` and `policy_reason`. A package whose versions
-  tim cannot compare is `changelog-driven`. `tim npm upgrade
---unattended` runs it in phase 1.
+  (`ci-is-enough`, `changelog-driven` or `held`, as `tim deps policy
+--repo <repo>` decides it), `set`, `set_scope` and `policy_reason`. A
+  package whose versions tim cannot compare is `changelog-driven`. `tim
+npm upgrade --unattended` runs it in phase 1, then takes each `held`
+  row out of the packages file.
 - `add-evidence` records one changelog item's row for one package in
   `<repo>/evidence/<package>.json` (`/` becomes `__`), never in the
   packages file, so planners can record at once. The file keeps the
@@ -2062,6 +2063,10 @@ The generated file has:
 - an npm `ignore` entry for every member of each set with
   `"scope": "cross-repo"`, because the nightly job moves those in every repo
   at once on one branch name
+- an npm `ignore` entry, with `versions`, for each hold that lists the repo,
+  beside any other ignore for the same package, so Dependabot stops
+  proposing the versions the hold covers. A repo the hold does not list is
+  unchanged
 - `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
   Actions
 - the schedule, pull request limit and versioning strategy from
@@ -2069,7 +2074,9 @@ The generated file has:
   update with its own `patch-and-minor` group
 
 Each set's `reason` is written as a comment above its group or ignore
-entries.
+entries. Each hold's date, reason, failing test, what would clear it and
+link are written as a comment above its ignore entry. `--check` fails for a
+repo whose file lacks a hold that lists it, or still has one that was lifted.
 
 #### The shape of `config/dependency-sets.json`
 
@@ -2085,31 +2092,82 @@ entries.
 | `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it |
 | `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                  |
 | `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                  |
+| `holds[].package`       | The exact npm name of a package held at its current version. One hold per package                                                                         |
+| `holds[].versions`      | The Dependabot version range held back, such as `4.14.x`, so a later `4.15` is still proposed and tested                                                  |
+| `holds[].repos`         | The repos the hold covers. Each must be in scope                                                                                                          |
+| `holds[].reason`        | Why the package is held, in plain English                                                                                                                 |
+| `holds[].failingTest`   | The test or check the held versions break                                                                                                                 |
+| `holds[].clashesWith`   | Optional. A package whose newer release may clear the hold, such as `govuk-frontend`                                                                      |
+| `holds[].link`          | Optional. A link to the evidence, such as the pull request                                                                                                |
+| `holds[].since`         | The date the hold was added, as `YYYY-MM-DD`                                                                                                              |
 
-After changing the file, run `--write` for each repo whose Dependabot config
-is generated, then `--check` to confirm.
+`holds` is required; an empty list means nothing is held. After changing
+the file, run `--write` for each repo whose Dependabot config is generated,
+then `--check` to confirm.
+
+### `tim deps hold|holds|lift` — hold one package at its current version
+
+```bash
+tim deps hold @axe-core/playwright --versions 4.14.x \
+  --repo trade-imports-animals-frontend \
+  --reason "axe 4.14 flags govuk-frontend's enhanced file upload button" \
+  --failing-test "FIT accessibility tests (label-content-name-mismatch)" \
+  --clashes-with govuk-frontend \
+  --link https://github.com/DEFRA/trade-imports-animals-frontend/pull/492
+tim deps holds --json
+tim deps lift @axe-core/playwright
+```
+
+When one package in a Dependabot group turns it red, the nightly job keeps
+that package at its current version and records a hold, so the rest of the
+group can merge and Dependabot stops proposing the held versions.
+
+- `hold` adds the hold for a package to `config/dependency-sets.json`, or
+  replaces the one it has, with today's date as `since`. `--versions`,
+  `--repo` (once for each repo), `--reason` and `--failing-test` are
+  required. A repo out of scope, a wildcard package name, a version range
+  npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`
+  command for every repo to regenerate: those the hold covers, and those a
+  replaced hold covered. `--json` gives `{hold, replaced, regenerate}`.
+- `holds` lists every hold with its versions, repos, date, reason and the
+  package it clashes with. `--json` gives `{holds}`.
+- `lift` removes the hold and prints the repos to regenerate. A package
+  that is not held exits 2. `--json` gives `{lifted, regenerate}`.
+
+`hold` and `lift` rewrite only `holds`, laid out as Prettier lays out JSON,
+so the diff shows only the hold. `tim deps dependabot` refuses, in every
+mode, a config whose hold covers a repo out of scope, so a misspelt repo
+cannot leave a hold that affects nothing.
 
 ### `tim deps policy` — can an upgrade merge on green CI
 
 ```bash
 tim deps policy vitest --from 4.1.0 --to 4.2.0
 tim deps policy govuk-frontend --from 6.5.0 --to 6.6.0 --json
+tim deps policy @axe-core/playwright --from 4.13.0 --to 4.14.0 --repo trade-imports-animals-frontend
 ```
 
 Says whether moving a package from one version to another is
-`ci-is-enough` (green CI is enough to merge) or `changelog-driven`
-(every changelog item needs clean evidence too), from
-`config/dependency-sets.json`, in this order:
+`ci-is-enough` (green CI is enough to merge), `changelog-driven`
+(every changelog item needs clean evidence too) or `held` (do not move
+to it), from `config/dependency-sets.json`, in this order:
 
-1. A prerelease target, or a minor of a 0.x version, is
+1. A target in the `versions` range of a hold on the package is `held`.
+   With `--repo`, only the holds covering that repo count; without it,
+   every hold on the package does.
+2. A prerelease target, or a minor of a 0.x version, is
    `changelog-driven`.
-2. A major takes `defaults.majorPolicy`, whatever the package's set says.
-3. Anything else takes the policy of the set the package is in, or
+3. A major takes `defaults.majorPolicy`, whatever the package's set says.
+4. Anything else takes the policy of the set the package is in, or
    `ci-is-enough` when it is in none.
 
-`--json` gives `{package, from, to, jump, set, scope, policy, reason}`.
-`tim govuk apply --unattended` and `tim npm packages set-policy` use the
-same rules. `--from` and `--to` are required.
+`--json` gives `{package, from, to, jump, set, scope, hold, policy,
+reason}`, where `hold` is the hold that applies, or null. `tim govuk apply
+--unattended` and `tim npm packages set-policy` use the same rules for the
+repo they work on: `tim govuk apply --unattended` refuses a held version,
+and `tim npm upgrade --unattended` leaves a held package out of its run in
+phase 1, printing a `Skipping` line for it. `--from` and `--to` are
+required.
 
 ### `tim deps evidence count|check|render` — changelog evidence
 

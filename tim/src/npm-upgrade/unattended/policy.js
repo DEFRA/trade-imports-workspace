@@ -10,7 +10,7 @@ import { packagesPath, readPackagesFile, runFolder } from '../state.js'
  * once its policy is recorded.
  */
 export const packagePolicySchema = z.object({
-  policy: z.enum(['ci-is-enough', 'changelog-driven']),
+  policy: z.enum(['ci-is-enough', 'changelog-driven', 'held']),
   set: z.string().min(1).nullable(),
   set_scope: z.enum(['repo', 'cross-repo']).nullable(),
   policy_reason: z.string().min(1)
@@ -29,21 +29,23 @@ const policyForUnreadableVersions = (dependencySets, row) => {
 }
 
 /**
- * The merge policy fields for one package row, from its current and target
- * versions. A row whose versions are not exact, or do not go up, is
- * `changelog-driven`.
+ * The merge policy fields for one package row of a repo, from its current
+ * and target versions. A target a hold on the repo covers is `held`. A row
+ * whose versions are not exact, or do not go up, is `changelog-driven`.
  *
- * @param {{defaults: {majorPolicy: string}, sets: object[]}} dependencySets - From `loadDependencySets`
+ * @param {{defaults: {majorPolicy: string}, sets: object[], holds: object[]}} dependencySets - From `loadDependencySets`
  * @param {{package: string, current: string, target: string}} row
+ * @param {string} repo
  * @returns {{policy: string, set: string|null, set_scope: string|null, policy_reason: string}}
  */
-export const packagePolicyOf = (dependencySets, row) => {
+export const packagePolicyOf = (dependencySets, row, repo) => {
   try {
     const { policy, set, scope, reason } = mergePolicyFor({
       dependencySets,
       packageName: row.package,
       from: row.current,
-      to: row.target
+      to: row.target,
+      repo
     })
     return packagePolicySchema.parse({
       policy,
@@ -86,7 +88,7 @@ export const recordPackagePolicies = ({ workspaceRoot, runId, repo }) => {
   const packagesFile = readPackagesFile(path)
   const rows = (packagesFile.packages ?? []).map((row) => ({
     ...row,
-    ...packagePolicyOf(dependencySets, row)
+    ...packagePolicyOf(dependencySets, row, repo)
   }))
   writeJsonAtomic(path, { ...packagesFile, packages: rows })
   return {
@@ -97,6 +99,49 @@ export const recordPackagePolicies = ({ workspaceRoot, runId, repo }) => {
     }))
   }
 }
+
+const isHeld = (row) => row.policy === 'held'
+
+/**
+ * Takes every row whose recorded policy is `held` out of one repo's
+ * `packages.<repo>.json`, so the run leaves those packages where they are.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} args.runId
+ * @param {string} args.repo
+ * @returns {{package: string, target: string, policy_reason: string}[]} The rows taken out, in file order
+ * @throws {TimError} NOT_FOUND when the packages file is missing
+ */
+export const removeHeldPackages = ({ workspaceRoot, runId, repo }) => {
+  const path = packagesPath(runFolder(workspaceRoot, runId), repo)
+  const packagesFile = readPackagesFile(path)
+  const rows = packagesFile.packages ?? []
+  const held = rows.filter(isHeld)
+  if (held.length > 0) {
+    writeJsonAtomic(path, {
+      ...packagesFile,
+      packages: rows.filter((row) => !isHeld(row))
+    })
+  }
+  return held.map(
+    ({ package: packageName, target, policy_reason: reason }) => ({
+      package: packageName,
+      target,
+      policy_reason: reason
+    })
+  )
+}
+
+/**
+ * @param {ReturnType<typeof removeHeldPackages>} held
+ * @returns {string[]} One line per package the run leaves where it is, with the hold's reason
+ */
+export const heldPackageLines = (held) =>
+  held.map(
+    ({ package: packageName, target, policy_reason: reason }) =>
+      `Skipping ${packageName} ${target}: ${reason}`
+  )
 
 const policyLine = ({ package: packageName, policy, set, set_scope: scope }) =>
   set

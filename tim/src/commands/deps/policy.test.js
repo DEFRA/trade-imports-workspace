@@ -3,7 +3,12 @@ import { rmSync } from 'node:fs'
 import { z } from 'zod'
 import { renderPolicyText } from './policy.js'
 import { runTimInWorkspace, envelopeOf } from '../../test-support/tim-cli.js'
-import { createDepsWorkspace } from '../../test-support/deps-workspace.js'
+import { holdSchema } from '../../deps/dependency-sets.js'
+import {
+  AXE_HOLD,
+  createDepsWorkspace,
+  fixtureDependencySetsHolding
+} from '../../test-support/deps-workspace.js'
 
 const envelopeSchema = z.object({
   ok: z.literal(true),
@@ -16,7 +21,8 @@ const envelopeSchema = z.object({
       jump: z.enum(['major', 'minor', 'patch', 'prerelease']),
       set: z.string().nullable(),
       scope: z.enum(['repo', 'cross-repo']).nullable(),
-      policy: z.enum(['ci-is-enough', 'changelog-driven']),
+      hold: holdSchema.nullable(),
+      policy: z.enum(['ci-is-enough', 'changelog-driven', 'held']),
       reason: z.string()
     })
     .strict()
@@ -51,6 +57,34 @@ describe('tim deps policy', () => {
       policy: 'changelog-driven'
     })
   })
+
+  test.each([
+    ['trade-imports-animals-frontend', 'held'],
+    ['tim', 'ci-is-enough']
+  ])(
+    'Should count a hold only in the repo --repo %s names, giving %s',
+    async (repo, expected) => {
+      root = createDepsWorkspace({
+        dependencySets: fixtureDependencySetsHolding([AXE_HOLD])
+      })
+
+      const run = await runPolicy(
+        AXE_HOLD.package,
+        '--from',
+        '4.13.0',
+        '--to',
+        '4.14.0',
+        '--repo',
+        repo
+      )
+
+      const { policy } = envelopeSchema.parse(envelopeOf(run)).result
+      expect({ exitCode: run.exitCode, policy }).toEqual({
+        exitCode: 0,
+        policy: expected
+      })
+    }
+  )
 
   test('Should refuse a missing --to as a usage error', async () => {
     root = createDepsWorkspace()

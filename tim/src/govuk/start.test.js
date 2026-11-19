@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createGovukChangelogClient } from '../clients/govuk-changelog-client.js'
@@ -7,11 +8,15 @@ import { closeHttpMocks, installHttpMocks } from '../test-support/http-mock.js'
 import {
   ADMIN,
   changelogText,
+  FRONTEND,
+  giveEveryRepoAnOrigin,
+  INS,
   readGovukStartGolden,
   recordStartCase,
   registryDocument,
   startCases,
   stageStartWorkspace,
+  startEnv,
   USAGE_CASES
 } from './__fixtures__/govuk-start.js'
 import { startUpgrade } from './start.js'
@@ -200,6 +205,158 @@ describe('#startUpgrade', () => {
       exitCode: 1,
       stdout: 'PHASE: 1\nRun ID: EUDPA-502\nBranch: chore/EUDPA-502\n\n',
       stderr: `Repos dir not found: ${join(staged.root, 'no-repos-here')}\n`
+    })
+  })
+})
+
+const UNATTENDED_RUN = 'NO_JIRA-govuk-frontend-5.10.0'
+const UNATTENDED_BRANCH = `chore/${UNATTENDED_RUN}`
+
+const startUnattended = (args) =>
+  startInProcess(args, startEnv(staged), { unattended: true })
+
+const runMeta = (runId) =>
+  JSON.parse(
+    readFileSync(
+      join(staged.root, 'workareas/govuk-upgrades', runId, '.run-meta.json'),
+      'utf8'
+    )
+  )
+
+const branchOf = (repo) =>
+  execFileSync('git', ['branch', '--show-current'], {
+    cwd: join(staged.root, 'repos', repo),
+    encoding: 'utf8'
+  }).trim()
+
+describe('#startUpgrade unattended', () => {
+  test('Should name the run after the ticket and the latest version, and say so in the header', async () => {
+    staged = stageStartWorkspace()
+    giveEveryRepoAnOrigin(staged)
+
+    const run = await startUnattended(['--ticket', 'NO_JIRA'])
+
+    expect(run.exitCode).toBe(0)
+    expect(run.stdout).toMatch(
+      new RegExp(
+        `^PHASE: 1\nRun ID: ${UNATTENDED_RUN}\nBranch: ${UNATTENDED_BRANCH}\nTarget: 5\\.10\\.0\nMode: unattended\n\n`
+      )
+    )
+  })
+
+  test('Should record the bare ticket and the unattended mode in .run-meta.json', async () => {
+    staged = stageStartWorkspace()
+    giveEveryRepoAnOrigin(staged)
+
+    await startUnattended(['--ticket', 'NO_JIRA'])
+
+    expect(runMeta(UNATTENDED_RUN)).toEqual(
+      expect.objectContaining({
+        ticket: 'NO_JIRA',
+        mode: 'unattended',
+        branch: UNATTENDED_BRANCH,
+        target_version: '5.10.0'
+      })
+    )
+  })
+
+  test('Should create the run branch from origin/main in every repo', async () => {
+    staged = stageStartWorkspace()
+    giveEveryRepoAnOrigin(staged)
+
+    const branch = 'chore/EUDPA-802-govuk-frontend-5.10.0'
+
+    const run = await startUnattended([
+      '--ticket',
+      'EUDPA-802',
+      '--target',
+      '5.10.0'
+    ])
+
+    expect(run.stdout).toContain(
+      [ADMIN, FRONTEND, INS]
+        .map(
+          (repo) =>
+            `${repo}: created ${branch} from origin/main and switched to it\n`
+        )
+        .join('')
+    )
+    expect([ADMIN, FRONTEND, INS].map(branchOf)).toEqual([
+      branch,
+      branch,
+      branch
+    ])
+  })
+
+  test('Should end by pointing at the skill for planning one version at a time', async () => {
+    staged = stageStartWorkspace()
+    giveEveryRepoAnOrigin(staged)
+
+    const run = await startUnattended(['--ticket', 'NO_JIRA'])
+
+    expect(run.stdout).toMatch(
+      /\nNext: plan one version at a time, as the govuk-upgrade skill's "Unattended mode" says\.\n$/
+    )
+  })
+
+  test('Should stop before switching any branch when a repo has uncommitted changes', async () => {
+    staged = stageStartWorkspace()
+    giveEveryRepoAnOrigin(staged)
+    writeFileSync(join(staged.root, 'repos', FRONTEND, 'draft.txt'), 'Draft\n')
+
+    const run = await startUnattended(['--ticket', 'NO_JIRA'])
+
+    expect(run.exitCode).toBe(1)
+    expect(run.stderr).toBe(
+      `Stopped before switching branches: uncommitted changes in ${FRONTEND}\n`
+    )
+    expect([ADMIN, FRONTEND, INS].map(branchOf)).toEqual([
+      'main',
+      'main',
+      'main'
+    ])
+  })
+
+  test.each([
+    [
+      ['--branch', 'chore/EUDPA-802-x', '--target', '6.6.0'],
+      '--unattended names its own branch: pass --ticket EUDPA-NNNN or --ticket NO_JIRA, not --branch'
+    ],
+    [
+      ['--ticket', 'ABC-1', '--target', '6.6.0'],
+      '--ticket must match EUDPA-NNNN or be NO_JIRA (got: ABC-1)'
+    ],
+    [
+      ['--ticket', 'EUDPA-802', '--target', 'latest'],
+      '--target must be X.Y.Z in unattended mode (got: latest)'
+    ],
+    [
+      ['--ticket', 'NO_JIRA', '--target', '6.6.0-beta.1'],
+      '--target must be X.Y.Z in unattended mode (got: 6.6.0-beta.1)'
+    ]
+  ])(
+    'Should refuse %o with exit 2 before writing anything',
+    async (args, message) => {
+      staged = stageStartWorkspace()
+
+      const run = await startUnattended(args)
+
+      expect(run).toEqual({ exitCode: 2, stdout: '', stderr: `${message}\n` })
+      expect(existsSync(join(staged.root, 'workareas/govuk-upgrades'))).toBe(
+        false
+      )
+    }
+  )
+
+  test('Should still refuse NO_JIRA without --unattended', async () => {
+    staged = stageStartWorkspace()
+
+    const run = await startInProcess(['--ticket', 'NO_JIRA'], startEnv(staged))
+
+    expect(run).toEqual({
+      exitCode: 2,
+      stdout: '',
+      stderr: '--ticket must match EUDPA-NNNN (got: NO_JIRA)\n'
     })
   })
 })

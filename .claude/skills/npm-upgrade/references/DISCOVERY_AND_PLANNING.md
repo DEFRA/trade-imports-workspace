@@ -89,6 +89,12 @@ Per-repo best practices: workareas/npm-upgrades/{ticket}/{repo}/best-practices.m
 Where `{normalized-package}` substitutes `/` with `__` (so
 `@hapi/hapi` → `@hapi__hapi`).
 
+In an unattended run (SKILL.md "Unattended mode"), each manifest entry
+also has `mode`, `policy` and `set`. Add them to the spawn prompt as
+`Mode: unattended`, `Policy: {policy}` and `Set: {set}`. A package still
+pending after the retry in Step 3 does not stop the run: the evidence
+table shows it as needing a person.
+
 ---
 
 ## Step 3: Verify coverage gate

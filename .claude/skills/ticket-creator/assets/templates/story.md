@@ -1,4 +1,4 @@
-*As* [user role],
+*As* a trader [doing what],
 *I want* [capability],
 *So that* [benefit]
 
@@ -8,7 +8,7 @@
 +*Acceptance Criteria*+
 *Given* [precondition]
 *And* {{FEATURE_FLAG}} is enabled
-*When* [action]
+*When* the trader [action]
 *Then* [expected behaviour]
 
 {panel:bgColor=#deebff}

@@ -8,6 +8,7 @@ import {
   ADMIN,
   changelogText,
   FRONTEND,
+  INS,
   registryDocument,
   stageStartWorkspace
 } from './__fixtures__/govuk-start.js'
@@ -117,5 +118,34 @@ describe('#discoverVersions', () => {
       code: 'NOT_FOUND',
       message: `Error: No package.json found in ${join(staged.root, 'repos', ADMIN)}`
     })
+  })
+})
+
+describe('#discoverVersions run id warning', () => {
+  const warningsFor = async (runId) => {
+    staged = stageStartWorkspace()
+    const warned = []
+
+    await discover(INS, {
+      runId,
+      target: '5.10.0',
+      warn: (line) => warned.push(line)
+    })
+
+    return warned
+  }
+
+  test.each([
+    'EUDPA-500',
+    'EUDPA-802-govuk-frontend-6.6.0',
+    'NO_JIRA-govuk-frontend-6.6.0'
+  ])('Should not warn about the run id %s', async (runId) => {
+    expect(await warningsFor(runId)).toEqual([])
+  })
+
+  test('Should warn about a run id that starts with no ticket key', async () => {
+    expect(await warningsFor('spike_govuk-bump')).toEqual([
+      "Warning: --run-id 'spike_govuk-bump' does not match expected Jira ticket format (e.g. PROJ-123)"
+    ])
   })
 })

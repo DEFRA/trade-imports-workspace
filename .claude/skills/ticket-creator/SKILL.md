@@ -141,7 +141,12 @@ introduce other named conventions in this skill.
 - Screenshots/logs?
 
 ### For Stories
-- User and goal?
+- Who is it for? Offer "a trader" as the default and ask the user to
+  confirm it. Almost every EUDPA story is written for a trader. Use
+  another actor only when the user names one, such as an internal user
+  of the animals admin service. See "Who a story is for" in
+  `ticket-conventions.md`.
+- What is the trader trying to do, and why?
 - Feature flag?
 - Design mockups?
 
@@ -318,7 +323,7 @@ This sends no request — `tim` only reads the manifest and the files next to
 it. Read the JSON result and show the user a plain-English plan: type,
 summary, parent, labels, priority, each attachment with its size, and every
 `warnings[]` entry verbatim. A warning almost always means a template
-placeholder was left in (`[Who is this for?`, `[Welsh needed]`,
+placeholder was left in (`[Who is this for?`, `[doing what]`, `[Welsh needed]`,
 `EUDPA-XXXX`, `TODO`) or the description is over Jira's 32,767-character
 limit — fix `draft.md`, rewrite `description.jira.txt`, and re-run the dry
 run before asking to raise it. Note the `planId` — 5.3 needs the exact

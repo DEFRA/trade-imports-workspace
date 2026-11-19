@@ -4487,6 +4487,131 @@ ${gateCommandList(phases, logs)}
    Run every one, even after a red one, so you have the whole picture before you repair anything.`
 }
 
+const MAIN_SYNC_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'repos', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'Every repo is on the branch, clean, and now holds origin/main' },
+    repos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'outcome'],
+        properties: {
+          repo: { type: 'string', description: 'The repo key, or "workspace"' },
+          outcome: { type: 'string', enum: ['already-in', 'merged-clean', 'merged-after-conflicts', 'failed'], description: 'What the sync did' },
+          commit: { type: 'string', description: 'The merge commit it made. Left out when already-in' },
+          conflicted: { type: 'array', items: { type: 'string' }, description: 'Every path git left unmerged, before you resolved it' },
+          resolutions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['path', 'took', 'why'],
+              properties: {
+                path: { type: 'string' },
+                took: { type: 'string', enum: ['main', 'branch', 'both'], description: 'Whose content the resolved file carries' },
+                why: { type: 'string', description: 'One sentence a reviewer can check, naming what each side said' }
+              },
+              additionalProperties: false
+            }
+          },
+          proof: { type: 'string', description: 'The command that proved the resolved tree, and what it printed. Left out when nothing conflicted' },
+          reason: { type: 'string', description: 'Why it failed. Only when outcome is failed' }
+        },
+        additionalProperties: false
+      }
+    },
+    loopScriptChanged: { type: 'boolean', description: 'Whether the merge changed the build loop\'s own script in the workspace repo' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const mainSyncPrompt = (id, repos) => `You are the MAIN SYNC for increment ${id}. Bring \`origin/main\` into \`${BASE_BRANCH}\` in every repo below,
+BEFORE the baseline reads them, so this increment builds on what main says today. Drift found here costs a merge;
+the same drift found at the pull request costs the whole increment.
+${guardrails()}
+THE REPOS:
+${repos.map(({ label, tilde }) => `- ${label} (\`${tilde}\`)`).join('\n')}
+For EACH, in that order, one Bash call per command:
+1. ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`, and \`git -C <repo> status --short\` must print nothing.
+   Otherwise outcome:failed for that repo, naming what it printed, and touch nothing in it.
+2. \`git -C <repo> fetch origin main\`
+3. \`git -C <repo> merge-base --is-ancestor origin/main HEAD\` — exit 0 means main is already in: outcome:already-in,
+   and go to the next repo without merging.
+4. \`git -C <repo> merge --no-ff origin/main\`
+   - It exits 0 → outcome:merged-clean. Record the commit from \`git -C <repo> rev-parse HEAD\`.
+   - It exits 1 naming conflicts → resolve them yourself, below. Never \`--abort\` a conflict you can read.
+   - It refuses to start (unrelated histories, a lock) → outcome:failed quoting what it said.
+RESOLVING A CONFLICT. Read BOTH sides before you write anything: \`git -C <repo> diff\` shows the conflict, and
+\`git -C <repo> log --oneline HEAD..origin/main -- <path>\` says what main changed it for. Then:
+- Both sides state something true and they do not contradict → keep both. A documentation paragraph, a list, a table.
+- Main carries a value with an owner or an expiry this branch predates, such as an audit allowlist entry → take main's.
+- A lockfile → take main's, then re-run the repo's install so the lockfile matches its package file.
+- The branch's own feature work against a refactor on main → keep the branch's behaviour expressed the way main now
+  writes it. Never drop either side's behaviour to make the conflict go away.
+Record each one in resolutions[], with \`why\` naming what each side said. A reviewer reads that line instead of the diff.
+PROVING IT. A repo you resolved a conflict in must be proved before you commit: run its checks
+(\`npm --prefix <repo> test\`, or the repo's own, redirected to ${WORKAREA_TILDE}/logs/${id}-sync-<repo>.log) and put
+the command and its last line in \`proof\`. Red → outcome:failed, naming the red test. Never weaken or skip a test.
+COMMITTING. \`git -C <repo> add -A\` then \`git -C <repo> commit --no-edit\`, which keeps git's merge message and both
+parents. Record the commit. Never \`--force\`, never rebase, never push: the land stage pushes.
+LAST, in the workspace repo only: \`git -C ${TILDE} diff --name-only HEAD@{1}..HEAD -- .claude/skills/requirements-pipeline/workflow/\`
+Anything printed → loopScriptChanged:true. The loop running now was read before that merge, so it is the old one.
+ok:true only when every repo is already-in, merged-clean or merged-after-conflicts.
+Return the structured output only.`
+
+// Every configured repo and the workspace, because openspec and the loop's own
+// tooling live in the workspace and drift there stops a run as readily. The
+// workspace is only added when no configured repo already is it.
+const SYNC_REPOS = [
+  ...REPO_KEYS.map((key) => ({ label: key, tilde: repoTilde(key) })),
+  ...(REPO_KEYS.some(isWorkspaceRepo)
+    ? []
+    : [{ label: 'workspace', tilde: TILDE }])
+]
+
+const syncWithMain = (id, repos) =>
+  agent(
+    mainSyncPrompt(id, repos),
+    code({
+      label: `${id} main sync`,
+      phase: 'Baseline',
+      schema: MAIN_SYNC_SCHEMA
+    })
+  )
+
+const resolutionsOf = (sync) =>
+  (sync.repos ?? []).flatMap((entry) =>
+    (entry.resolutions ?? []).map((resolution) => ({
+      repo: entry.repo,
+      ...resolution
+    }))
+  )
+
+const logMainSync = (id, sync) => {
+  const moved = (sync.repos ?? []).filter(
+    (entry) => entry.outcome !== 'already-in'
+  )
+  if (moved.length === 0) {
+    log(`${id}: main sync — every repo already holds origin/main`)
+    return
+  }
+  log(
+    `${id}: main sync brought origin/main into ${moved.map((entry) => `${entry.repo} (${entry.outcome})`).join(', ')}`
+  )
+  for (const resolution of resolutionsOf(sync)) {
+    log(
+      `${id}: main sync resolved ${resolution.repo}:${resolution.path} — took ${resolution.took}: ${resolution.why}`
+    )
+  }
+  if (sync.loopScriptChanged === true) {
+    log(
+      `${id}: main sync changed the build loop's own script. This run is the one read before that merge, so a relaunch may need different args — read ALWAYS_REQUIRED before the next launch`
+    )
+  }
+}
+
 const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -5259,7 +5384,7 @@ const postSpecDiffComment = async (id, ticketKey, mergedCommits, prs) => {
 }
 
 const themeFilter = (id, builtIds) =>
-  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
 
 const readTheme = (id, builtIds) =>
   agent(
@@ -5387,24 +5512,34 @@ const describePreexisting = ({ prefix, scenarios }) => `${scenarios.length} unde
 
 const themeSpecDiffLog = (theme) => specCheckLog(theme, 'all', 'diff')
 
-const readThemeSpecDiff = (id, theme, commits) =>
+// `tim spec diff` reads the workspace repo's git alone, and openspec/ lives
+// there, so the range is the workspace's own. A row's `commit` field holds the
+// service repos' shas, which this command can never resolve.
+const THEME_SPEC_DIFF_RANGE = `origin/main...HEAD`
+
+const readThemeSpecDiff = (id, theme) =>
   agent(
-    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly two
-commands, one Bash call each, and report what the second printed. That is your whole job.
+    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly three
+commands, one Bash call each, and report what the third printed. That is your whole job.
 ${BASE_GUARDRAILS}
-1. \`tim spec diff ${commits.map((sha) => `--commit ${sha}`).join(' ')} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
-2. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, errors}' ${themeSpecDiffLog(theme)}\`
-Report the second command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
+1. \`git -C ${TILDE} fetch origin main\`
+2. \`tim spec diff --range ${THEME_SPEC_DIFF_RANGE} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
+3. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, resolvedNone: .result.resolvedNone, errors}' ${themeSpecDiffLog(theme)}\`
+Report the third command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
 summarise or correct it, and run nothing else. The loop reads the JSON itself.`,
     light({ label: `spec diff:${theme}`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-const themeOwnedScenarios = async (id, theme, commits) => {
-  if (commits.length === 0) return { owned: [], skipped: [] }
-  const answer = await readThemeSpecDiff(id, theme, commits)
+const themeOwnedScenarios = async (id, theme) => {
+  const answer = await readThemeSpecDiff(id, theme)
   const parsed = jsonEnvelopeOf(answer?.stdout)
   if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
-  return { owned: parsed.touched, skipped: parsed.skipped ?? [] }
+  const skipped = parsed.skipped ?? []
+  // A diff that resolved nothing examined nothing, so its empty `touched` says
+  // nothing about what the theme owns. Reading it as "the theme owns no
+  // scenario" would mark every unproven scenario pre-existing.
+  if (parsed.resolvedNone === true) return { owned: null, skipped }
+  return { owned: parsed.touched, skipped }
 }
 
 const describeSpecPrefix = (entry) =>
@@ -5457,8 +5592,12 @@ const themeSpecCheck = async (id) => {
   }
   const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
   const answer = await checkThemeSpec(id, theme, prefixes)
-  const { owned, skipped } = await themeOwnedScenarios(id, theme, status.commits ?? [])
-  const unknownOwnership = owned === null ? ["the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts"] : []
+  const { owned, skipped } = await themeOwnedScenarios(id, theme)
+  const notFound = skipped.map(({ commit }) => commit)
+  const whyUnknown = notFound.length > 0
+    ? `tim spec diff could not read ${THEME_SPEC_DIFF_RANGE} in the workspace repo (${notFound.join(', ')}), so it examined nothing`
+    : "the run could not read which scenarios the theme added or re-proved (tim spec diff)"
+  const unknownOwnership = owned === null ? [`${whyUnknown}, so every unproven scenario counts`] : []
   const problems = [...unknownOwnership, ...specCheckProblems(answer, prefixes, written, owned)]
   const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
   const preexisting = preexistingGapsOf(checked, owned)
@@ -5473,7 +5612,7 @@ const themeSpecCheck = async (id) => {
     sources,
     problems,
     ...(preexisting.length > 0 ? { preexisting } : {}),
-    ...(skipped.length > 0 ? { commitsNotFound: skipped.map(({ commit }) => commit) } : {})
+    ...(skipped.length > 0 ? { specDiffUnread: skipped.map(({ commit }) => commit) } : {})
   }
   if (problems.length === 0) {
     log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)
@@ -5502,6 +5641,15 @@ ${themeRowsCommand(theme)}
 
 const themeDiffCommand = (key) => `\`git -C ${repoTilde(key)} diff ${THEME_DIFF_BASE}...HEAD -- <path>\``
 
+// The reviewer reads one repo, so a value this repo hardcodes and another owns
+// is invisible to it unless the others are named.
+const themeSiblingRepos = (key) => {
+  const others = REPO_KEYS.filter((other) => other !== key)
+  return others.length === 0
+    ? ''
+    : ` (${others.map((other) => repoTilde(other)).join(', ')})`
+}
+
 const themeReviewPrompt = (id, theme, key) => `You are the THEME ENGINEERING REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every
 row of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. Each row was reviewed on its own as it was
 built. You read the theme's whole change in this repo at once, for what a row-by-row review cannot see. You are a
@@ -5514,6 +5662,10 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - PATTERNS: one rule written in more than one place; a second mechanism beside one that exists; a piece in a layer
   the repo's docs keep it out of; a pattern extended where its recipe or a sibling was left behind; one concept with
   two names across rows.
+- A COPY OF ANOTHER REPO'S RULE: a list, map or rule this repo spells out for itself that one of the theme's other
+  repos owns${themeSiblingRepos(key)}. Grep those repos for the values before you report, because a copy drifts the
+  moment either side changes, and the drift surfaces somewhere that looks unrelated — a load-test threshold, a page
+  with no option to pick. Report it against the copy, and say which repo owns the original.
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
@@ -5918,6 +6070,7 @@ while (stopped === null) {
 
   let id = null
   let started = null
+  let syncResolutions = []
 
   if (queue) {
     id = queue.shift()
@@ -6269,6 +6422,27 @@ while (stopped === null) {
   if (enterAt === 'build') {
 
   phase('Baseline')
+
+  // Bring main in before the baseline reads the trees, so the baseline proves
+  // this row against what main says today. Drift caught here costs one merge;
+  // the same drift caught at the pull request costs the whole increment.
+  if (IS_BRANCH) {
+    const sync = await syncWithMain(id, SYNC_REPOS)
+    if (!sync || !sync.ok) {
+      const detail = sync?.summary ?? 'the main sync agent died'
+      log(`${id}: MAIN SYNC FAILED — ${detail}`)
+      results.push({
+        id,
+        ticket: ticket?.key ?? null,
+        outcome: 'sync-failed',
+        detail
+      })
+      stopped = { reason: 'sync-failed', detail: `${id}: ${detail}` }
+      break
+    }
+    logMainSync(id, sync)
+    syncResolutions = resolutionsOf(sync)
+  }
 
   const baseline = await recoverRunStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and

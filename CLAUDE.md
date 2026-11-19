@@ -14,7 +14,7 @@ The default place to clone the workspace is `~/git/defra/trade-imports-workspace
 
 - Branch naming: `feat/EUDPA-XXXX[-slug]` or `chore/EUDPA-XXXX[-slug]` (also `fix/EUDPA-XXXX[-slug]`).
 - Cross-repo branches must share the **same name** across every affected repo — the workspace stack's `--branch` flag probes each repo for a matching branch-tagged image and falls back to `:latest` per service, so mismatched names break the linked-branch pickup.
-- PRs: raise against `main` in the relevant repo.
+- PRs: raise against `main` in the relevant repo. Write the description as [`docs/best-practices/pull-requests.md`](docs/best-practices/pull-requests.md) says: what, why and checks, with no notes about other branches.
 - Cross-repo changes: coordinate via the tests repo. A fix that needs two repos changes both, the tests repo included.
 - Splitting a branch: every part keeps the ticket key. `chore/EUDPA-35-frontend-test-rewrites`, not `chore/admin-notifications-tidy`.
 - A programme of several tasks in one repo: one branch, one PR, a commit per task, merged once at the end.
@@ -28,7 +28,7 @@ The default place to clone the workspace is `~/git/defra/trade-imports-workspace
 - **Never edit `docker/stack/.staged/`** — it is generated on every stack start; edits are silently overwritten.
 - **Never commit `workareas/`** — it is gitignored runtime cache. The sole exception is `workareas/shared/` (tracked via a `.gitignore` negation for review handoff).
 - **Never let cross-repo branches drift** — same branch name across every affected repo (see rule 2).
-- **Never merge a PR you raised by hand without the user's go in that conversation.** When it is green, post the PR link and the evidence, then stop. Delete the branch only after the merge. This holds even when a brief says "merge on green". A build loop merges its own green increments as its skill says (`requirements-pipeline` BUILD).
+- **Never merge a PR you raised by hand without the user's go in that conversation.** When it is green, post the PR link and the evidence, then stop. Delete the branch only after the merge. This holds even when a brief says "merge on green". A build loop merges its own green increments as its skill says (`requirements-pipeline` BUILD). A scheduled nightly job, run from a `[nightly:<job>]` prompt that `/nightly-start` registered, merges only the Dependabot and nightly pull requests that [`.claude/rules/nightly.md`](.claude/rules/nightly.md)'s merge policy allows.
 - **Never write to CDP platform repos** (`DEFRA/cdp-app-config`, `cdp-tf-svc-infra`, `cdp-app-deployments`, `cdp-documentation`): no branch, commit, push, PR or `git add`. Edit the files in a local clone, show the user the diff and leave the rest to them. Reading is fine.
 - **Before pushing code changes:** a `PreToolUse` hook runs the real SonarCloud quality gate automatically on `git push` and blocks the push if it fails (see SonarCloud integration below). If `SONAR_TOKEN` isn't set locally, the hook skips gracefully — run the same check manually in that case.
 
@@ -54,6 +54,7 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `spec-catchup` | "catch-up", "catch-up animals/plants/ins/animals-admin", "catch-up and cover" | **The code does something the spec does not say** — runs one domain's full test suite, walks every `spec.md` in the prefix (not `tim spec gaps`) against the report and source, edits/adds/updates a coverage link/deletes as the evidence dictates. Drives "catch-up and cover" (this skill then `spec-cover`, per domain). |
 | `spec-cover` | "cover", "cover animals/plants/ins/animals-admin" | **The spec says something no test proves** — works `tim spec gaps --none` for that prefix, maps every Then to an assert, writes the test, proves it with an invert-red/restore-green probe, commits in the service repo on the same branch name. |
 | `theme-ticket` | "write the business tickets for `<theme>`", "write the theme ticket", "the build loop is starting on `<theme>`", "`<theme>` has merged", "which theme tickets are stale" | Fills in a built theme's Jira tickets automatically from `openspec/` — one Story per service domain, run at four points in the theme's life (split, loop start, loop drained, merge). No approval gate: the ticket is what the business reviews. |
+| `nightly-start` | "/nightly-start", "start the nightly jobs", "register the nightly crons", "restart the nightly jobs" | Check the always-on session is ready, fetch every repo, then register the jobs in `config/nightly-jobs.json` as session crons that run under [`.claude/rules/nightly.md`](.claude/rules/nightly.md). Run again every 7 days, when the crons expire. |
 | `prototype` | "the prototype", "my design release", "crit notes", "research session", "demo the prototype", "hand this to the real team", "make this real" — or any request from a designer (`CLAUDE.local.md` marker) | Front door for a designer working on the high-risk plants prototype (`trade-imports-plants-prototype`) from a Claude Code session opened at this workspace root. Holds no steps of its own beyond routing — every change is made by a `references/<name>.md` file it opens for you, read against the real `trade-imports-plants-frontend`, its recipes and `docs/best-practices/` so the result matches house conventions without the designer having to ask. |
 
 A request about pages, words, examples or journeys goes to `prototype` when
@@ -73,7 +74,7 @@ The house rules on comments, names, structure, logging and tests live in [`.clau
 
 ### 6. A red test on your branch is yours to fix
 
-Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
+Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask. A nightly job asks by leaving a draft PR and a line in the digest (see [`.claude/rules/nightly.md`](.claude/rules/nightly.md)).
 
 ### 7. Canary first
 
@@ -151,6 +152,7 @@ tim jira epics [--board <id>]                  # list open epics in a project or
 tim jira labels --board <id>                   # count the labels in a board's backlog (read-only)
 tim jira search <words> [--open] | --jql <q>   # find tickets by text or JQL (read-only)
 tim jira transition EUDPA-X "Done"             # move a ticket's status straight away (no dry run); --list shows what it offers
+tim nightly check --fetch         # is this session ready to run the nightly jobs; tim nightly stopped reads the kill switch
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
 ```
 
@@ -239,7 +241,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   credential setup for the agent skills.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
-  docker-compose.md, github-actions.md, shell.md). Cited by SKILL.md files via
+  docker-compose.md, github-actions.md, pull-requests.md, shell.md). Cited by SKILL.md files via
   `docs/best-practices/<topic>/<file>`.
   Read [`shell.md`](docs/best-practices/shell.md) before any bulk rename: this
   workspace is macOS, so `sed`'s `\b` matches nothing and still exits 0, and BSD

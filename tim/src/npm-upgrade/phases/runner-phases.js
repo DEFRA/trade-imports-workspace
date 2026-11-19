@@ -55,6 +55,7 @@ const runRepoBatch = async (request, repo) => {
     repo,
     allowlistOwner: request.allowlistOwner ?? '',
     expiryDays: request.expiryDays ?? '',
+    unattended: request.unattended ?? false,
     say: log.collect,
     warn: log.collect
   }).catch(async (error) => {
@@ -92,6 +93,7 @@ const reposOf = (batches, predicate) =>
  * @param {string[]} request.repos
  * @param {string} [request.allowlistOwner]
  * @param {string} [request.expiryDays]
+ * @param {boolean} [request.unattended] - Each repo's batch skips the end-of-batch E2E gate
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<{exitCode: number, result: object, text: string}>} exitCode 1 unless every repo's batch exited 0
  */

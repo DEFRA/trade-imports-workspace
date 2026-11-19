@@ -32,6 +32,10 @@ report as the JSON envelope's `.result`.
 | `tim npm run-auto` | 2 | Per-repo automated runner |
 | `tim npm upgrade-one` | 2 | Internal: install + test + commit + rollback, JSON-aware |
 | `tim npm run-manual` | 3 | Per-package manual runner (spawned by WALKER) |
+| `tim deps policy` / `tim npm packages set-policy` | 1 (unattended) | A package's policy and set from `config/dependency-sets.json`; record them on every row |
+| `tim npm packages add-evidence` / `tim npm packages check-evidence` | 1–3 (unattended) | Record a changelog item's evidence row; count it again after the edits |
+| `tim npm packages render-evidence` | After 3 (unattended) | Packages and evidence tables for a pull request body, or `--json` with the clean flags |
+| `tim deps evidence count` | 1–3 (unattended) | The hits a pattern has in a repo now |
 
 ## State model
 
@@ -64,6 +68,10 @@ upgrades broke E2E; the upgrades are already committed, so the
 operator decides whether to revert or fix forward (read
 `test-results/*/error-context.md` to diagnose — never grep the
 streaming log tail).
+
+An unattended run never runs `test:docker-compose`: `tim npm run-auto
+--unattended` skips it, and CI's "E2E Tests" check is the integration
+gate.
 
 ## Failure Types
 
@@ -110,6 +118,7 @@ workareas/npm-upgrades/{run-id}/{repo}/
   audit.{repo}.{label}.json         — npm audit report snapshot (+ .summary.json)
   .upgrades-meta.json               — thin discovery header
   best-practices.md                 — per-repo dependency-relevant best practices
+  evidence/{normalized-pkg}.json    — unattended: one package's changelog evidence
   .context/{normalized-pkg}/
     package-meta.json
     usages.txt
@@ -133,6 +142,9 @@ Recommended scope per run:
 
 ## Global Rules
 
-- Never push commits — all changes stay local until human review.
+- Never push commits — all changes stay local until human review. This
+  is interactive mode. An unattended run pushes, opens pull requests and
+  may merge, as SKILL.md "Unattended mode" says, and never runs
+  `test:docker-compose`.
 - Never skip test runs.
 - Summaries in reports, not full logs.

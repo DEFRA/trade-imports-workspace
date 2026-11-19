@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import { OK } from '../../constants/exitCodes.js'
-import { SIGNED_OFF_CHANGED } from '../../constants/specExitCodes.js'
+import {
+  RESOLVED_NOTHING,
+  SIGNED_OFF_CHANGED
+} from '../../constants/specExitCodes.js'
 import { TimError } from '../../errors.js'
 import { diffSpecCommits } from '../../spec/diff.js'
 import { diffSignedOff } from '../../spec/signed-off/diff.js'
@@ -73,19 +76,28 @@ const changeLines = (label, scenarios) => [
 const skippedLines = (skipped) =>
   skipped.map(({ reason }) => `Skipped: ${reason}.`)
 
+const RESOLVED_NONE =
+  "Checked nothing: none of the commits or ranges named is in the workspace repo. This reads the workspace repo's git alone, so a service repo's commit is never found here. Name the workspace's own commits, or a range such as origin/main...HEAD."
+
 /**
  * The plain-text report of `tim spec diff`.
  *
- * @param {{commits: object[], ranges?: object[], skipped: {commit: string, reason: string}[]}} result
+ * @param {{commits: object[], ranges?: object[], skipped: {commit: string, reason: string}[], resolvedNone?: boolean}} result
  * @returns {string}
  */
-export const renderSpecDiffText = ({ commits, ranges = [], skipped }) =>
+export const renderSpecDiffText = ({
+  commits,
+  ranges = [],
+  skipped,
+  resolvedNone = false
+}) =>
   [
     ...commits.flatMap(({ sha, scenarios }) =>
       changeLines(sha.slice(0, SHORT_SHA_LENGTH), scenarios)
     ),
     ...ranges.flatMap(({ range, scenarios }) => changeLines(range, scenarios)),
-    ...skippedLines(skipped)
+    ...skippedLines(skipped),
+    ...(resolvedNone ? [RESOLVED_NONE] : [])
   ].join('\n')
 
 const signedOffLines = ({ change, id, capability, name, why }) => [
@@ -135,14 +147,16 @@ const renderDiffText = (result) =>
     ? renderSpecDiffText(result)
     : renderSignedOffText(result)
 
-const exitCodeForDiff = (result) =>
-  result.signedOff?.length > 0 ? SIGNED_OFF_CHANGED : OK
+const exitCodeForDiff = (result) => {
+  if (result.resolvedNone) return RESOLVED_NOTHING
+  return result.signedOff?.length > 0 ? SIGNED_OFF_CHANGED : OK
+}
 
 export const register = (program, { timVersion }) => {
   program
     .command('diff')
     .description(
-      "Say what each commit or range changed in the Behaviour Spec, scenario by scenario: added, changed (name or steps), removed, or coverage (only its coverage.json entry changed), with each scenario's coverage after. A commit compares with its first parent, base..head from base to head, and base...head from their merge base. Reads the workspace repo's local git only: fetch first. A commit or range it cannot find is listed under skipped. result.touched is every scenario id they added, changed or re-proved. Exits 0 whatever it finds. With --signed-off it reports only changes to signed-off scenarios in result.signedOff, with result.ticketDraft for a person to approve or refuse them, and exits 3 when it finds any. With --signed-off, a range it cannot find is an error, not skipped."
+      "Say what each commit or range changed in the Behaviour Spec, scenario by scenario: added, changed (name or steps), removed, or coverage (only its coverage.json entry changed), with each scenario's coverage after. A commit compares with its first parent, base..head from base to head, and base...head from their merge base. Reads the workspace repo's local git only: fetch first, and never name a service repo's commit. A commit or range it cannot find is listed under skipped. result.touched is every scenario id they added, changed or re-proved. Exits 0 whatever it finds, except that resolving none of the commits and ranges named sets result.resolvedNone and exits 4, so a report that examined nothing is never read as a spec nothing touched. With --signed-off it reports only changes to signed-off scenarios in result.signedOff, with result.ticketDraft for a person to approve or refuse them, and exits 3 when it finds any. With --signed-off, a range it cannot find is an error, not skipped."
     )
     .option(
       '--commit <sha>',

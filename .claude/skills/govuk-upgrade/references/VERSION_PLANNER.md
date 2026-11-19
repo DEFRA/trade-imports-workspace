@@ -128,6 +128,82 @@ automatically — no further calls needed.
 
 ---
 
+## Unattended mode
+
+Follow this section instead of "Step 3" and the "Classification guide"
+when your spawn prompt has the line `Mode: unattended`. Nobody reviews
+your plan before it is applied, so every changelog item gets an evidence
+row that proves what happened to it. Steps 1 and 2 are the same.
+
+### U1. One evidence row per changelog item
+
+Record every item in the version's changelog section, not only the
+breaking ones: breaking changes, recommended changes, deprecations, new
+features and fixes.
+
+```bash
+tim govuk add-evidence \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
+  --item "{the changelog item's heading or first line}" \
+  --outcome applied|not-applicable|needs-a-person \
+  [--pattern "{the old form, as a fixed string}"] \
+  [--reason "{why it does not apply, or what a person has to decide}"]
+```
+
+It counts the pattern's hits in the repo's tracked files now and
+refuses an outcome the count contradicts: `applied` needs a pattern
+with hits, and a `not-applicable` pattern must have none. Choose a
+pattern that only the old form matches, such as a class name, macro
+parameter, import path or SCSS variable. Check it first:
+
+```bash
+tim deps evidence count {repo-name} "{pattern}"
+```
+
+An item with several old forms gets one row per pattern.
+
+### U2. Choose the outcome
+
+| Outcome | When |
+|---|---|
+| `applied` | The change is mechanical, as `.claude/rules/nightly.md` defines it: a rename, an import path, a config format or a type fix, including a deprecation whose replacement the changelog names. The pattern is the old form and the repo contains it. Phase 3 makes the change. |
+| `not-applicable` | The repo does not use what the item changes: give the pattern, which must have no hits, and the reason. Or the item is internal to govuk-frontend and changes nothing the repo or its users see: the reason says so, and no pattern is needed. |
+| `needs-a-person` | Anything else: a change to what users see, a change in behaviour, a new feature with options, an item that asks you to check or consider something, a hit inside a test assertion, or anything you are unsure of. The reason says what to decide. |
+
+When in doubt, choose `needs-a-person`. It replaces "when in doubt,
+`todo`" in unattended mode.
+
+### U3. Changes and classification
+
+For each `applied` row, add one `tim govuk add-change` entry per file
+the pattern hits, as in Step 3. Its `--why` quotes the item and its
+`--change` says exactly what replaces the pattern. Add no change for a
+`not-applicable` or `needs-a-person` row.
+
+Then classify the version with `tim govuk classify`:
+
+- `todo` when it has at least one `applied` row
+- `noop` otherwise, with a summary that names any `needs-a-person` rows
+
+A `noop` keeps its evidence rows: `classify` clears only `changes[]`.
+
+### U4. No changelog section
+
+When the pre-baked changelog file is missing, record one row and
+classify the version `noop`:
+
+```bash
+tim govuk add-evidence \
+  --run-id {run-id} --repo {repo-name} --govuk-version {version} \
+  --item "No changelog section for v{version}" --outcome needs-a-person \
+  --reason "Read the release notes and record each item"
+```
+
+Your confirmation line adds the row counts:
+`Classified {version}: {todo|noop} ({N} files; {A} applied, {P} not applicable, {Q} need a person)`.
+
+---
+
 ## Verifying your work
 
 After your last helper call, the version entry in

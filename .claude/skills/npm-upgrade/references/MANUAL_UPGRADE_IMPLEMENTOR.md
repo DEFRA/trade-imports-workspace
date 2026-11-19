@@ -270,6 +270,43 @@ tim npm packages set-status \
 
 ---
 
+## Unattended mode
+
+Follow these changes to the steps above when your spawn prompt has the
+line `Mode: unattended`. Nobody reviews your change before it is pushed,
+so it may only be mechanical, as `.claude/rules/nightly.md` defines it.
+
+- **Step 2:** a red baseline is not yours to fix tonight. Mark the
+  package failed with reason "Needs a person: baseline tests red before
+  the upgrade" and return `BASELINE RED`.
+- **Step 4:** never pass `--force` or `--legacy-peer-deps`, and never
+  add npm `overrides`. An install that fails without them is `FAILED`,
+  with reason "Needs a person: install refused: {brief}".
+- **Step 5:** your edits are the package's `applied` evidence rows and
+  nothing else: replace each row's pattern with the new form its item
+  names. Read them in
+  `workareas/npm-upgrades/{run-id}/{repo}/evidence/{normalized-package}.json`.
+  Stop, roll back as in Step 6 and mark the package failed with a
+  reason starting "Needs a person:" when an edit would change runtime
+  behaviour, edit a test assertion, or take the change past about 10
+  files.
+- **Between Steps 5 and 6:** count the evidence again and record it.
+
+  ```bash
+  tim npm packages check-evidence --run-id {run-id} --repo {repo} --package {package}
+  ```
+
+  Exit 1 means a row is not clean: roll back as in Step 6, mark failed
+  with "Needs a person: {the rows' items}", and return `FAILED`.
+- **Step 6:** in trade-imports-ins-tests, nothing runs the end-to-end
+  suite locally. CI's "E2E Tests" check covers it.
+- **Step 6a:** there is no allowlist owner, so never run
+  `tim npm audit allow`. A failing advisory of any kind rolls back,
+  marks failed with "Needs a person: {GHSA}" and returns `FAILED`.
+- **Step 7:** never pass `--no-verify`.
+
+---
+
 ## Output
 
 Return exactly one of:

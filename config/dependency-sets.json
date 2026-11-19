@@ -1,0 +1,110 @@
+{
+  "description": "Packages that must move together, who moves them, and the packages held at their current version. `tim deps dependabot <repo>` generates each repo's Dependabot config from this file. The shape is described in tim/README.md under `tim deps dependabot`.",
+  "defaults": {
+    "cooldownDays": 3,
+    "majorPolicy": "changelog-driven",
+    "repos": {
+      "fromReposJson": "npmUpgradeDefault",
+      "include": ["tim"],
+      "exclude": ["trade-imports-plants-prototype"]
+    },
+    "dependabot": {
+      "schedule": {
+        "interval": "daily",
+        "time": "10:30",
+        "timezone": "Europe/London"
+      },
+      "openPullRequestsLimit": 10,
+      "versioningStrategy": "increase"
+    }
+  },
+  "sets": [
+    {
+      "name": "eslint",
+      "members": [
+        "eslint",
+        "@eslint/*",
+        "eslint-plugin-*",
+        "eslint-config-*",
+        "neostandard",
+        "globals",
+        "typescript-eslint",
+        "@typescript-eslint/*"
+      ],
+      "scope": "repo",
+      "policy": "ci-is-enough",
+      "reason": "neostandard and the plugins declare eslint as a peer, so bumping eslint alone leaves an install that npm refuses or a config that no longer loads."
+    },
+    {
+      "name": "vitest",
+      "members": ["vitest", "@vitest/*"],
+      "scope": "repo",
+      "policy": "ci-is-enough",
+      "reason": "@vitest/coverage-v8 and the other @vitest packages pin the exact vitest version they were released with."
+    },
+    {
+      "name": "playwright",
+      "members": ["playwright", "playwright-core", "@playwright/*"],
+      "scope": "cross-repo",
+      "policy": "ci-is-enough",
+      "reason": "The frontends record traces that the tests repo and tim read, and a trace from one Playwright version will not open in another, so every repo moves to the same version on one branch name."
+    },
+    {
+      "name": "govuk-frontend",
+      "members": ["govuk-frontend"],
+      "scope": "cross-repo",
+      "policy": "changelog-driven",
+      "reason": "Its minors ship new components, deprecations and visual changes that green CI cannot prove were applied, so every version goes through the govuk-upgrade skill, one version at a time, across every frontend."
+    },
+    {
+      "name": "node",
+      "members": [],
+      "pins": [
+        ".nvmrc",
+        "package.json engines.node",
+        "Dockerfile PARENT_VERSION (defradigital/node and defradigital/node-development)",
+        "actions/setup-node node-version in GitHub workflows"
+      ],
+      "scope": "cross-repo",
+      "policy": "changelog-driven",
+      "reason": "The Node version is pinned in four places in every repo, none of which Dependabot's npm updates touch, and CI, Docker images and local installs must all run the same version."
+    }
+  ],
+  "holds": [
+    {
+      "package": "@axe-core/playwright",
+      "versions": "4.14.x",
+      "repos": ["trade-imports-animals-frontend"],
+      "reason": "axe 4.14 flags govuk-frontend's own enhanced file upload button (label-content-name-mismatch); no govuk-frontend release covers it yet",
+      "failingTest": "FIT Tests (documents drop-zone accessibility, label-content-name-mismatch)",
+      "clashesWith": "govuk-frontend",
+      "link": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/492",
+      "since": "2026-11-19"
+    },
+    {
+      "package": "stylelint",
+      "versions": "18.x",
+      "repos": [
+        "trade-imports-animals-admin",
+        "trade-imports-animals-frontend",
+        "trade-imports-ins-frontend",
+        "trade-imports-plants-frontend"
+      ],
+      "reason": "stylelint-config-gds 3.0.0, the newest release, has a peer of stylelint ^17.4.0, so stylelint 18 fails npm ci with ERESOLVE",
+      "failingTest": "npm ci (Run Pull Request Checks)",
+      "clashesWith": "stylelint-config-gds",
+      "link": "https://github.com/DEFRA/trade-imports-animals-admin/pull/99",
+      "since": "2026-11-19"
+    },
+    {
+      "package": "typescript",
+      "versions": "7.x",
+      "repos": ["trade-imports-ins-tests"],
+      "reason": "typescript-eslint, newest 8.73.0, has a peer of typescript <6.1.0 because TypeScript 7.0 ships no programmatic API, so typescript 7 fails npm ci with ERESOLVE",
+      "failingTest": "npm ci (Run Pull Request Checks)",
+      "clashesWith": "typescript-eslint",
+      "link": "https://github.com/DEFRA/trade-imports-ins-tests/pull/129",
+      "since": "2026-11-19"
+    }
+  ]
+}

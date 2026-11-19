@@ -286,11 +286,24 @@ jobs:
     needs: e2e
     runs-on: ubuntu-latest
     steps:
+      # The action's own extractor reads a zip front to back and ends an entry
+      # at the first data-descriptor signature whose size field matches, so a
+      # blob report zipped inside the artifact can end its entry early and fail
+      # the download with "unexpected end of file". unzip reads the central
+      # directory instead.
       - name: Download shard artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: shard-*
           path: all-shards/
+          skip-decompress: true
+
+      - name: Unzip shard artifacts
+        run: |
+          for zip in all-shards/*/*.zip; do
+            unzip -q "$zip" -d "$(dirname "$zip")"
+            rm "$zip"
+          done
 
       - uses: actions/setup-node@v7
         with:
@@ -342,11 +355,20 @@ jobs:
     outputs:
       report-url: ${{ steps.url.outputs.report-url }}
     steps:
+      # Unzipped by hand for the reason given at merge-reports' download.
       - name: Download merged report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: e2e-report
           path: report/
+          skip-decompress: true
+
+      - name: Unzip merged report
+        run: |
+          for zip in report/*.zip; do
+            unzip -q "$zip" -d report/
+            rm "$zip"
+          done
 
       - name: Resolve branch tag
         id: branch-tag

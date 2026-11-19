@@ -735,6 +735,22 @@ export const createJiraClient = ({
     },
 
     /**
+     * Whether an issue sits in a board's backlog rather than on the board.
+     *
+     * @param {number|string} boardId
+     * @param {string} key - Such as `'EUDPA-300'`
+     * @returns {Promise<boolean>}
+     */
+    isInBoardBacklog: async (boardId, key) => {
+      const jql = encodeURIComponent(`key = ${key}`)
+      const data = await get(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/backlog?jql=${jql}&fields=summary&maxResults=1`,
+        `isInBoardBacklog(${boardId}, ${key})`
+      )
+      return (data.issues ?? []).some((issue) => issue.key === key)
+    },
+
+    /**
      * Open epics in a project, for a hand-off to offer as the default
      * parent when no `parent` is set in the manifest. Uses the enhanced
      * JQL search: Atlassian removed `/rest/api/{2,3}/search`, which now

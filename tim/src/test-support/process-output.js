@@ -37,7 +37,10 @@ export const captureProcessOutput = () => {
  */
 export const runRegisteredCommand = async (register, ...args) => {
   const captured = captureProcessOutput()
-  const program = new Command().option('--json').exitOverride()
+  const program = new Command()
+    .option('--json')
+    .option('--workspace <path>')
+    .exitOverride()
   register(program, { timVersion: '1.0.0' })
 
   await program.parseAsync(['node', 'tim', ...args])

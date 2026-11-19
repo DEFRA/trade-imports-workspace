@@ -2,56 +2,47 @@ import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
 import { makeRunAction } from '../_run-action.js'
+import { resolveBoardId } from './board-id.js'
 import { exitCodeForBoardError, readBoard } from './board-read.js'
 
 const optionsSchema = z.object({
   project: z.string().trim().min(1).optional(),
-  board: z
-    .string()
-    .trim()
-    .regex(/^\d+$/, 'Give --board as a number, such as 13780.')
-    .optional(),
-  includeDone: z.boolean().optional()
+  board: z.string().optional(),
+  includeDone: z.boolean().optional(),
+  workspace: z.string().optional()
 })
 
-const parseBoardOptions = ({ project, board, includeDone }) => {
-  if (project) {
-    throw new TimError('USAGE', 'Give --project or --board, not both.')
-  }
-  return { board, includeDone: Boolean(includeDone) }
-}
-
-const parseProjectOptions = ({ project, includeDone }) => {
-  if (includeDone) {
-    throw new TimError('USAGE', 'Give --board with --include-done.')
-  }
-  const resolvedProject = project ?? process.env.JIRA_PROJECT_KEY
-  if (!resolvedProject) {
-    throw new TimError(
-      'USAGE',
-      'Give --project <key>, or set JIRA_PROJECT_KEY.'
-    )
-  }
-  return { project: resolvedProject }
-}
+const boardOptions = ({ board, includeDone, workspace }) => ({
+  board: resolveBoardId({ board, workspace }),
+  includeDone: Boolean(includeDone)
+})
 
 /**
  * Validate `epics`' options before any side-effect runs. `--board` lists
- * the board's epics; otherwise `--project`, falling back to
- * `JIRA_PROJECT_KEY`, lists the project's open epics.
+ * the board's epics. Otherwise `--project`, falling back to
+ * `JIRA_PROJECT_KEY`, lists the project's open epics, and with neither
+ * the workspace's board is listed.
  *
  * @param {object} opts
  * @returns {{board: string, includeDone: boolean} | {project: string}}
- * @throws {TimError} USAGE when no project or board is named, when both are, or when `--include-done` comes without `--board`
+ * @throws {TimError} USAGE when a project and a board are both named, when `--include-done` comes with a project, or when the board is not a number
  */
 export const parseEpicsOptions = (opts) => {
   const result = optionsSchema.safeParse(opts)
   if (!result.success) {
     throw new TimError('USAGE', result.error.issues[0].message)
   }
-  return result.data.board
-    ? parseBoardOptions(result.data)
-    : parseProjectOptions(result.data)
+  const { project, board, includeDone } = result.data
+  if (project && board !== undefined) {
+    throw new TimError('USAGE', 'Give --project or --board, not both.')
+  }
+  const resolvedProject =
+    board === undefined ? (project ?? process.env.JIRA_PROJECT_KEY) : undefined
+  if (!resolvedProject) return boardOptions(result.data)
+  if (includeDone) {
+    throw new TimError('USAGE', 'Give --board with --include-done.')
+  }
+  return { project: resolvedProject }
 }
 
 /**
@@ -92,17 +83,20 @@ export const register = (jira, { timVersion }) => {
   jira
     .command('epics')
     .description(
-      "List the open epics in a project, or the epics on a board (as the board marks them, open only unless you add --include-done). A board's epics print as 'KEY — summary'."
+      "List the open epics in a project, or the epics on a board (as the board marks them, open only unless you add --include-done). With no --project, --board or JIRA_PROJECT_KEY, it lists the workspace's board: jiraBoard in repos.json. A board's epics print as 'KEY — summary'."
     )
     .option(
       '--project <key>',
       'Project key, e.g. EUDPA (defaults to JIRA_PROJECT_KEY)'
     )
-    .option('--board <id>', 'Agile board id, e.g. 13780')
-    .option('--include-done', "With --board: include the board's done epics")
+    .option(
+      '--board <id>',
+      "Agile board id, e.g. 13780 (with no project, defaults to repos.json's jiraBoard)"
+    )
+    .option('--include-done', "With a board: include the board's done epics")
     .addHelpText(
       'after',
-      '\nExamples:\n  tim jira epics --project EUDPA --json\n  tim jira epics --board 13780\n  tim jira epics --board 13780 --include-done --json'
+      '\nExamples:\n  tim jira epics --project EUDPA --json\n  tim jira epics --board 13780\n  tim jira epics --include-done --json'
     )
     .action(
       makeRunAction({

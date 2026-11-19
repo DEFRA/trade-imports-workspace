@@ -5,7 +5,8 @@ across the trade-imports repos, the workspace and tim. First a hands-on
 catch-up, then small nightly runs.
 
 Written 13 Nov 2026. Updated 18 Nov 2026, after the tooling under `tools/`
-moved into tim.
+moved into tim, and 19 Nov 2026, after Dependabot PRs got E2E and the
+hold-back rule was agreed.
 
 ## Shape
 
@@ -101,13 +102,49 @@ step starts, and turned on there.
 | # | Job | Merges? |
 |---|---|---|
 | 2.1 | Digest only: open bot PRs, red `main` builds, sets waiting on readiness, `npm outdated` drift. Run it for a few nights to prove the session and cron mechanics. | No |
-| 2.2 | `ci-is-enough` Dependabot PRs: fix if red, merge if green. | Yes |
+| 2.2 | `ci-is-enough` Dependabot PRs: fix if red, hold back the one package that breaks a group (see below), merge if green. | Yes |
 | 2.3 | `changelog-driven`: govuk-frontend and every major, one version per night in semver order, with deprecations applied as minors arrive. Merges only when every evidence row is clean. | Sometimes |
 | 2.4 | Sets across repos: readiness check on peer ranges, one branch name, merge only when every repo is green. | Sometimes |
 | 2.5 | Docs: what merged since the last run. Raises one PR, or none if nothing material changed. | No, until the share merged unchanged earns it |
 
 At each 7-day restart, review merged-unchanged against corrected PRs, the
 drafts raised, and cost. Then decide on the next job.
+
+### Hold back one package, merge the rest
+
+A Dependabot group PR that one package breaks does not wait for a person.
+Example: animals-frontend #492 bumps 34 packages; `@axe-core/playwright`
+4.13 to 4.14 alone turns the FIT accessibility tests red, because axe 4.14
+flags govuk-frontend's own enhanced file upload button
+(`label-content-name-mismatch`). No govuk-frontend issue or release covers
+it yet.
+
+The job:
+
+1. Finds the one package: the failure names it (here the axe rule and its
+   help URL carry the axe version), or the job bisects the group by
+   installing half the updates at a time, on its own branch, with unit and
+   FIT tests only.
+2. Keeps that package at its current version on Dependabot's branch, so the
+   other updates go ahead. A held-back version is a mechanical change: no
+   test assertion and no runtime code moves.
+3. Adds a dated `hold` entry for the package to
+   `config/dependency-sets.json`: the version range held, the reason, and
+   the failing test. `tim deps dependabot --write` turns it into an
+   `ignore` for that range, so Dependabot stops re-proposing it.
+4. Merges the PR when every check is green, under the package's policy.
+5. Lists the hold in the digest's "Waiting" section, and each night checks
+   whether a newer release of the held package, or of the package it
+   clashes with (here govuk-frontend), clears it. When one does, the job
+   lifts the hold in a nightly PR.
+
+It only goes to "Needs you" when no single package explains the failure,
+or the fix would need a test assertion or runtime code changed.
+
+Needs building: the `hold` entry in `dependency-sets.json`, its `ignore`
+in `tim deps dependabot`, and a `tim deps hold|holds` pair to add, list and
+lift holds. Then a rule in `.claude/rules/nightly.md`, replacing "needs a
+person" for this case.
 
 ## Later
 
@@ -118,15 +155,16 @@ scheduling if the 7-day restart becomes a chore.
 
 ## Open decisions
 
-- **E2E on Dependabot PRs: resolved, rolling out.** `publish-branch.yml`
-  skipped every Dependabot run, so its PRs got no branch image and no E2E.
-  The skip was never needed: the build uses only the OIDC build role, which
-  trusts any run on the repo, and no Actions secret. Workspace #287 added a
-  `build-dependabot` input (off by default). animals-admin #94 turned it on
-  as the canary, and on 19 Nov animals-admin #88, rebased by Dependabot,
-  built its branch image as `dependabot[bot]` and passed E2E against it.
-  Next: pass `build-dependabot: true` in every other repo's
-  `publish-branch.yml` caller, then drop the input and the skip.
+- **E2E on Dependabot PRs: done, 19 Nov.** `publish-branch.yml` skipped
+  every Dependabot run, so its PRs got no branch image and no E2E. The skip
+  was never needed: the build uses only the OIDC build role, which trusts
+  any run on the repo, and no Actions secret. Canary: workspace #287 and
+  animals-admin #94, proved on animals-admin #88. Rollout: animals-admin
+  #95 then workspace #289 removed the skip for every repo. Proved with
+  `dependabot[bot]` as the actor, build and E2E green, on animals-admin
+  #82, ins-frontend #78, plants-frontend #147 and animals-frontend #492.
+  The other 10 repos have no Dependabot PR open (most get their config from
+  the drafts under 1.1), so their first one is the check.
 - **stylelint is a coupled set.** `stylelint-config-gds` 3.0.0 needs
   stylelint `^17.4.0`, so stylelint 18 cannot install yet (animals-admin
   #91, ins-frontend #84). Add a `stylelint` set (`stylelint`,

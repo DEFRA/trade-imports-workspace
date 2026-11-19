@@ -75,6 +75,7 @@ The Import Notification Service MUST offer a sign-in through the real Defra ID (
 - **WHEN** they arrive back at the service
 - **THEN** the page says the service is unable to sign them in, with a link to try again that opens the IDM sign-in start page
 - **AND** it shows none of the error's details
+- **AND** the error is logged in full
 
 #### Scenario: The signed-in page with no IDM sign-in starts one
 **ID**: SCN-INS-AUTH-003-F
@@ -87,3 +88,11 @@ The Import Notification Service MUST offer a sign-in through the real Defra ID (
 - **GIVEN** IDM is configured
 - **WHEN** someone opens the page IDM returns to after signing out
 - **THEN** it says they have signed out
+
+#### Scenario: An error IDM sends to the signed-out page shows the generic page, not signed out
+**ID**: SCN-INS-AUTH-003-H
+- **GIVEN** IDM refuses a sign-in and returns the user to the signed-out page with an error
+- **WHEN** they arrive back at the service
+- **THEN** the page says the service is unable to sign them in, with a link to try again that opens the IDM sign-in start page
+- **AND** it shows none of the error's details
+- **AND** the error is logged in full

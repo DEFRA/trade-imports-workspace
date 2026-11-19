@@ -5,11 +5,9 @@ import { TimError } from '../../errors.js'
 
 export const MAX_DESCRIPTION_LENGTH = 32767
 
-// Leftover template markers a hand-off should catch before it reaches the
-// real team — an unanswered prompt, a missing translation, an example
-// ticket number, or a plain TODO.
 export const PLACEHOLDER_PATTERNS = [
   '[Who is this for?',
+  '[doing what]',
   '[Welsh needed]',
   'EUDPA-XXXX',
   'TODO'

@@ -220,11 +220,11 @@ The system MUST offer, in a party section that has no address and whose paired s
 - **WHEN** they change the place of origin to a different address
 - **THEN** the Consignor section still shows the first address
 
-#### Scenario: The review shows the filled party's full details
+#### Scenario: The review reads the filled party back as name, address lines and country
 **ID**: SCN-CONSIGN-ADDR-009-E
 - **GIVEN** the user has filled the Importer section from the consignee using the control
 - **WHEN** they view the review
-- **THEN** the importer's entry shows the consignee's name, address lines, country, phone number and email address
+- **THEN** the importer's entry reads back the consignee's name, address lines and country, without the telephone number or email address
 
 #### Scenario: A request to fill a section the page is not offering changes nothing
 **ID**: SCN-CONSIGN-ADDR-009-F

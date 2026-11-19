@@ -13,7 +13,7 @@ order, then loop into per-item slow-track for anything marked Discuss.
 ticket — the full set in
 `workareas/reviews/EUDPA-XXXXX/.review-meta.json` `prs[]` (same scope as
 a fresh review). Load pending items from **all** `items.{repo}.json`
-files (omit `--repo` on `review-items.sh`). Present **one** combined
+files (omit `--repo` on `tim review items list`). Present **one** combined
 table ordered repo-by-repo (see Multi-repo note). Do **not** walk only
 the repo the user last edited or the repo named in the chat unless they
 explicitly filter: `walk review EUDPA-XXXXX trade-imports-ins-backend`.
@@ -23,7 +23,7 @@ When the user is walking **another reviewer's posted PR comment**
 `items.{repo}.json` before triage. If a repo with an open PR has no
 items file or an empty file while others do, **stop** and say which
 repos are missing — import the rows from the GitHub comment (or re-run
-`start-review.sh` / refresh) for those repos; do not triage a subset.
+`tim review start` or `tim review refresh`) for those repos; do not triage a subset.
 
 Items schema: `assets/items-table.md`.
 
@@ -59,7 +59,7 @@ verifier and judge apply the same defaults.
 Read programme repos (when not repo-filtered):
 
 ```bash
-tools/review/review-counts.sh EUDPA-XXXXX
+tim review items counts EUDPA-XXXXX
 ```
 
 Expect one `items.{repo}.json` per programme PR unless that repo had zero

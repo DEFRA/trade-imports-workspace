@@ -1,0 +1,22 @@
+{
+  "file": "src/auth/identity-providers.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:51Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Small, correct provider descriptor module that keeps stub behaviour (no aud/iss check, documented in architecture.md) and adds IDM aud/iss checks; one Major naming finding on Defra ID vs IDM synonyms for the two providers.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "defraIdProvider (line 4) and idmProvider (line 10) name the two sign-ins with two words for one identity service: the idm config group documents itself as 'the real Defra ID (IDM)' (config.js idm.oidcDiscoveryUrl doc), while defraIdProvider reads the defraId group whose defaults point at the Defra ID stub (policy b2c_1a_cui_cpdev_signupsigninsfi, localhost:3007). Read alone, the names do not say which provider is the stub-backed service sign-in and which is the hidden real-IDM sign-in, and the same synonym split carries through DEFRA_ID_CALLS/IDM_CALLS (dependency 'defra-id' vs 'idm')",
+      "fix": "Must: the two provider names say what differs between them (the service's own sign-in versus the hidden test sign-in against the real Defra ID), and one word names the real Defra ID across names, metrics dependency and config docs. One way: keep the config keys and env vars, and rename the exports to say the role, e.g. serviceSignInProvider and hiddenIdmSignInProvider, or reword the defraId group docs to say it is the service sign-in that the stack points at the stub",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

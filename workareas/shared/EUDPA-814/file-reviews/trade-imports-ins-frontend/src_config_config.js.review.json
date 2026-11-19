@@ -1,0 +1,38 @@
+{
+  "file": "src/config/config.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:58Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The idm config group is complete, keeps the secret sensitive and commits no values, but the group's name does not say how it differs from defraId, and its URLs and required secrets are not validated at load.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 264,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "idm.oidcDiscoveryUrl (line 264) and idm.redirectUrl (line 295) are URLs held as format: String, so a malformed IDM_OIDC_CONFIGURATION_URL or IDM_REDIRECT_URL set in CDP passes config.validate and fails later inside get-oidc-config or Bell, rather than at startup with a message naming the setting.",
+      "fix": "Must: a malformed IDM discovery or redirect URL is refused when config loads, and an unset discovery URL still leaves the IDM pages unserved. One way: format 'url' on redirectUrl; for oidcDiscoveryUrl, nullable: true with default null and a custom format that accepts null or a URL, keeping the falsy check in idm-sign-in.js.",
+      "best_practice": "node/hapi.md"
+    },
+    {
+      "id": 2,
+      "line": 263,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Two config groups name one identity provider two ways: defraId (lines 190-261, docs say 'Defra ID') and idm (lines 263-301, docs say 'IDM'). The ticket and the idm.oidcDiscoveryUrl doc ('the real Defra ID (IDM)') confirm IDM is Defra ID, so the doc string has to decode the name; neither group name says what actually separates them (the stub-backed default sign-in versus the hidden real-IDM registration).",
+      "fix": "Must: each group's name says what distinguishes it from the other, and one word names the identity provider across both groups, their doc strings, the env var prefix and the README list, without a doc string explaining the name. One way: keep defraId for the default sign-in and rename idm to a Defra ID name that says it is the hidden direct sign-in (for example defraIdDirect / DEFRA_ID_DIRECT_*), updating identity-providers.js, idm-auth.js, the tests and README together; or, if the team settles on IDM as the word, record that choice and make the doc strings say 'Defra ID' nowhere for this group."
+    },
+    {
+      "id": 3,
+      "line": 270,
+      "severity": "Minor",
+      "category": "error-handling",
+      "issue": "idm.clientId, idm.clientSecret and idm.serviceId (lines 270-288) default to '' and nothing refuses them empty when idm.oidcDiscoveryUrl is set. If IDM_OIDC_CONFIGURATION_URL reaches CDP dev or test before the CDP secrets do (the ticket notes secrets need a value per environment and a redeploy), the service starts, serves /auth/idm/sign-in and sends the user to IDM with an empty client_id, and the app logs nothing that names the missing secret.",
+      "fix": "Must: with the IDM discovery URL set, a missing IDM client ID, client secret or service ID stops the IDM sign-in from being served and is logged naming the missing setting. One way: in idmSignInRoutes.register, check the three settings beside the discovery-URL check and log a warn naming the empty ones before returning."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

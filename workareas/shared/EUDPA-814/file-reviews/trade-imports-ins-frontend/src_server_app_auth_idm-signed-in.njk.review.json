@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/auth/idm-signed-in.njk",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Template matches the routing proxy's signed-in layout as the AC asks and uses govukSummaryList correctly, but its h1 duplicates the title string the controller passes to base().",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The page heading 'Signed in' has two homes: hard-coded in the h1 here (line 6) and passed again as the title in src/server/auth/idm-sign-in.js showSignedIn (base('Signed in')). Every other page in the app renders its h1 from context ({{ copy.title }}, {{ heading }}, {{ sharedCopy.unauthorised.heading }}); a change to one copy leaves the browser title and the h1 disagreeing. idm-sign-in.njk and idm-signed-out.njk repeat the same pattern.",
+      "fix": "Must: the signed-in page's heading and its page title come from one value, as on the app's other pages. One way: pass heading (or reuse pageTitle) from showSignedIn and render <h1 class=\"govuk-heading-l\">{{ heading }}</h1>; do the same for idm-sign-in.njk and idm-signed-out.njk."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/auth/defra-id-hostnames.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests correctly move to passing the fetched discovery URL and the new test pins that the configured URL is ignored, but the new discoveryUrlAt helper leaves the URL format duplicated inline in three expectations.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 31,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new discoveryUrlAt helper (line 14) owns the discovery-URL format, but the getBrowserFacingDiscoveryUrl expectations still build the same string inline with `${origin}${DISCOVERY_PATH}` at lines 31, 41 and 50, so the format has two homes in one file.",
+      "fix": "Must: every discovery URL in this file, set-up and expectation alike, is built by discoveryUrlAt, and DISCOVERY_PATH is used only inside it. One way: expect(getBrowserFacingDiscoveryUrl().toString()).toBe(discoveryUrlAt('http://localhost:3007')) and the same at lines 41 and 50, then move DISCOVERY_PATH into discoveryUrlAt."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

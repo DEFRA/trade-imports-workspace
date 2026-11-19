@@ -1,0 +1,30 @@
+{
+  "file": "src/server/auth/idm-sign-in.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:32:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Routes, gating, token verification and error handling meet the AC; two Major code-quality items remain: a refused-token log with no search ids, and a second home for the unauthorised page render.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 92,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The ID-token refusal log ('IDM ID token refused', line 92) carries only { err }: no state, contactId, sessionId or correlationId, while the other two outcomes of the same handler log state (line 80) and contactId/sessionId/correlationId (lines 104-106). Support cannot tie a refused sign-in to the user or the IDM correlation id during an incident.",
+      "fix": "Must: the refused-token log line carries the ids support searches by for this sign-in (at least state and the IDM correlationId/contactId), alongside { err }. One way: decode the unverified ID token claims inside the catch (guarded, since decode itself can throw) and log contactId, sessionId, correlationId and request.query.state with err.",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 2,
+      "line": 58,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "unableToSignIn (line 58) writes the view literal 'auth/unauthorised' and base(sharedCopy.unauthorised.title) again; src/server/auth/controller.js:9 already owns it as UNAUTHORISED_VIEW and renders the same view and title four times. Two homes for the unable-to-sign-in page render.",
+      "fix": "Must: one function owns rendering the unable-to-sign-in page (view name and title), taking the try-again link as a named option; controller.js and idm-sign-in.js both call it. One way: export a helper such as renderUnableToSignIn(h, { signInUrl }) from a shared auth module and use it in both files, removing the local constant and literal."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

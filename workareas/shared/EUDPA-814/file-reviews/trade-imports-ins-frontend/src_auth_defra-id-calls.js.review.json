@@ -1,0 +1,29 @@
+{
+  "file": "src/auth/defra-id-calls.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Functionally correct and exercised by verify-token tests, but the stub and the real Defra ID are named ambiguously and IDM_CALLS duplicates DEFRA_ID_CALLS' operation and interface-id mapping.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 19,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One service, two names: the README calls the real service 'the real Defra ID (IDM)', yet DEFRA_ID_CALLS (line 1, dependency 'defra-id') now names the stub's calls and IDM_CALLS (line 19, dependency 'idm') names the real Defra ID's, in a file called defra-id-calls.js. A reader of DEFRA_ID_CALLS predicts the real Defra ID, and the metric Dependency 'defra-id' on a dashboard reads as the real service when it is the stub. The same split runs through identity-providers.js (defraIdProvider vs idmProvider).",
+      "fix": "Must: each provider's calls constant, its metric dependency name and the file name say which provider they are, so the stub and the real Defra ID cannot be mistaken for each other. One way: rename DEFRA_ID_CALLS to DEFRA_ID_STUB_CALLS (dependency 'defra-id-stub') and IDM_CALLS to DEFRA_ID_CALLS or keep 'idm' consistently as the real service's one name across constants, config keys and the provider objects, and rename the file to identity-provider-calls.js."
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "IDM_CALLS (lines 19-30) copies DEFRA_ID_CALLS (lines 1-17) entry for entry, differing only in the dependency string: the operation names and the interface ids SYN-11 (token-exchange) and SYN-12 (jwks) now live in two places, so a change to an interface id or operation name must be made twice and can drift.",
+      "fix": "Must: one place maps each operation to its operation name and interface id; each provider supplies only its dependency name (and which operations it uses, as the stub's tokenRefresh/SYN-13). One way: a callsFor(dependency) helper that builds the frozen openidConfiguration/jwks/tokenExchange/tokenRefresh entries, with DEFRA_ID_CALLS = callsFor('defra-id') and IDM_CALLS = callsFor('idm')."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

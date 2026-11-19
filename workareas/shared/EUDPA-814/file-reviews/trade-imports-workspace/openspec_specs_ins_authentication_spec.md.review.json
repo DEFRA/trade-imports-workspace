@@ -1,0 +1,45 @@
+{
+  "file": "openspec/specs/ins/authentication/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "86f6d76ba05318a26629855b856b98c18a225ed7",
+  "pr": 282,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:33:26Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The new scenarios match the code, but the error scenario leaves out the AC's 'logged in full' and the no-link MUST has no scenario, so the spec understates two acceptance criteria.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 72,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "SCN-INS-AUTH-003-E (lines 72-77) understates the AC 'An error from Defra ID is logged in full, and the user sees a generic error page': it specs only the generic page and says nothing of the log. The code does log (idm-sign-in.js completeSignIn: 'IDM sign-in failed' with err, idmError, idmErrorDescription, state; 'IDM ID token refused' with err), and other ins specs state logging in scenarios (address-book/spec.md:331, transporters/spec.md:228), so half the AC has no spec line and no coverage link.",
+      "fix": "Must: the error scenario states that the full IDM error (error, description, state, or the token-refusal cause) is logged, as the address-book and transporters specs phrase logging, and the coverage row for it names a test that asserts the log or is marked partial/none until one does. One way: add '- **AND** the error is logged in full, with IDM's error, its description and the request state' to SCN-INS-AUTH-003-E and add a logger assertion to the 'returns an error' test in idm-sign-in.test.js."
+    },
+    {
+      "id": 2,
+      "line": 40,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "REQ-INS-AUTH-003 (line 40) says the service 'MUST NOT link to it from any other page', which is the AC 'Nothing in the INS frontend links to the hidden sign-in pages', but no scenario under it states that rule, so coverage.json rolls the requirement up to 'full' while this MUST has no scenario and no test behind it.",
+      "fix": "Must: every MUST in REQ-INS-AUTH-003 is carried by a scenario, and the no-link rule's scenario has a coverage link or is recorded as none with a note. One way: add SCN-INS-AUTH-003-H 'No page of the service links to the IDM sign-in' (GIVEN IDM is configured, WHEN the user moves through the service's own pages, THEN none links to the IDM sign-in start, signed-in or signed-out pages) and add its coverage entry."
+    },
+    {
+      "id": 3,
+      "line": 79,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "SCN-INS-AUTH-003-F's title 'The signed-in page with no IDM sign-in starts one' (line 79) claims more than its THEN (line 83) and the code (showSignedIn redirects to idmPaths.signIn): the visitor is sent to the start page, and no sign-in at IDM starts until they press its button.",
+      "fix": "Must: the scenario title says what the THEN says. One way: 'The signed-in page with no IDM sign-in sends the user to the start page'."
+    },
+    {
+      "id": 4,
+      "line": 5,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Purpose (line 5) is now three sentences; openspec/config.yaml says 'Purpose: one or two sentences'. Separately, REQ-INS-AUTH-003's last sentence (line 40) 'It MUST NOT let the IDM identity reach any other page of the service, which keeps its own sign-in and that sign-in's data' attaches 'which' to 'the service', so it reads as a description rather than the second half of the rule.",
+      "fix": "Must: Purpose is at most two sentences, and the requirement's last sentence states the rule unambiguously. One way: Purpose 'Signing in to the Import Notification Service, what an unauthenticated user reaching one of its pages gets instead, and a hidden sign-in through the real Defra ID (IDM) that shows what IDM returns without signing anyone in to the service.'; requirement 'The IDM identity MUST NOT reach any other page of the service: the service's own sign-in and its session stay as they were.'"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:54Z"
+}

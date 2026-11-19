@@ -1,0 +1,37 @@
+{
+  "file": "src/plugins/idm-auth.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:46Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The IDM Bell strategy works as specified, but it duplicates the Defra ID Bell options, its profile mapping is untested, and an IDM discovery outage at boot stops the whole frontend starting.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "getIdmBellOptions (idm-auth.js:8-40) is a second copy of getBellOptions in src/plugins/auth.js:28-78: the same protocol 'oauth2', useParamsAuth, auth/token from the discovery document via timeTokenExchange, scope ['openid','offline_access',clientId], password/isSecure/isSameSite from session config, and providerParams { serviceId, p, response_mode: 'query' }. The PR adds a provider abstraction (identityProviders + providerSetting) yet auth.js still reads config.get('defraId.*') directly, so the Bell option shape now has two homes that can drift (e.g. a SameSite or scope fix applied to one only).",
+      "fix": "Must: one function owns the Bell OAuth options shared by Defra ID and IDM, taking the provider (via providerSetting) and the discovery document; auth.js and idm-auth.js both call it and add only what differs (Defra ID's profile decoding, redirect capture and organisation reselection params; IDM's profile from token params). One way: extract a bellOptionsFor(provider, oidcConfig, { profile, location, providerParams }) into src/auth/ and have getBellOptions and getIdmBellOptions supply only their overrides."
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The IDM provider's profile(credentials, params) mapping (lines 19-26) is never run by any test: idm-sign-in.test.js injects credentials.profile directly through server.inject({ auth }) (idmAuth helper, test lines 107-118), and the authorize-redirect test stops before the token exchange. Renaming params.id_token, dropping expires_in/scope, or inverting refreshTokenReturned turns no test red, yet this mapping feeds every value on the signed-in page the AC requires (ID token claims, token response). The requested scope (line 18) is also unasserted.",
+      "fix": "Must: a test fails if the mapping from the IDM token response (id_token, expires_in, scope, refresh_token) to credentials.profile changes, and if the authorize request's scope stops including openid, offline_access and the client id. One way: drive the real callback with a nock'd IDM token endpoint returning a token response (Bell state cookie from the go-to-IDM redirect, then /auth/callback?code=...&state=...), and assert the signed-in page; add a scope assertion to the existing authorize-endpoint test."
+    },
+    {
+      "id": 3,
+      "line": 46,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "register awaits getOidcConfigWithRetry against IDM (lines 46-49), which throws after ~7s of retries; idm-sign-in.js:179 awaits this registration and server.js now registers idmSignInRoutes unconditionally, so when IDM_OIDC_CONFIGURATION_URL is set (CDP dev/test, per the AC) and CP-Dev Defra ID discovery is unreachable at boot, createServer rejects and the whole INS frontend fails to start - stub sign-in, the dashboard and the E2E runs against it included. That breaks the AC 'Stub sign-in, the workspace stack and the E2E tests work as they do now' for an outage of an unlinked test-only feature.",
+      "fix": "Must: a failure to reach IDM discovery leaves the rest of the INS frontend starting and serving as before, with the failure logged once at error with the discovery URL and { err }, and the IDM pages unserved (or answering with the unable-to-sign-in page). One way: catch the discovery error in idm-sign-in.js's register (or here), log it, and skip registering the IDM strategy and routes; cover it with a test whose discovery endpoint fails and whose /auth/sign-in still works."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "src/auth/verify-token.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests correctly pin kid-based key selection, IDM aud/iss checks and unchanged stub behaviour, but the IDM tests reuse Defra ID's discovery document beside the helper's existing IDM route, so they cannot catch verifyToken reading the wrong provider's document.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 59,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The IDM tests point idm.oidcDiscoveryUrl at Defra ID's discovery URL (line 59) and spell the key as a literal (lines 39, 59), beside the helper's own IDM mechanism: serve-oidc-discovery.js:12 exports idmOidcDiscoveryUrlKey and serveOidcDiscovery takes { discoveryUrlKey } (line 26), which idm-sign-in.test.js:46-48 already uses; 'idm-client-id' is also declared again (here line 21, idm-sign-in.test.js:25). Because IDM and Defra ID share one discovery document here, the IDM tests at lines 84, 169 and 180 stay green if verifyToken read Defra ID's discovery document (getOidcConfig() with no provider) for IDM tokens.",
+      "fix": "Must: the IDM tests in this file get their discovery document through the shared helper's IDM route (idmOidcDiscoveryUrlKey with its own IDM issuer and jwks_uri), so reading the wrong provider's discovery document turns them red, and the IDM settings are named once for both test files. One way: serveOidcDiscovery(idmDocument, { discoveryUrlKey: idmOidcDiscoveryUrlKey }) with a distinct IDM issuer and keys origin, and move the IDM test settings into a shared test helper both files import.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

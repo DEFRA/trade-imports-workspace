@@ -1,0 +1,22 @@
+{
+  "file": "src/auth/verify-token.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Key selection by kid and per-provider aud/iss checks are correct and tested, and the stub path keeps its real prior behaviour (old code passed aud/iss in the key argument, which @hapi/jwt ignores); one Major naming finding on the decoded artifacts local.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "const decoded = Jwt.token.decode(token) (line 22) holds @hapi/jwt's artifacts object ({ token, decoded, raw }), not the decoded token, so line 23 reads decoded.decoded.header and line 35 passes 'decoded' to Jwt.token.verify, which takes artifacts. The name mispredicts the value it holds.",
+      "fix": "Must: the local that holds the result of Jwt.token.decode is named for what it is, so the header read and the verify call read without a doubled 'decoded'. One way: rename it to 'artifacts' (the term @hapi/jwt uses) and read 'const { kid } = artifacts.decoded.header'.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

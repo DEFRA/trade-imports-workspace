@@ -1,0 +1,54 @@
+{
+  "file": "src/server/auth/idm-sign-in.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:33:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Well-structured route tests, but the callback tests bypass bell and the profile mapping, one session test cannot fail, and the logging and stub-unchanged-with-IDM ACs are unproven.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 229,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should leave an existing service session in the cache...' (lines 229-247) cannot fail on its cache half: the callback request carries no service session cookie, so the handler has no way to reach the 'stub-signed-in-session' entry, and adding request.cookieAuth.clear() or a cache drop of the caller's session to completeSignIn would leave the cache assertion green.",
+      "fix": "Must: the callback request is made by a visitor who already holds a service session (its sid cookie sent with the request), so code that clears or drops that session turns the test red. One way: sign in via the stub or set a sealed sid cookie for serviceSessionId, pass it as the cookie header on completeSignIn, and keep both assertions."
+    },
+    {
+      "id": 2,
+      "line": 106,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Every successful-callback test (lines 182-247) injects 'auth: idmAuth(tokens)', which skips bell entirely, so the token exchange and the profile() mapping in src/plugins/idm-auth.js (id_token -> idToken, expires_in -> expiresIn, refresh_token -> refreshTokenReturned) are never run. The token response the signed-in page shows is a shape the test writes itself: renaming or dropping a field in profile() leaves every test green while the real page shows 'undefined'/'No'.",
+      "fix": "Must: at least one test drives /auth/callback through the idm bell strategy with a code and state, against a nocked IDM token endpoint, and asserts the signed-in page shows that token response's expires_in, scope and refresh-token values. One way: GET idmPaths.goToIdm to obtain bell's state cookie and the state param from the Location, nock POST IDM_DOCUMENT.token_endpoint to return { id_token, access_token, expires_in, scope, refresh_token }, then GET the callback with ?code=...&state=... and the cookie."
+    },
+    {
+      "id": 3,
+      "line": 249,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The AC 'An error from Defra ID is logged in full' is not proven: the IDM-error test (lines 249-259) and the wrong-key test (lines 261-267) assert only the page, so deleting the request.logger.error calls in completeSignIn ('IDM sign-in failed' with idmError, idmErrorDescription, state; 'IDM ID token refused' with err) leaves the file green.",
+      "fix": "Must: a test fails when the IDM error log line, carrying the error, error_description and state from the callback query, is no longer written. One way: capture the request logger's error lines for the callback (as module-logger-lines.js does for the module logger) and assert the 'IDM sign-in failed' entry's fields include idmError 'access_denied' and idmErrorDescription 'AADB2C90091'.",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 4,
+      "line": 193,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Titles claim the page shows the claims ('Should show the ID token claims...' line 193, 'Should show the access token claims...' line 213) but the assertions check only claim names (dt): arrayContaining(['aud','iss','sub','contactId']) and toContain('scp'). claimRows rendering the wrong value, or JSON-stringifying a string claim, would pass.",
+      "fix": "Must: each title states exactly what its assertions prove, and the claims tests assert the rendered value against its name. One way: assert the id-token-claims rows include contactId -> 'contact-1' and sub -> 'idm-user', and the access-token-claims row scp -> 'access-scope'."
+    },
+    {
+      "id": 5,
+      "line": 76,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The AC 'Stub sign-in (/auth/sign-in, /auth/sign-in-oidc) works as now' is checked only in the describe with no IDM discovery URL (line 76). The risk the AC guards is the other case: with IDM configured, idmAuthPlugin registers a second bell strategy and a route at /auth/callback, and nothing proves /auth/sign-in still goes to the Defra ID authorize endpoint then. The title's 'still' is also before/after narration.",
+      "fix": "Must: with IDM configured, a test proves /auth/sign-in redirects to the Defra ID authorize endpoint (mockOidcConfig.authorization_endpoint), and no title narrates history. One way: turn the existing test into a shared case run in both describes, titled 'Should send /auth/sign-in to the Defra ID authorize endpoint'."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

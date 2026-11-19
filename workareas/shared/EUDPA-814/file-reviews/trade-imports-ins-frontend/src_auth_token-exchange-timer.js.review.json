@@ -1,0 +1,38 @@
+{
+  "file": "src/auth/token-exchange-timer.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Provider parameterisation works but the request.app key still names Defra ID, the provider defaults silently, and no test proves IDM exchanges are recorded under 'idm'.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "STARTED_AT = 'defraIdTokenExchangeStartedAt' (line 4) is now stamped by timeTokenExchange for the IDM strategy too (plugins/idm-auth.js:17) and read for idmProvider (server/auth/idm-sign-in.js:72), so the request.app key names the stub Defra ID provider while holding either provider's start time; the JSDoc at line 9 was made provider-neutral but the key, and the tests reading request.app.defraIdTokenExchangeStartedAt (token-exchange-timer.test.js:38,50; plugins/auth.test.js:166; server/auth/controller.test.js:196,215), were not",
+      "fix": "Must: the request.app key names what it holds for every identity provider, and every test that reads or seeds it uses the same name. One way: rename the value to 'tokenExchangeStartedAt' and update the five test sites."
+    },
+    {
+      "id": 2,
+      "line": 23,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "recordTokenExchange(request, provider = defraIdProvider) (line 23) gives the provider a hidden default: server/auth/controller.js:19 calls recordTokenExchange(request) and reads as provider-neutral while recording under dependency 'defra-id', whereas idm-sign-in.js:72 passes idmProvider; a future strategy that forgets the argument silently records its token exchange as the stub's. The JSDoc at line 21 has to explain the default, and timeTokenExchange beside it takes no provider at all",
+      "fix": "Must: every caller of recordTokenExchange names the provider whose exchange it records, with no default. One way: drop '= defraIdProvider' and the import, make the param required in the JSDoc, and pass defraIdProvider explicitly in server/auth/controller.js:19 and the tests."
+    },
+    {
+      "id": 3,
+      "line": 28,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The change that makes recordTokenExchange emit provider.calls.tokenExchange (line 28) has no test: token-exchange-timer.test.js:54 only calls recordTokenExchange(request) and asserts Dependency 'defra-id', and idm-sign-in.test.js never reads the EMF output, so reverting line 28 to DEFRA_ID_CALLS.tokenExchange leaves every test green while IDM sign-ins are recorded as 'defra-id'",
+      "fix": "Must: a test fails if recordTokenExchange records an IDM exchange under any dependency other than 'idm'. One way: add a case to token-exchange-timer.test.js calling recordTokenExchange(request, idmProvider) and asserting document.Dependency is 'idm' and Operation 'token-exchange'.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

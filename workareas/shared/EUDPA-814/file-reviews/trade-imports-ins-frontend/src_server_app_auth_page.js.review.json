@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/auth/page.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:23Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The three new IDM page descriptors are correctly named and match the existing pattern, but no test proves the IDM routes carry them.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "idmSignInPage, idmSignedInPage and idmSignedOutPage (lines 3, 5, 7) are proven by no test: no test references them, idm-sign-in.test.js asserts nothing about the route's page or phase banner, and page-maturity.test.js's 'registered routes' block starts a server with no IDM discovery URL, so the IDM routes are never registered there and 'Should make every INS page Exploring' skips them. Deleting any of these descriptors, or the app.page option in idm-sign-in.js, leaves every test green.",
+      "fix": "Must: a test fails when an IDM sign-in route (start, signed-in, signed-out) stops carrying its page descriptor from auth/page.js. One way: in idm-sign-in.test.js, which already starts a server with IDM configured, add an it.each over [idmPaths.signIn, idmSignInPage], [idmPaths.signedIn, idmSignedInPage], [idmPaths.signedOut, idmSignedOutPage] asserting server.table() route.settings.app.page toEqual the descriptor, mirroring page-maturity.test.js's 'Should carry the page from its feature' case."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

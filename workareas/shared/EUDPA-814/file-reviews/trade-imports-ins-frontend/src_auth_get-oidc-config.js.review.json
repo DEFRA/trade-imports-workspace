@@ -1,0 +1,22 @@
+{
+  "file": "src/auth/get-oidc-config.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:22Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The provider-parameterised discovery fetch is correct, but nothing tests the IDM path's discovery URL or metric, so a regression to the Defra ID values would pass.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new provider parameter (lines 10-13: discovery URL read from providerSetting(provider, 'oidcDiscoveryUrl') and the call measured as provider.calls.openidConfiguration) has no test that fails if it is reverted: get-oidc-config.test.js only calls getOidcConfig() with the Defra ID default, and verify-token.test.js:59 sets idm.oidcDiscoveryUrl equal to defraId.oidcDiscoveryUrl and asserts only the jwks metric, so hardcoding defraId.oidcDiscoveryUrl or DEFRA_ID_CALLS.openidConfiguration back would leave every test green.",
+      "fix": "Must: a test in get-oidc-config.test.js fails if getOidcConfig(idmProvider) fetches anything but the idm.oidcDiscoveryUrl or measures the call as anything but idm openid-configuration. One way: set idm.oidcDiscoveryUrl to a URL distinct from the Defra ID one, serve it with serveOidcDiscovery(doc, { discoveryUrlKey: idmOidcDiscoveryUrlKey }), call getOidcConfig(idmProvider), and assert the returned document plus the EMF Dependency 'idm' and Operation 'openid-configuration'.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

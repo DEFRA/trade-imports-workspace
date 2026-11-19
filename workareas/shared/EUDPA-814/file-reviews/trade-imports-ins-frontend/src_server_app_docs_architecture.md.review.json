@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/docs/architecture.md",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The doc is accurate on providers, defaults and the try-again link, but its wording implies the hidden IDM sign-in is registered only when auth.enabled, while server.js registers it regardless.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The IDM sentence sits inside the 'Then — only when auth.enabled — it registers the auth plugin and ... one routes plugin' sentence and says 'Whatever the mode, it then registers the hidden IDM sign-in', which reads as part of the auth.enabled branch. server.js:77-80 registers idmSignInRoutes outside that branch, so the hidden sign-in (and its Bell strategy) is served even when AUTH_ENABLED is false, gated only by IDM_OIDC_CONFIGURATION_URL. A reader of the doc gets the wrong answer to 'when is /auth/idm/sign-in reachable?'",
+      "fix": "Must: the architecture doc says the IDM sign-in is registered whether or not auth.enabled is set and whatever the stub/Defra ID mode, its only gate being IDM_OIDC_CONFIGURATION_URL. One way: end the auth.enabled sentence after the stub/Defra ID routes plugin, then start a new sentence: 'Whether or not auth is enabled, it then registers the hidden IDM sign-in ...'."
+    },
+    {
+      "id": 2,
+      "line": 77,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "'The IDM sign-in's own pages ... are internal test pages, in English only, with their text in the templates' is only partly true: each page's title is set in the controller, not the template (idm-sign-in.js base('Sign in with Defra ID'), base('Signed in'), base('Signed out')), and the signed-in page's row labels ('expires_in', 'scope', 'refresh token returned', 'Yes'/'No') come from signInSummaryRows in idm-sign-in.js.",
+      "fix": "Must: the doc says accurately where the IDM pages' English text lives. One way: 'in English only, with their text in the templates and in idm-sign-in.js (page titles and the token-response row labels), not in copy.en.js/copy.cy.js'."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

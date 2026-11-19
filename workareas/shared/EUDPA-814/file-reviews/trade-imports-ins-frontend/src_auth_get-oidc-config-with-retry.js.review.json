@@ -1,0 +1,21 @@
+{
+  "file": "src/auth/get-oidc-config-with-retry.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The provider is threaded through correctly and the IDM path is covered by idm-sign-in.test.js, but the optional provider parameter falls back to the stub without the caller saying so.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "getOidcConfigWithRetry(logger, provider = defraIdProvider) takes the provider as an optional positional parameter that falls back to the stub provider. With two providers now, a caller that leaves it out (plugins/auth.js:21 calls getOidcConfigWithRetry(server.logger)) gets the stub's discovery document without saying so, and the call site does not show which provider it discovers. idm-auth.js:46 has to remember to pass idmProvider; dropping that argument would still start the server, but against the stub's endpoints. getOidcConfig(provider = defraIdProvider) in get-oidc-config.js:10 has the same default.",
+      "fix": "Must: every call to getOidcConfigWithRetry (and getOidcConfig) names the provider it discovers, and nothing falls back to the stub provider without being asked. One way: drop the default, make provider required, and change plugins/auth.js:21 to getOidcConfigWithRetry(server.logger, defraIdProvider) and refresh-tokens.js:11 to getOidcConfig(defraIdProvider)."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/server/common/test-helpers/signing-key.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:32:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct, well-named RS256 test key and token helper shared by both tests that need it; one Major house-rule breach: two single-use literals at module scope.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "RSA_MODULUS_BITS (line 5) and TOKEN_TTL_SECONDS (line 6) sit at module scope, but each is used by one function only (generateSigningKey line 10, signToken line 27) and neither is exported for a test to import; the house rule puts a literal used by one function inside that function.",
+      "fix": "Must: each literal lives in the one function that uses it, and module scope holds no constant used by a single function. One way: move RSA_MODULUS_BITS into generateSigningKey and TOKEN_TTL_SECONDS into signToken as local consts."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

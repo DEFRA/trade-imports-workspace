@@ -1,0 +1,30 @@
+{
+  "file": "src/server/common/test-helpers/serve-oidc-discovery.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:32:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Works as intended, but selects the IDM discovery URL by a raw config key instead of the provider abstraction production uses, duplicating the provider-to-key rule.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The helper picks which discovery URL to serve by a raw config key ('discoveryUrlKey', exported 'idmOidcDiscoveryUrlKey = idm.oidcDiscoveryUrl', lines 10-16), while the production code this PR adds picks it by provider object: 'providerSetting(provider, oidcDiscoveryUrl)' over 'defraIdProvider' / 'idmProvider' (src/auth/identity-providers.js:4-24, get-oidc-config.js:11). Two vocabularies and two homes for one rule (where a provider's discovery URL lives); the IDM key is also spelt out again as a literal in verify-token.test.js:39,59, and the private 'oidcDiscoveryUrlKey' (line 10) no longer says which of the two discovery URLs it is.",
+      "fix": "Must: the test helper selects the provider the same way production does, and the provider-to-config-key rule lives only in identity-providers.js; no test or helper spells out 'idm.oidcDiscoveryUrl' or 'defraId.oidcDiscoveryUrl' as its own constant. One way: give discoveryUrlRequest/serveOidcDiscovery a '{ provider = defraIdProvider }' option and read the URL with providerSetting(provider, 'oidcDiscoveryUrl'); drop idmOidcDiscoveryUrlKey and pass idmProvider from idm-sign-in.test.js; if a key string is still needed for config.set/restore, export it once from identity-providers.js (e.g. a providerSettingKey(provider, setting)).",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 24,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "src/server/app/docs/testing.md:143-153 documents this file's exports as 'serveOidcDiscovery()' and 'discoveryUrlRequest({ persist, ...scopeOptions })', 'the nock interceptor at the configured discovery URL'; this PR adds a second discovery URL and a discoveryUrlKey option, and does not export idmOidcDiscoveryUrlKey in that list, so the doc no longer says which URL is served or how to serve the IDM one.",
+      "fix": "Must: testing.md describes the helper's current signature, including how a test serves the IDM provider's discovery document. One way: update the serve-oidc-discovery.js paragraph alongside the fix for the provider option."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

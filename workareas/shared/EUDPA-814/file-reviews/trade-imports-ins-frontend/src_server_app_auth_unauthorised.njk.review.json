@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/auth/unauthorised.njk",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The template's change works (stub link stays /auth/sign-in, IDM link is tested in idm-sign-in.test.js:143), but it leaves a stale cross-module comment, splits the try-again destination between controller and template default, and names one value two ways.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The comment on line 5 ('Destination, not copy, so it lives here rather than in copy.en.js/copy.cy.js — identical in both locales.') describes other modules (the copy files) and gives rationale, which the house rules keep out of code. The diff also makes it untrue: the destination now comes from the view model's signInUrl, and only the stub fallback lives here.",
+      "fix": "Must: the template has no comment that describes other modules or gives rationale. Any rationale worth keeping is in the repo's docs/ (architecture.md:73-75 already describes the try-again link). One way: delete the comment."
+    },
+    {
+      "id": 2,
+      "line": 6,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The try-again destination now has two owners. idm-sign-in.js:58-60 passes signInUrl: idmPaths.signIn in its view model, while the four stub renders in controller.js (lines 34, 44, 55, 75) pass nothing and rely on the template's hard-coded default '/auth/sign-in' (unauthorised.njk:6). The template picks a route, and the stub sign-in path is written again here beside its owner in auth/index.js:11 and stub-sign-in.js:72.",
+      "fix": "Must: each controller that renders auth/unauthorised says where its try-again link goes, and the template only renders the URL it is given, with no route literal of its own. One way: have controller.js pass signInUrl from a stub path constant (shared with auth/index.js) and drop the default filter from the template."
+    },
+    {
+      "id": 3,
+      "line": 6,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One value, two names: the view model key is signInUrl (idm-sign-in.js:60, architecture.md:75) and the template renames it to tryAgainUrl on line 6, so a reader following the link href back to the controller has to map between them.",
+      "fix": "Must: the try-again link's destination has one name from the controller's view model to the href. One way: name the view model key for what the link does (tryAgainUrl, or keep signInUrl) and use that name in the template with no local alias."
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

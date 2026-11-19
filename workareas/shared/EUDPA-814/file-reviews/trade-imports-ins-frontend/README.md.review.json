@@ -1,0 +1,30 @@
+{
+  "file": "README.md",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Routes, env names, defaults and the .env pickup match the code, but the claim that the non-secret IDM settings are in cdp-app-config is not true today.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 207,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "README.md:207-208 says the IDM settings other than the three secrets 'are in cdp-app-config', but DEFRA/cdp-app-config main has no IDM_* key in services/trade-imports-ins-frontend/dev or test/trade-imports-ins-frontend.env, and no open PR adds them. Until they exist the plugin logs 'No IDM discovery URL set' and the routes 404 in CDP, and IDM_REDIRECT_URL would fall back to localhost:3002 - a reader trusting this line cannot tell why.",
+      "fix": "Must: the README states only what is true of CDP config when this merges, and names each key a deployer must set in cdp-app-config (at least IDM_OIDC_CONFIGURATION_URL and IDM_REDIRECT_URL with the deployed /auth/callback URL). One way: hand the user the cdp-app-config diff to raise themselves, and until it lands word the line as 'must be set in cdp-app-config' with the list."
+    },
+    {
+      "id": 2,
+      "line": 192,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "README.md:191-192 'the dashboard and address book keep the stub or Defra ID sign-in above, and its data' - 'and its data' has no clear referent (the IDM sign-in's data? the stub session's data?). The code keeps IDM's result under its own yar key 'idmSignIn' and never sets the service's auth session.",
+      "fix": "Must: the sentence says plainly that IDM sign-in does not create a service session and that what IDM returned is kept apart from it. One way: 'It never signs anyone in to the service. The dashboard and address book still use the sign-in above, and what IDM returns is kept separately, only to show on the signed-in page.'",
+      "best_practice": "gds/language.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

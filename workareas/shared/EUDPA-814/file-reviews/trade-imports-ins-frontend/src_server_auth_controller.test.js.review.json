@@ -1,0 +1,31 @@
+{
+  "file": "src/server/auth/controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "97c72f1568a5c7adb00b1f24b4efb88436803470",
+  "pr": 90,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-18T17:31:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new assertion correctly pins the stub sign-in link default, but matches raw markup instead of querying the link, and the test it extends mocks and spies on the service's own modules, which the testing guide forbids.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 136,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The new assertion matches a raw HTML string (`<a class=\"govuk-link\" href=\"/auth/sign-in\">...`), so a change to attribute order, an extra class or whitespace in unauthorised.njk turns it red while the link still works; the sibling idm-sign-in.test.js in this PR queries the rendered page with Cheerio and the rendered-text helpers instead",
+      "fix": "Must: the test proves the unauthorised page's sign-in link points at /auth/sign-in by querying the rendered link by its text and reading its href, not by matching serialised markup. One way: load the payload with cheerio (as idm-sign-in.test.js does) and assert $('a.govuk-link').filter((_, el) => $(el).text() === sharedEn.unauthorised.signInLinkText).attr('href') equals '/auth/sign-in'",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 20,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The file mocks the service's own modules verify-token.js (line 20), get-permissions.js (line 24) and get-sign-out-url.js (line 16), and the test this PR edits asserts on those spies (lines 142-143: expect(verifyToken).not.toHaveBeenCalled(), expect(getPermissions).not.toHaveBeenCalled()); the frontend testing guide allows only the OIDC discovery and auth config module mocks, and this PR adds signing-key.js and a parameterised serveOidcDiscovery that let verifyToken run for real against a nock-served JWKS, so the file now sits beside a network-boundary mechanism it does not use",
+      "fix": "Must: the sign-in-oidc tests drive verifyToken and getPermissions through their network boundary (nock for the JWKS and the permissions API) with no vi.mock of the service's own modules and no spy assertions on them. One way: serve the JWKS with generateSigningKey/signToken and serveOidcDiscovery, nock the permissions endpoint, and replace the not.toHaveBeenCalled checks with nock scopes that must stay unconsumed (scope.isDone() false)",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-18T17:33:52Z"
+}

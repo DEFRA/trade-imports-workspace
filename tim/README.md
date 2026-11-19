@@ -1267,7 +1267,7 @@ Each reads the repos a backlog builds from its envelope `repos` map.
 
 ```bash
 tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 \
-  --in-dev-status "In Dev" --done-status Done --board 13780 --json  # derive, ticket, branch
+  --in-dev-status "In Dev" --done-status Done --json  # derive, ticket, branch
 tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
 tim build gate shared/my-programme --json                   # unit+FIT (repos at once), then k6 alone, then E2E
@@ -1291,7 +1291,8 @@ the ticket when the next one is the id the previous attempt built, reporting
 wiki-markup description, and record the key on the row before anything else,
 so a retry never raises a second. A status other than `--in-dev-status` is
 moved there by an exact-name transition; one already at `--done-status` is
-left alone with a warning. Then the ticket is moved onto `--board`, every time.
+left alone with a warning. Then the ticket is moved onto `--board`, every time:
+the workspace's board, `jiraBoard` in `repos.json`, when `--board` is left out.
 Jira's agile API answers a partial rejection with 200 and an error body, so
 only a 204 counts as moved.
 **Branch**: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row,
@@ -1660,11 +1661,13 @@ tim jira unlink EUDPA-368 --list                    # read-only: id, type and ot
 tim jira unlink --id 426407 --confirm               # deletes one issue link by its id (dry run without --confirm)
 tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
 tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
+tim jira move-to-board EUDPA-200                    # dry run: says whether the ticket is in the workspace board's backlog
+tim jira move-to-board EUDPA-200 --confirm          # moves it onto the board, then reads the backlog again to check
 tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added
 tim jira comment EUDPA-200 --file comment.txt --confirm  # posts it, then reads the comments back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
-tim jira epics --board 13780 [--include-done]      # read-only: the board's epics as 'KEY — summary' lines, open only unless --include-done (the board decides what is done)
-tim jira labels --board 13780 --json               # read-only: how often each label appears in the board's backlog, most used first
+tim jira epics [--include-done]                    # read-only, with no --project or JIRA_PROJECT_KEY: the workspace board's epics as 'KEY — summary' lines, open only unless --include-done (the board decides what is done)
+tim jira labels --board 13780 --json               # read-only: how often each label appears in the board's backlog, most used first (--board defaults to the workspace's)
 tim jira search commodity MDM --open               # read-only: tickets in JIRA_PROJECT_KEY (or --project) whose text matches the words, newest change first; --open leaves out done tickets
 tim jira search --jql "parent = EUDPA-125" --limit 100 --json  # read-only: sends the JQL as written (--limit defaults to 50, up to 500)
 ```
@@ -1701,6 +1704,22 @@ other way round it fails with `UNKNOWN` and names the stored direction.
 reports `unchanged`, even with `--confirm`. `--json` puts
 `{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
 `assigned` or `unchanged`).
+
+`tim jira move-to-board` takes a ticket out of a board's backlog and puts it
+on the board. A raised ticket lands in the backlog, and no status or field
+moves it, so the team does not see it until this runs. The EUDPA board is
+13780 and has no sprints. Jira's backlog search trails a move by a second
+or two, so the read-back waits a second before each of up to five reads.
+A ticket not in the backlog is left alone and
+reported `unchanged`, even with `--confirm`. `--json` puts
+`{mode, key, board}` in `result` (`mode` is `dry-run`, `moved` or
+`unchanged`).
+
+Every command that takes `--board` (`move-to-board`, `epics`, `labels`,
+`prereqs` and `tim build start`) defaults it to the workspace's board,
+`jiraBoard` in `repos.json`: 13780, the EUDPA board. `--board` still wins.
+`epics` lists that board only when no `--project` or `JIRA_PROJECT_KEY`
+names a project.
 
 `tim jira update` rewrites a ticket that already exists: `--summary` for the
 title, and `--description` or `--description-file` (not both) for the

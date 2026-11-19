@@ -14,7 +14,7 @@ The default place to clone the workspace is `~/git/defra/trade-imports-workspace
 
 - Branch naming: `feat/EUDPA-XXXX[-slug]` or `chore/EUDPA-XXXX[-slug]` (also `fix/EUDPA-XXXX[-slug]`).
 - Cross-repo branches must share the **same name** across every affected repo — the workspace stack's `--branch` flag probes each repo for a matching branch-tagged image and falls back to `:latest` per service, so mismatched names break the linked-branch pickup.
-- PRs: raise against `main` in the relevant repo.
+- PRs: raise against `main` in the relevant repo. Write the description as [`docs/best-practices/pull-requests.md`](docs/best-practices/pull-requests.md) says: what, why and checks, with no notes about other branches.
 - Cross-repo changes: coordinate via the tests repo. A fix that needs two repos changes both, the tests repo included.
 - Splitting a branch: every part keeps the ticket key. `chore/EUDPA-35-frontend-test-rewrites`, not `chore/admin-notifications-tidy`.
 - A programme of several tasks in one repo: one branch, one PR, a commit per task, merged once at the end.
@@ -239,7 +239,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   credential setup for the agent skills.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
-  docker-compose.md, github-actions.md, shell.md). Cited by SKILL.md files via
+  docker-compose.md, github-actions.md, pull-requests.md, shell.md). Cited by SKILL.md files via
   `docs/best-practices/<topic>/<file>`.
   Read [`shell.md`](docs/best-practices/shell.md) before any bulk rename: this
   workspace is macOS, so `sed`'s `\b` matches nothing and still exits 0, and BSD

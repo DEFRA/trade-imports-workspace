@@ -724,7 +724,7 @@ The system MUST end an amendment's review with "Continue", which goes on to resu
 
 ### Requirement: An amendment's review is titled for re-submitting once a notification answer differs from the submitted version
 **ID**: REQ-CYA-028
-The system MUST head and title an amendment's review "Review your notification" when it is first opened, and "Review before re-submitting" once any notification answer differs from the submitted version. A change to the uploaded documents alone MUST NOT count as a difference.
+The system MUST head and title an amendment's review "Review your notification" when it is first opened. The system MUST head and title it "Review before re-submitting" once any notification answer differs from the submitted version. The system MUST head and title it "Review your notification" again once every changed answer is put back. A new amendment, started after a previous one was resubmitted or cancelled, MUST open as "Review your notification". A change to the uploaded documents alone MUST NOT count as a difference.
 
 #### Scenario: An amendment opened unchanged is headed as a review
 **ID**: SCN-CYA-028-A
@@ -741,6 +741,18 @@ The system MUST head and title an amendment's review "Review your notification" 
 #### Scenario: Adding only a document keeps the review heading
 **ID**: SCN-CYA-028-C
 - **GIVEN** a notification is being amended and only an uploaded document has been added
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: Putting the changed answer back restores the review heading
+**ID**: SCN-CYA-028-D
+- **GIVEN** a notification is being amended and a notification answer was changed and then put back to the submitted value
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: A new amendment after a cancelled or resubmitted one opens as a review
+**ID**: SCN-CYA-028-E
+- **GIVEN** an amendment with a changed answer was cancelled or resubmitted, and a new amendment is started
 - **WHEN** the user views check-your-answers
 - **THEN** the page is headed and titled "Review your notification"
 

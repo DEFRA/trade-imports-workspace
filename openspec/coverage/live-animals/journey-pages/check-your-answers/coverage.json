@@ -1058,7 +1058,7 @@
     {
       "id": "REQ-CYA-028",
       "name": "An amendment's review is titled for re-submitting once a notification answer differs from the submitted version",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-028-A",
@@ -1086,6 +1086,25 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-review-title.spec.ts", "test": "keeps the review heading when only a document is added", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep the opened title when an amendment changes only its documents", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-028-D",
+          "name": "Putting the changed answer back restores the review heading",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed and titled for reviewing again once the changed answer is put back", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/records-port.test.js", "test": "Should be true once a notification answer differs and false once it is put back", "strength": "partial", "notes": "not probed red; the stub signal" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-028-E",
+          "name": "A new amendment after a cancelled or resubmitted one opens as a review",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a new amendment is headed and titled for reviewing, not re-submitting", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/records-port.test.js", "test": "Should be false after resubmitting a changed amendment and when the next amendment starts", "strength": "partial", "notes": "not probed red; the stub signal" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/records-port.test.js", "test": "Should be false after a changed amendment is cancelled", "strength": "partial", "notes": "not probed red; the stub signal" }
           ]
         }
       ]

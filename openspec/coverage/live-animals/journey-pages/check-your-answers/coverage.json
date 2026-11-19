@@ -768,6 +768,14 @@
               "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete",
               "strength": "full",
               "notes": "the review reached after Save and continue names the main import reason and roles and addresses as outstanding"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/pages/notification-view-states.spec.ts",
+              "test": "an unanswered contact address keeps the trader on the review after Continue, naming it among what is outstanding",
+              "strength": "partial",
+              "notes": "the review opened from the overview, with the contact page never answered; not red-probed in this run — no workspace stack"
             }
           ]
         },
@@ -1392,7 +1400,7 @@
     {
       "id": "REQ-CYA-020",
       "name": "The roles-and-addresses card lists one row per animal that has a saved permanent address",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-020-A",
@@ -1427,16 +1435,16 @@
         },
         {
           "id": "SCN-CYA-020-B",
-          "name": "An animal that still owes a permanent address has no row, while the species card is still reported outstanding",
-          "coverage": "full",
+          "name": "An animal that still owes a permanent address has no row, while the species and roles-and-addresses cards are both still reported outstanding",
+          "coverage": "partial",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-animals-frontend",
               "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
-              "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and still report the outstanding answer against the species card",
-              "strength": "full",
-              "notes": ""
+              "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and report the outstanding answer against both the species and roles and addresses cards",
+              "strength": "partial",
+              "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)"
             }
           ]
         },
@@ -1452,6 +1460,52 @@
               "test": "Should list no permanent address row when a line needing one holds no animal identifier records",
               "strength": "full",
               "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-021",
+      "name": "The roles-and-addresses card shows the county parish holding number when the notification needs one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-021-A",
+          "name": "A saved county parish holding number reads in its slashed form",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+              "test": "Should show the CPH row in the roles-and-addresses card in its slashed county/parish/holding form when a line is a CPH-eligible commodity",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts",
+              "test": "after completing every section the check-your-answers page renders the answered rows",
+              "strength": "partial",
+              "notes": "needs the workspace stack; not probed locally in this increment"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts",
+              "test": "walks a cattle-by-air notification through every task with Save and continue, from create to submitted",
+              "strength": "partial",
+              "notes": "needs the workspace stack; not probed locally in this increment"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/all-operators.spec.ts",
+              "test": "check your answers lists all six operators with the picked name and country",
+              "strength": "partial",
+              "notes": "needs the workspace stack; not probed locally in this increment"
             }
           ]
         }

@@ -6,17 +6,17 @@
     {
       "id": "REQ-OB-COMMODITY-001",
       "name": "A commodity that calls for a County Parish Holding number brings it into play for the whole notification",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-OB-COMMODITY-001-A",
           "name": "Adding a commodity that calls for a CPH number brings it into play",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after Felis catus, adding Bos taurus makes the CPH section appear offering 'Add a CPH number'" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line is not CPH-exempt", "strength": "full", "notes": "a 0101 horse line beside a 0102 line; the 0102 line alone triggers" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put cph in scope when any line is not exempt", "strength": "full", "notes": "a pig (0103) beside an exempt horse is asked" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "chooses Bos taurus on the commodity page, opens addresses and follows the CPH section's add link (return=addresses); proves the page when in scope, not the add-line transition" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after a cats-only consignment, adding a poultry line (chicken) makes the CPH section appear offering 'Add a CPH number'" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line is on the CPH-required list", "strength": "partial", "notes": "a 0101 horse line beside a 0102 cattle line; the cattle line alone triggers; not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put cph in scope when any line is listed", "strength": "partial", "notes": "a horse line beside a listed pig (0103) line; not probed in this increment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "chooses Bos taurus on the commodity page, opens the consignment addresses page from the hub and follows the CPH section's add link; proves the page when in scope, not the add-line transition" }
           ]
         },
         {
@@ -24,20 +24,30 @@
           "name": "A notification with no such commodity is not asked for one",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "Felis catus alone: CPH section hidden; Continue from addresses returns to Overview with CPH heading hidden" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when every line is CPH-exempt", "strength": "full", "notes": "a 0101 horse line and a 01061900 line" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put cph in scope when every line is exempt", "strength": "full", "notes": "both lines carry CPH-exempt codes" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the CPH row for an exempt commodity", "strength": "partial", "notes": "CYA omit only; not the addresses hub / page skip" }
-          ],
-          "notes": "FIT-NEGATIVE GAP (verified): cph-number.fit.spec.js always chooses Bos taurus and opens /cph-number from the addresses page's CPH add link — never opens addresses with only a non-triggering commodity and asserts the section/page absent. UI hide path is E2E-only; unit covers the evaluator/whitelist out-of-scope decision."
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "a cats-only consignment: CPH section hidden, and opening the CPH page by its own address shows the consignment addresses page instead" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when no line is on the CPH-required list", "strength": "partial", "notes": "a 0101 horse line and a 01061900 line; not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put cph in scope for a consignment of the other-live-mammals code alone", "strength": "partial", "notes": "01061900: cats, dogs and ferrets; not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the CPH row for a commodity not on the CPH-required list", "strength": "partial", "notes": "CYA omit only; not the addresses hub / page skip" }
+          ]
         },
         {
-          "id": "SCN-OB-COMMODITY-001-C",
-          "name": "A commodity code on no list of its own is asked for a CPH number",
+          "id": "SCN-OB-COMMODITY-001-D",
+          "name": "A commodity not on the list is not asked for a CPH number",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put cph in scope for a consignment of the ostriches code alone", "strength": "partial", "notes": "ostriches (01063300) call for the number under no commodity rule; not probed in this increment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of ostriches for a CPH number", "strength": "partial", "notes": "not probed in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-001-E",
+          "name": "The commodities that call for a CPH number are cattle, pigs, sheep, goats and poultry",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put cph in scope for a code on no list at all", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of ostriches for a CPH number", "strength": "full", "notes": "ostriches (01063300) are on no other commodity list" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/services/commodities/index.test.js", "test": "Should list exactly the cattle, pig, sheep, goat and poultry codes", "strength": "partial", "notes": "the accessor's seventeen codes: cattle, pigs, sheep, goats, and poultry as day-old chicks, adult birds and hatching eggs; not probed in this increment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should have the CPH-required list contain exactly the expected values", "strength": "full", "notes": "anti-drift pin over the seventeen listed codes; red/green probe (probe-allowlist) earned full" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should ask for CPH for cattle (0102) but not for horses (0101) or ostriches (01063300)", "strength": "partial", "notes": "not probed in this increment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of poultry for a CPH number", "strength": "partial", "notes": "not probed in this increment" }
           ]
         }
       ]

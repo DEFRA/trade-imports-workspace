@@ -124,7 +124,7 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `unavailableBackendError(operation)` | The marked error a failed backend call throws, for seeding a failing store |
 | `backendJourneyId`, `backendNotification(options)` | A backend journey id and a backend notification to answer a read with |
 | `expectBackLinkIsPage(result, slug)` | Asserts the view's back link is the journey page at `slug` |
-| `sampleText(value, sampleArguments)` (animals only) | The text a copy leaf gives: the string itself, or what the copy function returns for the sample arguments |
+| `sampleText(value, sampleArguments)` | The text a copy leaf gives: the string itself, or what the copy function returns for the sample arguments |
 | `crumbProtectedServerMounting(routes, prefix)` (animals only) | A real server with the crumb plugin and test session auth, mounting the routes under the prefix |
 | `expectNoRefusalLogged(logger)` | Asserts the logger holds no refusal line |
 | `useReferenceDataServing()` | Registers `resetMocksAndConfigAfterTests()` itself and returns a function that serves given rows as the reference-data response |
@@ -134,7 +134,7 @@ Both frontends have this file. The rows below are in both unless a row says othe
 | `addressBookAnswering(addressResponse)`, `addressBookRefusingAddresses()`, `addressBookRequestUrls()` | Stub the address book's answers and report the URLs it was asked for |
 | `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |
 | `expectBackLinkIsPath(result, path)` (plants only) | Asserts the view's back link is the given path |
-| `itHoldsCopyAtEveryLeaf(en, cy)` and `expectEveryLeafToBeCopy(locale, bundle)` (plants only) | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function |
+| `itHoldsCopyAtEveryLeaf(en, cy, sampleArguments)` and `expectEveryLeafToBeCopy(locale, bundle, sampleArguments)` | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function, and resolves to a non-empty string — calling a copy function with the given sample arguments |
 
 ### Address feature tests: `src/server/app/sets/live-animals/journeys/linear/features/addresses/test-support.js`
 

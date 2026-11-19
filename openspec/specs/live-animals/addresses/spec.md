@@ -6,6 +6,45 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ## Requirements
 
+### Requirement: Each consignment role's list offers only that role's addresses, the consignment contact's only branch addresses, and any address saved with no role is on all of them
+**ID**: REQ-ADDR-018
+The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor. The consignment contact's list is the organisation's addresses saved as a branch address, together with any address saved with no role at all, and an address saved for a consignment role is not on it.
+
+#### Scenario: An address saved for one role is listed only on that role's list
+**ID**: SCN-ADDR-018-A
+- **GIVEN** an address is saved for the consignee role alone
+- **WHEN** the user opens any of the five consignment role lists
+- **THEN** the address is listed on the consignee list, and on none of the other four
+
+#### Scenario: An address saved for two roles is listed on both
+**ID**: SCN-ADDR-018-B
+- **GIVEN** an address is saved for both the consignee and the importer roles
+- **WHEN** the user opens either role's list
+- **THEN** the address is listed on both
+
+#### Scenario: An address saved with no role is listed on every role's list and on the consignment contact page
+**ID**: SCN-ADDR-018-C
+- **GIVEN** an address is saved with no role at all
+- **WHEN** the user opens any of the five consignment role lists, or the consignment contact page
+- **THEN** the address is listed on all five, and on the consignment contact page
+
+#### Scenario: An address saved as a branch address is offered to the consignment contact and to none of the five consignment roles
+**ID**: SCN-ADDR-018-D
+- **GIVEN** an address is saved as a branch address
+- **WHEN** the user opens the consignment contact page, or any of the five consignment role lists
+- **THEN** the address is offered on the consignment contact page
+- **AND** the address is listed on none of the five consignment role lists
+
+### Requirement: The list shows every address for the role on one page
+**ID**: REQ-ADDR-017
+The system MUST show every address a role's list holds on one page, however many there are, with the results heading, the count and one table between the search box and the save controls.
+
+#### Scenario: The whole list is shown on one page
+**ID**: SCN-ADDR-017-A
+- **GIVEN** a role's list holds more addresses than a page once held
+- **WHEN** the user opens that role's list
+- **THEN** every one of them is shown, between the search box and the save controls, with the results heading and the count above the table
+
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
 The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey afterwards, to the page each hand-off action's own scenario names.
@@ -32,7 +71,8 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 **ID**: SCN-ADDR-001-D
 - **GIVEN** the user is choosing an address for a consignment role or the consignment contact, and the address book service is available
 - **WHEN** they view the page
-- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading; for the consignment contact, a link is offered
+- **THEN** for a consignment role, a button named "Add a new address" is offered beside the page heading
+- **AND** for the consignment contact, the sentence "If the correct address is not shown, add a new branch address, then return to this page." is shown, with "add a new branch address" as the link, and it is the only way the page offers to add an address
 - **AND** either leads to the address book's own add-address page, and no add-address form is served within the journey itself
 
 #### Scenario: Saving with Save and select lands on the consignment addresses page with the address chosen for the role
@@ -89,6 +129,7 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **WHEN** they save a new address there with "Save and continue"
 - **THEN** the consignment contact page opens with a "Success" banner reading "<name> address added to your address book"
 - **AND** the address is chosen as the contact address
+- **AND** the new address is offered above the addresses that were already in the book
 
 #### Scenario: Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved
 **ID**: SCN-ADDR-001-M
@@ -153,7 +194,7 @@ The system MUST let the user edit the details of an address copied onto the noti
 #### Scenario: A copied address offers both choosing another address and editing its details
 **ID**: SCN-ADDR-014-E
 - **GIVEN** a role's address has been chosen for a draft notification
-- **WHEN** the user views that role on the consignment addresses page, the consignment contact page or the check-your-answers view
+- **WHEN** the user views that role on the consignment addresses page or the check-your-answers view
 - **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
 - **AND** a role with no address chosen offers only adding one
 
@@ -201,9 +242,9 @@ The system MUST refuse to continue past the review page, and refuse the submit, 
 - **WHEN** the user follows the error to edit that address and corrects it
 - **THEN** the error clears and the notification can then be submitted
 
-### Requirement: Choosing a role's address offers a search of the whole book, reporting how many matched
+### Requirement: Choosing a role's address offers a search of the role's list, reporting how many matched
 **ID**: REQ-ADDR-006
-The system MUST let the user search the whole address book when choosing an address for any consignment role, place of origin included, narrowing the list to the matching records. It MUST report under the heading "Select an address" how many were shown out of how many the book holds, and offer the addresses as one group with that name. The search box MUST be labelled "Search" with the hint "Name, address or country", and run on the server from the "Search" button or Enter.
+The system MUST let the user search the role's list when choosing an address for any consignment role, place of origin included, narrowing the list to the matching records. It MUST report under the heading "Select an address" how many were shown out of how many the role's list holds, and offer the addresses as one group with that name. The search box MUST be labelled "Search" with the hint "Name, address or country", and run on the server from the "Search" button or Enter.
 
 #### Scenario: Searching narrows the list and reports the count
 **ID**: SCN-ADDR-006-A
@@ -212,11 +253,11 @@ The system MUST let the user search the whole address book when choosing an addr
 - **THEN** only the matching records are listed
 - **AND** under the heading "Select an address" the page reads "Showing 2 out of 2 results"
 
-#### Scenario: Clearing the search restores the whole book
+#### Scenario: Clearing the search restores the role's whole list
 **ID**: SCN-ADDR-006-B
-- **GIVEN** the user has searched the address book
+- **GIVEN** the user has searched the role's list
 - **WHEN** they clear the search and search again with nothing entered
-- **THEN** the whole book is listed again, paginated as before
+- **THEN** the role's whole list is shown again
 
 #### Scenario: Without JavaScript, Enter in the search box narrows the list
 **ID**: SCN-ADDR-006-C
@@ -252,7 +293,7 @@ The system MUST NOT refuse a role's address page when nothing has been chosen: i
 
 #### Scenario: Saving with nothing selected keeps the address the role already holds
 **ID**: SCN-ADDR-007-C
-- **GIVEN** a consignment role holds an address whose details have been edited on the notification, so the list names no selected address
+- **GIVEN** a consignment role holds an address whose details have been edited on the notification, so no row is checked
 - **WHEN** the user reopens the list and saves without selecting another
 - **THEN** they return to the consignment addresses page, where the role still shows the address it held
 
@@ -285,11 +326,11 @@ When the address book service is available, the system MUST end each listed addr
 - **WHEN** they select Back
 - **THEN** they return to the same list of the same notification, with their search still applied
 
-#### Scenario: Back from View keeps the page and the chosen address while changing an answer
+#### Scenario: Back from View keeps the chosen address checked while changing an answer
 **ID**: SCN-ADDR-009-B
-- **GIVEN** the address book service is available, and the user opened the list to change a role's address, chose an address, and moved to a later page
+- **GIVEN** the address book service is available, and the user opened the list to change a role's address and chose an address
 - **WHEN** they follow an address's 'View' link and then select Back
-- **THEN** the same page of the list is shown with their chosen address still selected, and saving returns them where a change of answer does
+- **THEN** the list is shown again with their chosen address still checked, and saving returns them where a change of answer does
 
 #### Scenario: Each address ends with only a View link
 **ID**: SCN-ADDR-009-C
@@ -297,34 +338,24 @@ When the address book service is available, the system MUST end each listed addr
 - **WHEN** the list is shown
 - **THEN** each address's last column holds a single 'View' link, announced with the address's name, and nothing else
 
-### Requirement: Choosing a role's address is paged, and a choice made on any page is the one saved
-**ID**: REQ-ADDR-010
-The system MUST page the address book when choosing a role's address, MUST let the user move through the pages to reach a record, and MUST save the record they chose whichever page they found it on.
-
-#### Scenario: A record found on a later page is chosen and saved
-**ID**: SCN-ADDR-010-A
-- **GIVEN** the address book holds more records than fit on one page, and the record the user wants is not on the first
-- **WHEN** they move through the pages until they find it, choose it, and save
-- **THEN** they return to the consignment addresses page, and the role's row shows the record they chose
-
-### Requirement: Reopening the list names the address already chosen and keeps it on save
+### Requirement: Reopening the list shows the address already chosen checked, and keeps it on save
 **ID**: REQ-ADDR-011
-The system MUST name the address-book record a role's address was chosen from when the user reopens the list, and MUST keep the address already on the notification when they save again, even though the list reopens on its first page where the chosen record may not appear. It MUST name nothing once the address's details have been edited on the notification, or once that record has been deleted from the address book. This MUST hold without relying on client-side JavaScript.
+The system MUST show the record a role's address was chosen from as the checked row when the user reopens the list, with nothing restating the choice above the list, and MUST keep the address already on the notification when they save again. It MUST show no row checked once the address's details have been edited on the notification, or once that record has been deleted from the address book. This MUST hold without relying on client-side JavaScript.
 
-#### Scenario: Reopening the list names the saved choice and keeps it on save
+#### Scenario: Reopening the list shows the saved choice checked, and keeps it on save
 **ID**: SCN-ADDR-011-A
-- **GIVEN** the user has chosen an address found on a later page and saved it
+- **GIVEN** the user has chosen an address and saved it
 - **WHEN** they reopen the list to change it
-- **THEN** the list opens on its first page, naming the address already selected, although that record's own row is not shown
+- **THEN** the list shows that address's row checked
 - **WHEN** they save without choosing another
 - **THEN** the role's row still shows the address they originally chose
 
-#### Scenario: Reopening the list names nothing once the address is edited here or deleted from the book
+#### Scenario: Reopening the list shows no row checked once the address is edited here or deleted from the book
 **ID**: SCN-ADDR-011-B
 - **GIVEN** the user has chosen an address and saved it
 - **AND** they have since edited its details on the notification, or the record has been deleted from the address book
 - **WHEN** they reopen the list to change it
-- **THEN** the list opens with no address named as selected
+- **THEN** the list opens with no row checked
 
 ### Requirement: The list spans the content column and shows each address on its own lines
 **ID**: REQ-ADDR-015

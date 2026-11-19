@@ -1,0 +1,72 @@
+h3. Background
+
+The Import notification service front door holds the address book, and a trader filling in a notification reaches it through a handshake: the journey hands the front door the notification, the party being named and a token, and the front door hands the trader back when they save or cancel. That handshake already worked for live animals. This theme makes it work for germinal products notifications too, and the contact address work in the sibling tickets rests on the front door keeping branch addresses apart from consignment-party addresses.
+
+This matters to a trader adding an address while filling in a germinal products notification. They reach the same add page, with the same questions, as a trader coming from a live animals notification; and when they save or cancel they return to their own germinal products notification rather than being dropped into a live animals one. The address they save is one address-book record, the same shape whichever notification it was added from, so an address added once is available everywhere.
+
+The live animals and high-risk plants tickets for this theme cover the journey pages the trader reaches the address book from — the party pickers, the county parish holding number page and the contact address page. This ticket covers the front door's side of it alone.
+
+This work is not yet merged. It sits on the branch {{feat/EUDPA-805-design-release-2-1-consignment-parties}} across the Import notification service front door, the live animals frontend, the high-risk plants frontend, the end-to-end test suite and the performance-test suite, each with its own open pull request. The acceptance criteria below are the behaviour specification as it stands on that branch.
+
+h3. What changes for the user
+
+h4. A germinal products notification reaches the same add page
+
+A trader who adds an address while filling in a germinal products notification reaches the add page they would reach from a live animals notification, asking the same questions and offering the same controls. There is no second add page to keep in step.
+
+h4. Saving or cancelling returns to the germinal products notification
+
+When they save or cancel, they return to that germinal products notification's own return page, carrying the party, the token, the saved address and the landing the control they pressed names — never to a live animals notification. This holds even when the incoming request names a return of its own: the front door returns them to the registered germinal products pages rather than to whatever the request asked for, so a handshake cannot be pointed somewhere it should not go.
+
+h4. One address book, one record shape
+
+An address saved from a germinal products notification is stored with the same fields and the same role as one saved from a live animals notification. It is one record in one address book, not a per-journey copy.
+
+h3. Acceptance criteria
+
+These are copied from the behaviour specification, which is where they are maintained. This theme added 4 scenarios to one specification file for the front door, and every one of them is written out below. The file is linked in full at the foot of this ticket.
+
+h4. The germinal products handshake
+
+h5. A germinal products add reaches the same add page as a live animals add
+
+* *GIVEN* a handshake naming the germinal products journey and one of its parties
+* *WHEN* the add page opens with it
+* *THEN* it asks the same questions and offers the same controls as one reached from a live animals notification's party picker
+
+h5. Saving or cancelling a germinal products add returns to that notification's own return page
+
+* *GIVEN* a trader on the add page opened with a germinal products journey handshake
+* *WHEN* they save or cancel
+* *THEN* they return to that germinal products notification's own return page, carrying the party, the token, the saved address and the landing each control names
+* *AND* never to a live animals notification
+
+h5. A germinal products add whose request also names a return of its own still returns to the registered germinal products pages
+
+* *GIVEN* a trader is on the add page opened with a germinal products journey handshake, and the request also names a return of its own
+* *WHEN* they save or cancel
+* *THEN* they still return to the registered germinal products pages, not the request's own return
+
+h5. An address saved from a germinal products notification is the same record as one saved from live animals
+
+* *GIVEN* a trader fills in the add page opened with a germinal products journey handshake
+* *WHEN* they save it
+* *THEN* it is stored with the same fields and the same role as one saved from a live animals notification
+
+h3. The work behind this change
+
+Each row below was built and reviewed on its own. The table holds every row of this theme that changed the Import notification service front door. A row appears in more than one of this theme's tickets when it changed more than one service — that is how the theme was built, not duplication. inc-095 is in this table because it changed the front door, and its trader-facing behaviour is specified on the live animals contact address page, so its scenarios are in the live animals ticket rather than here. The theme's other eleven rows changed live animals, high-risk plants or the test suites alone.
+
+|| Row || What it changed || State ||
+| inc-095 | The contact address page offers only the trader's own branch addresses and adds a new branch through the address book \\ _Changed the front door so branch addresses are kept apart from the five consignment-party roles. Its scenarios are specified on the live animals contact address page._ | Built |
+| inc-180 | The address book takes adds from germinal products notifications and returns to them | Built |
+
+h3. Where this is specified
+
+The behaviour specification is the contract this change is held to, and the tests linked to each scenario are the evidence. This theme added 4 scenarios to this one file for the front door, on the branch named above.
+
+|| Specification || Scenarios this theme added ||
+| [address-book|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-805-design-release-2-1-consignment-parties/openspec/specs/ins/address-book/spec.md] | 4 |
+| *Total* | *4* |
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it does not go stale while the branch is open.

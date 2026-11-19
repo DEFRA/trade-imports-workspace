@@ -40,16 +40,16 @@ The system MUST ask the destination question under the heading and description t
 - **THEN** the heading is "Place of destination", as for a consignment still on its way
 - **AND** the description explains where the goods will be kept after arrival for a plant health spot check
 
-### Requirement: The page offers search of the organisation address book with a count of results
+### Requirement: The page offers search of its role's addresses with a count of results
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-002
-The system MUST offer a search of the organisation address book by name, address or country, MUST open on the first page of the whole book with how many are shown out of the total under the heading "Select an address", and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole book.
+The system MUST offer a search of the place-of-destination role's addresses by name, address or country, MUST show them all on one page with how many are shown out of the total under the heading "Select an address", and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole list.
 
-#### Scenario: The picker opens on the first page of the whole book with its count
+#### Scenario: The picker shows the role's whole list on one page, with its count
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-A
 - **GIVEN** the user opens the place of destination page
 - **WHEN** the page loads
-- **THEN** the first page of the organisation's address book is shown
-- **AND** under the heading "Select an address" the page reads "Showing 5 out of <total> results"
+- **THEN** every address the role's list holds is shown
+- **AND** under the heading "Select an address" the page reads "Showing <total> out of <total> results"
 
 #### Scenario: Searching narrows the list to matching addresses
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-B
@@ -58,30 +58,23 @@ The system MUST offer a search of the organisation address book by name, address
 - **THEN** only those addresses are shown
 - **AND** under the heading "Select an address" the page reads "Showing <shown> out of <total> results" for the matches
 
-#### Scenario: A search matching nothing says so, and clearing restores the book
+#### Scenario: A search matching nothing says so, and clearing restores the list
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-C
 - **GIVEN** the user searches for a term matching no address
 - **WHEN** the results are shown
 - **THEN** a message says nothing matched, not an empty table
 - **WHEN** they clear the search
-- **THEN** the first page of the whole book is shown again
+- **THEN** the whole list is shown again
 
-### Requirement: Results are paged five at a time, and a selection survives paging and search
+### Requirement: A checked row survives a further search
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-003
-The system MUST page the address results five at a time, MUST keep a checked row selected across a further search or a page change even when its own row is not on the page being shown, and MUST save the address chosen on a later page.
+The system MUST keep a checked row checked across a further search, even when its own row is not on the list the search shows.
 
 #### Scenario: A checked row survives a further search
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-003-A
 - **GIVEN** the user has checked a row
 - **WHEN** they search again with a term that would not list that row
-- **THEN** the checked address is still shown as the current selection
-
-#### Scenario: A row ticked on a later page is the one that saves
-**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-003-B
-- **GIVEN** a search returns more than five matching addresses
-- **WHEN** the user opens a later page, checks an address there and saves
-- **THEN** that address is what the notification keeps
-- **AND** reopening the page names it as selected even when its row is not on the first page of the whole book
+- **THEN** the checked address is still checked
 
 ### Requirement: A chosen address is accepted and replaces any previously saved one
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-004
@@ -126,14 +119,14 @@ Save-and-continue and save-and-return-to-overview MUST make the same checks. Wit
 
 ### Requirement: Deleting the chosen address from the address book leaves the destination on the notification
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-006
-The system MUST keep a place of destination whose address-book record has since been deleted: the Overview task row MUST stay completed, and the page MUST still show the held address as the current place of destination while naming no selected address in the list. The copy itself is governed by `plants/addresses`.
+The system MUST keep a place of destination whose address-book record has since been deleted: the Overview task row MUST stay completed, and the page MUST still show the held address as the current place of destination while checking no row in the list. The copy itself is governed by `plants/addresses`.
 
 #### Scenario: Deleting the chosen record leaves the destination on Overview and the page
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-006-A
 - **GIVEN** a place of destination has been saved from the address book
 - **WHEN** that address record is deleted from the organisation's address book
 - **THEN** the Overview destination task row still reads completed
-- **AND** reopening the page shows the held address as the current place of destination, with no selected address named
+- **AND** reopening the page shows the held address as the current place of destination, with no row checked
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007

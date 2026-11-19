@@ -85,8 +85,15 @@ A job may only make mechanical changes. A mechanical change is one of:
 - a type fix
 - keeping one package of a Dependabot group at its current version, in
   `package.json` and the lockfile, with a hold recorded by `tim deps hold`
+- a test's set-up (a mock, a fixture or a test-support helper) changed so the
+  test sets up the case its title names under the new version, with every
+  assertion left as it was
 
 It does not change what the code does at runtime.
+
+Example: nock 15's `delay()` holds back only the body, so a timeout test
+that asserted a 504 from late headers got a 408. The fix replies through a
+helper that holds back the headers too, and the 504 assertion stays.
 
 ## When to stop
 

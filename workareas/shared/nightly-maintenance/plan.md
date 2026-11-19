@@ -118,13 +118,15 @@ scheduling if the 7-day restart becomes a chore.
 
 ## Open decisions
 
-- **E2E never runs on a Dependabot PR.** `.github/workflows/publish-branch.yml`
-  skips publishing when `github.actor` is `dependabot[bot]` (most likely
-  because Dependabot runs get no write secrets), so "E2E Tests" is skipped
-  and job 2.2 can never merge. Options: publish with a token Dependabot
-  can read (Dependabot secrets), have the nightly job push an empty commit
-  so a person-owned actor triggers the build, or accept CI without E2E for
-  `ci-is-enough` minors.
+- **E2E on Dependabot PRs: resolved, rolling out.** `publish-branch.yml`
+  skipped every Dependabot run, so its PRs got no branch image and no E2E.
+  The skip was never needed: the build uses only the OIDC build role, which
+  trusts any run on the repo, and no Actions secret. Workspace #287 added a
+  `build-dependabot` input (off by default). animals-admin #94 turned it on
+  as the canary, and on 19 Nov animals-admin #88, rebased by Dependabot,
+  built its branch image as `dependabot[bot]` and passed E2E against it.
+  Next: pass `build-dependabot: true` in every other repo's
+  `publish-branch.yml` caller, then drop the input and the skip.
 - **stylelint is a coupled set.** `stylelint-config-gds` 3.0.0 needs
   stylelint `^17.4.0`, so stylelint 18 cannot install yet (animals-admin
   #91, ins-frontend #84). Add a `stylelint` set (`stylelint`,

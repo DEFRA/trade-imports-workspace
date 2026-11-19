@@ -59,7 +59,7 @@ verifier and judge apply the same defaults.
 Read programme repos (when not repo-filtered):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX
+tools/review/review-counts.sh EUDPA-XXXXX
 ```
 
 Expect one `items.{repo}.json` per programme PR unless that repo had zero

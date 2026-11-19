@@ -161,12 +161,45 @@ const stageRepo = (staged, repo) => {
   return dir
 }
 
-const giveRemoteBranch = (staged, dir, repo) => {
+const addOrigin = (staged, dir, repo) => {
   const remote = join(staged.home, 'remotes', `${repo}.git`)
   git(staged, dir, ['clone', '--quiet', '--bare', dir, remote])
   git(staged, dir, ['remote', 'add', 'origin', remote])
+  git(staged, dir, ['fetch', '--quiet', 'origin'])
+}
+
+const giveRemoteBranch = (staged, dir, repo) => {
+  addOrigin(staged, dir, repo)
   git(staged, dir, ['push', '--quiet', 'origin', `main:${RUN_BRANCH}`])
   git(staged, dir, ['fetch', '--quiet', 'origin'])
+}
+
+/**
+ * Gives every repo of a workspace from {@link stageStartWorkspace} that has
+ * no origin a bare origin holding its main, as an unattended run needs.
+ *
+ * @param {{home: string, root: string}} staged
+ */
+export const giveEveryRepoAnOrigin = (staged) =>
+  [ADMIN, FRONTEND, STUB].forEach((repo) =>
+    addOrigin(staged, join(staged.root, 'repos', repo), repo)
+  )
+
+/**
+ * Commits a new file on a repo's current branch, so its HEAD moves ahead
+ * of origin.
+ *
+ * @param {{home: string, root: string}} staged
+ * @param {string} repo
+ * @param {string} fileName
+ * @returns {string} The new commit's SHA
+ */
+export const commitLocally = (staged, repo, fileName) => {
+  const dir = join(staged.root, 'repos', repo)
+  writeFileSync(join(dir, fileName), 'Local work\n')
+  git(staged, dir, ['add', fileName])
+  git(staged, dir, ['commit', '--quiet', '-m', `Add ${fileName}`])
+  return git(staged, dir, ['rev-parse', 'HEAD']).trim()
 }
 
 /**

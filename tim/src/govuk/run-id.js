@@ -44,3 +44,56 @@ export const runOf = ({
   const embedded = branch.match(new RegExp(`${key}-[0-9]+`))
   return { runId: embedded ? embedded[0] : slugOf(branch), branch }
 }
+
+/**
+ * Checks the ticket an unattended run is given: a key of the project or
+ * `NO_JIRA`, and no branch, since the run names its own.
+ *
+ * @param {object} args
+ * @param {string} [args.ticket]
+ * @param {string} [args.branch]
+ * @param {string} [args.projectKey] - Defaults to JIRA_PROJECT_KEY, else EUDPA
+ * @returns {string} The ticket
+ * @throws {TimError} USAGE for a branch, or a ticket that is neither a key of the project nor NO_JIRA
+ */
+export const unattendedTicketOf = ({
+  ticket,
+  branch,
+  projectKey = process.env.JIRA_PROJECT_KEY || DEFAULT_PROJECT_KEY
+}) => {
+  if (branch || !ticket) {
+    throw new TimError(
+      'USAGE',
+      `--unattended names its own branch: pass --ticket ${projectKey}-NNNN or --ticket NO_JIRA, not --branch`
+    )
+  }
+  const key = escapeForRegExp(projectKey)
+  if (!new RegExp(`^(${key}-[0-9]+|NO_JIRA)$`).test(ticket)) {
+    throw new TimError(
+      'USAGE',
+      `--ticket must match ${projectKey}-NNNN or be NO_JIRA (got: ${ticket})`
+    )
+  }
+  return ticket
+}
+
+/**
+ * The run id and branch of an unattended run: the run id is
+ * `<ticket>-govuk-frontend-<target>` and the branch `chore/<run id>`.
+ *
+ * @param {object} args
+ * @param {string} args.ticket - From {@link unattendedTicketOf}
+ * @param {string} args.target - A stable version, such as 6.6.0
+ * @returns {{runId: string, branch: string}}
+ * @throws {TimError} USAGE when the target is not a stable X.Y.Z version
+ */
+export const unattendedRunOf = ({ ticket, target }) => {
+  if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(target)) {
+    throw new TimError(
+      'USAGE',
+      `--target must be X.Y.Z in unattended mode (got: ${target})`
+    )
+  }
+  const runId = `${ticket}-govuk-frontend-${target}`
+  return { runId, branch: `chore/${runId}` }
+}

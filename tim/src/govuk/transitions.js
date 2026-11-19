@@ -14,7 +14,15 @@ const CLASSIFICATIONS = ['todo', 'noop']
 export const stateTimestamp = (now = new Date()) =>
   `${now.toISOString().slice(0, 19)}Z`
 
-const writeVersion = ({ path, state }, version, updateEntry) => {
+/**
+ * Writes one version's entry back to its state file, atomically.
+ *
+ * @param {{path: string, state: object}} found - From `findVersion`
+ * @param {string} version
+ * @param {(entry: object) => object} updateEntry - Gives the new entry from the current one
+ * @returns {object} The new entry
+ */
+export const writeVersion = ({ path, state }, version, updateEntry) => {
   const versions = state.versions.map((entry) =>
     entry.version === version ? updateEntry(entry) : entry
   )

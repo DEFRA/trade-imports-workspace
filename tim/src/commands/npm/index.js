@@ -20,6 +20,7 @@ import { registerAudit } from './audit.js'
 import { registerContext } from './context.js'
 import { registerExec } from './exec.js'
 import { registerDiscover } from './discover.js'
+import { registerPackageEvidence } from './evidence.js'
 import { registerUpgradeSteps } from './upgrade.js'
 import { writeLine } from '../_write-line.js'
 
@@ -282,7 +283,7 @@ export const register = (program, { timVersion }) => {
   const packages = npm
     .command('packages')
     .description(
-      "List, count, classify and set the status of an npm upgrade run's packages"
+      "List, count, classify and set the status of an npm upgrade run's packages, and record their merge policy and changelog evidence"
     )
   registerList(packages, { timVersion })
   registerCounts(packages, { timVersion })
@@ -290,6 +291,7 @@ export const register = (program, { timVersion }) => {
   registerSetClassification(packages, { timVersion })
   registerAggregate(packages, { timVersion })
   registerVerify(packages, { timVersion })
+  registerPackageEvidence(packages, { timVersion })
   registerDiscover(npm, { timVersion })
   registerContext(npm, { timVersion })
   registerAudit(npm, { timVersion })

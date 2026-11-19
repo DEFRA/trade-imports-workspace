@@ -429,6 +429,11 @@ tim govuk add-change --run-id EUDPA-264 --repo trade-imports-animals-frontend --
 tim govuk mark-done --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --commit 0123abc
 tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --reason "npm test failed"
 tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
+tim govuk start --unattended --ticket NO_JIRA --target 6.6.0
+tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name
+tim govuk check-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0
+tim govuk apply --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --unattended
+tim govuk render-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --json
 ```
 
 - `start` finds every repo under `repos/` whose `package.json` lists
@@ -476,6 +481,37 @@ tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk
 - A missing option, or a classification other than todo or noop, exits
   2; every other refusal exits 1.
 
+Unattended mode, for the nightly jobs (the govuk-upgrade skill's
+"Unattended mode"):
+
+- `start --unattended` takes `--ticket` only, as a key or `NO_JIRA`, and
+  refuses `--branch`. The target defaults to npm's latest and must be
+  `X.Y.Z`. The run id is `<ticket>-govuk-frontend-<target>` and the
+  branch `chore/<run id>`, in every repo, made from `origin/main` after a
+  fetch. It stops before switching any branch when a repo has
+  uncommitted changes. `.run-meta.json` records the bare ticket, which
+  the commit messages carry, and `"mode": "unattended"`.
+- `add-evidence` adds a row for one changelog item to the version's
+  `evidence`, with the pattern's hits in the repo now as `hitsBefore`. An
+  `applied` row needs a pattern with hits; a `not-applicable` row needs a
+  reason, and its pattern, if any, must have none; a `needs-a-person` row
+  needs a reason. Hits are counted as `tim deps evidence count` counts
+  them.
+- `check-evidence` counts every row of a version again and records
+  `hitsAfter`. It exits 0 when every row is clean, and 1 when any row is
+  not or the version has no rows.
+- `apply --unattended` counts the version's evidence again, without
+  writing it, when moving govuk-frontend to it is `changelog-driven` in
+  `config/dependency-sets.json`. It exits 1, changing nothing, when any
+  row is not clean. This covers an intermediate noop too.
+- `render-evidence` prints one repo's evidence as the markdown for its
+  pull request: one table across every version, in version order, and a
+  line saying whether every row is clean. A version also gets a
+  needs-a-person row when it has no changelog section, nobody planned
+  it, it failed to apply, it is planned but not applied, or it is planned
+  with no evidence. It reads the counts as recorded. It exits 0 either
+  way; `--json` gives `allClean`.
+
 ### `tim npm packages` — read and change an npm upgrade run's packages
 
 ```bash
@@ -485,6 +521,10 @@ tim npm packages set-status --run-id EUDPA-500 --repo trade-imports-animals-fron
 tim npm packages set-classification --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --classification auto --risk LOW --safe-for-automation true --rationale "Patch fix only"
 tim npm packages aggregate --run-id EUDPA-500
 tim npm packages verify --run-id EUDPA-500 --json
+tim npm packages set-policy --run-id EUDPA-802-vitest-4.2 --repo trade-imports-animals-frontend
+tim npm packages add-evidence --run-id EUDPA-802-eslint-10 --repo trade-imports-animals-frontend --package eslint --item "Remove the no-old-rule rule" --outcome applied --pattern no-old-rule
+tim npm packages check-evidence --run-id EUDPA-802-eslint-10 --repo trade-imports-animals-frontend --package eslint
+tim npm packages render-evidence --run-id EUDPA-802-eslint-10 --json
 ```
 
 - The state is `workareas/npm-upgrades/<run>/<repo>/packages.<repo>.json`.
@@ -500,7 +540,29 @@ tim npm packages verify --run-id EUDPA-500 --json
 - `verify` runs `aggregate` first, writing what it did to stderr, then
   exits 1 and lists the packages still not classified when there are any.
   `--json` gives `{pending_count, pending}`.
-- Every refusal, a usage error included, exits 1.
+- Every refusal, a usage error included, exits 1, except in the
+  evidence commands below.
+- `set-policy` records each package's merge policy on its row of
+  `packages.<repo>.json`, from `config/dependency-sets.json`: `policy`
+  (`ci-is-enough`, `changelog-driven` or `held`, as `tim deps policy
+--repo <repo>` decides it), `set`, `set_scope` and `policy_reason`. A
+  package whose versions tim cannot compare is `changelog-driven`. `tim
+npm upgrade --unattended` runs it in phase 1, then takes each `held`
+  row out of the packages file.
+- `add-evidence` records one changelog item's row for one package in
+  `<repo>/evidence/<package>.json` (`/` becomes `__`), never in the
+  packages file, so planners can record at once. The file keeps the
+  package's target, and `add-evidence` and `check-evidence` refuse
+  evidence recorded for another target. The outcome rules are those of
+  `tim govuk add-evidence`. A bad option exits 2.
+- `check-evidence` counts a package's rows again and records
+  `hitsAfter`. It exits 0 when every row is clean and 1 when any is not.
+- `render-evidence` prints, per repo, the run's packages and their
+  evidence as the markdown for a pull request. A package is clean when
+  it is classified, has a policy recorded and is upgraded, and every
+  evidence row is clean; a `changelog-driven` package needs evidence.
+  It exits 0 either way; `--json` gives `clean` for the run, each repo
+  and each package.
 
 ### `tim npm discover` and `tim npm context` — seed a run and prepare its planners
 
@@ -516,7 +578,9 @@ tim npm context prebake --run-id EUDPA-500 --repo trade-imports-animals-frontend
   `packages.<repo>.json` and `.upgrades-meta.json`, and keeps the
   classification, status and context of every package still outdated.
   `--json` gives the packages file. A `service`, `app` or `src` folder is
-  named for its parent.
+  named for its parent. `--package` (repeatable, `*` as a wildcard)
+  discovers only those packages. `--record-policy` records each
+  package's merge policy, as `tim npm packages set-policy` does.
 - `context best-practices` writes the repo's `best-practices.md` (the
   Hapi, GOV.UK Frontend, testing and Playwright guides) and prints its
   path.
@@ -576,7 +640,10 @@ tim npm reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend
   uncommitted changes. Progress goes to stdout.
 - `run-auto` runs `upgrade-one` for every pending automatic package of
   one repo, then `refresh-lockfile`, and exits 0, 1 or 3 the same way.
-  The repo can also be the first argument.
+  The repo can also be the first argument. In
+  `trade-imports-ins-tests` it then runs `npm run test:docker-compose`
+  once. `--unattended` skips that, says so on stderr, and refuses
+  `--allowlist-owner`.
 - `refresh-lockfile` and `reset-overrides` print one JSON line (an
   envelope with `--json`). Everything npm prints goes to a log under
   `workareas/npm-upgrades/<run>/<repo>/`.
@@ -588,6 +655,7 @@ tim npm upgrade EUDPA-500 --phase 0 --branch chore/EUDPA-500-npm
 tim npm upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json
 tim npm upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --allowlist-owner "Sam Farrington" --expiry-days 30
 tim npm upgrade EUDPA-500 --phase 3 --repo trade-imports-animals-frontend --json
+tim npm upgrade EUDPA-802 --unattended --branch chore/EUDPA-802-vitest-4.2 --phase 1 --package vitest --package "@vitest/*"
 ```
 
 - Without `--repo` it runs on every repo `repos.json` flags
@@ -609,6 +677,18 @@ best-practices` and `context prebake`, and lists one PACKAGE_PLANNER
   `MANIFEST_BEGIN` and `MANIFEST_END` lines) and its progress on stderr.
   `--json` puts the report in the envelope's `result`; a refusal is an
   error envelope and exits 1.
+- `--package <name>` (repeatable, `*` as a wildcard) narrows phase 1's
+  discovery on any run.
+- `--unattended` is for the nightly jobs (the npm-upgrade skill's
+  "Unattended mode"). The ticket can be `NO_JIRA`. It needs a `--branch`
+  of the form `chore|fix|feat/<ticket>-<lower-case slug>`, and the run id
+  is the branch without that prefix. It refuses `--allowlist-owner` and
+  `--expiry-days`. Phase 0 stops if any repo has uncommitted changes,
+  then puts every repo on the branch, made from `origin/main` when it is
+  new. Phase 1 records each package's policy, and each planner task
+  gets `mode`, `policy` and `set`. Phase 2 runs `run-auto --unattended`.
+  Phase 3 points stderr at the skill's "Unattended mode" instead of the
+  WALKER. Without `--unattended`, `NO_JIRA` is refused.
 
 ### `tim review` — the review skill's helpers
 
@@ -1977,6 +2057,191 @@ blocks scoped to just `trade-imports-plants-prototype`, and reports
 Jira and Confluence auth readiness via the same probes `tim auth` uses — without
 failing the command when Jira isn't configured yet. It never touches Jira
 and never pushes.
+
+### `tim deps dependabot` — Dependabot config from the coupled package sets
+
+`config/dependency-sets.json` records the packages that must move together
+and who moves them. Each repo's `.github/dependabot.yml` is generated from
+it, never edited by hand.
+
+```bash
+tim deps dependabot trade-imports-animals-frontend                 # print the file the sets generate
+tim deps dependabot trade-imports-animals-frontend --write         # write it into the repo
+tim deps dependabot trade-imports-animals-frontend --check --json  # exit 1 if the file differs or is missing
+```
+
+The repo must be in scope for the sets and cloned under `repos/`. A repo
+outside the scope exits 2. `--write` and `--check` together exit 2.
+
+The generated file has:
+
+- an npm group for each set with `"scope": "repo"`, listed before the
+  `patch-and-minor` catch-all, because Dependabot puts a dependency in the
+  first group it matches. A set's group takes every update type, so a major
+  arrives as one PR for the whole set
+- an npm `ignore` entry for every member of each set with
+  `"scope": "cross-repo"`, because the nightly job moves those in every repo
+  at once on one branch name
+- an npm `ignore` entry, with `versions`, for each hold that lists the repo,
+  beside any other ignore for the same package, so Dependabot stops
+  proposing the versions the hold covers. A repo the hold does not list is
+  unchanged
+- `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
+  Actions
+- the schedule, pull request limit and versioning strategy from
+  `defaults.dependabot`, direct dependencies only, and the GitHub Actions
+  update with its own `patch-and-minor` group
+
+Each set's `reason` is written as a comment above its group or ignore
+entries. Each hold's date, reason, failing test, what would clear it and
+link are written as a comment above its ignore entry. `--check` fails for a
+repo whose file lacks a hold that lists it, or still has one that was lifted.
+
+#### The shape of `config/dependency-sets.json`
+
+| Field                   | What it holds                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaults.cooldownDays` | Days Dependabot waits after a release before proposing it                                                                                                 |
+| `defaults.majorPolicy`  | The policy every major follows, whatever its set says                                                                                                     |
+| `defaults.repos`        | The repos in scope: each repo in `repos.json` whose flag named by `fromReposJson` is true, plus `include`, less `exclude`                                 |
+| `defaults.dependabot`   | `schedule` (`interval`, `time`, `timezone`), `openPullRequestsLimit` and `versioningStrategy` for the npm update                                          |
+| `sets[].name`           | Lower-case words joined by `-`; the Dependabot group name for a repo set                                                                                  |
+| `sets[].members`        | npm package names, with `*` as a wildcard. Empty for a set npm does not manage                                                                            |
+| `sets[].pins`           | Optional. What a set with no npm members pins instead, such as `.nvmrc` for `node`                                                                        |
+| `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it |
+| `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                  |
+| `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                  |
+| `holds[].package`       | The exact npm name of a package held at its current version. One hold per package                                                                         |
+| `holds[].versions`      | The Dependabot version range held back, such as `4.14.x`, so a later `4.15` is still proposed and tested                                                  |
+| `holds[].repos`         | The repos the hold covers. Each must be in scope                                                                                                          |
+| `holds[].reason`        | Why the package is held, in plain English                                                                                                                 |
+| `holds[].failingTest`   | The test or check the held versions break                                                                                                                 |
+| `holds[].clashesWith`   | Optional. A package whose newer release may clear the hold, such as `govuk-frontend`                                                                      |
+| `holds[].link`          | Optional. A link to the evidence, such as the pull request                                                                                                |
+| `holds[].since`         | The date the hold was added, as `YYYY-MM-DD`                                                                                                              |
+
+`holds` is required; an empty list means nothing is held. After changing
+the file, run `--write` for each repo whose Dependabot config is generated,
+then `--check` to confirm.
+
+### `tim deps hold|holds|lift` — hold one package at its current version
+
+```bash
+tim deps hold @axe-core/playwright --versions 4.14.x \
+  --repo trade-imports-animals-frontend \
+  --reason "axe 4.14 flags govuk-frontend's enhanced file upload button" \
+  --failing-test "FIT accessibility tests (label-content-name-mismatch)" \
+  --clashes-with govuk-frontend \
+  --link https://github.com/DEFRA/trade-imports-animals-frontend/pull/492
+tim deps holds --json
+tim deps lift @axe-core/playwright
+```
+
+When one package in a Dependabot group turns it red, the nightly job keeps
+that package at its current version and records a hold, so the rest of the
+group can merge and Dependabot stops proposing the held versions.
+
+- `hold` adds the hold for a package to `config/dependency-sets.json`, or
+  replaces the one it has, with today's date as `since`. `--versions`,
+  `--repo` (once for each repo), `--reason` and `--failing-test` are
+  required. A repo out of scope, a wildcard package name, a version range
+  npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`
+  command for every repo to regenerate: those the hold covers, and those a
+  replaced hold covered. `--json` gives `{hold, replaced, regenerate}`.
+- `holds` lists every hold with its versions, repos, date, reason and the
+  package it clashes with. `--json` gives `{holds}`.
+- `lift` removes the hold and prints the repos to regenerate. A package
+  that is not held exits 2. `--json` gives `{lifted, regenerate}`.
+
+`hold` and `lift` rewrite only `holds`, laid out as Prettier lays out JSON,
+so the diff shows only the hold. `tim deps dependabot` refuses, in every
+mode, a config whose hold covers a repo out of scope, so a misspelt repo
+cannot leave a hold that affects nothing.
+
+### `tim deps policy` — can an upgrade merge on green CI
+
+```bash
+tim deps policy vitest --from 4.1.0 --to 4.2.0
+tim deps policy govuk-frontend --from 6.5.0 --to 6.6.0 --json
+tim deps policy @axe-core/playwright --from 4.13.0 --to 4.14.0 --repo trade-imports-animals-frontend
+```
+
+Says whether moving a package from one version to another is
+`ci-is-enough` (green CI is enough to merge), `changelog-driven`
+(every changelog item needs clean evidence too) or `held` (do not move
+to it), from `config/dependency-sets.json`, in this order:
+
+1. A target in the `versions` range of a hold on the package is `held`.
+   With `--repo`, only the holds covering that repo count; without it,
+   every hold on the package does.
+2. A prerelease target, or a minor of a 0.x version, is
+   `changelog-driven`.
+3. A major takes `defaults.majorPolicy`, whatever the package's set says.
+4. Anything else takes the policy of the set the package is in, or
+   `ci-is-enough` when it is in none.
+
+`--json` gives `{package, from, to, jump, set, scope, hold, policy,
+reason}`, where `hold` is the hold that applies, or null. `tim govuk apply
+--unattended` and `tim npm packages set-policy` use the same rules for the
+repo they work on: `tim govuk apply --unattended` refuses a held version,
+and `tim npm upgrade --unattended` leaves a held package out of its run in
+phase 1, printing a `Skipping` line for it. `--from` and `--to` are
+required.
+
+### `tim deps evidence count|check|render` — changelog evidence
+
+```bash
+tim deps evidence count trade-imports-animals-frontend govuk-header__link--service-name
+tim deps evidence count tim "from 'vitest'" --json
+tim deps evidence check --file rows.json
+tim deps evidence render --file rows.json --json
+```
+
+A `changelog-driven` upgrade records an evidence row for each changelog
+item: `item`, `outcome` (`applied`, `not-applicable` or
+`needs-a-person`), `reason`, and optionally `pattern`, `hitsBefore` and
+`hitsAfter`. `tim govuk` and `tim npm packages` record rows with their
+own `add-evidence` and `check-evidence`; these commands are the shared
+rules underneath.
+
+- `count` prints the number of lines of a repo's tracked files that
+  contain a fixed string. Uncommitted edits to tracked files count;
+  untracked files, binary files and every `package-lock.json` do not.
+  The repo is a clone under `repos/`, or `tim` for the workspace's own
+  `tim/` folder.
+- `check` reads a JSON list of rows from `--file` and exits 0 when every
+  row is clean and 1 when any row is not, or the file holds no rows. An
+  `applied` row is clean when its pattern has 0 hits after the change. A
+  `not-applicable` row is clean when it has a reason and its pattern, if
+  any, has 0 hits after the change; a pattern not counted since the
+  change is not clean. A `needs-a-person` row is never clean.
+- `render` prints the rows as the pull request table (Changelog item,
+  Outcome, Evidence) and a line saying whether every row is clean. A row
+  that is not clean has its outcome in bold and its problem in the
+  Evidence cell. It exits 0 either way; `--json` gives
+  `{markdown, allClean, rowCount, notCleanCount}`.
+- A file that is missing or not a valid list of rows exits 2.
+
+### `tim nightly check|stopped` — the nightly jobs' deterministic checks
+
+The `/nightly-start` skill and every nightly job use these. What the jobs may
+do is in `.claude/rules/nightly.md`.
+
+```bash
+tim nightly check --fetch --json  # is this session ready to run the jobs unattended
+tim nightly stopped --json        # is the kill switch on
+```
+
+`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not, the
+session runs inside tmux or screen (`TMUX` or `STY` is set, so the session
+outlives the SSH connection that started it), `workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
+workspace and every cloned repo are clean. `--fetch` fetches origin in each
+first. It lists every job with the `cronPrompt` to register, which starts
+`[nightly:<name>]`. It exits 0 when ready and 3 when not. It checks nothing on
+GitHub: run `gh auth status` for that.
+
+`stopped` reports whether `workareas/nightly/STOP` exists, with the text inside
+it as the reason. It exits 0 either way.
 
 ### Bypassing the interactive menu
 

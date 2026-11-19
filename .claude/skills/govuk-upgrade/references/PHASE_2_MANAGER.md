@@ -42,6 +42,18 @@ Pre-baked changelog: workareas/govuk-upgrades/{run-id}/{repo-name}/version__{ver
 Best-practices bundle: workareas/govuk-upgrades/{run-id}/{repo-name}/best-practices.md
 ```
 
+In an unattended run (SKILL.md "Unattended mode"), add a last line
+`Mode: unattended` to every spawn prompt. The planner then records an
+evidence row for every changelog item. In Step 3, an INCOMPLETE version
+is not sent to the walker: the evidence table shows it as needing a
+person.
+
+In an unattended run, spawn one repo's planners one after another, and
+different repos' planners at the same time. Every write rewrites the
+repo's whole `versions.{repo}.json`, so two planners writing it at once
+can lose a row. A lost `needs-a-person` row would let the pull request
+merge.
+
 ## Step 3: Verify coverage
 
 Wait for all subagents to complete, then re-run the unplanned query:

@@ -3,6 +3,7 @@ import { realpathSync } from 'node:fs'
 import { ERROR, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { isTimError } from '../../errors.js'
+import { refuseUnattendedAllowlist } from '../../npm-upgrade/unattended/run.js'
 import { refreshLockfile } from '../../npm-upgrade/refresh-lockfile.js'
 import { StepFailed } from '../../npm-upgrade/repo-commands.js'
 import { resetOverrides } from '../../npm-upgrade/reset-overrides.js'
@@ -114,11 +115,15 @@ const registerRunAuto = (npm) =>
     npm
       .command('run-auto')
       .description(
-        'Phase 2 for one repo: upgrade every automatic package still pending, one at a time, then refresh the lockfile. In trade-imports-ins-tests, then run npm run test:docker-compose once. Exits 0 when done, 1 on a cascade or uncommitted changes, and 3 when the audit is red before an install or cannot run.'
+        'Phase 2 for one repo: upgrade every automatic package still pending, one at a time, then refresh the lockfile. In trade-imports-ins-tests, then run npm run test:docker-compose once, unless --unattended. Exits 0 when done, 1 on a cascade, uncommitted changes or a refused option, and 3 when the audit is red before an install or cannot run.'
       )
       .argument('[repo]', 'The repo, the same as --repo')
       .option('--run-id <ticket>', 'The run, such as EUDPA-500')
       .option('--repo <name>', 'The repo')
+      .option(
+        '--unattended',
+        "For a nightly job: skip npm run test:docker-compose, leaving end-to-end proof to CI's E2E Tests check, and refuse --allowlist-owner"
+      )
       .addOption(new Option('--discover').hideHelp())
       .addOption(new Option('--no-discover').hideHelp())
   )
@@ -127,22 +132,26 @@ const registerRunAuto = (npm) =>
       'after',
       examplesText([
         'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend',
-        'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend --allowlist-owner "Sam Farrington" --expiry-days 30'
+        'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend --allowlist-owner "Sam Farrington" --expiry-days 30',
+        'run-auto --run-id EUDPA-802-vitest-4.2 --repo trade-imports-ins-tests --unattended'
       ])
     )
     .action(
       actionFor({
         exitCodeOnUsage: ERROR,
-        run: (opts, [repoArgument]) =>
-          runAutomatedUpgrades({
+        run: (opts, [repoArgument]) => {
+          if (opts.unattended) refuseUnattendedAllowlist(opts)
+          return runAutomatedUpgrades({
             workspaceRoot: workspaceOf(opts),
             runId: opts.runId,
             repo: opts.repo ?? repoArgument,
             allowlistOwner: opts.allowlistOwner ?? '',
             expiryDays: opts.expiryDays ?? '',
+            unattended: opts.unattended === true,
             say,
             warn
           })
+        }
       })
     )
 
@@ -221,7 +230,7 @@ const registerResetOverrides = (npm, { timVersion }) =>
       })
     )
 
-const collectRepo = (repo, repos) => [...repos, repo]
+const appendValue = (value, values) => [...values, value]
 
 const printPhaseOutcome = async (opts, { exitCode, result, text }) => {
   await say(
@@ -257,12 +266,15 @@ const registerUpgradeRun = (npm, { timVersion }) =>
       .description(
         'Run one phase of an npm upgrade run across its repos. 0 audits every repo and records the run in phase0.json. 1, once a green phase 0 covers every repo at its HEAD, discovers outdated packages and lists one PACKAGE_PLANNER task per unclassified package. 2 runs run-auto in every repo at once. 3 lists the manual and failed packages, the held ones, the allowlist and the audits for the WALKER. 4 runs reset-overrides in every repo at once. Without --repo it runs on every repo repos.json flags npmUpgradeDefault, skipping any with no checkout or no package.json. Exits 1 on a refusal, a red audit, a failed batch or a stopped reset.'
       )
-      .argument('[ticket...]', 'The run, such as EUDPA-500')
+      .argument(
+        '[ticket...]',
+        'The run, such as EUDPA-500, or NO_JIRA with --unattended'
+      )
       .option('--phase <phase>', '0, 1, 2, 3 or 4')
       .option(
         '--repo <name>',
         'Run on this repo; give it again for more',
-        collectRepo,
+        appendValue,
         []
       )
       .option(
@@ -271,20 +283,39 @@ const registerUpgradeRun = (npm, { timVersion }) =>
         'latest'
       )
       .option(
+        '--package <name>',
+        'Phase 1 discovers only this package, with * as a wildcard; give it again for more',
+        appendValue,
+        []
+      )
+      .option(
         '--branch <name>',
         'Refuse to run unless every repo is checked out on this branch'
       )
+      .option('--unattended', 'For a nightly job: see "Unattended mode" below')
       .allowUnknownOption()
   )
     .exitOverride(exitWith(ERROR))
     .addHelpText(
       'after',
-      examplesText([
-        'upgrade EUDPA-500 --phase 0 --branch chore/EUDPA-500-npm',
-        'upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json',
-        'upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --allowlist-owner "Sam Farrington" --expiry-days 30',
-        'upgrade EUDPA-500 --phase 3 --repo trade-imports-animals-frontend --json'
-      ])
+      [
+        '',
+        'Unattended mode:',
+        '  tim npm upgrade EUDPA-XXXXX|NO_JIRA --unattended --branch chore/<ticket>-<slug> --phase 0|1|2|3|4',
+        '  The branch must be chore/, fix/ or feat/ followed by the ticket and a lower-case slug.',
+        '  The run id is the branch without that prefix. Phase 0 stops if any repo has',
+        '  uncommitted changes, then puts every repo on the branch, made from origin/main when',
+        "  it is new. Phase 1 records each package's merge policy. Phase 2 skips npm run",
+        '  test:docker-compose. Phase 3 hands the manual packages to the job, not the WALKER.',
+        '  --allowlist-owner and --expiry-days are refused.',
+        examplesText([
+          'upgrade EUDPA-500 --phase 0 --branch chore/EUDPA-500-npm',
+          'upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json',
+          'upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --allowlist-owner "Sam Farrington" --expiry-days 30',
+          'upgrade EUDPA-500 --phase 3 --repo trade-imports-animals-frontend --json',
+          'upgrade EUDPA-802 --unattended --branch chore/EUDPA-802-vitest-4.2 --phase 1 --package vitest --package "@vitest/*"'
+        ])
+      ].join('\n')
     )
     .action(async function upgradeRunAction(operands) {
       const opts = { ...this.optsWithGlobals(), timVersion }
@@ -295,7 +326,9 @@ const registerUpgradeRun = (npm, { timVersion }) =>
           phase: opts.phase,
           repos: opts.repo,
           strategy: opts.strategy,
+          packages: opts.package,
           branch: opts.branch ?? '',
+          unattended: opts.unattended === true,
           allowlistOwner: opts.allowlistOwner,
           expiryDays: opts.expiryDays,
           warn

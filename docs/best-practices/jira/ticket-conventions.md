@@ -17,6 +17,27 @@ For GDS writing style applied to summaries, descriptions, and AC, see
 If it could land as either Story or Task, prefer **Story** when there
 is observable behaviour for an end user, **Task** otherwise.
 
+## Who a story is for
+
+Write a story for **a trader**: the person using the service to raise
+an import notification. Almost every EUDPA story does. Confirm it with
+the person raising the ticket, and use another actor only when they
+name one, such as an internal user of the animals admin service.
+
+Use the same word all the way through: the user story, the
+background and every acceptance criterion. Not "the user", "the
+importer" or "the organisation".
+
+Bad:
+
+> *As* an importer ... *Given* the organisation has more than 8
+> transporters *When* the user opens the page
+
+Good:
+
+> *As* a trader ... *Given* the trader has more than 8 transporters
+> *When* the trader opens the page
+
 ## Priority guidance
 
 | Priority | Use when |

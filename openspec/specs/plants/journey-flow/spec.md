@@ -98,7 +98,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
-The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved.
+The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved. The consignment contact page keeps the same two routes with its own words, as `plants/journey-pages/consignment-contact-select` describes.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-PLANTS-FLOW-004-A
@@ -276,19 +276,19 @@ While a notification is being amended, each journey page MUST end with exactly t
 
 ### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-PLANTS-FLOW-015
-The system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them, on a draft and while the notification is being amended.
+The system MUST end a page the hub links to directly with its primary action and its save-and-return control side by side, and its cancel link on its own line below them, on a draft and while the notification is being amended. Every one of these pages reads "Save and return to overview" and "Cancel and return to overview" except the consignment contact page, which keeps the same layout with its own words, as `plants/journey-pages/consignment-contact-select` describes.
 
 #### Scenario: Cancel and return to overview sits on its own line below the two buttons
 **ID**: SCN-PLANTS-FLOW-015-A
 - **GIVEN** a notification that is not being amended
-- **WHEN** the user opens a page the hub links to directly
+- **WHEN** the user opens Arrival status from Overview
 - **THEN** its primary action and "Save and return to overview" sit side by side
 - **AND** "Cancel and return to overview" sits on its own line below them
 
 #### Scenario: While amending, the layout is the same as on a draft
 **ID**: SCN-PLANTS-FLOW-015-B
 - **GIVEN** a notification being amended
-- **WHEN** the user opens a page the hub links to directly
+- **WHEN** the user opens Identification numbers from Overview
 - **THEN** "Save and continue" and "Save and return to overview" sit side by side
 - **AND** "Cancel and return to overview" sits on its own line below them
 

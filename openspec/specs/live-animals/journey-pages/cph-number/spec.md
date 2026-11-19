@@ -6,7 +6,7 @@
 
 **Page**: cphNumber
 
-Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached only from the 'Add a CPH number' link on Consignment addresses, it is not a step in the journey's order, and it ends with Save and continue alone on a draft and while the notification is being amended (`live-animals/journey-flow`'s REQ-FLOW-012 and REQ-FLOW-013). The page heading sits directly under the caption and the group of boxes carries a shorter legend, so the page has exactly one h1.
+Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". It belongs to the consignment addresses section: it is opened from the consignment addresses page's 'Add a CPH number' link, from Overview and from a review Change link, and always returns to the consignment addresses page. It is not a step in the journey's order, cannot be opened for a consignment whose commodities do not call for the number, and ends with Save and continue alone on a draft and while the notification is being amended (`live-animals/journey-flow`'s REQ-FLOW-012 and REQ-FLOW-013). The page heading sits directly under the caption and the group of boxes carries a shorter legend, so the page has exactly one h1.
 
 ## Requirements
 
@@ -25,7 +25,14 @@ The system MUST ask the user for the CPH number as three separate boxes — coun
 **ID**: SCN-CPH-001-B
 - **GIVEN** the user is on the CPH number page
 - **WHEN** they read the group
-- **THEN** one hint describes the whole CPH number, not a separate hint per box
+- **THEN** one hint describes the whole CPH number, reading "For example 12/345/6789", not a separate hint per box
+
+#### Scenario: Each box turns off the browser's saved values and asks for a digit keypad
+**ID**: SCN-CPH-001-C
+- **GIVEN** the user is on the CPH number page
+- **WHEN** they look at the county, parish and holding boxes
+- **THEN** none of the three offers the browser's own saved values
+- **AND** a phone shows a digit keypad for each of the three
 
 ### Requirement: A CPH number entered across the three boxes is accepted, saved as nine digits, and split back on return
 **ID**: REQ-CPH-002
@@ -43,16 +50,28 @@ The system MUST accept a complete, validly formatted CPH number entered across t
 - **WHEN** they return to the CPH number page
 - **THEN** the county, parish and holding boxes each show their own part of the saved number
 
-### Requirement: Submitting the page untouched asks the whole question again, at the first box
-**ID**: REQ-CPH-003
-The system MUST refuse to save the CPH number page when every box is left empty, showing a single error that asks for the CPH number as a whole and focuses the county box, rather than naming all three boxes as separately missing.
+### Requirement: Saving the page with every box empty is accepted, leaving the number to be added before submission
+**ID**: REQ-CPH-010
+The system MUST accept a save of the CPH number page with every box left empty, showing no error, MUST clear any CPH number saved before, and MUST hold the gap at submission: the consignment addresses page's CPH section reads as incomplete until a number is added, and the review refuses to continue while it is missing.
 
-#### Scenario: Submitting with every box empty names the whole question once
-**ID**: SCN-CPH-003-A
+#### Scenario: Saving every box empty is accepted and the section reads as incomplete
+**ID**: SCN-CPH-010-A
 - **GIVEN** the user is on the CPH number page with every box empty
 - **WHEN** they save and continue
-- **THEN** one error asks for the CPH number
-- **AND** following it focuses the county box, still empty
+- **THEN** no error is shown
+- **AND** the consignment addresses page's CPH section offers its add link again rather than showing a number
+
+#### Scenario: Saving every box empty clears a number saved before
+**ID**: SCN-CPH-010-B
+- **GIVEN** the user has saved a CPH number before
+- **WHEN** they empty every box and save and continue
+- **THEN** the consignment addresses page's CPH section offers its add link again rather than showing the number that was saved
+
+#### Scenario: The review refuses to continue while the CPH number is missing
+**ID**: SCN-CPH-010-C
+- **GIVEN** a notification whose commodities call for a CPH number and whose CPH section has no number added
+- **WHEN** the user tries to continue from the review
+- **THEN** the review refuses to continue, naming consignment addresses as outstanding
 
 ### Requirement: Each box is validated on its own length and digits, and every wrong box is named at once
 **ID**: REQ-CPH-004
@@ -114,7 +133,7 @@ The system MUST keep every character typed or pasted into a box, and when the co
 - **GIVEN** the county box holds 123456789, 12/345/6789 or 12 345 6789 and the parish and holding boxes are empty
 - **WHEN** the user saves and continues
 - **THEN** the number is saved as 123456789
-- **AND** the consignment addresses page shows 123456789 in its CPH section
+- **AND** the consignment addresses page shows the number in its CPH section as "12/345/6789"
 
 #### Scenario: Pasting the whole number saves it the same as typing it
 **ID**: SCN-CPH-008-C
@@ -140,7 +159,7 @@ The system MUST NOT move focus from one CPH box to another while the user types,
 
 ### Requirement: Help explaining what a CPH number is stays collapsed until opened
 **ID**: REQ-CPH-005
-The system MUST show a collapsed expander above the CPH boxes offering to explain what a CPH number is, and MUST reveal its explanation, including where to find the number, only once the user opens it.
+The system MUST show a collapsed expander above the CPH boxes offering to explain what a CPH number is, and MUST reveal its explanation, including where to find the number and a link to GOV.UK guidance on checking it, only once the user opens it.
 
 #### Scenario: The help text stays hidden until the expander is opened
 **ID**: SCN-CPH-005-A
@@ -151,41 +170,71 @@ The system MUST show a collapsed expander above the CPH boxes offering to explai
 - **WHEN** the user opens the expander
 - **THEN** the explanation, including where to find the number, becomes visible
 
-### Requirement: The back link returns to the consignment addresses page from the CPH section's add link, and to where the user came from otherwise
-**ID**: REQ-CPH-006
-The system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page after arriving from the CPH section's 'Add a CPH number' link there, to the review when they arrived from a Change link on the review, and to Overview when they arrived any other way, as `live-animals/journey-flow` describes.
+#### Scenario: The help's second paragraph links to the GOV.UK guidance on checking a holding's details
+**ID**: SCN-CPH-005-B
+- **GIVEN** the user has opened the CPH number help
+- **WHEN** they read its second paragraph
+- **THEN** it reads "You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK."
+- **AND** "checking your holding details on GOV.UK" links to the GOV.UK guidance on getting a county parish holding number, in the same tab
 
-#### Scenario: The back link opens Overview when the page was not opened from the CPH section's add link
+### Requirement: The back link always returns to the consignment addresses page, however the page was reached
+**ID**: REQ-CPH-006
+The system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page, whether they arrived from the consignment addresses page's 'Add a CPH number' link, from Overview, from a Change link on the review, or by the page's own address.
+
+#### Scenario: The back link returns to the consignment addresses page when the page was opened from Overview
 **ID**: SCN-CPH-006-A
-- **GIVEN** the user reached the CPH number page other than from the CPH section's 'Add a CPH number' link or a Change link on the review
+- **GIVEN** the user reached the CPH number page from Overview
 - **WHEN** they follow the back link
-- **THEN** Overview is shown
+- **THEN** the consignment addresses page is shown
 
 #### Scenario: The back link returns to the consignment addresses page when entered from there
 **ID**: SCN-CPH-006-B
-- **GIVEN** the user reached the CPH number page from the CPH section's 'Add a CPH number' link on the consignment addresses page (`?return=addresses`)
+- **GIVEN** the user reached the CPH number page from the consignment addresses page's 'Add a CPH number' link
 - **WHEN** they follow the back link
 - **THEN** the consignment addresses page is shown
 
-#### Scenario: The back link opens the review when the page was opened from a Change link
+#### Scenario: The back link returns to the consignment addresses page when the page was opened from a Change link
 **ID**: SCN-CPH-006-C
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the CPH number page and then the back link
-- **THEN** the review is shown
+- **THEN** the consignment addresses page is shown
 
-### Requirement: Saving the CPH number returns to the consignment addresses page
+### Requirement: Saving the CPH number returns to the consignment addresses page, except where a required earlier answer is still missing
 **ID**: REQ-CPH-007
-The system MUST return the user to the consignment addresses page after they save the CPH number, whatever way the page was reached.
+The system MUST return the user to the consignment addresses page after they save the CPH number, whatever way the page was reached, except where a required earlier answer is still missing, in which case `live-animals/journey-flow`'s REQ-FLOW-005 applies and the page that asks for that answer is shown instead.
 
-#### Scenario: Saving from the CPH section's add link returns to the consignment addresses page, showing the number
+#### Scenario: Saving from the consignment addresses page's add link returns to it, showing the number
 **ID**: SCN-CPH-007-A
-- **GIVEN** the user opened the CPH number page from the CPH section's 'Add a CPH number' link on the consignment addresses page
+- **GIVEN** the user opened the CPH number page from the consignment addresses page's 'Add a CPH number' link
 - **WHEN** they save a valid CPH number
 - **THEN** the consignment addresses page is shown
-- **AND** the CPH section shows the number with its parts separated by slashes, such as "12/345/6789"
+- **AND** the CPH section shows the number as "12/345/6789"
 
-#### Scenario: Saving without the add link's context also returns to the consignment addresses page
+#### Scenario: Saving from a review Change link also returns to the consignment addresses page
 **ID**: SCN-CPH-007-B
-- **GIVEN** the user reached the CPH number page other than from the CPH section's add link and not from check your answers
+- **GIVEN** the user opened the CPH number page from a review Change link
 - **WHEN** they save a valid CPH number
 - **THEN** the consignment addresses page is shown
+
+#### Scenario: Saving from Overview also returns to the consignment addresses page
+**ID**: SCN-CPH-007-C
+- **GIVEN** the user opened the CPH number page from Overview
+- **WHEN** they save a valid CPH number
+- **THEN** the consignment addresses page is shown
+
+#### Scenario: Saving while the country of origin is still missing opens the page that asks for it instead
+**ID**: SCN-CPH-007-D
+- **GIVEN** the user is on the CPH number page and the notification does not yet have a country of origin saved
+- **WHEN** they save a valid CPH number
+- **THEN** the page asking for the country of origin is shown, not the consignment addresses page
+
+### Requirement: The page cannot be opened for a consignment whose commodities do not call for the number
+**ID**: REQ-CPH-011
+The system MUST show the consignment addresses page instead of the CPH number page, and MUST save nothing, when the user opens or submits the CPH number page for a consignment whose commodities do not call for a CPH number, except where a required earlier answer is still missing, in which case `live-animals/journey-flow`'s REQ-FLOW-005 applies and the page that asks for that answer is shown instead.
+
+#### Scenario: Opening the page for a consignment that does not call for the number shows the consignment addresses page
+**ID**: SCN-CPH-011-A
+- **GIVEN** a notification whose commodities do not call for a CPH number
+- **WHEN** the user opens or submits the CPH number page by its own address
+- **THEN** the consignment addresses page is shown instead
+- **AND** nothing is saved

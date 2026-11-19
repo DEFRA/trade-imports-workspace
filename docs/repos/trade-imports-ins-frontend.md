@@ -18,13 +18,13 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 - The "What are you importing?" question offers no germinal products choice until the germinal products set has a start page in the animals service.
 - Address form validation (`features/address-book/fields.js`, built on `lib/validate/`) and mapping API problem responses to GOV.UK error summaries.
 - A journey handshake: an address-book visit can carry the query or form keys `journey-type`, `notification-id`, `fulfilment-id` and `handshake-token`. The only known journey type is `gbn-ag`. The return URL points at the animals frontend's live-animals set, `/live-animals/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}`, and adds `handshake-token` when one was sent (`journey-registry.js`). On the add page, Save adds `addressId` and `landing=select` or `landing=return`; Cancel adds `landing=cancel`, except for the consignment contact, whose cancel adds no landing; the back link adds no landing (`add.controller.js`).
+- Organisation-scoped dashboard reads: on every `GET /notifications` the service client sends the verified session's organisation in `Trade-Imports-Organisation-Id`. The ins-backend filters by that header and refuses a request without one.
 
 **Does not own**
 
 - Address data (address-book), notification data (aggregated read model in ins-backend) or country reference data (reference-data). It has no database.
 - Notification creation or editing. Dashboard links deep-link to trade-imports-animals-frontend (`/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED). The dashboard rows link to live animals notifications only, because the ins-backend read model aggregates only the animals backend's events.
 - The address-book tenant check. This service must send the verified `Trade-Imports-Organisation-Id`; address-book trusts it.
-- Organisation scoping of the dashboard: `ins-backend-client` sends no organisation header and lists all aggregated notifications (deliberate, per a code comment).
 - Role and permission lookup: `src/auth/get-permissions.js` uses simulated RPS and Siti Agri calls, and no caller was found.
 
 ## Integrations
@@ -32,7 +32,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
 | Outbound | trade-imports-address-book (`TRADE_IMPORTS_ADDRESS_BOOK_URL`, default :8089) | REST `/organisation/{orgId}/addresses`, header `Trade-Imports-Organisation-Id` | List, create, view, update, delete addresses |
-| Outbound | trade-imports-ins-backend (`TRADE_IMPORTS_INS_BACKEND_URL`, default :8090) | REST `GET /notifications` (`page`, `sort`, `referenceNumber`) | Dashboard notification list |
+| Outbound | trade-imports-ins-backend (`TRADE_IMPORTS_INS_BACKEND_URL`, default :8090) | REST `GET /notifications` (`page`, `sort`, `referenceNumber`), header `Trade-Imports-Organisation-Id` | Dashboard notification list |
 | Outbound | trade-imports-reference-data (`TRADE_IMPORTS_REFERENCE_DATA_URL`, default :8086) | REST `GET /countries` | Country names and address country options |
 | Outbound | Defra ID (trade-imports-defra-id-stub locally) | OIDC (`DEFRA_ID_OIDC_CONFIGURATION_URL`) | Sign-in, token refresh, sign-out; the CSP form-action allows the browser-facing Defra ID origin |
 | Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start a live animals notification from the type question; return to a live animals notification's origin page from the type question; resume or view a notification; return from the address handshake; follow an address-book page's honoured `return` query to an animals frontend page, given as a URL on that origin or as a `/live-animals` path resolved against this setting |

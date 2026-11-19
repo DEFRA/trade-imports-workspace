@@ -543,12 +543,12 @@ The system MUST show on the Consignment addresses card, after the county parish 
 - **THEN** the Consignment addresses card's "Permanent address" subsection lists an entry for each animal keyed by its species' common name and number
 - **AND** each entry holds that animal's name, address lines and country, with no telephone number or email address
 
-#### Scenario: An animal that still owes a permanent address has no entry, while commodity details are still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no entry, while commodity details and consignment addresses are both still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
 - **THEN** the "Permanent address" subsection lists an entry for the answered animal alone
-- **AND** the error summary still names commodity details as needing to be completed
+- **AND** the error summary names both commodity details and consignment addresses as needing to be completed
 
 #### Scenario: A line needing a permanent address with no animal counted gives no Permanent address subsection
 **ID**: SCN-CYA-020-C

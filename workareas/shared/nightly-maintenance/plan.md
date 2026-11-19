@@ -84,10 +84,10 @@ ends with everything merged.
 
 | # | Work | Notes |
 |---|---|---|
-| 1.1 | Fix config drift | tim: `engines >=22` against Node 24 in CI, and no `.nvmrc`. schemas: no `.nvmrc`, and a literal `24.22.1` in two CI jobs. animals-backend: Dependabot set to `nuget`. Dependabot is missing in 10 repos: generate each with `tim deps dependabot --write`. npm needs to be at least 11.10 for `min-release-age` (engines floor is 11.6.2). |
-| 1.2 | Drain the open Dependabot PRs | One each in animals-admin and ins-frontend. This is the first live test of fix-on-red. |
+| 1.1 | Fix config drift | **Done 19 Nov:** 12 repo PRs and workspace #286, all merged. tim: `engines >=22` against Node 24 in CI, and no `.nvmrc`. schemas: no `.nvmrc`, and a literal `24.22.1` in two CI jobs. animals-backend: Dependabot set to `nuget`. Dependabot is missing in 10 repos: generate each with `tim deps dependabot --write`. npm needs to be at least 11.10 for `min-release-age` (engines floor is 11.6.2). |
+| 1.2 | Drain the open Dependabot PRs | **Done 19 Nov for the first two waves.** 15 superseded PRs closed. The generated configs raised 23 more: 20 merged (5 majors with clean evidence tables: admin #52 and #98, ins-tests #126, performance-tests #42 and #43), 2 closed and held (stylelint 18, typescript 7: a peer no release accepts yet). A third wave of 9: 7 merged, among them MoJ Frontend 12 in three frontends (a mechanical Sass fix pushed to Dependabot's branch: configure govuk-frontend directly, built CSS byte-identical to main) and jsdom 31. animals-frontend #500 (patch-and-minor) is being recreated after a lockfile conflict. ins-frontend #95 (nock 15) is a draft for a person: three timeout tests depend on nock 14's `delayConnection`, and three transporter tests mock the wrong organisation, a test bug nock 14 hid. Holds in `dependency-sets.json`: `@axe-core/playwright` 4.14.x (animals-frontend), stylelint 18.x (four frontends), typescript 7.x (ins-tests). |
 | 1.3 | Node | Latest `defradigital/node` tag. Move `.nvmrc`, `engines`, Dockerfile `PARENT_VERSION`, schemas CI and workspace CI together, on one branch name. |
-| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos. |
+| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos. **19 Nov:** Dependabot's eslint groups moved animals-frontend, admin, ins-frontend (10.14), plants-frontend, ins-tests and performance-tests to eslint 10.15 (with `neostandard 0.14.1` where used), and its vitest groups moved animals-frontend, ins-frontend, plants-frontend, admin and performance-tests to vitest 5.1. Playwright is left. |
 | 1.5 | govuk-frontend to 6.6.0 | Run in unattended mode while you watch, and compare its evidence table with what you would have done. This step decides whether 2.3 goes ahead. Needs 0.3a and 0.3b. |
 | 1.6 | Full npm-upgrade | Every `npmUpgradeDefault` repo, plus tim. You walk the manual packages. Majors found here are entered into `dependency-sets.json`. Needs 0.3c. |
 | 1.7 | Docs | Deterministic checks first: links, `tools-index.md` against `tools/`, `tim/README.md` against `tim --help`. Then one repo's pages per pass (`docs/repos/<repo>.md`, README, AGENTS.md), across 17 repos, with you reviewing each one. |
@@ -165,11 +165,11 @@ scheduling if the 7-day restart becomes a chore.
   #82, ins-frontend #78, plants-frontend #147 and animals-frontend #492.
   The other 10 repos have no Dependabot PR open (most get their config from
   the drafts under 1.1), so their first one is the check.
-- **stylelint is a coupled set.** `stylelint-config-gds` 3.0.0 needs
-  stylelint `^17.4.0`, so stylelint 18 cannot install yet (animals-admin
-  #91, ins-frontend #84). Add a `stylelint` set (`stylelint`,
-  `stylelint-config-*`) to `dependency-sets.json`, then regenerate the
-  Dependabot configs.
+- **stylelint 18: held, 19 Nov.** `stylelint-config-gds` 3.0.0 needs
+  stylelint `^17.4.0`, so stylelint 18 cannot install yet. A hold
+  (`clashesWith: stylelint-config-gds`) stops Dependabot proposing it, and
+  the nightly re-check lifts it when a release accepts 18. A `stylelint`
+  set is still worth adding so the two move in one PR when that happens.
 - **The Sonar push gate blocks repos with no SonarCloud project.**
   defra-id-stub and routing-proxy carry the CDP template's
   `sonar-project.properties`, but SonarCloud has no project for them, so

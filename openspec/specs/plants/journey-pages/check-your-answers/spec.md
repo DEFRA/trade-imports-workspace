@@ -113,7 +113,7 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only, with no Change or Edit details links and no continue action. Its header MUST offer a primary "Amend this notification" button that starts an amendment and a red "Delete notification" button that leads to the delete page, and the foot MUST NOT offer Delete notification again. The view MUST NOT offer "Copy as new" or cancel-amendment. What delete does is owned by `plants/notification-lifecycle`.
+The system MUST show a submitted notification read-only, with no Change or Edit details links and no continue action. Its header MUST offer a primary "Amend this notification" button that starts an amendment and a red "Delete notification" button that leads to the delete page. "Amend this notification" MUST post from a form of its own carrying only what it needs, "Delete notification" MUST be a link outside that form, and both MUST work without JavaScript. The foot MUST NOT offer Delete notification again. The view MUST NOT offer "Copy as new" or cancel-amendment. What delete does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: The submitted view is read-only and offers Amend this notification and Delete notification
 **ID**: SCN-PLANTS-CYA-008-A
@@ -121,7 +121,7 @@ The system MUST show a submitted notification read-only, with no Change or Edit 
 - **WHEN** the user views it
 - **THEN** the status tag in the header reads "Submitted"
 - **AND** no Change or Edit details links and no continue action are offered
-- **AND** the header offers "Amend this notification" and a red "Delete notification"
+- **AND** the header offers "Amend this notification", posting from a form of its own, and a red "Delete notification" link outside it
 - **AND** no "Copy as new" or cancel-amendment action is shown
 - **AND** Delete notification is offered only in the header, and not at the foot of the view
 
@@ -137,6 +137,14 @@ The system MUST show a submitted notification read-only, with no Change or Edit 
 - **WHEN** the user deletes it and confirms
 - **THEN** they return to the dashboard with the notification no longer listed
 - **AND** a deleted banner is shown
+
+#### Scenario: The header actions work without JavaScript
+**ID**: SCN-PLANTS-CYA-008-D
+- **GIVEN** a submitted notification's view, with JavaScript off
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the amendment opens
+- **WHEN** the user uses "Delete notification"
+- **THEN** the delete confirmation page opens
 
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
@@ -343,15 +351,16 @@ The system MUST show, on a draft's check answers and on a submitted notification
 - **THEN** the "Import reference numbers" section shows its warning, a "Notification reference" row and a "Customs document code" row reading "C085" as text
 - **AND** the section has no Copy button
 
-### Requirement: Opening the view of a notification that does not exist goes to the notification list
+### Requirement: Opening the view of a notification that does not exist shows the standard page not found
 **ID**: REQ-PLANTS-CYA-018
-The system MUST send the user to the notification list when they open the view of a notification that does not exist.
+The system MUST show the service's standard page not found, with the same status and wording as every other journey page, when the user opens the view of a notification that does not exist.
 
-#### Scenario: An unknown notification goes to the list
+#### Scenario: An unknown notification shows page not found
 **ID**: SCN-PLANTS-CYA-018-A
 - **GIVEN** a signed-in user
 - **WHEN** they open the view of a notification that does not exist
-- **THEN** the notification list is shown
+- **THEN** the page not found status is returned
+- **AND** the page is headed "404" and reads "Page not found"
 
 ### Requirement: A draft's check answers is headed by its reference with a Draft tag, dated by its creation, and stays editable
 **ID**: REQ-PLANTS-CYA-019

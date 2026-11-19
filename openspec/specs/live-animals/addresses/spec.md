@@ -195,7 +195,7 @@ The system MUST let the user edit the details of an address copied onto the noti
 #### Scenario: A copied address offers both choosing another address and editing its details
 **ID**: SCN-ADDR-014-E
 - **GIVEN** a role's address has been chosen for a draft notification
-- **WHEN** the user views that role on the consignment addresses page
+- **WHEN** the user views that role on the consignment addresses page, or views the contact address on the review
 - **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
 - **AND** a role with no address chosen offers only adding one
 

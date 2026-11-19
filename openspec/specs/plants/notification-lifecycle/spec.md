@@ -139,6 +139,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 ### Requirement: A draft or submitted notification can be deleted after confirmation
 **ID**: REQ-PLANTS-LIFECYCLE-008
 The system MUST let the user delete a draft from the dashboard or from its check-your-answers, and a submitted notification from its read-only view, each after confirming, removing it from the dashboard listing. While an amendment is in progress, check-your-answers MUST NOT offer delete.
+
 #### Scenario: Deleting a draft removes it from the dashboard
 **ID**: SCN-PLANTS-LIFECYCLE-008-A
 - **GIVEN** a draft notification exists

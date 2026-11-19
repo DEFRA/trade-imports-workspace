@@ -74,6 +74,12 @@ The system MUST group the page under six numbered section headings, in order, ho
 - **THEN** the "Means of transport to the port of entry" row reads "Road"
 - **AND** an air arrival reads "Air"
 
+#### Scenario: Every card is a region a screen reader announces by the card's own title
+**ID**: SCN-CYA-001-J
+- **GIVEN** a notification with commodities and documents entered
+- **WHEN** the user views the review
+- **THEN** every card is a region whose name is exactly the card's own title, such as "Origin of import" or "Document 1"
+
 ### Requirement: A blank is written out as "Not applicable" on a settled card and left blank on one still outstanding
 **ID**: REQ-CYA-002
 On a notification's review, the system MUST draw a blank by the card it sits in: "Not applicable" on a card with nothing further owed; visibly blank, with "Missing" announced for a screen reader, on a card still holding outstanding answers. It MUST treat every blank row in a marked card alike, optional or not, and MUST NOT raise a role error against a party role nobody has reached yet; REQ-ADDR-005 reserves that error for a copied address that breaks the address book's rules.
@@ -182,7 +188,7 @@ The system MUST open the page that collects an answer when the user follows its 
 
 ### Requirement: A draft notification ends with a continue action, and its header offers Copy as new and a red Delete
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification, ending the review with a continue action alone, and MUST offer, in the draft's header, a "Copy as new" button then a red "Delete" button that opens the notification's delete confirmation. It MUST NOT offer cancel-amendment while the notification is still a draft.
+The system MUST invite the user to submit a draft notification, ending the review with a continue action alone, and MUST offer, in the draft's header, a "Copy as new" button then a red "Delete" button that opens the notification's delete confirmation. "Copy as new" MUST post from a form of its own carrying only what copying needs, "Delete" MUST be a link outside that form, and every action MUST work without JavaScript. It MUST NOT offer cancel-amendment while the notification is still a draft.
 
 #### Scenario: The draft view ends with Continue, and its header offers Copy as new and a red Delete
 **ID**: SCN-CYA-005-A
@@ -190,6 +196,7 @@ The system MUST invite the user to submit a draft notification, ending the revie
 - **WHEN** the user views it
 - **THEN** it invites them to submit the notification, ending with a continue action alone
 - **AND** the header offers "Copy as new" then a red "Delete" button
+- **AND** "Copy as new" posts from a form of its own holding only the fields copying needs, and "Delete" is a link outside it
 - **AND** no cancel-amendment action is offered
 
 #### Scenario: Delete on a draft's review opens the delete confirmation
@@ -197,6 +204,14 @@ The system MUST invite the user to submit a draft notification, ending the revie
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user presses "Delete" in the header
 - **THEN** the notification's delete confirmation opens
+
+#### Scenario: A draft's header actions work without JavaScript
+**ID**: SCN-CYA-005-C
+- **GIVEN** a draft notification's review, with JavaScript off
+- **WHEN** the user uses "Copy as new"
+- **THEN** a new draft copy opens
+- **WHEN** the user uses "Delete"
+- **THEN** the notification's delete confirmation page opens
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
 **ID**: REQ-CYA-006
@@ -289,7 +304,7 @@ The system MUST refuse to continue from the review of a draft while any card sti
 
 ### Requirement: A submitted notification's view offers Amend this notification, Copy as new and Delete in its header
 **ID**: REQ-CYA-008
-The system MUST offer, in the header of a submitted notification's view, a primary "Amend this notification" button that starts an amendment, a secondary "Copy as new" button beside it, and a red "Delete" button that opens the delete confirmation. "Amend this notification" and "Copy as new" MUST each submit a form. The view MUST NOT offer cancel-amendment, or a submit or continue action to submit it again. A draft's review MUST NOT offer "Amend this notification".
+The system MUST offer, in the header of a submitted notification's view, a primary "Amend this notification" button that starts an amendment, a secondary "Copy as new" button beside it, and a red "Delete" button that opens the delete confirmation. "Amend this notification" and "Copy as new" MUST each post from a form of their own carrying only what that action needs, and "Delete" MUST open the delete confirmation without being part of either form. Every action MUST work without JavaScript. The view MUST NOT offer cancel-amendment, or a submit or continue action to submit it again. A draft's review MUST NOT offer "Amend this notification".
 
 #### Scenario: The submitted view offers the actions open to a submitted notification
 **ID**: SCN-CYA-008-A
@@ -297,6 +312,7 @@ The system MUST offer, in the header of a submitted notification's view, a prima
 - **WHEN** the user views it
 - **THEN** the header offers "Amend this notification", then "Copy as new", then "Delete", in that order
 - **AND** "Copy as new" is a secondary button and "Delete" is a red button
+- **AND** "Amend this notification" and "Copy as new" each post from a form of their own holding only the fields that action needs, and "Delete" is a link outside both
 - **AND** no cancel-amendment action is shown
 - **AND** no submit or continue action is shown
 
@@ -318,6 +334,12 @@ The system MUST offer, in the header of a submitted notification's view, a prima
 - **WHEN** the user views it
 - **THEN** the header offers "Copy as new" then "Delete", and offers no "Amend this notification"
 - **AND** the review ends with "Continue"
+
+#### Scenario: The header actions work without JavaScript
+**ID**: SCN-CYA-008-E
+- **GIVEN** a submitted notification's view, with JavaScript off
+- **WHEN** the user presses "Amend this notification", "Copy as new" or "Delete"
+- **THEN** the amendment review opens, a new draft's Overview opens, or the delete confirmation opens, respectively
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009
@@ -531,6 +553,13 @@ The system MUST head a species block's identifier table "Identification details"
 - **WHEN** the user views the review
 - **THEN** the species block's Identification details has a Change link opening the animal identification page
 - **AND** a submitted notification's Identification details has none
+
+#### Scenario: Identification details is a heading one level below its species heading
+**ID**: SCN-CYA-017-D
+- **GIVEN** a draft with a saved animal on a species
+- **WHEN** the user views the review
+- **THEN** "Identification details" is a heading one level below its species block's heading
+- **AND** it is styled as a small heading
 
 ### Requirement: The Consignment addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address
 **ID**: REQ-CYA-020
@@ -756,16 +785,24 @@ The system MUST head and title an amendment's review "Review your notification" 
 - **WHEN** the user views check-your-answers
 - **THEN** the page is headed and titled "Review your notification"
 
-### Requirement: The Addresses and Contact address cards offer only their heading Change link
+### Requirement: The Consignment addresses card offers only its heading Change link, and the Contact address card adds Edit details for a chosen contact address
 **ID**: REQ-CYA-026
-The system MUST give the Consignment addresses card and the Contact address card no link but the Change link in each card's heading: no party row and no contact address row carries a link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
+The system MUST give the Consignment addresses card no link but the Change link in its heading: no party row carries a link. The system MUST give the Contact address card its heading Change link and, on an editable review (a draft or an amendment) with a chosen contact address, an "Edit details" link on the contact address row that opens that address's edit page and returns to the review. A submitted notification's view and an unanswered contact address MUST carry no "Edit details" link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
 
-#### Scenario: The address cards carry no link but their heading Change links
+#### Scenario: The address cards carry only the links they offer
 **ID**: SCN-CYA-026-A
 - **GIVEN** a draft notification with every role answered
 - **WHEN** the user views the review
 - **THEN** the Consignment addresses card's only link is its heading Change link
-- **AND** the Contact address card's only link is its heading Change link
+- **AND** the Contact address card's links are its heading Change link, then "Edit details" on its row
+
+#### Scenario: Saving or cancelling a contact address edit from the review returns to the review
+**ID**: SCN-CYA-026-C
+- **GIVEN** a draft notification with a chosen contact address
+- **WHEN** the user chooses "Edit details" on the Contact address card and saves a changed town
+- **THEN** the review opens showing the edited details
+- **WHEN** the user chooses "Edit details" again and cancels
+- **THEN** the review opens with the address as it was
 
 #### Scenario: A role whose copied address breaks the address-book rules is named in the error summary
 **ID**: SCN-CYA-026-B
@@ -840,15 +877,16 @@ The system MUST show, on a draft's review and on a submitted notification's view
 - **THEN** an "Import reference numbers" section shows the warning
 - **AND** its "Notification reference" row reads the notification's reference number and its "Customs document code" row reads "C640", as text with no button
 
-### Requirement: Opening the view of a notification that does not exist goes to the notification list
+### Requirement: Opening the view of a notification that does not exist shows the standard page not found
 **ID**: REQ-CYA-031
-The system MUST send the user to the notification list when they open the view of a notification that does not exist.
+The system MUST show the service's standard page not found, with the same status and wording as every other journey page, when the user opens the view of a notification that does not exist.
 
-#### Scenario: An unknown notification goes to the list
+#### Scenario: An unknown notification shows page not found
 **ID**: SCN-CYA-031-A
 - **GIVEN** a signed-in user
 - **WHEN** they open the view of a notification that does not exist
-- **THEN** the notification list is shown
+- **THEN** the page not found status is returned
+- **AND** the page is headed "404" and reads "Page not found"
 
 ### Requirement: A draft's review is headed by its reference with a Draft tag and dated by its creation, and stays editable
 **ID**: REQ-CYA-033

@@ -166,6 +166,36 @@ describe('#linkedTestChange', () => {
     })
   })
 
+  const PARAMETERISED = `test.each([{ language: 'English' }])(
+  'Should word the port hint exactly in $language',
+  ({ language }) => {
+    expect(hint(language)).toBe('Select a port')
+  }
+)
+`
+
+  test('Should leave a test.each alone when only the rest of the file changed, rather than counting every change to the file', () => {
+    const change = linkedTestChange({
+      title: 'Should word the port hint exactly in English',
+      file: JS_FILE,
+      baseText: `${PARAMETERISED}it('elsewhere', () => {})\n`,
+      currentText: `${PARAMETERISED}it('elsewhere', () => { rewritten() })\n`
+    })
+
+    expect(change).toBeNull()
+  })
+
+  test('Should find a test.each edited under the title its placeholder fills in', () => {
+    const change = linkedTestChange({
+      title: 'Should word the port hint exactly in English',
+      file: JS_FILE,
+      baseText: PARAMETERISED,
+      currentText: PARAMETERISED.replace('Select a port', 'Choose a port')
+    })
+
+    expect(change).toEqual({ change: 'edited' })
+  })
+
   test('Should count any change to the file when the file is new to the base', () => {
     const change = linkedTestChange({
       title: 'kept',

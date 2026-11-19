@@ -1,0 +1,415 @@
+h3. Background
+
+This theme settles who a live animals consignment's parties are and where each of them is, on one page. The consignment addresses page now offers a party picker for each of the five consignment roles — place of origin, consignor, consignee, importer and place of destination — and each picker lists only the addresses the trader's organisation saved for that role. Three "Same as …" shortcuts let a trader fill one party from another without searching again. A new county parish holding number page asks for that number where the commodities call for it. The contact address page asks who to contact about the consignment, offering only the organisation's own branch addresses.
+
+This matters to a trader bringing animals into Great Britain. Someone who keeps a dozen addresses in the address book no longer wades through all of them to name a consignee: the consignee picker lists consignee addresses. Someone whose consignor is the same as their place of origin presses one control instead of searching again. A cattle keeper is asked for their county parish holding number once per notification, with help that links to GOV.UK, and sees it read back as 12/345/6789 rather than as three separate numbers. And the trader names a contact for the consignment from their own branch addresses, which are kept apart from the consignment parties so neither list pollutes the other.
+
+High-risk plants gets the same party pickers and the same contact page wording, but not the county parish holding number, the "Same as …" shortcuts or the permanent address section — those are live animals only. The sibling tickets are the high-risk plants one and the Import notification service front door one, both raised under this theme.
+
+This work is merged. It landed on {{main}} in the live animals frontend, the high-risk plants frontend, the Import notification service front door, the end-to-end test suite, the performance-test suite and the behaviour specification, each through its own pull request. The acceptance criteria below are the behaviour specification as it stands on {{main}}.
+
+h3. What changes for the user
+
+h4. Each party picker lists only that role's addresses
+
+Opening the consignee picker lists the addresses saved for the consignee role, and not those saved for the other four. An address saved against two roles appears on both lists. An address saved with no role at all appears on every list, so a trader who saved an address without choosing a role can still use it anywhere. Each picker shows its whole list on one page rather than paging through it, with the count above the table, and a search narrows the list while clearing the search restores it.
+
+h4. A chosen address is remembered, and stops being shown when it no longer matches
+
+Reopening a picker shows the row the saved address came from ticked, and saving again without choosing keeps it. Once the record has been deleted from the address book, or its details were edited on the notification itself, the picker opens with nothing ticked — because the notification's copy and the book's record are no longer the same thing. The notification keeps the address it holds either way. Following an address's View link and coming back keeps the trader's tick.
+
+h4. Three "Same as …" shortcuts
+
+A section with no address offers to copy one from its paired party: the consignor from the place of origin, and the importer and the place of destination each from the consignee. Only those three pairs, and only while the target has no address and the source has one. Pressing the control fills the section in place with no success banner, and the control then disappears. The copy is independent: changing the source afterwards leaves the copied party alone. It works with JavaScript off, and the review shows the copied party's full details.
+
+h4. A county parish holding number page
+
+Where a consignment's commodities call for it — cattle, pigs, sheep, goats and poultry — the consignment addresses page gains a county parish holding number section and, from it, a page asking for the number in three boxes. The boxes ask a phone for a digit keypad and do not offer the browser's saved values. Help under the question links to the GOV.UK guidance on checking a holding's details. A consignment whose commodities do not call for the number never sees the page, and opening it directly returns the trader to the consignment addresses page.
+
+h4. The number reads back as 12/345/6789
+
+A saved number is shown in its slashed form, both in the consignment addresses page's own section and on the review page, rather than as the three parts the trader typed.
+
+h4. Saving the number empty is allowed, and leaves the task outstanding
+
+A trader who opens the page and saves with every box empty is not refused — nothing has been claimed yet — and the section offers its add link again. Saving empty also clears a number saved earlier. The review then refuses to continue while the number is still missing, naming roles and addresses as outstanding.
+
+h4. A contact address page offering branch addresses only
+
+The contact address page asks which address to contact about the consignment, and offers the organisation's branch addresses. An address held for a consignment role such as consignor is not offered here, and is refused if submitted. An address saved with no role at all is offered. Nothing is preselected the first time, and a choice is required: either save control with nothing chosen is refused with an error in the summary and against the options, and the notification's existing contact address is left alone.
+
+h4. The roles and addresses task completes only when everything the page shows does
+
+The Overview task reads Completed once every party role has an address — but only if the page is showing nothing else. Where the page shows a county parish holding number section with no number, or a permanent address section with an identified animal that has none, the task stays To do until that is answered too. A line that needs a permanent address but has no animal identified yet does not hold the task back, because there is nothing yet to answer for.
+
+h4. The contact address page always leads to the review
+
+Once a contact address is chosen, saving and continuing goes to check your answers whatever else the notification still owes, and the review names what is outstanding. Both save controls behave the same way, including while a notification is being amended.
+
+h3. Acceptance criteria
+
+These are copied from the behaviour specification, which is where they are maintained. This theme added 52 scenarios across 7 specification files for live animals. 40 are written out below, and the 12 left out are each a mirror, pair or boundary twin of one that is, named in a line beneath it — so nothing is hidden, and Jira's size limit is what decides the number. Every file is linked in full at the foot of this ticket.
+
+h4. Each party picker lists only that role's addresses
+
+h5. An address saved for one role is listed only on that role's list
+
+* *GIVEN* an address is saved for the consignee role alone
+* *WHEN* the user opens any of the five consignment role lists
+* *THEN* the address is listed on the consignee list, and on none of the other four
+
+h5. An address saved for two roles is listed on both
+
+* *GIVEN* an address is saved for both the consignee and the importer roles
+* *WHEN* the user opens either role's list
+* *THEN* the address is listed on both
+
+h5. An address saved with no role is listed on every role's list and on the consignment contact page
+
+* *GIVEN* an address is saved with no role at all
+* *WHEN* the user opens any of the five consignment role lists, or the consignment contact page
+* *THEN* the address is listed on all five, and on the consignment contact page
+
+h5. An address saved as a branch address is offered to the consignment contact and to none of the five consignment roles
+
+* *GIVEN* an address is saved as a branch address
+* *WHEN* the user opens the consignment contact page, or any of the five consignment role lists
+* *THEN* the address is offered on the consignment contact page
+* *AND* the address is listed on none of the five consignment role lists
+
+h5. The whole list is shown on one page
+
+* *GIVEN* a role's list holds more addresses than a page once held
+* *WHEN* the user opens that role's list
+* *THEN* every one of them is shown, between the search box and the save controls, with the results heading and the count above the table
+
+h5. Clearing the search restores the role's whole list
+
+* *GIVEN* the user has searched the role's list
+* *WHEN* they clear the search and search again with nothing entered
+* *THEN* the role's whole list is shown again
+
+h4. A chosen address is remembered, and stops being shown when it no longer matches
+
+h5. Reopening the list shows the saved choice checked, and keeps it on save
+
+* *GIVEN* the user has chosen an address and saved it
+* *WHEN* they reopen the list to change it
+* *THEN* the list shows that address's row checked
+* *WHEN* they save without choosing another
+* *THEN* the role's row still shows the address they originally chose
+
+h5. Reopening the list shows no row checked once the address is edited here or deleted from the book
+
+* *GIVEN* the user has chosen an address and saved it
+* *AND* they have since edited its details on the notification, or the record has been deleted from the address book
+* *WHEN* they reopen the list to change it
+* *THEN* the list opens with no row checked
+
+h5. Back from View keeps the chosen address checked while changing an answer
+
+* *GIVEN* the address book service is available, and the user opened the list to change a role's address and chose an address
+* *WHEN* they follow an address's 'View' link and then select Back
+* *THEN* the list is shown again with their chosen address still checked, and saving returns them where a change of answer does
+
+h4. Three "Same as …" shortcuts
+
+h5. Only a section with no address whose source has one offers the control, and only for the three stated pairs
+
+* *GIVEN* the user has chosen an address for the place of origin and for the consignee, and no address for the consignor, importer or place of destination
+* *WHEN* they view the consignment addresses page
+* *THEN* the Consignor section offers "Same as place of origin", and the Importer and Place of destination sections each offer "Same as consignee"
+* *AND* the Place of origin and Consignee sections offer no such control, and neither does the CPH number or permanent address section
+
+h5. Pressing the control fills the target section from the source, with no success banner, and the control is gone
+
+* *GIVEN* the Consignor section offers "Same as place of origin"
+* *WHEN* the user presses it
+* *THEN* the consignment addresses page is shown again with no success banner
+* *AND* the Consignor section shows the place of origin's name and address lines, with "Change" and "Edit details" links, and no longer offers the control
+
+h5. The control fills the target even when the target's own address list would not offer that record
+
+* *GIVEN* the place of origin is an address-book record held only against the place-of-origin role
+* *WHEN* the user presses "Same as place of origin" in the Consignor section
+* *THEN* the Consignor section shows that record's address
+* *AND* opening the consignor picker does not list that record
+
+h5. The filled party is an independent copy of the source
+
+* *GIVEN* the user has filled the Consignor section from the place of origin using the control
+* *WHEN* they change the place of origin to a different address
+* *THEN* the Consignor section still shows the first address
+
+h5. The review shows the filled party's full details
+
+* *GIVEN* the user has filled the Importer section from the consignee using the control
+* *WHEN* they view the review
+* *THEN* the importer's entry shows the consignee's name, address lines, country, phone number and email address
+
+h5. A request to fill a section the page is not offering changes nothing
+
+* *GIVEN* a section the page offers no "Same as …" control for, because the pair is not one of the three, because the source party has no address, or because the section already has one
+* *WHEN* a request arrives to fill it from that source
+* *THEN* every answer is left as it was and the consignment addresses page is shown again
+
+h5. A section is filled from its paired party with JavaScript off
+
+* *GIVEN* the user has chosen an address for the place of origin and none for the consignor, with JavaScript off
+* *WHEN* they press "Same as place of origin" in the Consignor section
+* *THEN* the Consignor section shows the place of origin's name and address lines
+
+h5. The page with a "Same as …" control showing has no serious or critical accessibility violations
+
+* *GIVEN* the user has chosen an address for the place of origin and for the consignee, and no address for the consignor, importer or place of destination
+* *WHEN* the consignment addresses page loads at desktop width and at phone width
+* *THEN* the page has no serious or critical accessibility violations
+
+h4. Which commodities call for a county parish holding number
+
+h5. The commodities that call for a CPH number are cattle, pigs, sheep, goats and poultry
+
+* *GIVEN* a notification with one commodity line
+* *WHEN* that line's commodity is cattle, pigs, sheep, goats, or poultry as day-old chicks, adult birds or hatching eggs
+* *THEN* the County Parish Holding number is asked for, as a mandatory answer for the notification as a whole
+
+h5. A commodity not on the list is not asked for a CPH number
+
+* *GIVEN* a notification whose only commodity line carries a commodity the CPH list does not name, such as ostriches
+* *WHEN* the user works through the journey
+* *THEN* the County Parish Holding number is not asked for
+
+h4. The county parish holding number page
+
+h5. Each box turns off the browser's saved values and asks for a digit keypad
+
+* *GIVEN* the user is on the CPH number page
+* *WHEN* they look at the county, parish and holding boxes
+* *THEN* none of the three offers the browser's own saved values
+* *AND* a phone shows a digit keypad for each of the three
+
+h5. The help's second paragraph links to the GOV.UK guidance on checking a holding's details
+
+* *GIVEN* the user has opened the CPH number help
+* *WHEN* they read its second paragraph
+* *THEN* it reads "You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK."
+* *AND* "checking your holding details on GOV.UK" links to the GOV.UK guidance on getting a county parish holding number, in the same tab
+
+h5. Opening the page for a consignment that does not call for the number shows the consignment addresses page
+
+* *GIVEN* a notification whose commodities do not call for a CPH number
+* *WHEN* the user opens or submits the CPH number page by its own address
+* *THEN* the consignment addresses page is shown instead
+* *AND* nothing is saved
+
+h5. Saving from the consignment addresses page's add link returns to it, showing the number
+
+* *GIVEN* the user opened the CPH number page from the consignment addresses page's 'Add a CPH number' link
+* *WHEN* they save a valid CPH number
+* *THEN* the consignment addresses page is shown
+* *AND* the CPH section shows the number as "12/345/6789"
+
+SCN-CPH-007-B and SCN-CPH-007-C are its pair for the two other ways in: saving from a review Change link, and from Overview, each also returns to the consignment addresses page.
+
+h5. Saving while the country of origin is still missing opens the page that asks for it instead
+
+* *GIVEN* the user is on the CPH number page and the notification does not yet have a country of origin saved
+* *WHEN* they save a valid CPH number
+* *THEN* the page asking for the country of origin is shown, not the consignment addresses page
+
+h5. The back link returns to the consignment addresses page when the page was opened from Overview
+
+* *GIVEN* the user reached the CPH number page from Overview
+* *WHEN* they follow the back link
+* *THEN* the consignment addresses page is shown
+
+SCN-CPH-006-C is its pair: the back link does the same when the page was opened from a review Change link.
+
+h4. Saving the number empty, and the number read back
+
+h5. Saving every box empty is accepted and the section reads as incomplete
+
+* *GIVEN* the user is on the CPH number page with every box empty
+* *WHEN* they save and continue
+* *THEN* no error is shown
+* *AND* the consignment addresses page's CPH section offers its add link again rather than showing a number
+
+h5. Saving every box empty clears a number saved before
+
+* *GIVEN* the user has saved a CPH number before
+* *WHEN* they empty every box and save and continue
+* *THEN* the consignment addresses page's CPH section offers its add link again rather than showing the number that was saved
+
+h5. The review refuses to continue while the CPH number is missing
+
+* *GIVEN* a notification whose commodities call for a CPH number and whose CPH section has no number added
+* *WHEN* the user tries to continue from the review
+* *THEN* the review refuses to continue, naming roles and addresses as outstanding
+
+h5. A saved CPH number shows in its slashed form with a Change link
+
+* *GIVEN* the notification has a saved county parish holding number
+* *WHEN* the user views the consignment addresses page
+* *THEN* the CPH number section shows the number as "12/345/6789"
+* *AND* the section offers "Change" into the county parish holding number page as its one link
+
+SCN-CYA-021-A is its review-page pair: the roles-and-addresses card's county parish holding row reads "12/345/6789".
+
+h4. The contact address page
+
+h5. An address held for a consignment role is not offered here
+
+* *GIVEN* the organisation's address book holds an address for a consignment role, such as consignor, and a separate address held as a branch address
+* *WHEN* the user opens the contact address page
+* *THEN* the address held for the consignment role is not offered as an option
+* *AND* the same address is offered on that role's own address list
+
+h5. An address held for a consignment role is refused the same way
+
+* *GIVEN* the user submits an address the book holds for a consignment role, not the contact role
+* *WHEN* they save and continue
+* *THEN* the save is refused, an error links to and focuses the option group
+* *AND* no option is shown as chosen
+* *AND* nothing is saved
+
+SCN-CONTACT-004-B is its boundary twin: a value that is not one of the addresses offered is refused the same way from the secondary save control.
+
+h5. Choosing a contact address saves without error and is shown chosen on return
+
+* *GIVEN* the user is on the contact address page
+* *WHEN* they choose an address and save and continue
+* *THEN* the answer is saved and no error summary is shown
+* *WHEN* they return to the contact address page
+* *THEN* the page shows only the options and the save controls under its two headings, with the same address shown chosen in the list
+* *WHEN* they save and continue again
+* *THEN* the chosen contact address is kept
+
+h5. Save and return to hub also saves the chosen address and opens Overview
+
+* *GIVEN* the user is on the contact address page
+* *WHEN* they choose an address and save and return to hub
+* *THEN* the answer is saved and no error summary is shown
+* *AND* Overview is shown
+* *WHEN* they return to the contact address page
+* *THEN* the same address is shown chosen in the list
+
+h5. The page ends with Save and continue beside Save and return to hub, and Cancel and return to hub below them
+
+* *GIVEN* the user is on the contact address page
+* *WHEN* the page loads
+* *THEN* it shows "Save and continue" and "Save and return to hub" side by side
+* *AND* it shows "Cancel and return to hub" on its own line below them
+
+h5. Save and continue with nothing chosen is refused
+
+* *GIVEN* the user opened the contact address page, with no address chosen
+* *WHEN* they save and continue
+* *THEN* the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
+* *AND* the contact address page is shown again
+
+SCN-CONTACT-003-B is its pair for the other control: save and return to hub with nothing chosen is refused the same way.
+
+h5. A held contact address is kept when a save is refused
+
+* *GIVEN* the notification already holds a chosen contact address
+* *WHEN* the user saves the contact address page again with nothing chosen
+* *THEN* the save is refused
+* *AND* the notification's contact address is unchanged
+
+h5. While amending, a save with nothing chosen is refused the same way, with the addresses offered again and none chosen
+
+* *GIVEN* a notification being amended whose held contact address is not one of the addresses the page offers, so none is shown chosen
+* *WHEN* the user saves the page with nothing chosen, from either save control
+* *THEN* the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
+* *AND* the organisation's addresses are offered again with none chosen
+* *AND* the notification's contact address is unchanged
+
+SCN-FLOW-015-B states the same rule at journey level: the contact address page refuses either save control with nothing chosen while amending, and nothing is saved.
+
+h5. A held contact address is not shown chosen once its record is no longer offered or its details were changed here
+
+* *GIVEN* the notification holds a contact address copied from a record the organisation's book no longer offers, or whose details were edited on the notification
+* *WHEN* the user opens the contact address page
+* *THEN* no address is shown as chosen
+* *AND* the organisation's remaining addresses are offered
+* *AND* the notification keeps the contact address it holds
+
+h4. When the roles and addresses task completes
+
+h5. Answering every role marks the Overview task Completed when the page shows no CPH number or permanent address section
+
+* *GIVEN* the user has chosen an address for every party role on the consignment addresses page, and the page shows no CPH number or permanent address section
+* *WHEN* they return to Overview
+* *THEN* the "Roles and addresses" task shows Completed
+
+h5. A line needing a permanent address with an animal identified holds the Overview task to To do until the animal has one
+
+* *GIVEN* every party role has an address, and an animal identified on a line that needs a permanent address has none
+* *WHEN* the user returns to Overview
+* *THEN* the "Roles and addresses" task shows To do
+
+SCN-CONSIGN-ADDR-004-C is its completion pair: the task completes once every such animal has a permanent address.
+
+h5. A consignment the page asks a CPH number of holds the Overview task to To do until the CPH number is given
+
+* *GIVEN* every party role has an address, and the notification has a commodity line the service treats as requiring a CPH number, with no CPH number saved
+* *WHEN* the user returns to Overview
+* *THEN* the "Roles and addresses" task shows To do
+* *AND* it shows Completed once the CPH number is saved
+
+h5. A line needing a permanent address with no animal identified yet does not hold the Overview task back
+
+* *GIVEN* every party role has an address, and a commodity line that needs a permanent address carries an animal count but no animal identified
+* *WHEN* the user returns to Overview
+* *THEN* the "Roles and addresses" task shows Completed
+
+h5. An animal that still owes a permanent address has no row, while the species and roles-and-addresses cards are both still reported outstanding
+
+* *GIVEN* a cat line of two animals, with a permanent address saved for only one of them
+* *WHEN* the user views check-your-answers
+* *THEN* the roles-and-addresses card lists a row for the answered animal alone
+* *AND* the error summary names both the species card and the roles-and-addresses card as needing to be completed
+
+h4. Where the contact address page leads
+
+h5. Contact address goes to check your answers whatever else is owed, once a contact address is chosen
+
+* *GIVEN* a notification with tasks outstanding and the contact address page open
+* *WHEN* the user chooses a contact address and saves and continues
+* *THEN* check your answers is shown, naming what is outstanding
+* *GIVEN* the contact address page open, with no contact address chosen
+* *WHEN* the user saves and continues
+* *THEN* the save does not go on, and the contact address page is shown again
+
+h3. The work behind this change
+
+Each row below was built and reviewed on its own, in the order shown. The table holds every row of this theme that changed live animals. A row appears in more than one of this theme's tickets when it changed more than one service — that is how the theme was built, not duplication. Two rows of the theme are not in this table: one changed the Import notification service front door alone and one changed only the performance-test suite, and both are in their own domain's ticket. One row here changed only the end-to-end test suite and is marked as such, because it proves the journey rather than changing it.
+
+|| Row || What it changed || State ||
+| inc-087 | Role-filtered party pickers on one page | Built |
+| inc-088 | Same-as shortcuts on the roles and addresses page | Built |
+| inc-090 | High-risk plants pickers' address lines and trimmed details disclosure \\ _Shared with high-risk plants; the shared picker behaviour it settled applies here too._ | Built |
+| inc-091 | The county parish holding number page: who is asked, its help and hint, a blank save, and where it goes | Built |
+| inc-092 | The consignment addresses and review pages show the county parish holding number as 12/345/6789 | Built |
+| inc-094 | The contact address page says whose address it is and requires a choice | Built |
+| inc-095 | The contact address page offers only the trader's own branch addresses and adds a new branch through the address book | Built |
+| inc-096 | The roles and addresses page shows a permanent address where one is needed, and its task completes only when every section shown does | Built |
+| inc-097 | The CPH, permanent address and contact pages' endings, with no cancel control while amending, and the contact page's hub wording | Built |
+| inc-237 | Party and CPH number browser tests share the journey's save step and prove looks without class lists \\ _End-to-end and browser-test proof only. It changed the test suites, not the service._ | Built (test suites only) |
+| inc-243 | Every save control on the county parish holding, permanent address and contact address pages makes the same checks | Built |
+
+h3. Where this is specified
+
+The behaviour specification is the contract this change is held to, and the tests linked to each scenario are the evidence. This theme added 52 scenarios across these 7 files for live animals, now on {{main}}.
+
+|| Specification || Scenarios this theme added ||
+| [journey-pages/consignment-addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md] | 14 |
+| [journey-pages/cph-number|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/cph-number/spec.md] | 12 |
+| [journey-pages/contact-address|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/contact-address/spec.md] | 11 |
+| [addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/addresses/spec.md] | 9 |
+| [journey-flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md] | 2 |
+| [journey-obligations/commodity-selection|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md] | 2 |
+| [journey-pages/check-your-answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md] | 2 |
+| *Total* | *52* |
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it does not go stale as that specification moves on.

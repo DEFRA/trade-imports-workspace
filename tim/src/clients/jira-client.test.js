@@ -1290,6 +1290,40 @@ describe('moveToBoard', () => {
   })
 })
 
+describe('isInBoardBacklog', () => {
+  const BACKLOG_PATH =
+    '/rest/agile/1.0/board/13780/backlog?jql=key%20%3D%20EUDPA-300&fields=summary&maxResults=1'
+
+  test('answers true when the backlog holds the issue', async () => {
+    mockPool(BASE)
+      .get(BACKLOG_PATH)
+      .reply(200, { issues: [{ key: 'EUDPA-300', fields: { summary: 'S' } }] })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const inBacklog = await client.isInBoardBacklog(13780, 'EUDPA-300')
+
+    expect(inBacklog).toBe(true)
+  })
+
+  test('answers false when the backlog does not hold the issue', async () => {
+    mockPool(BASE).get(BACKLOG_PATH).reply(200, { issues: [] })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const inBacklog = await client.isInBoardBacklog(13780, 'EUDPA-300')
+
+    expect(inBacklog).toBe(false)
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).get(BACKLOG_PATH).reply(404, {})
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(
+      client.isInBoardBacklog(13780, 'EUDPA-300')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
 describe('listOpenChildren', () => {
   test('reads every page of an epic’s open children', async () => {
     mockPool(BASE)

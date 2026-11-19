@@ -158,7 +158,8 @@ describe('#diffSpecCommits', () => {
         'SCN-ORIGIN-001-A',
         'SCN-ORIGIN-001-B',
         'SCN-ORIGIN-001-D'
-      ])
+      ]),
+      resolvedNone: false
     })
   })
 
@@ -179,8 +180,41 @@ describe('#diffSpecCommits', () => {
       skipped: [
         { commit: 'deadbeef', reason: 'deadbeef is not a commit in this repo' }
       ],
-      touched: []
+      touched: [],
+      resolvedNone: false
     })
+  })
+
+  test('Should say it resolved none when every commit it was asked about is in another repo', async () => {
+    const repoPath = await repoWithSpec()
+
+    const result = await diffSpecCommits({
+      workspaceRoot: repoPath,
+      commits: ['deadbeef', 'cafebabe']
+    })
+
+    expect(result.resolvedNone).toBe(true)
+    expect(result.skipped).toHaveLength(2)
+    expect(result.touched).toEqual([])
+  })
+
+  test('Should say it resolved none when the only range it was asked about is in another repo', async () => {
+    const repoPath = await repoWithSpec()
+
+    const result = await diffSpecCommits({
+      workspaceRoot: repoPath,
+      ranges: ['deadbeef..cafebabe']
+    })
+
+    expect(result.resolvedNone).toBe(true)
+  })
+
+  test('Should not say it resolved none when it was asked about nothing', async () => {
+    const repoPath = await repoWithSpec()
+
+    const result = await diffSpecCommits({ workspaceRoot: repoPath })
+
+    expect(result.resolvedNone).toBe(false)
   })
 
   test('Should read a first commit against nothing, so every scenario in it is added', async () => {

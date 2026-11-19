@@ -383,15 +383,25 @@ The system MUST list on the roles-and-addresses card, after the county parish ho
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
 
-#### Scenario: An animal that still owes a permanent address has no row, while the species card is still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no row, while the species and roles-and-addresses cards are both still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists a row for the answered animal alone
-- **AND** the error summary still names the species card as needing to be completed
+- **AND** the error summary names both the species card and the roles-and-addresses card as needing to be completed
 
 #### Scenario: A line needing a permanent address with no animal counted has no permanent address row
 **ID**: SCN-CYA-020-C
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
 - **THEN** the roles-and-addresses card lists no permanent address row
+
+### Requirement: The roles-and-addresses card shows the county parish holding number when the notification needs one
+**ID**: REQ-CYA-021
+The system MUST show, on the roles-and-addresses card, a row for the county parish holding number when the notification's commodities call for one, keyed as the copy keys it, reading the saved number in the slashed county/parish/holding form. The row carries no action of its own: the card's one Change link, in its heading, covers every row.
+
+#### Scenario: A saved county parish holding number reads in its slashed form
+**ID**: SCN-CYA-021-A
+- **GIVEN** a notification that needs a county parish holding number and has one saved
+- **WHEN** the user views check-your-answers
+- **THEN** the roles-and-addresses card's county parish holding row reads "12/345/6789"

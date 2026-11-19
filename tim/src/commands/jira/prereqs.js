@@ -17,9 +17,8 @@ import { createJiraClient } from '../../clients/jira-client.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { makeRunAction } from '../_run-action.js'
 import { exitCodeForBoardError, readBoard } from './board-read.js'
-import { parseEpicsOptions, renderEpics } from './epics.js'
-
-const DEFAULT_BOARD = '13780'
+import { renderEpics } from './epics.js'
+import { resolveBoardId } from './board-id.js'
 const DEFAULT_FLOOR = '20'
 
 export const prereqsFolderOf = (workspaceRoot) =>
@@ -196,7 +195,7 @@ export const renderPrereqs = (result) =>
 
 const parsePrereqsOptions = (opts) => ({
   workspaceRoot: resolveWorkspaceRoot({ explicit: opts.workspace }),
-  board: parseEpicsOptions({ board: opts.board }).board,
+  board: resolveBoardId(opts),
   capPage: opts.capPage,
   floor: process.env.MIN_CAPABILITIES || DEFAULT_FLOOR
 })
@@ -215,8 +214,7 @@ export const register = (jira, { timVersion }) =>
     )
     .option(
       '--board <id>',
-      'agile board to list open epics from',
-      DEFAULT_BOARD
+      "agile board to list open epics from (defaults to repos.json's jiraBoard)"
     )
     .option(
       '--cap-page <id>',

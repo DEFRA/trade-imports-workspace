@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
@@ -67,6 +67,22 @@ describe('findWarnings', () => {
       expect(warnings.some((warning) => warning.includes(pattern))).toBe(true)
     }
   )
+
+  test('warns on the ticket-creator story template left unfilled', () => {
+    const storyTemplate = readFileSync(
+      new URL(
+        '../../../../.claude/skills/ticket-creator/assets/templates/story.md',
+        import.meta.url
+      ),
+      'utf8'
+    )
+
+    const warnings = findWarnings(storyTemplate)
+
+    expect(warnings.some((warning) => warning.includes('[doing what]'))).toBe(
+      true
+    )
+  })
 })
 
 describe('computePlanId', () => {

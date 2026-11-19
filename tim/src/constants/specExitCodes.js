@@ -6,3 +6,10 @@
  * only this.
  */
 export const SIGNED_OFF_CHANGED = 3
+
+/**
+ * The exit code `tim spec diff` gives when it could resolve none of the
+ * commits or ranges it was asked about, so a caller never reads a report
+ * that examined nothing as a Behaviour Spec nothing touched.
+ */
+export const RESOLVED_NOTHING = 4

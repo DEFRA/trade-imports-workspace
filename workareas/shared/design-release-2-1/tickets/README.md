@@ -235,3 +235,44 @@ Not yet merged. Three pull requests are open on
 `feat/EUDPA-796-design-release-2-1-identification-and-permanent-address`
 (frontend #476, backend #126, tests #100), all green. The ticket is `In Dev`
 and the MERGE flow moves it to `Deskcheck`.
+
+### Consignment parties — 77 scenarios, 12 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `consignment-parties-animals/` | [EUDPA-805](https://eaflood.atlassian.net/browse/EUDPA-805) | Live animals journey | 11 | 52 | 7 |
+| `consignment-parties-plants/` | [EUDPA-821](https://eaflood.atlassian.net/browse/EUDPA-821) | High-risk plants journey | 5 | 21 | 4 |
+| `consignment-parties-ins/` | [EUDPA-822](https://eaflood.atlassian.net/browse/EUDPA-822) | Import notification service front door | 2 | 4 | 1 |
+
+52 + 21 + 4 = 77 scenarios, and 7 + 4 + 1 = 12 files, so the per-domain
+totals are the theme's. The folder was `consignment-parties-stub/` until the
+WRITE flow filled it in as the animals domain, and `tickets.json` now records
+`animals`, `plants` and `ins` in place of `stub`.
+
+The theme holds 13 rows, and the three tables hold 18 row entries between
+them, because five rows changed more than one service: inc-087, inc-090,
+inc-094, inc-097 and inc-243 each appear in both the animals and the plants
+ticket. inc-272 is in no table — it changed only the performance-test suite,
+so it altered no behaviour a business reader can go and look at. inc-237 is in
+the animals table marked test-suites-only for the same reason, because its row
+still belongs to the domain it proves.
+
+Of the 52 animals scenarios, 40 are written out in that ticket; the other 12
+are each a mirror, pair or boundary twin of one that is, named in a line
+beneath it. The plants and ins tickets write out all 21 and all 4.
+
+`derived.json` reported no `outsideFootprint` entries and one warning:
+`SCN-ADDR-016-C` was added to `live-animals/addresses/spec.md` by `8bd56993`
+and later removed, so it is not counted.
+
+Merged on 19 November. All six pull requests landed on `main` — animals-frontend
+#486 (`c944e373`), plants-frontend #148 (`294a0c73`), ins-tests #114
+(`a9978e79`), ins-frontend #87 (`1f2dd64f`), performance-tests #37
+(`2c3841d2`) and workspace #273 (`5f23d166`). The build loop's signed-off check
+had held them as drafts over an edit to a file holding a test linked to
+`SCN-ARRIVAL-012-A`, which is signed off; a person approved it. The workspace
+pull request was squashed, so `main` carries no row commits and the MERGE flow
+re-derived with `--branch main --commits-from
+feat/EUDPA-805-design-release-2-1-consignment-parties`, reporting the same
+52/21/4 split. The three tickets are `Deskcheck` and their specification links
+point at `main`.

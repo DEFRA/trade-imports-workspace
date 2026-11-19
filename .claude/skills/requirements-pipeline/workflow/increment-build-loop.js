@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets, and whether a verifier runs before the judge or the judge verifies the findings itself → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → the signed-off merge gate, where a change to a signed-off scenario raises a ticket, turns the PRs back into drafts and holds the row while the loop carries on → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme and then check it for signed-off changes, turning its pull requests into drafts when it finds any',
   whenToUse:
-    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
+    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch, raising no ticket and merging nothing, finding the open PRs rather than raising them. Before any row, either lifecycle assigns the run\'s ticket (config.epic, or the key in a branch run\'s branch name) to the person running it and moves it onto the board, leaving it alone where both are already so.',
   phases: [
     { title: 'Start' },
     { title: 'Derive' },
@@ -153,7 +153,7 @@ const BUDGETED_CI_FIX_ATTEMPTS = 3
 const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 76, codex: 84 }
 const AGENTS_PER_CI_FIX_ATTEMPT = 4
 const AGENTS_PER_GATE_FIX_ATTEMPT = 4
-const STARTUP_AGENTS = 4
+const STARTUP_AGENTS = 5
 const agentsPerIncrement = () =>
   AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES[EXECUTOR] +
   Math.max(0, CI_FIX_ATTEMPTS - BUDGETED_CI_FIX_ATTEMPTS) * (AGENTS_PER_CI_FIX_ATTEMPT + AGENTS_PER_GATE_FIX_ATTEMPT)
@@ -176,7 +176,7 @@ const LIFECYCLE = CFG.lifecycle
 const LIFECYCLES = ['full', 'branch']
 if (!LIFECYCLES.includes(LIFECYCLE)) {
   throw new Error(
-    `${WORKFLOW_NAME}: config.lifecycle must be "full" (ticket, own branch, PR, merge, ticket done) or "branch" (build onto an existing branch with no Jira and no merge) — got ${JSON.stringify(LIFECYCLE)}`
+    `${WORKFLOW_NAME}: config.lifecycle must be "full" (ticket, own branch, PR, merge, ticket done) or "branch" (build onto an existing branch, raising no ticket and merging nothing) — got ${JSON.stringify(LIFECYCLE)}`
   )
 }
 const IS_BRANCH = LIFECYCLE === 'branch'
@@ -196,7 +196,7 @@ if (IS_BRANCH) {
   const givenUnused = UNUSED_ON_BRANCH_KEYS.filter((key) => CFG[key] !== null)
   if (givenUnused.length > 0) {
     throw new Error(
-      `${WORKFLOW_NAME}: lifecycle "branch" makes no Jira call and merges nothing, so ${givenUnused.join(', ')} must be null — got ${givenUnused.map((key) => `${key}=${JSON.stringify(CFG[key])}`).join(', ')}`
+      `${WORKFLOW_NAME}: lifecycle "branch" raises no ticket and merges nothing, so ${givenUnused.join(', ')} must be null — got ${givenUnused.map((key) => `${key}=${JSON.stringify(CFG[key])}`).join(', ')}`
     )
   }
   if (PROTECTED_BRANCHES.includes(BASE_BRANCH)) {
@@ -1311,6 +1311,91 @@ Return the structured output only.`,
     light({ label: 'run lease:release', phase: 'Done', schema: RUN_LEASE_RELEASE_SCHEMA })
   )
 
+const BRANCH_TICKET_KEY = /^(?:feat|chore|fix)\/([A-Z][A-Z0-9]*-\d+)(?:-|$)/
+const RUN_TICKET = IS_BRANCH ? (BASE_BRANCH.match(BRANCH_TICKET_KEY)?.[1] ?? null) : EPIC
+const RUN_TICKET_SOURCE = IS_BRANCH ? `the branch name ${BASE_BRANCH}` : 'config.epic'
+
+const COMMAND_OUTPUT_SCHEMA = {
+  type: 'object',
+  required: ['exitCode', 'stdout'],
+  properties: {
+    exitCode: { type: 'number', description: 'The exit code the command finished with' },
+    stdout: { type: 'string', description: 'Everything the command printed, word for word' }
+  },
+  additionalProperties: false
+}
+
+const TICKET_CLAIM_SCHEMA = {
+  type: 'object',
+  required: ['assign', 'moveToBoard'],
+  properties: { assign: COMMAND_OUTPUT_SCHEMA, moveToBoard: COMMAND_OUTPUT_SCHEMA },
+  additionalProperties: false
+}
+
+const ticketClaimCommands = (key) => ({
+  assign: `tim jira assign ${key} me --confirm --workspace ${TILDE} --json`,
+  moveToBoard: [`tim jira move-to-board ${key}`, IS_BRANCH ? null : `--board ${JIRA_BOARD}`, `--confirm --workspace ${TILDE} --json`]
+    .filter(Boolean)
+    .join(' ')
+})
+
+const claimRunTicket = (key) => {
+  const commands = ticketClaimCommands(key)
+  return agent(
+    `You are the TICKET CLAIM for build run ${RUN_ID}. Before any increment, you give this run's ticket ${key} to the
+person running it and put it on the board. That is your whole job.
+${guardrails()}
+Run exactly these two commands, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000,
+the second even when the first fails:
+1. \`${commands.assign}\`
+2. \`${commands.moveToBoard}\`
+Each prints one JSON line. Report each one's exit code, and in \`stdout\` everything it printed, word for word. Never
+summarise it, correct it or run it again, whatever it says, and run nothing else. The loop reads the JSON itself.
+Return the structured output only.`,
+    light({ label: 'ticket claim', phase: 'Baseline', schema: TICKET_CLAIM_SCHEMA })
+  )
+}
+
+const claimStepReport = (output) => {
+  const envelope = jsonEnvelopeOf(output?.stdout)
+  if (envelope?.ok && envelope.result?.mode) return { mode: envelope.result.mode, problem: null }
+  const why =
+    envelope?.errors?.[0]?.message ??
+    `printed no JSON (exit ${output?.exitCode ?? 'unknown'}): ${String(output?.stdout ?? '').slice(0, 300)}`
+  return { mode: null, problem: why }
+}
+
+const ticketClaimOf = (key, answer) => {
+  if (!answer) {
+    return { key, assign: null, moveToBoard: null, problems: ['the ticket claim agent died'] }
+  }
+  const assign = claimStepReport(answer.assign)
+  const moveToBoard = claimStepReport(answer.moveToBoard)
+  return {
+    key,
+    assign: assign.mode,
+    moveToBoard: moveToBoard.mode,
+    problems: [
+      assign.problem ? `assigning ${key} to you failed: ${assign.problem}` : null,
+      moveToBoard.problem ? `moving ${key} onto the board failed: ${moveToBoard.problem}` : null
+    ].filter(Boolean)
+  }
+}
+
+const runTicketClaim = async () => {
+  if (RUN_TICKET === null) {
+    log(`${WORKFLOW_NAME}: no ticket to claim — ${RUN_TICKET_SOURCE} names no Jira key`)
+    return null
+  }
+  const claim = ticketClaimOf(RUN_TICKET, await claimRunTicket(RUN_TICKET))
+  log(
+    claim.problems.length === 0
+      ? `${WORKFLOW_NAME}: ${RUN_TICKET}, from ${RUN_TICKET_SOURCE}: assignee ${claim.assign}, board ${claim.moveToBoard}`
+      : `${WORKFLOW_NAME}: COULD NOT CLAIM ${RUN_TICKET} — ${claim.problems.join('; ')}. The run carries on`
+  )
+  return claim
+}
+
 const FULL_PUSH_GUARD = `- Never \`git push --force\`. Never merge a PR that is not green.
 - NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
   does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
@@ -1869,13 +1954,8 @@ Return the structured output only.`
 }
 
 const repoStatesIn = (text) => {
-  const line = lastJsonLine(text)
-  try {
-    const repos = line ? JSON.parse(line)?.result?.repos : null
-    return Array.isArray(repos) ? repos : null
-  } catch {
-    return null
-  }
+  const repos = jsonEnvelopeOf(text)?.result?.repos
+  return Array.isArray(repos) ? repos : null
 }
 
 const strayRepos = (states, branchedRepos) =>
@@ -2743,16 +2823,6 @@ const LAND_SCHEMA = {
 }
 
 const withoutWorkspacePrefix = (file) => file.replace(new RegExp(`^${WORKSPACE_KEY}:`), '').replace(/^\.\//, '')
-
-const COMMAND_OUTPUT_SCHEMA = {
-  type: 'object',
-  required: ['exitCode', 'stdout'],
-  properties: {
-    exitCode: { type: 'number', description: 'The exit code the command finished with' },
-    stdout: { type: 'string', description: 'Everything the command printed, word for word' }
-  },
-  additionalProperties: false
-}
 
 const readWorkspaceCommit = (id) =>
   agent(
@@ -4108,16 +4178,6 @@ ${RUN_WITH_BASH}`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
 
-const START_SCHEMA = {
-  type: 'object',
-  required: ['exitCode', 'stdout'],
-  properties: {
-    exitCode: { type: 'number', description: 'The exit code the command finished with' },
-    stdout: { type: 'string', description: 'Everything the command printed, word for word: one JSON line' }
-  },
-  additionalProperties: false
-}
-
 const startCommand = (explicitId, lastId) =>
   [
     `tim build start ${WORKAREA_REL}`,
@@ -4145,7 +4205,7 @@ Run it ONCE, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`${startCommand(explicitId, lastId)}\`
 Report its exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never summarise it, correct
 it, read anything into it or run it again, whatever it says, and run nothing else. The loop reads the JSON itself.`,
-    light({ label: explicitId ? `${explicitId} start` : 'start next', phase: 'Start', schema: START_SCHEMA })
+    light({ label: explicitId ? `${explicitId} start` : 'start next', phase: 'Start', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
 const lastJsonLine = (text) =>
@@ -4155,15 +4215,18 @@ const lastJsonLine = (text) =>
     .reverse()
     .find((line) => line.trim().startsWith('{'))
 
+const jsonEnvelopeOf = (text) => {
+  const line = lastJsonLine(text)
+  try {
+    return line ? JSON.parse(line) : null
+  } catch {
+    return null
+  }
+}
+
 const startReport = (answer) => {
   if (!answer) return { failedStep: 'derive', reason: 'the start agent died' }
-  const line = lastJsonLine(answer.stdout)
-  let envelope = null
-  try {
-    envelope = line ? JSON.parse(line) : null
-  } catch {
-    envelope = null
-  }
+  const envelope = jsonEnvelopeOf(answer.stdout)
   if (!envelope) {
     return {
       failedStep: 'derive',
@@ -5007,7 +5070,7 @@ const themeSignedOffHoldPrompt = (id, theme, changes) => {
   return `You are the SIGNED-OFF HOLD for theme \`${theme}\`, after ${id}. \`${BASE_BRANCH}\` changes behaviour that was signed off,
 so it must not merge into \`main\` until a person approves. THIS IS THE ONE STAGE OF THIS RUN ALLOWED TO CHANGE A PULL
 REQUEST'S DRAFT STATE, and only one way: it marks a pull request draft and comments on it. Never take one out of draft,
-edit its title or body, close it or merge it. This lifecycle makes no Jira call.
+edit its title or body, close it or merge it. Make no Jira call.
 ${guardrails()}
 THE TICKET DRAFT, for a person to raise:
 a. \`mkdir -p ${signedOffDraftDirTilde(name)}\`
@@ -5196,7 +5259,7 @@ const postSpecDiffComment = async (id, ticketKey, mergedCommits, prs) => {
 }
 
 const themeFilter = (id, builtIds) =>
-  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
 
 const readTheme = (id, builtIds) =>
   agent(
@@ -5214,13 +5277,8 @@ const isThemeSummary = (parsed) =>
   (typeof parsed.todo === 'number' && Array.isArray(parsed.built) && Array.isArray(parsed.otherRepos))
 
 const themeStatusOf = (answer) => {
-  const line = lastJsonLine(answer?.stdout)
-  try {
-    const parsed = line ? JSON.parse(line) : null
-    return parsed && 'theme' in parsed && isThemeSummary(parsed) ? parsed : null
-  } catch {
-    return null
-  }
+  const parsed = jsonEnvelopeOf(answer?.stdout)
+  return parsed && 'theme' in parsed && isThemeSummary(parsed) ? parsed : null
 }
 
 const readThemeStatus = async (id, builtIds) =>
@@ -5329,29 +5387,34 @@ const describePreexisting = ({ prefix, scenarios }) => `${scenarios.length} unde
 
 const themeSpecDiffLog = (theme) => specCheckLog(theme, 'all', 'diff')
 
-const readThemeSpecDiff = (id, theme, commits) =>
+// `tim spec diff` reads the workspace repo's git alone, and openspec/ lives
+// there, so the range is the workspace's own. A row's `commit` field holds the
+// service repos' shas, which this command can never resolve.
+const THEME_SPEC_DIFF_RANGE = `origin/main...HEAD`
+
+const readThemeSpecDiff = (id, theme) =>
   agent(
-    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly two
-commands, one Bash call each, and report what the second printed. That is your whole job.
+    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly three
+commands, one Bash call each, and report what the third printed. That is your whole job.
 ${BASE_GUARDRAILS}
-1. \`tim spec diff ${commits.map((sha) => `--commit ${sha}`).join(' ')} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
-2. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, errors}' ${themeSpecDiffLog(theme)}\`
-Report the second command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
+1. \`git -C ${TILDE} fetch origin main\`
+2. \`tim spec diff --range ${THEME_SPEC_DIFF_RANGE} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
+3. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, resolvedNone: .result.resolvedNone, errors}' ${themeSpecDiffLog(theme)}\`
+Report the third command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
 summarise or correct it, and run nothing else. The loop reads the JSON itself.`,
     light({ label: `spec diff:${theme}`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-const themeOwnedScenarios = async (id, theme, commits) => {
-  if (commits.length === 0) return { owned: [], skipped: [] }
-  const answer = await readThemeSpecDiff(id, theme, commits)
-  const line = lastJsonLine(answer?.stdout)
-  try {
-    const parsed = line ? JSON.parse(line) : null
-    if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
-    return { owned: parsed.touched, skipped: parsed.skipped ?? [] }
-  } catch {
-    return { owned: null, skipped: [] }
-  }
+const themeOwnedScenarios = async (id, theme) => {
+  const answer = await readThemeSpecDiff(id, theme)
+  const parsed = jsonEnvelopeOf(answer?.stdout)
+  if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
+  const skipped = parsed.skipped ?? []
+  // A diff that resolved nothing examined nothing, so its empty `touched` says
+  // nothing about what the theme owns. Reading it as "the theme owns no
+  // scenario" would mark every unproven scenario pre-existing.
+  if (parsed.resolvedNone === true) return { owned: null, skipped }
+  return { owned: parsed.touched, skipped }
 }
 
 const describeSpecPrefix = (entry) =>
@@ -5404,8 +5467,12 @@ const themeSpecCheck = async (id) => {
   }
   const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
   const answer = await checkThemeSpec(id, theme, prefixes)
-  const { owned, skipped } = await themeOwnedScenarios(id, theme, status.commits ?? [])
-  const unknownOwnership = owned === null ? ["the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts"] : []
+  const { owned, skipped } = await themeOwnedScenarios(id, theme)
+  const notFound = skipped.map(({ commit }) => commit)
+  const whyUnknown = notFound.length > 0
+    ? `tim spec diff could not read ${THEME_SPEC_DIFF_RANGE} in the workspace repo (${notFound.join(', ')}), so it examined nothing`
+    : "the run could not read which scenarios the theme added or re-proved (tim spec diff)"
+  const unknownOwnership = owned === null ? [`${whyUnknown}, so every unproven scenario counts`] : []
   const problems = [...unknownOwnership, ...specCheckProblems(answer, prefixes, written, owned)]
   const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
   const preexisting = preexistingGapsOf(checked, owned)
@@ -5420,7 +5487,7 @@ const themeSpecCheck = async (id) => {
     sources,
     problems,
     ...(preexisting.length > 0 ? { preexisting } : {}),
-    ...(skipped.length > 0 ? { commitsNotFound: skipped.map(({ commit }) => commit) } : {})
+    ...(skipped.length > 0 ? { specDiffUnread: skipped.map(({ commit }) => commit) } : {})
   }
   if (problems.length === 0) {
     log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)
@@ -5449,6 +5516,15 @@ ${themeRowsCommand(theme)}
 
 const themeDiffCommand = (key) => `\`git -C ${repoTilde(key)} diff ${THEME_DIFF_BASE}...HEAD -- <path>\``
 
+// The reviewer reads one repo, so a value this repo hardcodes and another owns
+// is invisible to it unless the others are named.
+const themeSiblingRepos = (key) => {
+  const others = REPO_KEYS.filter((other) => other !== key)
+  return others.length === 0
+    ? ''
+    : ` (${others.map((other) => repoTilde(other)).join(', ')})`
+}
+
 const themeReviewPrompt = (id, theme, key) => `You are the THEME ENGINEERING REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every
 row of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. Each row was reviewed on its own as it was
 built. You read the theme's whole change in this repo at once, for what a row-by-row review cannot see. You are a
@@ -5461,6 +5537,10 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - PATTERNS: one rule written in more than one place; a second mechanism beside one that exists; a piece in a layer
   the repo's docs keep it out of; a pattern extended where its recipe or a sibling was left behind; one concept with
   two names across rows.
+- A COPY OF ANOTHER REPO'S RULE: a list, map or rule this repo spells out for itself that one of the theme's other
+  repos owns${themeSiblingRepos(key)}. Grep those repos for the values before you report, because a copy drifts the
+  moment either side changes, and the drift surfaces somewhere that looks unrelated — a load-test threshold, a page
+  with no option to pick. Report it against the copy, and say which repo owns the original.
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
@@ -5794,7 +5874,7 @@ const plannedWork = queue ? `${queue.length} increment(s)` : 'draining the backl
 const stopAfterText = STOP_AFTER === 'all' ? 'every one it can' : `${STOP_AFTER} landed`
 log(
   IS_BRANCH
-    ? `${WORKAREA_REL}: ${plannedWork} onto ${BASE_BRANCH} (branch lifecycle: no Jira, no merge), executor ${EXECUTOR}, stopping after ${stopAfterText}`
+    ? `${WORKAREA_REL}: ${plannedWork} onto ${BASE_BRANCH} (branch lifecycle: no tickets raised, no merge), executor ${EXECUTOR}, stopping after ${stopAfterText}`
     : `${WORKAREA_REL}: ${plannedWork} off ${BASE_BRANCH}, executor ${EXECUTOR}, stopping after ${stopAfterText}`
 )
 
@@ -5845,6 +5925,8 @@ if (!PLAN_ONLY && !leaselessReason && !runLease?.acquired) {
 }
 
 const runMayHoldLease = !PLAN_ONLY && !leaselessReason && !runLease?.refused
+
+const ticketClaim = PLAN_ONLY || stopped !== null ? null : await runTicketClaim()
 
 try {
 while (stopped === null) {
@@ -7705,4 +7787,4 @@ if (workspaceLeftOn) {
 const heldNote = heldForRuling > 0 ? `, ${heldForRuling} more held before the merge awaiting a signed-off ruling` : ''
 log(`${WORKAREA_REL}: ${built} increment(s) landed${heldNote} — stopping: ${stopped.reason}. ${stopped.detail}`)
 
-return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, stopped }
+return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped }

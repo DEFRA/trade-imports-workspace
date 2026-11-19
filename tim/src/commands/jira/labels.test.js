@@ -4,6 +4,7 @@ import {
   loadJiraFixture
 } from '../../test-support/jira-mock.js'
 import { runRegisteredCommand } from '../../test-support/process-output.js'
+import { bundledRoster, timWorkspaceRoot } from '../../test-support/roster.js'
 import { register } from './index.js'
 import { parseLabelsOptions, renderLabels } from './labels.js'
 
@@ -95,11 +96,21 @@ describe('tim jira labels --board', () => {
     expect(exitCode).toBe(1)
   })
 
-  test('exits 2 with a usage message when --board is missing', async () => {
-    const { stderr, exitCode } = await runTim('jira', 'labels')
+  test("counts the labels on the workspace's board when --board is left out", async () => {
+    servesBoardBacklog()
 
-    expect(stderr).toBe('Give --board <id>, such as 13780.\n')
-    expect(exitCode).toBe(2)
+    const { stdout, exitCode } = await runTim(
+      'jira',
+      'labels',
+      '--workspace',
+      timWorkspaceRoot,
+      '--json'
+    )
+
+    expect({ board: JSON.parse(stdout).result.board, exitCode }).toEqual({
+      board: String(bundledRoster.jiraBoard),
+      exitCode: 0
+    })
   })
 })
 

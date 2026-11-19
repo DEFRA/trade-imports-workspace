@@ -130,6 +130,98 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-DASH-006",
+      "name": "The dashboard lists and searches only the signed-in user's organisation's notifications",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-DASH-006-A",
+          "name": "Another organisation's submitted notification is absent from the list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+              "test": "findAll_shouldReturnEmptyList_whenCallerOrgDoesNotOwnStoredNotification",
+              "strength": "full",
+              "notes": "ins-backend integration test (recorded as unit, the nearest type); proves scoped list reads"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/ins-backend/ins-backend.test.js",
+              "test": "Should send the Trade-Imports-Organisation-Id header from the session organisation",
+              "strength": "partial",
+              "notes": "proves the client forwards the organisation id as Trade-Imports-Organisation-Id; takes the id as an argument, not from the session"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts",
+              "test": "the owning organisation sees its submitted notification on the INS dashboard",
+              "strength": "partial",
+              "notes": "owner visibility after a live animals submit"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/aggregated-notification.spec.ts",
+              "test": "creates and updates aggregated notification document through the submission lifecycle",
+              "strength": "partial",
+              "notes": "Mongo owner field after journey submit"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-006-B",
+          "name": "Another organisation's reference search returns no results",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+              "test": "findAll_shouldReturnEmptyReferenceMatch_whenCallerOrgDoesNotOwnStoredNotification",
+              "strength": "full",
+              "notes": "ins-backend integration test (recorded as unit, the nearest type); proves scoped reference search"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts",
+              "test": "another organisation gets no rows when searching by reference",
+              "strength": "partial",
+              "notes": "cross-org reference search on the live stack; the unfiltered list half is the ins-backend IT"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-006-C",
+          "name": "A list request with no organisation is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+              "test": "findAll_shouldReturnBadRequest_whenOrganisationHeaderMissing",
+              "strength": "full",
+              "notes": "ins-backend integration test (recorded as unit, the nearest type)"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java",
+              "test": "findAll_shouldReturnBadRequest_whenOrganisationHeaderIsMissing",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

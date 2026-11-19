@@ -75,7 +75,7 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--root <checkout>',
-      'Validate a different checkout instead of the workspace root — journey-builder writes into a worktree'
+      'Validate a different checkout instead of the workspace root'
     )
     .option('--specs', "Check spec.md's own conventions only")
     .option('--coverage', "Check coverage.json's internals only")
@@ -95,7 +95,7 @@ export const register = (program, { timVersion }) => {
         '  tim spec lint --json\n' +
         '  tim spec lint --specs --coverage\n' +
         '  tim spec lint --capability live-animals/addresses\n' +
-        '  tim spec lint --root workareas/journey-builder/run-1/workspace-worktree'
+        '  tim spec lint --root ../another-workspace-checkout'
     )
     .action(
       makeSpecAction({

@@ -224,7 +224,7 @@ missing key. The first log line is the resolved configuration.
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
 | `branch` | Under `lifecycle: 'full'`, the base branch each increment's own branch is cut from and merged back into. Under `lifecycle: 'branch'`, the working branch itself, which already exists in every backlog repo; `main` and `master` are refused |
-| `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch` with no Jira and no merge). See [The branch lifecycle](#the-branch-lifecycle) |
+| `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch`, raising no ticket and merging nothing). See [The branch lifecycle](#the-branch-lifecycle) |
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex`, under either lifecycle — see below |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
@@ -232,7 +232,7 @@ missing key. The first log line is the resolved configuration.
 | `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
 | `jiraInDevStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
 | `jiraDoneStatus` | The board's finished status, set after the merge with `tim jira transition <KEY> "<status>"`. `null` under the branch lifecycle |
-| `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
+| `jiraBoard` | Numeric id of the board raised tickets, and the run's own ticket, are moved onto — 13780 is EUDPA, the same as `jiraBoard` in `repos.json`. `null` under the branch lifecycle, where tim takes the board from `repos.json` |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
@@ -244,6 +244,7 @@ missing key. The first log line is the resolved configuration.
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
 | `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed in full once, and revised whenever that review sends it back, with a second pass that re-checks only its findings; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with that second pass run only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `workspace` | The root of the workspace clone the run builds in, as a tilde path. The launch passes it, so a run builds in the clone that launched it. With `null`, the first stage resolves the root from the session folder, then from `CLAUDE_PROJECT_DIR`, then from a fixed list of paths as a last resort. Every Bash command the run gives an agent, and the Codex executor's `-C`, use it |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -292,10 +293,12 @@ args: `backlog.json` carries the status, ticket, branch, PRs and the last failed
 the row picks up at the stage that attempt reached — see
 [Resuming a row part-way through](#resuming-a-row-part-way-through).
 
-The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`, where `specChecks` holds one
-entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)), `reviewChecks` the checks left
-for whoever reviews a finished theme, `refutedFindings` every finding verification refuted (see
-[Findings by kind](#findings-by-kind)), and `stopped` is `{reason, detail}`. It stops:
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`, where
+`specChecks` holds one entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)),
+`reviewChecks` the checks left for whoever reviews a finished theme, `signedOffChecks` one entry per theme-end
+signed-off check (branch lifecycle), `refutedFindings` every finding verification refuted (see
+[Findings by kind](#findings-by-kind)), `ticketClaim` what [claiming the run's ticket](#claiming-the-runs-ticket)
+did, and `stopped` is `{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
@@ -303,11 +306,11 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`agent-budget`**, before starting an increment that would take the run past the
   `Workflow` tool's cap of 1000 agents. An increment is up to 76 agents on Claude and 84 on
   Codex with `ciFixAttempts: 3`, and 8 more for each attempt beyond three, so a run fits
-  roughly 13 or 11 of them. That worst case includes the signed-off check, and the ticket and
-  park agents a change to a signed-off scenario adds. A row parked for a signed-off ruling
+  roughly 13 or 11 of them. That worst case includes the signed-off merge gate, and the ticket
+  and hold agents a change to a signed-off scenario adds. A row held for a signed-off ruling
   counts towards the cap as a landed one does. Under the branch lifecycle the run also keeps
-  room for one theme's engineering review (twice the number of repos, plus 9) and counts each
-  one it runs. Nothing is wrong: launch again;
+  room for one theme's engineering review and its signed-off check (three times the number of
+  repos, plus 11) and counts each one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
   gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
 - at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
@@ -375,7 +378,8 @@ ever.
   stopAfter: 'all',
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'standard'
+  rigour: 'standard',
+  workspace: null
 }
 ```
 
@@ -445,7 +449,7 @@ the workspace whenever it may touch it, whether or not the increment builds ther
 **Changing the factory mid-run.** While the workspace is on the increment branch, a change to
 tim, `gates.json` or the stack scripts takes effect at once: every later tim call and gate run
 in that increment uses the branch's copy, and the gate re-ups the stack when `docker/stack` or
-`scripts/stack` changed. A change to this loop script takes effect from the **next launch**
+`tim/src/stack` changed. A change to this loop script takes effect from the **next launch**
 only, because a running loop never re-reads it. Stages are told never to edit the loop script
 unless the row names it, and a planner says so under `risks` when it does.
 
@@ -476,17 +480,18 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human**. Every code-quality finding is fix-now, in each twin |
 | Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
-| Signed off | 1, plus 2 when it finds a change | After the branch guard, runs `tim spec diff --signed-off --uncommitted` with `--repo` for each of the row's repos and `--base origin/<branch>`. Under the full lifecycle, a row that builds the workspace adds `--range origin/<branch>...HEAD`, so a resumed attempt's committed spec change is checked too. Nothing found: the row lands as before. A change to a signed-off scenario, or an edit to a test linked to one: a light agent raises the ticket `result.ticketDraft` drafts (full lifecycle; the branch lifecycle writes the draft to `logs/<id>-signed-off-ticket/` instead), and a light agent sets the row to `blocked` with an open question naming the ticket, before it lands. Then the row lands and its pull requests are raised as drafts, or made drafts when already open. No CI is watched and nothing merges, and the loop builds the next row. A run that dies after the park leaves the row withheld, so no later launch merges it. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 | Land | 2–4, plus up to 4 a quality gate fix attempt | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. Under the branch lifecycle it pushes too, and says why a push did not go: a refusal from the workspace's pre-push quality gate goes to a quality gate fixer, a non-fast-forward rejection does not — see [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too). The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 | CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Signed off | 1, plus 2 when it finds a change | Full lifecycle only: the merge gate, once CI is green and just before the merge. A light agent reads whether the row's `prs` carry `"signedOffHold": true`. A held row whose pull requests are all out of draft merges without a check, because a person approved it; one with a draft left is blocked again and nothing is rebuilt. Otherwise it fetches `origin/<branch>`, checks each of the row's repos is on the row's branch, and runs `tim spec diff --signed-off` with `--repo` for each and `--base origin/<branch>`, adding `--range origin/<branch>...HEAD` when the row builds the workspace. Nothing found: the row merges. A change: a light agent raises the ticket `result.ticketDraft` drafts (the draft stays in `logs/<id>-signed-off-ticket/` if Jira refuses), and a light agent makes each pull request a draft, comments on it, blocks the row with an open question and marks each `prs` entry held. An error holds the row the same way, naming the error, with no ticket. Nothing merges and the loop builds the next row; nothing about the hold stops the run. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 | Spec diff comment | 1–3, after the ticket closes | Full lifecycle only. A writer runs `tim spec diff` on the row's workspace merge commit and writes a Jira comment to `tickets/<id>-spec-diff.txt`: the scenarios added, changed and removed on `main`, one line on their coverage, and a link to every merged PR, in plain words with no backlog ids. A checker compares it with the diff and fixes it; a light agent posts it with `tim jira comment`, dry run then `--confirm`. The result carries `specDiffComment`. A failure at any step is recorded there and never stops the run |
 | Theme spec check | 1–3 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched, failing only on scenarios the theme's own commits added or re-proved. See [The Behaviour Spec](#the-behaviour-spec) |
-| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Theme engineering review | up to three times the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Theme signed-off check | 1, plus 1 when it finds a change | Branch lifecycle only, straight after the theme's engineering review, even one that stopped the run. Runs `tim spec diff --signed-off --range origin/main...HEAD` with `--repo` for every repo and `--base origin/main`. A change: a light agent makes every open pull request on the branch a draft, the workspace one included, comments on each, and writes the ticket draft to `logs/theme-<theme>-signed-off-ticket/`. No Jira call. A change or an error is recorded in `signedOffChecks` and never stops the run. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
 unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), the new-code coverage check
-(`tim build coverage`), FIT after a free-port check,
+(`tim build coverage`), FIT on the first free port from its planned one,
 and the tests repo's local-stack E2E. A red duplication rung is repaired by moving the copied set-up into the shared
 test helper and deleting the copies. The coverage rung runs straight after the rung that writes the report it reads —
 `npm test` or `mvn verify` — and measures what a SonarCloud `new_coverage` condition measures: every line and condition
@@ -628,12 +633,12 @@ spec behind.
 | Stage | What it does with the spec |
 |---|---|
 | Plan | Section 8 names the prefix by repo and set (`live-animals`, `germinal-products`, `plants`, `ins`, `admin`), each capability, requirement and scenario to change, any new AREA row and the coverage links — or `none — <reason>`. Returns `specPrefixes` |
-| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tools/frontend-change/openspec-validate.sh --root <workspace>` and `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
+| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
 | Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
 | Fix | A fix that changes behaviour updates the spec too, and reports its own line |
-| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
-| Signed off | Before land, `tim spec diff --signed-off --uncommitted` checks the uncommitted write for a change to a signed-off scenario. A change parks the row for a person's ruling |
+| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it confirms each `deleted:` one is gone, then runs `tim spec lint --capability <prefix>` once per prefix the lines write under, which validates every capability under it |
 | Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
+| Signed off | Full lifecycle: after CI and before the merge, `tim spec diff --signed-off` checks the row's committed work for a change to a signed-off scenario, and a change holds the row for a person's ruling. Branch lifecycle: once at theme end, against `origin/main` |
 
 The prompts say what the spec records, from `openspec/config.yaml`: observable behaviour only. A wording change is
 spec'd where a title, Purpose, requirement or scenario states that wording; a content change when it changes what a
@@ -948,6 +953,31 @@ log names the preset and what it runs, once for the run and once per increment, 
 whose rigour was not the run's carries it in the result — whose `findings` then count
 `{unverified, rejected}` in place of `{confirmed, refuted}`, because no verifier read them.
 
+### Claiming the run's ticket
+
+Once per run, after the stack lease and before the first row, one light agent (label `ticket
+claim`) gives the run's ticket to the person running it and puts it on the board:
+
+```
+tim jira assign <key> me --confirm --workspace <root> --json
+tim jira move-to-board <key> [--board <jiraBoard>] --confirm --workspace <root> --json
+```
+
+- **The ticket** is `epic` under the full lifecycle. Under the branch lifecycle it is the
+  Jira key in `branch` (`feat/EUDPA-696-overview-and-review` gives `EUDPA-696`). A branch
+  with no key, such as `feat/NO_JIRA-…`, claims nothing and logs why.
+- **The board** is `jiraBoard` under the full lifecycle. The branch lifecycle passes no
+  `--board`, so tim uses the workspace's board, `jiraBoard` in `repos.json`.
+- **Both commands are idempotent.** A ticket already assigned to the runner, or already off
+  the board's backlog, comes back `unchanged`.
+- **A failure never stops the run.** It is logged as `COULD NOT CLAIM <key>` and carried in
+  the result's `ticketClaim`: `{key, assign, moveToBoard, problems}`, where `assign` and
+  `moveToBoard` are tim's `mode` (`assigned`, `moved` or `unchanged`) and `null` on failure.
+  `ticketClaim` is `null` when no claim ran: a plan-only run, a run with no key, or one that
+  stopped before any row.
+
+Rows are claimed separately: `tim build start` moves each row's own ticket onto the board.
+
 ### The workspace stack lease
 
 The workspace stack is one compose project per machine, and a run that needs it holds it for
@@ -1028,7 +1058,7 @@ run's lease, and the next stage stopped the run at `stack-held` "held by nobody"
 reads the stack (`tim docker lease acquire|release|status`, and the gate through them) starts
 Docker Desktop with `open -a Docker` when the daemon does not answer. It waits up to five
 minutes for `docker info` (`TIM_DOCKER_START_WAIT_MS`), logs that it did so on stderr, then
-carries on. Starting the stack (`run-stack.sh`) does the same first. A stage whose check
+carries on. Starting the stack (`tim docker up`) does the same first. A stage whose check
 cannot reach the stack, and whose lease check finds the lease still the run's but the stack
 down, returns `stackDown`. The script then takes the run's lease again, which starts the
 stack under it, and runs that stage once more, once only. A Homebrew autoupdate is why: its
@@ -1110,20 +1140,20 @@ Per increment, codex mode is at most `40 + 3g` agents against Claude's `32 + 3g`
 ### The branch lifecycle
 
 `lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already carries an open PR in
-each repo, with no Jira and no merge. When to use it, what it never does and the stop reasons it adds are in
+each repo, raising no ticket and merging nothing. When to use it, what it never does and the stop reasons it adds are in
 [`../references/BUILD.md`](../references/BUILD.md#branch-lifecycle). The stages differ from the full lifecycle
 like this:
 
 | Stage | Under `lifecycle: 'branch'` |
 |---|---|
-| Start | Does not run. No Jira call of any kind, anywhere in the run. A drain derives each id with `tim backlog next` in a one-command agent |
+| Start | Does not run, and no row gets a ticket. The only Jira calls in the run are [claiming the run's ticket](#claiming-the-runs-ticket), the one the branch name carries. A drain derives each id with `tim backlog next` in a one-command agent |
 | Branch | Creates nothing. Asserts every repo in the envelope's `repos` (not only the row's) is on `branch`, clean, not mid-merge and fast-forwarded to its origin (`fetch`, then `merge --ff-only`), and that the envelope names exactly the configured repos. Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, which the script checks: a merge into a repo the row does not build stops the run as `row-invalid` |
 | Baseline, Ladder | Run only the row's `gatePhases` (all three when it has none; none for `[]`). A ladder without `e2e` does not fail for want of an end-to-end proof: that proof is another row's |
 | Merge start | Runs only for a row with `merge`, between plan and implement. Fetches and runs `git merge --no-ff --no-commit <ref>` per repo, and reports the conflicted paths. The planner previews the same merge with `git merge-tree` and plans every resolution, reading a resolutions file where the row's notes point at one |
 | Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
 | Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force`. The tests repo goes first, and the others wait for its branch image to publish |
 | Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
-| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. **A failing check that started before the PR's head commit is a stale rollup, not a red** — GitHub does not re-run a PR's checks when its base moves, so the script compares each failing check's start time with the head commit's own and exits 5 when every one of them predates it. The watcher re-runs those jobs and waits again, up to twice, spending a watch window rather than a fix attempt; the CI fixer confirms the same before it changes a line and refuses rather than fix a check that never saw the code. **An E2E check goes stale a second way**: it drives the workspace stack built from every repo's branch image, so a run that started before a sibling repo's image finished publishing tested that repo's previous image, however fresh its own head is. The fixer compares the check's start with each pushed repo's `publish / Publish branch-tagged index` completion, and on a stale image re-runs the failed jobs rather than editing code — an app rendering copy the branch has already changed is an old image, never a defect. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
+| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `gh pr checks <number> --watch --fail-fast` and reads the verdict from one `gh pr checks --json … --jq` call, whose filter the prompt carries: `SUMMARY: green`, `red`, `pending` (wait again) or `stale`, and gh's own "no checks reported", still there after the watch has re-run every 30s five times so checks that register late after a push are still watched, stops the row as `no-checks`. **A failing check that started before the PR's head commit is a stale rollup, not a red** — GitHub does not re-run a PR's checks when its base moves, so the verdict compares each failing check's start time with the head commit's own and says `stale` when every one of them predates it. The watcher re-runs those jobs and waits again, up to twice, spending a watch window rather than a fix attempt; the CI fixer confirms the same before it changes a line and refuses rather than fix a check that never saw the code. **An E2E check goes stale a second way**: it drives the workspace stack built from every repo's branch image, so a run that started before a sibling repo's image finished publishing tested that repo's previous image, however fresh its own head is. The fixer compares the check's start with each pushed repo's `publish / Publish branch-tagged index` completion, and on a stale image re-runs the failed jobs rather than editing code — an app rendering copy the branch has already changed is an old image, never a defect. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
 | Merge | Does not run |
 | Done | `tim backlog set <workarea> <id> --status done --commit <sha>`. No ticket to move |
 
@@ -1166,7 +1196,10 @@ The worked example for the frontend alignment sync:
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local'
+  e2e: 'local',
+  resumeFrom: null,
+  rigour: 'standard',
+  workspace: null
 }
 ```
 

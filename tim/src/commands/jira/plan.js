@@ -5,15 +5,15 @@ import { TimError } from '../../errors.js'
 
 export const MAX_DESCRIPTION_LENGTH = 32767
 
-// Leftover template markers a hand-off should catch before it reaches the
-// real team — an unanswered prompt, a missing translation, an example
-// ticket number, or a plain TODO.
 export const PLACEHOLDER_PATTERNS = [
   '[Who is this for?',
+  '[doing what]',
   '[Welsh needed]',
   'EUDPA-XXXX',
   'TODO'
 ]
+
+const withoutTrailingNewlines = (text) => text.replace(/\n+$/, '')
 
 const sha256Hex = (buffer) => createHash('sha256').update(buffer).digest('hex')
 
@@ -157,10 +157,8 @@ export const computePlanId = ({ manifest, description, attachments }) => {
  * @throws {TimError} USAGE when the description file or an attachment is missing
  */
 export const buildPlan = ({ manifest, dir }) => {
-  const description = readTextFile(
-    dir,
-    manifest.descriptionFile,
-    'description file'
+  const description = withoutTrailingNewlines(
+    readTextFile(dir, manifest.descriptionFile, 'description file')
   )
   const attachments = manifest.attachments.map((relPath) =>
     readAttachment(dir, relPath)

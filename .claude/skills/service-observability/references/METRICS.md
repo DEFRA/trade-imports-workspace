@@ -12,8 +12,8 @@ Ask of each candidate metric: what would someone do differently on
 seeing it change? Drop it if the answer is nothing.
 
 The list agreed for `trade-imports-reference-data` is the worked
-example, with the names it takes once moved to the one way. It
-publishes the old names until then ("A service built the old way"):
+example. It published older PascalCase names until it moved to the one
+way below; "A service built the old way" maps them:
 
 | Metric | Unit | Dimension | Answers |
 |---|---|---|---|
@@ -76,12 +76,12 @@ service's `metrics` package and change only the package:
 |---|---|
 | `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Gauges and distribution summaries publish in the CloudWatch unit of their base unit (`bytes` as Bytes); with no base unit, a distribution summary publishes as Count and a gauge as None. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
-| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
+| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. address-book's records a call it is given; it does not time one or keep its outcome. dynamics-gateway's is the reference for a recorder that does both: it takes `LastCallOutcomes` and records each call's outcome there, takes an `ExternalCall` naming a `Dependency` enum value, and `measure(call, action)` runs the call, times it by an injected nano-time source and records it as a success or, rethrowing, a failure; its `callStartedAt()` and `elapsedSince(start)` time a call `measure` cannot wrap, such as one an SDK interceptor sees begin and end in two callbacks. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
-is true. When it is false, as in integration tests, Spring Boot's
-in-memory registry is used and nothing is published. It reads two more
+is true. When it is false, as in integration tests, nothing is
+published. It reads two more
 properties, both in address-book's `application.yml` under `aws.emf`:
 
 - `aws.emf.environment` (`${AWS_EMF_ENVIRONMENT:}`). Blank, the default,
@@ -96,16 +96,38 @@ Add the method to
 the service's existing `MetricsConfig` in its `configuration` package,
 not to a new class in `metrics`. Keep that class's `TimedAspect` bean:
 `@Timed` records nothing without it. `@Counted` needs its
-`CountedAspect` bean, which dynamics-gateway's does not have yet. A
+`CountedAspect` bean; add it if the class lacks one. A
 service with no `MetricsConfig` gets one in its `configuration`
 package, with the `TimedAspect` and `CountedAspect` beans as in
 address-book.
+
+#### A service whose `/metrics` is read
+
+`EmfMeterRegistry` is a step registry: a counter there holds only the
+last completed step's count. A service whose actuator `/metrics`
+endpoint something reads (the performance tests read the gateway's
+`/metrics/notification.message` to count what it forwarded) needs
+running totals there, so it records every meter in a cumulative
+registry as well. dynamics-gateway's `MetricsConfig` is the reference:
+
+- a `SimpleMeterRegistry` bean, the cumulative registry;
+- a `@Primary` `CompositeMeterRegistry` bean holding the cumulative
+  registry and, when `aws.emf.enabled` is true, the `EmfMeterRegistry`
+  (taken through an `ObjectProvider`), so every meter the code records
+  goes to both;
+- a `MetricsEndpoint` bean built on the cumulative registry, so
+  `/metrics` reads running totals rather than the last step.
+
+Its `MetricsConfigTest` and `EmfMeterRegistryIT` prove the composite,
+the endpoint reading the running total after a step has passed, and
+the allowlist still applying. A service whose `/metrics` nothing reads
+does not need it.
 
 ### Write for the service
 
 | Class | What it does |
 |---|---|
-| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP. Measure at the transport, not in the calling service class, so every call is caught |
+| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP, an AWS SDK `ExecutionInterceptor` added to the client's `overrideConfiguration` for an AWS service (dynamics-gateway's `SqsCallRecorder`: one call per SDK execution, its retries counted in its duration, named after the SDK action in kebab case from a fixed set, anything else `other`). Measure at the transport, not in the calling service class, so every call is caught. A client with no hook (the Azure `ServiceBusSenderClient`) is measured where its one method is called (dynamics-gateway's `QueueMessageSender`, through `ExternalCallRecorder.measure`) |
 | `DependencyAvailabilityMetrics` | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below) |
 | A business-metrics class (`AddressMetrics`) | One counter per agreed business metric, tagged by its dimension |
 | `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published |
@@ -147,23 +169,42 @@ address-book.
   are running totals and can be asserted.
 - **Values are timestamped when published,** up to a step after they
   were recorded.
-- **Caches** `[UNPROVEN]`, not yet done this way on a service: the
-  counters `cache.hit` and `cache.miss`, tagged `cache` with the cache's
-  name, as in the agreed table and the dashboard's "Cache hits and
-  misses" panel. Increment one on each lookup, from the code that reads
-  the cache, and add both names to the allowlist. Not Micrometer's cache
-  binder: it publishes `cache.gets` under other names and tags, and as
-  function counters, which `EmfMeterRegistry` does not publish.
+- **Caches:** the counters `cache.hit` and `cache.miss`, tagged `cache`
+  with the cache's name, as in the agreed table and the dashboard's
+  "Cache hits and misses" panel. For a Caffeine cache, count them in a
+  Caffeine `StatsCounter`, not in the code that reads the cache, so
+  every read is caught: reference-data's `CacheMetrics.statsCounterFor(name)`
+  returns one that increments the two counters and keeps Caffeine's own
+  statistics, and `CacheConfig` passes it to each cache with
+  `.recordStats(() -> cacheMetrics.statsCounterFor(name))`. Add both
+  names to the allowlist. Not Micrometer's cache binder: it publishes
+  `cache.gets` under other names and tags, and as function counters,
+  which `EmfMeterRegistry` does not publish.
+- **A gauge that reads a remote value** (dynamics-gateway's
+  `QueueDepthMetrics`, `sqs.queue.depth` from SQS `GetQueueAttributes`)
+  reads it in the gauge's function, with no scheduler. Every registry
+  that reads the gauge triggers a remote read: each EMF publish, and
+  each `/metrics` scrape too. It returns NaN (not published) when the read throws,
+  logging at warn. Call the read through the bean that owns it, not a
+  copy in the gauge. Register it with `.strongReference(true)`:
+  Micrometer holds a gauge's state object weakly, so a lambda held by
+  nothing else is collected and the gauge reads NaN.
+- **Delete a `logback-test.xml`** that sets a plain pattern or a root
+  above INFO. The integration test that reads the console line, and the
+  unit tests that capture INFO lines, need `logback-spring.xml` with
+  `EcsEventEncoder`. Run `mvn clean` after deleting it: a stale copy in
+  `target/test-classes` still wins.
 
 ### A service built the old way
 
 These services write EMF directly and publish the older PascalCase
-names, not the dot-case names above (their `main`, checked 2026-11-06):
+names, not the dot-case names above (their `main`, checked 2026-11-06).
+`trade-imports-reference-data` and `trade-imports-dynamics-gateway`
+were among them and have moved; the tables below record how, as the
+worked example:
 
 | Service | Where | Publishes |
 |---|---|---|
-| `trade-imports-reference-data` | `metrics` package: `EmfMetricWriter`, `ExternalCallMetrics`, scheduled `DependencyAvailabilityMetrics` and `CacheMetrics`, `LookupMetrics` | Every old name in the table below |
-| `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 | `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
 `trade-imports-animals-admin` publishes none of these metrics.
@@ -190,8 +231,8 @@ service has apply to that service.
 | Old | New |
 |---|---|
 | The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallRecorder` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
-| `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` times the send itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown |
-| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with no cause for a response of 400 or over |
+| `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` runs the send through `ExternalCallRecorder.measure(call, action)`, which times it, records it as a success or a failure, and records its last outcome. dynamics-gateway's `ExternalCallRecorder` is the reference for `measure` and the outcome; address-book's has neither ("Copy as it is") |
+| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with the response's status for a response of 400 or over, which the call's log line carries as `http.response.status_code` (reference-data's `ExternalCallRecorder` adds a `recordFailure` overload taking the status) |
 | `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallRecorder` stays a copy |
 | The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallRecorder`, or drop it |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |
@@ -310,5 +351,5 @@ address-book's tests are the ones to copy.
 Run the repo's full build before pushing:
 
 ```bash
-mvn -f ~/git/defra/trade-imports-workspace/repos/<service>/pom.xml verify
+mvn -f repos/<service>/pom.xml verify
 ```

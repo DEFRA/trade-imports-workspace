@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -10,7 +11,9 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { NODE_REPOS } from '../../constants/repos.js'
+import { bundledRoster } from '../../test-support/roster.js'
+
+const { nodeRepos: NODE_REPOS } = bundledRoster
 import { cleanRepo, cleanAll, renderText } from './clean.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -20,7 +23,7 @@ let workspace
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-clean-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
 })
 

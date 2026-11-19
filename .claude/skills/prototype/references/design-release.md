@@ -2,20 +2,20 @@
 
 A **design release** is the designer's own copy of the real plants journey.
 It lives in `src/server/app/sets/<release-id>/` inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`,
+`repos/trade-imports-plants-prototype/`,
 is served at `http://localhost:3103/<release-id>`, and is listed on the
 chooser at `http://localhost:3103/`. Everything in it is the designer's: the
 weekly update from the real service never touches it.
 
 A release is a **snapshot**. It does not pick up the real team's later
 changes.
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`
+`npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`
 shows how far each release has fallen behind ("Staying current", below). To
 pick the changes up, start a fresh release and carry the designer's changes
 across (section E).
 
 The designer guide is
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/design-releases.md`.
+`repos/trade-imports-plants-prototype/docs/designers/design-releases.md`.
 Read it before your first release in a session.
 
 Talk to the designer in GDS plain English. Say "your design release", not
@@ -53,7 +53,7 @@ The chooser tags each set: **Real journey, updates weekly** (high-risk-plants),
   on a `design/*` branch or `main`. They belong to the real service. Do the
   change in a design release, or use `references/hand-off.md`.
 - **Check ownership before any other edit.** Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <paths>`
   and follow it. If a file "Belongs to the real service", stop and offer "do
   it in your design release" or `references/hand-off.md`. If unsure, check
   `overrides.json`: a release's own two globs are in `ours`.
@@ -73,7 +73,7 @@ The chooser tags each set: **Real journey, updates weekly** (high-risk-plants),
 ## A. See the releases
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list
+npm --prefix repos/trade-imports-plants-prototype run designer:release -- list
 ```
 
 It prints every set in the chooser's order with its kind, what it was made
@@ -101,7 +101,7 @@ to stay as it is.
 - **Which pages.** Name them with:
 
   ```
-  npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- drift <release-id>
+  npm --prefix repos/trade-imports-plants-prototype run designer:release -- drift <release-id>
   ```
 
   It prints the changed pages by their address (`arrival-details`,
@@ -112,9 +112,9 @@ to stay as it is.
 - **It only knows your branch.** The count compares with the branch you are
   on. The weekly update lands on `main`, so a branch started before it shows
   0 until `main` is brought in
-  (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
+  (`git -C repos/trade-imports-plants-prototype fetch origin main`,
   then
-  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`,
+  `git -C repos/trade-imports-plants-prototype merge --no-edit origin/main`,
   with `references/share-my-change.md`'s rules and section G for a clash in
   the three shared files). Offer that when the designer expects a change the
   count does not show.
@@ -133,7 +133,7 @@ to stay as it is.
 2. **Suggest an id.** Lower-case words joined by hyphens, starting `plants-`:
    `plants-dr2` for "design release 2", `plants-working` for a working copy,
    `plants-research-oct` for October research. Check it is not taken with
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`.
    Never use `examples`, `reset`, `auth`, `public` or `health`.
 3. **Stay on the designer's branch.** Branches are optional
    (`references/ROUTING.md`, "Branches"): on `main`, stay on `main` — that is
@@ -142,7 +142,7 @@ to stay as it is.
    `feat/*`, `chore/*` or trial branch) make a new one:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release-id>-start
+   git -C repos/trade-imports-plants-prototype switch -c design/<release-id>-start
    ```
 
    The designer's change and its save then land on the same branch as the
@@ -156,7 +156,7 @@ to stay as it is.
    release to copy (then use `--from <that release>`):
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run new:set -- <release-id> --from high-risk-plants --title "<its name, in the designer's words>" --describe "<one line for the chooser>" --purpose <working|research|frozen>
+   npm --prefix repos/trade-imports-plants-prototype run new:set -- <release-id> --from high-risk-plants --title "<its name, in the designer's words>" --describe "<one line for the chooser>" --purpose <working|research|frozen>
    ```
 
    Without `--describe` the chooser says "Copy of high-risk-plants made
@@ -175,13 +175,13 @@ to stay as it is.
 5. **Tidy the new lines:**
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format
+   npm --prefix repos/trade-imports-plants-prototype run designer:format
    ```
 
 6. **Check it boots and passes every check:**
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release-id> --full
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release-id> --full
    ```
 
    Explain any failure in plain English
@@ -200,7 +200,7 @@ to stay as it is.
 8. **Take its starting gallery:**
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release-id> --pages all,chooser
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release-id> --pages all,chooser
    ```
 
    Read a few of the PNGs yourself before you describe them, including the
@@ -211,17 +211,17 @@ to stay as it is.
 9. **Save it.** Stage exactly these, one `git add` per path:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/app/sets/<release-id>
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/app/routes-<release-id>.js
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/prototype-sets/index.js
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/prototype-sets/descriptions.js
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add overrides.json
+   git -C repos/trade-imports-plants-prototype add src/server/app/sets/<release-id>
+   git -C repos/trade-imports-plants-prototype add src/server/app/routes-<release-id>.js
+   git -C repos/trade-imports-plants-prototype add src/server/prototype-sets/index.js
+   git -C repos/trade-imports-plants-prototype add src/server/prototype-sets/descriptions.js
+   git -C repos/trade-imports-plants-prototype add overrides.json
    ```
 
    Then:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Start design release <release-id> from high-risk-plants"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Start design release <release-id> from high-risk-plants"
    ```
 
    (Name the other release instead when it was copied from one.) The
@@ -277,7 +277,7 @@ to stay as it is.
    frozen release's (the last chance to change it):
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- freeze <release-id> --as <new-working-id> --frozen-title "Design release 2" --title "Design release 2: working copy" --describe "<the working copy's line>" --frozen-describe "<the frozen release's line>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- freeze <release-id> --as <new-working-id> --frozen-title "Design release 2" --title "Design release 2: working copy" --describe "<the working copy's line>" --frozen-describe "<the frozen release's line>"
    ```
 
    Without `--as` the copy is called `<release-id>-working`. Without
@@ -289,9 +289,9 @@ to stay as it is.
    another. The frozen release's `release.json` now says `purpose: frozen`
    and `frozen: true`.
 
-4. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format`,
+4. `npm --prefix repos/trade-imports-plants-prototype run designer:format`,
    then
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <new-working-id> --full`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <new-working-id> --full`.
    The check's ownership line ends "You froze <release-id> in this change":
    that is expected, not a problem.
 5. Save both with one commit, with nothing else in it. Stage
@@ -299,14 +299,14 @@ to stay as it is.
    and routes file, the two `prototype-sets` files and `overrides.json`, then:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Freeze design release <release-id>; carry on in <new-working-id>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Freeze design release <release-id>; carry on in <new-working-id>"
    ```
 
    From this commit on, the checks and the pre-commit hook fail if any file
    in `<release-id>` changes.
 
 6. Picture the chooser to confirm the Frozen tag and the new release's line:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <new-working-id> --pages chooser`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <new-working-id> --pages chooser`.
    Read the picture.
 7. Tell the designer: "`<release-id>` is frozen and tagged Frozen on the
    chooser. Nobody will change it. Carry on in `<new-working-id>`." Its
@@ -321,7 +321,7 @@ to stay as it is.
    list the release's saved changes on every branch, newest first:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- changes <from-release>
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- changes <from-release>
    ```
 
    Each line has the commit id, the date, the branch that holds it and the
@@ -340,7 +340,7 @@ to stay as it is.
 2. Carry it:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- carry --from <from-release> --to <to-release> --commit <commit id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- carry --from <from-release> --to <to-release> --commit <commit id>
    ```
 
    or, for what is not saved yet, `--working` in place of `--commit <id>`.
@@ -358,11 +358,11 @@ to stay as it is.
      between `<<<<<<<` and `>>>>>>>` markers. Show the designer each clash in
      plain words, keep what they choose, and remove the markers. At most 3
      files by hand; with more, suggest making the change again in the target.
-4. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <to-release>`,
+4. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <to-release>`,
    then
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <to-release> --pages <the pages the change is on> --before`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <to-release> --pages <the pages the change is on> --before`.
    For a change to words,
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- find "<new words>" --set <to-release>`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:words -- find "<new words>" --set <to-release>`
    prints the pages. `--pages changed` pictures every page when the change
    is to a caption or other shared copy.
 5. Save it (with `references/share-my-change.md`'s rules): the message says
@@ -374,7 +374,7 @@ A release never updates itself. To bring in what the real team has built
 since the release was made:
 
 1. Name what changed:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- drift <old-release>`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:release -- drift <old-release>`.
    Tell the designer which pages will change. If it says nothing changed,
    stop there and say so (and see "Staying current" for a branch behind
    `main`).
@@ -383,7 +383,7 @@ since the release was made:
 3. List the designer's saved changes in the old release:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- changes <old-release>
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- changes <old-release>
    ```
 
    It lists them newest first: carry them oldest first. Leave out the one
@@ -395,7 +395,7 @@ since the release was made:
    one with the designer.
 5. Check and save as in section D. Show the pages step 1 named, so the
    designer sees the real team's changes next to their own:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <new-release> --pages <the pages from step 1>`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <new-release> --pages <the pages from step 1>`.
 6. `designer:release -- list` now shows 0 for the new release. Offer to
    freeze or retire the old one.
 
@@ -410,7 +410,7 @@ since the release was made:
 2. Retire it:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- retire <release-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- retire <release-id>
    ```
 
    It removes the folder and routes file (`git rm`), the mount, the chooser
@@ -426,21 +426,21 @@ since the release was made:
    changed in it since), run it again with `--discard`. It then says "gone
    for good and there is nothing to save": skip steps 3 and 4.
 
-3. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status`
+3. `git -C repos/trade-imports-plants-prototype status`
    should show only those removals and the three shared files. Stage the
    three shared files:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add overrides.json
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/prototype-sets/index.js
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/prototype-sets/descriptions.js
+   git -C repos/trade-imports-plants-prototype add overrides.json
+   git -C repos/trade-imports-plants-prototype add src/server/prototype-sets/index.js
+   git -C repos/trade-imports-plants-prototype add src/server/prototype-sets/descriptions.js
    ```
 
-4. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set high-risk-plants --full`,
+4. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set high-risk-plants --full`,
    then:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Retire design release <release-id>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Retire design release <release-id>"
    ```
 
    If it prints "Nothing was saved", act on the log lines it prints, as in
@@ -457,25 +457,25 @@ that clash by hand. When git reports a conflict in any of the three:
 1. Run:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- remount
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- remount
    ```
 
    It puts back this branch's side of each clashing file, then mounts,
    describes and marks as yours every release folder on disk, and takes out
    any release whose folder is gone.
 
-2. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format`,
+2. `npm --prefix repos/trade-imports-plants-prototype run designer:format`,
    then mark the three files resolved:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add overrides.json src/server/prototype-sets/index.js src/server/prototype-sets/descriptions.js
+   git -C repos/trade-imports-plants-prototype add overrides.json src/server/prototype-sets/index.js src/server/prototype-sets/descriptions.js
    ```
 
 3. If other files clash too, those are real clashes: settle them with the
    designer as in section D, step 3.
-4. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`,
+4. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`,
    then finish the merge with
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- --no-edit`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:save -- --no-edit`.
 
 `remount` is also safe to run at any time: when everything is mounted it says
 so and changes nothing.

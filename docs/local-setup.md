@@ -35,17 +35,16 @@ Playwright tests (no port) ──▶ Animals frontend + Admin
 | `REDIS_HOST` | `host.docker.internal` | Session cache |
 | `MONGO_URI` | `mongodb://host.docker.internal:27017` | Backend → MongoDB |
 
-All compose definitions live in the workspace stack (`docker/stack/`), driven
-by the wrappers in `scripts/stack/`. See `docker/stack/AGENTS.md` for the full
-flag reference and file layout. The `make docker-compose-*` targets delegate
-to the same wrappers.
+All compose definitions live in the workspace stack (`docker/stack/`). Run
+it through `tim docker`. See `docker/stack/AGENTS.md` for the full flag
+reference and file layout.
 
 ---
 
 ## Option 1 — Full stack from Docker Hub images (quickest)
 
 ```bash
-./scripts/stack/run-stack.sh      # or: make docker-compose-up
+tim docker up
 ```
 
 Services started:
@@ -75,13 +74,13 @@ To run images published from a feature branch (falls back to `:latest` per
 service when no branch-tagged image exists):
 
 ```bash
-./scripts/stack/run-stack.sh --branch feature/EUDPA-123-my-change
+tim docker up --branch feature/EUDPA-123-my-change
 ```
 
 Tear down and wipe volumes (mongo data, floci state):
 
 ```bash
-./scripts/stack/stop-stack.sh     # or: make docker-compose-down
+tim docker down
 ```
 
 ---
@@ -93,8 +92,8 @@ starts the full stack with volume mounts. Node services get hot-reload on
 `src/` changes; the backend runs `mvn spring-boot:run`.
 
 ```bash
-./scripts/stack/run-stack.sh -d   # or: make docker-compose-dev
-make docker-logs                  # tail frontend + admin + backend logs (Ctrl-C to stop)
+tim docker dev    # build and start the stack from local source
+tim docker logs   # tail frontend + admin + backend logs (Ctrl-C to stop)
 ```
 
 After the stack is up, run the E2E tests against it:
@@ -114,13 +113,13 @@ Node source changes are picked up automatically via webpack `--watch`. No action
 The backend does **not** hot-reload — recreate the container after changing Java source:
 
 ```bash
-./scripts/stack/bounce-backend.sh   # or: make docker-restart-backend
+tim docker bounce-backend
 ```
 
 ### Switching between source and image builds
 
-`-d` is the only switch. To revert to published images, run
-`./scripts/stack/run-stack.sh` (or `make docker-compose-up`) without it.
+`tim docker dev` builds from source and `tim docker up` runs published
+images. To go back to published images, run `tim docker up`.
 
 ---
 
@@ -130,45 +129,47 @@ Exclude the service you're developing from the stack and run it from source.
 Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
 `routing-proxy`, `ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
 `reference-data`, `address-book`, `gateway` (the authoritative list is the
-`services` array at the top of `scripts/stack/run-stack.sh`).
+`SERVICES` in `tim/src/stack/definition.js`).
 
 ```bash
 # Terminal 1 — everything except the backend
-./scripts/stack/run-stack.sh -e backend
+tim docker up -e backend
 
-# Terminal 2 — backend from source
-cd repos/trade-imports-animals-backend
-SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
+# Terminal 2 — backend from source, with the local Spring profile
+tim start backend
 ```
 
-The same pattern works for the Node services (`npm run dev`), e.g.:
+The same pattern works for the Node services, for example:
 
 ```bash
-./scripts/stack/run-stack.sh -e frontend
-cd repos/trade-imports-animals-frontend
-TRADE_IMPORTS_ANIMALS_BACKEND_URL=http://localhost:8085 npm run dev
+tim docker up -e frontend
+TRADE_IMPORTS_ANIMALS_BACKEND_URL=http://localhost:8085 tim start frontend
 ```
+
+`tim start` also takes `admin`, `gateway`, `address-book`, `ins-backend`,
+`plants-frontend` and `plants-backend`. Run `tim start --help` to see the
+port each one uses.
 
 For infrastructure only (MongoDB, Redis, Floci, cdp-uploader, stubs),
 limit the stack to the relevant profiles:
 
 ```bash
-./scripts/stack/run-stack.sh --profile database --profile infrastructure --profile stubs
+tim docker up --profile database --profile infrastructure --profile stubs
 ```
 
 ---
 
 ## The database
 
-The mongo init scripts are staged by `run-stack.sh` from their owning repos:
+The mongo init scripts are staged by `tim docker up` from their owning repos:
 the workspace owns the replica-set init and the backend owns the Floci
 provisioning (`compose/start-floci.sh`).
 
 Nothing wipes the database between test runs. Every E2E spec creates the
 state it asserts on through the backend API, scoped to that run, so the suite
 passes against a database still holding earlier runs' records. To start from
-empty, take the stack down (`./scripts/stack/stop-stack.sh` removes the
-volumes) and bring it back up. Wiping the volume under a running stack drops
+empty, take the stack down (`tim docker down` removes the volumes) and
+bring it back up. Wiping the volume under a running stack drops
 the indexes each service builds once at startup, and nothing rebuilds them.
 
 ---

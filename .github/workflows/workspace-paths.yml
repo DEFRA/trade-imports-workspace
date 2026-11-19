@@ -1,0 +1,46 @@
+name: Workspace paths
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude/**'
+      - 'docs/**'
+      - '**/CLAUDE.md'
+      - 'tim/src/skill-workflows/workspace-paths.test.js'
+      - '.github/workflows/workspace-paths.yml'
+  pull_request:
+    paths:
+      - '.claude/**'
+      - 'docs/**'
+      - '**/CLAUDE.md'
+      - 'tim/src/skill-workflows/workspace-paths.test.js'
+      - '.github/workflows/workspace-paths.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workspace-paths-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workspace-paths:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tim
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tim/package-lock.json
+
+      - run: npm ci
+
+      - name: Find fixed workspace paths
+        run: npm run test:workspace-paths

@@ -986,7 +986,7 @@ public class NotificationController {
 
 ## 19. Micrometer metrics
 
-Every metric is a Micrometer meter, and `EmfMeterRegistry` publishes them all to CloudWatch with each meter's tags as its dimensions. The rule, the classes to copy, the allowlist and the tests are in `~/git/defra/trade-imports-workspace/.claude/skills/service-observability/references/METRICS.md` → "Publish (Java, Spring Boot)". Follow it; this section only shows the shape.
+Every metric is a Micrometer meter, and `EmfMeterRegistry` publishes them all to CloudWatch with each meter's tags as its dimensions. The rule, the classes to copy, the allowlist and the tests are in `.claude/skills/service-observability/references/METRICS.md` → "Publish (Java, Spring Boot)". Follow it; this section only shows the shape.
 
 `MetricsConfig` creates the registry when `aws.emf.enabled` is true (section 9), and holds the aspects `@Timed` and `@Counted` need:
 

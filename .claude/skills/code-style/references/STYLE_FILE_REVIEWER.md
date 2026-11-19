@@ -17,14 +17,14 @@ rules; a `java` bundle carries modern-java + Javadoc; a `gds` bundle the
 Nunjucks/template style set; and so on.
 
 On top of every bundle, the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+`.claude/rules/code-quality.md`
 apply to every file, whatever its language. Read that file in full.
 
 Your prompt specifies the file, PR, mode (FRESH or REFRESH), and (in
 REFRESH) the prior items reported for this file.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
-`find_workspace_root` helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ## Success criteria
 
@@ -38,8 +38,8 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 ## Required output
 
 Artefact: findings written to the file's `.style.json` via
-`file-style-add-item.sh`, resolutions via `style-mark.sh`, and a verdict
-via `file-style-set-verdict.sh` (which stamps `reviewed_at`).
+`tim style file add`, resolutions via `tim style items mark`, and a verdict
+via `tim style file verdict` (which stamps `reviewed_at`).
 
 Return one line verbatim:
 
@@ -49,12 +49,12 @@ Reviewed {file}: {N} added, {M} resolved, verdict {COMPLIANT|MINOR_ISSUES|NEEDS_
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workspace
 
 ```
-~/git/defra/trade-imports-workspace/
+
 ├── .claude/rules/code-quality.md                   # READ IN FULL: house rules for every file
 ├── docs/best-practices/                            # SOURCE: style guides per language
 │   ├── node/code-style.md                          #   16 JS style rules (node bundle)
@@ -63,7 +63,6 @@ Reviewed {file}: {N} added, {M} resolved, verdict {COMPLIANT|MINOR_ISSUES|NEEDS_
 │   ├── playwright/BEST_PRACTICES.md                 #   spec style (playwright bundle)
 │   ├── k6/BEST_PRACTICES.md                         #   perf-script style (k6 bundle)
 │   └── doc-comments/                                #   doc comment accuracy (jsdoc/javadoc)
-├── tools/style/                                    # CALL: file-style-*.sh helpers
 └── workareas/
     ├── reviews/EUDPA-XXXXX/
     │   └── repos/{repo}/{file}                     # READ-ONLY: source snapshot
@@ -98,7 +97,7 @@ If a finding is `PASS` or `N/A`, do nothing — don't add a todo.
 ### 1. Read the pre-baked style rules bundle
 
 Your prompt specifies one or more per-(repo,topic) bundle paths
-`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md`.
+`workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md`.
 Read **each** in full — they concatenate the style-relevant
 best-practices for your file's language(s) (additive: a Playwright spec
 has both a `playwright` and a `node` bundle) so you don't pay per-file
@@ -107,7 +106,7 @@ you were given; together they are the authoritative ruleset for the file
 you are reviewing.
 
 Then read
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+`.claude/rules/code-quality.md`
 in full. Where a bundle and the house rules disagree, the house rules
 win.
 
@@ -121,10 +120,13 @@ win.
 ### 3a. FRESH mode — get the file diff (cached)
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/file-diff.sh {repo} {pr-number} {file} --ticket EUDPA-XXXXX
+tim review file-diff {file} --ticket EUDPA-XXXXX --repo {repo}
 ```
 
-`--ticket` reads from the diff cache populated by `prepare-review.sh`
+If it refuses with `No cached diff`, filter the PR diff instead:
+`gh pr diff {pr-number} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`.
+
+`--ticket` reads from the diff cache the review skill's Step 1 saves
 (`workareas/reviews/EUDPA-XXXXX/.diffs/{repo}.diff`), filtered to your
 file's hunks. Review **changed lines** against the bundle rules — do
 not flag other bundle-rule violations unless they are inside functions
@@ -166,7 +168,7 @@ with the options it leaves. It is never fixed in code.
 ### 3b. REFRESH mode — check old violations and new changes
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} diff {old_sha}..{new_sha} -- {file}
+git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} diff {old_sha}..{new_sha} -- {file}
 ```
 
 For **each prior item** in the JSON block of your prompt:
@@ -175,13 +177,13 @@ For **each prior item** in the JSON block of your prompt:
   present** or **resolved**.
 - If resolved, call:
   ```bash
-  ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} --disposition Auto-Resolved --note "resolved <today>"
+  tim style items mark EUDPA-XXXXX --repo {repo} --item {id} --disposition Auto-Resolved --note "resolved <today>"
   ```
 - If still present, leave as-is (don't re-add).
 
 For **new violations** in changed lines (since `old_sha`), and for
 comment and name findings anywhere in the file that no prior item
-covers, call `file-style-add-item.sh` (see Step 5).
+covers, call `tim style file add` (see Step 5).
 
 In **REFRESH (merge-resolved)** mode (your prompt names a `merge_sha`),
 use that merge as the diff anchor and pay extra attention to:
@@ -190,7 +192,7 @@ dropped/duplicated code, style drift introduced by the merge resolution.
 ### 4. Read the full file
 
 Read the file from
-`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file}`
+`workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file}`
 (read-only snapshot) for context. Changed lines are the primary target
 for bundle rules; surrounding code helps assess whole-function rules
 such as single responsibility and composition. Judge each changed line
@@ -214,13 +216,13 @@ near-identical controller bodies are not a rule-5 finding. That covers
 production controllers only, never test support, and importing a
 sibling feature's helper is fine.
 
-### 5. Persist each finding via `file-style-add-item.sh`
+### 5. Persist each finding via `tim style file add`
 
 The per-file `.style.json` placeholder was initialised by
-`prepare-style.sh`. For every violation you decide to flag:
+`tim style prepare`. For every violation you decide to flag:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history|design} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
+tim style file add EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16 — or code-quality} --category {naming|comments|structure|duplication|logging|test-readability|history|design} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
 ```
 
 `--category` is one of the code-quality categories the review skill
@@ -248,7 +250,7 @@ id. No markdown, no escaping, no file paths to type.
 After all findings are recorded, call:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-set-verdict.sh EUDPA-XXXXX --repo {repo} --file {file} --verdict {COMPLIANT|MINOR_ISSUES|NEEDS_WORK} --reason "one sentence"
+tim style file verdict EUDPA-XXXXX --repo {repo} --file {file} --verdict {COMPLIANT|MINOR_ISSUES|NEEDS_WORK} --reason "one sentence"
 ```
 
 Verdict criteria:
@@ -269,7 +271,7 @@ file-diff cache is empty, or a `file-style-*` helper rejects every call —
 do **not** return an empty or silent result. A silently-empty return (no
 findings, no verdict, zero resolved) is indistinguishable from a clean
 `COMPLIANT` pass, and the downstream style coverage gate
-(`verify-style-coverage.sh`) will block the parent with no clue why.
+(`tim review verify style`) will block the parent with no clue why.
 
 Every termination MUST use the success shape above **or** this explicit
 failure shape — never a bare, empty return:

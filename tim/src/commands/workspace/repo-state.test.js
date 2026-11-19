@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -39,7 +40,7 @@ afterEach(() => {
 
 const workspaceWithClone = async (name) => {
   root = mkdtempSync(join(tmpdir(), 'tim-repo-state-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   const origins = join(root, 'origins')
   mkdirSync(origins)
   const fixture = await createBareRepo(origins, name, { withGhPages: false })
@@ -272,7 +273,7 @@ describe('tim workspace repo-state CLI', () => {
 
   test('Should exit 2 with a usage error when an entry is not key:path', async () => {
     root = mkdtempSync(join(tmpdir(), 'tim-repo-state-'))
-    writeFileSync(join(root, 'Makefile'), 'all:\n')
+    markWorkspaceRoot(root)
     mkdirSync(join(root, 'repos'))
 
     const { stdout, exitCode } = await execa(

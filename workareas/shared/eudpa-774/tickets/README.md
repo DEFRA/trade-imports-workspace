@@ -18,5 +18,5 @@ Excluded: 9 `ins/address-book` scenarios that the coverage-link commit db4cc928 
 Regenerate:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/derive-scenarios.sh --workarea shared/eudpa-774 --theme eudpa-774-save-and-continue --branch main --commits-from feat/EUDPA-774-save-and-continue-through-journey --out ~/git/defra/trade-imports-workspace/workareas/shared/eudpa-774/tickets/derived.json
+tim theme-ticket derive --workarea shared/eudpa-774 --theme eudpa-774-save-and-continue --branch main --commits-from feat/EUDPA-774-save-and-continue-through-journey --out workareas/shared/eudpa-774/tickets/derived.json
 ```

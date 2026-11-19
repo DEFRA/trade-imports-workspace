@@ -45,7 +45,7 @@ do it, and say what you chose at the end.
   (`references/custom-pattern.md`). With no mandate, no new `app-*` class
   and nothing in the release's `assets/`, `layout.njk`, `patterns.md` or
   `mandates.md`.
-  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/templates.md`
+  `repos/trade-imports-plants-prototype/.claude/rules/templates.md`
   has the full list of template rules.
 - The header, service navigation, phase banner and footer are always a design
   gap. They live in `src/server/app/shared/layout.njk`, which every set shares
@@ -66,7 +66,7 @@ the path and the slug is everything after the notification id. A link to
 Find the feature folder by its slug:
 
 ```bash
-grep -rn "slug: '<slug>'" ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/src/server/app/sets/<set-id>/journeys/linear/features
+grep -rn "slug: '<slug>'" repos/trade-imports-plants-prototype/src/server/app/sets/<set-id>/journeys/linear/features
 ```
 
 The dashboard's slug is `''`, so look in `features/dashboard/` directly. The
@@ -76,7 +76,7 @@ in `h.view(...)`, usually `template.njk` beside it.
 Then:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<set-id>/journeys/linear/features/<feature>/template.njk
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- src/server/app/sets/<set-id>/journeys/linear/features/<feature>/template.njk
 ```
 
 - "Yours": carry on.
@@ -90,7 +90,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prot
 ### 2. Take the starting picture
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug> --reference <slug>=<image path>
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug> --reference <slug>=<image path>
 ```
 
 Leave out `--reference` when the design came in words. Use `dashboard` and
@@ -153,7 +153,7 @@ worked example.
 ### 5. Edit the template
 
 Make every matched and nearest change in the template. Follow
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
+`repos/trade-imports-plants-prototype/.claude/rules/templates.md`.
 In particular:
 
 - import each new macro at the top of the file
@@ -180,18 +180,18 @@ gives.
 ### 7. Check it
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
 ```
 
 If it fails, read the plain-English reason, fix your own change and run it
 again. After 3 failed attempts, undo your edits to the files you changed
-(`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype restore <file>`
+(`git -C repos/trade-imports-plants-prototype restore <file>`
 for each, after telling the designer which) and explain what went wrong.
 
 ### 8. Show it and compare
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug> --reference <slug>=<image path>
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug> --reference <slug>=<image path>
 ```
 
 Open the new PNG and the reference and look at them. Never describe a

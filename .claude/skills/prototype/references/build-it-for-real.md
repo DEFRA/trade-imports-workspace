@@ -5,7 +5,7 @@ service", "build this properly", or agrees to that route after
 `references/hand-off.md` or `references/raise-the-story.md`.
 
 This is the primary route the brief points to: build the change properly in
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend`
+`repos/trade-imports-plants-frontend`
 (the real, live checkout — never the prototype's own copy of
 `high-risk-plants`), on its own branch, through the same recipes and checks a
 developer would use. It **never pushes, never opens a pull request, never
@@ -16,7 +16,7 @@ what to do next.
 ## First: is there a hand-off yet?
 
 This route builds from a hand-off folder
-(`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
+(`repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
 with its `report.json` and `brief.md`). Look for one that matches the
 designer's words. When there is none — the design lives only in a stand-in
 service nobody built pages for, or the designer describes something that
@@ -55,7 +55,7 @@ purpose, say); when either points to C2, take C2.
   request goes in the story (C1) or the DISTIL request (C2) for the real
   team to build to the real service's standards.
 - **Requires a clean checkout of `trade-imports-plants-frontend`** before
-  starting: `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
+  starting: `git -C repos/trade-imports-plants-frontend status --porcelain`
   must print nothing. If it does not, stop and say so: something else is
   mid-change there.
 - **Records and restores the starting branch** of `trade-imports-plants-frontend`,
@@ -82,7 +82,8 @@ purpose, say); when either points to C2, take C2.
 Workflow({
   scriptPath: ".claude/skills/prototype/workflow/prepare-handoff.js",
   args: {
-    handoff: "~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>",
+    workspace: "<this clone's root, as a tilde path>",
+    handoff: "<workspace>/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>",
     ticket: "EUDPA-N" or "NO_JIRA",
     route: "C1" | "C2" | "auto",
     dryRun: true
@@ -97,7 +98,7 @@ already know it. **Always run once with `dryRun: true` first**, read the
 result, and tell the designer the planned branch names, the recipe per
 element and the route before running again with `dryRun: false`. A dry run
 touches nothing in any repo — check
-`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
+`git -C repos/trade-imports-plants-frontend status --porcelain`
 (and the backend and tests repos, if the plan names them) print nothing
 before and after.
 
@@ -115,9 +116,9 @@ read-only, and show it to the designer before doing anything:
    with its recipe (`add-a-field`, `add-a-page`, `add-a-section`, or none
    for words only) and whether it needs a backend contract.
 3. Pick C1 or C2 by "Which route" above.
-4. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
+4. `git -C repos/trade-imports-plants-frontend status --porcelain`
    (must print nothing) and
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend branch --show-current`
+   `git -C repos/trade-imports-plants-frontend branch --show-current`
    (the branch to come back to).
 5. `tim workspace branch feat/<ticket>-<slug> --dry-run --json` for the
    parity quote.
@@ -129,9 +130,9 @@ read-only, and show it to the designer before doing anything:
 
 1. Records `trade-imports-plants-frontend`'s current branch, and requires the
    checkout to be clean.
-2. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend switch -c feat/<ticket>-<slug> origin/main`.
+2. `git -C repos/trade-imports-plants-frontend switch -c feat/<ticket>-<slug> origin/main`.
 3. Applies the hand-off's `upstream.patch` upstream-ready part with
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend apply --3way`
+   `git -C repos/trade-imports-plants-frontend apply --3way`
    as a starting point — never the whole patch blind: it is a starting point
    for the recipes to finish, not the final diff.
 4. Invokes the `frontend-change` skill once per element, with the target
@@ -143,7 +144,7 @@ read-only, and show it to the designer before doing anything:
 6. Writes the workspace's own behaviour-spec delta as
    `openspec.patch` inside the hand-off folder — **never** by switching the
    workspace repo to the feature branch under a running session. Whoever
-   picks up the branch applies that patch to `~/git/defra/trade-imports-workspace`
+   picks up the branch applies that patch to the workspace root
    themselves once they are ready to open the spec PR alongside the code PR.
 7. Commits the change **locally** on `feat/<ticket>-<slug>` in
    `trade-imports-plants-frontend`. Does not push.
@@ -163,7 +164,7 @@ Writes `<handoff>/distil-request.md` naming:
 - `repo:trade-imports-plants-frontend`
 - `repo:trade-imports-plants-backend` (when the change needs a backend
   contract)
-- `~/git/defra/trade-imports-workspace/openspec/specs/plants` (the standing
+- `openspec/specs/plants` (the standing
   behaviour spec, so DISTIL reconciles against what is already promised)
 - the house conventions every increment must meet, from
   `references/house-conventions.md`: its frontend reading list, and, when a
@@ -179,12 +180,12 @@ next step for whoever picks this up."
 
 ## Verify
 
-- `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
+- `git -C repos/trade-imports-plants-frontend status --porcelain`
   prints nothing before the run and, after a real (non-dry) C1 run, shows
   the checkout back on its starting branch with the working tree clean (the
   new commit lives on `feat/<ticket>-<slug>`, not on the branch you are back
   on).
-- `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend log -1 --format="%H %s" feat/<ticket>-<slug>`
+- `git -C repos/trade-imports-plants-frontend log -1 --format="%H %s" feat/<ticket>-<slug>`
   shows the local commit.
 - `<handoff>/openspec.patch` (C1) or `<handoff>/distil-request.md` (C2)
   exists.

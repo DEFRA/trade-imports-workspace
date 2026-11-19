@@ -141,7 +141,10 @@ const rangeEnds = async (cwd, range) => {
     shaOf(cwd, `${headRef}^{commit}`)
   ])
   if (!base || !to) {
-    return { skipped: `${range} names a commit that is not in this repo` }
+    return {
+      skipped: `${range} names a commit that is not in this repo`,
+      missing: base ? headRef : baseRef
+    }
   }
   if (dots === '..') return { from: base, to }
   const mergeBase = await git(cwd, ['merge-base', base, to])
@@ -159,11 +162,12 @@ const commitEnds = async (cwd, commit) => {
 /**
  * The two trees a commit or a range compares: a commit against its first
  * parent, or nothing for a first commit; `base..head` from base to head;
- * `base...head` from their merge base to head.
+ * `base...head` from their merge base to head. `skipped` says why it
+ * cannot, and `missing` names the end of a range git cannot find.
  *
  * @param {string} cwd
  * @param {{commit: string}|{range: string}} named
- * @returns {Promise<{from: string, to: string}|{skipped: string}>}
+ * @returns {Promise<{from: string, to: string}|{skipped: string, missing?: string}>}
  */
 export const endsOf = (cwd, named) =>
   named.range === undefined
@@ -215,14 +219,16 @@ const skippedOf = (outcomes) =>
  * only re-proved (its coverage.json entry changed), with the coverage it
  * has after. A commit compares with its first parent, a range as `endsOf`
  * says. A commit or range git cannot find in the workspace repo is listed
- * in `skipped`, not treated as an error. `touched` is every scenario id
- * they added, changed or re-proved.
+ * in `skipped`. `touched` is every scenario id they added, changed or
+ * re-proved. `resolvedNone` is true when it was asked about commits or
+ * ranges and could resolve none of them, so a caller cannot read the empty
+ * result as a Behaviour Spec nothing touched.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string[]} [args.commits]
  * @param {string[]} [args.ranges]
- * @returns {Promise<{commits: object[], ranges: object[], skipped: {commit: string, reason: string}[], touched: string[]}>}
+ * @returns {Promise<{commits: object[], ranges: object[], skipped: {commit: string, reason: string}[], touched: string[], resolvedNone: boolean}>}
  */
 export const diffSpecCommits = async ({
   workspaceRoot,
@@ -234,10 +240,13 @@ export const diffSpecCommits = async ({
     Promise.all(ranges.map((range) => rangeChanges(workspaceRoot, range)))
   ])
   const found = (outcomes) => outcomes.filter((outcome) => !outcome.skipped)
+  const asked = commits.length + ranges.length
+  const resolved = found(commitOutcomes).length + found(rangeOutcomes).length
   return {
     commits: found(commitOutcomes),
     ranges: found(rangeOutcomes),
     skipped: skippedOf([...commitOutcomes, ...rangeOutcomes]),
-    touched: touchedIds([...found(commitOutcomes), ...found(rangeOutcomes)])
+    touched: touchedIds([...found(commitOutcomes), ...found(rangeOutcomes)]),
+    resolvedNone: asked > 0 && resolved === 0
   }
 }

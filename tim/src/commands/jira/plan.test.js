@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
@@ -32,6 +32,12 @@ describe('buildFields', () => {
     })
   })
 
+  test('sends an Epic as issue type Epic', () => {
+    const fields = buildFields({ ...baseManifest(), type: 'Epic' }, 'body')
+
+    expect(fields.issuetype).toEqual({ name: 'Epic' })
+  })
+
   test('includes priority and parent only when set', () => {
     const fields = buildFields(
       { ...baseManifest(), priority: 'High', parent: 'EUDPA-100' },
@@ -61,6 +67,22 @@ describe('findWarnings', () => {
       expect(warnings.some((warning) => warning.includes(pattern))).toBe(true)
     }
   )
+
+  test('warns on the ticket-creator story template left unfilled', () => {
+    const storyTemplate = readFileSync(
+      new URL(
+        '../../../../.claude/skills/ticket-creator/assets/templates/story.md',
+        import.meta.url
+      ),
+      'utf8'
+    )
+
+    const warnings = findWarnings(storyTemplate)
+
+    expect(warnings.some((warning) => warning.includes('[doing what]'))).toBe(
+      true
+    )
+  })
 })
 
 describe('computePlanId', () => {
@@ -141,6 +163,18 @@ describe('buildPlan', () => {
     ])
     expect(plan.warnings).toEqual([])
     expect(plan.planId).toMatch(/^[0-9a-f]{64}$/)
+  })
+
+  test('drops the newlines at the end of the description file and keeps the ones inside it', () => {
+    writeFileSync(
+      join(dir, 'description.txt'),
+      'h2. Background\n\nBody line.\n\n\n'
+    )
+    const manifest = { ...baseManifest(), descriptionFile: 'description.txt' }
+
+    const plan = buildPlan({ manifest, dir })
+
+    expect(plan.fields.description).toBe('h2. Background\n\nBody line.')
   })
 
   test('throws USAGE naming the path when the description file is missing', () => {

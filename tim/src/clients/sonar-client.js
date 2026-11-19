@@ -52,13 +52,20 @@ const conditionSummary = ({
   actual: actualValue ?? null
 })
 
+const pullRequestSummary = ({ key, branch, base, commit }) => ({
+  key,
+  branch,
+  base,
+  sha: commit?.sha ?? null
+})
+
 const issueSummary = (baseUrl, projectKey, scope) => (issue) => ({
   key: issue.key,
   rule: issue.rule,
   severity: issue.severity,
   type: issue.type,
   file: fileOf(issue.component),
-  line: issue.line ?? null,
+  line: issue.textRange?.startLine ?? issue.line ?? null,
   message: issue.message,
   url: `${baseUrl}/project/issues?id=${projectKey}&${scope}&open=${issue.key}`
 })
@@ -70,7 +77,7 @@ const issueSummary = (baseUrl, projectKey, scope) => (issue) => ({
  * @param {object} [opts]
  * @param {string} [opts.token]
  * @param {string} [opts.baseUrl]
- * @returns {object} client with listIssues
+ * @returns {object} client with listIssues, listPullRequests and qualityGate
  */
 export const createSonarClient = ({
   token = process.env.SONAR_TOKEN,
@@ -105,8 +112,9 @@ export const createSonarClient = ({
      * @param {object} [scope]
      * @param {string|number} [scope.pullRequest]
      * @param {string} [scope.branch]
+     * @param {string[]} [scope.severities] - only issues of these severities, such as BLOCKER and CRITICAL
      */
-    listIssues: async (project, { pullRequest, branch } = {}) => {
+    listIssues: async (project, { pullRequest, branch, severities } = {}) => {
       const projectKey = projectKeyOf(project)
       const scopeParams = scopeParamsOf({ pullRequest, branch })
       const scope = scopeParams.toString()
@@ -116,6 +124,7 @@ export const createSonarClient = ({
         ps: String(PAGE_SIZE)
       })
       for (const [name, value] of scopeParams) query.set(name, value)
+      if (severities?.length) query.set('severities', severities.join(','))
       const data = await get(
         `/api/issues/search?${query}`,
         `listIssues(${projectKey})`
@@ -126,6 +135,26 @@ export const createSonarClient = ({
         branch: branch ?? null,
         total: data.total ?? data.issues.length,
         issues: data.issues.map(issueSummary(root, projectKey, scope))
+      }
+    },
+
+    /**
+     * The pull requests SonarCloud knows for a project, each with the
+     * commit it last analysed. `sha` is null for one it has not analysed.
+     *
+     * @param {string} project - repo name, with or without the DEFRA_ prefix
+     * @returns {Promise<{project: string, pullRequests: Array<{key: string, branch: string, base: string, sha: string|null}>}>}
+     */
+    listPullRequests: async (project) => {
+      const projectKey = projectKeyOf(project)
+      const query = new URLSearchParams({ project: projectKey })
+      const data = await get(
+        `/api/project_pull_requests/list?${query}`,
+        `listPullRequests(${projectKey})`
+      )
+      return {
+        project: projectKey,
+        pullRequests: (data.pullRequests ?? []).map(pullRequestSummary)
       }
     },
 

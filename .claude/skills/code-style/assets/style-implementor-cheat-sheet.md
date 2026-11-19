@@ -6,9 +6,9 @@ persona owns the goal, success criteria and workflow; this file holds
 the common fix patterns it points at.
 
 The full rule text lives in
-`~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md`,
+`docs/best-practices/node/code-style.md`,
 and the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` —
+`.claude/rules/code-quality.md` —
 consult them for anything below.
 
 ## Common fix patterns

@@ -485,13 +485,13 @@ pages, so the counts are real.
 
 ## Check it
 
-1. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`
+1. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`
 2. Picture every state in one gallery. The dashboard is pictured with the
    release's example notifications in it; each `--url` is the dashboard with
    a query:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard --before --mobile --url "?status=submitted" --url "?tab=drafts" --url "?tab=submitted" --url "?commodity=nothing-like-this" --url "?dateFrom-day=31&dateFrom-month=2&dateFrom-year=2026"
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard --before --mobile --url "?status=submitted" --url "?tab=drafts" --url "?tab=submitted" --url "?commodity=nothing-like-this" --url "?dateFrom-day=31&dateFrom-month=2&dateFrom-year=2026"
    ```
 
 3. Read each picture yourself: the filtered list (with `?status=submitted`
@@ -504,7 +504,7 @@ pages, so the counts are real.
    state.
 4. The empty dashboard (no notifications at all) needs a second run, because
    the first one pictures it with the examples in it:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard --no-examples`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard --no-examples`.
    Name both gallery paths in the report.
 5. Clear filters is a plain link: the unfiltered dashboard picture is what it
    shows. Nothing here needs the designer to click.

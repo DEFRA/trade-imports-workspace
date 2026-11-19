@@ -1,7 +1,8 @@
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { createElement } from 'react'
 import { render } from 'ink-testing-library'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import MainMenu from './MainMenu.js'
@@ -9,7 +10,7 @@ import MainMenu from './MainMenu.js'
 const createFakeWorkspace = async () => {
   const root = await mkdtemp(join(tmpdir(), 'tim-mm-'))
   await mkdir(join(root, 'repos'))
-  await writeFile(join(root, 'Makefile'), '# fake workspace\n')
+  markWorkspaceRoot(root)
   return root
 }
 
@@ -124,13 +125,13 @@ describe('MainMenu', () => {
     expect(lastFrame()).toContain('In Dev')
   })
 
-  test('selecting Docker > Dev launches run-stack.sh with -d via the injected launcher', async () => {
+  test('selecting Docker > Dev launches the dev command via the injected launcher', async () => {
     const captured = []
-    const launchStackScript = async (spec) => captured.push(spec)
+    const launchStackCommand = async (spec) => captured.push(spec)
     const { stdin, lastFrame } = render(
       createElement(MainMenu, {
         workspaceRoot: fakeRoot,
-        launchStackScript
+        launchStackCommand
       })
     )
 
@@ -139,7 +140,7 @@ describe('MainMenu', () => {
     await new Promise((resolve) => setTimeout(resolve, 30))
     stdin.write('\r')
 
-    await vi.waitFor(() => expect(lastFrame()).toMatch(/run-stack\.sh/))
+    await vi.waitFor(() => expect(lastFrame()).toMatch(/tim docker dev/))
 
     // Docker submenu: Up (0), Dev (1) — one down
     stdin.write(ARROW_DOWN)
@@ -149,8 +150,7 @@ describe('MainMenu', () => {
     await vi.waitFor(() => expect(captured).toHaveLength(1))
     expect(captured[0]).toEqual({
       workspaceRoot: fakeRoot,
-      script: 'run-stack.sh',
-      args: ['-d']
+      command: 'dev'
     })
   })
 })

@@ -15,11 +15,11 @@ pull requests stay at theme level; only the tickets split.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -56,11 +56,12 @@ points. Nothing here waits for a person.
 | The theme merges to `main` | MERGE | Regenerate against `main` so the spec links do not point at a deleted branch, then status → `Deskcheck`. |
 
 **Why the loop itself does not call this.** The theme builds run
-`lifecycle: "branch"`, which BUILD.md guarantees "makes no Jira call of any
-kind" and which "refuses a value" in any Jira field. Driving a ticket from
-inside the loop would break that contract. The orchestrating session, which
-launches the loop per theme, runs START before it and WRITE after it instead —
-same effect, contract intact. A programme's own
+`lifecycle: "branch"`, which raises no ticket, moves no status and "refuses a
+value" in any Jira field. Its one Jira step is claiming the ticket in the
+branch name before the first row: assigning it to the runner and moving it
+onto the board. Statuses and descriptions stay outside the loop: the
+orchestrating session, which launches the loop per theme, runs START before it
+and WRITE after it. A programme's own
 `workareas/<workarea>/themes/HOW-TO-BUILD.md` is where those steps belong, next
 to the phrase that starts each theme's loop.
 
@@ -76,7 +77,7 @@ ticket that told the business something untrue.
    summary naming what is missing. The backlog supplies row titles and repos,
    nothing more.
 2. **A ticket carries only its own domain.** Per-domain scenario counts must sum
-   to the theme's total. `derive-scenarios.sh` fails rather than emit a split
+   to the theme's total. `tim theme-ticket derive` fails rather than emit a split
    that does not sum, because a short ticket looks finished.
 3. **Write it after the work is on a branch, not before.** openspec for a row
    only exists once that row is built. A ticket raised at split time is a stub
@@ -92,7 +93,7 @@ ticket that told the business something untrue.
    paragraph is one unwrapped line. Scenario names are `h5.` headings, not bold
    lines — a line starting with `*` is one space from being parsed as a bullet.
    `[label|url]` links work inside table cells. `{expand}` does not work at all:
-   `update-ticket.sh` posts to `rest/api/2`, which Jira Cloud converts to its own
+   `tim jira update` posts to `rest/api/2`, which Jira Cloud converts to its own
    document format and drops macros, so it renders as literal text. There is no
    collapsing on this path; a genuinely collapsible section would need an
    Atlassian Document Format body posted to `rest/api/3`.
@@ -104,7 +105,7 @@ ticket that told the business something untrue.
    transition without confirmation.
 
    Two things still hold. Report what you changed, with the keys and the counts,
-   so the writes are visible after the fact. And when `derive-scenarios.sh` fails
+   so the writes are visible after the fact. And when `tim theme-ticket derive` fails
    — counts that do not sum, an unmapped openspec area — stop and say so rather
    than publishing a ticket you cannot vouch for.
 
@@ -116,7 +117,7 @@ Two separate mappings, and they answer different questions.
 `openspec/specs/` — `live-animals/` is animals, `plants/` is plants, `ins/` is
 the front door, `admin/` is animals admin. This is what decides which domains
 get a ticket. An area with no mapping stops the run rather than being dropped
-silently; add it to `SPEC_AREA_DOMAIN` in `derive-scenarios.mjs`.
+silently; add it to `SPEC_AREA_DOMAIN` in `tim/src/theme-ticket/derive.js`.
 
 **Rows** are attributed by the repos they changed. A repository whose name
 carries a domain word belongs to that domain. One that carries none —
@@ -159,7 +160,7 @@ than letting a reader think a row went missing.
 ## Step 0: Start
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/start-theme-ticket.sh "<trigger phrase>" --workarea <path under workareas/> --theme <id>
+tim theme-ticket start "<trigger phrase>" --workarea <path under workareas/> --theme <id>
 ```
 
 First stdout line is `MODE: STUB`, `MODE: START`, `MODE: WRITE`, `MODE: MERGE`
@@ -214,7 +215,7 @@ ticket regenerated mid-build describes a half-finished theme.
 ## Step 1: Derive
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/derive-scenarios.sh --workarea <workarea> --theme <id> --out <workareaDir>/tickets/derived.json
+tim theme-ticket derive --workarea <workarea> --theme <id> --out <workareaDir>/tickets/derived.json
 ```
 
 This does the mechanical work, and it is the only place that should: the
@@ -327,13 +328,14 @@ check on the manifest, not an approval gate.
 A domain whose ticket already exists is updated in place:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/push-description.sh <workareaDir>/tickets/<domain-slug>
+tim theme-ticket push <workareaDir>/tickets/<domain-slug> --confirm
 ```
 
 This posts the description and the manifest's summary in one request, so the two
 cannot drift, and refuses a description that is hard-wrapped or uses `{expand}`.
-`tim` has no update command — this is why the helper wraps
-`tools/jira/update-ticket.sh`.
+Without `--confirm` it is a dry run that sends nothing, so always pass it here.
+It leaves a ticket that already holds that summary and description alone, and
+reads the ticket back to check a change landed.
 
 ## Step 4: Set the status
 
@@ -387,12 +389,13 @@ the work is in development.
 Re-derive against `main` and rewrite each description so the links resolve:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/derive-scenarios.sh --workarea <workarea> --theme <id> --branch main --out <workareaDir>/tickets/derived.json
+tim theme-ticket derive --workarea <workarea> --theme <id> --branch main --out <workareaDir>/tickets/derived.json
 ```
 
 Push each description, then move each ticket on:
 
 ```bash
+tim theme-ticket push <workareaDir>/tickets/<domain-slug> --confirm
 tim jira transition <KEY> "Deskcheck"
 ```
 
@@ -405,12 +408,12 @@ rewrite specs. If the counts differ from the pre-merge run, something landed on
 # STALE flow
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/theme-ticket/check-stale.sh --workarea <workarea>
+tim theme-ticket stale --workarea <workarea>
 ```
 
 For each ticket folder it compares when its cited spec files last changed on the
-branch against when the Jira ticket was last updated, and prints a verdict per
-ticket. It reports only.
+branch against when the Jira ticket was last updated, as instants with their
+time zones, and prints a verdict per ticket. It reports only.
 
 Show the table, then re-run the WRITE flow for every stale ticket's theme. The
 whole point is that the ticket tracks the specification; a stale one left stale
@@ -431,13 +434,13 @@ Status: all <status>.
 Next: <what the user should check, or which tickets are still stale>.
 ```
 
-## Scripts cheat-sheet
+## Commands cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/theme-ticket/`:
+All under `tim theme-ticket` (`--help` on each):
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-theme-ticket.sh` | Step 0 dispatcher — emits `MODE: WRITE` or `MODE: STALE` plus the workarea paths, branch and existing ticket keys |
-| `derive-scenarios.sh` | Finds the theme's row commits, reads the scenarios they added from the current specs, splits scenarios, files and rows by domain, and fails if the counts do not sum (wraps `derive-scenarios.mjs`) |
-| `push-description.sh` | Posts a ticket folder's description and summary together, refusing hard-wrapped prose and `{expand}` |
-| `check-stale.sh` | Compares each ticket's cited spec files against its Jira update time and reports what needs regenerating |
+| `start` | Step 0 dispatcher — emits `MODE: <NAME>` plus the workarea paths, branch and existing ticket keys |
+| `derive` | Finds the theme's row commits, reads the scenarios they added from the current specs, splits scenarios, files and rows by domain, and fails if the counts do not sum |
+| `push` | Posts a ticket folder's description and summary together, refusing hard-wrapped prose and `{expand}`; a dry run until `--confirm` |
+| `stale` | Compares each ticket's cited spec files against its Jira update time and reports what needs regenerating |

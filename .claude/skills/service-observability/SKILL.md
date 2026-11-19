@@ -23,11 +23,11 @@ step.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<name>`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -49,7 +49,7 @@ skill and point its plan at these steps.
 
 | Part | State |
 |---|---|
-| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; moving it to this way renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way") |
+| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; it has moved to this way, proven by its own tests (including Caffeine cache hits and misses through a `StatsCounter`), which renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way"). `[UNPROVEN]` in dev CloudWatch for reference-data until that release is checked there. dynamics-gateway has moved to this way too, proven by its own tests: every SQS call through an AWS SDK `ExecutionInterceptor` (against Floci), the Service Bus send against the emulator, an `@Timed` `@SqsListener` method through the proxy, and the `sqs.queue.depth` gauge read from SQS at publish. `[UNPROVEN]` in dev CloudWatch for the gateway until that release is checked there |
 | Log line, Java service | Proven by tests on `trade-imports-address-book`: `EcsEventEncoderTest` and `ExternalCallRecorderIT` check that the encoded JSON holds a nested `event` object with a numeric duration, and a failure's flat `error.type` and `error.message` with no stack trace (`references/LOGGING.md` → "How to write the fields"). The same encoder's line reached dev OpenSearch from reference-data 0.27.0 on 2026-10-21; CDP dropped the earlier MDC version (`references/LOGGING.md` → "What was learned on reference-data"). `[UNPROVEN]` in dev OpenSearch for address-book until its release is checked there |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`, which publishes the old PascalCase names (`references/METRICS.md` → "A service built the old way"); the first Node ticket adds a Node reference here |
 | Dashboard and alerts, PascalCase names | Done on reference-data in dev: the dashboard imported and showing CloudWatch and OpenSearch data on 2026-10-21, and the alerts built and fired on 2026-10-22 (`references/ALERTS.md` → "Prove they fire"). Not routed to Slack or promoted |
@@ -68,13 +68,13 @@ cannot write to Grafana, OpenSearch, the CDP Portal or Slack: the dev
 Grafana needs a signed-in Editor to write, and CDP issues no
 service-account tokens. For Steps 4 and 5 Claude writes the dashboard
 JSON and the alert build sheet to
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/`;
+`workareas/ticket-planning/<ticket>/grafana/`;
 for Step 6 it gives the exact messages. The developer does the Grafana,
 Portal and Slack parts, and Claude records what they report back.
 
 A run takes days and several sessions. Its progress lives in the
 ticket's plan,
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/plan.md`:
+`workareas/ticket-planning/<ticket>/plan.md`:
 add the completion block below to it at the end of each session, and
 read it first in the next one. If the run did not start from the
 `ticket` skill there is no plan yet, so create the file (and its

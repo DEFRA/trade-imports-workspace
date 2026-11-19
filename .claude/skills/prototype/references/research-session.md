@@ -26,7 +26,7 @@ Talk to the designer in GDS plain English. Say "your research release", not
 - **Never a frozen release.** Start a research release from it instead.
 - **Only inside the research release.** Every change stays in
   `src/server/app/sets/<set-id>/`. Before any edit, run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <paths>`
   and follow what it says. Never edit the engine,
   `src/server/app/lib/`, `src/server/app/shared/`, another set, or any file
   `overrides.json` does not list as `ours` — if a request needs one, stop and
@@ -48,7 +48,7 @@ Talk to the designer in GDS plain English. Say "your research release", not
 1. List the releases:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list
+   npm --prefix repos/trade-imports-plants-prototype run designer:release -- list
    ```
 
 2. If there is a research release for this round, use it. If not, follow
@@ -57,7 +57,7 @@ Talk to the designer in GDS plain English. Say "your research release", not
    `plants-research-arrival-202610`:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run new:set -- plants-research-arrival-202610 --from high-risk-plants --describe "Research round on arrival dates, October 2026" --purpose research
+   npm --prefix repos/trade-imports-plants-prototype run new:set -- plants-research-arrival-202610 --from high-risk-plants --describe "Research round on arrival dates, October 2026" --purpose research
    ```
 
    A research release made from a working release uses `--from <that release>`.
@@ -67,7 +67,7 @@ Talk to the designer in GDS plain English. Say "your research release", not
 1. Ask the designer for the tasks, in order, and the page each one starts on.
    Keep to what they asked for. If they are unsure, or give a number of tasks
    without naming them ("three tasks"), propose them yourself from
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- fixtures <set-id>`:
+   `npm --prefix repos/trade-imports-plants-prototype run designer:examples -- fixtures <set-id>`:
    it lists each fixture's kind of journey, the pages it answers and where
    fixtures differ (potatoes are asked for a time and a place of landing,
    plants only for a date). Pick one task per difference that matters to the
@@ -83,11 +83,11 @@ Talk to the designer in GDS plain English. Say "your research release", not
 3. Check every example reaches its page, then print the links:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
    ```
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
    ```
 
    Each link is `/examples/<set-id>/<example-id>`. It keeps working after the
@@ -117,13 +117,13 @@ them (the default), or should some pages let them through?"
 1. Check research mode is not already on:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:research -- status <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:research -- status <set-id>
    ```
 
    If it is on and the designer wants different pages, turn it off first
    (see "After the sessions").
 
-2. Check `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status`
+2. Check `git -C repos/trade-imports-plants-prototype status`
    shows nothing else changed in the release. If something is, save it or
    undo it first (`references/share-my-change.md`).
 3. Relax each chosen rule by following
@@ -139,19 +139,19 @@ them (the default), or should some pages let them through?"
 5. Check the release still works. Fix anything it reports before going on:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --full
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id> --full
    ```
 
 6. Save research mode as its one commit:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:research -- on <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:research -- on <set-id>
    ```
 
    It refuses high-risk-plants, frozen releases, a changed rule file the log
    does not name, deletions, and other files already staged for a save
    (unstage them with
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype restore --staged <file>`:
+   `git -C repos/trade-imports-plants-prototype restore --staged <file>`:
    the edits stay). It stages and commits only the controllers, obligations
    and `research-mode.md` inside the release, and lists anything it left
    unsaved. The checks that run before every commit run here too, so it takes
@@ -161,12 +161,12 @@ them (the default), or should some pages let them through?"
 ### 4. Make the participant sheet
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:research -- sheet <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:research -- sheet <set-id>
 ```
 
 It takes the deployed address from `scripts/designer/prototype.json`
 (`--deployed-url <address>` overrides it for one sheet). It writes
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/sheet.html`:
+`repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/sheet.html`:
 the local and deployed links for each task, how to sign in, the errors
 switched off, how to Reset, and a checklist. Read the file and tell the
 designer what is on it. Give them the path so they can open or print it. Say
@@ -181,7 +181,7 @@ the release.
 Run the walkthrough as a dry run first:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
+npm --prefix repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
 ```
 
 Each task's example is a story, so every story that walks to its end means
@@ -209,7 +209,7 @@ task link once before the first participant." and the Reset line with
 1. Switch errors back on:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:research -- off <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:research -- off <set-id>
    ```
 
    It finds the `Research mode on for <set-id>` commit by its title and reverts
@@ -226,7 +226,7 @@ task link once before the first participant." and the Reset line with
 
 2. If the designer shares findings, draft them as a change list for the **next
    working release**, not this research release. Write
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/findings.md`
+   `repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/findings.md`
    with one row per change: page, what to change, why (the finding), and the
    reference that makes it (`references/change-the-words.md`,
    `references/change-the-journey.md`, `references/match-the-design.md`,
@@ -262,14 +262,14 @@ task link once before the first participant." and the Reset line with
 1. Run the fast check:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
    ```
 
 2. Photograph each task's starting page with its error state, where each
    task link lands, and the chooser:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <start pages, comma-separated>,chooser --examples <task example ids, comma-separated> --errors
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <start pages, comma-separated>,chooser --examples <task example ids, comma-separated> --errors
    ```
 
    It runs its own copy of the prototype on a free port from 3203, so it
@@ -281,7 +281,7 @@ task link once before the first participant." and the Reset line with
    must be back. Never claim either without looking.
 
 3. Open the sheet at
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/sheet.html`
+   `repos/trade-imports-plants-prototype/.cache/designer/research/<set-id>/sheet.html`
    and check every task has a link.
 4. In the chooser picture, the release shows the "Research mode on" tag while
    `research-mode.md` exists, and not after `off`. Each `example:<id>` picture

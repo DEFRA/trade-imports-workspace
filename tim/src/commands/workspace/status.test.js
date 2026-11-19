@@ -1,10 +1,13 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS } from '../../constants/repos.js'
+import { bundledRoster } from '../../test-support/roster.js'
+
+const { repos: REPOS } = bundledRoster
 import { collectStatuses, renderText } from './status.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -28,7 +31,7 @@ let workspace
 
 beforeEach(async () => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-status-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   const reposDir = join(workspace, 'repos')
   mkdirSync(reposDir)
   // Clone one Node repo, leave the rest absent

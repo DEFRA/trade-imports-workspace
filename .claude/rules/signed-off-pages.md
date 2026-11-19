@@ -1,8 +1,8 @@
 # Signed-off pages
 
-A signed-off page has behaviour a person has agreed. An agent can raise a
-change to it, but never decides one. This applies to all work in the
-workspace: the build loop, a single ticket, an upgrade, a style fix.
+A signed-off page has behaviour a person has agreed. Only the increment build
+loop checks for changes to it. No other work runs the check, raises a ticket
+for it or waits for a person because of it.
 
 ## What a signed-off page is
 
@@ -16,44 +16,27 @@ workspace: the build loop, a single ticket, an upgrade, a style fix.
 The spec is the contract. The tests linked to its scenarios in
 `openspec/coverage/**/coverage.json` are the evidence.
 
-## What needs a person's decision
+## How the build loop checks
 
-- A signed-off scenario is added, changed or removed, or loses its mark.
-- A test linked to a signed-off scenario is edited or deleted.
+The increment build loop (`requirements-pipeline` BUILD) looks for a change
+to a signed-off scenario, or to a test linked to one:
 
-A red linked test means the code is wrong. Fix the code, not the test, unless
-a person has ruled the behaviour should change. This is the one exception to
-CLAUDE.md rule 6.
+- Full lifecycle: on each row, as the last step before merge. If it trips,
+  the row's pull requests become drafts, a Jira ticket is raised and the row
+  is held. The loop carries on with other rows.
+- Branch lifecycle: once at theme end, after the engineering review. If it
+  trips, the theme's open pull requests, the workspace one included, become
+  drafts with a comment, and a ticket draft is written.
 
-## Find out
+It never stops a run. The mechanics are in
+[`BUILD.md`](../skills/requirements-pipeline/references/BUILD.md#the-signed-off-check).
 
-Before raising a pull request, run the check over your work:
+## How a person decides
 
-```bash
-tim spec diff --signed-off --range origin/main...HEAD --json
-tim spec diff --signed-off --repo <repo> --base origin/main --json
-```
-
-The first covers the workspace's `openspec/`. The second covers each service
-repo you changed. Exit code 3 means a signed-off scenario changes.
-
-## When it trips
-
-1. Carry on with the work. A trip is not a block.
-2. Raise a Jira ticket from `result.ticketDraft`:
-   - Write `summary` into a `tim-ticket/1` manifest, and `description` into
-     the file its `descriptionFile` names.
-   - `tim jira create --from <manifest> --json` for a dry run.
-   - `tim jira create --from <manifest> --confirm <planId> --json` to create
-     it.
-3. Keep every pull request on the branch as a draft: the workspace one for
-   `openspec/` and each repo's one, all on the same branch name. Link the
-   ticket in each.
-4. Stop there. A person approves or refuses:
-   - Approved: they take the pull requests out of draft and merge as normal.
-   - Refused: the spec change comes out, and the code behind it.
-
-Never take a pull request out of draft, or merge it, while its ticket is open.
+- Approve: take the pull requests out of draft. In the full lifecycle, set
+  the row back to `todo` too, and the next launch merges it.
+- Refuse: close the pull requests. The spec change comes out, and the code
+  behind it.
 
 ## Promoting a page
 

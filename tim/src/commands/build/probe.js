@@ -188,7 +188,7 @@ export const registerProbe = (build, timVersion) =>
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js --line 42 --test-file src/server/app/origin/controller.test.js --json\n  tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" --json -- npm --prefix tim test -- src/build/gate.test.js\n  tim build probe trade-imports-animals-frontend src/server/app/shared/trail.js --line 30 --reload-url http://localhost:3000/health --json -- npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose -- tests/animals/e2e/journeys/back-entry-points.spec.ts'
+      '\nExamples:\n  tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js --line 42 --test-file src/server/app/origin/controller.test.js --json\n  tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" --json -- npm --prefix tim test -- src/build/gate.test.js\n  tim build probe trade-imports-animals-frontend src/server/app/shared/trail.js --line 30 --reload-url http://localhost:3000/health --json -- npm --prefix ../trade-imports-ins-tests run test:docker-compose -- tests/animals/e2e/journeys/back-entry-points.spec.ts'
     )
     .action(async function probeAction(repo, file, testCommand, opts) {
       const globalOpts = this.optsWithGlobals()

@@ -12,11 +12,11 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 ## How the spec stays in sync
 
-The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. Before it marks a coverage link `strength: "full"` it runs a red probe, as `spec-cover` does: invert the production line the scenario depends on, see the test fail, restore the line, see it pass. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
+The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `tim spec lint --capability <path>`, which runs `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. Before it marks a coverage link `strength: "full"` it runs a red probe, as `spec-cover` does: invert the production line the scenario depends on, see the test fail, restore the line, see it pass. The `requirements-pipeline` build loop inherits this: it routes each frontend row through `frontend-change`.
 
 **That is the whole of the automated, per-increment coverage.** `frontend-change` targets frontend repos, and only the sets it lists (`live-animals`, `high-risk-plants`, and `germinal-products` once the Design Release 2.1 programme creates that set in `trade-imports-animals-frontend`; it writes to the `live-animals/`, `plants/` and `germinal-products/` namespaces). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you in the moment. The periodic sweep that catches the rest is `spec-catchup` (drift: the code says something the spec doesn't) and `spec-cover` (gaps: the spec says something no test proves) — see CLAUDE.md's skill table, or "Periodic sweep" below.
 
-This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
+This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or the backlog row), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
 ### The spec on `main` matches the code on `main`
 
@@ -28,16 +28,9 @@ The spec on workspace `main` says only what the service repos' `main` code does.
 
 ### Where the spec write lands
 
-`frontend-change` writes into a **spec root its caller names**, and commits nothing itself. Who commits afterwards depends on which caller you are:
+`frontend-change` writes into a **spec root its caller names** — this checkout unless the caller names another — and commits nothing itself. The edit is left **uncommitted**, with every file named in the skill's completion output; the caller commits it with the increment it belongs to. So unexpected `openspec/` entries in `git status` are deliberate, not a stray edit.
 
-| Caller | Spec root | What happens next |
-|---|---|---|
-| Direct — a person, or the `ticket` skill | this checkout | The edit is written and left **uncommitted**, with every file named in the skill's completion output. Commit it with the increment it belongs to. |
-| `journey-builder` | `workareas/journey-builder/<run>/workspace-worktree` | Committed per increment on branch `spec/<run-id>`, and carried by **one PR per run** raised at run end. |
-
-So: unexpected `openspec/` entries in `git status` are the first case, not a stray edit. And an unfamiliar worktree under `workareas/` — a worktree of this repo, nested inside its own working tree — is the second. Both are deliberate. `git worktree prune` clears a stale one; `git clean -fdx` at the repo root would destroy a live one.
-
-The split exists because a build run needs a rollback boundary. If every increment wrote this checkout uncommitted, a rolled-back increment would undo the code and keep the spec describing it — a `spec.md` asserting behaviour that exists in no repo, which validates green and is worse than the drift the sync exists to stop. A dirty `openspec/` here also silently stalls `tim`'s `--ff-only` auto-pull.
+The spec root is an input so that a caller that rolls back an increment rolls back its spec with it. If every increment wrote this checkout, a rolled-back increment would undo the code and keep the spec describing it — a `spec.md` asserting behaviour that exists in no repo, which validates green and is worse than the drift the sync exists to stop. A dirty `openspec/` here also silently stalls `tim`'s `--ff-only` auto-pull.
 
 ### Reviewing a PR that touches `openspec/`
 
@@ -131,33 +124,21 @@ Admin page specs are not checked. A frontend that is not checked out is
 listed under `skipped`, as `page-maturity`.
 
 A signed-off scenario is part of a signed-off page's contract, and the
-tests its coverage links are that contract's evidence. A change to
-either needs a person's decision.
+tests its coverage links are that contract's evidence. Only the
+increment build loop checks for a change to either, before it merges:
+see [`.claude/rules/signed-off-pages.md`](../../.claude/rules/signed-off-pages.md).
 
 ### The spec check on pull requests
 
 [`.github/workflows/spec-check.yml`](../../.github/workflows/spec-check.yml)
-runs on every workspace pull request that touches `openspec/`,
-`tim/src/spec/` or the workflow itself. It is not a required check.
+runs `tim spec lint` on every workspace pull request that touches
+`openspec/`, `tim/src/spec/` or the workflow itself. It fails when lint
+finds anything, and writes its report to the job summary. It is not a
+required check.
 
-| Step | Runs | Fails when |
-|---|---|---|
-| Lint the Behaviour Spec | `tim spec lint` | Lint finds anything |
-| Check signed-off scenarios | `tim spec diff --signed-off --range 'HEAD^1..HEAD'` | A change touches a signed-off scenario (exit 3) |
-
-- Both steps run, and each writes its report to the job summary. A
-  signed-off change also prints the ticket draft for a person to raise.
-- The checkout is the pull request's merge commit at depth 2. Its first
-  parent is the base branch's tip, so `HEAD^1..HEAD` is what the pull
-  request's commits change on the base branch.
-- No service repo is checked out. The job creates an empty `repos/`,
-  which `tim` needs to recognise the workspace root, so lint lists every
-  repo's test-title check under `skipped`. The linked-test half of
-  `tim spec diff --signed-off` (`--repo`, `--base`) does not run here: it
-  belongs in each service repo's own pull request check.
-- A red check is a prompt, not a block. Raise the ticket from the draft
-  and keep the pull requests as drafts until a person approves or refuses
-  the change.
+No service repo is checked out. The job creates an empty `repos/`, which
+`tim` needs to recognise the workspace root, so lint lists every repo's
+test-title check under `skipped`.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

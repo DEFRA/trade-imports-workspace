@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build a hand-off change into the real trade-imports-plants-frontend on its own branch (route C1), or write a DISTIL request for a bigger change (route C2). Never pushes, never opens a pull request, never merges, never launches a build run.',
   whenToUse:
-    'references/build-it-for-real.md. Launch by scriptPath with args { handoff, ticket, route, dryRun }. Always run once with dryRun true first.',
+    'references/build-it-for-real.md. Launch by scriptPath with args { workspace, handoff, ticket, route, dryRun }, workspace being the root of the workspace clone the session runs in, as a tilde path. Always run once with dryRun true first.',
   phases: [
     {
       title: 'Plan',
@@ -64,7 +64,7 @@ const TICKET_PATTERN = /^EUDPA-\d+$/
 const ROUTES = ['C1', 'C2', 'auto']
 
 const WORKFLOW_NAME = meta.name
-const REQUIRED_KEYS = ['handoff', 'ticket', 'route', 'dryRun']
+const REQUIRED_KEYS = ['workspace', 'handoff', 'ticket', 'route', 'dryRun']
 const config = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, config, REQUIRED_KEYS)
 logResolvedConfig(WORKFLOW_NAME, config)
@@ -73,8 +73,11 @@ function fail(message) {
   throw new Error(`${WORKFLOW_NAME}: ${message}`)
 }
 
+if (typeof config.workspace !== 'string' || !config.workspace.startsWith('~/')) {
+  fail(`workspace must be the root of the workspace clone this session runs in, as a tilde path. A /Users/... path is denied in Bash. Got ${JSON.stringify(config.workspace)}`)
+}
 if (typeof config.handoff !== 'string' || config.handoff.trim() === '') {
-  fail('handoff must be the hand-off folder path, such as ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/2026-09-28-consignment-addresses')
+  fail('handoff must be the hand-off folder path, such as <workspace>/repos/trade-imports-plants-prototype/handoffs/2026-09-28-consignment-addresses')
 }
 if (config.ticket !== 'NO_JIRA' && !TICKET_PATTERN.test(config.ticket)) {
   fail('ticket must be an EUDPA-N key or the literal string "NO_JIRA"')
@@ -91,7 +94,7 @@ const { handoff, ticket, dryRun } = config
 // Every workspace-side path this script reads or writes; every prototype and
 // real-repo command is written out in full so a subagent launched from the
 // workspace root never touches the wrong checkout.
-const WORKSPACE = '~/git/defra/trade-imports-workspace'
+const WORKSPACE = config.workspace.replace(/\/+$/, '')
 const PLANTS_FRONTEND = `${WORKSPACE}/repos/trade-imports-plants-frontend`
 const PLANTS_BACKEND = `${WORKSPACE}/repos/trade-imports-plants-backend`
 const TESTS_REPO = `${WORKSPACE}/repos/trade-imports-ins-tests`
@@ -345,8 +348,8 @@ const elementPrompt = (element, index) =>
   [
     `Finish element ${index + 1} of ${planned.elements.length} of this hand-off, on the ${branchName} branch of trade-imports-plants-frontend: "${element.description}".`,
     element.recipe === 'none'
-      ? 'This is a wording-only element: tidy the already-applied patch to match the real repo\'s own copy conventions, following ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/house-conventions.md, "Copy".'
-      : `Follow the frontend-change skill's recipe for this element (the ${element.recipe} recipe, with target profile high-risk-plants-frontend), reading the recipe doc and its exemplars first, exactly as a developer would — do not hand-edit the patched files without reading the recipe. Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/house-conventions.md first, for the reading-list rung that applies (Controllers, Templates or Copy).`,
+      ? `This is a wording-only element: tidy the already-applied patch to match the real repo's own copy conventions, following ${PROTOTYPE_SKILL}/references/house-conventions.md, "Copy".`
+      : `Follow the frontend-change skill's recipe for this element (the ${element.recipe} recipe, with target profile high-risk-plants-frontend), reading the recipe doc and its exemplars first, exactly as a developer would — do not hand-edit the patched files without reading the recipe. Read ${PROTOTYPE_SKILL}/references/house-conventions.md first, for the reading-list rung that applies (Controllers, Templates or Copy).`,
     'Run the recipe\'s own checks as you go (lint, unit tests for the files you touched). Do not commit.',
     PARK,
     'Return ok, a plain summary, and changedFiles.',

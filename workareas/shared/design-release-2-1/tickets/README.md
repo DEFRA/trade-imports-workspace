@@ -139,7 +139,7 @@ in two sections, at the user's request (epic EUDPA-646), so `tickets.json`
 records EUDPA-789 under both `ins` and `animals`. The theme was delivered as six
 tickets (EUDPA-706 to 711) and then EUDPA-721's picker work, all scoped by Jira
 key rather than by theme slug, so `tickets.json` lists those keys under
-`rowScopes` for `derive-scenarios` to find the footprint. All merged to `main`;
+`rowScopes` for `tim theme-ticket derive` to find the footprint. All merged to `main`;
 the ticket is `Deskcheck`. 7 scenarios (2 INS, 5 live animals) are partly
 proved, each one only an end-to-end test can prove in full.
 
@@ -197,14 +197,82 @@ The two that most often catch someone out:
 
 ```bash
 # derive a theme, split by domain
-tools/theme-ticket/derive-scenarios.sh --workarea shared/design-release-2-1 --theme journey-foundation
+tim theme-ticket derive --workarea shared/design-release-2-1 --theme journey-foundation
 
-# push one folder's description and summary together
-tools/theme-ticket/push-description.sh workareas/shared/design-release-2-1/tickets/animals-journey
+# push one folder's description and summary together (a dry run until --confirm)
+tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
 
 # which tickets has openspec moved on from?
-tools/theme-ticket/check-stale.sh --workarea shared/design-release-2-1
+tim theme-ticket stale --workarea shared/design-release-2-1
 ```
 
 Creation goes through `tim jira create --from <folder>/ticket.json`, a dry run
 until you pass `--confirm <planId>`.
+
+### Identification and permanent address — 69 scenarios, 7 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `identification-and-permanent-address-animals/` | [EUDPA-796](https://eaflood.atlassian.net/browse/EUDPA-796) | Live animals journey | 11 | 69 | 7 |
+
+69 scenarios in one domain and 7 files, so the per-domain totals are the
+theme's. Every row changed live animals alone, so there is no sibling ticket.
+The folder was `identification-and-permanent-address-stub/` until the WRITE
+flow filled it in, and `tickets.json` now records `animals` in place of
+`stub`.
+
+The theme holds 13 rows; 11 are in the ticket's table. inc-049 was dropped and
+inc-058 changed only the end-to-end test suite, so neither is attributed to
+the domain, and `derived.json` reports the first as an `excludedRow`. inc-045
+is in the table as **Not built**: it is blocked behind the templates theme,
+which is parked, and nothing else in the theme depends on it.
+
+Of the 69 scenarios, 54 are written out in the ticket. The other 15 are each a
+mirror, pair or boundary twin of one that is, named in a line beneath it — a
+full write-out came to 33,715 characters against Jira's 32,767 limit.
+
+Not yet merged. Three pull requests are open on
+`feat/EUDPA-796-design-release-2-1-identification-and-permanent-address`
+(frontend #476, backend #126, tests #100), all green. The ticket is `In Dev`
+and the MERGE flow moves it to `Deskcheck`.
+
+### Consignment parties — 77 scenarios, 12 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `consignment-parties-animals/` | [EUDPA-805](https://eaflood.atlassian.net/browse/EUDPA-805) | Live animals journey | 11 | 52 | 7 |
+| `consignment-parties-plants/` | [EUDPA-821](https://eaflood.atlassian.net/browse/EUDPA-821) | High-risk plants journey | 5 | 21 | 4 |
+| `consignment-parties-ins/` | [EUDPA-822](https://eaflood.atlassian.net/browse/EUDPA-822) | Import notification service front door | 2 | 4 | 1 |
+
+52 + 21 + 4 = 77 scenarios, and 7 + 4 + 1 = 12 files, so the per-domain
+totals are the theme's. The folder was `consignment-parties-stub/` until the
+WRITE flow filled it in as the animals domain, and `tickets.json` now records
+`animals`, `plants` and `ins` in place of `stub`.
+
+The theme holds 13 rows, and the three tables hold 18 row entries between
+them, because five rows changed more than one service: inc-087, inc-090,
+inc-094, inc-097 and inc-243 each appear in both the animals and the plants
+ticket. inc-272 is in no table — it changed only the performance-test suite,
+so it altered no behaviour a business reader can go and look at. inc-237 is in
+the animals table marked test-suites-only for the same reason, because its row
+still belongs to the domain it proves.
+
+Of the 52 animals scenarios, 40 are written out in that ticket; the other 12
+are each a mirror, pair or boundary twin of one that is, named in a line
+beneath it. The plants and ins tickets write out all 21 and all 4.
+
+`derived.json` reported no `outsideFootprint` entries and one warning:
+`SCN-ADDR-016-C` was added to `live-animals/addresses/spec.md` by `8bd56993`
+and later removed, so it is not counted.
+
+Merged on 19 November. All six pull requests landed on `main` — animals-frontend
+#486 (`c944e373`), plants-frontend #148 (`294a0c73`), ins-tests #114
+(`a9978e79`), ins-frontend #87 (`1f2dd64f`), performance-tests #37
+(`2c3841d2`) and workspace #273 (`5f23d166`). The build loop's signed-off check
+had held them as drafts over an edit to a file holding a test linked to
+`SCN-ARRIVAL-012-A`, which is signed off; a person approved it. The workspace
+pull request was squashed, so `main` carries no row commits and the MERGE flow
+re-derived with `--branch main --commits-from
+feat/EUDPA-805-design-release-2-1-consignment-parties`, reporting the same
+52/21/4 split. The three tickets are `Deskcheck` and their specification links
+point at `main`.

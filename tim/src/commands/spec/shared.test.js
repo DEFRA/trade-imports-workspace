@@ -1,5 +1,6 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, vi, afterEach } from 'vitest'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { makeSpecAction } from './shared.js'
@@ -9,7 +10,7 @@ let workspaceRoot
 
 const seedWorkspace = () => {
   workspaceRoot = mkdtempSync(join(tmpdir(), 'tim-spec-shared-'))
-  writeFileSync(join(workspaceRoot, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspaceRoot)
   mkdirSync(join(workspaceRoot, 'repos'), { recursive: true })
   return workspaceRoot
 }

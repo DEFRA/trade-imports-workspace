@@ -24,12 +24,12 @@ reviewing someone's PR — use `review` (correctness across languages) or
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -42,7 +42,7 @@ by name via the Task tool.
 
 If the user asks to plan / scope / "how should I" an EUDPA ticket,
 follow `references/PLANNER.md`. Produces
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/plan.md`. No
+`workareas/ticket-planning/EUDPA-X/plan.md`. No
 implementation.
 
 The plan records decisions, homes and owners. It never writes names,
@@ -54,11 +54,10 @@ exists it is reviewed against `assets/plan-review-checklist.md`.
 If the user asks to build / implement / follow the plan, follow
 `references/IMPLEMENTOR.md`. Re-checks the plan against the checklist,
 makes the change under the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`,
+`.claude/rules/code-quality.md`,
 runs a delete-first comment pass over touched code, and raises a PR.
 Verifies with unit tests, lint, E2E and GitHub Actions. Between a green
-verification and the PR it syncs the behaviour spec and runs the
-signed-off check, as below.
+verification and the PR it syncs the behaviour spec, as below.
 
 ### Sync the behaviour spec
 
@@ -68,7 +67,7 @@ prove it (`coverage/`). A ticket that changes behaviour without it
 leaves drift for the next person to absorb.
 
 The steps are `frontend-change` Step 5, whatever the repo — read
-`~/git/defra/trade-imports-workspace/.claude/skills/frontend-change/SKILL.md`
+`.claude/skills/frontend-change/SKILL.md`
 → "Step 5: Sync the behaviour spec" and its `references/SPEC_SYNC.md`
 before the first write. In short:
 
@@ -84,7 +83,7 @@ before the first write. In short:
 5. **Validate**, once per capability written, then lint the whole spec:
 
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root ~/git/defra/trade-imports-workspace <capability-path> [<capability-path> ...]
+   tim spec lint --capability <capability-path>
    ```
 
    ```bash
@@ -98,29 +97,6 @@ before the first write. In short:
 A failed validate, lint or self-check is a halt: fix it before the PR.
 Commit the spec on the same branch name in the workspace, and raise its
 PR beside the repo PRs (`CLAUDE.md` rule 2).
-
-### Before the pull request: the signed-off check
-
-Run it once the spec and code are committed, before raising any PR, for
-Implement and Refactor alike: the range reads commits only. Once for the
-workspace's `openspec/`, then once for each repo you changed:
-
-```bash
-tim spec diff --signed-off --range origin/main...HEAD --json
-```
-
-```bash
-tim spec diff --signed-off --repo <repo> --base origin/main --json
-```
-
-Exit 0 means no signed-off scenario changes: raise the PRs as normal.
-Exit 3 is a trip: follow
-`~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
-→ "When it trips". Raise every PR on the branch as a draft linked to the
-ticket it raises, and never take one out of draft. A red test linked to
-a signed-off scenario means the code is wrong: fix the code, not the
-test. A Refactor that trips has changed behaviour it should not have:
-undo that change rather than raising it.
 
 ### Refactor
 
@@ -144,38 +120,33 @@ This is rule 3's treatment of merging a PR, for the same reason: both
 reach other people, and neither is yours to trigger unprompted. It holds
 even when the work is finished and the comment would be accurate.
 
-The one exception is the ticket a signed-off trip raises (see "Before
-the pull request: the signed-off check"). The workspace rule in
-`.claude/rules/signed-off-pages.md` asks for it, so raise it without
-asking, and name it in your report.
-
 When the user does ask, follow
-`~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`:
+`docs/best-practices/jira/ticket-conventions.md`:
 wiki markup with escaping, no "Won't Do" transition, no sprints, and
 the Blocks link direction. Check the render afterwards, as that file says.
 
 ## Shared tooling
 
-All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
+All under `tools/` per CC-3:
 
 | Domain | Used by | Purpose |
 |---|---|---|
-| `tools/ticket/prepare-plan.sh EUDPA-X [--repos r1,r2] [--json]` | PLANNER | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` |
-| `tools/ticket/prepare-implement.sh EUDPA-X [--repo R] [--json]` | IMPLEMENTOR | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
-| `tools/ticket/setup-branch.sh EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B]` | IMPLEMENTOR | One-dispatch fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` (`--type` defaults to `feat`) |
-| `tools/jira/` (`ticket.sh`, `comments.sh`) | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
-| `tools/jira/` (`add-comment.sh`, `transition-ticket.sh`) | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
-| `tools/github/` (`prs.sh`, `pr-details.sh`, `diff.sh`) | IMPLEMENTOR | PR creation context + inspection |
-| `tools/github-actions/` (`trigger-workflow.sh`, `wait-for-run.sh`, `get-failure.sh`, `run-status.sh`, `get-logs.sh`) | IMPLEMENTOR | CI verification |
-| `tools/review/detect-tech.sh` | called by `prepare-plan.sh` / `prepare-implement.sh` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
+| `tim ticket prepare-plan EUDPA-X [--repos r1,r2] [--json]` | PLANNER | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` |
+| `tim ticket prepare-implement EUDPA-X [--repo R] [--json]` | IMPLEMENTOR | Assert plan, re-validate detect-tech, emit `.implement-meta.json` |
+| `tim ticket branch EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B]` | IMPLEMENTOR | One-dispatch fetch → checkout base → pull → checkout `<type>/EUDPA-X-<slug>` (`--type` defaults to `feat`) |
+| `tim jira ticket EUDPA-X`, `tim jira comments EUDPA-X` | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
+| `tim jira comment EUDPA-X --file F --confirm`, `tim jira transition EUDPA-X "Status"` | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
+| `gh search prs EUDPA-X --owner DEFRA`, `gh pr view <n> --repo DEFRA/<repo>`, `gh pr diff <n> --repo DEFRA/<repo>` | IMPLEMENTOR | PR creation context + inspection |
+| `gh workflow run`, `gh run list`, `gh run watch`, `gh run view [--log-failed\|--log]` | IMPLEMENTOR | CI verification |
+| `tim review detect-tech <repo-path> [--json]` | used by `tim ticket prepare-plan` / `prepare-implement` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
 
-Authenticate to Jira/GitHub before fetching (or run the umbrella
-`~/git/defra/trade-imports-workspace/tools/auth.sh`).
+Check your Jira and Confluence sign-in with `tim auth`, and your GitHub
+sign-in with `gh auth status`, before fetching.
 
 ## Best practices
 
 PLANNER and IMPLEMENTOR cite a subset of
-`~/git/defra/trade-imports-workspace/docs/best-practices/` based on detected tech. The
+`docs/best-practices/` based on detected tech. The
 universe spans `gds/`, `java/`, `node/`, `playwright/`, `k6/`,
 `rest-api/`, `doc-comments/`, and `docker-compose.md`. Load only what
 applies to the repo being worked on.
@@ -184,9 +155,9 @@ applies to the repo being worked on.
 
 | Path | Purpose |
 |---|---|
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/ticket.md` | `prepare-plan.sh` writes (Jira metadata + description + comments + Confluence refs) |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/plan.md` | PLANNER writes and records its plan review; IMPLEMENTOR reads; both may amend with deviations |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.plan-meta.json` | `prepare-plan.sh` writes — ticket metadata + per-repo tech list |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/best-practices/<repo>.md` | `prepare-plan.sh` writes — concatenated best-practices bundle per repo |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.implement-meta.json` | `prepare-implement.sh` writes — re-validated tech + cached PR diffs |
-| `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-X/.diffs/<repo>.diff` | `prepare-implement.sh` writes — cached PR diff (when a prior PR exists) |
+| `workareas/ticket-planning/EUDPA-X/ticket.md` | `tim ticket prepare-plan` writes (Jira metadata + description + comments + Confluence refs) |
+| `workareas/ticket-planning/EUDPA-X/plan.md` | PLANNER writes and records its plan review; IMPLEMENTOR reads; both may amend with deviations |
+| `workareas/ticket-planning/EUDPA-X/.plan-meta.json` | `tim ticket prepare-plan` writes — ticket metadata + per-repo tech list |
+| `workareas/ticket-planning/EUDPA-X/best-practices/<repo>.md` | `tim ticket prepare-plan` writes — concatenated best-practices bundle per repo |
+| `workareas/ticket-planning/EUDPA-X/.implement-meta.json` | `tim ticket prepare-implement` writes — re-validated tech |
+| `workareas/ticket-planning/EUDPA-X/.diffs/<repo>.diff` | IMPLEMENTOR writes with `gh pr diff` — cached PR diff (when a prior PR exists) |

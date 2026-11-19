@@ -1,5 +1,15 @@
 import { describe, test, expect } from 'vitest'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync
+} from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'acorn'
@@ -9,6 +19,11 @@ import {
 } from '../test-support/workflow-runtime.js'
 import { ATTEMPT_STAGES } from '../build/start.js'
 import { loadBacklogSchema, rigoursOf } from './backlog-schema.js'
+import {
+  CODE_QUALITY_CATEGORIES,
+  DESIGN_CATEGORIES,
+  FUNCTIONAL_CATEGORIES
+} from '../review/finding-categories.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -73,15 +88,10 @@ const wordsInJsArray = (source, name) => {
   return [...items.matchAll(/'([^']+)'/g)].map(([, word]) => word)
 }
 
-const wordsInShellArray = (source, name) => {
-  const [, items] = source.match(new RegExp(`^${name}=\\(([^)]*)\\)`, 'm'))
-  return items.trim().split(/\s+/)
-}
-
-const findingCategoriesOf = (source, wordsInArray) => ({
-  functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
-  design: wordsInArray(source, 'DESIGN_CATEGORIES')
+const findingCategoriesIn = (loop) => ({
+  functional: wordsInJsArray(loop, 'FUNCTIONAL_CATEGORIES'),
+  codeQuality: wordsInJsArray(loop, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInJsArray(loop, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -124,7 +134,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'approvalWaitMinutes',
     'e2e',
     'resumeFrom',
-    'rigour'
+    'rigour',
+    'workspace'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -177,14 +188,15 @@ const BASE_ARGS = {
   approvalWaitMinutes: 20,
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'full'
+  rigour: 'full',
+  workspace: null
 }
 
 const WORKSPACE_ANSWER = {
   ok: true,
   abs: '/ws',
   tilde: '~/ws',
-  canonical: true,
+  from: 'session',
   startedAt: '20261001T090000Z',
   machineConfig: null,
   workers: {},
@@ -239,15 +251,42 @@ const planCheckAnswer = (planAnswers, label) => {
 
 const SIGNED_OFF_CLEAN = {
   ok: true,
+  held: false,
   exitCode: 0,
   changes: 0,
   summary: 'No signed-off scenario changes.'
 }
 const isSignedOffStage = (label) =>
-  / (signed off|signed-off ticket|park)$/.test(label ?? '')
+  / (signed off|signed-off (ticket|hold|rehold))$/.test(label ?? '')
 const signedOffAnswer = (signedOffAnswers, label) => {
   if (label in signedOffAnswers) return signedOffAnswers[label]
   return / signed off$/.test(label) ? SIGNED_OFF_CLEAN : null
+}
+
+const TICKET_CLAIM_LABEL = 'ticket claim'
+const isTicketClaim = (label) => label === TICKET_CLAIM_LABEL
+
+const timEnvelope = (result) => ({
+  exitCode: 0,
+  stdout: JSON.stringify({
+    ok: true,
+    schema_version: 1,
+    tim_version: '0.0.0',
+    result,
+    errors: []
+  })
+})
+
+const TICKET_CLAIMED = {
+  assign: timEnvelope({ mode: 'unchanged', key: 'EUDPA-1' }),
+  moveToBoard: timEnvelope({ mode: 'unchanged', key: 'EUDPA-1' })
+}
+
+const CLAIMED_RESULT = {
+  key: 'EUDPA-1',
+  assign: 'unchanged',
+  moveToBoard: 'unchanged',
+  problems: []
 }
 
 const answeringRunLease = (
@@ -255,7 +294,8 @@ const answeringRunLease = (
   leaseAnswers = {},
   themeAnswers = {},
   planAnswers = {},
-  signedOffAnswers = {}
+  signedOffAnswers = {},
+  claimAnswer = TICKET_CLAIMED
 ) => {
   let acquires = 0
   const acquireAnswer = () => {
@@ -268,12 +308,14 @@ const answeringRunLease = (
       ? acquireAnswer()
       : (leaseAnswers.release ?? LEASE_RELEASED)
   const answerOwnStage = (label) => {
+    if (isTicketClaim(label)) return claimAnswer
     if (isRunLease(label)) return leaseAnswer(label)
     if (isPlanCheck(label)) return planCheckAnswer(planAnswers, label)
     if (isSignedOffStage(label)) return signedOffAnswer(signedOffAnswers, label)
     return themeAnswer(themeAnswers, label)
   }
   const isOwnStage = (label) =>
+    isTicketClaim(label) ||
     isRunLease(label) ||
     isThemeCheck(label) ||
     isPlanCheck(label) ||
@@ -297,7 +339,7 @@ const answeringRunLease = (
 const stageLabels = (run) =>
   run.agents
     .map((entry) => entry.options.label)
-    .filter((label) => !isRunLease(label))
+    .filter((label) => !isRunLease(label) && !isTicketClaim(label))
 
 const modelOf = (run, label) =>
   run.agents.find((entry) => entry.options.label === label).options.model
@@ -307,11 +349,11 @@ const promptOf = (run, label) =>
 
 const runLoop = (
   path,
-  { answers = [], lease, themes, plans, signedOff, ...options } = {}
+  { answers = [], lease, themes, plans, signedOff, claim, ...options } = {}
 ) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease, themes, plans, signedOff)
+    answers: answeringRunLease(answers, lease, themes, plans, signedOff, claim)
   })
 
 const startAnswer = (result) => ({
@@ -366,6 +408,22 @@ const withoutKeys = (object, keys) =>
   )
 
 const withoutKey = (object, key) => withoutKeys(object, [key])
+
+const WATCH_LOOP_EXCEPTION =
+  'The ONE exception to the single-command and no-sleep rules is the `for try in ...; done` checks watch loop that a WAIT ON ITS CHECKS step gives you: run it as one Bash call, exactly as written, `;`, `||` and `sleep 30` included. Never split it into separate calls, never drop its loop, and never write a sleep of your own anywhere else.'
+
+const watchLoopExceptionPlacesIn = (prompt) => {
+  const flatPrompt = prompt.replace(/\s+/g, ' ')
+  return {
+    afterTheNoSleepRule: flatPrompt.includes(
+      `treat it as unresolved, never as a pass. ${WATCH_LOOP_EXCEPTION}`
+    ),
+    rightBeforeTheWatchLoop: flatPrompt.includes(
+      `${WATCH_LOOP_EXCEPTION} Block on it by running this exactly: \`for try in $(seq 5); do gh pr checks`
+    ),
+    timesStated: countOccurrences(flatPrompt, WATCH_LOOP_EXCEPTION)
+  }
+}
 
 describe('every workflow script', () => {
   test('finds at least the build loop, the distil workflow and the canary', () => {
@@ -426,14 +484,12 @@ describe('every workflow script', () => {
       join(buildLoopDir, 'increment-build-loop.js'),
       'utf8'
     )
-    const tools = readFileSync(
-      join(workspaceRoot, 'tools', 'review', 'finding-categories.sh'),
-      'utf8'
-    )
 
-    expect(findingCategoriesOf(tools, wordsInShellArray)).toEqual(
-      findingCategoriesOf(loop, wordsInJsArray)
-    )
+    expect({
+      functional: FUNCTIONAL_CATEGORIES,
+      codeQuality: CODE_QUALITY_CATEGORIES,
+      design: DESIGN_CATEGORIES
+    }).toEqual(findingCategoriesIn(loop))
   })
 
   test('has no FALLBACK', () => {
@@ -457,6 +513,14 @@ describe('every workflow script', () => {
       .map((script) => script.name)
 
     expect(withDefault).toEqual([])
+  })
+
+  test('names no absolute home folder', () => {
+    const withHomePath = workflowScripts()
+      .filter((script) => /\/Users\/[a-z]/.test(script.source))
+      .map((script) => script.name)
+
+    expect(withHomePath).toEqual([])
   })
 
   test('stops before any agent and names its required keys when args is empty', async () => {
@@ -628,6 +692,81 @@ describe('increment-build-loop', () => {
     expect(run.error.message).toContain(
       'no readable backlog at /ws/workareas/shared/args-fixture/backlog.json'
     )
+  })
+
+  describe('the workspace root', () => {
+    const SECOND_CLONE = '~/clones/second-workspace'
+
+    const runWithWorkspace = (workspace) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace },
+        answers: [
+          {
+            ...WORKSPACE_ANSWER,
+            abs: '/home/second-workspace',
+            from: 'config'
+          },
+          null
+        ]
+      })
+
+    test('builds every command in the clone config.workspace names, whatever the resolver reports', async () => {
+      const run = await runWithWorkspace(`${SECOND_CLONE}/`)
+
+      expect(run.agents[1].prompt).toContain(
+        `${SECOND_CLONE}/workareas/shared/args-fixture/backlog.json`
+      )
+      expect(run.agents[1].prompt).not.toContain('~/ws/')
+      expect(run.logs).toContain(
+        `increment-build-loop: workspace ${SECOND_CLONE}, from config`
+      )
+    })
+
+    test('tells the resolver to check config.workspace alone', async () => {
+      const run = await runWithWorkspace(SECOND_CLONE)
+
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`git -C ${SECOND_CLONE} rev-parse --show-toplevel\``
+      )
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`ls ${SECOND_CLONE}/.claude/skills/requirements-pipeline/workflow/increment-build-loop.js\``
+      )
+      expect(promptOf(run, 'workspace')).not.toContain('CLAUDE_PROJECT_DIR')
+      expect(promptOf(run, 'workspace')).not.toContain('is "fallback"')
+    })
+
+    test('resolves from the session folder first when config.workspace is null', async () => {
+      const run = await runJsonStringArgs()
+      const prompt = promptOf(run, 'workspace')
+
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeGreaterThan(
+        -1
+      )
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeLessThan(
+        prompt.indexOf('CLAUDE_PROJECT_DIR')
+      )
+      expect(prompt.indexOf('CLAUDE_PROJECT_DIR')).toBeLessThan(
+        prompt.indexOf('is "fallback"')
+      )
+      expect(run.logs).toContain(
+        'increment-build-loop: workspace ~/ws, from session'
+      )
+    })
+
+    test.each([
+      ['an absolute path', '/Users/someone/ws'],
+      ['an empty string', ''],
+      ['a number', 7]
+    ])('refuses %s before any agent', async (_, workspace) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace }
+      })
+
+      expect(run.error.message).toContain(
+        'config.workspace must be the workspace root as a tilde path'
+      )
+      expect(run.agents).toEqual([])
+    })
   })
 
   test('resolves object args to the same configuration as the string', async () => {
@@ -1156,8 +1295,10 @@ describe('increment-build-loop', () => {
         }
       ],
       reviewChecks: [],
+      signedOffChecks: [],
       specChecks: [],
       refutedFindings: [],
+      ticketClaim: null,
       stopped: {
         reason: 'no-buildable',
         detail: 'the increments list is built out'
@@ -1249,7 +1390,7 @@ describe('increment-build-loop', () => {
     const run = await runJsonStringArgs()
 
     expect(run.agents[0].prompt).toContain(
-      'Then run `tim build workers --workspace <the candidate path you used> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
+      'Then run `tim build workers --workspace <tilde> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
     )
   })
 
@@ -1671,8 +1812,10 @@ describe('increment-build-loop', () => {
           }
         ],
         reviewChecks: [],
+        signedOffChecks: [],
         specChecks: [],
         refutedFindings: [],
+        ticketClaim: CLAIMED_RESULT,
         stopped: {
           reason: 'ticket-failed',
           detail:
@@ -1799,7 +1942,7 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
+        `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
     })
@@ -2339,7 +2482,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
+          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -2417,17 +2560,25 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('tells the implementor and fixer to check themselves with the gate’s unit and FIT phases only, under the run’s lease', async () => {
+      test('tells the implementor and fixer to check themselves with the gate’s unit and FIT phases only, under the run’s lease, scoped to the row’s own repos', async () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --repo backend --repo tests --repo frontend --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --repo backend --repo tests --repo frontend --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
+      })
+
+      test('leaves the baseline and the ladder gating every repo, so they still prove the whole tree', async () => {
+        const run = await runThroughFixToLadder()
+
+        for (const label of ['inc-900 baseline', 'inc-900 ladder']) {
+          expect(promptOf(run, label)).not.toContain('--repo ')
+        }
       })
 
       test('tells no agent to stop the workspace stack before a unit or FIT suite', async () => {
@@ -3164,11 +3315,12 @@ describe('increment-build-loop', () => {
             'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
           )
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [<capability path> ...]`'
+            '3. Validate, in the FOREGROUND: run `tim spec lint --capability <prefix> --workspace ~/ws --json` once per\n   prefix you wrote under.'
           )
           expect(prompt).toContain(
-            'Either exiting non-zero means the row is NOT complete'
+            'A non-zero exit means the row is NOT complete'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the implementor to report a spec sync line, none with its reason included', async () => {
@@ -3306,15 +3458,15 @@ describe('increment-build-loop', () => {
             'each one removed as `deleted: <capability path>`'
           )
           expect(prompt).toContain(
-            'A capability you deleted is not validated: confirm it is gone\n   with `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
+            'A capability you deleted is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
           )
         })
 
-        test('tells the ladder to validate only the capabilities that still exist', async () => {
+        test('tells the ladder to confirm a deleted capability is gone rather than validate it', async () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            'A path marked `deleted:` is not validated: confirm it is gone with `ls ~/ws/openspec/specs/<capability path>`,\n   which must fail'
+            'A path the lines mark `deleted:` is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail'
           )
         })
 
@@ -3336,8 +3488,9 @@ describe('increment-build-loop', () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [...] > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-validate.log 2>&1`'
+            '`tim spec lint --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-lint-<prefix>.log 2>&1`'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the fixer to keep the spec in step with its fix', async () => {
@@ -3386,7 +3539,7 @@ describe('increment-build-loop', () => {
       describe('the command forms a plan check may take', () => {
         const PREFIX_CHECK =
           'STUB_PROFILE=fast npm --prefix ~/ws/repos/trade-imports-stub run start'
-        const SCRIPT_CHECK = 'bash scripts/stack/run-stack.sh --help'
+        const SCRIPT_CHECK = 'bash tools/example/check.sh --help'
         const NPM_CHECK =
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js'
 
@@ -4682,8 +4835,14 @@ describe('increment-build-loop', () => {
           const run = await runFrom(null)
 
           expect(
-            run.agents.map((entry) => entry.options.label).slice(0, 4)
-          ).toEqual(['workspace', 'preflight', ACQUIRE_LABEL, 'inc-900 start'])
+            run.agents.map((entry) => entry.options.label).slice(0, 5)
+          ).toEqual([
+            'workspace',
+            'preflight',
+            ACQUIRE_LABEL,
+            TICKET_CLAIM_LABEL,
+            'inc-900 start'
+          ])
         })
 
         test('tells the lease taker to start the stack from local source under the run’s holder', async () => {
@@ -4768,8 +4927,10 @@ describe('increment-build-loop', () => {
             result: {
               increments: [],
               reviewChecks: [],
+              signedOffChecks: [],
               specChecks: [],
               refutedFindings: [],
+              ticketClaim: null,
               stopped: {
                 reason: 'stack-held',
                 detail:
@@ -4787,7 +4948,7 @@ describe('increment-build-loop', () => {
               refused: false,
               holder: null,
               summary:
-                'The workspace stack did not come up (run-stack.sh exited 1).'
+                'The workspace stack did not come up (tim docker dev exited 1).'
             }
           })
 
@@ -4798,7 +4959,7 @@ describe('increment-build-loop', () => {
             stopped: {
               reason: 'stack-failed',
               detail:
-                'the run could not take the workspace stack, so it built nothing. The workspace stack did not come up (run-stack.sh exited 1).'
+                'the run could not take the workspace stack, so it built nothing. The workspace stack did not come up (tim docker dev exited 1).'
             },
             labels: ['workspace', 'preflight', ACQUIRE_LABEL, RELEASE_LABEL]
           })
@@ -4920,299 +5081,6 @@ describe('increment-build-loop', () => {
         })
 
       const labels = (run) => stageLabels(run)
-
-      test('checks every repo is on the branch, then runs the signed-off check, before land', async () => {
-        const run = await runToFailedLand()
-        const guardAt = labels(run).indexOf('inc-900 branch-guard:land')
-
-        expect(labels(run).slice(guardAt, guardAt + 3)).toEqual([
-          'inc-900 branch-guard:land',
-          'inc-900 signed off',
-          'inc-900 land'
-        ])
-      })
-
-      describe('a change to a signed-off scenario', () => {
-        const TRIPPED = {
-          ok: true,
-          exitCode: 3,
-          changes: 2,
-          summary:
-            'changed SCN-ORIGIN-001-A plants/journey-pages/origin | test-edited SCN-ORIGIN-001-B plants/journey-pages/origin'
-        }
-        const RAISED = { ok: true, key: 'EUDPA-990', summary: 'raised' }
-        const PARKED = { ok: true, summary: 'parked' }
-        const LANDED = { landed: true, commit: 'abc1234', summary: 'committed' }
-        const DRAFT_PRS = {
-          ok: true,
-          prs: [
-            {
-              repo: 'frontend',
-              url: 'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9',
-              number: 9,
-              raised: true
-            }
-          ],
-          summary: 'raised as a draft'
-        }
-
-        const runToTrip = (signedOff, ...afterGuard) =>
-          runLoop(scriptPath, {
-            args: BASE_ARGS,
-            signedOff,
-            answers: [
-              WORKSPACE_ANSWER,
-              PREFLIGHT_ANSWER,
-              START_ANSWER,
-              BASELINE_ANSWER,
-              PLANNED,
-              implementAnswer(['frontend:src/a.js']),
-              NO_FINDINGS,
-              NO_FINDINGS,
-              NO_FINDINGS,
-              GREEN_LADDER,
-              ON_BRANCH,
-              ...afterGuard
-            ]
-          })
-
-        const runTripped = () =>
-          runToTrip(
-            {
-              'inc-900 signed off': TRIPPED,
-              'inc-900 signed-off ticket': RAISED,
-              'inc-900 park': PARKED
-            },
-            LANDED,
-            DRAFT_PRS
-          )
-
-        test('compares the uncommitted spec, and each of the row’s repos with the base branch, before it lands', async () => {
-          const run = await runTripped()
-
-          expect(promptOf(run, 'inc-900 signed off')).toContain(
-            '`tim spec diff --signed-off --uncommitted --repo trade-imports-animals-backend --repo trade-imports-ins-tests --repo trade-imports-animals-frontend --base origin/main --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.json 2> ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.err`'
-          )
-        })
-
-        test('raises the drafted ticket under the epic, related to the row’s own ticket', async () => {
-          const run = await runTripped()
-
-          expect(promptOf(run, 'inc-900 signed-off ticket')).toContain(
-            '`{"schema":"tim-ticket/1","project":"EUDPA","type":"Task","summary":"<that summary, word for word>","descriptionFile":"description.txt","parent":"EUDPA-1","relates":["EUDPA-900"]}`'
-          )
-        })
-
-        test('reuses the ticket an earlier attempt raised, read from its receipt, before any create call', async () => {
-          const prompt = promptOf(
-            await runTripped(),
-            'inc-900 signed-off ticket'
-          )
-
-          const receiptCheck = prompt.indexOf(
-            '`test -f ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket/ticket.created.json`'
-          )
-          expect({
-            readsKey: prompt.includes(
-              "`jq -r '.key' ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket/ticket.created.json`"
-            ),
-            receiptCheckedFirst:
-              receiptCheck !== -1 &&
-              receiptCheck < prompt.indexOf('Dry run: `tim jira create')
-          }).toEqual({ readsKey: true, receiptCheckedFirst: true })
-        })
-
-        test('parks the row before it lands, then lands it and raises its pull requests as drafts, merging nothing', async () => {
-          const run = await runTripped()
-
-          expect({
-            stages: stageLabels(run).slice(
-              stageLabels(run).indexOf('inc-900 signed off')
-            ),
-            draft: promptOf(run, 'inc-900 pr').includes(
-              '--head feat/EUDPA-900-fixture --draft --title'
-            )
-          }).toEqual({
-            stages: [
-              'inc-900 signed off',
-              'inc-900 signed-off ticket',
-              'inc-900 park',
-              'inc-900 land',
-              'inc-900 pr'
-            ],
-            draft: true
-          })
-        })
-
-        test('makes a pull request already open for the branch a draft, and names the ticket on it', async () => {
-          const run = await runTripped()
-
-          expect(promptOf(run, 'inc-900 pr')).toContain(
-            'make it a draft: `gh pr ready <number> --repo <ghRepo> --undo`.\n     A PR that is already a draft stays one. Then `gh pr comment <number> --repo <ghRepo> --body "Waits on EUDPA-990, a ruling on a change to signed-off behaviour."`'
-          )
-        })
-
-        test('stops at a failed pull request stage with the row already parked as blocked', async () => {
-          const run = await runToTrip(
-            {
-              'inc-900 signed off': TRIPPED,
-              'inc-900 signed-off ticket': RAISED,
-              'inc-900 park': PARKED
-            },
-            LANDED,
-            { ok: false, prs: [], summary: 'gh pr create refused' }
-          )
-
-          expect({
-            stages: stageLabels(run).slice(
-              stageLabels(run).indexOf('inc-900 park')
-            ),
-            parkedAs: promptOf(run, 'inc-900 park').includes(
-              'inc-900 --status blocked --open-question'
-            ),
-            stopped: run.result.stopped.reason
-          }).toEqual({
-            stages: ['inc-900 park', 'inc-900 land', 'inc-900 pr'],
-            parkedAs: true,
-            stopped: 'pr-failed'
-          })
-        })
-
-        test('preserves the attempt and lands nothing when the row cannot be parked', async () => {
-          const run = await runToTrip(
-            {
-              'inc-900 signed off': TRIPPED,
-              'inc-900 signed-off ticket': RAISED,
-              'inc-900 park': { ok: false, summary: 'tim backlog set refused' }
-            },
-            PRESERVED
-          )
-
-          expect({
-            last: stageLabels(run).slice(-2),
-            stopped: run.result.stopped.reason
-          }).toEqual({
-            last: ['inc-900 park', 'inc-900 preserve'],
-            stopped: 'park-failed'
-          })
-        })
-
-        test('parks the row as blocked, with the ticket in its open question', async () => {
-          const run = await runTripped()
-
-          expect(promptOf(run, 'inc-900 park')).toContain(
-            '`tim backlog set shared/args-fixture inc-900 --status blocked --open-question "Awaiting a signed-off ruling on EUDPA-990: this row changes 2 signed-off scenario(s). Its pull requests stay drafts until a person approves or refuses the change." --workspace ~/ws --json`'
-          )
-        })
-
-        test('reports the row awaiting a ruling, not landed', async () => {
-          const run = await runTripped()
-
-          expect({
-            increment: run.result.increments[0],
-            stopped: run.result.stopped.reason
-          }).toEqual({
-            increment: expect.objectContaining({
-              id: 'inc-900',
-              outcome: 'awaiting-signed-off-ruling',
-              signedOffTicket: 'EUDPA-990',
-              commit: 'abc1234',
-              prs: [
-                'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9'
-              ]
-            }),
-            stopped: 'no-buildable'
-          })
-        })
-
-        test('builds and merges the next row after parking one, counting only the merged row towards stopAfter', async () => {
-          const builtUpToLand = [
-            BASELINE_ANSWER,
-            PLANNED,
-            implementAnswer(['frontend:src/a.js']),
-            NO_FINDINGS,
-            NO_FINDINGS,
-            NO_FINDINGS,
-            GREEN_LADDER,
-            ON_BRANCH,
-            LANDED
-          ]
-          const run = await runLoop(scriptPath, {
-            args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
-            signedOff: {
-              'inc-901 signed off': TRIPPED,
-              'inc-901 signed-off ticket': RAISED,
-              'inc-901 park': PARKED
-            },
-            answers: [
-              WORKSPACE_ANSWER,
-              PREFLIGHT_ANSWER,
-              startAnswer(startedResult({ id: 'inc-901' })),
-              ...builtUpToLand,
-              DRAFT_PRS,
-              startAnswer(startedResult({ id: 'inc-902' })),
-              ...builtUpToLand,
-              DRAFT_PRS,
-              { green: true, summary: 'every check green' },
-              {
-                green: true,
-                merged: [{ repo: 'frontend', sha: 'def5678' }],
-                summary: 'merged'
-              },
-              { ok: true, summary: 'ticket moved to Done' },
-              { ok: true, summary: 'no gate' }
-            ]
-          })
-
-          expect({
-            outcomes: run.result.increments.map(({ id, outcome }) => ({
-              id,
-              outcome
-            })),
-            secondRowMerged: stageLabels(run).includes('inc-902 merge'),
-            stopped: run.result.stopped.reason
-          }).toEqual({
-            outcomes: [
-              { id: 'inc-901', outcome: 'awaiting-signed-off-ruling' },
-              { id: 'inc-902', outcome: 'landed' }
-            ],
-            secondRowMerged: true,
-            stopped: 'count-reached'
-          })
-        })
-
-        test('raises no draft pull request and parks nothing when the check finds nothing', async () => {
-          const run = await runToTrip({}, LANDED, DRAFT_PRS)
-
-          expect({
-            draft: promptOf(run, 'inc-900 pr').includes('--draft'),
-            parked: stageLabels(run).includes('inc-900 park')
-          }).toEqual({ draft: false, parked: false })
-        })
-
-        test('preserves the attempt and stops before land when the check cannot run', async () => {
-          const run = await runToTrip(
-            {
-              'inc-900 signed off': {
-                ok: false,
-                exitCode: 2,
-                changes: 0,
-                summary:
-                  "Can't find origin/main in repos/trade-imports-ins-tests."
-              }
-            },
-            PRESERVED
-          )
-
-          expect({
-            last: stageLabels(run).slice(-2),
-            stopped: run.result.stopped.reason
-          }).toEqual({
-            last: ['inc-900 signed off', 'inc-900 preserve'],
-            stopped: 'signed-off-check-failed'
-          })
-        })
-      })
 
       test('tells the branch guard which branch every repo must be on', async () => {
         const run = await runToFailedLand()
@@ -5425,8 +5293,10 @@ describe('increment-build-loop', () => {
           expect(run.result).toEqual({
             increments: [],
             reviewChecks: [],
+            signedOffChecks: [],
             specChecks: [],
             refutedFindings: [],
+            ticketClaim: CLAIMED_RESULT,
             stopped: {
               reason: 'no-buildable',
               detail: 'tim build start found nothing buildable in the backlog'
@@ -5598,6 +5468,20 @@ describe('increment-build-loop', () => {
                   notes
                 })
 
+          // The spec diff runs on every theme check, so a test about something
+          // else still needs an answer from it: one that read the range and
+          // found the theme touched no scenario.
+          const TOUCHED_NOTHING = {
+            exitCode: 0,
+            stdout: JSON.stringify({
+              ok: true,
+              touched: [],
+              skipped: [],
+              resolvedNone: false,
+              errors: []
+            })
+          }
+
           const runThemed = ({ status, specCheck, notes }) =>
             runLoop(scriptPath, {
               args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
@@ -5609,7 +5493,8 @@ describe('increment-build-loop', () => {
               ],
               themes: {
                 'inc-901 theme': status,
-                [SPEC_CHECK_LABEL]: specCheck
+                [SPEC_CHECK_LABEL]: specCheck,
+                [`spec diff:${THEME}`]: TOUCHED_NOTHING
               }
             })
 
@@ -5846,15 +5731,19 @@ describe('increment-build-loop', () => {
           })
 
           const SPEC_DIFF_LABEL = `spec diff:${THEME}`
-          const THEME_COMMITS = ['abc1234', 'def5678']
           const COMMITTED = themeStatus({
             rows: 2,
-            otherRepos: ['frontend'],
-            commits: THEME_COMMITS
+            otherRepos: ['frontend']
           })
-          const specDiff = (touched, skipped = []) => ({
+          const specDiff = (touched, skipped = [], resolvedNone = false) => ({
             exitCode: 0,
-            stdout: JSON.stringify({ ok: true, touched, skipped, errors: [] })
+            stdout: JSON.stringify({
+              ok: true,
+              touched,
+              skipped,
+              resolvedNone,
+              errors: []
+            })
           })
           const UNPROVEN = {
             ...CLEAN,
@@ -5894,15 +5783,36 @@ describe('increment-build-loop', () => {
             })
           })
 
-          test('asks tim spec diff which scenarios every row commit of the theme touched', async () => {
+          test("asks tim spec diff for the workspace's own range, the one repo openspec lives in", async () => {
             const run = await runWithDiff({
               specCheck: UNPROVEN,
               diff: specDiff(['SCN-ORIGIN-009-A'])
             })
 
             expect(promptOf(run, SPEC_DIFF_LABEL)).toContain(
-              '`tim spec diff --commit abc1234 --commit def5678 --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-all-diff.json 2>&1`'
+              '`tim spec diff --range origin/main...HEAD --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-all-diff.json 2>&1`'
             )
+          })
+
+          test('never asks tim spec diff about a row commit, which belongs to a service repo it cannot read', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff(['SCN-ORIGIN-009-A'])
+            })
+
+            expect(promptOf(run, SPEC_DIFF_LABEL)).not.toContain('--commit')
+          })
+
+          test('counts every unproven scenario when the diff resolved nothing, rather than reading it as a theme that touched none', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff([], [{ commit: 'origin/main...HEAD' }], true)
+            })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'tim spec diff could not read origin/main...HEAD in the workspace repo (origin/main...HEAD), so it examined nothing, so every unproven scenario counts',
+              '2 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A, SCN-OLD-001-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json)'
+            ])
           })
 
           test('lists unproven scenarios that predate the theme without stopping', async () => {
@@ -5925,7 +5835,7 @@ describe('increment-build-loop', () => {
                     scenarios: ['SCN-ORIGIN-009-A', 'SCN-OLD-001-A']
                   }
                 ],
-                commitsNotFound: ['def5678']
+                specDiffUnread: ['def5678']
               }
             })
           })
@@ -5934,7 +5844,7 @@ describe('increment-build-loop', () => {
             const run = await runWithDiff({ specCheck: UNPROVEN, diff: null })
 
             expect(run.result.specChecks[0].problems).toEqual([
-              "the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts",
+              'the run could not read which scenarios the theme added or re-proved (tim spec diff), so every unproven scenario counts',
               '2 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A, SCN-OLD-001-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json)'
             ])
           })
@@ -6070,7 +5980,8 @@ describe('increment-build-loop', () => {
                 get 'inc-901 theme'() {
                   return readings.shift()
                 },
-                [SPEC_CHECK_LABEL]: CLEAN
+                [SPEC_CHECK_LABEL]: CLEAN,
+                [`spec diff:${THEME}`]: TOUCHED_NOTHING
               }
             })
 
@@ -6494,6 +6405,155 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
+  describe('claiming the run’s ticket', () => {
+    const NOTHING_TO_BUILD = startAnswer(
+      startedResult({ id: null, ...NOTHING_STARTED })
+    )
+    const BRANCH_RUN_ARGS = {
+      ...BASE_ARGS,
+      lifecycle: 'branch',
+      e2e: 'ci',
+      jiraProject: null,
+      epic: null,
+      jiraInDevStatus: null,
+      jiraDoneStatus: null,
+      jiraBoard: null,
+      requireApproval: null,
+      approvalWaitMinutes: null
+    }
+
+    const runFull = (claim) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, e2e: 'ci' },
+        claim,
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          NOTHING_TO_BUILD
+        ]
+      })
+
+    const runOnBranch = (branch) =>
+      runLoop(scriptPath, {
+        args: { ...BRANCH_RUN_ARGS, branch },
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }]
+      })
+
+    const claimPrompts = (run) =>
+      run.agents
+        .filter(({ options }) => options.label === TICKET_CLAIM_LABEL)
+        .map(({ prompt }) => prompt)
+
+    test('assigns the epic to the runner and moves it onto the configured board before the first row starts', async () => {
+      const run = await runFull()
+      const [prompt] = claimPrompts(run)
+
+      expect({
+        order: run.agents.map(({ options }) => options.label),
+        assigns: prompt.includes(
+          '`tim jira assign EUDPA-1 me --confirm --workspace ~/ws --json`'
+        ),
+        moves: prompt.includes(
+          '`tim jira move-to-board EUDPA-1 --board 13780 --confirm --workspace ~/ws --json`'
+        ),
+        claim: run.result.ticketClaim
+      }).toEqual({
+        order: ['workspace', 'preflight', TICKET_CLAIM_LABEL, 'inc-900 start'],
+        assigns: true,
+        moves: true,
+        claim: CLAIMED_RESULT
+      })
+    })
+
+    test('reports what tim did for each step', async () => {
+      const run = await runFull({
+        assign: timEnvelope({ mode: 'assigned', key: 'EUDPA-1' }),
+        moveToBoard: timEnvelope({ mode: 'moved', key: 'EUDPA-1' })
+      })
+
+      expect({
+        claim: run.result.ticketClaim,
+        logged: run.logs.includes(
+          'increment-build-loop: EUDPA-1, from config.epic: assignee assigned, board moved'
+        )
+      }).toEqual({
+        claim: {
+          key: 'EUDPA-1',
+          assign: 'assigned',
+          moveToBoard: 'moved',
+          problems: []
+        },
+        logged: true
+      })
+    })
+
+    test('reports a failed claim and carries on with the run', async () => {
+      const run = await runFull({
+        assign: {
+          exitCode: 2,
+          stdout: JSON.stringify({
+            ok: false,
+            schema_version: 1,
+            tim_version: '0.0.0',
+            errors: [
+              {
+                code: 'AUTH',
+                message:
+                  'Set JIRA_USER and JIRA_TOKEN to authenticate with Jira.'
+              }
+            ]
+          })
+        },
+        moveToBoard: { exitCode: 1, stdout: 'Killed' }
+      })
+
+      expect({
+        claim: run.result.ticketClaim,
+        stopped: run.result.stopped.reason,
+        logged: run.logs.some((line) =>
+          line.startsWith('increment-build-loop: COULD NOT CLAIM EUDPA-1')
+        )
+      }).toEqual({
+        claim: {
+          key: 'EUDPA-1',
+          assign: null,
+          moveToBoard: null,
+          problems: [
+            'assigning EUDPA-1 to you failed: Set JIRA_USER and JIRA_TOKEN to authenticate with Jira.',
+            'moving EUDPA-1 onto the board failed: printed no JSON (exit 1): Killed'
+          ]
+        },
+        stopped: 'no-buildable',
+        logged: true
+      })
+    })
+
+    test('claims the ticket a branch run’s branch name carries, on the workspace’s own board', async () => {
+      const run = await runOnBranch('feat/EUDPA-696-overview-and-review')
+      const [prompt] = claimPrompts(run)
+
+      expect({
+        assigns: prompt.includes(
+          '`tim jira assign EUDPA-696 me --confirm --workspace ~/ws --json`'
+        ),
+        moves: prompt.includes(
+          '`tim jira move-to-board EUDPA-696 --confirm --workspace ~/ws --json`'
+        )
+      }).toEqual({ assigns: true, moves: true })
+    })
+
+    test('claims nothing on a branch whose name carries no Jira key', async () => {
+      const run = await runOnBranch('feat/NO_JIRA-frontend-alignment')
+
+      expect({
+        claims: claimPrompts(run).length,
+        logged: run.logs.includes(
+          'increment-build-loop: no ticket to claim — the branch name feat/NO_JIRA-frontend-alignment names no Jira key'
+        )
+      }).toEqual({ claims: 0, logged: true })
+    })
+  })
+
   describe('under the branch lifecycle', () => {
     const WORKING_BRANCH = 'feat/NO_JIRA-frontend-alignment'
     const repo = (name) => ({
@@ -6574,7 +6634,7 @@ describe('increment-build-loop', () => {
         })
 
         expect(run.error.message).toBe(
-          'increment-build-loop: lifecycle "branch" makes no Jira call and merges nothing, so epic, requireApproval must be null — got epic="EUDPA-1", requireApproval=false'
+          'increment-build-loop: lifecycle "branch" raises no ticket and merges nothing, so epic, requireApproval must be null — got epic="EUDPA-1", requireApproval=false'
         )
         expect(run.agents).toEqual([])
       })
@@ -6999,7 +7059,6 @@ describe('increment-build-loop', () => {
           'inc-900 consistency',
           'inc-900 ladder',
           'inc-900 branch-guard:land',
-          'inc-900 signed off',
           'inc-900 land',
           'inc-900 pr',
           'inc-900 ci watch',
@@ -7012,65 +7071,10 @@ describe('increment-build-loop', () => {
       test('makes no Jira call in any stage', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const jiraCallers = run.agents
-          .filter(({ prompt }) =>
-            /tools\/jira|move-to-board|transition-ticket|tim jira/.test(prompt)
-          )
+          .filter(({ prompt }) => /tim jira/.test(prompt))
           .map(({ options }) => options.label)
 
         expect(jiraCallers).toEqual([])
-      })
-
-      describe('a change to a signed-off scenario', () => {
-        const runTrippedRow = () =>
-          runLoop(scriptPath, {
-            args: BRANCH_ARGS,
-            signedOff: {
-              'inc-900 signed off': {
-                ok: true,
-                exitCode: 3,
-                changes: 1,
-                summary: 'test-edited SCN-AUTH-001-A ins/sign-in'
-              },
-              'inc-900 signed-off ticket': { ok: true, summary: 'drafted' },
-              'inc-900 park': { ok: true, summary: 'parked' }
-            },
-            answers: [
-              WORKSPACE_ANSWER,
-              { ok: true, summary: '1' },
-              MERGE_ROW,
-              BASELINE,
-              PLAN,
-              MERGE_STARTED,
-              ...reviewedAndLanded
-            ]
-          })
-
-        test('parks the row, then lands and pushes it without looking for its pull requests or watching CI', async () => {
-          const run = await runTrippedRow()
-
-          expect(
-            labelsOf(run).slice(labelsOf(run).indexOf('inc-900 signed off'))
-          ).toEqual([
-            'inc-900 signed off',
-            'inc-900 signed-off ticket',
-            'inc-900 park',
-            'inc-900 land'
-          ])
-        })
-
-        test('drafts the ticket in the workarea and makes no Jira call', async () => {
-          const run = await runTrippedRow()
-          const jiraCallers = run.agents
-            .filter(({ prompt }) => /tim jira/.test(prompt))
-            .map(({ options }) => options.label)
-
-          expect({
-            jiraCallers,
-            question: promptOf(run, 'inc-900 park').includes(
-              'Raise the ticket drafted in ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket for a person to approve or refuse the change.'
-            )
-          }).toEqual({ jiraCallers: [], question: true })
-        })
       })
 
       test('reports the row landed on the working branch with its commit and PR', async () => {
@@ -7262,7 +7266,6 @@ describe('increment-build-loop', () => {
           'inc-900 plan read',
           'inc-900 ladder',
           'inc-900 branch-guard:land',
-          'inc-900 signed off',
           'inc-900 land',
           'inc-900 pr',
           'inc-900 ci watch',
@@ -7452,8 +7455,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )
@@ -7466,6 +7469,14 @@ describe('increment-build-loop', () => {
 
         expect(promptOf(run, 'inc-900 baseline')).toContain(
           "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+        )
+      })
+
+      test('tells the gate to leave e2e to CI when the pull requests prove it', async () => {
+        const run = await runBranch({ e2e: 'ci' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).toContain(
+          `\`tim build gate shared/args-fixture --phase unit --e2e ci --workspace ~/ws --json`
         )
       })
 
@@ -7628,7 +7639,7 @@ describe('increment-build-loop', () => {
         expect(
           prompt.indexOf('gh pr view <url> --json mergeable,mergeStateStatus')
         ).toBeLessThan(
-          prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh')
+          prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch')
         )
       })
 
@@ -7648,7 +7659,7 @@ describe('increment-build-loop', () => {
           ),
           capped: prompt.includes('at most 2 times per pr'),
           mixedIsStillRed: prompt.includes(
-            'Exit 1 with some lines marked stale is a real red'
+            '`SUMMARY: red` with some lines marked stale is a real red'
           ),
           keepsStaleOutOfFailures: prompt.includes(
             'Put only the checks NOT marked stale in failures[]'
@@ -7660,6 +7671,204 @@ describe('increment-build-loop', () => {
           capped: true,
           mixedIsStillRed: true,
           keepsStaleOutOfFailures: true
+        })
+      })
+
+      describe('the checks verdict the watcher reads', () => {
+        const recordedVerdicts = JSON.parse(
+          readFileSync(
+            join(
+              dirname(fileURLToPath(import.meta.url)),
+              '__fixtures__/pr-checks/bash-goldens.json'
+            ),
+            'utf8'
+          )
+        )
+        const verdictWordOfExit = {
+          0: 'green',
+          1: 'red',
+          2: 'pending',
+          5: 'stale'
+        }
+        const listedChecksCases = Object.entries(recordedVerdicts).filter(
+          ([, recorded]) => recorded.checks
+        )
+
+        const verdictFilterIn = (prompt) =>
+          textBetween(
+            prompt,
+            "--json name,bucket,link,startedAt --jq '",
+            "' > "
+          )
+
+        const verdictOf = (filter, { checks, headCommittedAt }) =>
+          spawnSync(
+            'jq',
+            ['-r', filter.replace('HEAD_COMMITTED_AT', headCommittedAt)],
+            { input: JSON.stringify(checks), encoding: 'utf8' }
+          ).stdout
+
+        const summaryWordOf = (output) => output.match(/^SUMMARY: (\w+)/m)?.[1]
+
+        test.each(listedChecksCases)(
+          'gives the recorded decision for %s',
+          async (_, recorded) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              summaryWordOf(verdictOf(verdictFilterIn(prompt), recorded))
+            ).toBe(verdictWordOfExit[recorded.bash.exit])
+          }
+        )
+
+        test.each(
+          listedChecksCases.filter(([, recorded]) => recorded.bash.exit !== 2)
+        )('prints the recorded lines for %s', async (_, recorded) => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(verdictOf(verdictFilterIn(prompt), recorded)).toBe(
+            recorded.bash.stdout
+          )
+        })
+
+        test('says it is red while a check on the current head failed and others still run', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+          const { red } = recordedVerdicts
+          const stillRunning = {
+            ...red,
+            checks: [...red.checks, { ...red.checks[0], bucket: 'pending' }]
+          }
+
+          expect(
+            summaryWordOf(verdictOf(verdictFilterIn(prompt), stillRunning))
+          ).toBe('red')
+        })
+
+        const watchCommandIn = (prompt) =>
+          textBetween(prompt, 'running this exactly:', 'Its exit code')
+            .trim()
+            .replace(/^`|`$/g, '')
+
+        const watchAgainstStubGh = (
+          prompt,
+          { reportsNoChecksFor, noChecksMessage }
+        ) => {
+          const dir = mkdtempSync(join(tmpdir(), 'pr-checks-watch-'))
+          const stubs = join(dir, 'bin')
+          mkdirSync(stubs)
+          mkdirSync(join(dir, 'logs'))
+          writeFileSync(
+            join(stubs, 'gh'),
+            [
+              '#!/bin/bash',
+              `calls=$(( $(cat "${dir}/calls" 2>/dev/null || echo 0) + 1 ))`,
+              `echo "$calls" > "${dir}/calls"`,
+              `if [ "$calls" -le ${reportsNoChecksFor} ]; then`,
+              `  echo "${noChecksMessage}" >&2`,
+              '  exit 1',
+              'fi',
+              'echo "build pass 1m https://github.com/DEFRA/x/actions/runs/1"'
+            ].join('\n')
+          )
+          writeFileSync(join(stubs, 'sleep'), '#!/bin/bash\n')
+          chmodSync(join(stubs, 'gh'), 0o755)
+          chmodSync(join(stubs, 'sleep'), 0o755)
+          const command = watchCommandIn(prompt)
+            .replaceAll('<number>', '42')
+            .replaceAll('<owner/name>', 'DEFRA/x')
+            .replaceAll('<repo>', 'x')
+            .replace(/\S*\/logs\//g, `${dir}/logs/`)
+          spawnSync('bash', ['-c', command], {
+            env: { ...process.env, PATH: `${stubs}:${process.env.PATH}` },
+            encoding: 'utf8'
+          })
+          return {
+            ghCalls: Number(readFileSync(join(dir, 'calls'), 'utf8')),
+            log: readFileSync(join(dir, 'logs', 'inc-900-ci-x.log'), 'utf8')
+          }
+        }
+
+        const noChecksMessages = [
+          "no checks reported on the 'feat/x' branch",
+          "No checks reported on the 'feat/x' branch"
+        ]
+
+        test.each(noChecksMessages)(
+          'watches again while gh reports "%s", then logs the checks that registered',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 2,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 3,
+              log: 'build pass 1m https://github.com/DEFRA/x/actions/runs/1\n'
+            })
+          }
+        )
+
+        test.each(noChecksMessages)(
+          'leaves "%s" in the log after five watches of a PR with no checks',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 99,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 5,
+              log: `${noChecksMessage}\n`
+            })
+          }
+        )
+
+        test('stops on a PR gh still reports no checks for, as no-checks', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          ).replace(/\s+/g, ' ')
+
+          expect({
+            readsTheWatchLog: prompt.includes(
+              'a log that STILL says "No checks reported" (in any case) after that loop means the PR has NO CHECKS'
+            ),
+            stopsAsNoChecks: prompt.includes(
+              'NO CHECKS at all: state "unresolved", blocked "no checks on <repo>", stopReason "no-checks"'
+            )
+          }).toEqual({ readsTheWatchLog: true, stopsAsNoChecks: true })
+        })
+
+        test('lets the watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
         })
       })
 
@@ -7971,6 +8180,27 @@ describe('increment-build-loop', () => {
           )
         })
 
+        test('names a repo’s siblings to its theme reviewer, so a rule another repo owns and this one copies is reachable', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme review:ins')
+
+          expect(prompt).toContain("A COPY OF ANOTHER REPO'S RULE")
+          expect(prompt).toContain('~/ws/repos/trade-imports-animals-frontend')
+          expect(prompt).toContain('~/ws/repos/trade-imports-plants-frontend')
+          expect(prompt).not.toContain(
+            '(~/ws/repos/trade-imports-ins-frontend,'
+          )
+        })
+
+        test('lets the theme CI watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme ci watch')
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
+        })
+
         const THEME_STYLE_LABELS = [
           'inc-900 theme style:ins',
           'inc-900 theme style:animals',
@@ -8235,6 +8465,187 @@ describe('increment-build-loop', () => {
           })
         })
 
+        describe('the signed-off check of the whole theme', () => {
+          const THEME_TRIPPED = {
+            ok: true,
+            exitCode: 3,
+            changes: 1,
+            summary: 'test-edited SCN-AUTH-001-A ins/sign-in'
+          }
+          const WORKSPACE_PR = `https://github.com/DEFRA/trade-imports-workspace/pull/258`
+          const THEME_HELD = {
+            ok: true,
+            drafted: [
+              WORKSPACE_PR,
+              'https://github.com/DEFRA/trade-imports-ins-tests/pull/227'
+            ],
+            problems: [],
+            summary: 'drafted and commented'
+          }
+          const runThemeSignedOff = (signedOff, overrides = {}) =>
+            runLoop(scriptPath, {
+              args: BRANCH_ARGS,
+              answers: (prompt, { label }) => {
+                const answers = { ...ROW_ANSWERS, ...overrides }
+                if (Object.hasOwn(answers, label)) return answers[label]
+                return isReviewer(label) ? NO_FINDINGS : null
+              },
+              themes: { 'inc-900 theme': THEME_BUILT },
+              signedOff
+            })
+          const RED_THEME_LADDER = {
+            'inc-900 theme ladder': {
+              green: false,
+              ran: ['tests lint'],
+              failures: ['tests lint: red'],
+              summary: 'red'
+            },
+            'inc-900 preserve': { ok: true, summary: 'patches saved' }
+          }
+
+          test('runs no signed-off check on a row, only one on the theme after its engineering review', async () => {
+            const labels = labelsOf(await runThemeSignedOff({}))
+
+            expect({
+              rowCheck: labels.includes('inc-900 signed off'),
+              afterReview: labels.slice(
+                labels.indexOf('inc-900 theme ci watch') + 1
+              )
+            }).toEqual({
+              rowCheck: false,
+              afterReview: ['inc-900 theme signed off']
+            })
+          })
+
+          test('compares the workspace and every repo on the branch with main, each checked to be on the branch', async () => {
+            const prompt = promptOf(
+              await runThemeSignedOff({}),
+              'inc-900 theme signed off'
+            )
+
+            expect({
+              range: prompt.includes(
+                'tim spec diff --signed-off --range origin/main...HEAD --repo'
+              ),
+              base: prompt.includes(
+                '--base origin/main --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/theme-origin-pages-signed-off.json'
+              ),
+              workspaceOnBranch: prompt.includes(
+                `\`git -C ~/ws fetch origin main\`, then \`git -C ~/ws rev-parse --abbrev-ref HEAD\` must print \`${WORKING_BRANCH}\``
+              )
+            }).toEqual({ range: true, base: true, workspaceOnBranch: true })
+          })
+
+          test('still checks the theme when its engineering review stopped the run', async () => {
+            const run = await runThemeSignedOff({}, RED_THEME_LADDER)
+
+            expect({
+              stopped: run.result.stopped.reason,
+              checked: run.result.signedOffChecks
+            }).toEqual({
+              stopped: 'theme-review-red',
+              checked: [
+                { after: 'inc-900', theme: THEME, outcome: 'signed-off-clean' }
+              ]
+            })
+          })
+
+          test('turns nothing into a draft when the theme changes nothing signed off', async () => {
+            const run = await runThemeSignedOff({})
+
+            expect(labelsOf(run)).not.toContain('inc-900 theme signed-off hold')
+          })
+
+          test('drafts and comments on every open pull request on the branch, the workspace one included, and never un-drafts one', async () => {
+            const prompt = promptOf(
+              await runThemeSignedOff({
+                'inc-900 theme signed off': THEME_TRIPPED,
+                'inc-900 theme signed-off hold': THEME_HELD
+              }),
+              'inc-900 theme signed-off hold'
+            )
+
+            expect({
+              workspacePrs: prompt.includes(
+                `\`gh pr list --repo <ghRepo> --head ${WORKING_BRANCH} --state open --json number,url,isDraft\``
+              ),
+              workspaceRepo: prompt.includes('DEFRA/trade-imports-workspace'),
+              drafts: prompt.includes(
+                'when it is not a draft yet, `gh pr ready <url> --undo`'
+              ),
+              comments: prompt.includes(
+                '`gh pr comment <url> --body-file ~/ws/workareas/shared/args-fixture/logs/theme-origin-pages-signed-off-comment.md`'
+              ),
+              neverUndrafts: prompt.includes('Never take one out of draft'),
+              jira: /tim jira/.test(prompt)
+            }).toEqual({
+              workspacePrs: true,
+              workspaceRepo: true,
+              drafts: true,
+              comments: true,
+              neverUndrafts: true,
+              jira: false
+            })
+          })
+
+          test('records the drafted pull requests and the ticket draft without stopping the run', async () => {
+            const clean = await runThemeSignedOff({})
+            const tripped = await runThemeSignedOff({
+              'inc-900 theme signed off': THEME_TRIPPED,
+              'inc-900 theme signed-off hold': THEME_HELD
+            })
+
+            expect({
+              stopped: tripped.result.stopped.reason,
+              checked: tripped.result.signedOffChecks
+            }).toEqual({
+              stopped: clean.result.stopped.reason,
+              checked: [
+                {
+                  after: 'inc-900',
+                  theme: THEME,
+                  outcome: 'signed-off-changes',
+                  changes: 1,
+                  detail: 'test-edited SCN-AUTH-001-A ins/sign-in',
+                  drafted: THEME_HELD.drafted,
+                  ticketDraft:
+                    '~/ws/workareas/shared/args-fixture/logs/theme-origin-pages-signed-off-ticket'
+                }
+              ]
+            })
+          })
+
+          test('records a check that could not run, drafts nothing and does not stop the run', async () => {
+            const clean = await runThemeSignedOff({})
+            const failed = await runThemeSignedOff({
+              'inc-900 theme signed off': {
+                ok: false,
+                changes: 0,
+                summary:
+                  "Can't find origin/main in repos/trade-imports-ins-tests."
+              }
+            })
+
+            expect({
+              stopped: failed.result.stopped.reason,
+              checked: failed.result.signedOffChecks,
+              held: labelsOf(failed).includes('inc-900 theme signed-off hold')
+            }).toEqual({
+              stopped: clean.result.stopped.reason,
+              checked: [
+                {
+                  after: 'inc-900',
+                  theme: THEME,
+                  outcome: 'signed-off-check-failed',
+                  detail:
+                    "Can't find origin/main in repos/trade-imports-ins-tests."
+                }
+              ],
+              held: false
+            })
+          })
+        })
+
         test('keeps room for one theme’s engineering review when it budgets agents', async () => {
           const STAGE_ANSWERS = {
             branch: ROW,
@@ -8271,7 +8682,7 @@ describe('increment-build-loop', () => {
 
           expect(run.result.increments.length).toBe(12)
           expect(run.result.stopped.detail).toContain(
-            "keeping 21 for a theme's engineering review"
+            "keeping 23 for a theme's engineering review"
           )
         })
 
@@ -8584,7 +8995,6 @@ describe('increment-build-loop', () => {
             'inc-900 consistency',
             'inc-900 ladder',
             'inc-900 branch-guard:land',
-            'inc-900 signed off',
             'inc-900 land',
             'inc-900 done',
             'inc-900 gate check',
@@ -8896,10 +9306,10 @@ describe('increment-build-loop', () => {
           'inc-014 implement',
           'inc-014 ladder',
           'inc-014 branch-guard:land',
-          'inc-014 signed off',
           'inc-014 land',
           'inc-014 pr',
           'inc-014 ci watch',
+          'inc-014 signed off',
           'inc-014 merge',
           'inc-014 done',
           'inc-014 spec diff draft',
@@ -8972,13 +9382,11 @@ describe('increment-build-loop', () => {
           ),
           confirm: prompt.includes(
             '`tim jira ticket EUDPA-914 --workspace ~/ws --json`'
-          ),
-          shellScript: prompt.includes('tools/jira')
+          )
         }).toEqual({
           move: true,
           list: true,
-          confirm: true,
-          shellScript: false
+          confirm: true
         })
       })
 
@@ -9435,12 +9843,17 @@ describe('increment-build-loop', () => {
         })
       )
 
-    test('checks the workspace’s commits on the branch for signed-off changes, so a resumed attempt’s spec change is seen', async () => {
-      const run = await runFactory()
+    test('gates the merge on the workspace’s commits on the branch and the row’s repos, against the base branch', async () => {
+      const prompt = promptOf(await runFactory(), 'inc-020 signed off')
 
-      expect(promptOf(run, 'inc-020 signed off')).toContain(
-        '`tim spec diff --signed-off --uncommitted --range origin/main...HEAD --repo trade-imports-performance-tests --base origin/main --workspace ~/ws --json'
-      )
+      expect({
+        command: prompt.includes(
+          '`tim spec diff --signed-off --range origin/main...HEAD --repo trade-imports-performance-tests --base origin/main --workspace ~/ws --json'
+        ),
+        workspaceOnBranch: prompt.includes(
+          `\`git -C ~/ws fetch origin main\`, then \`git -C ~/ws rev-parse --abbrev-ref HEAD\` must print \`${WORK_BRANCH}\``
+        )
+      }).toEqual({ command: true, workspaceOnBranch: true })
     })
 
     test('checks the workspace’s commits on the branch when a row resumes from a preserved attempt', async () => {
@@ -9623,7 +10036,8 @@ describe('increment-build-loop', () => {
           mergeabilityBeforeChecks:
             prompt.indexOf(
               'gh pr view <url> --json mergeable,mergeStateStatus'
-            ) < prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh'),
+            ) <
+            prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch'),
           stopReason: prompt.includes('stopReason "pr-conflict"')
         }).toEqual({
           everyFirst: true,
@@ -9840,11 +10254,11 @@ describe('increment-build-loop', () => {
           'inc-020 implement',
           'inc-020 ladder',
           'inc-020 branch-guard:land',
-          'inc-020 signed off',
           'inc-020 land',
           'inc-020 workspace commit',
           'inc-020 pr',
           'inc-020 ci watch',
+          'inc-020 signed off',
           'inc-020 merge',
           'inc-020 done',
           'inc-020 workspace to base',
@@ -10486,6 +10900,323 @@ describe('increment-build-loop', () => {
           'If it has changes, report landed:false naming them, and commit nothing anywhere'
         )
       })
+    })
+  })
+
+  describe('the signed-off merge gate, under the full lifecycle', () => {
+    const PR = {
+      repo: 'frontend',
+      url: 'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9',
+      number: 9
+    }
+    const TRIPPED = {
+      ok: true,
+      held: false,
+      exitCode: 3,
+      changes: 2,
+      summary:
+        'changed SCN-ORIGIN-001-A plants/journey-pages/origin | test-edited SCN-ORIGIN-001-B plants/journey-pages/origin'
+    }
+    const RAISED = { ok: true, key: 'EUDPA-990', summary: 'raised' }
+    const HELD = {
+      ok: true,
+      drafted: [PR.url],
+      problems: [],
+      summary: 'drafted, commented and blocked'
+    }
+    const heldAt = (isDraft) => ({
+      ok: true,
+      held: true,
+      prs: [{ url: PR.url, state: 'OPEN', isDraft }],
+      summary: isDraft ? `${PR.url} is a draft` : 'none is a draft'
+    })
+
+    const answersFor = (id, overrides) => ({
+      [`${id} pr`]: { ok: true, prs: [PR], summary: 'one PR' },
+      [`${id} ci watch`]: { green: true, summary: 'green' },
+      [`${id} merge`]: {
+        green: true,
+        merged: [{ repo: 'frontend', sha: 'def5678' }],
+        summary: 'merged'
+      },
+      [`${id} done`]: { ok: true, summary: 'ticket moved to Done' },
+      [`${id} gate check`]: { ok: true, summary: 'no gate' },
+      ...overrides
+    })
+
+    const resumedAtCi = (id) =>
+      startAnswer(
+        startedResult({
+          id,
+          ticket: { ...startedResult().ticket, key: `EUDPA-${id.slice(4)}` },
+          repos: ['frontend'],
+          resumeAt: 'ci'
+        })
+      )
+
+    const runGate = (signedOff, overrides = {}) =>
+      runLoop(scriptPath, {
+        args: BASE_ARGS,
+        signedOff,
+        answers: (prompt, { label }) =>
+          ({
+            workspace: WORKSPACE_ANSWER,
+            preflight: { ok: true, summary: '1' },
+            'inc-900 start': resumedAtCi('inc-900'),
+            ...answersFor('inc-900', overrides)
+          })[label] ?? null
+      })
+
+    const runTwoRows = (signedOff) => {
+      const rows = [resumedAtCi('inc-901'), resumedAtCi('inc-902')]
+      return runLoop(scriptPath, {
+        args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+        signedOff,
+        answers: (prompt, { label }) => {
+          if (label === 'start next') return rows.shift() ?? null
+          return (
+            {
+              workspace: WORKSPACE_ANSWER,
+              preflight: { ok: true, summary: '1' },
+              ...answersFor('inc-901'),
+              ...answersFor('inc-902')
+            }[label] ?? null
+          )
+        }
+      })
+    }
+
+    const TRIP = {
+      'inc-900 signed off': TRIPPED,
+      'inc-900 signed-off ticket': RAISED,
+      'inc-900 signed-off hold': HELD
+    }
+
+    const afterCi = (run) =>
+      stageLabels(run).slice(stageLabels(run).indexOf('inc-900 ci watch') + 1)
+
+    test('runs once CI is green and, finding nothing, lets the row merge', async () => {
+      const run = await runGate({})
+
+      expect({
+        stages: afterCi(run).slice(0, 2),
+        outcome: run.result.increments[0].outcome
+      }).toEqual({
+        stages: ['inc-900 signed off', 'inc-900 merge'],
+        outcome: 'landed'
+      })
+    })
+
+    test('compares each of the row’s repos, on the row’s branch, with the base branch', async () => {
+      const prompt = promptOf(await runGate({}), 'inc-900 signed off')
+
+      expect({
+        command: prompt.includes(
+          '`tim spec diff --signed-off --repo trade-imports-animals-frontend --base origin/main --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.json 2> ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.err`'
+        ),
+        onBranch: prompt.includes(
+          '`git -C ~/ws/repos/trade-imports-animals-frontend fetch origin main`, then `git -C ~/ws/repos/trade-imports-animals-frontend rev-parse --abbrev-ref HEAD` must print `feat/EUDPA-900-fixture`'
+        ),
+        readsHold: prompt.includes('select(.signedOffHold == true)')
+      }).toEqual({ command: true, onBranch: true, readsHold: true })
+    })
+
+    test('holds a row that changes a signed-off scenario: ticket, drafts, blocked row, and no merge', async () => {
+      const run = await runGate(TRIP)
+
+      expect({
+        stages: afterCi(run),
+        increment: run.result.increments[0],
+        stopped: run.result.stopped.reason
+      }).toEqual({
+        stages: [
+          'inc-900 signed off',
+          'inc-900 signed-off ticket',
+          'inc-900 signed-off hold'
+        ],
+        increment: expect.objectContaining({
+          id: 'inc-900',
+          outcome: 'awaiting-signed-off-ruling',
+          signedOffTicket: 'EUDPA-990',
+          prs: [PR.url],
+          drafted: [PR.url]
+        }),
+        stopped: 'no-buildable'
+      })
+    })
+
+    test('raises the drafted ticket under the epic, related to the row’s own ticket, reusing a receipt first', async () => {
+      const prompt = promptOf(await runGate(TRIP), 'inc-900 signed-off ticket')
+      const receiptCheck = prompt.indexOf(
+        '`test -f ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket/ticket.created.json`'
+      )
+
+      expect({
+        manifest: prompt.includes(
+          '`{"schema":"tim-ticket/1","project":"EUDPA","type":"Task","summary":"<that summary, word for word>","descriptionFile":"description.txt","parent":"EUDPA-1","relates":["EUDPA-900"]}`'
+        ),
+        receiptCheckedFirst:
+          receiptCheck !== -1 &&
+          receiptCheck < prompt.indexOf('Dry run: `tim jira create')
+      }).toEqual({ manifest: true, receiptCheckedFirst: true })
+    })
+
+    test('drafts and comments on each pull request, blocks the row with the ticket, and marks each pull request held', async () => {
+      const prompt = promptOf(await runGate(TRIP), 'inc-900 signed-off hold')
+
+      expect({
+        drafts: prompt.includes(
+          'when it is not a draft yet, `gh pr ready <url> --undo`'
+        ),
+        comments: prompt.includes(
+          '`gh pr comment <url> --body-file ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-comment.md`'
+        ),
+        blocks: prompt.includes(
+          "inc-900 --status blocked --open-question 'Awaiting a signed-off ruling on EUDPA-990: this row changes 2 signed-off scenario(s), and its pull requests are drafts. To approve, take every one of its pull requests out of draft and set the row back to todo. To refuse, close them.'"
+        ),
+        marksHeld: prompt.includes(
+          `inc-900 --pr '{"url":"${PR.url}","signedOffHold":true}'`
+        )
+      }).toEqual({
+        drafts: true,
+        comments: true,
+        blocks: true,
+        marksHeld: true
+      })
+    })
+
+    test('carries on and merges the next row after holding one', async () => {
+      const run = await runTwoRows({
+        'inc-901 signed off': TRIPPED,
+        'inc-901 signed-off ticket': RAISED,
+        'inc-901 signed-off hold': HELD
+      })
+
+      expect({
+        outcomes: run.result.increments.map(({ id, outcome }) => ({
+          id,
+          outcome
+        })),
+        stopped: run.result.stopped.reason
+      }).toEqual({
+        outcomes: [
+          { id: 'inc-901', outcome: 'awaiting-signed-off-ruling' },
+          { id: 'inc-902', outcome: 'landed' }
+        ],
+        stopped: 'count-reached'
+      })
+    })
+
+    test('holds the row, naming the error, when the check cannot run', async () => {
+      const error =
+        "Can't find origin/main in repos/trade-imports-animals-frontend."
+      const run = await runGate({
+        'inc-900 signed off': { ok: false, held: false, summary: error },
+        'inc-900 signed-off hold': HELD
+      })
+
+      expect({
+        stages: afterCi(run),
+        question: promptOf(run, 'inc-900 signed-off hold').includes(
+          "--open-question 'The signed-off check could not run before the merge: Can'\\''t find origin/main in repos/trade-imports-animals-frontend."
+        ),
+        increment: run.result.increments[0],
+        stopped: run.result.stopped.reason
+      }).toEqual({
+        stages: ['inc-900 signed off', 'inc-900 signed-off hold'],
+        question: true,
+        increment: expect.objectContaining({
+          outcome: 'awaiting-signed-off-ruling',
+          checkError: error
+        }),
+        stopped: 'no-buildable'
+      })
+    })
+
+    test('holds the row, pointing at the ticket draft, when Jira refuses the ticket', async () => {
+      const run = await runGate({
+        ...TRIP,
+        'inc-900 signed-off ticket': {
+          ok: false,
+          summary: 'Jira said 401 Unauthorized'
+        }
+      })
+
+      expect({
+        question: promptOf(run, 'inc-900 signed-off hold').includes(
+          'Its Jira ticket could not be raised (Jira said 401 Unauthorized): raise the one drafted in ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket.'
+        ),
+        increment: run.result.increments[0],
+        stopped: run.result.stopped.reason
+      }).toEqual({
+        question: true,
+        increment: expect.objectContaining({
+          outcome: 'awaiting-signed-off-ruling',
+          ticketProblem: 'Jira said 401 Unauthorized'
+        }),
+        stopped: 'no-buildable'
+      })
+    })
+
+    test('records what went wrong when the hold agent dies, and still merges nothing', async () => {
+      const run = await runGate({ ...TRIP, 'inc-900 signed-off hold': null })
+
+      expect({
+        merged: stageLabels(run).includes('inc-900 merge'),
+        increment: run.result.increments[0],
+        stopped: run.result.stopped.reason
+      }).toEqual({
+        merged: false,
+        increment: expect.objectContaining({
+          outcome: 'awaiting-signed-off-ruling',
+          holdProblems: [
+            'the hold agent died, so its pull requests may not be drafts and its row may not be blocked'
+          ]
+        }),
+        stopped: 'no-buildable'
+      })
+    })
+
+    test('merges an approved row, whose pull requests a person took out of draft, without checking it again', async () => {
+      const run = await runGate({ 'inc-900 signed off': heldAt(false) })
+
+      expect({
+        stages: afterCi(run).slice(0, 2),
+        outcome: run.result.increments[0].outcome
+      }).toEqual({
+        stages: ['inc-900 signed off', 'inc-900 merge'],
+        outcome: 'landed'
+      })
+    })
+
+    test('keeps holding a row whose pull requests are still drafts, without rebuilding it', async () => {
+      const run = await runGate({
+        'inc-900 signed off': heldAt(true),
+        'inc-900 signed-off rehold': { ok: true, summary: 'blocked' }
+      })
+
+      expect({
+        built: stageLabels(run).includes('inc-900 implement'),
+        stages: afterCi(run),
+        reholds: promptOf(run, 'inc-900 signed-off rehold').includes(
+          "inc-900 --status blocked --open-question 'Still awaiting a signed-off ruling"
+        ),
+        outcome: run.result.increments[0].outcome
+      }).toEqual({
+        built: false,
+        stages: ['inc-900 signed off', 'inc-900 signed-off rehold'],
+        reholds: true,
+        outcome: 'awaiting-signed-off-ruling'
+      })
+    })
+
+    test('tells the CI watcher of no advisory exit', async () => {
+      const prompt = promptOf(await runGate({}), 'inc-900 ci watch')
+
+      expect({
+        exit6: prompt.includes('Exit 6'),
+        advisory: /advisory/i.test(prompt)
+      }).toEqual({ exit6: false, advisory: false })
     })
   })
 

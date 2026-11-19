@@ -2,9 +2,54 @@
 
 ## Purpose
 
-How a high-risk plants notification chooses the consignor, place of destination and consignment contact address from the organisation's address book — search, paging and the copy it keeps — and how that copy is edited on the notification without changing the book. When a copy blocks submission is governed by `plants/journey-obligations/review`.
+How a high-risk plants notification chooses the consignor, place of destination and consignment contact address from the organisation's address book — search and the copy it keeps — and how that copy is edited on the notification without changing the book. When a copy blocks submission is governed by `plants/journey-obligations/review`.
 
 ## Requirements
+
+### Requirement: The consignor and place of destination pickers list only addresses saved for their own role, and any saved with no role; the contact picker lists every address
+**ID**: REQ-PLANTS-ADDR-013
+The system MUST list, on the consignor picker, only the organisation's addresses saved for the consignor role, together with any address saved with no role at all; on the place of destination picker, only those saved for the place of destination role, together with any saved with no role. The consignment contact picker MUST list every address the organisation holds, whatever its role.
+
+#### Scenario: The consignor picker lists only consignor-role and role-less addresses
+**ID**: SCN-PLANTS-ADDR-013-A
+- **GIVEN** the organisation has an address saved for the place of destination role and an address saved with no role at all
+- **WHEN** the user opens the consignor picker
+- **THEN** the role-less address is listed, and the place-of-destination address is not
+
+#### Scenario: The place of destination picker lists only its own role and role-less addresses
+**ID**: SCN-PLANTS-ADDR-013-B
+- **GIVEN** the organisation has an address saved for the consignor role and an address saved with no role at all
+- **WHEN** the user opens the place of destination picker
+- **THEN** the role-less address is listed, and the consignor address is not
+
+#### Scenario: The consignment contact picker lists every address, whatever its role
+**ID**: SCN-PLANTS-ADDR-013-C
+- **GIVEN** the organisation has addresses saved for the consignor role, the place of destination role and no role at all
+- **WHEN** the user opens the consignment contact picker
+- **THEN** all of them are listed
+
+### Requirement: Each listed address shows its lines on their own lines and ends with a disclosure of its contact details
+**ID**: REQ-PLANTS-ADDR-014
+On the consignor, place of destination and consignment contact pickers, the system MUST show each listed address's street lines on their own lines, then its town or city, county and postcode together on one line, joined by commas, with blank parts left out; the country has its own column. Each row MUST end with a "View details" disclosure that opens in place and shows that record's telephone number and email address.
+
+#### Scenario: An address shows its street lines, then its town, county and postcode on one line
+**ID**: SCN-PLANTS-ADDR-014-A
+- **GIVEN** a listed address has two street lines, a town, a county and a postcode
+- **WHEN** the user finds it on a picker
+- **THEN** each street line shows on its own line, then the town, county and postcode on one line
+
+#### Scenario: Blank parts are left out
+**ID**: SCN-PLANTS-ADDR-014-B
+- **GIVEN** a listed address has no second street line and no county
+- **WHEN** it is shown on a picker
+- **THEN** it shows its street line, then its town and postcode on one line, with no blank line
+
+#### Scenario: A row's disclosure shows only the record's telephone number and email address
+**ID**: SCN-PLANTS-ADDR-014-C
+- **GIVEN** the user is on a picker
+- **WHEN** they open a row's "View details" disclosure
+- **THEN** it opens in place, without leaving the page, and shows that record's telephone number then its email address
+- **AND** the record's name, address lines and country are read from the row's own columns, not the disclosure
 
 ### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-PLANTS-ADDR-001
@@ -30,16 +75,16 @@ The system MUST copy the chosen address-book record onto the notification when t
 - **WHEN** the user picks a record from the address book for it
 - **THEN** the notification holds that record's name, address lines, town or city, county, postcode, country, telephone and email
 
-### Requirement: The picker offers a search of the whole organisation address book, reporting how many matched
+### Requirement: The picker offers a search of its own list, reporting how many matched, and shows every match on one page
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST search the whole organisation address book on the server, narrowing the list, from the button named "Search" beside the box or by pressing Enter. On the consignor, place of destination and consignment contact pickers it MUST report under the heading "Select an address" how many addresses are shown out of the total, and offer them as one group with that name. A search matching nothing MUST say so, not show an empty table, and clearing it MUST restore the whole book.
+The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total, offer them as one group with that name, and show every one on one page. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list.
 
-#### Scenario: The picker shows the first page with its count
+#### Scenario: The picker shows its whole list on one page, with its count
 **ID**: SCN-PLANTS-ADDR-002-A
 - **GIVEN** the user opens the picker
 - **WHEN** the page loads
-- **THEN** the first page of the organisation's address book is shown
-- **AND** under the heading "Select an address" the page reads "Showing 5 out of <total> results"
+- **THEN** every address the picker's list holds is shown
+- **AND** under the heading "Select an address" the page reads "Showing <total> out of <total> results"
 
 #### Scenario: Searching narrows the list to the matching term
 **ID**: SCN-PLANTS-ADDR-002-B
@@ -54,11 +99,11 @@ The system MUST search the whole organisation address book on the server, narrow
 - **WHEN** the results are shown
 - **THEN** a message says nothing matched, not an empty table
 
-#### Scenario: Clearing the search restores the whole book
+#### Scenario: Clearing the search restores the whole list
 **ID**: SCN-PLANTS-ADDR-002-D
-- **GIVEN** the user has searched the address book
+- **GIVEN** the user has searched the picker's list
 - **WHEN** they clear the search and search again with nothing entered
-- **THEN** the whole book is listed again, paginated as before
+- **THEN** the whole list is shown again
 
 #### Scenario: Without JavaScript, Enter in the search box narrows the list
 **ID**: SCN-PLANTS-ADDR-002-E
@@ -73,21 +118,15 @@ The system MUST search the whole organisation address book on the server, narrow
 - **WHEN** the page loads
 - **THEN** every listed address belongs to one group named "Select an address"
 
-### Requirement: A row checked before searching or paging stays checked
+### Requirement: A row checked before searching stays checked
 **ID**: REQ-PLANTS-ADDR-003
-The system MUST keep a row the user has checked selected across a further search or a page change, showing it as the current selection even when its own row is not on the page being shown.
+The system MUST keep a row the user has checked checked across a further search, even when its own row is not on the list the search shows.
 
 #### Scenario: A checked row survives a further search
 **ID**: SCN-PLANTS-ADDR-003-A
 - **GIVEN** the user has checked a row
 - **WHEN** they search again with a term that would not list that row
-- **THEN** the checked address is still shown as the current selection
-
-#### Scenario: A saved choice is carried through the paging links
-**ID**: SCN-PLANTS-ADDR-003-B
-- **GIVEN** the user has saved a chosen address and has not edited its details since
-- **WHEN** they reopen the picker and move through its pages
-- **THEN** the record it was chosen from is still named as selected, wherever its own row falls
+- **THEN** the checked address is still checked
 
 ### Requirement: Choosing a replacement address replaces the one already saved
 **ID**: REQ-PLANTS-ADDR-004
@@ -124,17 +163,6 @@ Every save control on a picker MUST make the same checks. The system MUST NOT re
 - **WHEN** they save an id the book no longer holds
 - **THEN** the party error is shown
 - **AND** following the error focuses the search field, which still holds the term
-
-### Requirement: Results are paged, and a choice made on any page is the one saved
-**ID**: REQ-PLANTS-ADDR-006
-The system MUST page the address book when choosing a role's address, MUST let the user move through the pages to reach a record, and MUST save the record they chose whichever page they found it on. Reopening the list MUST open on its first page while still naming the record the address was chosen from when its own row is not shown.
-
-#### Scenario: A record found on a later page is chosen and saved
-**ID**: SCN-PLANTS-ADDR-006-A
-- **GIVEN** the address book holds more matching records than fit on one page, and the record the user wants is not on the first
-- **WHEN** they move through the pages until they find it, choose it, and save
-- **THEN** the role is saved as that record
-- **AND** reopening the picker names it as selected even though its own row is not on the first page
 
 ### Requirement: A copied address can be edited on the notification without changing the address book
 **ID**: REQ-PLANTS-ADDR-009
@@ -222,15 +250,15 @@ Once a notification is submitted, the system MUST show the address details copie
 - **WHEN** that address record is later edited or deleted in the address book
 - **THEN** the read-only check your answers, and an amendment of the notification, still show the details as they were copied
 
-### Requirement: Reopening the picker names the record the address was chosen from, and keeps the address on a blank save
+### Requirement: Reopening the picker shows the address already chosen checked, and keeps it on a blank save
 **ID**: REQ-PLANTS-ADDR-012
-The system MUST name the address-book record a role's address was chosen from when the user reopens the picker, and MUST keep the address already on the notification when they save with nothing ticked. It MUST name nothing once the address's details have been edited on the notification, or once that record has been deleted from the address book.
+The system MUST show the record a role's address was chosen from as the checked row when the user reopens the picker, with nothing restating the choice above the list, and MUST keep the address already on the notification when they save with nothing ticked. It MUST show no row checked once the address's details have been edited on the notification, or once that record has been deleted from the address book.
 
-#### Scenario: Reopening the picker names the record the address was chosen from
+#### Scenario: Reopening the picker shows the record the address was chosen from ticked
 **ID**: SCN-PLANTS-ADDR-012-A
 - **GIVEN** the user has chosen an address and saved it
 - **WHEN** they reopen the picker
-- **THEN** that record is ticked and named as the selected address
+- **THEN** that record is ticked, with nothing restating it above the list
 
 #### Scenario: Saving with nothing ticked keeps the address already held
 **ID**: SCN-PLANTS-ADDR-012-B
@@ -238,16 +266,16 @@ The system MUST name the address-book record a role's address was chosen from wh
 - **WHEN** the user saves the picker with nothing ticked
 - **THEN** the save is accepted with no error, and the role still holds the edited address
 
-#### Scenario: Reopening the picker names nothing once the record is deleted from the book
+#### Scenario: Reopening the picker shows no row checked once the record is deleted from the book
 **ID**: SCN-PLANTS-ADDR-012-C
 - **GIVEN** the user has chosen an address and saved it
 - **AND** the record has since been deleted from the address book
 - **WHEN** they reopen the picker
-- **THEN** no address is named as selected, and the current address card still shows the copy
+- **THEN** no row is checked, and the current address card still shows the copy
 
-#### Scenario: Reopening the picker names nothing once the address is edited on the notification
+#### Scenario: Reopening the picker shows no row checked once the address is edited on the notification
 **ID**: SCN-PLANTS-ADDR-012-D
 - **GIVEN** the user has chosen an address and saved it
 - **AND** they have since edited its details on the notification
 - **WHEN** they reopen the picker
-- **THEN** no address is named as selected
+- **THEN** no row is checked

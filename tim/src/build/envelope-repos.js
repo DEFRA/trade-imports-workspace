@@ -68,3 +68,26 @@ export const readEnvelopeRepos = (workspaceRoot, workarea) => {
     })
   )
 }
+
+/**
+ * The repos among `repos` that `keys` names, in the envelope's own order. An
+ * empty or absent `keys` means every repo, so a caller that scopes nothing
+ * behaves as it always has.
+ *
+ * @param {{key: string}[]} repos - From {@link readEnvelopeRepos}
+ * @param {string[]} [keys] - Envelope repo keys to keep
+ * @returns {{key: string}[]}
+ * @throws {TimError} USAGE when a key is not in the envelope
+ */
+export const reposNamedBy = (repos, keys) => {
+  if (keys === undefined || keys.length === 0) return repos
+  const known = new Set(repos.map(({ key }) => key))
+  const unknown = keys.filter((key) => !known.has(key))
+  if (unknown.length > 0) {
+    throw new TimError(
+      'USAGE',
+      `The backlog has no repo ${unknown.join(', ')}. It builds ${[...known].join(', ')}.`
+    )
+  }
+  return repos.filter(({ key }) => keys.includes(key))
+}

@@ -49,7 +49,7 @@ This is the load-bearing pattern. Whenever a slide would otherwise list
 arguments, outputs or a target table that will drift, replace it with a
 callout: a blue **Live view** chip and the single command or prompt that
 shows current reality, in blue mono on a light blue-tint row. For example
-"Run `make help`", "Read `CLAUDE.md`", or "Ask Claude: read the SKILL.md
+"Run `tim --help`", "Read `CLAUDE.md`", or "Ask Claude: read the SKILL.md
 for this skill and tell me how to drive it".
 
 The slide shows the *door*, not the contents behind it. Recordings then

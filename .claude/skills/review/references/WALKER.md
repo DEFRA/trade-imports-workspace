@@ -8,6 +8,23 @@ order, then loop into per-item slow-track for anything marked Discuss.
 {repo}"` (repo filter), or `"walk review EUDPA-XXXXX --major"`
 (severity filter).
 
+**Programme scope (default):** `walk review EUDPA-XXXXX` with **no**
+`{repo}` means **every repository** that has a programme PR for the
+ticket — the full set in
+`workareas/reviews/EUDPA-XXXXX/.review-meta.json` `prs[]` (same scope as
+a fresh review). Load pending items from **all** `items.{repo}.json`
+files (omit `--repo` on `tim review items list`). Present **one** combined
+table ordered repo-by-repo (see Multi-repo note). Do **not** walk only
+the repo the user last edited or the repo named in the chat unless they
+explicitly filter: `walk review EUDPA-XXXXX trade-imports-ins-backend`.
+
+When the user is walking **another reviewer's posted PR comment**
+(e.g. `@amieljemei`), every programme PR's open rows must be in
+`items.{repo}.json` before triage. If a repo with an open PR has no
+items file or an empty file while others do, **stop** and say which
+repos are missing — import the rows from the GitHub comment (or re-run
+`tim review start` or `tim review refresh`) for those repos; do not triage a subset.
+
 Items schema: `assets/items-table.md`.
 
 ## Defaults by kind
@@ -35,20 +52,32 @@ verifier and judge apply the same defaults.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
+Read programme repos (when not repo-filtered):
+
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --filter pending --json
+tim review items counts EUDPA-XXXXX
 ```
 
+Expect one `items.{repo}.json` per programme PR unless that repo had zero
+findings. The walk title line must name **all repos in scope**, e.g.
+`Walking review EUDPA-714 (7 repos) — N pending items`.
+
+```bash
+tim review items list EUDPA-XXXXX --filter pending --json
+```
+
+The items are the envelope's `result`.
+
 Apply trigger filters:
-- `{repo}` → add `--repo {repo}`
+- `{repo}` → add `--repo {repo}` (single-repo walk only)
 - `--critical` / `--major` → filter the JSON output for matching severities
 
 Hand-marked rows (where the disposition was set directly via
-`review-mark.sh`) are already excluded by `--filter pending`.
+`tim review items mark`) are already excluded by `--filter pending`.
 
 If empty:
 ```
@@ -113,8 +142,8 @@ Map each character to the item at the same index. Apply:
 
 | Char | Action | Helper call |
 |---|---|---|
-| `F` | Mark Fix | `review-mark.sh ... --disposition "Fix"` |
-| `W` | Mark Won't Fix | `review-mark.sh ... --disposition "Won't Fix"` |
+| `F` | Mark Fix | `tim review items mark ... --disposition "Fix"` |
+| `W` | Mark Won't Fix | `tim review items mark ... --disposition "Won't Fix"` |
 | `D` | Defer to Step 4 slow-track (don't mutate yet) | — |
 | `S` | Skip — leave pending | — |
 
@@ -129,7 +158,7 @@ because the defaults above need evidence the Step 2 list does not show:
 
 Count them under Discuss in the batch summary.
 
-Each `review-mark.sh` invocation is a separate Bash call (no
+Each `tim review items mark` invocation is a separate Bash call (no
 chaining). Run them as the user expects feedback — you can fan them
 out in parallel, but each is its own Bash tool call.
 
@@ -153,7 +182,7 @@ For each item marked `D`, in input order:
 
 1. **Read the file** from the workspace copy:
    ```
-   ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
+   workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
    ```
    Use the Read tool with `offset` / `limit` to grab ~10 lines around
    the reported line.
@@ -166,14 +195,14 @@ For each item marked `D`, in input order:
    items, read whatever neighbouring files help.
 
 4. **Conclude with a disposition** — call the matching helper:
-   - "fix it" → `review-mark.sh ... --disposition "Fix" --note "{agreed approach}"`
-   - "leave it" → `review-mark.sh ... --disposition "Won't Fix" --note "{reason}"`.
+   - "fix it" → `tim review items mark ... --disposition "Fix" --note "{agreed approach}"`
+   - "leave it" → `tim review items mark ... --disposition "Won't Fix" --note "{reason}"`.
      For a code-quality item the reason is the quoted code, with its
      file:line, that shows the finding is factually wrong; any other
      reason leaves it Fix (see "Defaults by kind").
    - "defer to PR thread / standup / wider conversation":
      ```bash
-     ~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
+     tim review items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
      ```
 
 Move to the next Discuss item.
@@ -186,8 +215,10 @@ Re-render the markdown items view so the user can see the dispositions
 they just set:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo} --write
+tim review items render EUDPA-XXXXX --repo {repo} --write
 ```
+
+When the walk was repo-filtered, add `--repo {repo}`.
 
 Print the summary:
 
@@ -210,7 +241,7 @@ Omit the last line if no Fix dispositions were recorded.
 
 If the work list spans multiple repos, present them in one combined
 table — the `#` column refers to a single ordering across the whole
-list. Each `review-mark.sh` call still gets `--repo` with the right
+list. Each `tim review items mark` call still gets `--repo` with the right
 value (it's a column of the item record), so the helpers stay
 unambiguous.
 

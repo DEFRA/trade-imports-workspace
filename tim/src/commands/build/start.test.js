@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -25,6 +26,11 @@ const JIRA_ARGS = [
   '13780'
 ]
 
+const withoutOption = (flag) =>
+  JIRA_ARGS.filter(
+    (arg, index) => arg !== flag && JIRA_ARGS[index - 1] !== flag
+  )
+
 let root
 
 afterEach(() => {
@@ -33,7 +39,7 @@ afterEach(() => {
 
 const seedBacklog = (increments) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-start-cli-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
   const workarea = join(root, 'workareas', 'shared', 'programme')
   mkdirSync(workarea, { recursive: true })
@@ -109,13 +115,36 @@ describe('tim build start', () => {
     })
   })
 
+  test("reaches the ticket step on the workspace's board when --board is left out", async () => {
+    seedBacklog([todo])
+
+    const run = await runTim([WORKAREA, ...withoutOption('--board'), '--json'])
+
+    expect({
+      exitCode: run.exitCode,
+      failedStep: envelopeOf(run).result.failedStep
+    }).toEqual({ exitCode: 1, failedStep: 'ticket' })
+  })
+
+  test('refuses a board that is not a number', async () => {
+    seedBacklog([todo])
+
+    const run = await runTim([
+      WORKAREA,
+      ...withoutOption('--board'),
+      '--board',
+      'EUDPA'
+    ])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
+      exitCode: 2,
+      stderr: 'Give --board as a number, such as 13780.'
+    })
+  })
+
   test('refuses to start without the epic', async () => {
     seedBacklog([todo])
-    const withoutEpic = JIRA_ARGS.filter(
-      (arg, index) => arg !== '--epic' && JIRA_ARGS[index - 1] !== '--epic'
-    )
-
-    const run = await runTim([WORKAREA, ...withoutEpic])
+    const run = await runTim([WORKAREA, ...withoutOption('--epic')])
 
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,

@@ -3,7 +3,7 @@
 
   "set": {
     "checkout": "repos/trade-imports-animals-frontend",
-    "run": "src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+    "run": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
     "features": "src/server/app/sets/live-animals/journeys/linear/features"
   },
 
@@ -126,6 +126,21 @@
           ]
         },
         {
+          "name": "Add the CPH number",
+          "slug": "cph-number",
+          "paths": ["page/cph-number", "obligation/commodities/aggregates.js"],
+          "note": "Back in the run, and skipped for a species whose commodity code is CPH-exempt."
+        },
+        {
+          "name": "Permanent address",
+          "slug": "permanent-address",
+          "paths": [
+            "page/permanent-address",
+            "obligation/commodities/identifiers.js"
+          ],
+          "note": "One card per animal, with the choice of the same address as the destination."
+        },
+        {
           "name": "Consignment addresses",
           "slug": "addresses",
           "paths": [
@@ -157,6 +172,7 @@
     {
       "band": "Submitting",
       "numbered": true,
+      "runOrder": true,
       "pages": [
         {
           "name": "Declaration",
@@ -173,12 +189,6 @@
     {
       "band": "Opened from a page, not a step in the run",
       "pages": [
-        {
-          "name": "Add the CPH number",
-          "slug": "cph-number",
-          "paths": ["page/cph-number"],
-          "note": "Journey foundation has already taken this out of the opening run. It now opens only from its row on Consignment addresses."
-        },
         {
           "name": "Party pickers — consignor, consignee, importer, place of origin, place of destination",
           "slug": "addresses/{party}",
@@ -262,6 +272,11 @@
       "theme": "design-snagging-followups",
       "section": "crossCutting",
       "body": "Save and return to overview makes the same checks as Save and continue on every page, and no page logs a trader's own typing mistakes."
+    },
+    {
+      "theme": "test-hygiene",
+      "section": "crossCutting",
+      "body": "The tests and helpers behind the pages, not the pages themselves: browser tests that proved a look by its class, the type-ahead helper, and the plants testing guides."
     },
     {
       "theme": "obligation-model",

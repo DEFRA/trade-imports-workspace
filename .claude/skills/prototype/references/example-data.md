@@ -7,7 +7,7 @@ journey would refuse. Each example has a **slug**, its stable id, and a link
 `/examples/<set-id>/<slug>` that keeps working after a restart.
 
 The full guide, with every kind of example written out, is
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/example-data.md`.
+`repos/trade-imports-plants-prototype/docs/designers/example-data.md`.
 Read it before your first change in a session.
 
 Talk to the designer in GDS plain English. Say "your design release", not
@@ -47,7 +47,7 @@ names the story after the fixture's use case instead.
   release's own, and it must change when the release's journey changes (a
   new required page, a new walk step): `references/fake-a-service.md`, "Put
   the page in the walk", and
-  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/designer-sets.md`
+  `repos/trade-imports-plants-prototype/.claude/rules/designer-sets.md`
   rule 4.
 - **Never edit a real service's stub rows** (`src/server/app/services/<name>/stub*`
   for `address-book`, `countries`, `ports` and the other real services).
@@ -60,7 +60,7 @@ names the story after the fixture's use case instead.
   says `"frozen": true`, the release's examples are frozen too: start a
   working release with `references/design-release.md`.
 - **Check ownership first.** Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <paths>`
   on every file you will change and follow what it says. If anything is
   "Belongs to the real service", stop and offer "do it in your design
   release" or `references/hand-off.md`. Check `overrides.json` if unsure.
@@ -73,7 +73,7 @@ names the story after the fixture's use case instead.
 
 1. Use the set the designer names. If they name none, use their working design
    release
-   (`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`).
+   (`npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`).
    If they name none and have no working release of their own, make
    `plants-working` now without asking (`references/design-release.md`
    section B, saved as its own commit), then come back here: that is the
@@ -81,14 +81,14 @@ names the story after the fixture's use case instead.
    `high-risk-plants` only when they name it (its scenario file is the
    prototype's own, so that is allowed).
 2. Run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <each file you will change>`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <each file you will change>`.
    For a scenario file that does not exist yet, name it anyway: it reports
    "Yours".
 
 ### 2. See what is there
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- list <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- list <set-id>
 ```
 
 It lists each example's slug, label, what it will be (draft, submitted,
@@ -96,14 +96,14 @@ amended, deleted) and where it stops. A set with no scenario file shows its four
 default examples. To add to them, start the file:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- init <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- init <set-id>
 ```
 
 To see which fixtures an example can use, what each is for and which pages it
 answers:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- fixtures <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- fixtures <set-id>
 ```
 
 It ends with "Where they differ": the pages only some fixtures visit (the
@@ -188,7 +188,7 @@ or port in an example, give its id or code in `answers`.
 ### 4. Check the examples
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
 ```
 
 Every example must say "Reached". A "Stopped" line quotes the page:
@@ -201,7 +201,7 @@ suggest another country or another fixture.
 ### 5. Check the change
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <set-id>
 ```
 
 It runs the code rules on the scenario file too, and names the file, line and
@@ -218,7 +218,7 @@ Then take the pictures: the dashboard (pictured with every example on it,
 before and after), and where each new example's link lands:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages dashboard --examples <new slugs, comma-separated> --before
+npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages dashboard --examples <new slugs, comma-separated> --before
 ```
 
 Read the key PNGs yourself before you describe them. Never claim a visual
@@ -228,7 +228,7 @@ not on the dashboard pictures: they are taken as the example-data user.)
 ### 7. Give the links
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
 ```
 
 Give the designer the new examples' links. For another organisation's example,
@@ -261,11 +261,11 @@ cannot be moved or removed: say so plainly if the designer asks.
 Check the order before calling it done:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
+npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
 ```
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --fast --no-open
+npm --prefix repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --fast --no-open
 ```
 
 `--fast` skips the human pacing, so this only proves the order and the

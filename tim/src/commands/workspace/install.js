@@ -1,11 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import {
-  NODE_REPOS,
-  JAVA_REPOS,
-  repoPath,
-  realRepoPath
-} from '../../constants/repos.js'
+import { rosterOf, repoPath, realRepoPath } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import { runAcross } from '../../exec/parallel.js'
 import { makeTaskAction, toResultRecord } from './_task-output.js'
@@ -99,10 +94,11 @@ export const buildInstallTasks = (
   workspaceRoot,
   { nodeOnly = false, javaOnly = false, repo = [] } = {}
 ) => {
+  const { nodeRepos, javaRepos } = rosterOf(workspaceRoot)
   const wanted = repo.length > 0 ? new Set(repo) : null
   const tasks = []
   if (!javaOnly) {
-    for (const nodeRepo of NODE_REPOS) {
+    for (const nodeRepo of nodeRepos) {
       if (wanted && !wanted.has(nodeRepo)) continue
       const dir = realRepoPath(workspaceRoot, nodeRepo)
       if (!existsSync(dir)) continue
@@ -110,7 +106,7 @@ export const buildInstallTasks = (
     }
   }
   if (!nodeOnly) {
-    for (const javaRepo of JAVA_REPOS) {
+    for (const javaRepo of javaRepos) {
       if (wanted && !wanted.has(javaRepo)) continue
       const dir = repoPath(workspaceRoot, javaRepo)
       if (!existsSync(join(dir, 'pom.xml'))) continue

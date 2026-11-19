@@ -17,21 +17,21 @@ Install any that aren't already on your `PATH`:
 for cmd in curl jq gh; do command -v "$cmd" >/dev/null || brew install "$cmd"; done
 ```
 
-### 1. Canonical clone location
+### 1. Clone location
 
-Clone the workspace to `~/git/defra/trade-imports-workspace`:
+The default place to clone the workspace is `~/git/defra/trade-imports-workspace`:
 
 ```bash
 git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imports-workspace
 ```
 
-Every LLM-typed Bash command, every helper script, and the
-`.claude/settings.json` allowlist patterns hardcode that path. There is no env
-var to set and no symlink to maintain — the canonical path is the checkout, and
-a checkout under any other name will not work.
+Any other folder works too, and several clones can sit side by side. `tim`
+finds the workspace it runs in, and the paths in skills, rules and docs are
+relative to the workspace root, so open Claude Code there. There is no env var
+to set and no symlink to maintain.
 
 `repos/` is gitignored, so a fresh clone starts empty. Populate it with
-`make setup` (or `tim workspace setup`), which clones each repo named in
+`tim workspace setup`, which clones each repo named in
 `repos.json`.
 
 ### 2. Get Your Credentials
@@ -69,14 +69,14 @@ gh auth login
 
 ### 3. Check Authentication
 
-Run the auth script (from the workspace root) to verify all services
-are configured:
+Check that every service is set up:
 
 ```bash
-./tools/auth.sh
+tim auth
+gh auth status
 ```
 
-This checks Jira, Confluence, and GitHub authentication.
+`tim auth` checks Jira and Confluence. `gh auth status` checks GitHub.
 
 ### 4. SonarCloud (Claude Code integration)
 
@@ -110,8 +110,8 @@ It used to register all eight, but Claude Code starts every server in a project 
 at session start, and each one is an `mcp/sonarqube` docker container (roughly 400–800 MiB).
 Every workspace-root session therefore held about 5–6 GiB of Docker memory, enough to starve
 the testcontainers the Java integration suites start. Nothing automated needed them: the
-pre-push quality gate (`tools/sonar/sonar-push-check.sh`) and the pending-check hooks under
-`scripts/sonar/` call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
+pre-push quality gate (`tim sonar push-check --hook`) and the pending-check hooks
+(`tim sonar pending`) call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
 
 To query SonarCloud from a workspace-root session, use the `sonar` CLI (for example
 `sonar list issues --project DEFRA_<repo>`), or open a session inside the repo to get its
@@ -147,9 +147,9 @@ Two cooperating hooks bridge that gap without any long-lived process (an earlier
 async-`git push` hook that polled for CI was abandoned — Claude Code reaps async
 hooks when the session goes idle, so the multi-minute wait never completed):
 
-- `scripts/sonar/sonar-record-push.sh` — on `git push`, records a pending check
+- `tim sonar pending record` — on `git push`, records a pending check
   (`{project, sha}`) for each sonar repo at its pushed HEAD, then exits instantly.
-- `scripts/sonar/sonar-check-pending.sh` — on `UserPromptSubmit` and `SessionStart`,
+- `tim sonar pending check --event <name>` — on `UserPromptSubmit` and `SessionStart`,
   does one fast, non-blocking query per pending commit: if SonarCloud has analyzed
   it, inject any new BLOCKER/CRITICAL via `additionalContext` (each commit surfaced
   once); if clean, clear it; if not analyzed yet, leave it (dropped after 45 min).
@@ -161,17 +161,17 @@ robust shape. Add to `hooks`:
 ```json
 "PostToolUse": [
   { "matcher": "Bash", "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh\"", "if": "Bash(git push*)", "timeout": 10 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending record 2>/dev/null || true", "if": "Bash(git push*)", "timeout": 10 }
   ] }
 ],
 "UserPromptSubmit": [
   { "matcher": "*", "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" UserPromptSubmit", "timeout": 15 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event UserPromptSubmit 2>/dev/null || true", "timeout": 15 }
   ] }
 ],
 "SessionStart": [
   { "hooks": [
-    { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh\" SessionStart", "timeout": 15 }
+    { "type": "command", "command": "TIM_NO_AUTO_PULL=1 node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event SessionStart 2>/dev/null || true", "timeout": 15 }
   ] }
 ]
 ```
@@ -188,21 +188,22 @@ workspace repo's own `gh-pages` is ~1 GiB. Any clone still on the
 default `+refs/heads/*` fetch refspec drags them in on a bare
 `git fetch` / `git pull`.
 
-Pin your workspace clone once:
+Pin your workspace clone once, from its root. `--prune` then runs
+`git gc --prune=now`, which reclaims about 1 GiB if gh-pages was ever
+fetched:
 
 ```bash
-bash tools/git/light-remote.sh --exclude-gh-pages ~/git/defra/trade-imports-workspace
-git -C ~/git/defra/trade-imports-workspace gc --prune=now   # reclaims ~1 GiB if gh-pages was ever fetched
+tim workspace pin-fetch . --exclude-gh-pages --prune
 ```
 
-Per-ticket review clones under `workareas/` are pinned automatically by
-`tools/review/prepare-review.sh` (and self-healed on refresh by
-`tools/review/refresh/pull-repos.sh`).
+Per-ticket review clones under `workareas/` are pinned automatically to
+their pull request (`tim workspace pin-fetch <dir> --pr <number>`) by
+`tim review prepare`, and self-healed on refresh by
+`tim review refresh pull`.
 
-The dev repos under `repos/` are handled for you: `make setup` /
-`tim workspace setup` clone with the exclusion in place
-(`--single-branch`, pin the refspec, then a widening fetch), and
-`make update` / `tim workspace update` heal any clone still on the
+The dev repos under `repos/` are handled for you: `tim workspace setup` clones with the exclusion in
+place (`--single-branch`, pin the refspec, then a widening fetch), and
+`tim workspace update` heals any clone still on the
 default refspec exactly once — pin, refetch, then `git gc --prune=now`
 to reclaim the gh-pages packs already on disk. Expect that first update
 to take a few minutes per large clone; every later run skips the heal.
@@ -283,17 +284,18 @@ Designers working on the high-risk plants prototype
 (`trade-imports-plants-prototype`) onboard the same way as everyone else in
 this workspace — there is no separate, prototype-only setup:
 
-1. **Clone the workspace to the canonical path** (step 1 above) — same
-   command, same path. The prototype does not stand alone with its own
+1. **Clone the workspace** (step 1 above) — same command, same default
+   path. The prototype does not stand alone with its own
    copy of the workspace tooling; it is cloned under `repos/` like every
-   other repo (`make setup` / `tim workspace setup`).
+   other repo (`tim workspace setup`).
 2. **Set `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY` and
    authenticate `gh`**, exactly as in step 2 and step 3 above. A hand-off
    raises a real Jira story from the prototype, so the same credentials
    apply.
 3. **Run `tim prototype setup`** (after
-   `npm --prefix ~/git/defra/trade-imports-workspace/tim link` if `tim` is
-   not already on your `PATH`). It writes a short note into a gitignored
+   `npm --prefix tim link`, run from the workspace root, if `tim` is not
+   already on your `PATH`; one link serves every clone, and each clone
+   runs its own tim). It writes a short note into a gitignored
    `CLAUDE.local.md` at the workspace root ("You are working with a
    designer…", so every request routes through the `prototype` skill
    without you ever having to name it), adds the prototype's fetch-only
@@ -301,8 +303,7 @@ this workspace — there is no separate, prototype-only setup:
    installs the prototype's dependencies with its pinned npm version, and
    reports Jira and Confluence readiness (for GitHub, run `gh auth status`). It never touches Jira and never pushes.
    Re-run it with `--remove` to take the note back out.
-4. **Open Claude Code at the workspace root**
-   (`~/git/defra/trade-imports-workspace`), not inside
+4. **Open Claude Code at the workspace root**, not inside
    `repos/trade-imports-plants-prototype`. The agent layer for a designer's
    requests — the `prototype` skill — only loads from the workspace root;
    see the routing row in the workspace [`CLAUDE.md`](../CLAUDE.md) and

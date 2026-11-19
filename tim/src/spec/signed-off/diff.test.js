@@ -119,17 +119,66 @@ const workspaceWithSpec = async (scenarios) => {
   return root
 }
 
+const FIT_SOURCE = `import { test, expect } from '@playwright/test'
+
+test.describe('origin page', () => {
+  test('lists every country', async ({ page }) => {
+    await expect(page.getByRole('option')).toHaveCount(2)
+  })
+
+  test("lists countries in order", async ({ page }) => {
+    await expect(page).toHaveURL(/origin\\/(list)?$/)
+  })
+
+  test(\`shows the heading\`, async ({ page }) => {
+    await expect(page.getByRole('heading')).toHaveText('Origin')
+  })
+
+  test('shows the caption', async ({ page }) => {
+    await expect(page.getByText('Origin (')).toBeVisible()
+  })
+})
+`
+
+const UNIT_SOURCE = `describe('#controller', () => {
+  it('returns every country', () => {
+    expect(countries()).toHaveLength(2)
+  })
+
+  it('saves the country', () => {
+    expect(save('FR')).toBe('FR')
+  })
+
+  it('can\\'t save an empty answer', () => {
+    expect(save('')).toBeNull()
+  })
+})
+`
+
 const serviceRepo = async (workspacePath) => {
   const repoPath = join(workspacePath, 'repos', REPO)
   await git(workspacePath, 'init', '--quiet', '-b', 'main', repoPath)
   writeFiles(repoPath, {
-    [FIT_FILE]: 'fit\n',
-    [UNIT_FILE]: 'unit\n',
-    [HINT_FILE]: 'hint\n'
+    [FIT_FILE]: FIT_SOURCE,
+    [UNIT_FILE]: UNIT_SOURCE,
+    [HINT_FILE]: "test('offers the country', () => {})\n"
   })
   await commitAll(repoPath, 'tests')
   return repoPath
 }
+
+const replaceIn = (repoPath, file, source, from, to) => {
+  expect(source).toContain(from)
+  writeFiles(repoPath, { [file]: source.replace(from, to) })
+}
+
+const signedOffTests = (result) =>
+  result.signedOff.map(({ id, change, why, test }) => ({
+    id,
+    change,
+    why,
+    titles: test.titles
+  }))
 
 const steps = (then) => [
   '- **GIVEN** a trader on the origin page',
@@ -282,6 +331,45 @@ describe('#diffSignedOff over the spec', () => {
       ticketDraft: null
     })
   })
+
+  test('Should refuse a range whose base git cannot find, rather than find nothing', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+
+    await expect(
+      diffSignedOff({
+        workspaceRoot: workspacePath,
+        ranges: ['origin/main...HEAD']
+      })
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: "Can't find origin/main. Fetch first, or name another --range."
+    })
+  })
+
+  test('Should refuse a range whose head git cannot find', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+
+    await expect(
+      diffSignedOff({
+        workspaceRoot: workspacePath,
+        ranges: ['main..feat/gone']
+      })
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: "Can't find feat/gone. Fetch first, or name another --range."
+    })
+  })
+
+  test('Should refuse a range that is not one', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+
+    await expect(
+      diffSignedOff({ workspaceRoot: workspacePath, ranges: ['main'] })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'main is not a range such as main..HEAD. Name another --range.'
+    })
+  })
 })
 
 describe('#diffSignedOff over the uncommitted spec', () => {
@@ -352,8 +440,11 @@ describe('#diffSignedOff over a repo', () => {
     rmSync(join(repoPath, FIT_FILE))
     await commitAll(repoPath, 'drop the fit spec')
     writeFiles(repoPath, {
-      [UNIT_FILE]: 'unit, edited\n',
-      [HINT_FILE]: 'hint, edited\n',
+      [UNIT_FILE]: UNIT_SOURCE.replace("save('FR')", "save('ES')").replace(
+        'toHaveLength(2)',
+        'toHaveLength(3)'
+      ),
+      [HINT_FILE]: "test('offers the country', () => { search() })\n",
       'src/features/origin/new.test.js': 'new\n'
     })
 
@@ -412,10 +503,16 @@ describe('#diffSignedOff over a repo', () => {
     const workspacePath = await workspaceWithSpec([LISTS, SAVES])
     const repoPath = await serviceRepo(workspacePath)
     await git(repoPath, 'checkout', '--quiet', '-b', 'feature')
-    writeFiles(repoPath, { [FIT_FILE]: 'fit, edited on the branch\n' })
+    replaceIn(
+      repoPath,
+      FIT_FILE,
+      FIT_SOURCE,
+      'toHaveCount(2)',
+      'toHaveCount(3)'
+    )
     await commitAll(repoPath, 'edit the fit spec on the branch')
     await git(repoPath, 'checkout', '--quiet', 'main')
-    writeFiles(repoPath, { [UNIT_FILE]: 'unit, edited on main\n' })
+    replaceIn(repoPath, UNIT_FILE, UNIT_SOURCE, "save('FR')", "save('ES')")
     await commitAll(repoPath, 'edit the unit test on main')
     await git(repoPath, 'checkout', '--quiet', 'feature')
 
@@ -446,7 +543,13 @@ describe('#diffSignedOff over a repo', () => {
       }
     ])
     const repoPath = await serviceRepo(workspacePath)
-    writeFiles(repoPath, { [UNIT_FILE]: 'unit, edited\n' })
+    replaceIn(
+      repoPath,
+      UNIT_FILE,
+      UNIT_SOURCE,
+      'toHaveLength(2)',
+      'toHaveLength(3)'
+    )
 
     const result = await diffSignedOff({
       workspaceRoot: workspacePath,
@@ -455,6 +558,196 @@ describe('#diffSignedOff over a repo', () => {
     })
 
     expect(result.signedOff).toEqual([])
+  })
+
+  test('Should find nothing, with no ticket draft, when only tests no signed-off scenario links change in a file that holds linked ones', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS, SAVES])
+    const repoPath = await serviceRepo(workspacePath)
+    writeFiles(repoPath, {
+      [FIT_FILE]: FIT_SOURCE.replace(
+        "toHaveText('Origin')",
+        "toHaveText('Country of origin')"
+      ).replace(
+        `
+  test('shows the caption', async ({ page }) => {
+    await expect(page.getByText('Origin (')).toBeVisible()
+  })
+`,
+        ''
+      )
+    })
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(result).toEqual({ signedOff: [], skipped: [], ticketDraft: null })
+  })
+
+  test('Should name only the linked test whose own block changes', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+    const repoPath = await serviceRepo(workspacePath)
+    replaceIn(
+      repoPath,
+      FIT_FILE,
+      FIT_SOURCE,
+      'toHaveCount(2)',
+      'toHaveCount(3)'
+    )
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(signedOffTests(result)).toEqual([
+      {
+        id: LISTS.id,
+        change: 'test-edited',
+        why: `A test linked to it in coverage.json is edited: ${REPO}/${FIT_FILE}.`,
+        titles: ['lists every country']
+      }
+    ])
+  })
+
+  test('Should report a linked test removed or renamed as deleted, and one edited beside it as edited', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+    const repoPath = await serviceRepo(workspacePath)
+    writeFiles(repoPath, {
+      [FIT_FILE]: FIT_SOURCE.replace(
+        'lists every country',
+        'lists each country'
+      ).replace('(list)?$', '(list)$')
+    })
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(signedOffTests(result)).toEqual([
+      {
+        id: LISTS.id,
+        change: 'test-deleted',
+        why: `A test linked to it in coverage.json is deleted: ${REPO}/${FIT_FILE}.`,
+        titles: ['lists every country']
+      },
+      {
+        id: LISTS.id,
+        change: 'test-edited',
+        why: `A test linked to it in coverage.json is edited: ${REPO}/${FIT_FILE}.`,
+        titles: ['lists countries in order']
+      }
+    ])
+  })
+
+  test('Should find linked tests titled in single quotes with an escape, double quotes and a plain template literal', async () => {
+    const workspacePath = await workspaceWithSpec([
+      {
+        ...LISTS,
+        tests: [
+          link(FIT_FILE, 'lists countries in order'),
+          link(FIT_FILE, 'shows the heading'),
+          link(UNIT_FILE, "can't save an empty answer")
+        ]
+      }
+    ])
+    const repoPath = await serviceRepo(workspacePath)
+    replaceIn(
+      repoPath,
+      FIT_FILE,
+      FIT_SOURCE,
+      "toHaveText('Origin')",
+      "toHaveText('Where from')"
+    )
+    replaceIn(repoPath, UNIT_FILE, UNIT_SOURCE, 'toBeNull()', 'toBeUndefined()')
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(signedOffTests(result).map(({ titles }) => titles)).toEqual([
+      ['shows the heading'],
+      ["can't save an empty answer"]
+    ])
+  })
+
+  test('Should count any change to the file for a linked test it cannot find, saying why', async () => {
+    const workspacePath = await workspaceWithSpec([
+      {
+        ...LISTS,
+        tests: [
+          link(FIT_FILE, 'lists every country'),
+          link(FIT_FILE, 'opens the page'),
+          { type: 'fit', repo: REPO, file: FIT_FILE }
+        ]
+      }
+    ])
+    const repoPath = await serviceRepo(workspacePath)
+    replaceIn(
+      repoPath,
+      FIT_FILE,
+      FIT_SOURCE,
+      "toHaveText('Origin')",
+      "toHaveText('Where from')"
+    )
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(signedOffTests(result)).toEqual([
+      {
+        id: LISTS.id,
+        change: 'test-edited',
+        why: `A test linked to it in coverage.json is edited: ${REPO}/${FIT_FILE}. Can't find "opens the page" in the file before the change, so any change to the file counts. Its link in coverage.json names no test, so any change to the file counts.`,
+        titles: ['opens the page']
+      }
+    ])
+  })
+
+  test('Should count any change to the file for a linked title that names more than one test in it', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+    const repoPath = await serviceRepo(workspacePath)
+    const duplicated = `${FIT_SOURCE}
+test.describe('origin page on a phone', () => {
+  test('lists every country', async ({ page }) => {
+    await expect(page.getByRole('option')).toHaveCount(2)
+  })
+})
+`
+    writeFiles(repoPath, { [FIT_FILE]: duplicated })
+    await commitAll(repoPath, 'a phone describe')
+    replaceIn(
+      repoPath,
+      FIT_FILE,
+      duplicated,
+      "toHaveText('Origin')",
+      "toHaveText('Where from')"
+    )
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'HEAD'
+    })
+
+    expect(signedOffTests(result)).toEqual([
+      {
+        id: LISTS.id,
+        change: 'test-edited',
+        why: `A test linked to it in coverage.json is edited: ${REPO}/${FIT_FILE}. "lists every country" names more than one test in the file, so any change to the file counts.`,
+        titles: ['lists every country']
+      }
+    ])
   })
 
   test('Should refuse a base the repo does not have', async () => {

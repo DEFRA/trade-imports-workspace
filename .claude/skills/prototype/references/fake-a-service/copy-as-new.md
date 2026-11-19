@@ -171,11 +171,11 @@ controller, and show a success banner from a copy function, for example
 
 ## Check it
 
-1. `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`.
+1. `npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full`.
 2. Picture the dashboard and the check page:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,task-list --url "notifications/{notification}/copy" --url "notifications/{notification}?copiedFrom=GBN-EXAMPLE" --before
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,task-list --url "notifications/{notification}/copy" --url "notifications/{notification}?copiedFrom=GBN-EXAMPLE" --before
    ```
 
    The second `--url` is the task list (`hubPath`) as the copy lands on it,

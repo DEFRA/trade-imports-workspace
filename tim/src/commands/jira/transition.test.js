@@ -1,10 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { execa } from 'execa'
 import {
   loadJiraFixture,
   mockJiraForEachTest
 } from '../../test-support/jira-mock.js'
-import { TIM_CLI_PATH } from '../../test-support/tim-cli.js'
+import { runTim } from '../../test-support/tim-cli.js'
 import {
   parseTransitionArgs,
   renderTransition,
@@ -403,10 +402,7 @@ describe('renderTransition', () => {
 
 describe('tim jira transition (spawn)', () => {
   const spawnTim = (args, env = {}) =>
-    execa('node', [TIM_CLI_PATH, 'jira', 'transition', ...args], {
-      reject: false,
-      env: { ...process.env, ...env }
-    })
+    runTim(['jira', 'transition', ...args], { env })
 
   test('exits 2 with a USAGE envelope when neither a status nor --list is given', async () => {
     const { stdout, exitCode } = await spawnTim(['EUDPA-300', '--json'])

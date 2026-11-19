@@ -27,7 +27,7 @@ the conversation.
 How to count pages: a file under `journeys/linear/features/<feature>/` is that
 feature's pages (its `page.js` lists their `slug`s). For words, count the
 pages
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- find "<new words>" --set <set-id>`
+`npm --prefix repos/trade-imports-plants-prototype run designer:words -- find "<new words>" --set <set-id>`
 lists ("Shown on" and "Also shown on"). Files under `journeys/linear/flow/` or
 `obligations/` touch the journey as a whole: say "across the journey" unless
 you can name the pages. Never copy a count from an example here.

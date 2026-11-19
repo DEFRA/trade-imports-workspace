@@ -32,6 +32,7 @@ flowchart LR
   user([Browser]) --> AF[animals-frontend]
   user --> PF[plants-frontend]
   user --> IF[ins-frontend]
+  user --> RP[routing-proxy]
   staff([Internal user]) --> AA[animals-admin]
 
   AF --> AB[animals-backend]
@@ -58,7 +59,7 @@ flowchart LR
   AA -->|DLQ operations| GW
 
   RD --> MDM[MDM via stub locally]
-  AF & AA & IF & PF -.->|OIDC| DID[Defra ID or defra-id-stub]
+  AF & AA & IF & PF & RP -.->|OIDC| DID[Defra ID or defra-id-stub]
 ```
 
 ## Responsibilities at a glance
@@ -71,7 +72,7 @@ flowchart LR
 | plants-frontend | High-risk plants UI, journey flow, validation, session | Persistence, reference data, addresses |
 | plants-backend | Plants notification aggregate and lifecycle, reference numbers, audit | Identity. No outbox or PIMS routing yet — planned, not yet built |
 | ins-frontend | Sign-in front door, notifications dashboard, address-book UI (a backend-for-frontend) | Any database |
-| routing-proxy | INS's public entry point, forwarding each request to the INS service its path addresses. A skeleton today: forwarding is not built yet | Sign-in, pages of its own beyond the template's, any database |
+| routing-proxy | INS public entry point: it will forward each request to the INS service its path addresses, but forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned | Passing the user's identity on, any database |
 | ins-backend | Cross-journey notification read model, built from events | Writes to notifications; it is read-only over REST |
 | address-book | Organisation-scoped address records (system of record) | Authentication; trusts the `Trade-Imports-Organisation-Id` header |
 | reference-data | Read API for countries, ports of entry and live-animal commodity search and species checks, MDM token handling, caching | Holding data itself; it fetches from MDM |
@@ -114,7 +115,8 @@ entry, and the animals frontend also for commodity search and species checks. re
 animals backend does not use it.
 
 **Sign-in.** The four UIs use Defra ID OIDC, or `trade-imports-defra-id-stub`
-locally. Sessions live in Redis.
+locally. `trade-imports-routing-proxy` signs in through `trade-imports-defra-id-stub`,
+in the workspace stack and in CDP dev and test. Sessions live in Redis.
 
 ## Target direction
 

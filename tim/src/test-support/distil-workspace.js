@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from './workspace-marker.js'
 import {
   cpSync,
   mkdirSync,
@@ -32,7 +33,7 @@ export const DEMO_WORKAREA = 'shared/demo'
  */
 export const makeDistilWorkspace = () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'tim-distil-')))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
   for (const file of Object.values(DISTIL_SCHEMA_FILES)) {
     const target = join(root, DISTIL_SCHEMA_DIR, file)

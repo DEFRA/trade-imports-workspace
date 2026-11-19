@@ -1,0 +1,213 @@
+h3. Background
+
+This theme settles who a high-risk plants consignment's parties are and where each of them is. The consignor and place of destination pickers now list only the addresses the trader's organisation saved for that role, and the consignment contact page lists every address whatever its role. Each listed address reads as a postal address rather than as a run of fields, and a row's "View details" disclosure shows only what the row itself does not already say — the telephone number and the email address. The contact page gained the journey's standard ending: Save and continue beside Save and return to hub, with Cancel and return to hub below them.
+
+This matters to a trader bringing high-risk plants into Great Britain. Someone who keeps a dozen addresses in the address book no longer reads through all of them to name a consignor: the consignor picker lists consignor addresses, plus any saved without a role at all, so nothing a trader saved becomes unreachable. The addresses read the way an address reads, with blank parts left out rather than showing as gaps. And a trader who saves the contact page and goes back to the hub is not forced to continue through the journey first.
+
+Live animals gets the same party pickers and the same contact page wording, and also gets things high-risk plants does not: a county parish holding number page, three "Same as …" shortcuts between paired parties, and a permanent address section. None of those three is part of high-risk plants. The sibling tickets are the live animals one and the Import notification service front door one, both raised under this theme.
+
+This work is merged. It landed on {{main}} in the high-risk plants frontend, the live animals frontend, the Import notification service front door, the end-to-end test suite, the performance-test suite and the behaviour specification, each through its own pull request. The acceptance criteria below are the behaviour specification as it stands on {{main}}.
+
+h3. What changes for the user
+
+h4. Each party picker lists only that role's addresses
+
+The consignor picker lists the organisation's consignor addresses; the place of destination picker lists its own role's. Neither lists the other's. An address saved with no role at all is listed on both, so an address saved without choosing a role can still be used anywhere. The consignment contact picker is the exception by design: it lists every address the organisation holds, whatever role it was saved for.
+
+h4. Each picker shows its whole list on one page
+
+A picker shows every address its list holds on one page, with "Showing <total> out of <total> results" under the "Select an address" heading, rather than paging through them. A search narrows the list; clearing the search restores it; and a search matching nothing says so in words rather than showing an empty table.
+
+h4. An address reads as an address
+
+Each street line shows on its own line, then the town, county and postcode together on one line. Blank parts are left out rather than leaving a gap — an address with no second street line and no county shows its street line, then its town and postcode, with no blank line between them.
+
+h4. A row's details disclosure shows only what the row does not
+
+Opening a row's "View details" opens it in place, without leaving the page, and shows that record's telephone number and then its email address. The name, address lines and country are not repeated there, because the row's own columns already show them.
+
+h4. A chosen address is remembered, and stops being shown when it no longer matches
+
+Reopening a picker shows the record the saved address came from ticked, with nothing restating it above the list. Once the record has been deleted from the address book, or its details were edited on the notification itself, the picker opens with nothing ticked — the notification's copy and the book's record are no longer the same thing — while the notification keeps the address it holds and the current address card still shows it. A tick survives a further search even when the search would not list that row.
+
+h4. The contact page's ending, and saving back to the hub
+
+The contact page ends with "Save and continue" beside "Save and return to hub", and "Cancel and return to hub" on its own line below them. Save and return to hub saves the chosen address and reaches Overview with the contact task Completed, without continuing through the journey. Saving it with nothing chosen and nothing held yet is accepted — nothing has been claimed — and Overview shows the task as not yet started with no error. An invalid selection is refused from either control, in the same way, with the first address row focused and the search term kept.
+
+h3. Acceptance criteria
+
+These are copied from the behaviour specification, which is where they are maintained. This theme added 21 scenarios across 4 specification files for high-risk plants, and every one of them is written out below. Every file is linked in full at the foot of this ticket.
+
+h4. Each party picker lists only that role's addresses
+
+h5. The consignor picker lists only consignor-role and role-less addresses
+
+* *GIVEN* the organisation has an address saved for the place of destination role and an address saved with no role at all
+* *WHEN* the user opens the consignor picker
+* *THEN* the role-less address is listed, and the place-of-destination address is not
+
+h5. The place of destination picker lists only its own role and role-less addresses
+
+* *GIVEN* the organisation has an address saved for the consignor role and an address saved with no role at all
+* *WHEN* the user opens the place of destination picker
+* *THEN* the role-less address is listed, and the consignor address is not
+
+h5. The consignment contact picker lists every address, whatever its role
+
+* *GIVEN* the organisation has addresses saved for the consignor role, the place of destination role and no role at all
+* *WHEN* the user opens the consignment contact picker
+* *THEN* all of them are listed
+
+h5. The page lists the organisation's consignor-role addresses, and any saved with no role, on one page
+
+* *GIVEN* the organisation has an address saved for the consignor role, an address saved with no role, and an address saved for the place of destination role
+* *WHEN* the user opens the consignor page
+* *THEN* the consignor-role and role-less addresses are listed, on one page, and the place-of-destination address is not
+
+h4. Each picker shows its whole list on one page
+
+h5. The picker shows its whole list on one page, with its count
+
+* *GIVEN* the user opens the picker
+* *WHEN* the page loads
+* *THEN* every address the picker's list holds is shown
+* *AND* under the heading "Select an address" the page reads "Showing <total> out of <total> results"
+
+h5. The picker shows the role's whole list on one page, with its count
+
+* *GIVEN* the user opens the place of destination page
+* *WHEN* the page loads
+* *THEN* every address the role's list holds is shown
+* *AND* under the heading "Select an address" the page reads "Showing <total> out of <total> results"
+
+h5. The page shows every address on one page, none preselected
+
+* *GIVEN* the user has reached the contact page without answering it before
+* *WHEN* the page loads
+* *THEN* it shows every address the organisation holds, reading "Showing <total> out of <total> results" under the heading "Select an address"
+* *AND* no address is shown as chosen, and the sentence saying whose address this is shows
+
+h5. Clearing the search restores the whole list
+
+* *GIVEN* the user has searched the picker's list
+* *WHEN* they clear the search and search again with nothing entered
+* *THEN* the whole list is shown again
+
+h5. A search matching nothing says so, and clearing restores the list
+
+* *GIVEN* the user searches for a term matching no address
+* *WHEN* the results are shown
+* *THEN* a message says nothing matched, not an empty table
+* *WHEN* they clear the search
+* *THEN* the whole list is shown again
+
+h4. An address reads as an address
+
+h5. An address shows its street lines, then its town, county and postcode on one line
+
+* *GIVEN* a listed address has two street lines, a town, a county and a postcode
+* *WHEN* the user finds it on a picker
+* *THEN* each street line shows on its own line, then the town, county and postcode on one line
+
+h5. Blank parts are left out
+
+* *GIVEN* a listed address has no second street line and no county
+* *WHEN* it is shown on a picker
+* *THEN* it shows its street line, then its town and postcode on one line, with no blank line
+
+h5. A row's disclosure shows only the record's telephone number and email address
+
+* *GIVEN* the user is on a picker
+* *WHEN* they open a row's "View details" disclosure
+* *THEN* it opens in place, without leaving the page, and shows that record's telephone number then its email address
+* *AND* the record's name, address lines and country are read from the row's own columns, not the disclosure
+
+h4. A chosen address is remembered, and stops being shown when it no longer matches
+
+h5. Reopening the picker shows the record the address was chosen from ticked
+
+* *GIVEN* the user has chosen an address and saved it
+* *WHEN* they reopen the picker
+* *THEN* that record is ticked, with nothing restating it above the list
+
+h5. Reopening the picker shows no row checked once the record is deleted from the book
+
+* *GIVEN* the user has chosen an address and saved it
+* *AND* the record has since been deleted from the address book
+* *WHEN* they reopen the picker
+* *THEN* no row is checked, and the current address card still shows the copy
+
+h5. Reopening the picker shows no row checked once the address is edited on the notification
+
+* *GIVEN* the user has chosen an address and saved it
+* *AND* they have since edited its details on the notification
+* *WHEN* they reopen the picker
+* *THEN* no row is checked
+
+h5. A ticked row stays checked after a further search
+
+* *GIVEN* the user has ticked an address
+* *WHEN* they search again with a term that would not list that row
+* *THEN* the ticked address is still checked
+
+h5. A held contact address is not shown chosen once its record is no longer offered or its details were changed here
+
+* *GIVEN* the notification holds a contact address copied from a record the book no longer offers, or whose details were edited on the notification
+* *WHEN* the user opens the contact page
+* *THEN* no address is shown as chosen
+* *AND* the notification keeps the contact address it holds
+
+h4. The contact page's ending, and saving back to the hub
+
+h5. The page ends with Save and continue beside Save and return to hub, and Cancel and return to hub below them
+
+* *GIVEN* the user is on the contact page
+* *WHEN* the page loads
+* *THEN* it shows "Save and continue" and "Save and return to hub" side by side
+* *AND* it shows "Cancel and return to hub" on its own line below them
+
+h5. Save and return to hub saves the address without continuing
+
+* *GIVEN* the user is on the contact page of a notification that is not being amended
+* *WHEN* they choose an address and select "Save and return to hub"
+* *THEN* they reach Overview with the contact task Completed
+* *AND* returning to the page shows that address still chosen
+
+h5. A blank save and return to hub opens Overview with the task not yet started
+
+* *GIVEN* the user is on the contact page of a notification that is not being amended, with no address chosen and no contact address held yet
+* *WHEN* they select "Save and return to hub"
+* *THEN* Overview is shown with no error summary
+* *AND* the contact task shows not yet started
+* *AND* returning to the page still shows no address chosen
+
+h5. An invalid selection from Save and return to hub is rejected the same way
+
+* *GIVEN* the user has searched the address book and submits a value that is not one of the addresses offered
+* *WHEN* they select "Save and return to hub" and follow the error
+* *THEN* the first address row is focused
+* *AND* the search term they entered is still in the search box
+
+h3. The work behind this change
+
+Each row below was built and reviewed on its own, in the order shown. The table holds every row of this theme that changed high-risk plants. A row appears in more than one of this theme's tickets when it changed more than one service — that is how the theme was built, not duplication. The theme's other eight rows changed live animals, the Import notification service front door or the test suites alone, and are in their own domain's ticket.
+
+|| Row || What it changed || State ||
+| inc-087 | Role-filtered party pickers on one page | Built |
+| inc-090 | High-risk plants pickers' address lines and trimmed details disclosure | Built |
+| inc-094 | The contact address page says whose address it is and requires a choice | Built |
+| inc-097 | The CPH, permanent address and contact pages' endings, with no cancel control while amending, and the contact page's hub wording \\ _Only the contact page's ending and hub wording apply here; the CPH and permanent address pages are live animals only._ | Built |
+| inc-243 | Every save control on the county parish holding, permanent address and contact address pages makes the same checks \\ _Only the contact address page's save controls apply here._ | Built |
+
+h3. Where this is specified
+
+The behaviour specification is the contract this change is held to, and the tests linked to each scenario are the evidence. This theme added 21 scenarios across these 4 files for high-risk plants, now on {{main}}.
+
+|| Specification || Scenarios this theme added ||
+| [addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/addresses/spec.md] | 11 |
+| [journey-pages/consignment-contact-select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignment-contact-select/spec.md] | 7 |
+| [journey-pages/place-of-destination|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/place-of-destination/spec.md] | 2 |
+| [journey-pages/consignor-select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignor-select/spec.md] | 1 |
+| *Total* | *21* |
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it does not go stale as that specification moves on.

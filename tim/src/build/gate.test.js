@@ -1,3 +1,9 @@
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../test-support/fake-docker.js'
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { createServer } from 'node:net'
 import {
@@ -24,6 +30,7 @@ import {
   testFileWithSetUp
 } from '../test-support/copied-set-up.js'
 import { runGate, cannotRunBecause, defaultLogsDir } from './gate.js'
+import { isPortHeld } from './ports.js'
 
 const WORKAREA = 'shared/programme'
 
@@ -41,10 +48,11 @@ const writeExecutable = (path, body) => {
 
 const stackStatePath = () => join(root, 'stack-state')
 const stackCallsPath = () => join(root, 'stack-calls')
+const stackWorkingDirPath = () => join(root, 'stack-working-dir')
 
 const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(dirname(join(root, GATES_PATH)), { recursive: true })
   writeFileSync(
     join(root, GATES_PATH),
@@ -73,17 +81,18 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   )
   const state = stackStatePath()
   const calls = stackCallsPath()
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $*" >> '${calls}'\nif [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi\necho up > '${state}'`
-  )
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'stop-stack.sh'),
-    `echo "stop-stack.sh $*" >> '${calls}'\nrm -f '${state}'`
-  )
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    [
+      fakeComposeStartLines({
+        callsPath: calls,
+        onUp: `if [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi; echo up > '${state}'`
+      }),
+      fakeComposeDownLine({ statePath: state, callsPath: calls }),
+      `if [ "$1" != ps ] || [ ! -f '${state}' ]; then exit 0; fi`,
+      `case "$5" in *working_dir*) cat '${stackWorkingDirPath()}' 2>/dev/null || echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
+    ].join('\n')
   )
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
@@ -282,6 +291,52 @@ describe('runGate — unit and FIT rungs', () => {
     )
   })
 
+  test('runs only the repos --repo names, leaving the rest of the envelope alone', async () => {
+    const env = workspaceWith({
+      gates: {
+        ...unitOnly().gates,
+        backend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      },
+      repos: { ...unitOnly().repos, backend: { test: 'echo tested' } }
+    })
+
+    const outcome = await gate(env, { phase: 'unit', repoKeys: ['frontend'] })
+
+    expect({ green: outcome.green, rungs: outcomeOf(outcome.rungs) }).toEqual({
+      green: true,
+      rungs: ['frontend:format:pass', 'frontend:unit:pass']
+    })
+  })
+
+  test('runs every repo when no --repo is given', async () => {
+    const env = workspaceWith({
+      gates: {
+        ...unitOnly().gates,
+        backend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      },
+      repos: { ...unitOnly().repos, backend: { test: 'echo tested' } }
+    })
+
+    const outcome = await gate(env, { phase: 'unit' })
+
+    expect(outcomeOf(outcome.rungs)).toEqual([
+      'frontend:format:pass',
+      'frontend:unit:pass',
+      'backend:unit:pass'
+    ])
+  })
+
+  test('refuses a --repo the envelope does not have', async () => {
+    const env = workspaceWith(unitOnly())
+
+    await expect(
+      gate(env, { phase: 'unit', repoKeys: ['backend'] })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'The backlog has no repo backend. It builds frontend.'
+    })
+  })
+
   test('fails a repo that gates.json has no rungs for', async () => {
     const env = workspaceWith({
       ...unitOnly(),
@@ -372,92 +427,134 @@ describe('runGate — unit and FIT rungs', () => {
     })
   })
 
-  test('fails a FIT rung whose port is held, naming the holder, without running it', async () => {
+  const listenOnPortWithNextOneFree = async () => {
     const server = createServer()
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
     const { port } = server.address()
-    const env = workspaceWith({
+    if (!(await isPortHeld(port + 1))) return { server, port }
+    await closeServer(server)
+    return listenOnPortWithNextOneFree()
+  }
+
+  const closeServer = (server) =>
+    new Promise((resolve) => server.close(resolve))
+
+  const fitGateOn = (ports, script = 'echo "fit on port $PORT"') =>
+    workspaceWith({
       gates: {
         frontend: {
-          rungs: [
-            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ports: [port] }
-          ]
+          rungs: [{ name: 'fit', phase: 'fit', run: 'test:fit:ci', ports }]
         }
       },
-      repos: { frontend: { 'test:fit:ci': 'echo fit' } }
+      repos: { frontend: { 'test:fit:ci': script } }
     })
+
+  test('serves a FIT rung on its planned port, passed as PORT, when the port is free', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    await closeServer(server)
+    const env = fitGateOn([port])
 
     const outcome = await gate(env, { phase: 'fit' })
 
-    await new Promise((resolve) => server.close(resolve))
-    expect(outcome.rungs).toEqual([
-      expect.objectContaining({
-        ok: false,
-        log: null,
-        reason: expect.stringMatching(
-          new RegExp(
-            `^Port ${port} is in use by \\S+ \\(pid ${process.pid}\\)\\.`
-          )
-        )
-      })
-    ])
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      logged: readFileSync(outcome.rungs[0].log, 'utf8')
+    }).toEqual({
+      ok: true,
+      ports: [{ planned: port, used: port, heldBy: null }],
+      logged: expect.stringContaining(`fit on port ${port}\n`)
+    })
   })
 
-  const fitHeldByTheStack = async (lease) => {
-    const server = createServer()
-    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
-    const { port } = server.address()
-    const env = workspaceWith({
-      gates: {
-        frontend: {
-          rungs: [
-            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ports: [port] }
-          ]
+  test('moves a FIT rung whose planned port is held to the next free one, passes it as PORT, and names the holder', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    const env = fitGateOn([port])
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    await closeServer(server)
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      logged: readFileSync(outcome.rungs[0].log, 'utf8')
+    }).toEqual({
+      ok: true,
+      ports: [
+        {
+          planned: port,
+          used: port + 1,
+          heldBy: expect.stringMatching(
+            new RegExp(`^\\S+ \\(pid ${process.pid}\\)$`)
+          )
         }
-      },
-      repos: { frontend: { 'test:fit:ci': 'echo fit' } }
+      ],
+      logged: expect.stringContaining(`fit on port ${port + 1}\n`)
     })
+  })
+
+  test('moves a FIT rung off a port the workspace stack holds without reporting the stack held', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    const env = fitGateOn([port])
     writeExecutable(
       join(root, 'fake-bin', 'docker'),
       `if [ "$1" = ps ]; then printf 'trade-imports-animals-frontend-1\\ttrade-imports\\n'; fi`
     )
-    if (lease) writeLease(lease)
 
     const outcome = await gate(env, { phase: 'fit' })
 
-    await new Promise((resolve) => server.close(resolve))
-    return { port, outcome }
-  }
+    await closeServer(server)
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      held: outcome.stack.held
+    }).toEqual({
+      ok: true,
+      ports: [
+        {
+          planned: port,
+          used: port + 1,
+          heldBy:
+            "the workspace stack's trade-imports-animals-frontend-1 container"
+        }
+      ],
+      held: null
+    })
+  })
 
-  test('says nobody leases the workspace stack when its container holds a FIT port and no lease exists', async () => {
-    const { port, outcome } = await fitHeldByTheStack(null)
-
-    expect(outcome.rungs.map(({ ok, reason }) => ({ ok, reason }))).toEqual([
-      {
-        ok: false,
-        reason: `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.`
+  test('gives two FIT rungs running at the same time on one planned port a port each, naming the rung that holds it', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    await closeServer(server)
+    const fitRung = { name: 'fit', phase: 'fit', run: 'test:fit:ci' }
+    const script = 'sleep 0.5; echo "fit on port $PORT"'
+    const env = workspaceWith({
+      gates: {
+        alpha: { rungs: [{ ...fitRung, ports: [port] }] },
+        beta: { rungs: [{ ...fitRung, ports: [port] }] }
+      },
+      repos: {
+        alpha: { 'test:fit:ci': script },
+        beta: { 'test:fit:ci': script }
       }
-    ])
-  })
-
-  test('names the lease holder when a leased workspace stack holds a FIT port', async () => {
-    const { port, outcome } = await fitHeldByTheStack({
-      holder: 'ibl-20261001T090000Z inc-001 consistency'
     })
 
-    expect(outcome.rungs[0].reason).toBe(
-      `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. The workspace stack is leased to "ibl-20261001T090000Z inc-001 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x).`
+    const outcome = await gate(env, { phase: 'fit' })
+
+    const used = outcome.rungs.map(({ ports }) => ports[0].used)
+    const servedOnPlanned = outcome.rungs.find(
+      ({ ports }) => ports[0].used === port
     )
-  })
-
-  test('reports the held stack and its lease holder in the result', async () => {
-    const { outcome } = await fitHeldByTheStack({
-      holder: 'ibl-20261001T090000Z inc-001 consistency'
-    })
-
-    expect(outcome.stack.held).toEqual({
-      holder: 'ibl-20261001T090000Z inc-001 consistency',
-      detail: expect.stringContaining('The workspace stack is leased to')
+    const moved = outcome.rungs.find(({ ports }) => ports[0].used !== port)
+    expect({
+      ok: outcome.rungs.map(({ ok }) => ok),
+      distinct: new Set(used).size,
+      lowest: Math.min(...used),
+      heldBy: moved.ports[0].heldBy
+    }).toEqual({
+      ok: [true, true],
+      distinct: 2,
+      lowest: port,
+      heldBy: `the ${servedOnPlanned.repo} fit rung of this gate`
     })
   })
 
@@ -492,7 +589,7 @@ describe('runGate — e2e rungs', () => {
       stack: outcome.stack
     }).toEqual({
       green: true,
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['tim docker dev', 'docker compose down'],
       up: false,
       stack: expect.objectContaining({
         wasUp: false,
@@ -577,7 +674,7 @@ describe('runGate — e2e rungs', () => {
       green: outcome.green,
       stack: outcome.stack
     }).toEqual({
-      calls: ['run-stack.sh -d'],
+      calls: ['tim docker dev'],
       up: true,
       lease: expect.objectContaining({ holder: GATE_HOLDER, state: 'up' }),
       green: true,
@@ -622,8 +719,15 @@ describe('runGate — e2e rungs', () => {
     writeFileSync(join(repo, 'src', 'index.js'), 'export {}\n')
     await execa('git', ['init', '--quiet', repo])
     writeExecutable(
-      join(root, 'scripts', 'stack', 'dev-service.sh'),
-      `echo "dev-service.sh $*" >> '${stackCallsPath()}'\nif [ -f '${root}/dev-service-fails' ]; then exit 4; fi`
+      join(root, 'fake-bin', 'docker'),
+      [
+        `if [ "$1" = ps ]; then case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac; exit 0; fi`,
+        'if [ "$1" != compose ]; then exit 0; fi',
+        'shift',
+        'while [ "$1" = -f ] || [ "$1" = --profile ]; do shift 2; done',
+        `echo "compose $*" >> '${stackCallsPath()}'`,
+        `if [ -f '${root}/compose-fails' ]; then exit 4; fi`
+      ].join('\n')
     )
     writeFileSync(stackStatePath(), 'up\n')
     writeLease({
@@ -648,7 +752,7 @@ describe('runGate — e2e rungs', () => {
       refresh: outcome.stack.refresh
     }).toEqual({
       green: true,
-      calls: ['dev-service.sh rebuild frontend'],
+      calls: ['compose up --build --no-deps --wait --detach frontend'],
       refresh: {
         ok: true,
         restacked: false,
@@ -678,7 +782,10 @@ describe('runGate — e2e rungs', () => {
       calls: stackCalls(),
       restarted: outcome.stack.refresh.restarted
     }).toEqual({
-      calls: ['dev-service.sh restart frontend'],
+      calls: [
+        'compose restart frontend',
+        'compose up --no-deps --no-recreate --wait --detach frontend'
+      ],
       restarted: ['frontend']
     })
   })
@@ -689,7 +796,7 @@ describe('runGate — e2e rungs', () => {
     )
     await withDevService()
     writeFileSync(join(root, 'repos', 'frontend', 'src', 'index.js'), '1\n')
-    writeFileSync(join(root, 'dev-service-fails'), '')
+    writeFileSync(join(root, 'compose-fails'), '')
 
     const outcome = await gate(env, { phase: 'e2e' })
 
@@ -702,7 +809,7 @@ describe('runGate — e2e rungs', () => {
       green: false,
       e2eRan: false,
       up: true,
-      reason: `Restarting frontend failed (dev-service.sh exited 4). Read ${join(defaultLogsDir(root, WORKAREA), 'gate-stack-restart.log')}.`
+      reason: `Restarting frontend failed (docker compose exited 4). Read ${join(defaultLogsDir(root, WORKAREA), 'gate-stack-restart.log')}.`
     })
   })
 
@@ -752,6 +859,134 @@ describe('runGate — e2e rungs', () => {
         detail:
           'The workspace stack is leased to "ibl-20261001T080000Z inc-007 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x). Leave it alone: it is theirs to release.'
       }
+    })
+  })
+
+  test('refuses a stack another clone started, naming that clone, and leaves it alone', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeFileSync(stackStatePath(), 'up\n')
+    writeFileSync(
+      stackWorkingDirPath(),
+      `${join(otherClone, 'docker', 'stack')}\n`
+    )
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      lease: existsSync(leasePath()),
+      rungs: outcome.rungs.map(({ ok, reason }) => ({ ok, reason })),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      up: true,
+      lease: false,
+      rungs: [
+        {
+          ok: false,
+          reason: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+        }
+      ],
+      held: {
+        holder: null,
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('refuses while another clone is still starting the stack under its lease', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeLease({
+      holder: GATE_HOLDER,
+      workspace: otherClone,
+      state: 'starting',
+      pid: process.pid
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      reasons: outcome.rungs.map(({ reason }) => reason),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      reasons: [
+        `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      ],
+      held: {
+        holder: GATE_HOLDER,
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('refuses a stack another clone started under a lease, naming the lease holder', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeFileSync(stackStatePath(), 'up\n')
+    writeFileSync(
+      stackWorkingDirPath(),
+      `${join(otherClone, 'docker', 'stack')}\n`
+    )
+    writeLease({
+      holder: 'ibl-20261001T080000Z inc-007 consistency',
+      workspace: otherClone
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      up: true,
+      held: {
+        holder: 'ibl-20261001T080000Z inc-007 consistency',
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('fails the e2e rungs without starting the stack when the lease is not valid JSON', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    mkdirSync(dirname(leasePath()), { recursive: true })
+    writeFileSync(leasePath(), '{not json')
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      reasons: outcome.rungs.map(({ reason }) => reason)
+    }).toEqual({
+      calls: [],
+      reasons: [
+        expect.stringMatching(
+          /^Can't tell whether the workspace stack is free: The stack lease at .* is not valid JSON/
+        )
+      ]
+    })
+  })
+
+  test('starts the stack over a lease another clone left behind when its stack has gone', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({
+      holder: 'ibl-20261001T080000Z inc-007 consistency',
+      workspace: '/clones/trade-imports-workspace-a',
+      state: 'up',
+      pid: null
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({ green: outcome.green, calls: stackCalls() }).toEqual({
+      green: true,
+      calls: ['tim docker dev', 'docker compose down']
     })
   })
 
@@ -830,15 +1065,15 @@ describe('runGate — e2e rungs', () => {
         expect.objectContaining({
           ok: false,
           reason: expect.stringContaining(
-            'The workspace stack did not come up (run-stack.sh exited 9).'
+            'The workspace stack did not come up (tim docker dev exited 9).'
           )
         })
       ],
-      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      calls: ['tim docker dev', 'docker compose down'],
       lease: null,
       held: null,
       startError: expect.stringMatching(
-        /^The workspace stack did not come up \(run-stack\.sh exited 9\)\. .* It was taken down again and the lease cleared\.$/
+        /^The workspace stack did not come up \(tim docker dev exited 9\)\. .* It was taken down again and the lease cleared\.$/
       )
     })
   })
@@ -970,8 +1205,8 @@ describe('runGate — running repos at the same time', () => {
 
       expect(stackCalls()).toEqual([
         'unit-done',
-        'run-stack.sh -d',
-        'stop-stack.sh'
+        'tim docker dev',
+        'docker compose down'
       ])
     },
     CONCURRENCY_TIMEOUT_MS
@@ -1045,7 +1280,7 @@ describe('runGate — running repos at the same time', () => {
         calls: stackCalls()
       }).toEqual({
         rungs: ['frontend:unit:pass', 'tests:e2e-plants:pass'],
-        calls: ['run-stack.sh -d', 'stop-stack.sh']
+        calls: ['tim docker dev', 'docker compose down']
       })
     },
     CONCURRENCY_TIMEOUT_MS
@@ -1391,5 +1626,85 @@ describe("runGate — this machine's own settings", () => {
       workers: outcome.rungs[0].workers,
       machine: outcome.machine
     }).toEqual({ logged: false, workers: null, machine: null })
+  })
+})
+
+describe('runGate — e2e left to CI', () => {
+  const writeMachineConfig = (config) =>
+    writeFileSync(machineConfigPath(), JSON.stringify(config))
+
+  const ciEvidence = {
+    where: 'ci',
+    leftToCi: [{ repo: 'tests', name: 'e2e-plants' }],
+    evidence: expect.stringContaining('e2e-tests.yml')
+  }
+
+  test('takes no lease, runs no stack command and runs no e2e rung, and lists the rung as left to CI', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+    const outcome = await gate(env, { e2e: 'ci' })
+
+    expect({
+      green: outcome.green,
+      rungs: outcomeOf(outcome.rungs),
+      calls: stackCalls(),
+      lease: leaseOnDisk(),
+      ranE2e: existsSync(
+        join(defaultLogsDir(root, WORKAREA), 'gate-tests-e2e-plants.log')
+      ),
+      stack: outcome.stack.wasUp,
+      e2e: outcome.e2e
+    }).toEqual({
+      green: true,
+      rungs: ['frontend:unit:pass'],
+      calls: [],
+      lease: null,
+      ranE2e: false,
+      stack: null,
+      e2e: ciEvidence
+    })
+  })
+
+  test('is green on the e2e phase alone, with every rung left to CI', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+    const outcome = await gate(env, { phase: 'e2e', e2e: 'ci' })
+
+    expect({
+      green: outcome.green,
+      rungs: outcome.rungs,
+      calls: stackCalls(),
+      e2e: outcome.e2e
+    }).toEqual({ green: true, rungs: [], calls: [], e2e: ciEvidence })
+  })
+
+  test('leaves e2e to CI when this machine sets e2e to ci', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+    writeMachineConfig({ e2e: 'ci' })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      e2e: outcome.e2e,
+      machine: outcome.machine.e2e
+    }).toEqual({ calls: [], e2e: ciEvidence, machine: 'ci' })
+  })
+
+  test('runs e2e against the local stack when asked, over a machine set to ci', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeMachineConfig({ e2e: 'ci' })
+
+    const outcome = await gate(env, { phase: 'e2e', e2e: 'local' })
+
+    expect({
+      calls: stackCalls(),
+      rungs: outcomeOf(outcome.rungs),
+      e2e: outcome.e2e
+    }).toEqual({
+      calls: ['tim docker dev', 'docker compose down'],
+      rungs: ['tests:e2e-plants:pass'],
+      e2e: { where: 'local', leftToCi: [], evidence: null }
+    })
   })
 })

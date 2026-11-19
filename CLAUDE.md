@@ -2,13 +2,13 @@
 
 This is a local workspace aggregating the independent GitHub repos of the DEFRA trade imports services. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
 
-The load-bearing rules that agents must always honour are kept **inline** below. The volatile reference catalogues (make targets, common workflows, the `tools/` index, worker references, the workareas map) live as topic files under [`docs/reference/`](docs/reference/) — see the [Reference catalogues](#reference-catalogues) pointer near the foot of this file.
+The load-bearing rules that agents must always honour are kept **inline** below. The volatile reference catalogues (common workflows, the `tools/` index, worker references, the workareas map) live as topic files under [`docs/reference/`](docs/reference/) — see the [Reference catalogues](#reference-catalogues) pointer near the foot of this file.
 
 ## Load-bearing rules
 
-### 1. Canonical clone location
+### 1. Clone location and paths
 
-Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode that path, so a checkout under any other name will not work. No env var to set, and no symlink to maintain: the canonical path is the checkout.
+The default place to clone the workspace is `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-clone-location). Any other folder works, and several clones can work at once. Every path in skills, rules and docs is relative to the workspace root, so run Bash from there. A spawned agent may start in a sub-repo, so its brief names the workspace root.
 
 ### 2. Branches: naming, cross-repo parity and where to work
 
@@ -18,7 +18,7 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - Cross-repo changes: coordinate via the tests repo. A fix that needs two repos changes both, the tests repo included.
 - Splitting a branch: every part keeps the ticket key. `chore/EUDPA-35-frontend-test-rewrites`, not `chore/admin-notifications-tidy`.
 - A programme of several tasks in one repo: one branch, one PR, a commit per task, merged once at the end.
-- **Where to work:** on branches in this checkout and in `repos/`, switched in place (`git checkout` or `tim workspace branch <name>`). No git worktrees: the stack builds and mounts `repos/<repo>`, so work in a worktree is invisible to E2E and to `git status`. No side clones to keep out of another session's way. The one exception is the worktrees `journey-builder` creates for its own runs.
+- **Where to work:** on branches in this checkout and in `repos/`, switched in place (`git checkout` or `tim workspace branch <name>`). No git worktrees: the stack builds and mounts `repos/<repo>`, so work in a worktree is invisible to E2E and to `git status`. No side clones to keep out of another session's way.
 - **Reading `main`:** a `repos/` checkout is often on a spike branch, so check `git -C <repo> branch --show-current` first. Read `main` with `git -C <repo> show origin/main:<path>`, or from a shallow clone in the scratchpad that you read and never write to.
 - **Stashing:** only when a branch switch forces it, with `git stash push -u`. Leave untracked `workareas/` files alone.
 - **Exempt: the plants prototype's own `design/<set>-<slug>` branches.** `trade-imports-plants-prototype` has no Docker stack service (`dockerStack: null`) and no branch-tagged image to probe for, so a design branch never needs a matching name anywhere else. A hand-off out of the prototype is different work, not a prototype branch: it lands as one real `feat/EUDPA-N-<slug>` (or `feat/NO_JIRA-<slug>` without a ticket yet) across every real repo it touches — `trade-imports-plants-frontend`, `trade-imports-plants-backend`, the tests repo, this workspace's `openspec/` — following the same-name rule above like any other cross-repo change.
@@ -75,8 +75,6 @@ The house rules on comments, names, structure, logging and tests live in [`.clau
 
 Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
 
-One exception: for a test linked to a signed-off scenario, fix the code, not the test, unless a person has ruled. See [`.claude/rules/signed-off-pages.md`](.claude/rules/signed-off-pages.md).
-
 ### 7. Canary first
 
 To make one change across several repos, services or environments, apply it to one target that needs the whole change, check it, then do the rest. Check every target afterwards, not a sample.
@@ -110,10 +108,10 @@ A correction about code, tests, tooling or process is an edit to its committed h
 | `repos/trade-imports-dynamics-gateway` | DEFRA/trade-imports-dynamics-gateway | Centralised gateway forwarding events to Azure Service Bus (ADR-EUDP-001 Option B) | Java / Spring Boot |
 | `repos/trade-imports-address-book` | DEFRA/trade-imports-address-book | Org-scoped address book API (system of record for Standard Address Block records) | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
-| `repos/trade-imports-routing-proxy` | DEFRA/trade-imports-routing-proxy | INS public entry point: forwards each request to the INS service its path addresses | Node.js |
+| `repos/trade-imports-routing-proxy` | DEFRA/trade-imports-routing-proxy | INS public entry point: it will forward each request to the INS service its path addresses, but forwarding is not built yet. Today it signs a user in through the Defra ID stub, in the workspace stack and in CDP dev and test, and shows what the sign-in returned | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
-| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103 (its real twin's plus 100), by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |
+| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103 (its real twin's plus 100), by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |
 | `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
 
@@ -123,14 +121,14 @@ Work on a specific repo by entering its directory:
 cd repos/trade-imports-animals-frontend   # then use claude, git, npm etc. as normal
 ```
 
-Run `make help` from this directory to see all cross-repo commands.
+Run `tim --help` to see all cross-repo commands.
 
-## `tim` CLI (alternative to Make + tools/)
+## `tim` CLI
 
-[`tim/`](tim/) is a Node.js CLI that mirrors the Makefile + read-only
-parts of `tools/`. Library-first integrations (REST clients —
-no shell-out to `gh`/`jq`), behaviourally tested, deterministic
-`--json` output for skill use. Dual-runs with the bash; pick whichever.
+[`tim/`](tim/) is the workspace's command line: every cross-repo command,
+the Docker stack and the read-only parts of `tools/` go through it.
+Library-first integrations (REST clients — no shell-out to `gh`/`jq`),
+behaviourally tested, deterministic `--json` output for skill use.
 
 tim has no GitHub commands. For pull requests, checks, Actions runs and
 GitHub auth, use the GitHub CLI directly: `gh search prs EUDPA-X --owner
@@ -138,18 +136,19 @@ DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
 `gh auth status` (see rule 8).
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
+npm --prefix tim link     # from any clone's root, once per machine: tim on PATH
 tim --help                # full surface
-tim workspace status      # equivalent of `make status` + jq-friendly --json
-tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
-tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
+tim workspace status      # git status for every repo, with jq-friendly --json
+tim docker dev            # start the stack from local source
+tim jira ticket EUDPA-X [--rendered]   # a ticket with its parent, labels, last update, subtasks and links; --rendered shows the HTML description
 tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
-tim jira update EUDPA-X --summary "..." --description-file d.txt   # rewrite an existing ticket's title or description; dry run by default, --confirm to write
-tim jira attach|link                           # the rest of the Jira write surface — also dry run by default; --confirm to write
-tim jira epics                                 # list open epics (read-only)
+tim jira update EUDPA-X --summary "..." --description-file d.txt   # rewrite an existing ticket's title, description, --priority, --parent or labels; dry run by default, --confirm to write
+tim jira attach|link|detach|unlink             # the rest of the Jira write surface — also dry run by default; --confirm to write
+tim jira epics [--board <id>]                  # list open epics in a project or on a board (read-only)
+tim jira labels --board <id>                   # count the labels in a board's backlog (read-only)
 tim jira search <words> [--open] | --jql <q>   # find tickets by text or JQL (read-only)
 tim jira transition EUDPA-X "Done"             # move a ticket's status straight away (no dry run); --list shows what it offers
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
@@ -157,13 +156,12 @@ tim prototype setup               # onboard a designer session: CLAUDE.local.md 
 
 `tim/` is a sub-project of this repo rather than one of the cloned
 repos, so the workspace-wide install, lint and test skip it. Run its own
-scripts against it directly — no `cd` needed, and nothing in the
-Makefile, which is deprecated:
+scripts against it directly, with no `cd` needed:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim test
-npm --prefix ~/git/defra/trade-imports-workspace/tim run lint
-npm --prefix ~/git/defra/trade-imports-workspace/tim run format
+npm --prefix tim test
+npm --prefix tim run lint
+npm --prefix tim run format
 ```
 
 `npm ci` is the one exception: it needs the shell to be inside `tim`.
@@ -175,19 +173,22 @@ with the one each repo records traces with, so reach for this when that
 test fails:
 
 ```bash
-cd ~/git/defra/trade-imports-workspace/tim
+cd tim
 npm ci
 ```
 
-`tim` finds the workspace by walking up from the current directory, then
-falls back to the canonical path. Standing in another checkout — the old
+`tim` finds the workspace from `--workspace`, then `TIM_WORKSPACE`, then
+by walking up from the current directory, then falls back to the
+canonical path, printing one warning to stderr that names `TIM_WORKSPACE`.
+The global `tim` is a launcher: once it has found a
+workspace clone that holds `tim/src/cli.js` and `repos.json`, it runs
+that clone's own tim, against that clone's roster. One `npm link` serves
+every clone on the machine, and each clone runs its own code. A clone
+whose `tim/node_modules` is missing is refused with a message to run
+`npm ci` in its `tim` folder. Standing in another checkout — the old
 `trade-imports-animals` clone, say — that walk-up wins and reads the
-wrong data, so pass `--workspace ~/git/defra/trade-imports-workspace`
-when you are not inside this one.
-
-If `tim` behaves as though it is looking at a different workspace, check
-`readlink -f "$(which tim)"` — a `tim` linked from an older clone resolves
-that clone's `tools/` and `workareas/`.
+wrong data, so pass `--workspace <path to this clone>` when you are not
+inside this one.
 
 See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary
@@ -198,17 +199,19 @@ the bash uses — seamless pickup).
 Skills should prefer `tim <cmd> --json` over bare bash once a surface
 is covered by tim — the JSON envelope is schema-versioned and stable.
 
-## Workspace stack (what `make docker-compose-*` delegates to)
+## Workspace stack (what `tim docker` runs)
 
-`scripts/stack/run-stack.sh` brings up the full stack from Dockerhub — the
+`tim docker up` (and `dev`, `restart`) starts the stack from `tim/src/stack/` and
+takes the flags `tim docker up --help` lists. CI starts the stack the same way. It brings up the full stack from Dockerhub — the
 only compose stack in the workspace and its repos. Supports `-b <branch>`
 (probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
 tiers), and `--perf` (both stubs answer at their SLA latency, on published
 images; `tim docker perf` takes the lease in perf mode). In `--dev` mode the Java backend, stub and reference-data hot-reload
-edited source via Spring Boot DevTools; `bounce-backend.sh` is a fallback that
-recreates the backend container (e.g. after a `pom.xml`/dependency change).
+edited source via Spring Boot DevTools; `tim docker bounce-backend` rebuilds the backend
+image and recreates its container (e.g. after a `pom.xml`/dependency change), and
+`tim docker service rebuild|restart <service>...` does the same for any named service.
 
 Init scripts are staged from their owning repos on every stack start
 (backend: Floci init; tests repo: mongo seed fixtures; dynamics-gateway:
@@ -237,7 +240,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md, github-actions.md, shell.md). Cited by SKILL.md files via
-  `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+  `docs/best-practices/<topic>/<file>`.
   Read [`shell.md`](docs/best-practices/shell.md) before any bulk rename: this
   workspace is macOS, so `sed`'s `\b` matches nothing and still exits 0, and BSD
   `grep` rejects the word-boundary syntax BSD `sed` accepts — a rename verified
@@ -265,7 +268,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 
 - **Secrets scanning** — `UserPromptSubmit` and `PreToolUse(Read)` hooks block prompts/reads containing API keys or tokens.
 - **MCP server** — query SonarCloud issues, quality gate status and rules via the repo's `sonar-*` MCP server (e.g. `mcp__sonar-gateway__search_sonar_issues_in_projects` for `trade-imports-dynamics-gateway`). Only loaded in a session opened **inside that repo**: the workspace root registers none, because each one is a ~0.5–0.8 GiB docker container started at session start whether used or not. From the workspace root, use the `sonar` CLI instead (`sonar list issues --project DEFRA_<repo>`). Nothing automated depends on these servers — the push gate below uses the CLI and scanners.
-- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running one shared check, [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh), by one of two routes. A session opened at the workspace root runs [`scripts/sonar/sonar-push-gate.sh`](scripts/sonar/sonar-push-gate.sh) from this repo's `.claude/settings.json`; it works out which repo the push targets and runs the check there. A session opened inside a repo runs the check directly from that repo's `.claude/settings.json`. The check runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
+- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running one shared check, [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh), by one of two routes. A session opened at the workspace root runs `tim sonar push-check --hook` from this repo's `.claude/settings.json`; it works out which repo the push targets and runs the check there. A session opened inside a repo runs the check directly from that repo's `.claude/settings.json`. The check runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
 
   For Node repos the check runs the cheap gates before the expensive ones — `npm ci`, then `format:check`, then `lint` (both via `npm run --if-present`, so repos lacking those scripts are unaffected), and only then `npm test` and the scanner. A formatting slip therefore fails in seconds rather than after a production build and the full suite, and a lint-dirty branch never reaches SonarCloud as an uploaded analysis. `npm ci` has to stay first because format and lint need the devDependencies it installs.
 
@@ -276,7 +279,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 **Requires `SONAR_TOKEN`** in the environment (a personal SonarCloud token, works across all these repos) — set alongside the other credentials in `~/.zshrc`. If it isn't set, the hook skips gracefully rather than blocking pushes over a missing local prerequisite; CI's own SonarCloud Scan check is still the authoritative backstop either way. To run the same check manually (e.g. mid-investigation, or on a repo without an open PR yet):
 
 ```bash
-bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
+bash tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
 ```
 
 (the script reads its trigger command from that JSON on stdin, matching the real hook's contract) — or just invoke the underlying `mvn .../sonar:sonar` or `sonar-scanner` command the script runs, directly.
@@ -285,9 +288,9 @@ bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"
 
 The volatile catalogues live as topic files under [`docs/reference/`](docs/reference/) — read the relevant one on demand; edit the topic file, not this list:
 
-- [`docs/reference/make-targets.md`](docs/reference/make-targets.md) — every `make` target and what it does.
+- `tim --help`, and `tim <command> --help` for each command, with usage and the env-var contract in [`tim/README.md`](tim/README.md) — every cross-repo command and what it does.
 - [`docs/reference/workflows.md`](docs/reference/workflows.md) — common workflows (setup, daily update, running the stack, tests).
-- [`docs/reference/tools-index.md`](docs/reference/tools-index.md) — the full `tools/` script index (args + purpose).
+- [`docs/reference/tools-index.md`](docs/reference/tools-index.md) — the hook script left under `tools/`; every other command is in `tim --help`.
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.
 - [`docs/reference/workareas.md`](docs/reference/workareas.md) — the `workareas/` runtime-cache map.
 - [`docs/reference/openspec.md`](docs/reference/openspec.md) — OpenSpec CLI, coverage gap queries, and how to read coverage rows for the Behaviour Spec under `openspec/` (authoring conventions: [`openspec/config.yaml`](openspec/config.yaml)).

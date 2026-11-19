@@ -1,3 +1,9 @@
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../../test-support/fake-docker.js'
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -25,45 +31,58 @@ const writeExecutable = (path, body) => {
   chmodSync(path, 0o755)
 }
 
-const statePath = () => join(workspace, 'stack-state')
+const statePath = (root = workspace) => join(root, 'stack-state')
 const leasePath = () => join(workspace, 'state', 'stack-lease.json')
-const callsPath = () => join(workspace, 'stack-calls')
+const callsPath = (root = workspace) => join(root, 'stack-calls')
+const stackLogsOf = (root) => join(root, 'workareas', 'stack-logs')
+
+const makeWorkspace = () => {
+  const root = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
+  markWorkspaceRoot(root)
+  mkdirSync(join(root, 'repos'))
+  writeStackInitSources(root)
+  writeExecutable(
+    join(root, 'fake-bin', 'docker'),
+    [
+      fakeComposeStartLines({
+        callsPath: callsPath(root),
+        recordAlso: ' STUB_PROFILE=$STUB_PROFILE',
+        onUp: `echo "started in ${root}"; echo up > '${statePath(root)}'`
+      }),
+      fakeComposeDownLine({ statePath: statePath(root) }),
+      `if [ "$1" != ps ] || [ ! -f '${statePath(root)}' ]; then exit 0; fi`,
+      `case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
+    ].join('\n')
+  )
+  return root
+}
+
+const workspacesMade = []
 
 beforeEach(() => {
-  workspace = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
-  mkdirSync(join(workspace, 'repos'))
-  writeExecutable(
-    join(workspace, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath()}'\necho up > '${statePath()}'`
-  )
-  writeExecutable(
-    join(workspace, 'scripts', 'stack', 'stop-stack.sh'),
-    `rm -f '${statePath()}'`
-  )
-  writeExecutable(
-    join(workspace, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then echo trade-imports-frontend-1; fi`
-  )
+  workspace = makeWorkspace()
+  workspacesMade.push(workspace)
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  workspacesMade
+    .splice(0)
+    .forEach((root) => rmSync(root, { recursive: true, force: true }))
 })
 
-const runDocker = (args, env = {}) =>
-  execa('node', [cliPath, 'docker', ...args, '--workspace', workspace], {
+const runDocker = (args, { env = {}, root = workspace } = {}) =>
+  execa('node', [cliPath, 'docker', ...args, '--workspace', root], {
     reject: false,
     env: {
       TIM_NO_AUTO_PULL: '1',
       TIM_STACK_LEASE: leasePath(),
       STUB_PROFILE: '',
-      PATH: `${join(workspace, 'fake-bin')}:${process.env.PATH}`,
+      PATH: `${join(root, 'fake-bin')}:${process.env.PATH}`,
       ...env
     }
   })
 
-const runTim = (args) => runDocker(['lease', ...args])
+const runTim = (args, options) => runDocker(['lease', ...args], options)
 
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
@@ -170,6 +189,79 @@ describe('tim docker lease release', () => {
   })
 })
 
+describe('tim docker lease logs', () => {
+  const logText = (path) => readFileSync(path, 'utf8')
+
+  const devStartLog = (root) =>
+    [
+      '$ tim docker dev',
+      `# in ${root}`,
+      '',
+      'Profiles: database infrastructure servicebus stubs backend frontend',
+      '  stub:            built (source)',
+      `started in ${root}`,
+      ''
+    ].join('\n')
+
+  test('acquire writes the output of starting the stack to workareas/stack-logs in the workspace', async () => {
+    await runTim(['acquire', '--holder', HOLDER])
+
+    expect(logText(join(stackLogsOf(workspace), 'lease-acquire.log'))).toBe(
+      devStartLog(workspace)
+    )
+  })
+
+  test('release writes the tim docker down output to workareas/stack-logs in the workspace', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER)
+
+    await runTim(['release', '--holder', HOLDER])
+
+    expect(logText(join(stackLogsOf(workspace), 'lease-release.log'))).toBe(
+      [
+        '$ tim docker down',
+        `# in ${workspace}`,
+        '',
+        'Tearing down stack...',
+        ''
+      ].join('\n')
+    )
+  })
+
+  test('two clones write their logs in their own workspaces and share one lease file', async () => {
+    const otherClone = makeWorkspace()
+    workspacesMade.push(otherClone)
+
+    await runTim(['acquire', '--holder', HOLDER])
+    await runTim(['release', '--holder', HOLDER])
+    await runTim(['acquire', '--holder', HOLDER], { root: otherClone })
+
+    expect({
+      firstClone: logText(join(stackLogsOf(workspace), 'lease-acquire.log')),
+      otherClone: logText(join(stackLogsOf(otherClone), 'lease-acquire.log')),
+      leaseHeldFrom: leaseOnDisk().workspace
+    }).toEqual({
+      firstClone: devStartLog(workspace),
+      otherClone: devStartLog(otherClone),
+      leaseHeldFrom: otherClone
+    })
+  })
+
+  test('--logs writes the log to the folder given and nothing to workareas/stack-logs', async () => {
+    const givenFolder = join(workspace, 'run-logs')
+
+    await runTim(['acquire', '--holder', HOLDER, '--logs', givenFolder])
+
+    expect({
+      given: logText(join(givenFolder, 'lease-acquire.log')),
+      stackLogsWritten: existsSync(stackLogsOf(workspace))
+    }).toEqual({
+      given: devStartLog(workspace),
+      stackLogsWritten: false
+    })
+  })
+})
+
 describe('tim docker lease status', () => {
   test('says the stack is up with nobody holding it', async () => {
     writeFileSync(statePath(), 'up\n')
@@ -177,7 +269,7 @@ describe('tim docker lease status', () => {
     const run = await runTim(['status'])
 
     expect(run.stdout.trim()).toBe(
-      'The workspace stack is up (1 container). Nobody holds a lease on it, so somebody started it by hand.'
+      `The workspace stack is up (1 container, started from ${workspace}). Nobody holds a lease on it, so somebody started it by hand.`
     )
   })
 
@@ -188,8 +280,92 @@ describe('tim docker lease status', () => {
     const run = await runTim(['status'])
 
     expect(run.stdout.trim()).toBe(
-      'The workspace stack is up (1 container). It is leased to "perf" (perf mode, stubs on sla, since 2026-10-01T08:00:00.000Z).'
+      `The workspace stack is up (1 container, started from ${workspace}). It is leased to "perf" (perf mode, stubs on sla, since 2026-10-01T08:00:00.000Z).`
     )
+  })
+
+  test('gives the clone that started the running stack as workspace in --json', async () => {
+    writeFileSync(statePath(), 'up\n')
+
+    const run = await runTim(['status', '--json'])
+
+    expect(envelopeOf(run).result.workspace).toBe(workspace)
+  })
+
+  test('gives no workspace while the stack is down', async () => {
+    const run = await runTim(['status', '--json'])
+
+    expect({
+      workspace: envelopeOf(run).result.workspace,
+      up: envelopeOf(run).result.up
+    }).toEqual({ workspace: null, up: false })
+  })
+})
+
+describe('tim docker lease with the same holder name from another clone', () => {
+  const otherClone = '/clones/trade-imports-workspace-a'
+
+  test('acquire exits 1 with STACK_HELD and leaves the stack alone', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER, { workspace: otherClone })
+
+    const run = await runTim(['acquire', '--holder', HOLDER, '--json'])
+
+    expect({
+      exitCode: run.exitCode,
+      code: envelopeOf(run).errors[0].code,
+      message: envelopeOf(run).errors[0].message,
+      calls: stackCalls()
+    }).toEqual({
+      exitCode: 1,
+      code: 'STACK_HELD',
+      message: expect.stringContaining(`from another clone, ${otherClone}`),
+      calls: []
+    })
+  })
+
+  test('acquire --force reuses the stack', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER, { workspace: otherClone })
+
+    const run = await runTim([
+      'acquire',
+      '--holder',
+      HOLDER,
+      '--force',
+      '--json'
+    ])
+
+    expect({
+      exitCode: run.exitCode,
+      reused: envelopeOf(run).result.reused
+    }).toEqual({ exitCode: 0, reused: true })
+  })
+
+  test('release exits 1 with NOT_HOLDER and leaves the stack up', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER, { workspace: otherClone })
+
+    const run = await runTim(['release', '--holder', HOLDER, '--json'])
+
+    expect({
+      exitCode: run.exitCode,
+      code: envelopeOf(run).errors[0].code,
+      up: existsSync(statePath())
+    }).toEqual({ exitCode: 1, code: 'NOT_HOLDER', up: true })
+  })
+
+  test('release --force takes the stack down and clears the lease', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER, { workspace: otherClone })
+
+    const run = await runTim(['release', '--holder', HOLDER, '--force'])
+
+    expect({
+      exitCode: run.exitCode,
+      up: existsSync(statePath()),
+      lease: existsSync(leasePath())
+    }).toEqual({ exitCode: 0, up: false, lease: false })
   })
 })
 
@@ -212,7 +388,7 @@ describe('tim docker lease acquire --mode perf', () => {
 })
 
 describe('tim docker perf', () => {
-  test('starts the stack with --perf and leases it to "perf" in perf mode', async () => {
+  test('starts the stack with --perf and leases it to "perf <this clone>" in perf mode', async () => {
     const run = await runDocker(['perf'])
 
     expect({
@@ -222,11 +398,10 @@ describe('tim docker perf', () => {
       lease: leaseOnDisk()
     }).toEqual({
       exitCode: 0,
-      stdout:
-        'Started the workspace stack in perf mode, with both stubs on the sla latency profile, and leased it to "perf". Release it with tim docker lease release --holder "perf".',
-      calls: ['run-stack.sh --perf STUB_PROFILE='],
+      stdout: `Started the workspace stack in perf mode, with both stubs on the sla latency profile, and leased it to "perf ${workspace}". Release it with tim docker lease release --holder "perf ${workspace}".`,
+      calls: ['tim docker up --perf STUB_PROFILE='],
       lease: expect.objectContaining({
-        holder: 'perf',
+        holder: `perf ${workspace}`,
         mode: 'perf',
         stubProfile: 'sla'
       })
@@ -240,19 +415,19 @@ describe('tim docker perf', () => {
   })
 
   test('passes STUB_PROFILE to the stack and records it', async () => {
-    await runDocker(['perf'], { STUB_PROFILE: 'zero-delay' })
+    await runDocker(['perf'], { env: { STUB_PROFILE: 'zero-delay' } })
 
     expect({
       calls: stackCalls(),
       stubProfile: leaseOnDisk().stubProfile
     }).toEqual({
-      calls: ['run-stack.sh --perf STUB_PROFILE=zero-delay'],
+      calls: ['tim docker up --perf STUB_PROFILE=zero-delay'],
       stubProfile: 'zero-delay'
     })
   })
 
   test('refuses an unknown STUB_PROFILE before starting anything', async () => {
-    const run = await runDocker(['perf'], { STUB_PROFILE: 'fast' })
+    const run = await runDocker(['perf'], { env: { STUB_PROFILE: 'fast' } })
 
     expect({
       exitCode: run.exitCode,

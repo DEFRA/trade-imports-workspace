@@ -2,21 +2,22 @@
 
 **First-time setup:**
 ```bash
-make setup    # clone all repos
-make install  # npm install in Node repos
+tim workspace setup     # clone all repos
+tim workspace install   # install dependencies in every repo
 ```
 
-Scripts under `tools/` reach the workspace at
-`~/git/defra/trade-imports-workspace/` — the path is hardcoded, so clone
-it there. A checkout under another name will not work.
-See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-canonical-clone-location)
+The default place to clone the workspace is
+`~/git/defra/trade-imports-workspace`. Any other folder works too: `tim`
+finds the workspace it runs in, and paths in skills and docs are relative
+to the workspace root.
+See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-clone-location)
 for the setup and for the JIRA / GitHub / Confluence credentials the tools
 still need.
 
 **Daily update:**
 ```bash
-make update   # pull latest on all repos
-make status   # check for anything uncommitted
+tim workspace update   # pull latest on all repos
+tim workspace status   # check for anything uncommitted
 ```
 
 `trade-imports-plants-prototype` has `workspaceBranchSync: false` in
@@ -29,8 +30,8 @@ in the Docker stack to keep in step with, and it never merges from
 **Designer prototyping (workspace-first):**
 ```bash
 tim prototype setup   # once per machine: CLAUDE.local.md designer note, upstream remote, install, auth readiness
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev            # run standalone on :3103, no stack
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream  # weekly-style sync from trade-imports-plants-frontend, overrides.json-aware
+npm --prefix repos/trade-imports-plants-prototype run dev            # run standalone on :3103, no stack
+npm --prefix repos/trade-imports-plants-prototype run sync:upstream  # weekly-style sync from trade-imports-plants-frontend, overrides.json-aware
 ```
 Then open Claude Code at the workspace root and say what you want — the
 `prototype` skill routes the request to the right reference and, for
@@ -41,11 +42,11 @@ multi-step requests, to a workflow under
 
 **Run the full stack from source (cross-service development):**
 ```bash
-make docker-compose-dev   # build + start all services from local source
-make docker-logs          # tail logs (Ctrl-C to stop)
+tim docker dev    # build + start all services from local source
+tim docker logs   # tail logs (Ctrl-C to stop)
 # Java source edits hot-reload via DevTools; only a pom.xml/dependency
 # change needs a rebuild:
-make docker-compose-dev
+tim docker dev
 ```
 
 **Run the E2E tests:**
@@ -54,11 +55,12 @@ cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:animals     # one domain: animals, animals-admin, ins or plants
 ```
+Only the clone that owns the stack (`tim docker owner`) runs local E2E. From any other clone the run stops before its first test; push and let GitHub Actions run it, or set `ALLOW_FOREIGN_STACK=1` to run anyway.
 To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json). How the suites and tags are applied: [`docs/testing/e2e-tests-gh-actions.md`](../testing/e2e-tests-gh-actions.md).
 
 **Run unit tests:**
 ```bash
-make test
+tim workspace test
 ```
 
 **Work on a single repo:**

@@ -43,7 +43,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows each chosen party in its section as the bold name, its address lines and the country, with Change and Edit details naming the party", "strength": "full", "notes": "after picking all five from the stub book: bold name in each inset, the consignor's inset text exactly, each section's links exactly Change and Edit details with the role in their accessible names" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Consignor selection saves and persists", "strength": "full", "notes": "representative of the per-party loop; asserts the section holds the chosen name and exactly the Change and Edit details links. Same claim for each other party title in sibling tests." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show a chosen consignor as its name and address lines, ending with the locality, postcode and country, offering Change and Edit details", "strength": "full", "notes": "the name, the street lines, the joined last line with the country, and the Change and Edit details hrefs" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "after save, the consignor section's inset reads exactly the name, street line and 'Carlisle, CA1 1AA, United Kingdom', and Change re-opens the picker headed Consignor; picker search/pagination itself is addresses ownership" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "full", "notes": "after save, the consignor section's inset reads exactly the name, street line and 'Carlisle, CA1 1AA, United Kingdom', and Change re-opens the picker headed Consignor; picker search itself is addresses ownership" }
           ]
         }
       ]
@@ -81,15 +81,49 @@
     },
     {
       "id": "REQ-CONSIGN-ADDR-004",
-      "name": "Overview's task for this page shows Completed once every role has an address",
-      "coverage": "full",
+      "name": "Overview's task for this page shows Completed once every answer the page asks for has been given",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-004-A",
-          "name": "Answering every role marks the Overview task Completed",
+          "name": "Answering every role marks the Overview task Completed when the page shows no CPH number or permanent address section",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "completing every party marks the hub task Complete", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "completing every party marks the hub task Complete for a consignment asked for no CPH number or permanent address", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-B",
+          "name": "A line needing a permanent address with an animal identified holds the Overview task to To do until the animal has one",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold the addresses row In progress while an identified animal that needs a permanent address has none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/addresses-task-completion.spec.ts", "test": "the Overview task reads To do with every party answered and no permanent address, and Complete once the permanent address is given", "strength": "partial", "notes": "needs the workspace stack; no red probe run in this stage" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-C",
+          "name": "The Overview task completes once every such animal has a permanent address",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the addresses row once every such animal has a permanent address", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/addresses-task-completion.spec.ts", "test": "the Overview task reads To do with every party answered and no permanent address, and Complete once the permanent address is given", "strength": "partial", "notes": "needs the workspace stack; no red probe run in this stage" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-D",
+          "name": "A consignment the page asks a CPH number of holds the Overview task to To do until the CPH number is given",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should hold the addresses row to its parties and CPH number for a consignment the page asks no permanent address of", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-004-E",
+          "name": "A line needing a permanent address with no animal identified yet does not hold the Overview task back",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should complete the addresses row on its parties alone when a line needing a permanent address has an animal count but no animal identified", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
           ]
         }
       ]
@@ -104,8 +138,9 @@
           "name": "A CPH-eligible commodity brings the CPH section into the page, empty",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of ostriches for a CPH number", "strength": "full", "notes": "ostriches are on no other commodity list, so it rules out an accidental allow-list explanation; asserts the section's hint and its single link 'Add a CPH number'" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should end with an empty CPH section offering the add link into cph-number when a CPH-triggering commodity line exists", "strength": "full", "notes": "sections only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of poultry for a CPH number", "strength": "full", "notes": "asserts the section's hint and its single link 'Add a CPH number' for a chicken (01051111) line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should end with an empty CPH section offering the add link into cph-number when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the section's title, its description sentence and its add link into cph-number, as the last section of the page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the control to exactly the consignor, importer and place of destination sections, with the CPH and permanent address sections present but carrying none", "strength": "full", "notes": "asserts the ordered section titles, the CPH section following the five party sections, the last of which is place of destination" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "adds cattle after cats and asserts the section appears offering exactly 'Add a CPH number'" }
           ]
         },
@@ -114,9 +149,68 @@
           "name": "No CPH-eligible commodity leaves the section off the page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "commodity code 0101 is one of the two design release 1 lets off; asserts the five party headings and no other" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list only the five party sections when no CPH-triggering commodity line exists", "strength": "full", "notes": "sections only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "asserts the five party headings and no other" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of ostriches for a CPH number", "strength": "full", "notes": "ostriches are on no other commodity list, so it rules out an accidental allow-list explanation" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list the five party sections then the permanent address section, and no CPH section, for a cats-only consignment", "strength": "full", "notes": "sections only" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the CPH section is hidden for a cats-only consignment" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-005-C",
+          "name": "A saved CPH number shows in its slashed form with a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows a saved CPH number in its slashed form, offering only a Change link into the CPH page", "strength": "full", "notes": "saves a number from the section's own add link and asserts the section's text and its one link" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the stored CPH value in its slashed county/parish/holding form with a Change link when answered", "strength": "full", "notes": "sections only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "a saved CPH number shows in its slashed county/parish/holding form on the addresses page, Change pre-fills county, parish and holding, and Back returns to the addresses page, whose Continue reaches the contact address", "strength": "partial", "notes": "needs the workspace stack; not probed locally in this increment" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-008",
+      "name": "The page also sets out a permanent address section when the notification carries a cat, dog or ferret",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-008-A",
+          "name": "A consignment carrying a cat, dog or ferret brings the permanent address section into the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows its heading, lead-in, bullets and add link for a cat consignment", "strength": "full", "notes": "asserts the section's lead-in, both bullets and its single add link" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list the five party sections then the permanent address section, and no CPH section, for a cats-only consignment", "strength": "full", "notes": "sections only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the permanent address section before any animal has one, with its add link carrying the return marker", "strength": "full", "notes": "the section's full view model, including the add link's href" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-008-B",
+          "name": "A consignment with no cat, dog or ferret leaves the section off the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "is not on the page for a cattle consignment", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list no permanent address section for a cattle-only consignment", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-008-C",
+          "name": "The section shows that one address once every animal that needs one shares it",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the one saved address, with its inset lines and a Change link, for a single hand-entered animal", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show that one address once, not a count line, when two animals are both saved against the place of destination", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows that one address once, with a Change link, when a cat and a ferret are both saved against the place of destination", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cat consignment walked from the consignment addresses page through a hand-entered save, back to the consignment addresses page", "strength": "full", "notes": "the inset now holds the whole saved address, not the name alone" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-008-D",
+          "name": "Animals not all saved against the place of destination show the count of animals instead of an address",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the count line, not an address, when two animals hold different hand-entered addresses", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js", "test": "Should interpolate the number of animals into the count line, in English and in Welsh", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "saves each animal with its own hand-entered address, counts the two animals on the consignment addresses page, and reopens with each one selected and its own values back", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/pet-cats-air-permanent-address.spec.ts", "test": "walks a pet-cats-by-air notification from create to submitted, with a mixed permanent-address choice and every task complete", "strength": "partial", "notes": "a stronger witness of this scenario through a full submitted journey (one cat same as the place of destination, one hand-entered); no red probe run — the e2e rung runs on each repo's pull request" }
           ]
         }
       ]
@@ -140,7 +234,7 @@
     {
       "id": "REQ-CONSIGN-ADDR-007",
       "name": "The page works without JavaScript and has no serious or critical accessibility violations",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONSIGN-ADDR-007-A",
@@ -157,6 +251,87 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "hub page has no serious or critical axe violations empty and complete, at desktop and phone width", "strength": "full", "notes": "the complete stage after picking all five, at 1280px and 375px" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-007-C",
+          "name": "The page with a \"Same as …\" control showing has no serious or critical accessibility violations",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "has no serious or critical axe violations with the same-as buttons showing, at desktop and phone width", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-007-D",
+          "name": "A section is filled from its paired party with JavaScript off",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "fills the consignor section from the place of origin when its same-as button is pressed", "strength": "partial", "notes": "JavaScript off; no red probe run in this change" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-009",
+      "name": "A party section with no address may offer a shortcut that fills it from a paired party's address",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-009-A",
+          "name": "Only a section with no address whose source has one offers the control, and only for the three stated pairs",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the consignor section a same-as control naming the place of origin, and offer the place of origin section none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the control to exactly the consignor, importer and place of destination sections, with the CPH and permanent address sections present but carrying none", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should carry no control and still show the chosen address when the consignor already holds one", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/same-as-action.test.js", "test": "Should give the consignor, importer and place of destination a source party and no other party one", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows a same-as button naming its source in the Consignor, Importer and Place of destination sections, with the two consignee buttons each naming the section they fill, and none in the Place of origin or Consignee sections", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-B",
+          "name": "Pressing the control fills the target section from the source, with no success banner, and the control is gone",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should fill the consignor from the place of origin, redirect to the addresses page carrying the trail, and show no success banner on the following GET", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "pressing a same-as button fills its target section with the source address, with no success banner, and the pressed button gone", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-C",
+          "name": "The control fills the target even when the target's own address list would not offer that record",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "excludes the copied place-of-origin record from the consignor picker, with the Consignor section still showing it", "strength": "partial", "notes": "no red probe run — the production file is uncommitted at this stage, so tim build probe refuses it (DIRTY_TREE)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the shortcut only on the Consignor, Importer and Place of destination sections, and pressing each fills it with the full address of the picked place of origin or consignee, leaving no button and offering the record to no other picker", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-D",
+          "name": "The filled party is an independent copy of the source",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "keeps the consignor showing the place-of-origin record it was filled from after the place of origin is changed to a different record", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-E",
+          "name": "The review shows the filled party's full details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts", "test": "shows the importer filled from the consignee on the review with the consignee record's full details", "strength": "partial", "notes": "no red probe run in this change" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-009-F",
+          "name": "A request to fill a section the page is not offering changes nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing when the target party has no paired source, logging the refusal", "strength": "full", "notes": "the pair that is not one of the three" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing when the source party holds no address, logging the refusal", "strength": "full", "notes": "the source with no address" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should commit nothing and keep the target party showing the address it already held, logging the refusal", "strength": "full", "notes": "the section that already has an address" }
           ]
         }
       ]

@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -59,7 +60,7 @@ const row = (overrides = {}) => ({
 
 beforeEach(() => {
   workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-build-rigour-')))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
   const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
   mkdirSync(dirname(schemaCopy), { recursive: true })

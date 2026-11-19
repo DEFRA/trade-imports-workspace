@@ -2,7 +2,7 @@
 
 Prepares a change made in a design release so the real plants-frontend team
 can build it: a folder `handoffs/<yyyy-mm-dd>-<slug>/` (inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`)
+`repos/trade-imports-plants-prototype/`)
 with
 
 - `brief.jira.txt`: the story in Jira wiki markup. It starts with the story
@@ -60,7 +60,7 @@ it never sends anything anywhere by itself.
   the real `trade-imports-plants-frontend` checkout, never in the prototype's
   own copy.
 - **Check ownership first.** Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- --changed`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where -- --changed`
   and check `overrides.json`: a hand-off starts from the designer's own saved
   files. A prototype-owned service (a folder under
   `src/server/app/services/` with its own line in `ours`) is the designer's
@@ -87,7 +87,7 @@ it never sends anything anywhere by itself.
    be made in a design release first (default), or they want
    `references/build-it-for-real.md` directly for a change already agreed.
 2. Run
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`.
+   `git -C repos/trade-imports-plants-prototype status --porcelain`.
    If anything is unsaved, save it first with `references/share-my-change.md`,
    so the hand-off matches what is saved.
 3. If `src/server/app/sets/<set-id>/research-mode.md` exists, say research mode
@@ -96,9 +96,9 @@ it never sends anything anywhere by itself.
    If they keep it on, the brief lists each rule under "cannot ship".
 4. **Check the change exists.** The designer names a change ("hand off the
    Consignment addresses wording"). Look for it in the release: for words,
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:words -- find "<the new words>" --set <set-id>`;
+   `npm --prefix repos/trade-imports-plants-prototype run designer:words -- find "<the new words>" --set <set-id>`;
    for anything else,
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log --oneline -- src/server/app/sets/<set-id>`.
+   `git -C repos/trade-imports-plants-prototype log --oneline -- src/server/app/sets/<set-id>`.
    If it is not there, it was never made, or it was made in another release:
    say so, and offer to make it now with the right reference
    (`references/change-the-words.md` for words), save it, and then hand it
@@ -132,7 +132,7 @@ it never sends anything anywhere by itself.
    Welsh, from the copy files. For anything else, draft them from the change
    (the pages it adds or changes, the fields, each validation rule and its
    error, any flow or gate change), write them to
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt`
+   `repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt`
    (git ignores it), show them to the designer and ask them to confirm or
    change them. Their changes win. Use only what the prototype really does,
    on pages that really exist. If the designer has not confirmed them yet
@@ -156,7 +156,7 @@ it never sends anything anywhere by itself.
    Each criterion is a block of `Given`, `When`, `Then`, `And` or `But`
    lines; a blank line starts the next. `Scenario:` and lines starting `#`
    are optional. Pass it as
-   `--criteria ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt`.
+   `--criteria repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt`.
 
 8. **Links to see it.** If the design branch is already on GitHub, pass
    `--link https://github.com/DEFRA/trade-imports-plants-prototype/tree/<branch>`,
@@ -193,7 +193,7 @@ it never sends anything anywhere by itself.
    prototype has no `upstream` remote, so check for it:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype remote get-url upstream
+   git -C repos/trade-imports-plants-prototype remote get-url upstream
    ```
 
    If git says there is no such remote, add it, then lock its push address,
@@ -201,20 +201,20 @@ it never sends anything anywhere by itself.
    read plants-frontend):
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype remote add upstream https://github.com/DEFRA/trade-imports-plants-frontend.git
+   git -C repos/trade-imports-plants-prototype remote add upstream https://github.com/DEFRA/trade-imports-plants-frontend.git
    ```
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype remote set-url --push upstream DISABLED
+   git -C repos/trade-imports-plants-prototype remote set-url --push upstream DISABLED
    ```
 
    Check
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype remote get-url --push upstream`
+   `git -C repos/trade-imports-plants-prototype remote get-url --push upstream`
    prints `DISABLED` whenever the remote already existed too; if it does not,
    run the `set-url --push` command above. Then fetch:
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch upstream main
+   git -C repos/trade-imports-plants-prototype fetch upstream main
    ```
 
    If the fetch fails (no network, or no access to plants-frontend), carry
@@ -228,11 +228,11 @@ it never sends anything anywhere by itself.
    Dry run, to see which pages change and what stands in the way:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --all --dry-run
+   npm --prefix repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --all --dry-run
    ```
 
    Read
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/handoff/<yyyy-mm-dd>-<slug>/report.json`
+   `repos/trade-imports-plants-prototype/.cache/designer/handoff/<yyyy-mm-dd>-<slug>/report.json`
    and `brief.md`. Note the page slugs in `pages[].slugs`, the rules in
    `validation` and any `servicesToBuild`: they help you draft the criteria
    (step 7 above).
@@ -242,7 +242,7 @@ it never sends anything anywhere by itself.
 2. Photograph those pages beside the real journey:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug,slug> --compare high-risk-plants
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <set-id> --pages <slug,slug> --compare high-risk-plants
    ```
 
    (Add `--errors` when error messages or validation changed.) A change
@@ -254,7 +254,7 @@ it never sends anything anywhere by itself.
 3. Write the hand-off folder:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --all --title "<short summary>" --why "<what and why>" --as "<who>" --want "<what they need>" --so-that "<why they need it>" --criteria ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt --link <design branch address>
+   npm --prefix repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --all --title "<short summary>" --why "<what and why>" --as "<who>" --want "<what they need>" --so-that "<why they need it>" --criteria repos/trade-imports-plants-prototype/.cache/designer/handoff/<slug>.criteria.txt --link <design branch address>
    ```
 
    Add `--criteria-draft` while the designer has not confirmed the criteria.
@@ -265,7 +265,7 @@ it never sends anything anywhere by itself.
    which story placeholders are left.
 
 4. **Check the story.** Read
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/brief.jira.txt`
+   `repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/brief.jira.txt`
    from the top. It must have:
    - a story line (_As_, _I want_, _So that_) that is not a placeholder in
      square brackets, and
@@ -295,7 +295,7 @@ it never sends anything anywhere by itself.
    - which requirement files still quote the old words (the real journey's
      `spec/` folder and, when the brief found it on this computer, the real
      team's plants behaviour spec under
-     `~/git/defra/trade-imports-workspace/openspec/specs/plants/`, which the
+     `openspec/specs/plants/`, which the
      brief names by path),
    - any standing ruling that chose the words this change replaces ("Standing
      ruling c-002 chose the words…" under "What cannot ship as it is"): name
@@ -319,15 +319,15 @@ it never sends anything anywhere by itself.
 6. Save the folder on the designer's branch:
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format
+   npm --prefix repos/trade-imports-plants-prototype run designer:format
    ```
 
    ```
-   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add handoffs/<yyyy-mm-dd>-<slug>
+   git -C repos/trade-imports-plants-prototype add handoffs/<yyyy-mm-dd>-<slug>
    ```
 
    ```
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Hand-off story: <title>"
+   npm --prefix repos/trade-imports-plants-prototype run designer:save -- -m "Hand-off story: <title>"
    ```
 
    The checks run first; it prints one line when the save worked, or the end
@@ -372,7 +372,7 @@ upstream.patch` in their own clone of `trade-imports-plants-frontend`, write
    words" sections match what you told the designer.
 6. The screenshots folder is under 2 MB (the script keeps it there and lists
    anything it left out).
-7. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+7. `git -C repos/trade-imports-plants-prototype status --porcelain`
    prints nothing, and you are back on the designer's branch.
 8. `upstream.patch` names no file under the release's `assets/`, and no
    `app-<release>-` class, `release-<release>` bundle or

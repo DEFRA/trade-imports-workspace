@@ -20,39 +20,37 @@ themselves git repositories, so `git rev-parse --show-toplevel` returns
 the sub-repo root when called from inside one — silently breaking any
 path that should be workspace-relative.
 
-Two layers:
+The rule:
 
-- **In LLM-typed commands** (SKILL.md, references/*.md, spawn prompts):
-  use the literal home-relative path `~/git/defra/trade-imports-workspace/...`.
-  Bash expands `~` to `$HOME` automatically. Contributors must clone
-  to this canonical location for the LLM-typed allowlist to match.
-- **Inside `tools/<domain>/<script>.sh`**: scripts hardcode the path
-  literally as `$HOME/git/defra/trade-imports-workspace/...`. No env var.
-  `$HOME` expands inside the shell at script-run time; it never reaches
-  the permission system or an LLM.
+- **In LLM-typed commands** (SKILL.md, references/*.md, rules, spawn
+  prompts): paths are relative to the workspace root —
+  `git -C repos/<repo> ...`, `npm --prefix repos/<repo> ...`,
+  `mvn -f repos/<repo>/pom.xml ...`, `docs/best-practices/...`,
+  `workareas/...`. The session runs from the workspace root, and the
+  allowlist holds a literal rule for each of these prefixes. The
+  workspace can be cloned anywhere, and several clones can work at once.
+- **In a spawned agent's brief**: the agent may start inside a sub-repo,
+  where `git rev-parse --show-toplevel` names the sub-repo. So the brief
+  passes the workspace root in and says that every path in it is relative
+  to that root.
+- **`tim`** finds the workspace it runs in by walking up from the current
+  folder, so a `tim` command needs no path at all.
 
-The split exists because Claude Code's permission system flags
-parameter expansion (`$VAR`) in LLM-typed Bash commands as "Contains
-simple_expansion" — even when the variable is explicitly allowlisted
+Never put `$VAR` in an LLM-typed command: Claude Code's permission system
+flags parameter expansion as "Contains simple_expansion" — even when the
+variable is explicitly allowlisted
 ([GH#51001](https://github.com/anthropics/claude-code/issues/51001)).
-Literal `~` paths in agent-typed commands don't trip the check, and
-`$HOME` inside script bodies never crosses the boundary.
-
-Earlier iterations used a walk-up helper that derived the root from
-`${BASH_SOURCE[0]}` or `$PWD`. That had two failure modes: off-by-one
-when scripts moved between directory depths, and false matches when a
-parent of the workspace happened to contain a stray `.claude/` directory.
 
 ## Path conventions
 
-Cross-workspace references in `SKILL.md` use absolute paths anchored on
-`~/git/defra/trade-imports-workspace`:
+Cross-workspace references in `SKILL.md` are relative to the workspace
+root:
 
 ```
-Scripts:        ~/git/defra/trade-imports-workspace/tools/<domain>/<script>
-Best-practices: ~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>
-Workareas:      ~/git/defra/trade-imports-workspace/workareas/...
-Other skills:   ~/git/defra/trade-imports-workspace/.claude/skills/<name>/...
+Repos:          repos/<repo>/...
+Best-practices: docs/best-practices/<topic>/<file>
+Workareas:      workareas/...
+Other skills:   .claude/skills/<name>/...
 ```
 
 Skill-internal references stay relative from `SKILL.md`:
@@ -76,7 +74,7 @@ each piece would individually. Symptoms:
   full paths instead.
 - `find ... -exec cmd {} \;` — `-exec` runs an arbitrary embedded
   command. Claude Code refuses to prefix-allowlist it. Run a plain
-  `find ~/git/defra/trade-imports-workspace/... -name X`, then Read
+  `find ... -name X`, then Read
   each result.
 - `VAR=x cmd` — an environment-variable prefix does not match the
   allowlisted command, so `PORT=3100 npm run test:prototype` prompts.
@@ -84,22 +82,23 @@ each piece would individually. Symptoms:
   the parent session.
 - `$VAR` in the command — Claude Code's "Contains simple_expansion"
   check ([GH#51001](https://github.com/anthropics/claude-code/issues/51001))
-  trips before the allowlist matcher sees it. Use literal
-  `~/git/defra/trade-imports-workspace/...` paths.
-- `/Users/<you>/git/...` resolved-tilde form — the matcher compares
-  literal strings, so `~/git/...` and `/Users/<you>/git/...` are
-  *different* prefixes. Always type the `~/` form, never resolve it
-  to your home path.
-- Ad-hoc text utilities (`awk`, `sed`, `find`) on files outside the
-  workspace — scoped to workspace paths in the allowlist; system
-  paths still prompt.
+  trips before the allowlist matcher sees it. Use literal paths
+  relative to the workspace root.
+- An absolute `/Users/<you>/...` or `~/...` path into the workspace —
+  the matcher compares literal strings, so `repos/<repo>` and
+  `/Users/<you>/.../repos/<repo>` are *different* prefixes. Type the
+  path relative to the workspace root.
+- Ad-hoc text utilities (`awk`, `sed`, `find`) on a system path — the
+  allowlist covers them only on a path under one of the workspace's
+  top-level folders (`repos/`, `workareas/`, `tools/`, `docs/`,
+  `.claude/`, `openspec/`, `tim/`).
 
 **Read, search and find with the tools that never prompt:**
 
 - File inspection → the Read tool (with `offset` + `limit`), not `awk`, `sed -n` or `cat`.
-- Searching file contents → one unpiped Bash `grep -rn <pattern> ~/git/defra/trade-imports-workspace/<path>`.
-- File location by name → one unpiped Bash `find ~/git/defra/trade-imports-workspace/<path> -name X`, not `find -exec` or `find ... | xargs`.
-- Do not use the Grep or Glob tools in a spawned agent. They are not on the allowlist, and an agent left to choose reaches for them first. Bash `grep` and workspace-path `find` are allowlisted.
+- Searching file contents → one unpiped Bash `grep -rn <pattern> <path>`.
+- File location by name → one unpiped Bash `find <path> -name X`, not `find -exec` or `find ... | xargs`.
+- Do not use the Grep or Glob tools in a spawned agent. They are not on the allowlist, and an agent left to choose reaches for them first. Bash `grep` is allowlisted, and so is `find` under a top-level workspace folder.
 - JSON queries → `jq` against a workspace file, not `python3 -c "import json"`.
 - Filtering script output → add a `--filter` / `--file` / `--repo` flag to the helper, not `| awk`. If the helper lacks the flag, propose extending it.
 
@@ -112,13 +111,13 @@ and never re-run a suite to check part of its result.
 
 | Bad | Good |
 |---|---|
-| `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test 2>&1 \| tail -40` | `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test > ~/git/defra/trade-imports-workspace/workareas/<area>/unit.log 2>&1`, then Read the log |
-| `mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml verify \| grep ERROR` | the same `mvn -f ... verify > <workarea>/verify.log 2>&1`, then Read the log and `target/surefire-reports/` |
+| `npm --prefix repos/trade-imports-plants-frontend test 2>&1 \| tail -40` | `npm --prefix repos/trade-imports-plants-frontend test > workareas/<area>/unit.log 2>&1`, then Read the log |
+| `mvn -f repos/trade-imports-animals-backend/pom.xml verify \| grep ERROR` | the same `mvn -f ... verify > <workarea>/verify.log 2>&1`, then Read the log and `target/surefire-reports/` |
 
 The same holds for any long output: `git commit -F msg > <workarea>/commit.log 2>&1`, then Read, not `git commit -F msg | tail`.
 
 **Formatting and lint: the repo's named npm script only.** Fix formatting
-with `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> run format`
+with `npm --prefix repos/<repo> run format`
 (or the repo's `lint:fix`). Never call a binary under `node_modules/.bin/`
 directly and never use `npx` for it. Prettier run by path from outside the
 repo resolves its config differently: in the plants frontend it left two
@@ -139,9 +138,9 @@ uncommitted or differs from HEAD. Set the bit through git, one command per
 call, then commit before running it:
 
 ```
-git -C ~/git/defra/trade-imports-workspace add tools/<dir>/<script>.sh
-git -C ~/git/defra/trade-imports-workspace update-index --chmod=+x tools/<dir>/<script>.sh
-git -C ~/git/defra/trade-imports-workspace checkout -- tools/<dir>/<script>.sh
+git add tools/<dir>/<script>.sh
+git update-index --chmod=+x tools/<dir>/<script>.sh
+git checkout -- tools/<dir>/<script>.sh
 ```
 
 The `checkout` copies the 755 mode from the index back onto disk. Check
@@ -167,22 +166,38 @@ approve it. Never write that a command "did not prompt". When it matters,
 for example after changing a hook or before an unattended run, run the real
 command and ask the user whether it prompted.
 
+**A `*` inside a `:*` allow rule matches nothing.** Only the literal text
+before `:*` is a prefix. Tested on 18 November 2026, with the rule in
+`.claude/settings.local.json` and a person watching for prompts:
+
+| Allow rule | Command | Prompted |
+|---|---|---|
+| `Bash(npm --prefix tim:*)` | `npm --prefix tim ls --depth 0` | no |
+| `Bash(git -C repos/*:*)` | `git -C repos/trade-imports-schemas fetch --dry-run` | yes |
+| `Bash(npm --prefix repos/*:*)` | `npm --prefix repos/trade-imports-schemas ls --depth 0` | yes |
+| `Bash(mvn -f repos/*:*)` | `mvn -f repos/trade-imports-stub/pom.xml --version` | yes |
+| `Bash(gh api repos/DEFRA/*/pulls/*/files:*)` | `gh api repos/DEFRA/trade-imports-workspace/pulls/263/files --jq length` | yes |
+
+So allow one literal prefix per repo (`Bash(git -C repos/trade-imports-schemas:*)`),
+not a wildcard over `repos/`. The `find`, `sed` and `awk` rules tested did not
+prompt either, but read-only commands can run with no rule at all, so that
+test does not show the rules matched.
+
 **Quick reference:**
 
 | Anti-pattern | Use instead |
 |---|---|
-| `cd ~/git/.../foo && tools/x.sh` | `~/git/.../tools/x.sh` (no `cd`) |
-| `tools/x.sh` (relative) | full `~/git/...` form |
+| `cd repos/foo && npm test` | `npm --prefix repos/foo test` (no `cd`) |
 | `tools/x.sh && tools/y.sh` | two separate Bash calls |
-| `$TRADE_IMPORTS_WORKSPACE/tools/x.sh` | literal `~/git/...` form |
-| `/Users/<you>/git/.../tools/x.sh` (resolved tilde) | literal `~/git/...` form |
+| `$TRADE_IMPORTS_WORKSPACE/tools/x.sh` | `tools/x.sh`, relative to the workspace root |
+| `/Users/<you>/.../tools/x.sh` or `~/.../tools/x.sh` | `tools/x.sh`, relative to the workspace root |
 | `cd <dir> && git ...` | `git -C <dir> ...` |
 | `awk '...' file` (workspace inspection) | Read tool with offset+limit |
-| `find <dir> -name X -exec cat {} \;` | `find ~/git/... -name X`, then Read |
+| `find <dir> -name X -exec cat {} \;` | `find <dir> -name X`, then Read |
 | Grep or Glob tool in a spawned agent | one unpiped Bash `grep -rn` or `find` |
 | `tools/x.sh \| awk` | helper `--filter` flag |
 | `npm test \| tail` | `npm test > <workarea>/test.log 2>&1`, then Read |
-| `repos/<repo>/node_modules/.bin/prettier --write <file>` | `npm --prefix ~/git/.../repos/<repo> run format` |
+| `repos/<repo>/node_modules/.bin/prettier --write <file>` | `npm --prefix repos/<repo> run format` |
 | `PORT=3100 npm run test:prototype` | a named npm script, or leave the run to the parent |
 | `rm -rf <dir>` | `git rm -r -f -q <dir>` |
 | `chmod +x tools/x.sh` | `git update-index --chmod=+x`, `git checkout --`, commit |
@@ -206,7 +221,7 @@ description: ...          # 1-1024 chars; WHAT + WHEN + trigger keywords
 - `references/<NAME>.md` — additional docs loaded on demand.
 - `assets/<NAME>.md` — templates, schemas, static resources.
 - Skills do NOT carry private `scripts/` folders in this workspace: shared
-  shell scripts live at `~/git/defra/trade-imports-workspace/tools/`.
+  commands live in `tim`.
 
 Spawn idiom inside `SKILL.md`:
 
@@ -221,7 +236,7 @@ prose inside the owning skill. They are spawned via the Task tool with
 `subagent_type: general-purpose` and a prompt that begins:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/<owner>/references/<NAME>.md.
+Follow the instructions in .claude/skills/<owner>/references/<NAME>.md.
 
 <per-spawn context: file/path/commit/output-path>
 ```
@@ -234,8 +249,9 @@ Rationale:
   available) and is not subject to the no-write guardrail injected into
   custom-named restricted subagents — workers can therefore reliably
   write the per-file artifacts that downstream `tools/` scripts consume.
-- The path is absolute so the spawned subagent doesn't need to inherit
-  the parent's working directory.
+- The path is relative to the workspace root. The spawned subagent may
+  start in a sub-repo, so the per-spawn context names the workspace root
+  and says every path in the brief is relative to it.
 
 ## Spawning agents
 
@@ -250,7 +266,8 @@ whole run until someone looks. The block says:
 
 1. One command per Bash call. No `&&`, `;` or `|`, no `cd`, no
    `VAR=x` prefix. Each compound command stops the run behind a prompt.
-2. Bash paths start `~/git/defra/trade-imports-workspace/`, never `/Users/`.
+2. Bash paths are relative to the workspace root the brief names, and
+   every command runs from that root. Never `/Users/`.
 3. No Grep or Glob tools: Bash `grep -rn` and `find`. Read files with the
    Read tool; no `awk`, `sed` or `cat` to read or reshape text.
 4. Redirect every test or long run to a file and read the file. Never pipe it.
@@ -268,7 +285,7 @@ SendMessage straight away rather than waiting or respawning.
 
 **Code-writing prompts read the house rules.** Every prompt for an agent
 that writes or reviews code, tests or templates tells it to read
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` in
+`.claude/rules/code-quality.md` in
 full before it starts. `.claude/rules/` files load only when an agent
 reads a matching path, and Codex loads none of them, so the prompt names
 the file.
@@ -290,13 +307,13 @@ How `.claude/rules/` loads, so a prompt can make up for it:
 
 **Two path constants in a Workflow script.** An absolute path anywhere in a
 prompt leaks into the agent's Bash calls, even when the prompt also says
-"use `~/`". Read and Write need the absolute form; Bash needs the tilde
-form. Define both, keep the absolute one out of every Bash example, and
-say which is which early in the guard rails:
+"use relative paths". Read and Write need the absolute form; Bash needs the
+form relative to the workspace root. Define both, keep the absolute one out
+of every Bash example, and say which is which early in the guard rails:
 
 ```js
-const WORKAREA_FOR_FILE_TOOLS = '/Users/<you>/git/defra/trade-imports-workspace/workareas/<area>'
-const WORKAREA_FOR_BASH = '~/git/defra/trade-imports-workspace/workareas/<area>'
+const WORKAREA_FOR_FILE_TOOLS = `${workspaceRootAbs}/workareas/<area>`
+const WORKAREA_FOR_BASH = 'workareas/<area>'
 ```
 
 **Set `model` on every spawn.** A spawn without one inherits the
@@ -357,6 +374,6 @@ later commits, follow the handover's intent with the newer tooling.
 
 ## Runtime workareas
 
-`~/git/defra/trade-imports-workspace/workareas/` is runtime cache and is gitignored. Skills
+`workareas/` is runtime cache and is gitignored. Skills
 populate it (reviews, code-style reviews, ticket plans, upgrades) as they
 run; nothing under `workareas/` is part of the checked-in audit trail.

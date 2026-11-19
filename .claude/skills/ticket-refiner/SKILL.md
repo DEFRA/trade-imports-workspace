@@ -1,6 +1,6 @@
 ---
 name: ticket-refiner
-description: 'Assess whether a Jira ticket is READY for team refinement and estimation, producing a READY / NEEDS WORK / SPIKE REQUIRED verdict in ~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-X/review.md. Use when the user asks to validate a ticket''s description, AC, repos, dependencies and sizing BEFORE refinement (triggers: "is ticket EUDPA-X ready", "pre-refinement", "refine EUDPA-X", "refinement check"). NOT for authoring brand-new tickets (use the ticket-creator skill: "assess existing ticket readiness" vs "create new"). NOT for planning or implementing an already-refined ticket (use the ticket skill: "assess readiness" vs "plan/implement").'
+description: 'Assess whether a Jira ticket is READY for team refinement and estimation, producing a READY / NEEDS WORK / SPIKE REQUIRED verdict in workareas/ticket-refinement/EUDPA-X/review.md. Use when the user asks to validate a ticket''s description, AC, repos, dependencies and sizing BEFORE refinement (triggers: "is ticket EUDPA-X ready", "pre-refinement", "refine EUDPA-X", "refinement check"). NOT for authoring brand-new tickets (use the ticket-creator skill: "assess existing ticket readiness" vs "create new"). NOT for planning or implementing an already-refined ticket (use the ticket skill: "assess readiness" vs "plan/implement").'
 context: fork
 allowed-tools: [Bash, Read, Glob, Edit, Write]
 argument-hint: 'EUDPA-XXXXX'
@@ -13,21 +13,20 @@ Works in complement with the `ticket-creator` skill — tickets created
 there flow into refinement here. Both skills share a single source of
 truth for "what makes a good EUDPA ticket":
 
-- `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md` — EUDPA ticket conventions (description structure, AC quality, parent/epic, labels).
-- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md` — GDS plain-English writing standard.
+- `docs/best-practices/jira/ticket-conventions.md` — EUDPA ticket conventions (description structure, AC quality, parent/epic, labels).
+- `docs/best-practices/gds/writing.md` — GDS plain-English writing standard.
 
 Read both at session start; assess against the same standards
 `ticket-creator` authors to.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
-Skill-internal references stay relative
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim refine` works on the workspace
+you run it in, and prints the folder it wrote. Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
 
@@ -47,14 +46,13 @@ in this file.
 
 ## Prerequisites
 
-Authenticate to Jira before fetching tickets:
+Check your Jira and Confluence sign-in before fetching tickets:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/auth.sh
+tim auth
 ```
 
-(Or the umbrella `~/git/defra/trade-imports-workspace/tools/auth.sh` covering Jira +
-Confluence + GitHub.)
+For GitHub, run `gh auth status`.
 
 ## Ready When Team Can
 
@@ -66,7 +64,7 @@ Confluence + GitHub.)
 ## Workflow
 
 1. Prepare workspace (one helper call — fetches Jira ticket + comments + Confluence links, seeds meta JSON, stubs `review.md`)
-2. Explore codebase (read directly from `~/git/defra/trade-imports-workspace/repos/<repo>/`)
+2. Explore codebase (read directly from `repos/<repo>/`)
 3. Assess readiness
 4. Write review
 5. Finalise verdict
@@ -76,16 +74,16 @@ Confluence + GitHub.)
 Read the shared conventions docs once at session start — they are the
 standards you assess against:
 
-- Read `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md` — these are the standards you assess against.
-- Read `~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md` — GDS plain-English writing rules.
+- Read `docs/best-practices/jira/ticket-conventions.md` — these are the standards you assess against.
+- Read `docs/best-practices/gds/writing.md` — GDS plain-English writing rules.
 
 Then prepare the workarea:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/refine/prepare-refinement.sh EUDPA-XXXXX
+tim refine prepare EUDPA-XXXXX
 ```
 
-This produces, under `~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-XXXXX/`:
+This produces, in the `Directory:` it prints (`workareas/ticket-refinement/EUDPA-XXXXX/` in the workspace):
 
 - `ticket.md` — summary, description, AC, comments, Confluence references (from Jira JSON)
 - `.refinement-meta.json` — ticket fields + `verdict: null` (finalised in Step 5)
@@ -96,7 +94,7 @@ Read `ticket.md` to internalise the summary, AC and comments. The helper has alr
 ## Step 2: Explore Codebase
 
 The workspace already has the canonical clones at
-`~/git/defra/trade-imports-workspace/repos/<repo>/`. Read directly from those
+`repos/<repo>/`. Read directly from those
 working trees when you need to peek at code — do **not** clone anywhere.
 See the workspace `CLAUDE.md` repo map for the authoritative repo list.
 
@@ -119,7 +117,7 @@ description structure, AC quality, parent/epic, label conformance
 | Scope | In/out of scope clear? |
 | Specificity | Concrete details? |
 | No history | Is it free of timelines, commit hashes and audit dumps, with evidence linked instead? |
-| Markup | Does it render? No literal Markdown, no `class="error"` in `ticket.sh EUDPA-X full`. |
+| Markup | Does it render? No literal Markdown, no `class="error"` in `tim jira ticket EUDPA-X --rendered`. |
 
 ### Acceptance Criteria
 | Check | Question |
@@ -169,8 +167,7 @@ PR plus a one-off history rewrite. The ticket was READY.
 
 ## Step 4: Write Review
 
-`prepare-refinement.sh` already stubbed
-`~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-XXXXX/review.md`
+`tim refine prepare` already stubbed `review.md` in the folder it printed
 from `assets/refinement-template.md`. Fill each section in place from
 Steps 1-3 — `## Description Summary`, `## Acceptance Criteria`,
 `## Codebase Investigation`, `## Readiness Assessment`,
@@ -182,7 +179,7 @@ trailing `## Verdict` block.
 After filling `review.md`, record the verdict on the meta JSON:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/refine/refine-finalize.sh EUDPA-XXXXX --verdict READY --reason "Clear AC, repos identified"
+tim refine finalize EUDPA-XXXXX --verdict READY --reason "Clear AC, repos identified"
 ```
 
 Verdict must be one of `READY`, `NEEDS WORK`, `SPIKE REQUIRED` (the
@@ -223,5 +220,5 @@ Key findings:
 Questions for refinement:
 - [Question]
 
-Review available at: ~/git/defra/trade-imports-workspace/workareas/ticket-refinement/EUDPA-XXXXX/review.md
+Review available at: workareas/ticket-refinement/EUDPA-XXXXX/review.md
 ```

@@ -22,11 +22,6 @@ on:
         required: false
         type: boolean
         default: false
-      build-dependabot:
-        description: 'Build pull requests Dependabot opens too, so they get a branch image and an E2E run'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   id-token: write
@@ -42,9 +37,8 @@ jobs:
     name: Build ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     if: >
-      (inputs.build-dependabot || github.actor != 'dependabot[bot]') &&
-      (github.event_name != 'pull_request' ||
-       github.event.pull_request.head.repo.full_name == github.repository)
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:

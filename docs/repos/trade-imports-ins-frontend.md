@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web app (GOV.UK Frontend) providing Defra ID sign-in, a notifications dashboard and an organisation-scoped address-book UI. It is a backend-for-frontend (BFF): it holds the user session and calls the address-book, ins-backend and reference-data APIs on the user's behalf. The README is still the CDP frontend template text; this description is drawn from `src/`.
+Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web app (GOV.UK Frontend) providing Defra ID sign-in, a notifications dashboard and an organisation-scoped address-book UI. It is a backend-for-frontend (BFF): it holds the user session and calls the address-book, ins-backend and reference-data APIs on the user's behalf.
 
 **Target direction (not yet in code):** the INS becomes the front door for all journeys. A trader answers routing questions here and is sent to the right journey, and capabilities shared across journeys (dashboard, address book) live in the INS. See [`architecture-overview.md`](architecture-overview.md#target-direction).
 

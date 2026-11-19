@@ -88,16 +88,17 @@ each piece would individually. Symptoms:
   the matcher compares literal strings, so `repos/<repo>` and
   `/Users/<you>/.../repos/<repo>` are *different* prefixes. Type the
   path relative to the workspace root.
-- Ad-hoc text utilities (`awk`, `sed`, `find`) — the allowlist covers
-  them only on the `~/...` workspace path, so on a path relative to the
-  workspace root, or on a system path, they prompt.
+- Ad-hoc text utilities (`awk`, `sed`, `find`) on a system path — the
+  allowlist covers them only on a path under one of the workspace's
+  top-level folders (`repos/`, `workareas/`, `tools/`, `docs/`,
+  `.claude/`, `openspec/`, `tim/`).
 
 **Read, search and find with the tools that never prompt:**
 
 - File inspection → the Read tool (with `offset` + `limit`), not `awk`, `sed -n` or `cat`.
 - Searching file contents → one unpiped Bash `grep -rn <pattern> <path>`.
 - File location by name → one unpiped Bash `find <path> -name X`, not `find -exec` or `find ... | xargs`.
-- Do not use the Grep or Glob tools in a spawned agent. They are not on the allowlist, and an agent left to choose reaches for them first. Bash `grep` is allowlisted. A relative-path `find` is not yet, so it prompts until a person adds the rule.
+- Do not use the Grep or Glob tools in a spawned agent. They are not on the allowlist, and an agent left to choose reaches for them first. Bash `grep` is allowlisted, and so is `find` under a top-level workspace folder.
 - JSON queries → `jq` against a workspace file, not `python3 -c "import json"`.
 - Filtering script output → add a `--filter` / `--file` / `--repo` flag to the helper, not `| awk`. If the helper lacks the flag, propose extending it.
 

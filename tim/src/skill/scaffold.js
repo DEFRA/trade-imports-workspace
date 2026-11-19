@@ -126,10 +126,7 @@ const writeTextAtomic = (path, text) => {
   renameSync(tempPath, path)
 }
 
-const allowlistEntriesFor = (name) => [
-  `Bash(~/git/defra/trade-imports-workspace/tools/${name}/*)`,
-  `Bash(~/git/defra/trade-imports-workspace/tools/${name}/*:*)`
-]
+const allowlistEntriesFor = (name) => [`Bash(tools/${name}/*)`]
 
 /**
  * Settings with entries added to the end of `permissions.allow`, skipping
@@ -224,7 +221,7 @@ const summaryText = (result) =>
 /**
  * Builds a new workspace skill from a run's finished interview: SKILL.md,
  * a reference per fan-out worker, a state schema for JSON state, a stub
- * script per helper, decisions.md, two allowlist entries appended to
+ * script per helper, decisions.md, an allowlist entry appended to
  * `.claude/settings.json`, and a `scaffolded_at` stamp. Each file is
  * written through a temp file and a rename, one after another, so a
  * failure part way leaves the files already written.

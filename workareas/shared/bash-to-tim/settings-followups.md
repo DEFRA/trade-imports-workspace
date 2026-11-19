@@ -455,3 +455,16 @@ Left for a person, because agents do not edit hooks or permission config:
   command's output, not to text, and no check yet shows that the relative
   form `Bash(tools/<name>/*)` matches a call. Change it in P73 or its own
   row, once the relative `tools/` rules are proven.
+
+## P73
+
+Done by Sam's script `sam/7-relative-rules.mjs`. The four tilde rules
+listed under P72 are gone. `Bash(git:*)` and a `find`, `awk` and `sed`
+rule per top-level folder replace them. The guard hook's two messages now
+give relative paths. `tim skill scaffold` writes one rule,
+`Bash(tools/<name>/*)`; the `:*` twin matched nothing (P11).
+
+Still open, and not settings: the service repos' hooks run
+`bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`
+(hooks are out of scope), and `docs/onboarding/01-workspace.pptx` still
+needs regenerating from `build-deck.js`.

@@ -265,7 +265,7 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **WHEN** the user views the review
 - **THEN** the error summary reads "Enter at least 1 animal identifier for <species>" for each, the species name in lower case
 - **AND** each entry links to that species' block
-- **AND** following the entry for bos taurus moves focus to that species' block, whose heading reads "Bos Taurus"
+- **AND** following the entry for bos taurus moves focus to that species' block, whose heading reads "Bos taurus"
 
 #### Scenario: A single identified species with no identifier is not named
 **ID**: SCN-CYA-007-H
@@ -613,7 +613,7 @@ The system MUST show a card titled "What are you importing?" between "Origin of 
 **ID**: SCN-CYA-023-A
 - **GIVEN** a notification with Bos taurus selected under commodity code 0102
 - **WHEN** the user views the review
-- **THEN** the "What are you importing?" card has rows "Commodity code", "Common name" and "Species", reading "0102", "Domestic Cattle" and "Bos Taurus"
+- **THEN** the "What are you importing?" card has rows "Commodity code", "Common name" and "Species", reading "0102", "Domestic Cattle" and "Bos taurus"
 - **AND** its Change link opens the commodity selection page
 
 #### Scenario: Two species of one commodity share one code
@@ -621,7 +621,7 @@ The system MUST show a card titled "What are you importing?" between "Origin of 
 - **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
 - **WHEN** the user views the review
 - **THEN** the "Commodity code" row reads "0102" once
-- **AND** the "Common name" row reads "Domestic Cattle, American Bison" and the "Species" row reads "Bos Taurus, Bison Bison"
+- **AND** the "Common name" row reads "Domestic Cattle, American Bison" and the "Species" row reads "Bos taurus, Bison bison"
 
 #### Scenario: Each species under other live mammals adds its own code and common name
 **ID**: SCN-CYA-023-C
@@ -629,7 +629,7 @@ The system MUST show a card titled "What are you importing?" between "Origin of 
 - **WHEN** the user views the review
 - **THEN** the "Commodity code" row reads "01061900, 01061900"
 - **AND** the "Common name" row reads "Domestic Cat, Ferret"
-- **AND** the "Species" row reads "Felis Catus, Mustela Putorius Furo"
+- **AND** the "Species" row reads "Felis catus, Mustela putorius furo"
 
 #### Scenario: A submitted notification's card has no Change link
 **ID**: SCN-CYA-023-D
@@ -646,20 +646,20 @@ The system MUST show one card per selected commodity in "2. Description of the g
 - **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
 - **WHEN** the user views the review
 - **THEN** "2. Description of the goods" holds one card titled "0102"
-- **AND** the card holds a block headed "Bos Taurus" and a block headed "Bison Bison"
+- **AND** the card holds a block headed "Bos taurus" and a block headed "Bison bison"
 
 #### Scenario: A block shows its counts and no commodity or species rows
 **ID**: SCN-CYA-024-B
 - **GIVEN** a notification with 25 Bos taurus and 5 packages
 - **WHEN** the user views the review
-- **THEN** the "Bos Taurus" block shows "Number of animals" reading "25" and then "Number of packages (when required)" reading "5"
+- **THEN** the "Bos taurus" block shows "Number of animals" reading "25" and then "Number of packages (when required)" reading "5"
 - **AND** it shows no "Commodity code", "Common name" or "Species" row
 
 #### Scenario: A blank package count reads Not applicable and a species with no packaging shows no package row
 **ID**: SCN-CYA-024-C
 - **GIVEN** a notification with Bos taurus counted and no package count given, and an ostrich counted
 - **WHEN** the user views the review
-- **THEN** the "Bos Taurus" block's "Number of packages (when required)" row reads "Not applicable"
+- **THEN** the "Bos taurus" block's "Number of packages (when required)" row reads "Not applicable"
 - **AND** the ostrich block shows "Number of animals" alone
 
 #### Scenario: The card and the first row of each block carry their own Change links to consignment details
@@ -680,7 +680,7 @@ The system MUST show one card per selected commodity in "2. Description of the g
 - **GIVEN** a notification with Bison bison and Bos taurus selected under commodity code 0102, and Felis catus under commodity code 01061900, each with a number of animals entered
 - **WHEN** the user views the review
 - **THEN** "2. Description of the goods" holds a card titled "0102" and then a card titled "01061900"
-- **AND** the "0102" card holds a "Bison Bison" block and a "Bos Taurus" block, and the "01061900" card holds a "Felis Catus" block alone
+- **AND** the "0102" card holds a "Bison bison" block and a "Bos taurus" block, and the "01061900" card holds a "Felis catus" block alone
 - **AND** each block's "Number of animals" reads the number entered for its species
 
 ### Requirement: The review reads the county parish holding number back as its three parts separated by slashes

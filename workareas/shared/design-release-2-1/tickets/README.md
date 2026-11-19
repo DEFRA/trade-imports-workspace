@@ -265,11 +265,14 @@ beneath it. The plants and ins tickets write out all 21 and all 4.
 `SCN-ADDR-016-C` was added to `live-animals/addresses/spec.md` by `8bd56993`
 and later removed, so it is not counted.
 
-Not yet merged. Six pull requests are open on
-`feat/EUDPA-805-design-release-2-1-consignment-parties` (animals-frontend
-#486, plants-frontend #148, ins-tests #114, ins-frontend #87,
-performance-tests #37, workspace #273), all green. All six are drafts: the
-build loop's signed-off check found an edit to a file holding a test linked to
-`SCN-ARRIVAL-012-A`, which is signed off, and drafted them for a person to
-decide. The tickets are `In Dev` and the MERGE flow moves them to
-`Deskcheck`.
+Merged on 19 November. All six pull requests landed on `main` — animals-frontend
+#486 (`c944e373`), plants-frontend #148 (`294a0c73`), ins-tests #114
+(`a9978e79`), ins-frontend #87 (`1f2dd64f`), performance-tests #37
+(`2c3841d2`) and workspace #273 (`5f23d166`). The build loop's signed-off check
+had held them as drafts over an edit to a file holding a test linked to
+`SCN-ARRIVAL-012-A`, which is signed off; a person approved it. The workspace
+pull request was squashed, so `main` carries no row commits and the MERGE flow
+re-derived with `--branch main --commits-from
+feat/EUDPA-805-design-release-2-1-consignment-parties`, reporting the same
+52/21/4 split. The three tickets are `Deskcheck` and their specification links
+point at `main`.

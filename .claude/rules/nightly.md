@@ -180,6 +180,7 @@ so the next major has less to do.
 
 Merges are squash merges: `gh pr merge <number> --squash`. A job deletes the
 branch only after the merge.
+
 A job that cannot merge leaves the pull request as a draft, with the reason in
 its description, and reports it in the digest.
 

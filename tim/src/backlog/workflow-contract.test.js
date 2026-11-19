@@ -8180,6 +8180,17 @@ describe('increment-build-loop', () => {
           )
         })
 
+        test('names a repo’s siblings to its theme reviewer, so a rule another repo owns and this one copies is reachable', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme review:ins')
+
+          expect(prompt).toContain("A COPY OF ANOTHER REPO'S RULE")
+          expect(prompt).toContain('~/ws/repos/trade-imports-animals-frontend')
+          expect(prompt).toContain('~/ws/repos/trade-imports-plants-frontend')
+          expect(prompt).not.toContain(
+            '(~/ws/repos/trade-imports-ins-frontend,'
+          )
+        })
+
         test('lets the theme CI watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
           const prompt = promptOf(await runTheme(), 'inc-900 theme ci watch')
 

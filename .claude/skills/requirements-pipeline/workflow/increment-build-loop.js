@@ -5516,6 +5516,15 @@ ${themeRowsCommand(theme)}
 
 const themeDiffCommand = (key) => `\`git -C ${repoTilde(key)} diff ${THEME_DIFF_BASE}...HEAD -- <path>\``
 
+// The reviewer reads one repo, so a value this repo hardcodes and another owns
+// is invisible to it unless the others are named.
+const themeSiblingRepos = (key) => {
+  const others = REPO_KEYS.filter((other) => other !== key)
+  return others.length === 0
+    ? ''
+    : ` (${others.map((other) => repoTilde(other)).join(', ')})`
+}
+
 const themeReviewPrompt = (id, theme, key) => `You are the THEME ENGINEERING REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every
 row of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. Each row was reviewed on its own as it was
 built. You read the theme's whole change in this repo at once, for what a row-by-row review cannot see. You are a
@@ -5528,6 +5537,10 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - PATTERNS: one rule written in more than one place; a second mechanism beside one that exists; a piece in a layer
   the repo's docs keep it out of; a pattern extended where its recipe or a sibling was left behind; one concept with
   two names across rows.
+- A COPY OF ANOTHER REPO'S RULE: a list, map or rule this repo spells out for itself that one of the theme's other
+  repos owns${themeSiblingRepos(key)}. Grep those repos for the values before you report, because a copy drifts the
+  moment either side changes, and the drift surfaces somewhere that looks unrelated — a load-test threshold, a page
+  with no option to pick. Report it against the copy, and say which repo owns the original.
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.

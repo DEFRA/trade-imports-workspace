@@ -4487,6 +4487,131 @@ ${gateCommandList(phases, logs)}
    Run every one, even after a red one, so you have the whole picture before you repair anything.`
 }
 
+const MAIN_SYNC_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'repos', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'Every repo is on the branch, clean, and now holds origin/main' },
+    repos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'outcome'],
+        properties: {
+          repo: { type: 'string', description: 'The repo key, or "workspace"' },
+          outcome: { type: 'string', enum: ['already-in', 'merged-clean', 'merged-after-conflicts', 'failed'], description: 'What the sync did' },
+          commit: { type: 'string', description: 'The merge commit it made. Left out when already-in' },
+          conflicted: { type: 'array', items: { type: 'string' }, description: 'Every path git left unmerged, before you resolved it' },
+          resolutions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['path', 'took', 'why'],
+              properties: {
+                path: { type: 'string' },
+                took: { type: 'string', enum: ['main', 'branch', 'both'], description: 'Whose content the resolved file carries' },
+                why: { type: 'string', description: 'One sentence a reviewer can check, naming what each side said' }
+              },
+              additionalProperties: false
+            }
+          },
+          proof: { type: 'string', description: 'The command that proved the resolved tree, and what it printed. Left out when nothing conflicted' },
+          reason: { type: 'string', description: 'Why it failed. Only when outcome is failed' }
+        },
+        additionalProperties: false
+      }
+    },
+    loopScriptChanged: { type: 'boolean', description: 'Whether the merge changed the build loop\'s own script in the workspace repo' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const mainSyncPrompt = (id, repos) => `You are the MAIN SYNC for increment ${id}. Bring \`origin/main\` into \`${BASE_BRANCH}\` in every repo below,
+BEFORE the baseline reads them, so this increment builds on what main says today. Drift found here costs a merge;
+the same drift found at the pull request costs the whole increment.
+${guardrails()}
+THE REPOS:
+${repos.map(({ label, tilde }) => `- ${label} (\`${tilde}\`)`).join('\n')}
+For EACH, in that order, one Bash call per command:
+1. ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`, and \`git -C <repo> status --short\` must print nothing.
+   Otherwise outcome:failed for that repo, naming what it printed, and touch nothing in it.
+2. \`git -C <repo> fetch origin main\`
+3. \`git -C <repo> merge-base --is-ancestor origin/main HEAD\` — exit 0 means main is already in: outcome:already-in,
+   and go to the next repo without merging.
+4. \`git -C <repo> merge --no-ff origin/main\`
+   - It exits 0 → outcome:merged-clean. Record the commit from \`git -C <repo> rev-parse HEAD\`.
+   - It exits 1 naming conflicts → resolve them yourself, below. Never \`--abort\` a conflict you can read.
+   - It refuses to start (unrelated histories, a lock) → outcome:failed quoting what it said.
+RESOLVING A CONFLICT. Read BOTH sides before you write anything: \`git -C <repo> diff\` shows the conflict, and
+\`git -C <repo> log --oneline HEAD..origin/main -- <path>\` says what main changed it for. Then:
+- Both sides state something true and they do not contradict → keep both. A documentation paragraph, a list, a table.
+- Main carries a value with an owner or an expiry this branch predates, such as an audit allowlist entry → take main's.
+- A lockfile → take main's, then re-run the repo's install so the lockfile matches its package file.
+- The branch's own feature work against a refactor on main → keep the branch's behaviour expressed the way main now
+  writes it. Never drop either side's behaviour to make the conflict go away.
+Record each one in resolutions[], with \`why\` naming what each side said. A reviewer reads that line instead of the diff.
+PROVING IT. A repo you resolved a conflict in must be proved before you commit: run its checks
+(\`npm --prefix <repo> test\`, or the repo's own, redirected to ${WORKAREA_TILDE}/logs/${id}-sync-<repo>.log) and put
+the command and its last line in \`proof\`. Red → outcome:failed, naming the red test. Never weaken or skip a test.
+COMMITTING. \`git -C <repo> add -A\` then \`git -C <repo> commit --no-edit\`, which keeps git's merge message and both
+parents. Record the commit. Never \`--force\`, never rebase, never push: the land stage pushes.
+LAST, in the workspace repo only: \`git -C ${TILDE} diff --name-only HEAD@{1}..HEAD -- .claude/skills/requirements-pipeline/workflow/\`
+Anything printed → loopScriptChanged:true. The loop running now was read before that merge, so it is the old one.
+ok:true only when every repo is already-in, merged-clean or merged-after-conflicts.
+Return the structured output only.`
+
+// Every configured repo and the workspace, because openspec and the loop's own
+// tooling live in the workspace and drift there stops a run as readily. The
+// workspace is only added when no configured repo already is it.
+const SYNC_REPOS = [
+  ...REPO_KEYS.map((key) => ({ label: key, tilde: repoTilde(key) })),
+  ...(REPO_KEYS.some(isWorkspaceRepo)
+    ? []
+    : [{ label: 'workspace', tilde: TILDE }])
+]
+
+const syncWithMain = (id, repos) =>
+  agent(
+    mainSyncPrompt(id, repos),
+    code({
+      label: `${id} main sync`,
+      phase: 'Baseline',
+      schema: MAIN_SYNC_SCHEMA
+    })
+  )
+
+const resolutionsOf = (sync) =>
+  (sync.repos ?? []).flatMap((entry) =>
+    (entry.resolutions ?? []).map((resolution) => ({
+      repo: entry.repo,
+      ...resolution
+    }))
+  )
+
+const logMainSync = (id, sync) => {
+  const moved = (sync.repos ?? []).filter(
+    (entry) => entry.outcome !== 'already-in'
+  )
+  if (moved.length === 0) {
+    log(`${id}: main sync — every repo already holds origin/main`)
+    return
+  }
+  log(
+    `${id}: main sync brought origin/main into ${moved.map((entry) => `${entry.repo} (${entry.outcome})`).join(', ')}`
+  )
+  for (const resolution of resolutionsOf(sync)) {
+    log(
+      `${id}: main sync resolved ${resolution.repo}:${resolution.path} — took ${resolution.took}: ${resolution.why}`
+    )
+  }
+  if (sync.loopScriptChanged === true) {
+    log(
+      `${id}: main sync changed the build loop's own script. This run is the one read before that merge, so a relaunch may need different args — read ALWAYS_REQUIRED before the next launch`
+    )
+  }
+}
+
 const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -5945,6 +6070,7 @@ while (stopped === null) {
 
   let id = null
   let started = null
+  let syncResolutions = []
 
   if (queue) {
     id = queue.shift()
@@ -6296,6 +6422,27 @@ while (stopped === null) {
   if (enterAt === 'build') {
 
   phase('Baseline')
+
+  // Bring main in before the baseline reads the trees, so the baseline proves
+  // this row against what main says today. Drift caught here costs one merge;
+  // the same drift caught at the pull request costs the whole increment.
+  if (IS_BRANCH) {
+    const sync = await syncWithMain(id, SYNC_REPOS)
+    if (!sync || !sync.ok) {
+      const detail = sync?.summary ?? 'the main sync agent died'
+      log(`${id}: MAIN SYNC FAILED — ${detail}`)
+      results.push({
+        id,
+        ticket: ticket?.key ?? null,
+        outcome: 'sync-failed',
+        detail
+      })
+      stopped = { reason: 'sync-failed', detail: `${id}: ${detail}` }
+      break
+    }
+    logMainSync(id, sync)
+    syncResolutions = resolutionsOf(sync)
+  }
 
   const baseline = await recoverRunStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and

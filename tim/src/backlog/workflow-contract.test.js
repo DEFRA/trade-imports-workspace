@@ -222,6 +222,19 @@ const NO_THEME = {
   exitCode: 0,
   stdout: '{"theme":null,"rows":0,"todo":0,"built":[],"otherRepos":[]}'
 }
+// The main sync runs before every branch-lifecycle baseline. It answers itself
+// so a test about a later stage keeps its positional answers.
+const MAIN_SYNC_CLEAN = {
+  ok: true,
+  repos: [],
+  summary: 'every repo already holds origin/main'
+}
+const isMainSync = (label) => / main sync$/.test(label ?? '')
+const mainSyncAnswer = (syncAnswers, label) =>
+  label in syncAnswers
+    ? syncAnswers[label]
+    : (syncAnswers.default ?? MAIN_SYNC_CLEAN)
+
 const isThemeCheck = (label) => / theme$|^spec (check|diff):/.test(label ?? '')
 const themeAnswer = (themeAnswers, label) => {
   if (label in themeAnswers) return themeAnswers[label]
@@ -295,7 +308,8 @@ const answeringRunLease = (
   themeAnswers = {},
   planAnswers = {},
   signedOffAnswers = {},
-  claimAnswer = TICKET_CLAIMED
+  claimAnswer = TICKET_CLAIMED,
+  syncAnswers = {}
 ) => {
   let acquires = 0
   const acquireAnswer = () => {
@@ -312,6 +326,7 @@ const answeringRunLease = (
     if (isRunLease(label)) return leaseAnswer(label)
     if (isPlanCheck(label)) return planCheckAnswer(planAnswers, label)
     if (isSignedOffStage(label)) return signedOffAnswer(signedOffAnswers, label)
+    if (isMainSync(label)) return mainSyncAnswer(syncAnswers, label)
     return themeAnswer(themeAnswers, label)
   }
   const isOwnStage = (label) =>
@@ -319,7 +334,8 @@ const answeringRunLease = (
     isRunLease(label) ||
     isThemeCheck(label) ||
     isPlanCheck(label) ||
-    isSignedOffStage(label)
+    isSignedOffStage(label) ||
+    isMainSync(label)
   if (typeof answers === 'function') {
     return (prompt, options) =>
       isOwnStage(options.label)
@@ -349,11 +365,28 @@ const promptOf = (run, label) =>
 
 const runLoop = (
   path,
-  { answers = [], lease, themes, plans, signedOff, claim, ...options } = {}
+  {
+    answers = [],
+    lease,
+    themes,
+    plans,
+    signedOff,
+    claim,
+    sync,
+    ...options
+  } = {}
 ) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease, themes, plans, signedOff, claim)
+    answers: answeringRunLease(
+      answers,
+      lease,
+      themes,
+      plans,
+      signedOff,
+      claim,
+      sync
+    )
   })
 
 const startAnswer = (result) => ({
@@ -6693,6 +6726,13 @@ describe('increment-build-loop', () => {
         gatePhases: ['unit', 'fit']
       }
       const BASELINE = { ok: true, green: true, rungs: [], summary: 'green' }
+      // The main sync runs before every branch-lifecycle baseline, so a test
+      // about anything else still needs an answer from it.
+      const MAIN_SYNC = {
+        ok: true,
+        repos: [{ repo: 'frontend', outcome: 'already-in' }],
+        summary: 'every repo already holds origin/main'
+      }
       const PLAN = {
         ok: true,
         summary: 'Resolve the one conflict.',
@@ -6801,6 +6841,7 @@ describe('increment-build-loop', () => {
           workspace: WORKSPACE_ANSWER,
           preflight: { ok: true, summary: '1' },
           'inc-900 branch': ROW,
+          'inc-900 main sync': MAIN_SYNC,
           'inc-900 baseline': BASELINE,
           'inc-900 plan': PLAN,
           'inc-900 implement': IMPLEMENTED,
@@ -7041,6 +7082,104 @@ describe('increment-build-loop', () => {
           ...reviewedAndLanded
         )
 
+      describe('the main sync before the baseline', () => {
+        const runSync = (sync) =>
+          runLoop(scriptPath, {
+            args: BRANCH_ARGS,
+            answers: [
+              WORKSPACE_ANSWER,
+              { ok: true, summary: '1' },
+              MERGE_ROW,
+              BASELINE,
+              PLAN,
+              MERGE_STARTED,
+              ...reviewedAndLanded,
+              FOUND,
+              CI_GREEN,
+              MARKED_DONE,
+              NO_GATE
+            ],
+            sync
+          })
+
+        test('brings main into every repo and the workspace before the baseline reads them', async () => {
+          const run = await runSync({})
+          const prompt = promptOf(run, 'inc-900 main sync')
+
+          expect(prompt).toContain('merge --no-ff origin/main')
+          expect(prompt).toContain('~/ws/repos/trade-imports-ins-frontend')
+          expect(prompt).toContain('workspace (`~/ws`)')
+          expect(labelsOf(run).indexOf('inc-900 main sync')).toBeLessThan(
+            labelsOf(run).indexOf('inc-900 baseline')
+          )
+        })
+
+        test('stops the row at sync-failed rather than building on a repo it could not sync', async () => {
+          const run = await runSync({
+            default: {
+              ok: false,
+              repos: [
+                { repo: 'frontend', outcome: 'failed', reason: 'dirty tree' }
+              ],
+              summary: 'frontend is dirty'
+            }
+          })
+
+          expect(run.result.stopped).toEqual({
+            reason: 'sync-failed',
+            detail: 'inc-900: frontend is dirty'
+          })
+          expect(labelsOf(run)).not.toContain('inc-900 baseline')
+          expect(labelsOf(run)).not.toContain('inc-900 pr')
+        })
+
+        test('logs every resolution it made, so a reviewer reads what it took and why', async () => {
+          const run = await runSync({
+            default: {
+              ok: true,
+              repos: [
+                {
+                  repo: 'frontend',
+                  outcome: 'merged-after-conflicts',
+                  commit: 'abc1234',
+                  conflicted: ['audit-ci.jsonc'],
+                  resolutions: [
+                    {
+                      path: 'audit-ci.jsonc',
+                      took: 'main',
+                      why: "main's entry carries the owner and the 2026-11-25 expiry; the branch's predates it"
+                    }
+                  ],
+                  proof: 'npm test — 120 passed'
+                }
+              ],
+              summary: 'frontend merged after one conflict'
+            }
+          })
+
+          expect(run.logs).toContain(
+            "inc-900: main sync resolved frontend:audit-ci.jsonc — took main: main's entry carries the owner and the 2026-11-25 expiry; the branch's predates it"
+          )
+        })
+
+        test('says so when the merge changed the loop’s own script, because this run is the old one', async () => {
+          const run = await runSync({
+            default: {
+              ok: true,
+              repos: [{ repo: 'workspace', outcome: 'merged-clean' }],
+              loopScriptChanged: true,
+              summary: 'workspace merged'
+            }
+          })
+
+          expect(
+            run.logs.some((line) =>
+              line.includes("main sync changed the build loop's own script")
+            )
+          ).toBe(true)
+        })
+      })
+
       test('raises no ticket, checks the branch, and merges nothing', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
 
@@ -7048,6 +7187,7 @@ describe('increment-build-loop', () => {
           'workspace',
           'preflight',
           'inc-900 branch',
+          'inc-900 main sync',
           'inc-900 baseline',
           'inc-900 plan',
           'inc-900 plan lint',
@@ -8986,6 +9126,7 @@ describe('increment-build-loop', () => {
             'workspace',
             'preflight',
             'inc-900 branch',
+            'inc-900 main sync',
             'inc-900 baseline',
             'inc-900 plan',
             'inc-900 plan lint',

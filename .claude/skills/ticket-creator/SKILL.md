@@ -384,6 +384,15 @@ Dry run first, then add `--confirm` to write it:
 tim jira update EUDPA-XXXXX --description-file workareas/ticket-creation/<slug>/description.jira.txt
 ```
 
+When the user asks to move the ticket to the board, take it out of
+the backlog. This is not a status change:
+
+```bash
+tim jira move-to-board EUDPA-XXXXX
+```
+
+Dry run first, then add `--confirm`.
+
 To assign the ticket to someone other than yourself, or to link it as blocking or
 blocked by another, follow "Workflow facts" in
 `ticket-conventions.md`. Both are dry runs until `--confirm`:

@@ -231,6 +231,13 @@ To drop a ticket:
 3. If neither is available, leave the ticket in `To Do` with the
    comment. Never move it to `Done` or `CLOSED` to tidy the board.
 
+### Moving a ticket onto the board
+
+A new ticket lands in board 13780's backlog. "Move it to the board"
+means taking it out of the backlog, not changing its status: no status
+does that. Use `tim jira move-to-board EUDPA-X`, a dry run until you
+add `--confirm`.
+
 ### Assigning a ticket
 
 `tim jira assign EUDPA-X <accountId|me>` assigns a ticket, a new one

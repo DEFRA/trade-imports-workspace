@@ -1,3 +1,5 @@
+import { titleNames } from '../test-title.js'
+
 const REGEX_AFTER_CHARACTERS = new Set('(,=:[!&|?{};+-*%<>~^')
 const REGEX_AFTER_WORDS = new Set([
   'return',
@@ -170,19 +172,41 @@ const literalValueAt = (text, start, options) => {
 const JS_TEST_CALL =
   /(?<![\w$.])(?:test|it|describe)(?:\s*\.\s*[\w$]+)*\s*\(\s*/g
 
+const JS = { java: false }
+
+const firstNonSpace = (text, from) => {
+  let index = from
+  while (index < text.length && /\s/.test(text[index])) index++
+  return index
+}
+
+/**
+ * The title a test call declares, and where its block ends. `test.each(cases)`
+ * is called again with the title, so a call whose first argument is not a
+ * string is followed to the call after it.
+ */
+const jsTitledCall = (text, openIndex) => {
+  const close = matchingClose(text, openIndex, JS)
+  if (close === null) return null
+  const title = literalValueAt(text, firstNonSpace(text, openIndex + 1), JS)
+  if (typeof title === 'string') return { title, end: close }
+  const nextOpen = firstNonSpace(text, close + 1)
+  if (text[nextOpen] !== '(') return null
+  const nextClose = matchingClose(text, nextOpen, JS)
+  if (nextClose === null) return null
+  const curried = literalValueAt(text, firstNonSpace(text, nextOpen + 1), JS)
+  return typeof curried === 'string' ? { title: curried, end: nextClose } : null
+}
+
 const jsBlocksTitled = (text, title, spans) =>
   [...text.matchAll(JS_TEST_CALL)]
     .filter((match) => !isInSpans(spans, match.index))
-    .filter(
-      (match) =>
-        literalValueAt(text, match.index + match[0].length, { java: false }) ===
-        title
-    )
-    .map((match) => {
-      const open = text.indexOf('(', match.index)
-      const close = matchingClose(text, open, { java: false })
-      return close === null ? null : text.slice(match.index, close + 1)
-    })
+    .map((match) => ({
+      match,
+      call: jsTitledCall(text, text.indexOf('(', match.index))
+    }))
+    .filter(({ call }) => call !== null && titleNames(call.title, title))
+    .map(({ match, call }) => text.slice(match.index, call.end + 1))
 
 const escapedForPattern = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -226,11 +250,12 @@ const javaMethodsNamed = (text, title, spans) =>
 const javaMethodsDisplayed = (text, title, spans) =>
   [...text.matchAll(/@DisplayName\s*\(\s*/g)]
     .filter((match) => !isInSpans(spans, match.index))
-    .filter(
-      (match) =>
-        literalValueAt(text, match.index + match[0].length, { java: true }) ===
-        title
-    )
+    .filter((match) => {
+      const literal = literalValueAt(text, match.index + match[0].length, {
+        java: true
+      })
+      return typeof literal === 'string' && titleNames(literal, title)
+    })
     .map((match) => {
       const method = text
         .slice(match.index)

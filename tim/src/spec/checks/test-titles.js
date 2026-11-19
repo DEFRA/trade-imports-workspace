@@ -2,35 +2,17 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { parsedCoverage } from './shape.js'
 import { makeFinding } from './finding.js'
+import {
+  escapedForRegex,
+  isTitlePattern,
+  titlePatternOf,
+  unescapedTitle
+} from '../test-title.js'
 
 const finding = makeFinding('test-titles')
 
 const STRING_LITERAL =
   /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g
-const PLACEHOLDER = /%[sdifjop#%]|\$\{[^}]*\}|\$[A-Za-z_][\w.]*/g
-const HAS_PLACEHOLDER = new RegExp(PLACEHOLDER.source)
-
-const unescaped = (literal) => literal.replaceAll(/\\(.)/g, '$1')
-
-const escapedForRegex = (text) => text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-const titlePatternOf = (literal) =>
-  new RegExp(
-    `^${literal
-      .split(PLACEHOLDER)
-      .map((part) => escapedForRegex(unescaped(part)))
-      .join('.+')}$`,
-    's'
-  )
-
-const isTitlePattern = (literal) => {
-  const fewestFixedWords = 2
-  const fixedWords = literal.replaceAll(PLACEHOLDER, ' ').match(/[A-Za-z]+/g)
-  return (
-    HAS_PLACEHOLDER.test(literal) &&
-    (fixedWords?.length ?? 0) >= fewestFixedWords
-  )
-}
 
 const RELATIVE_IMPORT = /(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]/g
 
@@ -40,7 +22,7 @@ const titlesIn = (source) => {
   )
   return {
     sources: [source],
-    exact: new Set(literals.map(unescaped)),
+    exact: new Set(literals.map(unescapedTitle)),
     patterns: literals.filter(isTitlePattern).map(titlePatternOf)
   }
 }

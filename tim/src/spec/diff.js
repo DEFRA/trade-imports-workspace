@@ -219,14 +219,16 @@ const skippedOf = (outcomes) =>
  * only re-proved (its coverage.json entry changed), with the coverage it
  * has after. A commit compares with its first parent, a range as `endsOf`
  * says. A commit or range git cannot find in the workspace repo is listed
- * in `skipped`, not treated as an error. `touched` is every scenario id
- * they added, changed or re-proved.
+ * in `skipped`. `touched` is every scenario id they added, changed or
+ * re-proved. `resolvedNone` is true when it was asked about commits or
+ * ranges and could resolve none of them, so a caller cannot read the empty
+ * result as a Behaviour Spec nothing touched.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string[]} [args.commits]
  * @param {string[]} [args.ranges]
- * @returns {Promise<{commits: object[], ranges: object[], skipped: {commit: string, reason: string}[], touched: string[]}>}
+ * @returns {Promise<{commits: object[], ranges: object[], skipped: {commit: string, reason: string}[], touched: string[], resolvedNone: boolean}>}
  */
 export const diffSpecCommits = async ({
   workspaceRoot,
@@ -238,10 +240,13 @@ export const diffSpecCommits = async ({
     Promise.all(ranges.map((range) => rangeChanges(workspaceRoot, range)))
   ])
   const found = (outcomes) => outcomes.filter((outcome) => !outcome.skipped)
+  const asked = commits.length + ranges.length
+  const resolved = found(commitOutcomes).length + found(rangeOutcomes).length
   return {
     commits: found(commitOutcomes),
     ranges: found(rangeOutcomes),
     skipped: skippedOf([...commitOutcomes, ...rangeOutcomes]),
-    touched: touchedIds([...found(commitOutcomes), ...found(rangeOutcomes)])
+    touched: touchedIds([...found(commitOutcomes), ...found(rangeOutcomes)]),
+    resolvedNone: asked > 0 && resolved === 0
   }
 }

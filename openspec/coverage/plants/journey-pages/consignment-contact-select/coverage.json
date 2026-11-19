@@ -68,6 +68,15 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "at the last question, Save and continue goes to check your answers even though the notification is incomplete", "strength": "full", "notes": "wood notification with arrival unanswered; asserts the check your answers URL, the reference as the h1 and the error summary link naming the arrival row" }
           ]
+        },
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-002-E",
+          "name": "A held contact address is not shown chosen once its record is no longer offered or its details were changed here",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "not red-probed in this row" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should keep a copy already held, edited since it was picked", "strength": "partial", "notes": "not red-probed in this row" }
+          ]
         }
       ]
     },
@@ -107,6 +116,15 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "an address not in the book is refused, focusing the first row and keeping the search", "strength": "full", "notes": "covers all three clauses, the retained search term included" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "choosing an address after that refusal moves on", "strength": "full", "notes": "the error does not stick once a valid row is ticked" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-004-B",
+          "name": "An invalid selection from Save and return to hub is rejected the same way",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js", "test": "Should refuse the id on %s, linking the error to the first row and describing the group by it", "strength": "full", "notes": "declared once over both save controls and run for this picker; probed by inverting the not-in-book branch of address-book-picker/save-selection.js:50: the case goes red, restoring it green" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/high-risk-plants-journey.js", "test": "an address not in the book is refused on Save and return to hub, staying on the page and keeping the search", "strength": "full", "notes": "declared by describeAddressPicker with this page's own label; same probe line, address-book-picker/save-selection.js:50" }
           ]
         }
       ]

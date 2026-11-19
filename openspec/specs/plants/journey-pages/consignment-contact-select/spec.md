@@ -54,7 +54,7 @@ The system MUST keep a row the user has ticked checked across a further search, 
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. Save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-003). The page's save-and-return control, "Save and return to hub", MUST save the address without continuing the journey.
+The system MUST accept a chosen contact address and show it still chosen on return only while the record it was copied from is still offered and its details are unchanged on the notification; otherwise the page opens with no address chosen, with the notification keeping the address it holds. A different choice MUST replace it. Save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-003). The page's save-and-return control, "Save and return to hub", MUST save the address without continuing the journey.
 
 #### Scenario: Choosing a contact saves, opens check your answers, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
@@ -83,6 +83,13 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 - **THEN** check your answers is shown
 - **AND** its error summary names the outstanding arrival answer
 
+#### Scenario: A held contact address is not shown chosen once its record is no longer offered or its details were changed here
+**ID**: SCN-PLANTS-CONTACT-SELECT-002-E
+- **GIVEN** the notification holds a contact address copied from a record the book no longer offers, or whose details were edited on the notification
+- **WHEN** the user opens the contact page
+- **THEN** no address is shown as chosen
+- **AND** the notification keeps the contact address it holds
+
 ### Requirement: Saving with nothing chosen is allowed, keeping any contact already held
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
 The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). The page's save-and-return-to-overview control, "Save and return to hub", MUST return to Overview, and save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-003).
@@ -105,12 +112,19 @@ The system MUST allow the page to be saved with no address chosen, by either sav
 
 ### Requirement: An invalid submitted option is refused without preserving it as chosen
 **ID**: REQ-PLANTS-CONTACT-SELECT-004
-The system MUST refuse to save a submitted value that is not one of the offered addresses, MUST link the resulting error to and focus the first row, MUST NOT treat that value as a successful choice, and MUST keep any search term the user had entered so the refused page comes back as they left it.
+The system MUST refuse to save a submitted value that is not one of the offered addresses, from either save action (`plants/addresses`), MUST link the resulting error to and focus the first row, MUST NOT treat that value as a successful choice, and MUST keep any search term the user had entered so the refused page comes back as they left it.
 
 #### Scenario: An invalid selection is rejected, focuses the first row and keeps the search
 **ID**: SCN-PLANTS-CONTACT-SELECT-004-A
 - **GIVEN** the user has searched the address book and submits a value that is not one of the addresses offered
 - **WHEN** they save and continue and follow the error
+- **THEN** the first address row is focused
+- **AND** the search term they entered is still in the search box
+
+#### Scenario: An invalid selection from Save and return to hub is rejected the same way
+**ID**: SCN-PLANTS-CONTACT-SELECT-004-B
+- **GIVEN** the user has searched the address book and submits a value that is not one of the addresses offered
+- **WHEN** they select "Save and return to hub" and follow the error
 - **THEN** the first address row is focused
 - **AND** the search term they entered is still in the search box
 

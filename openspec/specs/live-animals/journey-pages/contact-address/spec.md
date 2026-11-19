@@ -39,7 +39,7 @@ The system MUST show, directly under the page heading, the sentence saying whose
 
 ### Requirement: A chosen contact address is copied onto the notification and shown chosen on return
 **ID**: REQ-CONTACT-002
-The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as chosen in the list, with no other card or way to edit it from this page. Saving again MUST keep the chosen contact address. The copy is shown on the review.
+The system MUST accept a chosen contact address from either save control, copying it onto the notification without error: save and continue moves on to the next page that applies, and save and return to hub opens Overview. When the user returns to the page, it MUST show the chosen address as selected in the list only while the record it was copied from is still offered and its details are unchanged on the notification; otherwise the page opens with no address chosen, with the notification keeping the address it holds. The page shows no other card or way to edit it. Saving again MUST keep the chosen contact address. The copy is shown on the review.
 
 #### Scenario: Choosing a contact address saves without error and is shown chosen on return
 **ID**: SCN-CONTACT-002-A
@@ -51,9 +51,26 @@ The system MUST accept a chosen contact address, copying it onto the notificatio
 - **WHEN** they save and continue again
 - **THEN** the chosen contact address is kept
 
+#### Scenario: Save and return to hub also saves the chosen address and opens Overview
+**ID**: SCN-CONTACT-002-B
+- **GIVEN** the user is on the contact address page
+- **WHEN** they choose an address and save and return to hub
+- **THEN** the answer is saved and no error summary is shown
+- **AND** Overview is shown
+- **WHEN** they return to the contact address page
+- **THEN** the same address is shown chosen in the list
+
+#### Scenario: A held contact address is not shown chosen once its record is no longer offered or its details were changed here
+**ID**: SCN-CONTACT-002-C
+- **GIVEN** the notification holds a contact address copied from a record the organisation's book no longer offers, or whose details were edited on the notification
+- **WHEN** the user opens the contact address page
+- **THEN** no address is shown as chosen
+- **AND** the organisation's remaining addresses are offered
+- **AND** the notification keeps the contact address it holds
+
 ### Requirement: A contact address must be chosen before either save control moves on
 **ID**: REQ-CONTACT-003
-The system MUST refuse to save the contact address page with no address chosen, from either save control, showing the error that a contact address must be selected and saving nothing. A contact address already held by the notification MUST be kept unchanged when a save is refused.
+The system MUST refuse to save the contact address page with no address chosen, from either save control, showing the error that a contact address must be selected and saving nothing. A contact address already held by the notification MUST be kept unchanged when a save is refused. The same refusal applies while the notification is being amended, and the refused page offers the organisation's addresses again with none shown chosen.
 
 #### Scenario: Save and continue with nothing chosen is refused
 **ID**: SCN-CONTACT-003-A
@@ -74,6 +91,14 @@ The system MUST refuse to save the contact address page with no address chosen, 
 - **GIVEN** the notification already holds a chosen contact address
 - **WHEN** the user saves the contact address page again with nothing chosen
 - **THEN** the save is refused
+- **AND** the notification's contact address is unchanged
+
+#### Scenario: While amending, a save with nothing chosen is refused the same way, with the addresses offered again and none chosen
+**ID**: SCN-CONTACT-003-D
+- **GIVEN** a notification being amended whose held contact address is not one of the addresses the page offers, so none is shown chosen
+- **WHEN** the user saves the page with nothing chosen, from either save control
+- **THEN** the save is refused, with the error that a contact address must be selected shown in the error summary and against the options
+- **AND** the organisation's addresses are offered again with none chosen
 - **AND** the notification's contact address is unchanged
 
 ### Requirement: An invalid submitted option is refused without preserving it

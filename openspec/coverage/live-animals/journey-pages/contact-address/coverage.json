@@ -54,10 +54,28 @@
           "name": "Choosing a contact address saves without error and is shown chosen on return",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a contact address saved by the secondary control is still chosen on return, with the page headings still exactly the two", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "accepts a valid contact address and goes on to check your answers", "strength": "partial", "notes": "proves the save and the landing on check your answers" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "selects a valid contact, redirects and shows it chosen on return, with the page headings still exactly the two", "strength": "partial", "notes": "does not cover saving again" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should commit a copy of the picked address and show that option chosen on return", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-002-B",
+          "name": "Save and return to hub also saves the chosen address and opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should save a chosen address from either save control, each reaching its own destination", "strength": "full", "notes": "probed by inverting the hub-exit branch of shared/kit.js's nextTarget (shared/kit.js:244): the case goes red, restoring it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a contact address saved by the secondary control is still chosen on return, with the page headings still exactly the two", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-002-C",
+          "name": "A held contact address is not shown chosen once its record is no longer offered or its details were changed here",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should select nothing when the record the contact was picked from is gone", "strength": "full", "notes": "probed by inverting the checked comparison in contact/controller.js's render (controller.js:85): the case goes red, restoring it green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should select nothing for a contact whose details were edited here", "strength": "full", "notes": "same probe line, contact/controller.js:85" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a branch address deleted after being chosen is no longer offered, each save control refuses a blank save, and the notification keeps the address", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" }
           ]
         }
       ]
@@ -65,7 +83,7 @@
     {
       "id": "REQ-CONTACT-003",
       "name": "A contact address must be chosen before either save control moves on",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONTACT-003-A",
@@ -81,10 +99,10 @@
         {
           "id": "SCN-CONTACT-003-B",
           "name": "Save and return to hub with nothing chosen is refused the same way",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "Save and return to hub with nothing chosen does the same", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to hub with nothing chosen does the same and goes nowhere", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to hub with nothing chosen does the same and goes nowhere", "strength": "full", "notes": "probed by inverting the required rule at contact/validate.js:16: the case goes red, restoring it green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 with the choice in error and commit nothing when nothing is selected and no contact address is held", "strength": "partial", "notes": "the refusal and the empty commit; the secondary control itself is proved by the fit case" }
           ]
         },
@@ -94,6 +112,15 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should answer 400 and re-render with the choice in error when nothing is selected, leaving a held contact address as it was", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-003-D",
+          "name": "While amending, a save with nothing chosen is refused the same way, with the addresses offered again and none chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should hold %s on the contact address page to its own check while amending, re-offering the organisation's addresses with none chosen", "strength": "full", "notes": "probed by inverting the required rule at contact/validate.js:16: the case goes red, restoring it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a branch address deleted after being chosen is no longer offered, each save control refuses a blank save, and the notification keeps the address", "strength": "partial", "notes": "not red-probed — this run held no workspace stack" }
           ]
         }
       ]
@@ -114,9 +141,9 @@
         {
           "id": "SCN-CONTACT-004-B",
           "name": "An invalid selection from the secondary save control is rejected the same way",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to hub with a value the book does not hold is refused the same way, with no option left chosen", "strength": "partial", "notes": "not red-probed — the production line it depends on (contact/controller.js) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "Save and return to hub with a value the book does not hold is refused the same way, with no option left chosen", "strength": "full", "notes": "probed by inverting the narrowing of offered options to the chosen record at contact/controller.js:140: the case goes red, restoring it green" }
           ]
         },
         {

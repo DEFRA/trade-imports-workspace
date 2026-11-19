@@ -379,6 +379,13 @@ While a notification is being amended, the system MUST make each of a page's sav
 - **THEN** they stay on the page, which shows an error for each missing answer
 - **AND** nothing is saved
 
+#### Scenario: The contact address page refuses either save control with nothing chosen while amending
+**ID**: SCN-FLOW-015-B
+- **GIVEN** the contact address page of a notification being amended, with no address chosen
+- **WHEN** the user selects "Save and continue" or "Save and return to hub"
+- **THEN** they stay on the page, which shows the error that a contact address must be selected
+- **AND** nothing is saved
+
 ### Requirement: A notification started from the Import Notification Service's type question opens at the entry page
 **ID**: REQ-FLOW-017
 The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page, exactly as starting from its own dashboard does.

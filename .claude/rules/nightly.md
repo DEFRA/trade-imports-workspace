@@ -180,12 +180,6 @@ so the next major has less to do.
 
 Merges are squash merges: `gh pr merge <number> --squash`. A job deletes the
 branch only after the merge.
-
-GitHub blocks a merge when any run of a required check is cancelled, even if
-a newer run of it passed. When `gh pr merge` says the base branch policy
-prohibits the merge and every check is green, the job re-runs the cancelled
-run with `gh run rerun <id>`, waits for it, and merges.
-
 A job that cannot merge leaves the pull request as a draft, with the reason in
 its description, and reports it in the digest.
 

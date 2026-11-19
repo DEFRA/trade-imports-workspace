@@ -7,6 +7,7 @@ import {
   loadJiraFixture
 } from '../../test-support/jira-mock.js'
 import { runRegisteredCommand } from '../../test-support/process-output.js'
+import { bundledRoster, timWorkspaceRoot } from '../../test-support/roster.js'
 import { register } from './index.js'
 import { runEpics, renderEpics, parseEpicsOptions } from './epics.js'
 
@@ -31,10 +32,17 @@ describe('parseEpicsOptions', () => {
     expect(parseEpicsOptions({})).toEqual({ project: 'EUDPA' })
   })
 
-  test('throws USAGE when neither is set', () => {
-    expect(() => parseEpicsOptions({})).toThrowError(
-      expect.objectContaining({ code: 'USAGE' })
-    )
+  test("lists the workspace's board when neither is set", () => {
+    expect(parseEpicsOptions({ workspace: timWorkspaceRoot })).toEqual({
+      board: String(bundledRoster.jiraBoard),
+      includeDone: false
+    })
+  })
+
+  test("includes the workspace board's done epics with --include-done alone", () => {
+    expect(
+      parseEpicsOptions({ includeDone: true, workspace: timWorkspaceRoot })
+    ).toEqual({ board: String(bundledRoster.jiraBoard), includeDone: true })
   })
 })
 

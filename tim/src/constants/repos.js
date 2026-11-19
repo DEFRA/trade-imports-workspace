@@ -60,6 +60,7 @@ const rosterFrom = (manifest) => {
   return Object.freeze({
     reposDir: manifest.reposDir,
     githubOrg: manifest.githubOrg,
+    jiraBoard: manifest.jiraBoard ?? null,
     nodeRepos,
     javaRepos,
     repos: Object.freeze([...nodeRepos, ...javaRepos]),
@@ -90,7 +91,7 @@ const rostersByManifestPath = new Map()
  * per manifest file, on first use.
  *
  * @param {string} workspaceRoot
- * @returns {{reposDir: string, githubOrg: string, repos: string[],
+ * @returns {{reposDir: string, githubOrg: string, jiraBoard: number | null, repos: string[],
  *   nodeRepos: string[], javaRepos: string[], unitTestExemptRepos: string[],
  *   upstreamRepos: Record<string, string>, unsyncedRepos: string[],
  *   npmUpgradeDefaultRepos: string[]}}

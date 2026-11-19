@@ -36,6 +36,7 @@ const manifestNamesWhere = (manifest, predicate) =>
 const fixtureManifest = {
   reposDir: 'checkouts',
   githubOrg: 'FIXTURE-ORG',
+  jiraBoard: 4242,
   repos: [
     { name: 'fixture-web', stack: 'node', npmUpgradeDefault: true },
     {
@@ -73,6 +74,7 @@ describe('#rosterOf', () => {
     expect(rosterOf(ownRoster)).toEqual({
       reposDir: 'checkouts',
       githubOrg: 'FIXTURE-ORG',
+      jiraBoard: 4242,
       nodeRepos: ['fixture-web', 'fixture-web-copy'],
       javaRepos: ['fixture-api'],
       repos: ['fixture-web', 'fixture-web-copy', 'fixture-api'],
@@ -92,6 +94,20 @@ describe('#rosterOf', () => {
     ])
     expect(roster.reposDir).toBe(bundledManifest.reposDir)
     expect(roster.githubOrg).toBe(bundledManifest.githubOrg)
+    expect(roster.jiraBoard).toBe(bundledManifest.jiraBoard)
+  })
+
+  test('Should give no Jira board when repos.json sets none', () => {
+    const unboarded = writeWorkspace({
+      reposDir: fixtureManifest.reposDir,
+      githubOrg: fixtureManifest.githubOrg,
+      repos: fixtureManifest.repos
+    })
+
+    const { jiraBoard } = rosterOf(unboarded)
+
+    rmSync(unboarded, { recursive: true, force: true })
+    expect(jiraBoard).toBeNull()
   })
 
   test('Should give two workspaces their own rosters in one process', () => {

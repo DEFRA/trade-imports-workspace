@@ -646,7 +646,7 @@
         "inc-091"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -729,7 +729,25 @@
         "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it."
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "f9dc6115cfcb57d54582227653fa7363fbf34f82 ea71dd8d4a17c38776e03add80809fbc4e33a690 5c5f10197b8dee76e46cf3e8ba138af68d580024",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/148",
+          "repo": "trade-imports-plants-frontend",
+          "number": 148
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
+        }
+      ]
     },
     {
       "id": "inc-095",
@@ -746,7 +764,7 @@
         "inc-094"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -798,7 +816,9 @@
         "req-760"
       ],
       "openQuestions": [
-        "Where the organisation's contact addresses ultimately come from is open: the Live Animals & Germinals Data Fields page gives the contact address a government-identity row as well as a user-created one (c-359). Default followed: the list stays the organisation's own address book, filtered to branch addresses, until that is settled."
+        "Where the organisation's contact addresses ultimately come from is open: the Live Animals & Germinals Data Fields page gives the contact address a government-identity row as well as a user-created one (c-359). Default followed: the list stays the organisation's own address book, filtered to branch addresses, until that is settled.",
+        "For the designer: the add-a-branch sentence on the live-animals contact address page is written in the passive voice. The design source sets it verbatim — GB-notification-service at commit 04a073b, app/views/design-release-2.1/contact-address-for-consignment.html:64-68: \"If the correct address is not shown, add a new branch address, then return to this page.\" — and the code copies it exactly at repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:6-8. The GDS language guide asks for the active voice and for addressing users directly as \"you\" (docs/best-practices/gds/language.md, sections Active Voice and Address Users Directly, https://github.com/DEFRA/trade-imports-workspace/blob/main/docs/best-practices/gds/language.md). Keep the prototype wording as the design source sets it, or change it to an active form such as \"If you cannot see the correct address, add a new branch address, then return to this page.\"? The same choice applies to the Welsh machine draft at copy.cy.js:7, which uses the same passive construction, once a translator reviews it.",
+        "Twin fix: repos/trade-imports-plants-frontend/src/server/app/services/address-book/address-book.test.js:377-378 and repos/trade-imports-plants-frontend/src/server/app/services/address-book/index.js:7 carry the same comment naming the INS frontend as the only writer of the address book, which is the comments finding raised on repos/trade-imports-animals-frontend/src/server/app/services/address-book/address-book.test.js:392. Both plants comments need deleting: the house rules forbid a comment that describes another service, and the test title plus the asserted export list already state the fact. The plants frontend is outside this increment repos list (insfrontend, frontend, tests), so the fix is recorded here rather than made now."
       ],
       "notes": [
         "Carried over from the existing row inc-095. Criteria 1 and 2 are reworded to state what the page offers instead of quoting the link it replaces and the parties it no longer lists; nothing else changed.",
@@ -825,7 +845,25 @@
           "id": "inc-080"
         }
       ],
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "1430623d1fee62d767cf86b956ab952e4085a000 8f044868828a19da0e2d00e27b6cd07e46021abe",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/87",
+          "repo": "insfrontend",
+          "number": 87
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "tests",
+          "number": 114
+        }
+      ]
     },
     {
       "id": "inc-096",
@@ -842,7 +880,7 @@
         "inc-091"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -874,7 +912,9 @@
         "req-575",
         "req-584"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: on the roles and addresses page, a commodity line that needs a permanent address draws an empty \"Permanent address\" section with its \"Add a permanent address\" link as soon as the species is chosen (repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:128-153, which returns the section whenever anyLineNeedsPermanentAddress is true), but while no animal is identified on that line the Overview task still reads \"Completed\", because everyAddressableAnimalHasPermanentAddress is vacuously true over an empty list of addressable animals (features/permanent-address/cards.js:57-63) and so rowStatus does not hold the row back (flow/task-rows.js:83-91). Acceptance criterion 3 of this row says the task must not read Complete while any section the page shows is empty, so the built behaviour departs from it in that one state, recorded as SCN-CONSIGN-ADDR-004-E in openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md:93-99 and as departure 3 in plans/inc-096.md. Options: (a) keep it as built - the task completes because the page is not yet asking for an address for any animal, and the separate \"Animal identification\" task is what holds the notification back; (b) hold the \"Roles and addresses\" task at \"To do\" until every line needing a permanent address has an identified animal with one, matching criterion 3 word for word; (c) do not draw the \"Permanent address\" section at all until an animal is identified on such a line, so no empty section is ever on the page with the task complete. Raised by review finding on REQ-CONSIGN-ADDR-004, whose prose currently states option (b) while the code does (a)."
+      ],
       "notes": [
         "Re-drafted on this re-distil from existing row inc-096. Combines the page's permanent address section and its task completion: they share the parties obligations and the page's section list, so building them apart would build the section and then teach the task about it in a second sitting. c-104: completion counts every section the page shows. req-574 (exempt only 0101 and 01061900) is adopted as already met and its germinal half is req-1826, so no criterion names the germinal commodity codes. CHANGE ON THIS RE-DISTIL: req-582 (where 'Save and continue' goes from this page) has left this row. Its behaviour is the journey's step order, in frontend:src/server/app/sets/live-animals/journeys/linear/flow, which the split-off journey-foundation theme owns, and that theme's inc-001 already carries the same acceptance word for word ('Save and continue' on roles and addresses goes to the contact address, and to the overview when every section is complete). The existing row held req-582 with no criterion of its own for it, which is a coverage fiction; req-582 is listed in this draft's splitOff for the journey-foundation branch instead. Where the 'Add a permanent address' link leads, and the permanent address page itself, are the cph-permanent-and-contact and identification-and-permanent-address areas' work, so this row waits on the permanent address page row (inc-054) and on the CPH number page row (inc-091); criterion 4 only observes the return to this page. High-risk plants is unchanged: it has no roles and addresses page. Main checked at origin/main: the CPH half is already there, with the overview's addresses task counting the addresses page and the CPH page together in flow/task-rows.js and the CPH section showing only when in scope in addresses/controller.js; there is no permanent-address feature folder yet. Build note: template.njk renders a section's hint as one govuk-hint paragraph, so the bullets need the section object and the template to carry a list. Making the permanent address count towards the task may be done in the addresses page's own obligations, or by adding the permanent address page to the addresses task row in flow/task-rows.js, which journey-foundation owns; the first keeps the change inside this theme and is preferred. Theme: consignment-parties.",
         "Re-distil 2 November: req-582 (where 'Save and continue' goes from the roles and addresses page on the opening run) leaves this row. The journey's step order is the split-off journey-foundation theme's code, so the requirement is handed to that branch to pick up, where the same acceptance is already stated."
@@ -888,6 +928,19 @@
         {
           "workarea": "shared/design-release-2-1/themes/identification-and-permanent-address",
           "id": "inc-054"
+        }
+      ],
+      "commit": "dc1b9fac4900abe41eccb6565bf59ec65c3d7f36 e55dae1f7b90aa1d366bba93690073d5e503364d",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
         }
       ]
     },
@@ -903,7 +956,7 @@
       ],
       "dependsOn": [],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -998,6 +1051,24 @@
           "workarea": "shared/design-release-2-1/themes/identification-and-permanent-address",
           "id": "inc-054"
         }
+      ],
+      "commit": "c502598bfc611d87e93ce53fdebaf28f9eff3871 dd640a03739949b79d375ca9ab481ff81c2b2e13 892e7ed44fb0cefa00ca7ccb33d725732d63faed",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/148",
+          "repo": "trade-imports-plants-frontend",
+          "number": 148
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
+        }
       ]
     },
     {
@@ -1014,7 +1085,7 @@
         "inc-090"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -1047,6 +1118,19 @@
           "workarea": "shared/design-release-2-1/themes/address-book",
           "id": "inc-080"
         }
+      ],
+      "commit": "75aac721b57b3bcce3e2cb06d71701bd92973d39 52f4f69b9c7026e3393a592b24f158b1f0eb6951",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/87",
+          "repo": "trade-imports-ins-frontend",
+          "number": 87
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
+        }
       ]
     },
     {
@@ -1061,7 +1145,7 @@
         "inc-091"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "frontend",
@@ -1080,7 +1164,20 @@
         "inc-091 rewrites the CPH number page, so this row waits on it."
       ],
       "gate": null,
-      "rigour": "fast"
+      "rigour": "fast",
+      "commit": "4fe8ff71b0db015eebeff73080c5121c14a3e201",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "trade-imports-animals-frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "trade-imports-ins-tests",
+          "number": 114
+        }
+      ]
     },
     {
       "id": "inc-243",
@@ -1099,7 +1196,7 @@
         "inc-097"
       ],
       "theme": "consignment-parties",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -1135,7 +1232,10 @@
       "requirements": [
         "req-2188"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the consignment contact page's two return controls read 'Save and return to hub' and 'Cancel and return to hub' (repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:9-10), while the consignor and place of destination pickers in the same journey read 'Save and return to overview' and 'Cancel and return to overview' (.../features/address-book-picker/shared/copy.en.js:63-64), and the page all three lead to is titled 'Overview' (.../features/hub/copy/copy.en.js:9). Design Release 2.1 sets both wordings: trace-prototype-dr2-1-p13-027 sets the hub wording for the contact, address selection, permanent address and CPH pages, trace-prototype-dr2-1-p13-026 sets the overview wording for the other section pages, and distil/conflicts.json c-209 settled it on precedence alone, overruling repo-frontend-p1-076 ('The task-list page is called Overview on screen and hub never appears to users'). The GOV.UK content style guide asks for the same word for the same thing and no internal jargon (https://www.gov.uk/guidance/style-guide/a-to-z#plain-english), and the repo had to carve the exception into its own guide (sets/high-risk-plants/docs/features.md:104). Options: (a) all three pages read 'Save and return to overview' / 'Cancel and return to overview', treating the prototype's 'hub' as a slip; (b) every overview-linked page reads '...to hub' and the Overview page is retitled 'Hub'. Until it is answered the code keeps what the design source sets (openspec/specs/plants/journey-pages/consignment-contact-select/spec.md:7, maturity exploring, nothing signed off). Raised by the engineering review finding on consignment-contact-select/copy/copy.en.js:10.",
+        "Stub search matches fields the real address book does not: the plants stub book's free-text search runs over the record name plus every value of record.address, so country, telephone and email all match (repos/trade-imports-plants-frontend/src/server/app/services/address-book/index.js:9-16), while the real service searches only name, addressLine1, addressLine2, townOrCity, county and postcode (repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressListQueryImpl.java:18-19, SEARCHABLE_FIELDS; country is a separate countryCodes filter the frontend never sends). Every 'Denmark' search assertion in the plants fit and unit suites (controller-test-support.js denmarkMatch, consignor-select.fit.spec.js, address-book.test.js) therefore proves behaviour the compose stack does not have, against inc-087's invariant that stub mode filters as the real thing does. The picker hint says 'Name, address or country' (features/address-book-picker/copy/copy.en.js:5), so narrowing the stub alone would leave that promise unmet in both modes. Options: (a) narrow the stub haystack to the six fields the service searches, re-point the search fixtures at a town or a name, and change the hint to match what search does; (b) make the address book search country (add it to SEARCHABLE_FIELDS, or send countryCodes), which is a change to trade-imports-address-book, outside this theme's repos. Deferred rather than fixed because either option reaches past this theme: (a) changes copy the design source sets, (b) changes another service. Raised by the engineering review finding on plants services/address-book/index.js:15."
+      ],
       "notes": [
         "New on this re-distil, for req-2188, which the 26 October ruling brought in. It is kept apart from the amend-endings row because that row builds which controls each page offers, while this one builds what each control checks, and from the contact address row because that row's check is the first-pass 'Save and continue' alone.",
         "req-2188 is one requirement that reaches further than this area. Its upload-documents clause (a part-filled document refused by every save control, with an error for each missing detail) falls in the documents feature folder, which the split-off documents theme owns, so no criterion here builds it: hand that clause to that branch. Its germinal-products clause is picked up by the germinal set's copy of each live-animals page, in the germinal-products theme.",
@@ -1148,6 +1248,34 @@
         {
           "workarea": "shared/design-release-2-1/themes/identification-and-permanent-address",
           "id": "inc-055"
+        }
+      ],
+      "commit": "598b67d5 f71104b 138c401",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/486",
+          "repo": "frontend",
+          "number": 486
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/148",
+          "repo": "plantsfrontend",
+          "number": 148
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/114",
+          "repo": "tests",
+          "number": 114
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/87",
+          "repo": "insfrontend",
+          "number": 87
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/37",
+          "repo": "perftests",
+          "number": 37
         }
       ]
     }

@@ -30,7 +30,7 @@ transporters/document-uploads services — before inventing a contract), the
 "Services" reading list, and "Kept deliberately" (`isStubDataMode()`,
 `process.env` for the backend URL, inlined HTTP helpers are the house shape
 here, not a deviation from it). Decide platform-owned vs set-owned first: read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/services.md`
+`repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/services.md`
 for that split and the removed-for-want-of-behaviour rule (never quietly
 rebuild a service the real team took out on purpose, such as commercial
 transporters — say so in the design gap row instead). Name the prior art you
@@ -50,7 +50,7 @@ passes.
   `notification-search`). A new one is made only with
   `designer:service -- new` (`references/fake-a-service/fake-a-service.md`,
   "Making a new service"). Run
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where`
+  `npm --prefix repos/trade-imports-plants-prototype run designer:where`
   on every path before you edit it (step 3). Anything not in `ours` belongs to
   the real service: the weekly update overwrites it or clashes with it.
 - **Never in high-risk-plants.** It is the real service's journey and must
@@ -104,7 +104,7 @@ passes.
 Run:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status
+git -C repos/trade-imports-plants-prototype status
 ```
 
 The first line names the branch. Branches are optional
@@ -113,14 +113,14 @@ there. Only on someone else's branch (a `feat/*`, `chore/*` or trial branch)
 make one before editing:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
+git -C repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
 ```
 
 Work out the release:
 
 1. If the designer named one, use it.
 2. If not, run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:release -- list`
    and pick the working release changed most recently. If two or more fit and
    nothing points to one, ask one question: which release.
 
@@ -202,7 +202,7 @@ service (this reference) registered as a journey page
 (`references/change-the-journey.md`'s add-a-page recipe).
 
 Before making a new service, check the ones there are:
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service -- list`.
+`npm --prefix repos/trade-imports-plants-prototype run designer:service -- list`.
 Use one that fits; never make a second.
 
 Tell the designer in one line which reference you will follow, what it will
@@ -231,14 +231,14 @@ toolbox.
 For a new service, make it first, so its folder can answer "Yours":
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service -- new <name> --owner <plants-backend|new-api|ins> --describe "<what the real service would need to do>"
+npm --prefix repos/trade-imports-plants-prototype run designer:service -- new <name> --owner <plants-backend|new-api|ins> --describe "<what the real service would need to do>"
 ```
 
 It makes the folder and its `ours` line together. Then list every file you
 plan to create or change, and run:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path> <path> <path>
+npm --prefix repos/trade-imports-plants-prototype run designer:where -- <path> <path> <path>
 ```
 
 Every path must say "Yours". A file in a prototype-owned service folder says
@@ -264,7 +264,7 @@ Before editing, make sure the release is green, so any failure afterwards is
 yours:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release>
+npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release>
 ```
 
 If it fails before you have changed anything, stop. Say "your release was
@@ -293,7 +293,7 @@ release's own files, or from the saved transporters example in
 Then format what you changed:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:format
+npm --prefix repos/trade-imports-plants-prototype run designer:format
 ```
 
 ## Step 6: Check and show it
@@ -304,25 +304,25 @@ Run these one at a time. Each must pass before the next.
    inside the prototype repo):
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype test -- src/server/app/services/<name> --coverage.enabled=false
+   npm --prefix repos/trade-imports-plants-prototype test -- src/server/app/services/<name> --coverage.enabled=false
    ```
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run lint
+   npm --prefix repos/trade-imports-plants-prototype run lint
    ```
 
 2. The full check. It boots the release, so a missing import or route shows
    here:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <release> --full
+   npm --prefix repos/trade-imports-plants-prototype run designer:check -- --set <release> --full
    ```
 
 3. Show the dashboard and every page you added, before and after. The
    dashboard is pictured with the release's example notifications on it:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,<new pages> --errors --before --mobile
+   npm --prefix repos/trade-imports-plants-prototype run designer:show -- --set <release> --pages dashboard,<new pages> --errors --before --mobile
    ```
 
    - `--mobile` matters for tables and lists: a wide table wraps badly at
@@ -455,5 +455,5 @@ Run the conventions pass (`references/conventions-pass.md`) before
   page the user left
 - `references/fake-a-service/service-home.md`: a front door across
   commodities
-- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/services-and-dashboards.md`:
+- `repos/trade-imports-plants-prototype/docs/designers/services-and-dashboards.md`:
   the designer's own guide to all of this

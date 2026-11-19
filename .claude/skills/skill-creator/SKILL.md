@@ -8,7 +8,7 @@ argument-hint: '<trigger phrase including skill name>'
 ---
 
 The meta-skill. Captures the 8-pattern checklist for workspace
-skills under `~/git/defra/trade-imports-workspace/.claude/skills/`
+skills under `.claude/skills/`
 and applies it two ways:
 
 - **CREATE** — interview the user, produce a full scaffold with
@@ -22,11 +22,11 @@ implementer prompt.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 
 **Bash call hygiene** — one command per Bash call. Full rule table: [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -36,11 +36,11 @@ relative (`references/<NAME>.md`, `assets/<NAME>.md`).
 Before either mode, Read these into context (the checklist must
 be live; anti-patterns drift over time):
 
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/patterns.md`
+- `docs/best-practices/skills/patterns.md`
   — the 8-pattern checklist (canonical reference).
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
+- `docs/best-practices/skills/anti-patterns.md`
   — known mis-applications. Grows over time.
-- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/scaffold-template.md`
+- `docs/best-practices/skills/scaffold-template.md`
   — only Read in CREATE mode (the SKILL.md skeleton + decisions.md
   sidecar).
 
@@ -64,17 +64,17 @@ existing skill — edit the skill's `references/` folder directly.
 
 | Persona | Loaded by | Spawn model | Artifact |
 |---|---|---|---|
-| `references/INTERVIEWER.md` | CREATE mode parent session | parent-loaded (no Task spawn) | populates `decisions.json` then invokes `scaffold-skill.sh` |
+| `references/INTERVIEWER.md` | CREATE mode parent session | parent-loaded (no Task spawn) | populates `decisions.json` then runs `tim skill scaffold` |
 | `references/AUDITOR.md` | AUDIT mode parent session | Task `subagent_type: general-purpose`, one per skill | per-skill plan at `workareas/skills-audit/<name>.md` |
 
 Spawn idiom for AUDITOR — prompt begins:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/references/AUDITOR.md.
+Follow the instructions in .claude/skills/skill-creator/references/AUDITOR.md.
 
 **Target skill:** <name>
-**SKILL.md path:** ~/git/defra/trade-imports-workspace/.claude/skills/<name>/SKILL.md
-**Output path:** ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md
+**SKILL.md path:** .claude/skills/<name>/SKILL.md
+**Output path:** workareas/skills-audit/<name>.md
 ```
 
 `general-purpose` carries `Tools: *` so the worker can Read /
@@ -85,13 +85,16 @@ this SKILL.md (it has its own hygiene block at the top of
 ## Step 0: Dispatch
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/skill-creator/start-skill-creator.sh "<trigger phrase>"
+tim skill start "<trigger phrase>" --json
 ```
 
-The dispatcher writes `MODE: CREATE`, `MODE: AUDIT_ONE`, or
-`MODE: AUDIT_ALL` as the first stdout line, then prints a JSON
-payload with mode-specific parameters (`skill_name`, `targets[]`,
-`decisions_path`).
+The envelope's `result.mode` is `CREATE`, `AUDIT_ONE` or
+`AUDIT_ALL`, beside the mode's own fields: `name` and
+`decisions_path` for CREATE, `name`, `skill_md_path` and
+`output_path` for AUDIT_ONE, and `targets[]` for AUDIT_ALL.
+`decisions_path` sits in the workspace you run tim from. Without
+`--json` it prints `MODE: <mode>` and then the same fields as one
+line of JSON.
 
 Branch on the mode:
 
@@ -107,10 +110,10 @@ The parent session loads `references/INTERVIEWER.md` and follows
 it. The interviewer:
 
 1. Walks the 8 shape questions one at a time (serial, not batched).
-2. Records each answer atomically via `interview-add-answer.sh`
+2. Records each answer atomically via `tim skill answer`
    into `workareas/skill-creator/<name>/decisions.json`.
-3. When all 8 are answered, invokes
-   `scaffold-skill.sh --run-id <name>` which materialises the full
+3. When all 8 are answered, runs
+   `tim skill scaffold --run-id <name>`, which materialises the full
    scaffold (`.claude/skills/<name>/`, `tools/<name>/`, allowlist
    entries, `decisions.md` sidecar).
 4. Prints the artifact paths and a short list of TODO markers the
@@ -146,7 +149,7 @@ Next: open .claude/skills/<name>/SKILL.md and fill in the TODOs.
 
 `AUDIT_ONE` — targets is a single skill name from the trigger.
 
-`AUDIT_ALL` — `start-skill-creator.sh` already listed every
+`AUDIT_ALL` — `tim skill start` already listed every
 `.claude/skills/*/SKILL.md` (excluding `skill-creator` itself) in
 the JSON payload's `targets[]`.
 
@@ -158,11 +161,11 @@ target). Each spawn prompt:
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/references/AUDITOR.md.
+Follow the instructions in .claude/skills/skill-creator/references/AUDITOR.md.
 
 **Target skill:** <name>
-**SKILL.md path:** ~/git/defra/trade-imports-workspace/.claude/skills/<name>/SKILL.md
-**Output path:** ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md
+**SKILL.md path:** .claude/skills/<name>/SKILL.md
+**Output path:** workareas/skills-audit/<name>.md
 ```
 
 Wait for all workers to finish (the harness emits
@@ -199,13 +202,13 @@ Next: read each plan. Resolve Open Questions, then hand-write the
 implementer prompt (no auto-chaining audit → implement).
 ```
 
-## Scripts cheat-sheet
+## Commands cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/skill-creator/`:
+Each is a `tim skill` command; `tim skill <command> --help` gives its options.
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-skill-creator.sh` | Step 0 dispatcher — parses trigger, emits `MODE: ...` + JSON payload |
-| `scaffold-skill.sh` | CREATE step 3 — reads `decisions.json`, writes the scaffold + allowlist entries + `decisions.md` |
-| `interview-add-answer.sh` | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
-| `render-interview.sh` | CREATE — markdown view of `decisions.json` (used for `decisions.md` sidecar and mid-interview recaps) |
+| `tim skill start "<trigger>" [--json]` | Step 0 dispatcher — parses trigger, emits the mode and its fields |
+| `tim skill answer --run-id <name> --field <path> --value '<json>'` | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
+| `tim skill render --run-id <name>` | CREATE — markdown view of `decisions.json` (mid-interview recaps; the scaffold writes the same view as `decisions.md`) |
+| `tim skill scaffold --run-id <name> [--dry-run]` | CREATE step 3 — reads `decisions.json`, writes the scaffold + allowlist entries + `decisions.md` |

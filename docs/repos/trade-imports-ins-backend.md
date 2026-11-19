@@ -64,6 +64,6 @@ mvn spring-boot:run
 mvn clean verify                         # unit and Testcontainers integration tests
 ```
 
-Full repo stack: `docker compose --profile services up --build -d`. Workspace stack: `./scripts/stack/run-stack.sh`.
+Full repo stack: `docker compose --profile services up --build -d`. Workspace stack: `tim docker up`.
 
 Port: **8090** (`PORT`).

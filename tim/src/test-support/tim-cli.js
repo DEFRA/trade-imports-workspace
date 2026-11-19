@@ -20,4 +20,10 @@ export const runTimInWorkspace = (workspaceRoot, args, { env = {} } = {}) =>
     env: { TIM_NO_AUTO_PULL: '1', ...env }
   })
 
+export const runTim = (args, { env = {} } = {}) =>
+  execa('node', [TIM_CLI_PATH, ...args], {
+    reject: false,
+    env: { ...process.env, TIM_NO_AUTO_PULL: '1', ...env }
+  })
+
 export const envelopeOf = (run) => JSON.parse(run.stdout.trim())

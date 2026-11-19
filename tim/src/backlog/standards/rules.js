@@ -4,7 +4,15 @@ import { load as yamlLoad } from 'js-yaml'
 import picomatch from 'picomatch'
 import { TimError } from '../../errors.js'
 
-const WORKSPACE_PREFIX = '~/git/defra/trade-imports-workspace/'
+const WORKSPACE_PREFIXES = ['~/git/defra/trade-imports-workspace/', '/']
+const SCOPE_ROOT_FOLDERS = [
+  '.claude/',
+  'docs/',
+  'openspec/',
+  'repos/',
+  'tim/',
+  'workareas/'
+]
 const FRONT_MATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 const LIST_ITEM_START_RE = /^-\s+(.*)$/
 const CONTINUATION_RE = /^\s+\S/
@@ -48,20 +56,27 @@ const stripTrailingSlash = (dir) => dir.replace(/\/$/, '')
 const joinRelative = (base, rel) =>
   base ? `${stripTrailingSlash(base)}/${rel}` : rel
 
+const workspacePathOf = (token) => {
+  const prefix = WORKSPACE_PREFIXES.find((candidate) =>
+    token.startsWith(candidate)
+  )
+  return prefix === undefined ? null : token.slice(prefix.length)
+}
+
+const isScopeRootPath = (token) =>
+  SCOPE_ROOT_FOLDERS.some((folder) => token.startsWith(folder))
+
 const resolveToken = (token, { topicDirRelative, scopeRootRelative }) => {
-  if (token.startsWith(WORKSPACE_PREFIX)) {
-    return token.slice(WORKSPACE_PREFIX.length)
-  }
-  if (topicDirRelative) {
+  const workspacePath = workspacePathOf(token)
+  if (workspacePath !== null) return workspacePath
+  if (topicDirRelative && !isScopeRootPath(token)) {
     return joinRelative(topicDirRelative, token)
   }
   return joinRelative(scopeRootRelative, token)
 }
 
 const resolveTopicDir = (topicDirRaw, scopeRootRelative) =>
-  topicDirRaw.startsWith(WORKSPACE_PREFIX)
-    ? topicDirRaw.slice(WORKSPACE_PREFIX.length)
-    : joinRelative(scopeRootRelative, topicDirRaw)
+  workspacePathOf(topicDirRaw) ?? joinRelative(scopeRootRelative, topicDirRaw)
 
 const listItemsOf = (body) => {
   const items = []

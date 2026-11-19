@@ -6,9 +6,8 @@ import { TimError } from '../errors.js'
 const MARKER_FILES = ['.git', 'docs/best-practices']
 
 /**
- * Where CLAUDE.md rule 1 mandates the workspace lives. `tools/*.sh` hardcode
- * this path, so the workspace is cloned there rather than living under another
- * name.
+ * The default clone location, which `resolveWorkspaceRoot` falls back on
+ * when nothing else names a workspace.
  */
 export const CANONICAL_WORKSPACE_PATH = resolve(
   homedir(),
@@ -31,6 +30,17 @@ const walkUp = (start) => {
   }
 }
 
+let canonicalFallbackWarned = false
+
+const warnOnceOnStderr = (message) => {
+  if (canonicalFallbackWarned) return
+  canonicalFallbackWarned = true
+  process.stderr.write(`${message}\n`)
+}
+
+export const canonicalFallbackWarning = (canonical) =>
+  `Warning: you are not inside a workspace clone, so tim is using ${canonical}. Set TIM_WORKSPACE or pass --workspace to choose a clone.`
+
 const isDirectory = (path) => {
   try {
     return statSync(path).isDirectory()
@@ -42,15 +52,16 @@ const isDirectory = (path) => {
 /**
  * Resolves the workspace root with precedence: explicit option, TIM_WORKSPACE
  * env var, walking up from cwd looking for the workspace marker files, then
- * the canonical path. The canonical fallback is what lets tim run from
- * anywhere on a machine set up per CLAUDE.md rule 1; it comes last so a
- * checkout you are standing in always wins over it.
+ * the canonical path. Falling back on the canonical path passes a warning
+ * naming TIM_WORKSPACE to `warn`, which by default prints it to stderr once
+ * per process.
  *
  * @param {object} [opts]
  * @param {string} [opts.explicit] - Explicit path passed via --workspace
  * @param {string} [opts.env] - Value of TIM_WORKSPACE env var
  * @param {string} [opts.cwd] - Working directory to walk up from
  * @param {string} [opts.canonical] - Path to fall back on when the walk-up finds nothing
+ * @param {(message: string) => void} [opts.warn] - Receives the fallback warning
  * @returns {string} Absolute path to the workspace root
  * @throws {TimError} When no valid workspace root is found
  */
@@ -58,7 +69,8 @@ export const resolveWorkspaceRoot = ({
   explicit,
   env = process.env.TIM_WORKSPACE,
   cwd = process.cwd(),
-  canonical = CANONICAL_WORKSPACE_PATH
+  canonical = CANONICAL_WORKSPACE_PATH,
+  warn = warnOnceOnStderr
 } = {}) => {
   const candidate = explicit ?? env
   if (candidate) {
@@ -79,7 +91,10 @@ export const resolveWorkspaceRoot = ({
   }
   const found = walkUp(cwd)
   if (found) return found
-  if (looksLikeWorkspaceRoot(canonical)) return canonical
+  if (looksLikeWorkspaceRoot(canonical)) {
+    warn(canonicalFallbackWarning(canonical))
+    return canonical
+  }
   throw new TimError(
     'USAGE',
     `Cannot find the workspace root. Run from inside the trade-imports workspace checkout, set TIM_WORKSPACE, or clone the workspace to ${canonical}.`

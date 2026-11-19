@@ -1,6 +1,6 @@
 import { existsSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { NODE_REPOS, repoPath } from '../../constants/repos.js'
+import { rosterOf, repoPath } from '../../constants/repos.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
@@ -17,7 +17,9 @@ export const cleanRepo = (workspaceRoot, repo) => {
 }
 
 export const cleanAll = (workspaceRoot) =>
-  NODE_REPOS.map((repo) => cleanRepo(workspaceRoot, repo))
+  rosterOf(workspaceRoot).nodeRepos.map((repo) =>
+    cleanRepo(workspaceRoot, repo)
+  )
 
 export const renderText = (results) =>
   results

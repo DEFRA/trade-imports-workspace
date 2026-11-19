@@ -14,12 +14,12 @@ on its own after the upgrades.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
-your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Run Bash from the
+workspace root, which a spawned agent's brief names. `tim` finds
+the workspace it runs in — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -30,11 +30,11 @@ by name via the Task tool.
 
 | Persona | Used in | Artifact |
 |---|---|---|
-| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `packages-set-classification.sh`) |
+| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `tim npm packages set-classification`) |
 | `references/MANUAL_UPGRADE_IMPLEMENTOR.md` | `references/WALKER.md` `I` keystroke — one per package the operator chooses to implement | source edits + commit + JSON status row update |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/<NAME>.md.`
+beginning `Follow the instructions in .claude/skills/npm-upgrade/references/<NAME>.md.`
 `general-purpose` carries `Tools: *` so workers can WebFetch
 changelogs, Grep the codebase, and (for the implementor) edit source
 files and run tests.
@@ -56,13 +56,13 @@ extension conventions, and global rules shared by all phases.
 ## Repos
 
 The workspace roster lives in one place —
-`~/git/defra/trade-imports-workspace/repos.json`. This skill covers the
+`repos.json`. This skill covers the
 entries flagged `npmUpgradeDefault`, all checked out under
-`~/git/defra/trade-imports-workspace/repos/`. `start-upgrade.sh` reads
+`repos/`. `tim npm upgrade` reads
 the same flag, so ask the roster rather than a copied list:
 
 ```bash
-jq -r '.repos[] | select(.npmUpgradeDefault) | .name' ~/git/defra/trade-imports-workspace/repos.json
+jq -r '.repos[] | select(.npmUpgradeDefault) | .name' repos.json
 ```
 
 Pass `--repo <name>` to run against a different set. A repo with no
@@ -79,7 +79,7 @@ rule 2): `chore/EUDPA-N-<slug>`, or `feat/` or `fix/` for that kind of
 work. Read it from the ticket, or from a repo already on it:
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend branch --show-current
+git -C repos/trade-imports-animals-frontend branch --show-current
 ```
 
 Parse `EUDPA-XXXXX` from the branch name (e.g.
@@ -87,7 +87,7 @@ Parse `EUDPA-XXXXX` from the branch name (e.g.
 the user for the ticket and the branch name.
 
 Pass the branch to every dispatcher call as `--branch {branch}`.
-`start-upgrade.sh` then refuses to run if any repo is on another branch.
+`tim npm upgrade` then refuses to run if any repo is on another branch.
 
 ## Step 2: Branch Setup
 
@@ -99,27 +99,27 @@ it below would diverge from theirs.
 
 ```bash
 # Check local (separate Bash calls — no pipes)
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --list "{branch}"
+git -C repos/{repo-name} branch --list "{branch}"
 ```
 
 ```bash
 # Check remote
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --remotes --list "origin/{branch}"
+git -C repos/{repo-name} branch --remotes --list "origin/{branch}"
 ```
 
 ```bash
 # Switch if it exists locally
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout "{branch}"
+git -C repos/{repo-name} checkout "{branch}"
 ```
 
 ```bash
 # Exists only on the remote — create it tracking origin, never bare
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}" --track "origin/{branch}"
+git -C repos/{repo-name} checkout -b "{branch}" --track "origin/{branch}"
 ```
 
 ```bash
 # Missing in both — create it fresh
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}"
+git -C repos/{repo-name} checkout -b "{branch}"
 ```
 
 All repos must be on `{branch}` before continuing.
@@ -132,14 +132,14 @@ root) and start green. A repo without one is red in phase 0, so phase
 them all and records the run in `{run-id}/phase0.json`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 0 --branch {branch}
+tim npm upgrade {run-id} --phase 0 --branch {branch}
 ```
 
 It exits 1 if any repo's audit fails, or an allowlisted advisory now
 has a fixed version (`fixable_allowlisted`: take the fix and drop the
 entry). Phase 1 refuses to start unless the last phase 0 run covered
 every repo at its current HEAD and was green. Write or renew an
-allowlist entry only with `audit-allowlist-add.sh` (see
+allowlist entry only with `tim npm audit allow` (see
 `references/COMMON.md`); the repo's CI checks the entry rules.
 
 ## Phase 1: Discovery and Planning
@@ -148,10 +148,10 @@ allowlist entry only with `audit-allowlist-add.sh` (see
 Follow references/DISCOVERY_AND_PLANNING.md. Run ID: {run-id}
 ```
 
-Phase 1 calls the dispatcher (`start-upgrade.sh --phase 1`) which
-runs discovery, pre-bakes per-package context, and emits a JSON spawn
-manifest. The persona fans out one PACKAGE_PLANNER subagent per
-manifest entry, then runs `verify-classification-coverage.sh` as the
+Phase 1 calls the dispatcher (`tim npm upgrade --phase 1 --json`)
+which runs discovery, pre-bakes per-package context, and gives the
+spawn manifest as the envelope's `.result`. The persona fans out one PACKAGE_PLANNER subagent per
+manifest entry, then runs `tim npm packages verify` as the
 gate.
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
@@ -165,13 +165,13 @@ Phase 2?"
 Follow references/AUTOMATED_EXECUTION.md. Run ID: {run-id}
 ```
 
-Phase 2 calls the dispatcher (`start-upgrade.sh --phase 2`) which
-fans out `run-automated-upgrades.sh` per repo in parallel and
+Phase 2 calls the dispatcher (`tim npm upgrade --phase 2 --json`) which
+fans out `tim npm run-auto` per repo in parallel and
 aggregates JSON status. Per-package demotions to manual happen
 automatically. Each package is audited after its tests; pass
 `--allowlist-owner` and `--expiry-days` so a new advisory with no fix
 is allowlisted rather than demoting the package. Each repo's batch
-ends with `refresh-lockfile.sh` (transitive dependencies within their
+ends with `tim npm refresh-lockfile` (transitive dependencies within their
 ranges).
 
 Present its report verbatim. **Gate:** "Phase 2 complete. Proceed to
@@ -188,8 +188,9 @@ proceeding. Each runner's log is at `{run-id}/{repo}/phase2.log`.
 Follow references/MANUAL_HANDOFF.md. Run ID: {run-id}
 ```
 
-Phase 3 calls the dispatcher (`start-upgrade.sh --phase 3`) which
-emits a JSON manifest of every manual (and failed-auto) package. The
+Phase 3 calls the dispatcher (`tim npm upgrade --phase 3 --json`)
+which gives, as the envelope's `.result`, a manifest of every manual
+(and failed-auto) package. The
 persona renders the operator report and hands off to the WALKER.
 
 ## Walker (manual triage)
@@ -210,10 +211,10 @@ Run on its own, once the upgrades are in, to take each repo back to
 no `overrides` and keep only the ones it can prove it needs:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 4 --branch {branch}
+tim npm upgrade {run-id} --phase 4 --branch {branch}
 ```
 
-Per repo (in parallel), `reset-overrides.sh` does every trial in a
+Per repo (in parallel), `tim npm reset-overrides` does every trial in a
 throwaway git worktree under the run's workarea, so the repo checkout
 never sees a red state. With no overrides it runs install, update,
 audit, test, lint and `build:frontend`. A failing advisory (high and
@@ -246,19 +247,19 @@ repo / single package / planning-only batches.
 - `references/MANUAL_UPGRADE_IMPLEMENTOR.md` — per-package atomic edit-test-commit-rollback worker (spawned by the WALKER on `I`).
 - `assets/packages-table.md` — canonical JSON schema for `packages.{repo}.json`.
 
-Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
+Commands:
 
-- `start-upgrade.sh` — single dispatcher (phase 0 / 1 / 2 / 3 / 4).
-- `audit-baseline.sh` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
-- `audit-allowlist-add.sh` — write or renew one `audit-ci.jsonc` allowlist entry.
-- `refresh-lockfile.sh` — Phase 2 end-of-batch transitive refresh.
-- `reset-overrides.sh` — Phase 4 per-repo override reset.
-- `discover-upgrades.sh` — discovery + seed `packages.{repo}.json`.
-- `prebake-context.sh` — per-package context pre-bake (best-effort).
-- `bake-best-practices.sh` — per-repo best-practices bundle.
-- `packages-init.sh` / `packages-set-classification.sh` / `packages-set-status.sh` — JSON state writers.
-- `packages-list.sh` / `packages-counts.sh` — JSON state queries.
-- `verify-classification-coverage.sh` — Phase 1 gate.
-- `run-automated-upgrades.sh` — Phase 2 per-repo runner.
-- `upgrade-one-package.sh` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
-- `run-manual-upgrade.sh` — Phase 3 per-package runner (spawned by WALKER on `I`).
+- `tim npm upgrade` — single dispatcher (phase 0 / 1 / 2 / 3 / 4); `--json` gives each phase's report as the envelope's `.result`.
+- `tim npm audit baseline` — Phase 0 and per-upgrade audit check (audit-ci, plus whether each advisory has a fix).
+- `tim npm audit allow` — write or renew one `audit-ci.jsonc` allowlist entry.
+- `tim npm refresh-lockfile` — Phase 2 end-of-batch transitive refresh.
+- `tim npm reset-overrides` — Phase 4 per-repo override reset.
+- `tim npm discover` — discovery + seed `packages.{repo}.json`.
+- `tim npm context prebake` — per-package context pre-bake (best-effort).
+- `tim npm context best-practices` — per-repo best-practices bundle.
+- `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
+- `tim npm packages list` / `tim npm packages counts` — JSON state queries.
+- `tim npm packages verify` — Phase 1 gate.
+- `tim npm run-auto` — Phase 2 per-repo runner.
+- `tim npm upgrade-one` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
+- `tim npm run-manual` — Phase 3 per-package runner (spawned by WALKER on `I`).

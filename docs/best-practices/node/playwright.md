@@ -574,11 +574,11 @@ Environment variables:
 | `ALLURE_RESULTS_DIR` | Output dir for Allure results |
 | `PLAYWRIGHT_WORKERS` | How many browsers run at once: a whole number or a percentage |
 
-For `@compose` tagged tests, the full workspace stack must be running first. Start it with `tim docker dev` (or `scripts/stack/run-stack.sh -d`) so it runs your local changes, then:
+For `@compose` tagged tests, the full workspace stack must be running first. Start it with `tim docker dev` so it runs your local changes, then:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose             # every domain
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose:animals     # one domain
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose -- tests/plants/  # any domain, by path (trailing slash: paths are regexes)
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose             # every domain
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose:animals     # one domain
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose -- tests/plants/  # any domain, by path (trailing slash: paths are regexes)
 ```
 
 `test:docker-compose` is the one local runner. Redirect its output to a file and read the file once.

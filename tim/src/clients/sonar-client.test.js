@@ -1,6 +1,15 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { installHttpMocks, closeHttpMocks } from '../test-support/http-mock.js'
 import { createSonarClient } from './sonar-client.js'
+
+const sonarFixture = (name) =>
+  JSON.parse(
+    readFileSync(
+      new URL(`../test-support/fixtures/sonar/${name}`, import.meta.url),
+      'utf8'
+    )
+  )
 
 const BASE = 'https://sonarcloud.io'
 const PROJECT = 'DEFRA_trade-imports-plants-frontend'
@@ -89,6 +98,38 @@ describe('listIssues', () => {
     expect(result.issues[0].line).toBeNull()
   })
 
+  test('asks only for the severities given, and takes the line from the text range', async () => {
+    const frontend = 'DEFRA_trade-imports-animals-frontend'
+    mockPool(BASE)
+      .get('/api/issues/search')
+      .query({
+        componentKeys: frontend,
+        issueStatuses: 'OPEN,CONFIRMED',
+        ps: '500',
+        pullRequest: '484',
+        severities: 'BLOCKER,CRITICAL'
+      })
+      .reply(200, sonarFixture('issues-pull-request.json'))
+
+    const result = await createSonarClient({ token: '' }).listIssues(frontend, {
+      pullRequest: '484',
+      severities: ['BLOCKER', 'CRITICAL']
+    })
+
+    expect(result.issues).toEqual([
+      {
+        key: 'AaHY03BCGiVmDmX-rkCL',
+        rule: 'javascript:S7750',
+        severity: 'CRITICAL',
+        type: 'CODE_SMELL',
+        file: 'src/server/app/bridge/collection-complete.js',
+        line: 12,
+        message: 'Prefer `.findLast(…)` over `.filter(…).at(-1)`.',
+        url: `${BASE}/project/issues?id=${frontend}&pullRequest=484&open=AaHY03BCGiVmDmX-rkCL`
+      }
+    ])
+  })
+
   test('sends SONAR_TOKEN as a bearer token when one is set', async () => {
     mockPool(BASE)
       .get('/api/issues/search')
@@ -123,6 +164,90 @@ describe('listIssues', () => {
     await expect(
       createSonarClient({ token: '' }).listIssues(PROJECT)
     ).rejects.toMatchObject({ code: 'PARSE' })
+  })
+})
+
+describe('listPullRequests', () => {
+  const frontend = 'DEFRA_trade-imports-animals-frontend'
+
+  test('returns each pull request with its branch, base and analysed commit', async () => {
+    mockPool(BASE)
+      .get('/api/project_pull_requests/list')
+      .query({ project: frontend })
+      .reply(200, sonarFixture('pull-requests.json'))
+
+    const result = await createSonarClient({ token: '' }).listPullRequests(
+      'trade-imports-animals-frontend'
+    )
+
+    expect(result).toEqual({
+      project: frontend,
+      pullRequests: [
+        {
+          key: '484',
+          branch: 'feat/EUDPA-696-overview-and-review',
+          base: 'main',
+          sha: '8ac42f0992109ab3f8202bde47e1c39514b1649f'
+        },
+        {
+          key: '485',
+          branch: 'chore/NO_JIRA-bash-to-tim',
+          base: 'main',
+          sha: 'd7cf87ef31461d549759443b9fa1b9bb5ae59deb'
+        },
+        {
+          key: '312',
+          branch: 'feat/EUDPA-312-not-analysed',
+          base: 'main',
+          sha: null
+        }
+      ]
+    })
+  })
+
+  test('returns no pull requests when SonarCloud lists none', async () => {
+    mockPool(BASE)
+      .get('/api/project_pull_requests/list')
+      .query(true)
+      .reply(200, {})
+
+    const result = await createSonarClient({ token: '' }).listPullRequests(
+      frontend
+    )
+
+    expect(result.pullRequests).toEqual([])
+  })
+
+  test('sends SONAR_TOKEN as a bearer token when one is set', async () => {
+    mockPool(BASE)
+      .get('/api/project_pull_requests/list')
+      .query(true)
+      .matchHeader('authorization', 'Bearer secret')
+      .reply(200, { pullRequests: [] })
+
+    const result = await createSonarClient({
+      token: 'secret'
+    }).listPullRequests(frontend)
+
+    expect(result.pullRequests).toEqual([])
+  })
+
+  test.each([
+    [401, 'AUTH'],
+    [404, 'NOT_FOUND'],
+    [429, 'RATE_LIMIT']
+  ])('maps a %s response to TimError(%s)', async (status, code) => {
+    mockPool(BASE)
+      .get('/api/project_pull_requests/list')
+      .query(true)
+      .reply(status, {})
+
+    await expect(
+      createSonarClient({ token: '' }).listPullRequests(frontend)
+    ).rejects.toMatchObject({
+      code,
+      message: expect.stringMatching(/^listPullRequests\(/)
+    })
   })
 })
 

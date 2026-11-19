@@ -7,8 +7,7 @@ description: 'Front door for a designer working on the high-risk plants prototyp
 
 You are helping an interaction or content designer work on the high-risk
 plants prototype (`trade-imports-plants-prototype`), from a Claude Code
-session opened at the workspace root
-(`~/git/defra/trade-imports-workspace`). This skill is the one front door:
+session opened at the workspace root. This skill is the one front door:
 it holds no steps of its own beyond routing — every change is made by a
 `references/<name>.md` file this skill opens for you.
 
@@ -29,7 +28,7 @@ Design System. They use git lightly and are not JavaScript architects.
 ## The workspace-first premise
 
 The prototype **runs** standalone:
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev`
+`npm --prefix repos/trade-imports-plants-prototype run dev`
 (or `designer:fresh`) on its own stubs, no docker stack, no backend, no Jira
 access needed to see a change. Nothing in this skill ever waits on the
 workspace stack to show a result.
@@ -38,7 +37,7 @@ The workspace is where things are **built sympathetically with the real
 service**. Every reference in this skill has you read the real
 `trade-imports-plants-frontend`, its recipes, the owning backend's
 controllers and contracts, `openspec/`, and
-`~/git/defra/trade-imports-workspace/docs/best-practices/`, so what a
+`docs/best-practices/`, so what a
 designer's request produces — a stub service, a client, a controller, a
 template, `copy.en.js`/`copy.cy.js`, a validation rule, a test — reads as
 though the real team wrote it. The designer never has to ask for this: see
@@ -50,7 +49,7 @@ opens with.
 Read these before any change, whatever the request:
 
 1. **Ask whose file it is before any edit.** Run
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
+   `npm --prefix repos/trade-imports-plants-prototype run designer:where -- <paths>`
    and follow the answer. A file that "Belongs to the real service" is
    never edited, on `main` or a `design/*` branch alike: offer "do it in your design
    release" (the default) or "prepare it for the real team"
@@ -84,7 +83,7 @@ Read these before any change, whatever the request:
    - **Who has a mandate.** The designer in this session, once you have
      recorded their words (`references/custom-pattern.md`), and an agent
      whose brief carries that recorded entry. The build loop,
-     journey-builder, frontend-change, Codex on a real repo and a workflow
+     frontend-change, Codex on a real repo and a workflow
      with no recorded mandate have none: they build the nearest GOV.UK
      option and log a gap.
    - Gaps: `references/match-the-design/design-gaps.md`. Patterns:
@@ -110,11 +109,11 @@ Read these before any change, whatever the request:
    own message ("save it and open a pull request") is the yes: do not ask
    again. Otherwise ask first.
 9. **Bash paths are always tilde-form**
-   (`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/...`);
+   (`repos/trade-imports-plants-prototype/...`);
    Read/Write/Edit tools use the absolute form. Commands are always
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run <script> -- ...`
+   `npm --prefix repos/trade-imports-plants-prototype run <script> -- ...`
    and
-   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype ...`.
+   `git -C repos/trade-imports-plants-prototype ...`.
    A bare `npm run` or a bare `git` command from the workspace root acts on
    the **workspace** repo, which is the most dangerous failure here.
 10. **Never edit** `.claude/settings.json`,

@@ -4,7 +4,7 @@ A prototype-owned service stands in for a service the real plants frontend
 does not have yet: a transporter register, notification templates, anything a
 design needs to look up, list or save. It is built exactly the way the real
 services are, in the place the real services live (inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`):
+`repos/trade-imports-plants-prototype/`):
 
 ```
 src/server/app/services/<name>/
@@ -311,7 +311,7 @@ it, or `designer:check -- --walk` fails on a page it never reaches:
    `src/server/app/services/transporters/stub.js`). For an optional page
    in a scenario that skips it, the step posts `"fields": {}` (an empty
    Continue). Check with
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <release>`.
+   `npm --prefix repos/trade-imports-plants-prototype run designer:examples -- check <release>`.
 
 For "add a new one", add a page that is not a journey step. The add page in
 the saved transporters example (`add.njk`, and `renderAdd` and `add` in its
@@ -716,7 +716,7 @@ prototype's own.
    would own the real one, and write the "needs a real service" sentence:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service -- new saved-vehicles --owner new-api --describe "A register of an organisation's vehicles: search them, read one, add one and delete one."
+   npm --prefix repos/trade-imports-plants-prototype run designer:service -- new saved-vehicles --owner new-api --describe "A register of an organisation's vehicles: search them, read one, add one and delete one."
    ```
 
    - `--owner plants-backend`: the plants backend would hold the data (the
@@ -757,10 +757,10 @@ prototype's own.
 3. Check it (from inside the prototype repo):
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype test -- src/server/app/services/<name> --coverage.enabled=false
+   npm --prefix repos/trade-imports-plants-prototype test -- src/server/app/services/<name> --coverage.enabled=false
    ```
 
-   then `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run lint`.
+   then `npm --prefix repos/trade-imports-plants-prototype run lint`.
    Extend `<name>.test.js` for anything you added: the stub's behaviour, and
    the client's request and mapping.
 

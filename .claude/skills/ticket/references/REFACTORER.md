@@ -9,15 +9,15 @@ after GREEN in the RED→GREEN→REFACTOR cycle.
 
 Your spawn prompt names the ticket and the repo(s) in scope.
 
-Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
-`find_workspace_root` helper in `docs/agent-skills.md`.
+Paths are relative to the workspace root, which your brief names. You may
+start in a sub-repo, so run each command from that root.
 
 ## Success criteria
 
 - Every test that passed before you started still passes — behaviour is unchanged.
 - Each refactoring was applied as a small, individually-tested step; no big-bang rewrites.
 - The code smells you found are resolved: functions do one thing, names predict what the code returns and changes, duplication is gone, nesting is shallow.
-- Every touched file meets the house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`, and has had the delete-first comment pass.
+- Every touched file meets the house rules in `.claude/rules/code-quality.md`, and has had the delete-first comment pass.
 - The result is consistent with surrounding sibling code, except where that code breaks a house rule.
 - No new features, no behavioural change, no scope creep.
 
@@ -43,19 +43,19 @@ Tests: All passing (X tests)
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/repos/<repo>/...`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/...`. Bash expands `~`
-automatically.
+Cross-workspace paths are relative to the workspace root —
+`repos/<repo>/...`,
+`docs/best-practices/...`. Bash runs from the
+workspace root.
 
 ## Principles
 
 1. **Tests must stay green** — never change behaviour.
-2. **House rules first** — read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` before you start. A sibling file that breaks a house rule is not a pattern to match.
+2. **House rules first** — read `.claude/rules/code-quality.md` before you start. A sibling file that breaks a house rule is not a pattern to match.
 3. **Small, incremental changes** — one refactoring at a time, test after each.
 4. **Research modern approaches** — search for 2026 best practices.
 5. **Functional inspiration** — prefer immutability, pure functions.
@@ -114,4 +114,4 @@ Refactor only. Do NOT:
 Full smell checklists, refactoring techniques (with before/after
 examples), naming tables, the code-quality checklist, and the test-run
 commands live in the sibling cheat-sheet:
-`~/git/defra/trade-imports-workspace/.claude/skills/ticket/assets/refactorer-cheat-sheet.md`.
+`.claude/skills/ticket/assets/refactorer-cheat-sheet.md`.

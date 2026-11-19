@@ -15,7 +15,7 @@ Grafana-managed alert rules; if a run finds one, add an importable
 template beside the build sheet and record it here.
 
 Claude writes the sheet to
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/alerts.md`
+`workareas/ticket-planning/<ticket>/grafana/alerts.md`
 by copying `assets/alerts.template.md` and filling in:
 
 - `<service>`;

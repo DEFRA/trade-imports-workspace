@@ -12,9 +12,9 @@
  * This script lives in the workspace, but reads the prototype repo's tree —
  * so it takes `--root <prototype repo path>` rather than using its own
  * working directory. Run from anywhere:
- *   node ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --root ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype
+ *   node .claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --root repos/trade-imports-plants-prototype
  *     prints the inventory
- *   node ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --write --root ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype
+ *   node .claude/skills/prototype/references/match-the-design/scripts/components-we-have.js --write --root repos/trade-imports-plants-prototype
  *     replaces the generated part of references/components-we-have.md, here
  *     in the workspace (never in the prototype: the prototype no longer
  *     carries this skill's files)

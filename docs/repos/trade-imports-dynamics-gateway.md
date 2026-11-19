@@ -66,6 +66,6 @@ mvn verify                                              # plus integration tests
 
 Required outside `local`: `AZURE_SERVICE_BUS_CONNECTION_STRING`, `NOTIFICATION_SQS_QUEUE_URL`, `NOTIFICATION_SQS_ARN`, `TRADE_IMPORTS_ANIMALS_ADMIN_SECRET`. The service refuses to start without the ASB connection string.
 
-Workspace stack: `scripts/stack/run-stack.sh` (the `servicebus` profile provides the emulator); `-e gateway` excludes it to run natively.
+Workspace stack: `tim docker up` (the `servicebus` profile provides the emulator); `-e gateway` excludes it to run natively.
 
 Port: **8088**

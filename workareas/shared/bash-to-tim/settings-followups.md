@@ -1,0 +1,470 @@
+# Settings follow-ups for Sam
+
+Agents cannot edit permission config. Allowlist entries that name a
+script a row has deleted are listed here, under the row's id. Remove them
+from `.claude/settings.json` with:
+
+```
+node <scratchpad>/settings-remove-allow.mjs '<entry>' '<entry>'
+```
+
+then delete the row's section from this file and commit both.
+
+## P35
+
+None. No allowlist entry names `tools/skill-creator/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P36
+
+The row deletes every script in `tools/theme-ticket/`. Remove:
+
+```
+Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*)
+Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)
+```
+
+`Bash(tim:*)` covers `tim theme-ticket`.
+
+## P40
+
+None. No allowlist entry names `tools/understanding-check/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P41
+
+None. No allowlist entry names `tools/understanding-check/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.
+
+## P42
+
+None. No allowlist entry names `tools/understanding-check/`, and the
+folder is now gone. `Bash(tim:*)` covers `tim understanding-check start`
+and `prepare`; the skill's `gh search prs`, `gh pr view` and `gh pr diff`
+calls need whatever `gh` permission the session already has.
+
+## P43
+
+None. No allowlist entry names `tools/govuk/list-plans.sh`,
+`upgrade-status.sh`, `list-plan-summaries.sh` or
+`render-version-plan.sh`; the generic `tools/**` entries cover the
+scripts left in `tools/govuk/`, and `Bash(tim:*)` covers `tim govuk`.
+
+## P44
+
+None. No allowlist entry names `tools/govuk/version-classify.sh`,
+`version-add-change.sh`, `version-mark-implemented.sh`,
+`version-mark-failed.sh` or `apply-version.sh`; the generic `tools/**`
+entries cover the scripts left in `tools/govuk/`, and `Bash(tim:*)` covers
+`tim govuk classify`, `add-change`, `mark-done`, `mark-failed` and `apply`.
+
+## P45
+
+None. No allowlist entry names `tools/govuk/start-upgrade.sh`,
+`discover-repos.sh`, `discover-versions.sh` or `setup-branch.sh`, and the
+folder is now gone. `Bash(tim:*)` covers `tim govuk start`.
+
+## P46
+
+None. No allowlist entry names `tools/review/detect-tech.sh`, and
+`Bash(tim:*)` covers `tim review detect-tech`.
+
+## P31
+
+None. No allowlist entry names `tools/ticket/setup-branch.sh`,
+`prepare-plan.sh` or `prepare-implement.sh`, and the folder is now gone.
+`Bash(tim:*)` covers `tim ticket branch`, `prepare-plan` and
+`prepare-implement`; IMPLEMENTOR's `gh search prs` and `gh pr diff` calls
+need whatever `gh` permission the session already has.
+
+## P47
+
+None. No allowlist entry names `file-review-init.sh`,
+`file-review-add-item.sh`, `file-review-set-verdict.sh`, `review-items.sh`,
+`review-counts.sh`, `review-add-item.sh`, `review-mark.sh` or
+`review-set-status.sh`. `Bash(tim:*)` covers `tim review file` and
+`tim review items`.
+
+## P48
+
+None to remove. No allowlist entry names `render-items.sh`,
+`items-table.jq`, `aggregate-file-reviews.sh`, `verify-consistency.sh`,
+`verify-style-coverage.sh`, `verify-coverage.sh` or
+`refresh/reconcile.sh`. `Bash(tim:*)` covers the tim commands. The review
+skill's Step 3 now runs
+`gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > ...`, which
+only `Bash(gh api user:*)` is allowed today, so it prompts: consider
+allowing `Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.
+
+## P49
+
+None to remove. No allowlist entry names `pull-repos.sh`,
+`list-merge-resolved.sh`, `list-coverage-gaps.sh`, `refresh/scope.sh` or
+`file-diff.sh`; the generic `tools/**` rules (lines 63-64) still serve
+other folders. `Bash(tim:*)` covers `tim review refresh` and
+`tim review file-diff`. The review skill's Step 0 now also runs
+`gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > ...` on a
+refresh, and FILE_REVIEWER/STYLE_FILE_REVIEWER fall back to
+`gh pr diff {pr} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`
+when there is no cached diff: consider allowing
+`Bash(gh api repos/DEFRA/*/pulls/*/files:*)` and `Bash(gh pr diff:*)`.
+
+## P50
+
+None to remove. No allowlist entry names `prepare-review.sh`,
+`prepare-review-local.sh`, `start-review.sh`, `prs.sh` or
+`pr-details.sh`; the generic `tools/**` rules (lines 63-64) still serve
+other folders. `Bash(tim:*)` covers `tim review start` and
+`tim review prepare`. The review skill's Step 1 now runs `gh` itself:
+`gh search prs ... > .raw/prs.json`, `gh pr view ... > .raw/<repo>.json`
+(already allowed by `Bash(gh pr view:*)`),
+`gh api repos/DEFRA/<repo>/pulls/<n>/files --paginate --slurp > ...` and
+`gh pr diff <n> --repo DEFRA/<repo> > .diffs/<repo>.diff`; the style
+skill's fresh prepare script now calls `gh api .../files --paginate`.
+Consider allowing `Bash(gh search prs:*)`, `Bash(gh pr diff:*)` and
+`Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.
+
+## P52
+
+None to remove. No allowlist entry names `style-items.sh`,
+`style-counts.sh`, `render-items.sh`, `style-add-item.sh`, `style-mark.sh`,
+`style-set-status.sh`, `file-style-add-item.sh`,
+`file-style-set-verdict.sh`, `aggregate-file-reviews.sh`,
+`refresh/reconcile.sh` or `items-table.jq` under `tools/style/`; the
+generic `tools/**` rules still serve the style scripts left for P53.
+`Bash(tim:*)` covers `tim style`.
+
+## P53
+
+None to remove. No allowlist entry names `start-style.sh`,
+`prepare-style.sh`, `prepare-style-local.sh`, `file-style-init.sh`,
+`file-topics.sh`, `bake-rules-bundle.sh` or `refresh/scope.sh` under
+`tools/style/`, which is now gone; the generic `tools/**` rules (lines
+63-64) still serve other folders. `Bash(tim:*)` covers `tim style start`,
+`prepare`, `scope`, `topics`, `bundle` and `file init`. The code-style
+skill's refresh now writes each PR's changed files with
+`gh api repos/DEFRA/<repo>/pulls/<n>/files --paginate --slurp > ...`
+first, as the review skill does.
+
+## P39
+
+None to remove. No allowlist entry names `ticket.sh`, `comments.sh`,
+`add-comment.sh`, `transition-ticket.sh` or `search.sh` under
+`tools/jira/`, which is now gone; the generic `tools/**` rules (lines
+63-64) still serve other folders. `Bash(tim:*)` covers `tim jira ticket`,
+`comments`, `comment`, `transition` and `search`.
+
+## P54
+
+None to remove. P54 adds tim library code only and deletes no script;
+`sonar-check-pending.sh` and `sonar-record-push.sh` stay until P55.
+
+## P55
+
+No allowlist entry names the three scripts. The row could not finish:
+`.claude/settings.json` is protected from agent edits, and its hooks still
+call the Bash, so the scripts stay until the hooks switch. Change these
+hook commands, keeping each `if`, `matcher` and `timeout`:
+
+- PostToolUse (`if: Bash(git push*)`, timeout 10):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh"`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending record 2>/dev/null || true`
+- UserPromptSubmit (timeout 15):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh" UserPromptSubmit`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event UserPromptSubmit 2>/dev/null || true`
+- SessionStart (timeout 15):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh" SessionStart`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event SessionStart 2>/dev/null || true`
+- SessionStart (timeout 30):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-remove-stale-mcp-containers.sh"`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar mcp-tidy 2>/dev/null || true`
+
+Then, in one follow-up commit: delete the three scripts under
+`scripts/sonar/` (the golden recording tests skip once they are gone), and
+rewrite `docs/agent-onboarding.md`'s "Workspace-level hooks" section and its
+line about the hooks under `scripts/sonar/` calling the `sonar` CLI to name
+the tim commands and the hook JSON above.
+
+## P37
+
+None. No allowlist entry names `tools/confluence/sync-docs.sh`,
+`html_to_md.js` or `clean-docs.sh`; `Bash(tim:*)` covers
+`tim confluence sync`.
+
+## P33
+
+None. No allowlist entry names `tools/ticket-creator/check-capabilities.sh`
+or `prepare-ticket-creation.sh`; `Bash(tim:*)` covers `tim capabilities check`
+and `tim jira prereqs`.
+
+## P56
+
+None to remove. P56 adds `tim sonar push-check` and deletes no script;
+`tools/sonar/sonar-push-check.sh` and `scripts/sonar/sonar-push-gate.sh`
+stay, and the hooks keep calling them, until P57 cuts them over.
+
+## P51
+
+Nothing to remove. No allowlist entry names `tools/review/share-review.sh`,
+`share-review.summary.test.sh`, `finding-categories.sh` or
+`tools/github/pr-comment.sh`; `Bash(tim:*)` covers `tim review share` and
+`Bash(gh api user:*)` already allows the reviewer lookup. Suggested
+addition, for Sam to decide: `Bash(gh pr comment:*)`, which the review
+skill now runs itself to post each body (it posts to GitHub, so it may be
+better left prompting).
+
+## P57
+
+No allowlist entry names `tools/sonar/sonar-push-check.sh` or
+`scripts/sonar/sonar-push-gate.sh`. The row could not finish: every
+`.claude/settings.json` (the workspace's and each repo's) is protected
+from agent edits. Both scripts are now forwarders to
+`tim sonar push-check --hook`, run from the clone that holds them, so the
+hooks already run tim. Make these changes, keeping each `matcher` and
+`timeout`:
+
+- Workspace `.claude/settings.json`, PreToolUse `Bash` (timeout 600):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-push-gate.sh"`
+  becomes
+  `W="$CLAUDE_PROJECT_DIR"; if [ -f "$W/tim/src/cli.js" ] && [ -d "$W/tim/node_modules" ]; then node "$W/tim/src/cli.js" sonar push-check --hook; fi`
+- Each repo's `.claude/settings.json` line 19, in
+  trade-imports-animals-frontend first (canary), then address-book,
+  animals-admin, dynamics-gateway, animals-backend, ins-backend,
+  reference-data and ins-frontend:
+  `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`
+  becomes
+  `W="$CLAUDE_PROJECT_DIR/../.."; if [ -f "$W/tim/src/cli.js" ] && [ -d "$W/tim/node_modules" ]; then node "$W/tim/src/cli.js" sonar push-check --hook; fi`
+  This finds the workspace the repo is cloned inside; a repo cloned on
+  its own gets no check. Each is a service-repo PR on
+  `chore/NO_JIRA-bash-to-tim`.
+- `CLAUDE.md` "SonarCloud integration": the pre-push bullet should name
+  `tim sonar push-check --hook` as the check, and the manual-run block
+  should become `tim sonar push-check`, run inside the repo. The old
+  `bash .../sonar-push-check.sh <<< ...` line still works through the
+  forwarder.
+
+The canary on the real animals-frontend is still to run, because this
+session had no SONAR_TOKEN or sonar-scanner and was refused the commands
+that stage stand-ins. With a token, from the workspace root: break the
+formatting of one file in animals-frontend and run
+`printf '{"tool_input":{"command":"git push"},"cwd":"%s"}' "$PWD/repos/trade-imports-animals-frontend" | bash scripts/sonar/sonar-push-gate.sh; echo $?`.
+It should say "Formatting check failed — push blocked" and print 2.
+Restore the file and run it again: it should print 0, with
+`.cache/prepush-verified` in the repo holding HEAD.
+`tim/src/sonar/push-check-forwarders.test.js` already drives every check
+and gate case through both forwarders, blocks and the marker included.
+
+Delete the forwarders, and `tim/src/sonar/push-check-forwarders.test.js`
+with them, only once `git grep sonar-push-check.sh` over every
+`refs/remotes/origin/*` in the eight repos is clean. On 14 Nov 2026 every
+remote branch still named it, `main` included (address-book 2,
+animals-frontend 19, animals-admin 9, dynamics-gateway 2,
+animals-backend 8, ins-backend 2, reference-data 7, ins-frontend 13
+branches).
+
+## P58
+
+No allowlist entry names `scripts/stack/help.test.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack had
+been up for 24 hours with no lease, and `tim docker lease acquire` refuses
+an unleased stack. Taking it down would wipe a stack someone may be using.
+The row changes nothing the stack runs (the Bash scripts are untouched and
+the tim modules are not yet called), so run the smoke on P59, which is the
+first row to swap a script for tim.
+
+## P59
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/bounce-backend.sh`, `dev-service.sh` or
+`restart-stack.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack was
+still up with no lease (`tim docker lease status` shows `lease: null`), and
+`tim docker lease acquire` refuses an unleased stack. Taking it down would
+wipe a stack someone may be using. Run the smoke, and the live gate refresh
+the row's proof asks for (touch one frontend file under a dev lease and
+compare the gate's `gate-stack-restart.log`), once that stack is down.
+
+## P60
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/stop-stack.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack was
+still up (every container up 24 hours) with no lease, and `tim docker lease
+acquire` refuses an unleased stack. Taking it down would wipe a stack
+someone may be using. Run the smoke once that stack is down: it is also the
+first live run of the native `tim docker down` (and of `tim docker lease
+release`, which now takes the stack down through it).
+
+## P63
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/journey-builder/` or a script in it; nothing to remove. The
+generic `tools/**` entries cover what remains.
+
+## P38
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/confluence/page.sh`; nothing to remove.
+
+## P64
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/packages-list.sh`, `packages-counts.sh`,
+`packages-set-status.sh`, `packages-set-classification.sh`,
+`packages-aggregate-classifications.sh` or
+`verify-classification-coverage.sh`; nothing to remove.
+
+## P65
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/discover-upgrades.sh`, `packages-init.sh`,
+`bake-best-practices.sh` or `prebake-context.sh`; nothing to remove.
+
+## P66
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/audit-lib.sh`, `audit-fix-check.mjs`, `audit-baseline.sh`,
+`audit-allowlist-add.sh`, `audit-allowlist-forget.sh` or `npm-in-repo.sh`;
+nothing to remove.
+
+## P67
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/upgrade-one-package.sh`, `refresh-lockfile.sh`,
+`run-automated-upgrades.sh`, `run-manual-upgrade.sh` or
+`reset-overrides.sh`; nothing to remove.
+
+## P68
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/start-upgrade.sh` or `tools/npm/README.md`; nothing to
+remove. `tools/npm/` is gone.
+
+## P61
+
+Nothing deleted: `scripts/stack/run-stack.sh`, `lib/flags.sh` and
+`lib/init-scripts.sh` stay for CI until P62, so no allowlist entry changes.
+
+The stack-smoke check and the live canary (`tim docker dev`, then
+`tim build gate`, under a lease) did not run. The workspace stack was
+started by hand and nobody holds a lease, `tim docker lease acquire`
+refuses an unleased stack, and taking it down would wipe a stack someone
+may be using. It is item 9 in `NEEDS-SAM.md`. The landing phase's CI E2E
+run starts the stack through this code once P62 lands, and is the first
+live run of the native start (staging, Dockerhub probes, early pulls,
+mongo first, stack up and the branch re-check).
+
+## P62
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `scripts/stack/run-stack.sh` or `scripts/stack/lib/*.sh`; nothing to
+remove. `scripts/stack/` is gone.
+
+The stack-smoke check did not run, for the reason given under P61: the
+stack is up, started by hand, with no lease (`NEEDS-SAM.md` item 9).
+
+## P72
+
+Nothing deleted, so no allowlist entry names a removed script. Skill, rule
+and doc text no longer types `~/git/defra/trade-imports-workspace`, so P73
+can drop these from `.claude/settings.json` (as on `main` after #280):
+
+- `Bash(git -C ~/git/defra/trade-imports-workspace:*)`
+- `Bash(awk * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(sed * ~/git/defra/trade-imports-workspace/*)`
+- `Bash(find ~/git/defra/trade-imports-workspace/*)`
+
+Dropping them without replacements makes unattended agents stop at prompts,
+because the skill text now types these commands relative to the workspace
+root, and no allow rule matches them (on this branch or on `main` after
+#280):
+
+- `find repos/trade-imports-ins-tests/test-results -name "error-context.md"`
+  (`npm-upgrade/references/WALKER.md`, `review/references/REVIEW_ITEM_FIXER.md`,
+  `review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git rev-parse --abbrev-ref HEAD`, `git checkout main` and
+  `git branch -D <branch>` (`review/references/BATCH_IMPLEMENTOR.md`)
+- bare `git add`, `git update-index --chmod=+x` and `git checkout -- <path>`
+  on `tools/<dir>/<script>.sh` (`docs/agent-skills.md`)
+- `awk`, `sed` and `find` on any relative workspace path, which
+  `docs/agent-skills.md` now says prompt
+- `git -C workareas/reviews/EUDPA-XXXXX/repos/{repo} diff ...` and
+  `... rev-parse HEAD`, typed by unattended file-reviewer agents
+  (`review/references/FILE_REVIEWER.md`,
+  `code-style/references/STYLE_FILE_REVIEWER.md`, `review/SKILL.md`). The
+  tilde `git -C` rule matched these; `main` after #280 has only
+  `git -C repos/<repo>:*` rules, which do not
+
+So P73 adds these allow entries in the same change that drops the four
+tilde rules:
+
+- `Bash(find repos/*)`, `Bash(find workareas/*)`, `Bash(find tools/*)`,
+  `Bash(find docs/*)`, `Bash(find .claude/*)`, `Bash(find openspec/*)`
+- `Bash(awk * repos/*)`, `Bash(awk * workareas/*)`, and the same pair for
+  `sed` (the tilde `sed *` rule allowed `sed -i` too; keep or narrow that
+  on purpose)
+- `Bash(git rev-parse:*)`, `Bash(git checkout main)`,
+  `Bash(git checkout -- :*)`, `Bash(git branch -D:*)`, `Bash(git add:*)`,
+  `Bash(git update-index:*)`. The tilde `git -C` rule allowed every git
+  subcommand at the workspace root; `Bash(git:*)` is the equal of that,
+  and the existing `git push --force`/`-f` denies still apply.
+  `git -C repos/<repo>:*` is already allowed per repo on `main` (#280).
+- `Bash(git -C workareas/:*)`, for the review clones under
+  `workareas/reviews/`. Without it (or `Bash(git:*)`), file-reviewer
+  agents stop at a permission prompt once the tilde `git -C` rule goes.
+
+Once the rules are in, change `docs/agent-skills.md` back: `awk`, `sed`
+and `find` are allowed on workspace-relative paths, and the "A
+relative-path `find` is not yet" line under "Read, search and find" says
+`find` is allowlisted.
+
+Left for a person, because agents do not edit hooks or permission config:
+
+- `.claude/hooks/guard-bash.sh` line 101: the deny message for a literal
+  `/Users/<user>/` path says "Use ~/ instead of a literal /Users/<user>/
+  path". That steers agents to `~/git/defra/trade-imports-workspace/...`,
+  against CLAUDE.md rule 1 and `docs/agent-skills.md`, which now say to
+  type paths relative to the workspace root. Suggested message: "Type the
+  path relative to the workspace root instead of a literal /Users/<user>/
+  path — the permission matcher compares literal strings, so an absolute
+  path triggers avoidable prompts."
+
+- `.claude/hooks/guard-bash.sh` line 120: the deny message for a piped test
+  run still gives
+  `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > ~/git/defra/trade-imports-workspace/workareas/<area>/test.log 2>&1`
+  as its example. The relative form is
+  `npm --prefix repos/<repo> test > workareas/<area>/test.log 2>&1`.
+  `tim/src/skill-workflows/workspace-paths.test.js` allows that line; drop
+  its entry once the message changes.
+- Each service repo's `.claude/settings.json` hook still runs
+  `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`.
+- `docs/onboarding/01-workspace.pptx` still says "Clone to
+  ~/git/defra/trade-imports-workspace (symlink if elsewhere)". Its
+  generator, `docs/onboarding/generator/build-deck.js`, now says the folder
+  is a default, so regenerate the deck from it.
+- `tim skill scaffold` still prints `allowlist_entries` in the tilde form,
+  `Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)`, and appends
+  them to `.claude/settings.json`. P72 left it alone: it is a change to a
+  command's output, not to text, and no check yet shows that the relative
+  form `Bash(tools/<name>/*)` matches a call. Change it in P73 or its own
+  row, once the relative `tools/` rules are proven.
+
+## P73
+
+Done by Sam's script `sam/7-relative-rules.mjs`. The four tilde rules
+listed under P72 are gone. `Bash(git:*)` and a `find`, `awk` and `sed`
+rule per top-level folder replace them. The guard hook's two messages now
+give relative paths. `tim skill scaffold` writes one rule,
+`Bash(tools/<name>/*)`; the `:*` twin matched nothing (P11).
+
+Still open, and not settings: the service repos' hooks run
+`bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`
+(hooks are out of scope), and `docs/onboarding/01-workspace.pptx` still
+needs regenerating from `build-deck.js`.

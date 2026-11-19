@@ -7,14 +7,14 @@ A plan holds **decisions, homes and owners**. It never writes code
 text: no new names, comments, JSDoc or Javadoc, test titles, log
 message strings or code bodies. The implementor chooses those, against
 the house rules in
-`~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`.
+`.claude/rules/code-quality.md`.
 Plans that write code text are the main way poor names, stale comments
 and history get into this codebase: the implementor copies them and
 nobody reviews them.
 
 Mark uncertainty with `[ASSUMPTION]` and `[NEEDS VERIFICATION]`.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workflow
 
@@ -26,13 +26,13 @@ Reads `workareas/ticket-planning/EUDPA-XXXXX/{ticket.md,.plan-meta.json,best-pra
 when done.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX
+tim ticket prepare-plan EUDPA-XXXXX
 ```
 
 Or, if the affected repos are already known up front:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
+tim ticket prepare-plan EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
 ```
 
 ### 2. Explore Codebase
@@ -47,7 +47,7 @@ rules before deciding where anything goes.
 
 Tech + best-practices are already baked in `.plan-meta.json` and
 `best-practices/<repo>.md` for the repos you passed. If you discover
-further repos in scope, re-run `prepare-plan.sh --repos` to refresh.
+further repos in scope, re-run `tim ticket prepare-plan --repos` to refresh.
 
 ### 3. Decide
 
@@ -65,7 +65,7 @@ no downside, so it was the plan.
 
 ### 4. Create Plan
 
-Create: `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md`
+Create: `workareas/ticket-planning/EUDPA-XXXXX/plan.md`
 
 ```markdown
 # Implementation Plan: EUDPA-XXXXX
@@ -185,7 +185,7 @@ to defend that same speculative shape. This gate catches both.
 
 Before any code exists, run a separate review pass over `plan.md`
 against
-`~/git/defra/trade-imports-workspace/.claude/skills/ticket/assets/plan-review-checklist.md`.
+`.claude/skills/ticket/assets/plan-review-checklist.md`.
 Read the plan as a reviewer would, not as its author: open each
 file:line it cites and each owner it names. Fix every failed item in
 the plan, then record the result under `## Plan review` at the foot of
@@ -197,7 +197,7 @@ Review stays at full strength. Never skip an item because the plan
 ## Output
 
 ```
-Plan created: ~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md
+Plan created: workareas/ticket-planning/EUDPA-XXXXX/plan.md
 Repos: [list] | Decisions: [X] | Confidence: [level]
 Items needing verification: [X]
 Plan review: [passed / N items fixed]

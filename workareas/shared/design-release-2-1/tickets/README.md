@@ -139,7 +139,7 @@ in two sections, at the user's request (epic EUDPA-646), so `tickets.json`
 records EUDPA-789 under both `ins` and `animals`. The theme was delivered as six
 tickets (EUDPA-706 to 711) and then EUDPA-721's picker work, all scoped by Jira
 key rather than by theme slug, so `tickets.json` lists those keys under
-`rowScopes` for `derive-scenarios` to find the footprint. All merged to `main`;
+`rowScopes` for `tim theme-ticket derive` to find the footprint. All merged to `main`;
 the ticket is `Deskcheck`. 7 scenarios (2 INS, 5 live animals) are partly
 proved, each one only an end-to-end test can prove in full.
 
@@ -197,13 +197,13 @@ The two that most often catch someone out:
 
 ```bash
 # derive a theme, split by domain
-tools/theme-ticket/derive-scenarios.sh --workarea shared/design-release-2-1 --theme journey-foundation
+tim theme-ticket derive --workarea shared/design-release-2-1 --theme journey-foundation
 
-# push one folder's description and summary together
-tools/theme-ticket/push-description.sh workareas/shared/design-release-2-1/tickets/animals-journey
+# push one folder's description and summary together (a dry run until --confirm)
+tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
 
 # which tickets has openspec moved on from?
-tools/theme-ticket/check-stale.sh --workarea shared/design-release-2-1
+tim theme-ticket stale --workarea shared/design-release-2-1
 ```
 
 Creation goes through `tim jira create --from <folder>/ticket.json`, a dry run

@@ -5,11 +5,15 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
+import { isWorkspaceBranchSynced } from '../../constants/repos.js'
+import { bundledRoster, timWorkspaceRoot } from '../../test-support/roster.js'
+
+const { repos: REPOS } = bundledRoster
+const isSynced = (repo) => isWorkspaceBranchSynced(timWorkspaceRoot, repo)
 import { createBareRepo, pushCommit } from '../../test-support/git-fixtures.js'
 
-const syncedRepos = REPOS.filter(isWorkspaceBranchSynced)
-const exemptRepos = REPOS.filter((repo) => !isWorkspaceBranchSynced(repo))
+const syncedRepos = REPOS.filter(isSynced)
+const exemptRepos = REPOS.filter((repo) => !isSynced(repo))
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')

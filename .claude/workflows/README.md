@@ -81,7 +81,8 @@ Before launching:
   (so agents read it under allowlisted workspace paths)
 - create `branch` in the plants prototype
 
-Required args: `batches` (`{ recent: [{ id, window, commits: [sha] }], older: { id, window, commits } }`
+Required args: `workspace` (the root of the workspace clone the session runs in, as a tilde path),
+`batches` (`{ recent: [{ id, window, commits: [sha] }], older: { id, window, commits } }`
 — the commit windows to read) and `branch` (the plants-prototype branch to build on).
 The 2026-09 run's batches are in `workareas/shared/designer-prototyping/batches.json`. Outputs go to
 `workareas/shared/designer-prototyping/` (notes, analysis, plan, trials, handover README).

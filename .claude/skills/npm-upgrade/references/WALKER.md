@@ -16,12 +16,12 @@ is no pre-veto walker on the auto side — Phase 2 just runs.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification manual --json
+tim npm packages list --run-id EUDPA-XXXXX --classification manual --json
 ```
 
 For an optional repo filter add `--repo {repo}`. Also pull the
@@ -29,8 +29,10 @@ failed-auto demotion side (these are already classified manual via
 demoted_from_auto, but a separate query helps render them first):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification auto --status failed --json
+tim npm packages list --run-id EUDPA-XXXXX --classification auto --status failed --json
 ```
+
+Each prints a tim JSON envelope; the rows are its `.result` array.
 
 If both queries are empty:
 ```
@@ -102,14 +104,14 @@ held package needs one: the handoff report and the PR body list it.
 Then store it:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
+tim npm packages set-status \
   --run-id EUDPA-XXXXX --repo {repo} --package {pkg} \
   --status failed --failure-reason "Deferred by walker: {reason}"
 ```
 (We use `failed` rather than introducing a new status or a `held`
 classification — failed + a reason starting "Deferred by walker:"
 carries the same "needs human attention later" signal, and
-`start-upgrade.sh --phase 3` lists those rows under `held`.)
+`tim npm upgrade --phase 3` lists those rows under `held`.)
 
 For `S`: do nothing — the package row stays as it is.
 
@@ -137,7 +139,7 @@ commits, and we don't want two implementors racing on the same repo).
 Spawn prompt:
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
+Follow the instructions in .claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
 
 Run ID: EUDPA-XXXXX
 Repository: {repo}
@@ -145,7 +147,7 @@ Package: {package}
 Current: {current}
 Target: {target}
 
-Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
+Context bundle: workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
 Files affected (from planner): {files_affected}
 Required changes (from planner): {changes_required_summary}
 Allowlist owner: {owner}
@@ -157,13 +159,13 @@ not given them (the sweep's workflow args `allowlistOwner` and
 `expiryDays` carry them).
 
 The implementor returns one of `DONE`, `FAILED`, `SKIPPED`. It updates
-JSON state itself via `packages-set-status.sh`; you don't need to.
+JSON state itself via `tim npm packages set-status`; you don't need to.
 
-You can also call `run-manual-upgrade.sh` directly if you'd prefer the
+You can also call `tim npm run-manual` directly if you'd prefer the
 script-driven flow without an extra subagent:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/run-manual-upgrade.sh \
+tim npm run-manual \
   --run-id EUDPA-XXXXX --repo {repo} --package {package} \
   --allowlist-owner "{owner}" --expiry-days {expiry-days}
 ```
@@ -184,14 +186,14 @@ repo (it has no unit suite — it IS the E2E suite), so this is the
 first chance to confirm the upgrades didn't break the test runner.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
+npm --prefix repos/trade-imports-ins-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
 ```
 
 Read the log file you just created — summary line only. On failure,
 **do NOT grep the streaming output**. Find the structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
+find repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what broke. Surface the
@@ -205,7 +207,7 @@ If no `DONE` package was in the tests repo, skip this step.
 ## Step 5: Final report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id EUDPA-XXXXX
+tim npm packages counts --run-id EUDPA-XXXXX
 ```
 
 Print the summary:

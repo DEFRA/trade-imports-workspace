@@ -1,10 +1,9 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  REPOS,
+  rosterOf,
   repoPath,
   repoUrl,
-  REPOS_DIR,
   upstreamOf
 } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
@@ -58,11 +57,11 @@ const healTask = async (repo, dir) => {
 
 // git has no "all branches except X" clone flag, so bootstrap is
 // clone-narrow then widen behind the exclusion refspec.
-const cloneLight = async (repo, label, dir) => {
+const cloneLight = async (workspaceRoot, repo, label, dir) => {
   const clone = await run('git', [
     'clone',
     '--single-branch',
-    repoUrl(repo),
+    repoUrl(workspaceRoot, repo),
     dir
   ])
   if (clone.exitCode !== 0) {
@@ -131,15 +130,16 @@ const upstreamRemoteIsCorrect = (state, url) =>
  * correctly-configured remote is left untouched. Shared by
  * `tim workspace setup` and `tim prototype setup`.
  *
+ * @param {string} workspaceRoot - The workspace whose `repos.json` declares the upstream
  * @param {string} repo
  * @param {string} dir - Absolute path to the cloned repo
  * @returns {Promise<{exitCode: 0, action: 'none'|'unchanged'|'added'|'corrected'} | ReturnType<typeof failure>>}
  */
-export const ensureUpstreamRemote = async (repo, dir) => {
-  const upstreamRepo = upstreamOf(repo)
+export const ensureUpstreamRemote = async (workspaceRoot, repo, dir) => {
+  const upstreamRepo = upstreamOf(workspaceRoot, repo)
   if (!upstreamRepo) return { exitCode: 0, action: 'none' }
 
-  const url = repoUrl(upstreamRepo)
+  const url = repoUrl(workspaceRoot, upstreamRepo)
   const before = await upstreamRemoteState(dir)
 
   if (before.url && upstreamRemoteIsCorrect(before, url)) {
@@ -228,9 +228,9 @@ const UPSTREAM_ACTION_NOTE = {
   corrected: 'upstream remote corrected'
 }
 
-const withUpstreamRemote = async (repo, dir, base) => {
+const withUpstreamRemote = async (workspaceRoot, repo, dir, base) => {
   if (base.exitCode !== 0) return base
-  const upstream = await ensureUpstreamRemote(repo, dir)
+  const upstream = await ensureUpstreamRemote(workspaceRoot, repo, dir)
   if (upstream.exitCode !== 0) return upstream
   const note = UPSTREAM_ACTION_NOTE[upstream.action]
   return note ? { ...base, label: `${base.label}, ${note}` } : base
@@ -257,16 +257,18 @@ const cloneTask = (workspaceRoot, repo) => {
           stderrTail: null
         }
       }
-      mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
-      return cloneLight(repo, label, dir)
+      mkdirSync(join(workspaceRoot, rosterOf(workspaceRoot).reposDir), {
+        recursive: true
+      })
+      return cloneLight(workspaceRoot, repo, label, dir)
     })()
-    return withUpstreamRemote(repo, dir, base)
+    return withUpstreamRemote(workspaceRoot, repo, dir, base)
   }
   return task
 }
 
 export const buildSetupTasks = (workspaceRoot) =>
-  REPOS.map((repo) => cloneTask(workspaceRoot, repo))
+  rosterOf(workspaceRoot).repos.map((repo) => cloneTask(workspaceRoot, repo))
 
 export const setupAll = async (workspaceRoot) => {
   const tasks = buildSetupTasks(workspaceRoot)

@@ -20,7 +20,7 @@ describe('resolveSpecRoot', () => {
     expect(resolveSpecRoot({ workspaceRoot })).toBe(workspaceRoot)
   })
 
-  test('roots to --root instead, for a worktree journey-builder wrote the spec into', () => {
+  test('roots to --root instead, for another checkout holding the spec', () => {
     const worktree = mkdtempSync(join(tmpdir(), 'tim-spec-worktree-'))
     mkdirSync(join(worktree, 'openspec', 'specs'), { recursive: true })
 

@@ -238,6 +238,38 @@ describe('tim build gate', () => {
     expect(envelopeOf(run).result.serial).toBe(false)
   })
 
+  test('refuses an --e2e other than local or ci', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim(['build', 'gate', WORKAREA, '--e2e', 'cloud'])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
+      exitCode: 2,
+      stderr: '--e2e must be one of: local, ci.'
+    })
+  })
+
+  test('reports where e2e ran with --e2e ci', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--e2e',
+      'ci',
+      '--json'
+    ])
+
+    expect(envelopeOf(run).result.e2e).toEqual({
+      where: 'ci',
+      leftToCi: [],
+      evidence: expect.stringContaining('e2e-tests.yml')
+    })
+  })
+
   test('refuses an unknown phase', async () => {
     seedGateRepo({ test: 'echo tested' })
 
@@ -479,7 +511,7 @@ describe('renderGateText for a stack started again under its holder’s lease', 
 describe('renderGateText for a stack that did not start', () => {
   test('says the gate could not start the stack and why, not that the stack was left up', () => {
     const startError =
-      'The workspace stack did not come up (run-stack.sh exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
+      'The workspace stack did not come up (tim docker dev exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
 
     const text = renderGateText({
       green: false,
@@ -605,7 +637,7 @@ describe('renderGateText for a stack its holder already leased', () => {
         }
       }).split('\n')[1]
     ).toBe(
-      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: none. Restarted: none. Left as they were: trade-imports-stub. The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack) changed, and did not start the whole stack again.'
+      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: none. Restarted: none. Left as they were: trade-imports-stub. The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, tim/src/stack) changed, and did not start the whole stack again.'
     )
   })
 
@@ -706,5 +738,52 @@ describe('renderGateText', () => {
         'Logs are in /logs.'
       ].join('\n')
     )
+  })
+
+  test('names the e2e rungs it left to CI and what proves them', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [],
+        stack: { wasUp: null, startedForE2e: false },
+        e2e: {
+          where: 'ci',
+          leftToCi: [{ repo: 'tests', name: 'e2e-plants' }],
+          evidence: 'the pull requests.'
+        }
+      })
+        .split('\n')
+        .slice(0, 2)
+    ).toEqual([
+      'Gate passed: 0 rungs.',
+      'Left to CI, not run here: tests e2e-plants. The evidence is the pull requests.'
+    ])
+  })
+
+  test('names the port a FIT rung moved to and who holds the one it planned', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [
+          {
+            repo: 'frontend',
+            name: 'fit',
+            phase: 'fit',
+            ok: true,
+            durationMs: 3000,
+            ports: [{ planned: 3050, used: 3051, heldBy: 'node (pid 42)' }]
+          }
+        ],
+        stack: { wasUp: null, startedForE2e: false }
+      })
+        .split('\n')
+        .slice(0, 3)
+    ).toEqual([
+      'Gate passed: 1 rungs.',
+      '  pass  fit  frontend fit (3s)',
+      '        served on port 3051, because node (pid 42) holds 3050'
+    ])
   })
 })

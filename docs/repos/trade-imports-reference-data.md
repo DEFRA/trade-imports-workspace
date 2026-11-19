@@ -94,6 +94,6 @@ The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-
 mvn spring-boot:run          # port 8086; needs MongoDB and an MDM source (the stub on 8087 by default)
 ```
 
-Workspace stack: `./scripts/stack/run-stack.sh` (service in the `backend` profile, `docker/stack/backend.compose.yml`). Use `-e reference-data` to run it from your IDE instead. The stack sets `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` to the stub and waits for the stub to be healthy (optional).
+Workspace stack: `tim docker up` (service in the `backend` profile, `docker/stack/backend.compose.yml`). Use `-e reference-data` to run it from your IDE instead. The stack sets `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` to the stub and waits for the stub to be healthy (optional).
 
 Port: **8086**

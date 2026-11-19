@@ -1,6 +1,6 @@
 # Workspace skill patterns — the 8-pattern checklist
 
-Workspace skills under `~/git/defra/trade-imports-workspace/.claude/skills/`
+Workspace skills under `.claude/skills/`
 share a small vocabulary of shapes. Each pattern is a judgment call,
 not a default — the same skill rarely uses all of them. This doc is
 the canonical reference cited by `skill-creator` (CREATE mode applies
@@ -63,23 +63,24 @@ The hard rules, all enforced via the project allowlist:
 - No `cd <dir> && cmd` — use `-C` (git), `--prefix` (npm) or `-f`
   (mvn).
 - Never pipe a test run. Redirect it to a file and Read the file:
-  `npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > <workarea>/test.log 2>&1`,
+  `npm --prefix repos/<repo> test > <workarea>/test.log 2>&1`,
   not `... test | tail -40`. A piped run reports the trimmer's exit
   code, so a red run reads as green. `guard-bash.sh` denies it.
 - Format and lint through the repo's named npm script
-  (`npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> run format`).
+  (`npm --prefix repos/<repo> run format`).
   Never a `node_modules/.bin/` binary and never `npx`: prettier run
   by path from outside the repo formats differently from the repo's
   own script, and the pre-commit hook rejects the result.
-- No `find ... -exec`. Run a plain `find ~/git/... -name X`, then Read.
+- No `find ... -exec`. Run a plain `find <path> -name X`, then Read.
 - No Grep or Glob tools in a spawned agent. Search with one unpiped
   Bash `grep -rn`; find files with one unpiped `find`.
 - No `VAR=x cmd` prefixes; they do not match the allowlist.
 - No env vars (`$VAR`) in LLM-typed Bash — Claude Code prompts on
   expansion. Use literal
-  `~/git/defra/trade-imports-workspace/...` paths.
+  `repos/<repo>/...`, `docs/...`, `workareas/...` paths.
 - No `/Users/<you>/git/...` resolved form either — the matcher
-  treats `~/git/...` and `/Users/.../git/...` as different prefixes.
+  treats `repos/<repo>` and an absolute path to the same folder as
+  different prefixes.
 - No `python3 -c` for JSON — use `jq` or workspace helpers.
 - No `awk` / `sed -n` / `grep -n` to inspect files — use Read with
   offset+limit.
@@ -105,7 +106,7 @@ memory.
    "Bash call hygiene". Point, don't inline, so copies cannot drift.
 2. **The house rules, for every agent that writes or reviews code,
    tests or templates.** The prompt says: "Before you start, read
-   `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+   `.claude/rules/code-quality.md`
    in full." This holds for skill personas, Workflow scripts and
    one-off scripts alike. Rule files under `.claude/rules/` load only
    when an agent happens to read a matching path, and Codex loads
@@ -154,15 +155,11 @@ approval is right.
 ## 8. Allowlist coverage
 
 **Question:** Does the skill introduce new `tools/<name>/` scripts?
-If yes, add:
-
-```
-Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)
-Bash(~/git/defra/trade-imports-workspace/tools/<name>/*:*)
-```
-
-to `.claude/settings.json`. CREATE mode generates the entries as
-part of scaffolding; AUDIT mode checks for missing entries.
+If yes, `.claude/settings.json` needs the allow entry
+`Bash(tools/<name>/*)`. CREATE mode generates it as part
+of scaffolding (the `allowlist_entries` of
+`tim skill scaffold --run-id <name> --dry-run --json`); AUDIT mode checks for missing
+entries.
 
 ## Pattern 9 (companion): Prose hygiene
 
@@ -229,11 +226,11 @@ hit a line count.
 ## Cross-cutting conventions
 
 - **Path conventions** — literal
-  `~/git/defra/trade-imports-workspace/...` in LLM-typed
+  `repos/<repo>/...`, `docs/...`, `workareas/...` in LLM-typed
   prose. No env vars. See
   [`docs/agent-skills.md`](../../agent-skills.md).
 - **Worker fan-out** — `subagent_type: general-purpose` with a
-  `Follow the instructions in ~/git/.../references/<NAME>.md.`
+  `Follow the instructions in .claude/skills/<owner>/references/<NAME>.md.`
   prompt. Not custom subagent types (they trigger the no-write
   guardrail). Every spawn prompt carries the three items in §5.
 - **Rendered markdown from JSON** — when state is JSON, the

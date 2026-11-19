@@ -23,11 +23,11 @@ step.
 
 ## Path conventions
 
-Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-workspace/workareas/`. Bash
-expands `~` automatically. Skill-internal references stay
+Cross-workspace paths are relative to the workspace root —
+`tools/<domain>/`,
+`docs/best-practices/`,
+`workareas/`. Bash
+runs from the workspace root. Skill-internal references stay
 relative (`references/<NAME>.md`, `assets/<name>`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
@@ -68,13 +68,13 @@ cannot write to Grafana, OpenSearch, the CDP Portal or Slack: the dev
 Grafana needs a signed-in Editor to write, and CDP issues no
 service-account tokens. For Steps 4 and 5 Claude writes the dashboard
 JSON and the alert build sheet to
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/`;
+`workareas/ticket-planning/<ticket>/grafana/`;
 for Step 6 it gives the exact messages. The developer does the Grafana,
 Portal and Slack parts, and Claude records what they report back.
 
 A run takes days and several sessions. Its progress lives in the
 ticket's plan,
-`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/plan.md`:
+`workareas/ticket-planning/<ticket>/plan.md`:
 add the completion block below to it at the end of each session, and
 read it first in the next one. If the run did not start from the
 `ticket` skill there is no plan yet, so create the file (and its

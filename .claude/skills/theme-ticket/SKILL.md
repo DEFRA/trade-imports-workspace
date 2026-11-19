@@ -56,11 +56,12 @@ points. Nothing here waits for a person.
 | The theme merges to `main` | MERGE | Regenerate against `main` so the spec links do not point at a deleted branch, then status → `Deskcheck`. |
 
 **Why the loop itself does not call this.** The theme builds run
-`lifecycle: "branch"`, which BUILD.md guarantees "makes no Jira call of any
-kind" and which "refuses a value" in any Jira field. Driving a ticket from
-inside the loop would break that contract. The orchestrating session, which
-launches the loop per theme, runs START before it and WRITE after it instead —
-same effect, contract intact. A programme's own
+`lifecycle: "branch"`, which raises no ticket, moves no status and "refuses a
+value" in any Jira field. Its one Jira step is claiming the ticket in the
+branch name before the first row: assigning it to the runner and moving it
+onto the board. Statuses and descriptions stay outside the loop: the
+orchestrating session, which launches the loop per theme, runs START before it
+and WRITE after it. A programme's own
 `workareas/<workarea>/themes/HOW-TO-BUILD.md` is where those steps belong, next
 to the phrase that starts each theme's loop.
 

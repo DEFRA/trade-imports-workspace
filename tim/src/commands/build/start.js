@@ -5,6 +5,7 @@ import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { runBuildStart } from '../../build/start.js'
+import { resolveBoardId } from '../jira/board-id.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
@@ -37,10 +38,6 @@ const startOptionsSchema = z.object({
   ),
   inDevStatus: required('--in-dev-status', '"In Dev"'),
   doneStatus: required('--done-status', 'Done'),
-  board: required('--board', '13780').regex(
-    /^\d+$/,
-    '--board must be the numeric board id, such as 13780.'
-  ),
   repos: z
     .string()
     .trim()
@@ -184,7 +181,7 @@ export const registerStart = (build, timVersion) =>
     )
     .option(
       '--board <id>',
-      'The numeric id of the board tickets are moved onto'
+      "The numeric id of the board tickets are moved onto (defaults to repos.json's jiraBoard)"
     )
     .option(
       '--repos <keys>',
@@ -195,7 +192,7 @@ export const registerStart = (build, timVersion) =>
     )
     .addHelpText(
       'after',
-      '\nExample:\n  tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 --in-dev-status "In Dev" --done-status Done --board 13780 --json'
+      '\nExample:\n  tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 --in-dev-status "In Dev" --done-status Done --json'
     )
     .action(async function startAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -209,8 +206,11 @@ export const registerStart = (build, timVersion) =>
           epic: opts.epic,
           inDevStatus: opts.inDevStatus,
           doneStatus: opts.doneStatus,
-          board: opts.board,
           repos: opts.repos
+        })
+        const board = resolveBoardId({
+          board: opts.board,
+          workspace: globalOpts.workspace
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
@@ -226,7 +226,7 @@ export const registerStart = (build, timVersion) =>
             epic: parsed.epic,
             inDevStatus: parsed.inDevStatus,
             doneStatus: parsed.doneStatus,
-            board: Number(parsed.board),
+            board: Number(board),
             ...(parsed.repos ? { repoOrder: parsed.repos.split(',') } : {})
           },
           jira: () => createJiraClient()

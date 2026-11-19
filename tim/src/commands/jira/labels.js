@@ -1,28 +1,14 @@
-import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
-import { TimError } from '../../errors.js'
 import { makeRunAction } from '../_run-action.js'
+import { resolveBoardId } from './board-id.js'
 import { exitCodeForBoardError, readBoard } from './board-read.js'
-
-const optionsSchema = z.object({
-  board: z
-    .string({ error: 'Give --board <id>, such as 13780.' })
-    .trim()
-    .regex(/^\d+$/, 'Give --board as a number, such as 13780.')
-})
 
 /**
  * @param {object} opts
  * @returns {{board: string}}
- * @throws {TimError} USAGE when `--board` is missing or not a number
+ * @throws {TimError} USAGE when `--board` is not a number, or is left out and `repos.json` sets no `jiraBoard`
  */
-export const parseLabelsOptions = (opts) => {
-  const result = optionsSchema.safeParse(opts)
-  if (!result.success) {
-    throw new TimError('USAGE', result.error.issues[0].message)
-  }
-  return { board: result.data.board }
-}
+export const parseLabelsOptions = (opts) => ({ board: resolveBoardId(opts) })
 
 /**
  * How often each label appears in a board's backlog, most used first.
@@ -59,10 +45,13 @@ export const register = (jira, { timVersion }) => {
     .description(
       "Count the labels on the issues in a board's backlog, most used first, one '<count> <label>' line each"
     )
-    .option('--board <id>', 'Agile board id, e.g. 13780')
+    .option(
+      '--board <id>',
+      "Agile board id, e.g. 13780 (defaults to repos.json's jiraBoard)"
+    )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim jira labels --board 13780\n  tim jira labels --board 13780 --json'
+      '\nExamples:\n  tim jira labels\n  tim jira labels --board 13780 --json'
     )
     .action(
       makeRunAction({

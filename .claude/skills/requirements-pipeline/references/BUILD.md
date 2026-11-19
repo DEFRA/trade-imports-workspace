@@ -37,7 +37,7 @@ workspace     the root of the workspace clone this session runs in, as a tilde
               null makes the run resolve it from the session folder
 workarea      path under workareas/ holding backlog.json, e.g. shared/my-programme
 lifecycle     full (default) | branch. branch builds onto one existing
-              long-lived branch with no Jira and no merge: see "Branch
+              long-lived branch, raising no ticket and merging nothing: see "Branch
               lifecycle" below. Use it only when the user names such a branch
 branch        full: the BASE branch every increment cuts its own off and
               merges back into. Default main.
@@ -733,11 +733,19 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, stopped}`:
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`:
 one entry per increment it attempted, each with its `outcome`, one entry per theme whose spec it
 checked, the checks left for whoever reviews a finished theme, one entry per theme checked for
-signed-off changes (branch lifecycle), every review finding verification refuted, and one
-`stopped` saying which condition ended the run. Do not trust that report on its own.
+signed-off changes (branch lifecycle), every review finding verification refuted, what claiming
+the run's ticket did, and one `stopped` saying which condition ended the run. Do not trust that
+report on its own.
+
+**The run's ticket.** Before any row the loop assigns the run's ticket to you and moves it onto
+the board: `epic` under the full lifecycle, or the Jira key in the branch name under the branch
+lifecycle. Both are no-ops when already so. A `ticketClaim` with `problems` did not stop the
+run: report each problem, and fix it by hand with `tim jira assign <key> me --confirm` and
+`tim jira move-to-board <key> --confirm`. The mechanics are in
+[`../workflow/README.md`](../workflow/README.md#claiming-the-runs-ticket).
 
 **The Behaviour Spec.** Every row keeps `openspec/` current, whatever its repos: its plan's
 section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
@@ -1316,14 +1324,19 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 
 ### What it never does
 
-- It makes no Jira call of any kind. There is no ticket and no board, so `jiraProject`, `epic`,
-  `jiraInDevStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
-  `null`. The loop refuses a value in any of them, because a value would suggest it governs the run.
+- It raises no ticket and moves no status. No row gets a ticket, so `jiraProject`, `epic`, `jiraInDevStatus`,
+  `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as `null`. The loop
+  refuses a value in any of them, because a value would suggest it governs the run.
 
-  A theme built this way still gets its Jira tickets, from outside the loop: the orchestrating session runs the
+  Its one Jira step is claiming the theme's ticket before the first row: when `branch` carries a Jira key
+  (`feat/EUDPA-696-overview-and-review`), the loop assigns that ticket to you and moves it onto the workspace's
+  board (`jiraBoard` in `repos.json`). Both are no-ops when already so, and a failure is reported in
+  `ticketClaim`, never a stop. A `NO_JIRA` branch claims nothing.
+
+  Everything else about the theme's tickets happens outside the loop: the orchestrating session runs the
   `theme-ticket` skill before it ("the build loop is starting on `<theme>`" — statuses to In Dev) and after it
   ("write the business tickets for `<theme>`" — one Story per service domain, acceptance criteria copied from
-  `openspec/`). Keeping it outside is what preserves this guarantee.
+  `openspec/`).
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
   a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can

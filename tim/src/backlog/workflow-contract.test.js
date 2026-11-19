@@ -263,12 +263,39 @@ const signedOffAnswer = (signedOffAnswers, label) => {
   return / signed off$/.test(label) ? SIGNED_OFF_CLEAN : null
 }
 
+const TICKET_CLAIM_LABEL = 'ticket claim'
+const isTicketClaim = (label) => label === TICKET_CLAIM_LABEL
+
+const timEnvelope = (result) => ({
+  exitCode: 0,
+  stdout: JSON.stringify({
+    ok: true,
+    schema_version: 1,
+    tim_version: '0.0.0',
+    result,
+    errors: []
+  })
+})
+
+const TICKET_CLAIMED = {
+  assign: timEnvelope({ mode: 'unchanged', key: 'EUDPA-1' }),
+  moveToBoard: timEnvelope({ mode: 'unchanged', key: 'EUDPA-1' })
+}
+
+const CLAIMED_RESULT = {
+  key: 'EUDPA-1',
+  assign: 'unchanged',
+  moveToBoard: 'unchanged',
+  problems: []
+}
+
 const answeringRunLease = (
   answers,
   leaseAnswers = {},
   themeAnswers = {},
   planAnswers = {},
-  signedOffAnswers = {}
+  signedOffAnswers = {},
+  claimAnswer = TICKET_CLAIMED
 ) => {
   let acquires = 0
   const acquireAnswer = () => {
@@ -281,12 +308,14 @@ const answeringRunLease = (
       ? acquireAnswer()
       : (leaseAnswers.release ?? LEASE_RELEASED)
   const answerOwnStage = (label) => {
+    if (isTicketClaim(label)) return claimAnswer
     if (isRunLease(label)) return leaseAnswer(label)
     if (isPlanCheck(label)) return planCheckAnswer(planAnswers, label)
     if (isSignedOffStage(label)) return signedOffAnswer(signedOffAnswers, label)
     return themeAnswer(themeAnswers, label)
   }
   const isOwnStage = (label) =>
+    isTicketClaim(label) ||
     isRunLease(label) ||
     isThemeCheck(label) ||
     isPlanCheck(label) ||
@@ -310,7 +339,7 @@ const answeringRunLease = (
 const stageLabels = (run) =>
   run.agents
     .map((entry) => entry.options.label)
-    .filter((label) => !isRunLease(label))
+    .filter((label) => !isRunLease(label) && !isTicketClaim(label))
 
 const modelOf = (run, label) =>
   run.agents.find((entry) => entry.options.label === label).options.model
@@ -320,11 +349,11 @@ const promptOf = (run, label) =>
 
 const runLoop = (
   path,
-  { answers = [], lease, themes, plans, signedOff, ...options } = {}
+  { answers = [], lease, themes, plans, signedOff, claim, ...options } = {}
 ) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease, themes, plans, signedOff)
+    answers: answeringRunLease(answers, lease, themes, plans, signedOff, claim)
   })
 
 const startAnswer = (result) => ({
@@ -1269,6 +1298,7 @@ describe('increment-build-loop', () => {
       signedOffChecks: [],
       specChecks: [],
       refutedFindings: [],
+      ticketClaim: null,
       stopped: {
         reason: 'no-buildable',
         detail: 'the increments list is built out'
@@ -1785,6 +1815,7 @@ describe('increment-build-loop', () => {
         signedOffChecks: [],
         specChecks: [],
         refutedFindings: [],
+        ticketClaim: CLAIMED_RESULT,
         stopped: {
           reason: 'ticket-failed',
           detail:
@@ -4804,8 +4835,14 @@ describe('increment-build-loop', () => {
           const run = await runFrom(null)
 
           expect(
-            run.agents.map((entry) => entry.options.label).slice(0, 4)
-          ).toEqual(['workspace', 'preflight', ACQUIRE_LABEL, 'inc-900 start'])
+            run.agents.map((entry) => entry.options.label).slice(0, 5)
+          ).toEqual([
+            'workspace',
+            'preflight',
+            ACQUIRE_LABEL,
+            TICKET_CLAIM_LABEL,
+            'inc-900 start'
+          ])
         })
 
         test('tells the lease taker to start the stack from local source under the run’s holder', async () => {
@@ -4893,6 +4930,7 @@ describe('increment-build-loop', () => {
               signedOffChecks: [],
               specChecks: [],
               refutedFindings: [],
+              ticketClaim: null,
               stopped: {
                 reason: 'stack-held',
                 detail:
@@ -5258,6 +5296,7 @@ describe('increment-build-loop', () => {
             signedOffChecks: [],
             specChecks: [],
             refutedFindings: [],
+            ticketClaim: CLAIMED_RESULT,
             stopped: {
               reason: 'no-buildable',
               detail: 'tim build start found nothing buildable in the backlog'
@@ -6325,6 +6364,155 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
+  describe('claiming the run’s ticket', () => {
+    const NOTHING_TO_BUILD = startAnswer(
+      startedResult({ id: null, ...NOTHING_STARTED })
+    )
+    const BRANCH_RUN_ARGS = {
+      ...BASE_ARGS,
+      lifecycle: 'branch',
+      e2e: 'ci',
+      jiraProject: null,
+      epic: null,
+      jiraInDevStatus: null,
+      jiraDoneStatus: null,
+      jiraBoard: null,
+      requireApproval: null,
+      approvalWaitMinutes: null
+    }
+
+    const runFull = (claim) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, e2e: 'ci' },
+        claim,
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          NOTHING_TO_BUILD
+        ]
+      })
+
+    const runOnBranch = (branch) =>
+      runLoop(scriptPath, {
+        args: { ...BRANCH_RUN_ARGS, branch },
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }]
+      })
+
+    const claimPrompts = (run) =>
+      run.agents
+        .filter(({ options }) => options.label === TICKET_CLAIM_LABEL)
+        .map(({ prompt }) => prompt)
+
+    test('assigns the epic to the runner and moves it onto the configured board before the first row starts', async () => {
+      const run = await runFull()
+      const [prompt] = claimPrompts(run)
+
+      expect({
+        order: run.agents.map(({ options }) => options.label),
+        assigns: prompt.includes(
+          '`tim jira assign EUDPA-1 me --confirm --workspace ~/ws --json`'
+        ),
+        moves: prompt.includes(
+          '`tim jira move-to-board EUDPA-1 --board 13780 --confirm --workspace ~/ws --json`'
+        ),
+        claim: run.result.ticketClaim
+      }).toEqual({
+        order: ['workspace', 'preflight', TICKET_CLAIM_LABEL, 'inc-900 start'],
+        assigns: true,
+        moves: true,
+        claim: CLAIMED_RESULT
+      })
+    })
+
+    test('reports what tim did for each step', async () => {
+      const run = await runFull({
+        assign: timEnvelope({ mode: 'assigned', key: 'EUDPA-1' }),
+        moveToBoard: timEnvelope({ mode: 'moved', key: 'EUDPA-1' })
+      })
+
+      expect({
+        claim: run.result.ticketClaim,
+        logged: run.logs.includes(
+          'increment-build-loop: EUDPA-1, from config.epic: assignee assigned, board moved'
+        )
+      }).toEqual({
+        claim: {
+          key: 'EUDPA-1',
+          assign: 'assigned',
+          moveToBoard: 'moved',
+          problems: []
+        },
+        logged: true
+      })
+    })
+
+    test('reports a failed claim and carries on with the run', async () => {
+      const run = await runFull({
+        assign: {
+          exitCode: 2,
+          stdout: JSON.stringify({
+            ok: false,
+            schema_version: 1,
+            tim_version: '0.0.0',
+            errors: [
+              {
+                code: 'AUTH',
+                message:
+                  'Set JIRA_USER and JIRA_TOKEN to authenticate with Jira.'
+              }
+            ]
+          })
+        },
+        moveToBoard: { exitCode: 1, stdout: 'Killed' }
+      })
+
+      expect({
+        claim: run.result.ticketClaim,
+        stopped: run.result.stopped.reason,
+        logged: run.logs.some((line) =>
+          line.startsWith('increment-build-loop: COULD NOT CLAIM EUDPA-1')
+        )
+      }).toEqual({
+        claim: {
+          key: 'EUDPA-1',
+          assign: null,
+          moveToBoard: null,
+          problems: [
+            'assigning EUDPA-1 to you failed: Set JIRA_USER and JIRA_TOKEN to authenticate with Jira.',
+            'moving EUDPA-1 onto the board failed: printed no JSON (exit 1): Killed'
+          ]
+        },
+        stopped: 'no-buildable',
+        logged: true
+      })
+    })
+
+    test('claims the ticket a branch run’s branch name carries, on the workspace’s own board', async () => {
+      const run = await runOnBranch('feat/EUDPA-696-overview-and-review')
+      const [prompt] = claimPrompts(run)
+
+      expect({
+        assigns: prompt.includes(
+          '`tim jira assign EUDPA-696 me --confirm --workspace ~/ws --json`'
+        ),
+        moves: prompt.includes(
+          '`tim jira move-to-board EUDPA-696 --confirm --workspace ~/ws --json`'
+        )
+      }).toEqual({ assigns: true, moves: true })
+    })
+
+    test('claims nothing on a branch whose name carries no Jira key', async () => {
+      const run = await runOnBranch('feat/NO_JIRA-frontend-alignment')
+
+      expect({
+        claims: claimPrompts(run).length,
+        logged: run.logs.includes(
+          'increment-build-loop: no ticket to claim — the branch name feat/NO_JIRA-frontend-alignment names no Jira key'
+        )
+      }).toEqual({ claims: 0, logged: true })
+    })
+  })
+
   describe('under the branch lifecycle', () => {
     const WORKING_BRANCH = 'feat/NO_JIRA-frontend-alignment'
     const repo = (name) => ({
@@ -6405,7 +6593,7 @@ describe('increment-build-loop', () => {
         })
 
         expect(run.error.message).toBe(
-          'increment-build-loop: lifecycle "branch" makes no Jira call and merges nothing, so epic, requireApproval must be null — got epic="EUDPA-1", requireApproval=false'
+          'increment-build-loop: lifecycle "branch" raises no ticket and merges nothing, so epic, requireApproval must be null — got epic="EUDPA-1", requireApproval=false'
         )
         expect(run.agents).toEqual([])
       })

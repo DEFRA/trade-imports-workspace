@@ -224,7 +224,7 @@ missing key. The first log line is the resolved configuration.
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
 | `branch` | Under `lifecycle: 'full'`, the base branch each increment's own branch is cut from and merged back into. Under `lifecycle: 'branch'`, the working branch itself, which already exists in every backlog repo; `main` and `master` are refused |
-| `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch` with no Jira and no merge). See [The branch lifecycle](#the-branch-lifecycle) |
+| `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch`, raising no ticket and merging nothing). See [The branch lifecycle](#the-branch-lifecycle) |
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex`, under either lifecycle — see below |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
@@ -232,7 +232,7 @@ missing key. The first log line is the resolved configuration.
 | `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
 | `jiraInDevStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
 | `jiraDoneStatus` | The board's finished status, set after the merge with `tim jira transition <KEY> "<status>"`. `null` under the branch lifecycle |
-| `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
+| `jiraBoard` | Numeric id of the board raised tickets, and the run's own ticket, are moved onto — 13780 is EUDPA, the same as `jiraBoard` in `repos.json`. `null` under the branch lifecycle, where tim takes the board from `repos.json` |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
@@ -293,11 +293,12 @@ args: `backlog.json` carries the status, ticket, branch, PRs and the last failed
 the row picks up at the stage that attempt reached — see
 [Resuming a row part-way through](#resuming-a-row-part-way-through).
 
-The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, stopped}`, where
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`, where
 `specChecks` holds one entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)),
 `reviewChecks` the checks left for whoever reviews a finished theme, `signedOffChecks` one entry per theme-end
 signed-off check (branch lifecycle), `refutedFindings` every finding verification refuted (see
-[Findings by kind](#findings-by-kind)), and `stopped` is `{reason, detail}`. It stops:
+[Findings by kind](#findings-by-kind)), `ticketClaim` what [claiming the run's ticket](#claiming-the-runs-ticket)
+did, and `stopped` is `{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
@@ -952,6 +953,31 @@ log names the preset and what it runs, once for the run and once per increment, 
 whose rigour was not the run's carries it in the result — whose `findings` then count
 `{unverified, rejected}` in place of `{confirmed, refuted}`, because no verifier read them.
 
+### Claiming the run's ticket
+
+Once per run, after the stack lease and before the first row, one light agent (label `ticket
+claim`) gives the run's ticket to the person running it and puts it on the board:
+
+```
+tim jira assign <key> me --confirm --workspace <root> --json
+tim jira move-to-board <key> [--board <jiraBoard>] --confirm --workspace <root> --json
+```
+
+- **The ticket** is `epic` under the full lifecycle. Under the branch lifecycle it is the
+  Jira key in `branch` (`feat/EUDPA-696-overview-and-review` gives `EUDPA-696`). A branch
+  with no key, such as `feat/NO_JIRA-…`, claims nothing and logs why.
+- **The board** is `jiraBoard` under the full lifecycle. The branch lifecycle passes no
+  `--board`, so tim uses the workspace's board, `jiraBoard` in `repos.json`.
+- **Both commands are idempotent.** A ticket already assigned to the runner, or already off
+  the board's backlog, comes back `unchanged`.
+- **A failure never stops the run.** It is logged as `COULD NOT CLAIM <key>` and carried in
+  the result's `ticketClaim`: `{key, assign, moveToBoard, problems}`, where `assign` and
+  `moveToBoard` are tim's `mode` (`assigned`, `moved` or `unchanged`) and `null` on failure.
+  `ticketClaim` is `null` when no claim ran: a plan-only run, a run with no key, or one that
+  stopped before any row.
+
+Rows are claimed separately: `tim build start` moves each row's own ticket onto the board.
+
 ### The workspace stack lease
 
 The workspace stack is one compose project per machine, and a run that needs it holds it for
@@ -1114,13 +1140,13 @@ Per increment, codex mode is at most `40 + 3g` agents against Claude's `32 + 3g`
 ### The branch lifecycle
 
 `lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already carries an open PR in
-each repo, with no Jira and no merge. When to use it, what it never does and the stop reasons it adds are in
+each repo, raising no ticket and merging nothing. When to use it, what it never does and the stop reasons it adds are in
 [`../references/BUILD.md`](../references/BUILD.md#branch-lifecycle). The stages differ from the full lifecycle
 like this:
 
 | Stage | Under `lifecycle: 'branch'` |
 |---|---|
-| Start | Does not run. No Jira call of any kind, anywhere in the run. A drain derives each id with `tim backlog next` in a one-command agent |
+| Start | Does not run, and no row gets a ticket. The only Jira calls in the run are [claiming the run's ticket](#claiming-the-runs-ticket), the one the branch name carries. A drain derives each id with `tim backlog next` in a one-command agent |
 | Branch | Creates nothing. Asserts every repo in the envelope's `repos` (not only the row's) is on `branch`, clean, not mid-merge and fast-forwarded to its origin (`fetch`, then `merge --ff-only`), and that the envelope names exactly the configured repos. Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, which the script checks: a merge into a repo the row does not build stops the run as `row-invalid` |
 | Baseline, Ladder | Run only the row's `gatePhases` (all three when it has none; none for `[]`). A ladder without `e2e` does not fail for want of an end-to-end proof: that proof is another row's |
 | Merge start | Runs only for a row with `merge`, between plan and implement. Fetches and runs `git merge --no-ff --no-commit <ref>` per repo, and reports the conflicted paths. The planner previews the same merge with `git merge-tree` and plans every resolution, reading a resolutions file where the row's notes point at one |

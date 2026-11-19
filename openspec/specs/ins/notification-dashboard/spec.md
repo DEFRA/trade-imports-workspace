@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed.
+The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed. Each signed-in organisation sees only its own notifications in that list.
 
 ## Requirements
 
@@ -12,14 +12,14 @@ The system MUST show, as the signed-in landing page, a list of notifications spa
 
 #### Scenario: Notifications of every status appear together, deleted ones excluded
 **ID**: SCN-INS-DASH-001-A
-- **GIVEN** notifications exist in SUBMITTED, DRAFT, AMEND and soft-deleted states
+- **GIVEN** the user's organisation has notifications in SUBMITTED, DRAFT, AMEND and soft-deleted states
 - **WHEN** a signed-in user opens the dashboard
 - **THEN** the SUBMITTED, DRAFT and AMEND notifications are all shown, each with its reference number and status
 - **AND** the soft-deleted notification does not appear
 
 #### Scenario: A row shows the notification's origin country, commodity and arrival date
 **ID**: SCN-INS-DASH-001-B
-- **GIVEN** a notification has been submitted with an arrival date entered
+- **GIVEN** the user's organisation has submitted a notification with an arrival date entered
 - **WHEN** a signed-in user opens the dashboard
 - **THEN** its row shows its reference number, status, origin country, commodity and the arrival date entered
 - **AND** its row offers a 'View' link
@@ -46,7 +46,7 @@ The system MUST let the user search the dashboard by complete notification refer
 
 #### Scenario: Searching by complete reference returns only that notification
 **ID**: SCN-INS-DASH-003-A
-- **GIVEN** more than one notification exists
+- **GIVEN** the user's organisation has more than one notification
 - **WHEN** the user searches by one notification's complete reference number
 - **THEN** only that notification is shown
 
@@ -97,3 +97,25 @@ The system MUST offer a "Create new" button under the dashboard heading and abov
 - **GIVEN** the notifications list cannot be loaded
 - **WHEN** the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
 - **THEN** "Create new" is still offered under the dashboard heading
+
+### Requirement: The dashboard lists and searches only the signed-in user's organisation's notifications
+**ID**: REQ-INS-DASH-006
+The dashboard MUST list and search only notifications owned by the signed-in user's organisation; a notification owned by another organisation MUST NOT be shown or revealed. A notification list request without an organisation MUST be refused and MUST NOT return any notifications.
+
+#### Scenario: Another organisation's submitted notification is absent from the list
+**ID**: SCN-INS-DASH-006-A
+- **GIVEN** organisation A has submitted a notification
+- **WHEN** organisation B opens the dashboard
+- **THEN** organisation A's notification is not shown
+
+#### Scenario: Another organisation's reference search returns no results
+**ID**: SCN-INS-DASH-006-B
+- **GIVEN** organisation A has submitted a notification
+- **WHEN** organisation B searches by organisation A's complete reference number
+- **THEN** the "No notifications found" message is shown, as for a reference that matches nothing
+
+#### Scenario: A list request with no organisation is refused
+**ID**: SCN-INS-DASH-006-C
+- **GIVEN** notifications exist
+- **WHEN** the notification list is requested with no organisation
+- **THEN** the request is refused and no notifications are returned

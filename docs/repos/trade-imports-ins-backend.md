@@ -10,16 +10,15 @@ Aggregates notification events into a cross-journey read model for the Import No
 
 **Owns**
 
-- The `notifications` collection in the `trade-imports-ins-backend` MongoDB database: one `AggregatedNotification` per aggregate id (`aggregateVersion`, `referenceNumber`, `status`, `originCountry`, `commodity`, `arrivalDate`, `lastUpdated`).
+- The `notifications` collection in the `trade-imports-ins-backend` MongoDB database: one `AggregatedNotification` per aggregate id (`aggregateVersion`, `referenceNumber`, `organisationId`, `status`, `originCountry`, `commodity`, `arrivalDate`, `lastUpdated`).
 - Event ingestion: an SQS listener validates the message (FIFO message group id is the aggregate id, JSON body, known `eventType`) and upserts. The upsert is a single atomic operation that applies only when the incoming `aggregateVersion` is higher than the stored one, so out-of-order or redelivered events converge.
-- Read API `GET /notifications` with `page` (1-based), `sort` (`arrivalDate` or `lastUpdated`, asc/desc; default `arrivalDate,desc`) and exact `referenceNumber` match. Notifications with status `DELETED` are excluded.
+- Read API `GET /notifications` with `page` (1-based), `sort` (`arrivalDate` or `lastUpdated`, asc/desc; default `arrivalDate,desc`), exact `referenceNumber` match, and required header `Trade-Imports-Organisation-Id` (caller organisation). Lists and reference searches return only that organisation's notifications. Notifications with status `DELETED` are excluded.
 - Retry versus dead-letter classification of bad messages (`SqsRetryableException`, `SqsNonRetryableException`).
 
 **Does not own**
 
 - The notification source of truth or its event publication. Events originate elsewhere (see Integrations); this service only reads them, and its data is derived and read-only.
 - Any write API. The only controller is `AggregatedNotificationController` (GET).
-- Organisation scoping: the stored model has no organisation id and the list is unscoped (ins-frontend notes this is deferred to a later ticket).
 - Authentication: no Spring Security dependency was found in the pom; no auth filter in `src/main` (Unclear from code whether it relies on network policy).
 - Address data (address-book) and reference data.
 

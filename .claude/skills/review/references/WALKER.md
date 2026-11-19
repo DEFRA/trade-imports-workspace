@@ -8,6 +8,23 @@ order, then loop into per-item slow-track for anything marked Discuss.
 {repo}"` (repo filter), or `"walk review EUDPA-XXXXX --major"`
 (severity filter).
 
+**Programme scope (default):** `walk review EUDPA-XXXXX` with **no**
+`{repo}` means **every repository** that has a programme PR for the
+ticket — the full set in
+`workareas/reviews/EUDPA-XXXXX/.review-meta.json` `prs[]` (same scope as
+a fresh review). Load pending items from **all** `items.{repo}.json`
+files (omit `--repo` on `review-items.sh`). Present **one** combined
+table ordered repo-by-repo (see Multi-repo note). Do **not** walk only
+the repo the user last edited or the repo named in the chat unless they
+explicitly filter: `walk review EUDPA-XXXXX trade-imports-ins-backend`.
+
+When the user is walking **another reviewer's posted PR comment**
+(e.g. `@amieljemei`), every programme PR's open rows must be in
+`items.{repo}.json` before triage. If a repo with an open PR has no
+items file or an empty file while others do, **stop** and say which
+repos are missing — import the rows from the GitHub comment (or re-run
+`start-review.sh` / refresh) for those repos; do not triage a subset.
+
 Items schema: `assets/items-table.md`.
 
 ## Defaults by kind
@@ -39,6 +56,16 @@ verifier and judge apply the same defaults.
 
 ## Step 1: Load the work list
 
+Read programme repos (when not repo-filtered):
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX
+```
+
+Expect one `items.{repo}.json` per programme PR unless that repo had zero
+findings. The walk title line must name **all repos in scope**, e.g.
+`Walking review EUDPA-714 (7 repos) — N pending items`.
+
 ```bash
 tim review items list EUDPA-XXXXX --filter pending --json
 ```
@@ -46,7 +73,7 @@ tim review items list EUDPA-XXXXX --filter pending --json
 The items are the envelope's `result`.
 
 Apply trigger filters:
-- `{repo}` → add `--repo {repo}`
+- `{repo}` → add `--repo {repo}` (single-repo walk only)
 - `--critical` / `--major` → filter the JSON output for matching severities
 
 Hand-marked rows (where the disposition was set directly via
@@ -190,6 +217,8 @@ they just set:
 ```bash
 tim review items render EUDPA-XXXXX --repo {repo} --write
 ```
+
+When the walk was repo-filtered, add `--repo {repo}`.
 
 Print the summary:
 

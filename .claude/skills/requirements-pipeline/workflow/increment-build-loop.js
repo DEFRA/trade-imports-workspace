@@ -5259,7 +5259,7 @@ const postSpecDiffComment = async (id, ticketKey, mergedCommits, prs) => {
 }
 
 const themeFilter = (id, builtIds) =>
-  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique), commits: ([$rows[] | (.commit // "") | splits(" +") | select(length > 0)] | unique)}`
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
 
 const readTheme = (id, builtIds) =>
   agent(
@@ -5387,24 +5387,34 @@ const describePreexisting = ({ prefix, scenarios }) => `${scenarios.length} unde
 
 const themeSpecDiffLog = (theme) => specCheckLog(theme, 'all', 'diff')
 
-const readThemeSpecDiff = (id, theme, commits) =>
+// `tim spec diff` reads the workspace repo's git alone, and openspec/ lives
+// there, so the range is the workspace's own. A row's `commit` field holds the
+// service repos' shas, which this command can never resolve.
+const THEME_SPEC_DIFF_RANGE = `origin/main...HEAD`
+
+const readThemeSpecDiff = (id, theme) =>
   agent(
-    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly two
-commands, one Bash call each, and report what the second printed. That is your whole job.
+    `You are the SPEC DIFF READER for theme \`${theme}\`: its last row to build, ${id}, has landed. Run exactly three
+commands, one Bash call each, and report what the third printed. That is your whole job.
 ${BASE_GUARDRAILS}
-1. \`tim spec diff ${commits.map((sha) => `--commit ${sha}`).join(' ')} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
-2. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, errors}' ${themeSpecDiffLog(theme)}\`
-Report the second command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
+1. \`git -C ${TILDE} fetch origin main\`
+2. \`tim spec diff --range ${THEME_SPEC_DIFF_RANGE} --workspace ${TILDE} --json > ${themeSpecDiffLog(theme)} 2>&1\`
+3. \`jq -c '{ok, touched: .result.touched, skipped: .result.skipped, resolvedNone: .result.resolvedNone, errors}' ${themeSpecDiffLog(theme)}\`
+Report the third command's exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never
 summarise or correct it, and run nothing else. The loop reads the JSON itself.`,
     light({ label: `spec diff:${theme}`, phase: 'Done', schema: COMMAND_OUTPUT_SCHEMA })
   )
 
-const themeOwnedScenarios = async (id, theme, commits) => {
-  if (commits.length === 0) return { owned: [], skipped: [] }
-  const answer = await readThemeSpecDiff(id, theme, commits)
+const themeOwnedScenarios = async (id, theme) => {
+  const answer = await readThemeSpecDiff(id, theme)
   const parsed = jsonEnvelopeOf(answer?.stdout)
   if (parsed?.ok !== true || !Array.isArray(parsed.touched)) return { owned: null, skipped: [] }
-  return { owned: parsed.touched, skipped: parsed.skipped ?? [] }
+  const skipped = parsed.skipped ?? []
+  // A diff that resolved nothing examined nothing, so its empty `touched` says
+  // nothing about what the theme owns. Reading it as "the theme owns no
+  // scenario" would mark every unproven scenario pre-existing.
+  if (parsed.resolvedNone === true) return { owned: null, skipped }
+  return { owned: parsed.touched, skipped }
 }
 
 const describeSpecPrefix = (entry) =>
@@ -5457,8 +5467,12 @@ const themeSpecCheck = async (id) => {
   }
   const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
   const answer = await checkThemeSpec(id, theme, prefixes)
-  const { owned, skipped } = await themeOwnedScenarios(id, theme, status.commits ?? [])
-  const unknownOwnership = owned === null ? ["the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts"] : []
+  const { owned, skipped } = await themeOwnedScenarios(id, theme)
+  const notFound = skipped.map(({ commit }) => commit)
+  const whyUnknown = notFound.length > 0
+    ? `tim spec diff could not read ${THEME_SPEC_DIFF_RANGE} in the workspace repo (${notFound.join(', ')}), so it examined nothing`
+    : "the run could not read which scenarios the theme added or re-proved (tim spec diff)"
+  const unknownOwnership = owned === null ? [`${whyUnknown}, so every unproven scenario counts`] : []
   const problems = [...unknownOwnership, ...specCheckProblems(answer, prefixes, written, owned)]
   const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
   const preexisting = preexistingGapsOf(checked, owned)
@@ -5473,7 +5487,7 @@ const themeSpecCheck = async (id) => {
     sources,
     problems,
     ...(preexisting.length > 0 ? { preexisting } : {}),
-    ...(skipped.length > 0 ? { commitsNotFound: skipped.map(({ commit }) => commit) } : {})
+    ...(skipped.length > 0 ? { specDiffUnread: skipped.map(({ commit }) => commit) } : {})
   }
   if (problems.length === 0) {
     log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)
@@ -5502,6 +5516,15 @@ ${themeRowsCommand(theme)}
 
 const themeDiffCommand = (key) => `\`git -C ${repoTilde(key)} diff ${THEME_DIFF_BASE}...HEAD -- <path>\``
 
+// The reviewer reads one repo, so a value this repo hardcodes and another owns
+// is invisible to it unless the others are named.
+const themeSiblingRepos = (key) => {
+  const others = REPO_KEYS.filter((other) => other !== key)
+  return others.length === 0
+    ? ''
+    : ` (${others.map((other) => repoTilde(other)).join(', ')})`
+}
+
 const themeReviewPrompt = (id, theme, key) => `You are the THEME ENGINEERING REVIEWER for theme \`${theme}\` in the ${key} repo (\`${repoTilde(key)}\`). Every
 row of the theme is now built on \`${BASE_BRANCH}\`, and ${id} was its last. Each row was reviewed on its own as it was
 built. You read the theme's whole change in this repo at once, for what a row-by-row review cannot see. You are a
@@ -5514,6 +5537,10 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - PATTERNS: one rule written in more than one place; a second mechanism beside one that exists; a piece in a layer
   the repo's docs keep it out of; a pattern extended where its recipe or a sibling was left behind; one concept with
   two names across rows.
+- A COPY OF ANOTHER REPO'S RULE: a list, map or rule this repo spells out for itself that one of the theme's other
+  repos owns${themeSiblingRepos(key)}. Grep those repos for the values before you report, because a copy drifts the
+  moment either side changes, and the drift surfaces somewhere that looks unrelated — a load-test threshold, a page
+  with no option to pick. Report it against the copy, and say which repo owns the original.
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.

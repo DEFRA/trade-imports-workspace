@@ -5468,6 +5468,20 @@ describe('increment-build-loop', () => {
                   notes
                 })
 
+          // The spec diff runs on every theme check, so a test about something
+          // else still needs an answer from it: one that read the range and
+          // found the theme touched no scenario.
+          const TOUCHED_NOTHING = {
+            exitCode: 0,
+            stdout: JSON.stringify({
+              ok: true,
+              touched: [],
+              skipped: [],
+              resolvedNone: false,
+              errors: []
+            })
+          }
+
           const runThemed = ({ status, specCheck, notes }) =>
             runLoop(scriptPath, {
               args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
@@ -5479,7 +5493,8 @@ describe('increment-build-loop', () => {
               ],
               themes: {
                 'inc-901 theme': status,
-                [SPEC_CHECK_LABEL]: specCheck
+                [SPEC_CHECK_LABEL]: specCheck,
+                [`spec diff:${THEME}`]: TOUCHED_NOTHING
               }
             })
 
@@ -5716,15 +5731,19 @@ describe('increment-build-loop', () => {
           })
 
           const SPEC_DIFF_LABEL = `spec diff:${THEME}`
-          const THEME_COMMITS = ['abc1234', 'def5678']
           const COMMITTED = themeStatus({
             rows: 2,
-            otherRepos: ['frontend'],
-            commits: THEME_COMMITS
+            otherRepos: ['frontend']
           })
-          const specDiff = (touched, skipped = []) => ({
+          const specDiff = (touched, skipped = [], resolvedNone = false) => ({
             exitCode: 0,
-            stdout: JSON.stringify({ ok: true, touched, skipped, errors: [] })
+            stdout: JSON.stringify({
+              ok: true,
+              touched,
+              skipped,
+              resolvedNone,
+              errors: []
+            })
           })
           const UNPROVEN = {
             ...CLEAN,
@@ -5764,15 +5783,36 @@ describe('increment-build-loop', () => {
             })
           })
 
-          test('asks tim spec diff which scenarios every row commit of the theme touched', async () => {
+          test("asks tim spec diff for the workspace's own range, the one repo openspec lives in", async () => {
             const run = await runWithDiff({
               specCheck: UNPROVEN,
               diff: specDiff(['SCN-ORIGIN-009-A'])
             })
 
             expect(promptOf(run, SPEC_DIFF_LABEL)).toContain(
-              '`tim spec diff --commit abc1234 --commit def5678 --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-all-diff.json 2>&1`'
+              '`tim spec diff --range origin/main...HEAD --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-all-diff.json 2>&1`'
             )
+          })
+
+          test('never asks tim spec diff about a row commit, which belongs to a service repo it cannot read', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff(['SCN-ORIGIN-009-A'])
+            })
+
+            expect(promptOf(run, SPEC_DIFF_LABEL)).not.toContain('--commit')
+          })
+
+          test('counts every unproven scenario when the diff resolved nothing, rather than reading it as a theme that touched none', async () => {
+            const run = await runWithDiff({
+              specCheck: UNPROVEN,
+              diff: specDiff([], [{ commit: 'origin/main...HEAD' }], true)
+            })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'tim spec diff could not read origin/main...HEAD in the workspace repo (origin/main...HEAD), so it examined nothing, so every unproven scenario counts',
+              '2 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A, SCN-OLD-001-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json)'
+            ])
           })
 
           test('lists unproven scenarios that predate the theme without stopping', async () => {
@@ -5795,7 +5835,7 @@ describe('increment-build-loop', () => {
                     scenarios: ['SCN-ORIGIN-009-A', 'SCN-OLD-001-A']
                   }
                 ],
-                commitsNotFound: ['def5678']
+                specDiffUnread: ['def5678']
               }
             })
           })
@@ -5804,7 +5844,7 @@ describe('increment-build-loop', () => {
             const run = await runWithDiff({ specCheck: UNPROVEN, diff: null })
 
             expect(run.result.specChecks[0].problems).toEqual([
-              "the run could not read which scenarios the theme's commits added or re-proved (tim spec diff), so every unproven scenario counts",
+              'the run could not read which scenarios the theme added or re-proved (tim spec diff), so every unproven scenario counts',
               '2 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A, SCN-OLD-001-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json)'
             ])
           })
@@ -5940,7 +5980,8 @@ describe('increment-build-loop', () => {
                 get 'inc-901 theme'() {
                   return readings.shift()
                 },
-                [SPEC_CHECK_LABEL]: CLEAN
+                [SPEC_CHECK_LABEL]: CLEAN,
+                [`spec diff:${THEME}`]: TOUCHED_NOTHING
               }
             })
 
@@ -8136,6 +8177,17 @@ describe('increment-build-loop', () => {
           ])
           expect(run.logs).toContain(
             'inc-900: theme origin-pages gets no style review of its whole change — a style reviewer read every row'
+          )
+        })
+
+        test('names a repo’s siblings to its theme reviewer, so a rule another repo owns and this one copies is reachable', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme review:ins')
+
+          expect(prompt).toContain("A COPY OF ANOTHER REPO'S RULE")
+          expect(prompt).toContain('~/ws/repos/trade-imports-animals-frontend')
+          expect(prompt).toContain('~/ws/repos/trade-imports-plants-frontend')
+          expect(prompt).not.toContain(
+            '(~/ws/repos/trade-imports-ins-frontend,'
           )
         })
 

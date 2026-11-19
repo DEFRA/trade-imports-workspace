@@ -89,7 +89,7 @@
     {
       "id": "REQ-INS-AUTH-003",
       "name": "A hidden sign-in through the real Defra ID shows what it returned, and leaves the service's own sign-in alone",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-AUTH-003-A",
@@ -115,9 +115,9 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/auth/idm-sign-in.test.js",
-              "test": "Should show a start page whose button links to the route that goes to IDM",
+              "test": "Should show a start page whose Sign in with Defra ID button links to the route that goes to IDM",
               "strength": "full",
-              "notes": "red-probed by pointing the button elsewhere"
+              "notes": "asserts the button's text and its target; red-probed by pointing the button elsewhere"
             },
             {
               "type": "unit",
@@ -138,17 +138,25 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/auth/idm-sign-in.test.js",
-              "test": "Should show the ID token claims and token response, and say the access token is the ID token",
+              "test": "Should list every ID token claim with its value and the token response, and say the access token is the ID token",
               "strength": "full",
-              "notes": "Bell's code exchange is replaced by injected credentials; the ID token is verified against served keys. Red-probed by dropping the ID token claim rows"
+              "notes": "compares every claim name and shown value with the signed token's payload; the ID token is verified against served keys. Red-probed by rendering a wrong claim value"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/auth/idm-sign-in.test.js",
-              "test": "Should show the access token claims when the access token is not the ID token",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "test": "Should list every access token claim with its value when the access token is not the ID token",
+              "strength": "full",
+              "notes": "compares every claim name and shown value with the access token's payload; red-probed by rendering a wrong claim value"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should exchange the code at IDM, show the token response IDM returned and measure the exchange as idm token-exchange",
+              "strength": "full",
+              "notes": "runs the callback through the IDM Bell strategy against a nocked IDM token endpoint; red-probed by mis-mapping expires_in"
             },
             {
               "type": "unit",
@@ -169,9 +177,9 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/auth/idm-sign-in.test.js",
-              "test": "Should leave an existing service session in the cache and set or clear no service session cookie",
+              "test": "Should leave the caller's service session in the cache and set or clear no service session cookie",
               "strength": "full",
-              "notes": "red-probed by setting the service session cookie in the callback"
+              "notes": "the callback carries a real sealed service session cookie for the cached session; red-probed by clearing the service session cookie in the callback"
             }
           ]
         },
@@ -192,7 +200,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/auth/idm-sign-in.test.js",
-              "test": "Should show the unable to sign in page when the ID token is signed by a key IDM does not serve",
+              "test": "Should show the unable to sign in page, and log the refusal with the state and the IDM ids, when the ID token is signed by a key IDM does not serve",
               "strength": "partial",
               "notes": "the unverifiable-token branch; not red-probed on its own"
             }
@@ -200,7 +208,7 @@
         },
         {
           "id": "SCN-INS-AUTH-003-F",
-          "name": "The signed-in page with no IDM sign-in starts one",
+          "name": "The signed-in page with no IDM sign-in sends the user to the start page",
           "coverage": "full",
           "tests": [
             {
@@ -240,6 +248,21 @@
               "test": "Should show the unable to sign in page, not the signed-out page, and log the error in full, when IDM returns an error to the signed-out page",
               "strength": "full",
               "notes": "red-probed by rendering the signed-out page whatever the query"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-I",
+          "name": "No page of the service links to the IDM sign-in",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should name no IDM sign-in page in any template or module of the service",
+              "strength": "partial",
+              "notes": "reads every template and module under src/server/app for an IDM sign-in path; a link built elsewhere, or from config, would not be caught. Red-probed by adding a template that links to the start page"
             }
           ]
         }

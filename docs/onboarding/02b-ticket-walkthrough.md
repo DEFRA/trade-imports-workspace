@@ -10,7 +10,7 @@ This is the hands-on counterpart to [`02-ticket.md`](02-ticket.md). Where
 that page is the usage-focused tour (what the skill is for, how you trigger
 it, where you decide), this one is a single worked example built from the
 captured logs under
-[`workareas/ticket-skill-demo/`](../../workareas/ticket-skill-demo/) —
+`workareas/ticket-skill-demo/` (not committed) —
 `plan.log`, `implement.log`, `refactor.log`. Every terminal snippet on the
 slides is lifted from those transcripts.
 

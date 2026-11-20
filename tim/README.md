@@ -1,6 +1,6 @@
 # tim — Trade Imports CLI
 
-Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the Docker stack in [`../docker/stack/`](../docker/stack/) itself. Every workspace command is here: `tim --help` lists them all. GitHub work uses the GitHub CLI (`gh`) directly. [`../docs/reference/tools-index.md`](../docs/reference/tools-index.md) lists the few hook scripts left under `../tools/` and `../scripts/`.
+Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the Docker stack in [`../docker/stack/`](../docker/stack/) itself. Every workspace command is here: `tim --help` lists them all. GitHub work uses the GitHub CLI (`gh`) directly. [`../docs/reference/tools-index.md`](../docs/reference/tools-index.md) lists the hook scripts, and the one script and data file left under `../tools/`.
 
 ## Install
 

@@ -40,6 +40,10 @@ const isComposeCall =
     args[0] === 'compose' &&
     words.every((word) => args.includes(word))
 
+/** The service names a `docker compose up` call ends with, sorted. */
+const servicesOf = (upArgs) =>
+  upArgs.filter((arg, index) => index > upArgs.lastIndexOf('always')).sort()
+
 describe('tim docker up', () => {
   test.each(RECORDED.map(({ name }) => [name]))(
     'Should make the recorded run-stack.sh calls and print its output for "%s"',
@@ -147,6 +151,87 @@ describe('tim docker up', () => {
       stderr:
         'error: no services resolved from compose config — the compose files may be invalid\n',
       calls: 1
+    })
+  })
+
+  test.each([
+    [
+      'plants',
+      [
+        'floci',
+        'floci-init',
+        'mongodb',
+        'redis',
+        'trade-imports-address-book',
+        'trade-imports-defra-id-stub',
+        'trade-imports-plants-backend',
+        'trade-imports-plants-frontend',
+        'trade-imports-reference-data',
+        'trade-imports-stub'
+      ]
+    ],
+    [
+      'animals-admin',
+      [
+        'floci',
+        'floci-init',
+        'mongodb',
+        'mssql',
+        'redis',
+        'servicebus-emulator',
+        'toxiproxy',
+        'trade-imports-address-book',
+        'trade-imports-animals-admin',
+        'trade-imports-animals-backend',
+        'trade-imports-defra-id-stub',
+        'trade-imports-dynamics-gateway'
+      ]
+    ]
+  ])(
+    'Should start only the %s services with --domain',
+    async (domain, expected) => {
+      const run = await recordTimStackRun(['up', '--domain', domain])
+      const stackUp = run.sequence.at(-1).args
+
+      expect({
+        exitCode: run.exitCode,
+        started: servicesOf(stackUp)
+      }).toEqual({ exitCode: 0, started: expected })
+    }
+  )
+
+  test('Should say how many of the stack services a domain starts', async () => {
+    const run = await recordTimStackRun(['up', '--domain', 'plants'])
+
+    expect(run.stdout).toContain('Domain: plants (10 of 22 services)')
+  })
+
+  test('Should leave a domain service out when --exclude names it', async () => {
+    const run = await recordTimStackRun([
+      'up',
+      '--domain',
+      'plants',
+      '-e',
+      'plants-backend'
+    ])
+    const stackUp = run.sequence.at(-1).args
+
+    expect(stackUp).not.toContain('trade-imports-plants-backend')
+  })
+
+  test('Should refuse a domain whose services no active profile defines, and exit 1', async () => {
+    const run = await recordTimStackRun([
+      'up',
+      '--domain',
+      'animals-admin',
+      '--profile',
+      'database'
+    ])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr }).toEqual({
+      exitCode: 1,
+      stderr:
+        "error: no active profile defines floci, floci-init, mssql, redis, servicebus-emulator, toxiproxy, trade-imports-address-book, trade-imports-animals-admin, trade-imports-animals-backend, trade-imports-defra-id-stub, trade-imports-dynamics-gateway, which domain 'animals-admin' needs\n"
     })
   })
 

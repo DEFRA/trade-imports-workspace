@@ -132,6 +132,77 @@ export const OPT_IN_PROFILES = ['security', 'monitoring']
 export const STUB_LATENCY_PROFILES = ['zero-delay', 'sla']
 
 /**
+ * The services every domain needs, whichever one you start: the databases
+ * and queues each backend writes to and specs read from, the session cache
+ * every frontend uses, and the sign-in stub all four UIs go through.
+ */
+export const CORE_SERVICES = [
+  'mongodb',
+  'redis',
+  'floci',
+  'floci-init',
+  'trade-imports-defra-id-stub',
+  'trade-imports-address-book'
+]
+
+/**
+ * What each test domain in trade-imports-ins-tests needs on top of the core,
+ * so `--domain` can start one domain's suite instead of the whole stack.
+ *
+ * A domain lists every service its specs reach, not only the ones compose
+ * resolves through `depends_on`. The two are not the same graph: the admin
+ * UI's DLQ page calls the dynamics gateway over HTTP at request time, with
+ * no `depends_on` edge to show for it, and `address-book` is reached from
+ * the test layer alone. Both were found by running a domain's suite without
+ * them, never by reading the compose files. See
+ * docs/analysis/local-stack-domain-subsets.md, and prove a change here with
+ * `tim docker domain verify <name>`.
+ */
+export const DOMAIN_SERVICES = {
+  animals: [
+    'trade-imports-animals-frontend',
+    'animals-frontend-nginx',
+    'trade-imports-animals-backend',
+    'trade-imports-reference-data',
+    'trade-imports-stub',
+    'cdp-uploader'
+  ],
+  'animals-admin': [
+    'trade-imports-animals-admin',
+    'trade-imports-animals-backend',
+    'trade-imports-dynamics-gateway',
+    'toxiproxy',
+    'servicebus-emulator',
+    'mssql'
+  ],
+  ins: [
+    'trade-imports-ins-frontend',
+    'trade-imports-ins-backend',
+    'trade-imports-routing-proxy',
+    'trade-imports-reference-data',
+    'trade-imports-stub'
+  ],
+  plants: [
+    'trade-imports-plants-frontend',
+    'trade-imports-plants-backend',
+    'trade-imports-reference-data',
+    'trade-imports-stub'
+  ]
+}
+
+/** The domains `--domain` takes. */
+export const DOMAIN_NAMES = Object.keys(DOMAIN_SERVICES)
+
+/**
+ * Every compose service one domain's stack runs: its own and the core.
+ *
+ * @param {string} domain - One of {@link DOMAIN_NAMES}
+ * @returns {string[]} Compose service names, sorted
+ */
+export const servicesForDomain = (domain) =>
+  [...CORE_SERVICES, ...(DOMAIN_SERVICES[domain] ?? [])].sort()
+
+/**
  * The folder holding the stack's compose files.
  *
  * @param {string} workspaceRoot

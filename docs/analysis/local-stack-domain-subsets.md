@@ -131,19 +131,40 @@ chain behind it. No other domain does — `DLQ` appears in no spec under
 
 Logs: `workareas/gateway-experiment/` (not committed).
 
+## The plants subset, proven
+
+`tim docker up --domain plants` then the plants suite, on the machine above:
+
+| | Full stack | `--domain plants` |
+|---|---|---|
+| Containers running | 21 | **9** (plus `floci-init`, which exits) |
+| Memory | ~4.8 GiB | **1.77 GiB** |
+| `test:docker-compose:plants` | — | **151 passed, 0 failed, 2.8m** |
+
 ## Keeping the map honest
 
 The map above is a claim about behaviour, and behaviour changes when specs are
 added. A spec that reaches a service the map drops fails confusingly, long
 after the change that caused it.
 
-So the map is paired with `tim docker domain verify <name>`, which runs a
-domain's suite against its subset and against the full stack and diffs the
-pass, fail and skip counts. Identical counts are the evidence the subset is
-sufficient. Anything else names the specs that differ.
+So the map is paired with `tim docker domain verify <name>`. It runs the
+domain's suite against that domain's services alone and names every spec that
+did not pass, exiting 1 when any did. A clean run is the evidence the subset is
+sufficient.
 
-Run it when a domain's specs change, and treat a diff as the map being out of
-date rather than the test being wrong.
+A failure is evidence the map is missing a service, but not proof — the spec
+may be broken on any stack. `--against-full` adds the control run on the whole
+stack and separates the two: a spec that fails on the subset and passes on the
+full stack is the map's fault, and the command says so and names the file to
+edit. One that fails on both is not.
+
+The control is opt-in because it doubles the runtime, and most of the time the
+subset run alone answers the question.
+
+Run it when a domain's specs change, and treat a failure as the map being out
+of date rather than the test being wrong.
+
+`tim docker domain list` prints each domain and the services it starts.
 
 ## What this page does not cover
 

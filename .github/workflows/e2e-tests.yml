@@ -298,12 +298,27 @@ jobs:
           path: all-shards/
           skip-decompress: true
 
+      # Several artifacts download to all-shards/shard-N/<zip>, but a lone
+      # one (a one-shard run) downloads to all-shards/shard-1.zip. Both end
+      # up unzipped in all-shards/shard-N/, the layout the steps below read.
       - name: Unzip shard artifacts
         run: |
+          shopt -s nullglob
+          found=0
           for zip in all-shards/*/*.zip; do
             unzip -q "$zip" -d "$(dirname "$zip")"
             rm "$zip"
+            found=1
           done
+          for zip in all-shards/*.zip; do
+            unzip -q "$zip" -d "${zip%.zip}"
+            rm "$zip"
+            found=1
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "::error::No shard artifact zips were downloaded"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v7
         with:

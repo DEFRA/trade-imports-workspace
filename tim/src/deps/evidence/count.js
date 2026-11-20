@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import { run } from '../../exec/exec.js'
 import { TimError } from '../../errors.js'
+import { depsCheckoutPath } from '../checkout.js'
 
 const NO_MATCHES = 1
 
@@ -15,10 +15,7 @@ const NO_MATCHES = 1
  * @throws {TimError} NOT_FOUND when the checkout is missing
  */
 export const evidenceRepoPath = (workspaceRoot, repo) => {
-  const repoPath =
-    repo === 'tim'
-      ? join(workspaceRoot, 'tim')
-      : join(workspaceRoot, 'repos', repo)
+  const repoPath = depsCheckoutPath(workspaceRoot, repo)
   if (!existsSync(repoPath)) {
     throw new TimError('NOT_FOUND', `Can't find ${repo} at ${repoPath}.`)
   }

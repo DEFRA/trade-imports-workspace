@@ -21,7 +21,7 @@ const UNKNOWN_REVIEWER = '(unknown)'
 const SHORT_SHA_LENGTH = 8
 
 const USAGE =
-  'Usage: tim review share EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary] [--refresh] [--head SHA] [--branch B] [--reviewer LOGIN] [--dry-run] [--json]'
+  'Usage: tim review share EUDPA-XXXXX | <branch-review-id> [--repo R] [--pr N] [--comment-only] [--summary] [--refresh] [--head SHA] [--branch B] [--reviewer LOGIN] [--dry-run] [--json]'
 
 const prsInScope = ({ meta, repo, pr }) => {
   const wantedPr = pr === undefined ? undefined : Number(pr)
@@ -43,6 +43,18 @@ const prsInScope = ({ meta, repo, pr }) => {
 }
 
 const metaPathOf = (folder) => join(folder, '.review-meta.json')
+
+const isBranchReview = (workspaceRoot, reviewId) => {
+  if (!reviewId || reviewId.includes('/')) return false
+  const metaPath = metaPathOf(reviewDir(workspaceRoot, reviewId))
+  return existsSync(metaPath) && Boolean(readJsonFile(metaPath).branch)
+}
+
+const refuseUnshareableId = (workspaceRoot, reviewId) => {
+  if (reviewId?.startsWith(TICKET_PREFIX)) return
+  if (isBranchReview(workspaceRoot, reviewId)) return
+  throw new TimError('USAGE', USAGE)
+}
 
 const readMeta = (metaPath) => {
   if (!existsSync(metaPath)) {
@@ -212,7 +224,7 @@ export const shareReview = async ({
   dryRun = false,
   trailers = []
 }) => {
-  if (!ticket?.startsWith(TICKET_PREFIX)) throw new TimError('USAGE', USAGE)
+  refuseUnshareableId(workspaceRoot, ticket)
   const summarising = summary || refresh
   refuseHeadWithoutOnePr({ head, summary: summarising, repo, pr })
   const reviewFolder = reviewDir(workspaceRoot, ticket)

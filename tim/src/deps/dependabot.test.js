@@ -200,6 +200,26 @@ describe('#renderDependabotConfig', () => {
     })
   })
 
+  test('Should point npm at the given folder and GitHub Actions at each given folder', () => {
+    const config = yaml.load(
+      renderDependabotConfig({
+        repo: 'tim',
+        dependencySets: fixtureDependencySets(),
+        directories: { npm: '/tim', actions: ['/', '/.github/actions/*'] }
+      })
+    )
+
+    expect({
+      npm: npmUpdate(config).directory,
+      actions: actionsUpdate(config).directories,
+      actionsDirectory: actionsUpdate(config).directory
+    }).toEqual({
+      npm: '/tim',
+      actions: ['/', '/.github/actions/*'],
+      actionsDirectory: undefined
+    })
+  })
+
   test('Should apply the cooldown to npm and GitHub Actions', () => {
     const dependencySets = fixtureDependencySets()
     const fiveDays = {

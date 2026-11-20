@@ -11,6 +11,7 @@ import { syncDependabotConfig } from './dependabot-file.js'
 import { renderDependabotConfig } from './dependabot.js'
 import {
   AXE_HOLD,
+  CHECKOUT_WORKSPACE_ROOT,
   createDepsWorkspace,
   fixtureDependencySets,
   fixtureDependencySetsHolding
@@ -96,7 +97,7 @@ describe('#syncDependabotConfig', () => {
 
   test('Should report a hand-edited file as out of date in check mode and leave it as it is', () => {
     root = createDepsWorkspace()
-    const handEdited = generated().replace('default-days: 3', 'default-days: 1')
+    const handEdited = generated().replace('default-days: 7', 'default-days: 1')
     seedConfig(handEdited)
 
     const result = syncDependabotConfig({
@@ -187,13 +188,44 @@ describe('#syncDependabotConfig', () => {
     root = createDepsWorkspace({ cloned: [] })
 
     expect(() =>
-      syncDependabotConfig({ workspaceRoot: root, repo: 'tim', mode: 'print' })
+      syncDependabotConfig({ workspaceRoot: root, repo: REPO, mode: 'print' })
     ).toThrow(
       expect.objectContaining({
         code: 'NOT_FOUND',
-        message:
-          "Can't find tim under repos/. This command writes Dependabot config for repos cloned there."
+        message: `Can't find ${REPO} at ${join(root, 'repos', REPO)}. This command writes Dependabot config for repos cloned under repos/, and for the workspace's own tim folder.`
       })
     )
+  })
+
+  test("Should find the workspace's committed Dependabot config matches its dependency sets", () => {
+    const result = syncDependabotConfig({
+      workspaceRoot: CHECKOUT_WORKSPACE_ROOT,
+      repo: 'tim',
+      mode: 'check'
+    })
+
+    expect(result.upToDate).toBe(true)
+  })
+
+  test("Should write tim's config as the workspace's own file, with npm updates for the tim folder", () => {
+    root = createDepsWorkspace({ cloned: ['tim'] })
+
+    const result = syncDependabotConfig({
+      workspaceRoot: root,
+      repo: 'tim',
+      mode: 'write'
+    })
+
+    expect({
+      path: result.path,
+      onDisk: readFileSync(join(root, '.github', 'dependabot.yml'), 'utf8')
+    }).toEqual({
+      path: join('.github', 'dependabot.yml'),
+      onDisk: renderDependabotConfig({
+        repo: 'tim',
+        dependencySets: fixtureDependencySets(),
+        directories: { npm: '/tim', actions: ['/', '/.github/actions/*'] }
+      })
+    })
   })
 })

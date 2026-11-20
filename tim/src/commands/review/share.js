@@ -12,7 +12,10 @@ import { addTrailerOption, trailersOf } from '../_trailer-option.js'
  */
 export const registerShare = (review, { timVersion }) =>
   addTrailerOption(review.command('share'))
-    .argument('[ticket]', 'The ticket whose review to share')
+    .argument(
+      '[ticket]',
+      'The ticket whose review to share, or the id of a branch review (the folder tim review prepare --branch made)'
+    )
     .description(
       "Render a review's PR comment, one body file per PR in .review-meta.json, for gh pr comment <pr> --repo DEFRA/<repo> --body-file <file> to post. Without --comment-only it is a handoff: it copies the review to workareas/shared/<ticket> without repos/ and .diffs/, commits that to the handoff branch (chore/<ticket> unless --branch), pushes it without forcing, and returns to the branch you were on. It refuses when the workspace has changes outside workareas/shared/. A body over GitHub's 65536-character limit stops it; --summary posts counts in place of the item table. Each PR's verdict comes from its own repo's items, and names any other PR in the ticket that is not APPROVED as a possible blocker. The **Notes:** line of review-index.md is posted as written; its **Verdict:** is not. --dry-run renders and copies only."
     )
@@ -48,7 +51,7 @@ export const registerShare = (review, { timVersion }) =>
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)" --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"\n  tim review share EUDPA-1234 --summary --dry-run\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --refresh --head 1a2b3c4d --reviewer "$(gh api user --jq .login)"'
+      '\nExamples:\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --reviewer "$(gh api user --jq .login)" --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"\n  tim review share EUDPA-1234 --summary --dry-run\n  tim review share fix-EUDPA-1234-proxy --repo trade-imports-stub --pr 12 --comment-only --reviewer "$(gh api user --jq .login)"\n  tim review share EUDPA-1234 --repo trade-imports-stub --pr 12 --comment-only --refresh --head 1a2b3c4d --reviewer "$(gh api user --jq .login)"'
     )
     .action(
       makeRunAction({

@@ -432,7 +432,7 @@ tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk
 tim govuk start --unattended --ticket NO_JIRA --target 6.6.0
 tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name
 tim govuk check-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0
-tim govuk apply --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --unattended
+tim govuk apply --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --unattended --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"
 tim govuk render-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --json
 ```
 
@@ -647,6 +647,12 @@ tim npm reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend
 - `refresh-lockfile` and `reset-overrides` print one JSON line (an
   envelope with `--json`). Everything npm prints goes to a log under
   `workareas/npm-upgrades/<run>/<repo>/`.
+- Each of them, `tim npm upgrade` (phases 2 and 4), `tim govuk apply`
+  and `tim review share` takes `--trailer <line>`, as often as you like.
+  Each line goes at the end of every commit message the command makes,
+  after one blank line, in the order given, such as
+  `--trailer "Co-Authored-By: Claude <noreply@anthropic.com>"`. A line
+  that is not `Name: value` is refused before anything changes.
 
 ### `tim npm upgrade` — run one phase of an npm upgrade across its repos
 

@@ -128,10 +128,11 @@ like this, and Step 4 is skipped:
   or a `not-applicable` pattern now has some. Fix it with a mechanical
   change and count again, or put back the edits with
   `git -C repos/{repo-name} checkout HEAD -- .` and stop this repo.
-- **2b.** Add `--unattended`:
+- **2b.** Add `--unattended`, and a `--trailer` for each of the
+  session's attribution lines:
 
   ```bash
-  tim govuk apply --run-id {run-id} --repo {repo-name} --govuk-version {version} --unattended
+  tim govuk apply --run-id {run-id} --repo {repo-name} --govuk-version {version} --unattended --trailer "Co-Authored-By: {model} <noreply@anthropic.com>" --trailer "Claude-Session: {session link}"
   ```
 
   It counts the evidence again and exits 1, changing nothing, when any

@@ -12,6 +12,7 @@ import { upgradePackage } from '../../npm-upgrade/upgrade-package.js'
 import { runUpgradePhase } from '../../npm-upgrade/phases/index.js'
 import { PhaseStopped } from '../../npm-upgrade/phases/run-repos.js'
 import { errorPayloadFor, jsonEnvelope } from '../envelope.js'
+import { addTrailerOption, trailersOf } from '../_trailer-option.js'
 import { writeLine } from '../_write-line.js'
 
 const say = (line) => writeLine(process.stdout, line)
@@ -52,19 +53,19 @@ const allowlistOptions = (command) =>
     .option('--expiry-days <days>', 'Days until that entry expires')
 
 const packageCommand = (npm, name, description) =>
-  allowlistOptions(
-    npm
-      .command(name)
-      .description(description)
-      .option('--run-id <ticket>', 'The run, such as EUDPA-500')
-      .option('--repo <name>', 'The repo')
-      .option('--package <name>', 'The npm package, such as @hapi/hapi')
-  )
-    .option(
+  addTrailerOption(
+    allowlistOptions(
+      npm
+        .command(name)
+        .description(description)
+        .option('--run-id <ticket>', 'The run, such as EUDPA-500')
+        .option('--repo <name>', 'The repo')
+        .option('--package <name>', 'The npm package, such as @hapi/hapi')
+    ).option(
       '--repo-path <path>',
       'Upgrade this checkout instead of repos/<repo>'
     )
-    .exitOverride(exitWith(USAGE))
+  ).exitOverride(exitWith(USAGE))
 
 const upgradeRunner = (mode) => (opts) =>
   upgradePackage({
@@ -76,6 +77,7 @@ const upgradeRunner = (mode) => (opts) =>
     allowlistOwner: opts.allowlistOwner ?? '',
     expiryDays: opts.expiryDays ?? '',
     repoPath: opts.repoPath,
+    trailers: trailersOf(opts),
     say,
     warn
   })
@@ -90,7 +92,8 @@ const registerUpgradeOne = (npm) =>
       'after',
       examplesText([
         'upgrade-one --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash',
-        'upgrade-one --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --allowlist-owner "Sam Farrington" --expiry-days 30'
+        'upgrade-one --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --allowlist-owner "Sam Farrington" --expiry-days 30',
+        'upgrade-one --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
       ])
     )
     .action(actionFor({ run: upgradeRunner('auto') }))
@@ -105,15 +108,15 @@ const registerRunManual = (npm) =>
       'after',
       examplesText([
         'run-manual --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi',
-        'run-manual --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi --allowlist-owner "Sam Farrington" --expiry-days 30'
+        'run-manual --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi --allowlist-owner "Sam Farrington" --expiry-days 30',
+        'run-manual --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
       ])
     )
     .action(actionFor({ run: upgradeRunner('manual') }))
 
 const registerRunAuto = (npm) =>
   allowlistOptions(
-    npm
-      .command('run-auto')
+    addTrailerOption(npm.command('run-auto'))
       .description(
         'Phase 2 for one repo: upgrade every automatic package still pending, one at a time, then refresh the lockfile. In trade-imports-ins-tests, then run npm run test:docker-compose once, unless --unattended. Exits 0 when done, 1 on a cascade, uncommitted changes or a refused option, and 3 when the audit is red before an install or cannot run.'
       )
@@ -133,7 +136,8 @@ const registerRunAuto = (npm) =>
       examplesText([
         'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend',
         'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend --allowlist-owner "Sam Farrington" --expiry-days 30',
-        'run-auto --run-id EUDPA-802-vitest-4.2 --repo trade-imports-ins-tests --unattended'
+        'run-auto --run-id EUDPA-802-vitest-4.2 --repo trade-imports-ins-tests --unattended',
+        'run-auto --run-id EUDPA-500 --repo trade-imports-animals-frontend --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
       ])
     )
     .action(
@@ -148,6 +152,7 @@ const registerRunAuto = (npm) =>
             allowlistOwner: opts.allowlistOwner ?? '',
             expiryDays: opts.expiryDays ?? '',
             unattended: opts.unattended === true,
+            trailers: trailersOf(opts),
             say,
             warn
           })
@@ -167,13 +172,14 @@ const printOutcome = async (opts, { exitCode, result }) => {
 }
 
 const repoCommand = (npm, name, description) =>
-  npm
-    .command(name)
-    .description(description)
-    .option('--run-id <ticket>', 'The run, such as EUDPA-500')
-    .option('--repo <name>', 'The repo')
-    .option('--repo-path <path>', 'Use this checkout instead of repos/<repo>')
-    .exitOverride(exitWith(USAGE))
+  addTrailerOption(
+    npm
+      .command(name)
+      .description(description)
+      .option('--run-id <ticket>', 'The run, such as EUDPA-500')
+      .option('--repo <name>', 'The repo')
+      .option('--repo-path <path>', 'Use this checkout instead of repos/<repo>')
+  ).exitOverride(exitWith(USAGE))
 
 const registerRefreshLockfile = (npm, { timVersion }) =>
   repoCommand(
@@ -184,7 +190,8 @@ const registerRefreshLockfile = (npm, { timVersion }) =>
     .addHelpText(
       'after',
       examplesText([
-        'refresh-lockfile --run-id EUDPA-500 --repo trade-imports-schemas'
+        'refresh-lockfile --run-id EUDPA-500 --repo trade-imports-schemas',
+        'refresh-lockfile --run-id EUDPA-500 --repo trade-imports-schemas --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
       ])
     )
     .action(
@@ -196,7 +203,8 @@ const registerRefreshLockfile = (npm, { timVersion }) =>
               workspaceRoot: workspaceOf(opts),
               runId: opts.runId,
               repo: opts.repo,
-              repoPath: opts.repoPath
+              repoPath: opts.repoPath,
+              trailers: trailersOf(opts)
             })
           )
       })
@@ -211,7 +219,8 @@ const registerResetOverrides = (npm, { timVersion }) =>
     .addHelpText(
       'after',
       examplesText([
-        'reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend'
+        'reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend',
+        'reset-overrides --run-id EUDPA-500 --repo trade-imports-animals-frontend --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
       ])
     )
     .action(
@@ -224,6 +233,7 @@ const registerResetOverrides = (npm, { timVersion }) =>
               runId: opts.runId,
               repo: opts.repo,
               repoPath: opts.repoPath,
+              trailers: trailersOf(opts),
               warn
             })
           )
@@ -261,8 +271,7 @@ const printPhaseFailure = async (opts, error) => {
 
 const registerUpgradeRun = (npm, { timVersion }) =>
   allowlistOptions(
-    npm
-      .command('upgrade')
+    addTrailerOption(npm.command('upgrade'))
       .description(
         'Run one phase of an npm upgrade run across its repos. 0 audits every repo and records the run in phase0.json. 1, once a green phase 0 covers every repo at its HEAD, discovers outdated packages and lists one PACKAGE_PLANNER task per unclassified package. 2 runs run-auto in every repo at once. 3 lists the manual and failed packages, the held ones, the allowlist and the audits for the WALKER. 4 runs reset-overrides in every repo at once. Without --repo it runs on every repo repos.json flags npmUpgradeDefault, skipping any with no checkout or no package.json. Exits 1 on a refusal, a red audit, a failed batch or a stopped reset.'
       )
@@ -313,7 +322,8 @@ const registerUpgradeRun = (npm, { timVersion }) =>
           'upgrade EUDPA-500 --phase 1 --branch chore/EUDPA-500-npm --json',
           'upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --allowlist-owner "Sam Farrington" --expiry-days 30',
           'upgrade EUDPA-500 --phase 3 --repo trade-imports-animals-frontend --json',
-          'upgrade EUDPA-802 --unattended --branch chore/EUDPA-802-vitest-4.2 --phase 1 --package vitest --package "@vitest/*"'
+          'upgrade EUDPA-802 --unattended --branch chore/EUDPA-802-vitest-4.2 --phase 1 --package vitest --package "@vitest/*"',
+          'upgrade EUDPA-500 --phase 2 --branch chore/EUDPA-500-npm --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
         ])
       ].join('\n')
     )
@@ -331,6 +341,7 @@ const registerUpgradeRun = (npm, { timVersion }) =>
           unattended: opts.unattended === true,
           allowlistOwner: opts.allowlistOwner,
           expiryDays: opts.expiryDays,
+          trailers: trailersOf(opts),
           warn
         })
         process.exit(await printPhaseOutcome(opts, outcome))

@@ -87,6 +87,7 @@ const upgradeExitCodeOf = async (context, packageName) => {
     allowlistOwner: context.allowlistOwner,
     expiryDays: context.expiryDays,
     env: context.env,
+    trailers: context.trailers,
     say: context.say,
     warn: context.warn
   }).catch(async (error) => {
@@ -159,7 +160,8 @@ const refreshAtEndOfBatch = async (context) => {
     workspaceRoot: context.workspaceRoot,
     runId: context.runId,
     repo: context.repo,
-    env: context.env
+    env: context.env,
+    trailers: context.trailers
   }).catch(async (error) => {
     if (!(error instanceof TimError) && !(error instanceof StepFailed)) {
       throw error
@@ -286,6 +288,7 @@ const runnerSteps = async (context) => {
  * @param {boolean} [request.unattended] - Skip the end-of-batch E2E gate
  * @param {string} [request.tmpFolder='/tmp'] - Where the end-of-batch E2E log goes
  * @param {Record<string, string | undefined>} [request.env]
+ * @param {string[]} [request.trailers=[]] - Lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.say
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<number>} 0 done, 1 a cascade or a dirty tree, 3 an audit red or not run before an install
@@ -293,10 +296,11 @@ const runnerSteps = async (context) => {
  */
 export const runAutomatedUpgrades = async ({
   tmpFolder = '/tmp',
+  trailers = [],
   ...request
 }) => {
   const checkout = await requireRunnerOptions(request)
-  const context = { ...request, tmpFolder, checkout }
+  const context = { ...request, tmpFolder, trailers, checkout }
   try {
     await runnerSteps(context)
     return 0

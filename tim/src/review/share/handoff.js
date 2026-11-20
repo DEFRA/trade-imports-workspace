@@ -2,6 +2,7 @@ import { mkdtempSync, renameSync, rmdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../../errors.js'
 import { run } from '../../exec/exec.js'
+import { withTrailers } from '../../git/commit-message.js'
 
 const SHARED_PREFIX = 'workareas/shared/'
 
@@ -86,7 +87,7 @@ const switchKeepingSharedCopy = async ({
   rmdirSync(parking)
 }
 
-const commitSharedCopy = async ({ workspaceRoot, git, ticket }) => {
+const commitSharedCopy = async ({ workspaceRoot, git, ticket, trailers }) => {
   await git('add', `${SHARED_PREFIX}${ticket}`)
   const staged = await run('git', [
     '-C',
@@ -100,7 +101,10 @@ const commitSharedCopy = async ({ workspaceRoot, git, ticket }) => {
     'commit',
     '--quiet',
     '-m',
-    `review(${ticket}): handoff artefacts\n\nPosted by tim review share.`
+    withTrailers(
+      `review(${ticket}): handoff artefacts\n\nPosted by tim review share.`,
+      trailers
+    )
   )
   return true
 }
@@ -117,6 +121,7 @@ const commitSharedCopy = async ({ workspaceRoot, git, ticket }) => {
  * @param {string} args.ticket
  * @param {string} args.branch - The handoff branch
  * @param {string} args.sharedDir - workareas/shared/<ticket>, already copied
+ * @param {string[]} [args.trailers=[]] - Lines for the end of the commit message
  * @returns {Promise<{committed: boolean}>} committed is false when the branch already held this copy
  * @throws {TimError} DIRTY_TREE when the workspace has changes outside workareas/shared/; UNKNOWN when a git step fails
  */
@@ -124,14 +129,20 @@ export const pushHandoffBranch = async ({
   workspaceRoot,
   ticket,
   branch,
-  sharedDir
+  sharedDir,
+  trailers = []
 }) => {
   const git = gitIn(workspaceRoot)
   await refuseChangesOutsideShared(git)
   const startingBranch = (await git('rev-parse', '--abbrev-ref', 'HEAD')).trim()
   await switchKeepingSharedCopy({ workspaceRoot, git, branch, sharedDir })
   try {
-    const committed = await commitSharedCopy({ workspaceRoot, git, ticket })
+    const committed = await commitSharedCopy({
+      workspaceRoot,
+      git,
+      ticket,
+      trailers
+    })
     await git('push', '--quiet', '-u', 'origin', branch)
     return { committed }
   } finally {

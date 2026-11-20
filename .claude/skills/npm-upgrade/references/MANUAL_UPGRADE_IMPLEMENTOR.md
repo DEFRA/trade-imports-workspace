@@ -242,7 +242,7 @@ git -C repos/{repo} commit -m "Upgrade {package} {current} → {target}
 
 {short description of the API changes you made}
 
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+{the session's commit attribution lines, one per line}"
 ```
 
 If the pre-commit hook fails due to Prettier, re-run prettier on

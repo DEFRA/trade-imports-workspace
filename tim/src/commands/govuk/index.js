@@ -22,6 +22,7 @@ import {
   renderSummariesText
 } from '../../govuk/summaries.js'
 import { makeRunAction } from '../_run-action.js'
+import { addTrailerOption, trailersOf } from '../_trailer-option.js'
 import { writeLine } from '../_write-line.js'
 
 const workspaceRootOf = (opts) =>
@@ -263,12 +264,14 @@ const STATE_WRITES = [
 ]
 
 const registerApply = (govuk, { timVersion }) =>
-  versionOptions(
-    govuk
-      .command('apply')
-      .description(
-        "Apply one version of a govuk-frontend upgrade to a repo: set the version in package.json, run npm install and npm test, commit everything in the repo and mark the version done. A failed npm step marks the version failed and exits 1. An intermediate noop version is only marked done. Edit the repo's source for the version's changes first."
-      )
+  addTrailerOption(
+    versionOptions(
+      govuk
+        .command('apply')
+        .description(
+          "Apply one version of a govuk-frontend upgrade to a repo: set the version in package.json, run npm install and npm test, commit everything in the repo and mark the version done. A failed npm step marks the version failed and exits 1. An intermediate noop version is only marked done. Edit the repo's source for the version's changes first."
+        )
+    )
   )
     .option(
       '--final',
@@ -280,7 +283,7 @@ const registerApply = (govuk, { timVersion }) =>
     )
     .addHelpText(
       'after',
-      `\nnpm install and npm test write their output to /tmp/govuk-install-<repo>-<version>-<stamp>.txt and /tmp/govuk-test-<repo>-<version>-<stamp>.txt.\n\nThe policy comes from config/dependency-sets.json. The commit message carries the ticket in the run's .run-meta.json.\n\nExamples:\n  tim govuk apply ${EXAMPLE_IDS}\n  tim govuk apply ${EXAMPLE_IDS} --final --json\n  tim govuk apply ${EXAMPLE_IDS} --unattended`
+      `\nnpm install and npm test write their output to /tmp/govuk-install-<repo>-<version>-<stamp>.txt and /tmp/govuk-test-<repo>-<version>-<stamp>.txt.\n\nThe policy comes from config/dependency-sets.json. The commit message carries the ticket in the run's .run-meta.json.\n\nExamples:\n  tim govuk apply ${EXAMPLE_IDS}\n  tim govuk apply ${EXAMPLE_IDS} --final --json\n  tim govuk apply ${EXAMPLE_IDS} --unattended\n  tim govuk apply ${EXAMPLE_IDS} --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"`
     )
     .action(function applyAction(...positional) {
       const { json } = this.optsWithGlobals()
@@ -290,7 +293,8 @@ const registerApply = (govuk, { timVersion }) =>
         parseOptions: (opts) => ({
           ...versionIdsOf(opts),
           final: opts.final === true,
-          unattended: opts.unattended === true
+          unattended: opts.unattended === true,
+          trailers: trailersOf(opts)
         }),
         run: (_context, parsed) => applyVersion({ ...parsed, say, warn }),
         renderText: () => null,

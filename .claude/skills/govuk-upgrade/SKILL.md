@@ -162,8 +162,9 @@ enough, and every evidence row must be clean.
 
 Call only `tim` and `gh`, plus `git` in the repos to push and count
 files. One command per Bash call, run from the workspace root.
-`<run-id>`, `<ticket>`, `<target>`, `<branch>`, `<repo>`, `<version>`
-and `<n>` below are placeholders you fill in.
+`<run-id>`, `<ticket>`, `<target>`, `<branch>`, `<repo>`, `<version>`,
+`<n>`, `<model>` and `<session link>` below are placeholders you fill
+in. The last two come from the session's commit attribution lines.
 
 ### U1. Start
 
@@ -220,7 +221,13 @@ Follow `references/PHASE_3_MANAGER.md` Steps 1 to 3, with its
 - makes only the `changes[]` edits, each one for an `applied` row
 - records the counts after the edits with `tim govuk check-evidence`
 - applies with `tim govuk apply --unattended`, which refuses, changing
-  nothing, a version whose evidence is not all clean
+  nothing, a version whose evidence is not all clean. Pass the session's
+  attribution lines with `--trailer`, one each, so the commit carries
+  them:
+
+  ```bash
+  tim govuk apply --run-id <run-id> --repo <repo> --govuk-version <version> --unattended --trailer "Co-Authored-By: <model> <noreply@anthropic.com>" --trailer "Claude-Session: <session link>"
+  ```
 
 Skip Step 4 of `PHASE_3_MANAGER.md`. Never start the Docker Compose
 stack, `tim docker` or `npm run test:docker-compose`. CI's "E2E Tests"
@@ -388,6 +395,7 @@ Unattended mode, in tim:
 - `tim govuk start --unattended` — takes `--ticket` only (a key or `NO_JIRA`), names the branch `chore/<ticket>-govuk-frontend-<target>`, makes it from `origin/main`, and stops before switching any branch when a repo has uncommitted changes.
 - `tim govuk add-evidence` / `tim govuk check-evidence` — record a changelog item's evidence row, counting the pattern's hits before the change, then count every row again after the edits. `check-evidence` exits 1 when any row is not clean.
 - `tim govuk apply --unattended` — refuses, changing nothing, a version whose evidence is not all clean.
+- `tim govuk apply --trailer <line>` — adds the line to the end of the commit message; give it once for each attribution line.
 - `tim govuk render-evidence` — read-only: the evidence table for a pull request body; `--json` gives `allClean`.
 - `tim deps evidence count <repo> <pattern>` — the hits a pattern has in a repo now.
 

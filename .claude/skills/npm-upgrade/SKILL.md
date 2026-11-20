@@ -264,8 +264,9 @@ it.
 
 Call only `tim` and `gh`, plus `git` in the repos to push and count
 files. One command per Bash call, run from the workspace root.
-`<ticket>`, `<branch>`, `<run-id>`, `<repo>`, `<package>`, `<target>`
-and `<n>` below are placeholders you fill in.
+`<ticket>`, `<branch>`, `<run-id>`, `<repo>`, `<package>`, `<target>`,
+`<n>`, `<model>` and `<session link>` below are placeholders you fill
+in. The last two come from the session's commit attribution lines.
 
 ### U1. Choose the work and the branch
 
@@ -332,10 +333,11 @@ No gate after Phase 1.
 ### U4. Phase 2: automated upgrades
 
 ```bash
-tim npm upgrade <ticket> --unattended --branch <branch> --phase 2 --repo <repo>
+tim npm upgrade <ticket> --unattended --branch <branch> --phase 2 --repo <repo> --trailer "Co-Authored-By: <model> <noreply@anthropic.com>" --trailer "Claude-Session: <session link>"
 ```
 
-`--allowlist-owner` and `--expiry-days` are refused, so a new advisory
+Give one `--trailer` for each of the session's attribution lines, so
+every commit carries them. `--allowlist-owner` and `--expiry-days` are refused, so a new advisory
 demotes its package, which then needs a person. `run-auto` skips
 `npm run test:docker-compose` in trade-imports-ins-tests and says so on
 stderr. No gate after Phase 2.
@@ -552,4 +554,5 @@ Unattended mode:
 - `tim npm packages add-evidence` / `tim npm packages check-evidence` — record a changelog item's evidence row, then count every row again after the edits.
 - `tim npm packages render-evidence` — read-only: the packages and evidence tables for a pull request body; `--json` gives the clean flag for the run, each repo and each package.
 - `tim npm run-auto --unattended` — Phase 2 runner that skips `npm run test:docker-compose`.
+- `--trailer <line>` on `tim npm upgrade`, `run-auto`, `upgrade-one`, `run-manual`, `refresh-lockfile` and `reset-overrides` — adds the line to the end of every commit message it makes; give it once for each attribution line.
 - `tim deps evidence count <repo> <pattern>` — the hits a pattern has in a repo now.

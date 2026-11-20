@@ -2558,7 +2558,7 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and from the consignee, importer and place of destination pickers, and no country chosen from the place of origin and consignor pickers and the consignment contact page",
+      "name": "The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and from the consignee, importer and place of destination pickers, and no country chosen from the place of origin and consignor pickers",
       "coverage": "full",
       "scenarios": [
         {
@@ -2649,7 +2649,7 @@
         },
         {
           "id": "SCN-INS-ADDR-027-D",
-          "name": "The add form opened from the place of origin or consignor picker or the consignment contact page selects no country",
+          "name": "The add form opened from the place of origin or consignor picker selects no country",
           "coverage": "full",
           "tests": [
             {
@@ -3772,53 +3772,6 @@
               "test": "Cancel and return to hub on the INS add page reached from the ${role} picker lands on the Overview and saves no address",
               "strength": "partial",
               "notes": "for Consignor; run on the leased stack by the gate; not red-probed"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-036-E",
-          "name": "The consignment contact's add page offers Back, Save and continue and Cancel and return to address page",
-          "coverage": "full",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing",
-              "strength": "full",
-              "notes": "red-probed: fails when the contact is not told apart from a role"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/journey-registry.test.js",
-              "test": "is true for the consignment contact handshake",
-              "strength": "full",
-              "notes": "red-probed: fails when the predicate never says true"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing",
-              "strength": "full",
-              "notes": "red-probed: fails when the save hands back the return landing instead of select"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once",
-              "strength": "full",
-              "notes": "red-probed: fails when the contact cancel hands back with the cancel landing"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page",
-              "strength": "partial",
-              "notes": "run by the gate; not red-probed"
             }
           ]
         },
@@ -5771,7 +5724,7 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-045-A",
-          "name": "An address added from a role's picker or the consignment contact page is saved with that party's role",
+          "name": "An address added from a role's picker is saved with that party's role",
           "coverage": "full",
           "tests": [
             {
@@ -5968,21 +5921,6 @@
               "notes": "red-probed: fails when the checkbox items stop marking the ticked roles"
             }
           ]
-        },
-        {
-          "id": "SCN-INS-ADDR-046-E",
-          "name": "The consignment contact page asks no such question",
-          "coverage": "full",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET from the consignment contact handshake shows the address fields and no roles question",
-              "strength": "full",
-              "notes": "red-probed: fails when the question is shown for a party with no other roles"
-            }
-          ]
         }
       ]
     },
@@ -6088,153 +6026,6 @@
               "test": "a search over five pages links the first, current, neighbouring and last pages, with an ellipsis for each gap",
               "strength": "full",
               "notes": "33 stamped addresses searched; follows page 4 after page 5 and asserts exact pagination items 1, ellipsis, 3, 4, 5, current page 4 and 'Showing 25-32 of 33'"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-INS-ADDR-048",
-      "name": "The add page serves every notification journey the service registers, and returns through that journey's own registered pages",
-      "coverage": "partial",
-      "scenarios": [
-        {
-          "id": "SCN-INS-ADDR-048-A",
-          "name": "A germinal products add reaches the same add page as a live animals add",
-          "coverage": "partial",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET from the germinal products consignor handshake renders the same add page as the live animals handshake and links Back to the germinal products return",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "shows the add page and offers Back and Cancel to that notification germinal products return",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-048-B",
-          "name": "Saving or cancelling a germinal products add returns to that notification's own return page",
-          "coverage": "partial",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/journey-registry.test.js",
-              "test": "builds the %s handshake's return address under the germinal products set base",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST of Save and select from the germinal products consignor handshake returns to that notification germinal products return with the new address id and the select landing, and logs the hand-back with the germinal products journey type",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST of Save and return to address page from the germinal products consignor handshake returns to that notification germinal products return with the return landing",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "Cancel from the germinal products consignor handshake returns to that notification germinal products return with the cancel landing and creates nothing",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts",
-              "test": "shows the add page, offers Back and Cancel to the germinal products return, and Save and select hands back the saved address holding the same record a live animals add would",
-              "strength": "partial",
-              "notes": "run on the leased stack by the gate; not red-probed"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-048-C",
-          "name": "A germinal products add whose request also names a return of its own still returns to the registered germinal products pages",
-          "coverage": "partial",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET from a germinal products handshake that also carries a return of its own still links Back and Cancel to the registered germinal products return",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST of Save and select from a germinal products handshake that also carries a return of its own returns to the registered germinal products return",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "Cancel from a germinal products handshake that also carries a return of its own returns to the registered germinal products return",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-048-D",
-          "name": "An address saved from a germinal products notification is the same record as one saved from live animals",
-          "coverage": "partial",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/journey-registry.test.js",
-              "test": "gives the %s handshake the same own role, other roles and saved roles as the live animals handshake",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the germinal products consignment contact handshake saves the address as a Branch address",
-              "strength": "partial",
-              "notes": "not red-probed: the probe requires a committed tree, and this stage only stages its changes"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts",
-              "test": "shows the add page, offers Back and Cancel to the germinal products return, and Save and select hands back the saved address holding the same record a live animals add would",
-              "strength": "partial",
-              "notes": "run on the leased stack by the gate; compares the read record against the shared trader address and the party's role; not red-probed"
             }
           ]
         }

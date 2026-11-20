@@ -10,15 +10,15 @@ The task list a user works a notification from, listing every task under numbere
 
 ## Requirements
 
-### Requirement: Overview groups the notification's tasks under six fixed, numbered sections
+### Requirement: Overview groups the notification's tasks under five fixed, numbered sections
 **ID**: REQ-OVERVIEW-001
-For a notification, the system MUST group its tasks on the Overview page under six numbered section headings, in a fixed order, with one task list per section.
+For a notification, the system MUST group its tasks on the Overview page under five numbered section headings, in a fixed order, with one task list per section.
 
-#### Scenario: A fresh notification's Overview lists its always-present tasks under the six sections
+#### Scenario: A fresh notification's Overview lists its always-present tasks under the five sections
 **ID**: SCN-OVERVIEW-001-A
 - **GIVEN** a new notification has just been started
 - **WHEN** the user views Overview
-- **THEN** it shows six numbered section headings in order: "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties", "6. Contact address"
+- **THEN** it shows five numbered section headings in order: "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties"
 - **AND** each section lists that notification's always-present tasks (for example, "Where is this consignment coming from?" and "What are you importing?" under the first section)
 
 ### Requirement: Each task row shows one of two statuses, and Overview offers a review button open at any point

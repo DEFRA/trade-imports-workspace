@@ -14,7 +14,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification being worked on
 - **WHEN** its pages are followed from the start
-- **THEN** they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, and finally check your answers, the declaration and the confirmation
+- **THEN** they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, and finally check your answers, the declaration and the confirmation
 - **AND** Overview lists its tasks in the same order
 
 #### Scenario: The transport pages are offered in order
@@ -27,7 +27,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 
 ### Requirement: Saving and continuing goes to the next page that applies, whatever way the page was reached
 **ID**: REQ-FLOW-003
-The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on. A page's own required answer MUST be given before Save and continue goes on from it.
+The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on.
 
 #### Scenario: The CPH number page goes on to Roles and addresses
 **ID**: SCN-FLOW-003-A
@@ -41,14 +41,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save and continue
 - **THEN** they are taken to the consignment addresses page
 
-#### Scenario: Contact address goes to check your answers whatever else is owed, once a contact address is chosen
+#### Scenario: Roles and addresses goes to check your answers whatever is owed
 **ID**: SCN-FLOW-003-B
-- **GIVEN** a notification with tasks outstanding and the contact address page open
-- **WHEN** the user chooses a contact address and saves and continues
-- **THEN** check your answers is shown, naming what is outstanding
-- **GIVEN** the contact address page open, with no contact address chosen
+- **GIVEN** a notification with tasks outstanding and the consignment addresses page open
 - **WHEN** the user saves and continues
-- **THEN** the save does not go on, and the contact address page is shown again
+- **THEN** check your answers is shown, naming what is outstanding
 
 #### Scenario: What are you importing goes on to Main import reason
 **ID**: SCN-FLOW-003-C
@@ -56,11 +53,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save a selection and continue
 - **THEN** Main import reason is shown
 
-#### Scenario: Roles and addresses goes on to Contact address, never the CPH number page, even when complete
+#### Scenario: Roles and addresses goes on to check your answers, never the CPH number page, even when complete
 **ID**: SCN-FLOW-003-D
 - **GIVEN** a consignment that needs a CPH number, every other task complete, and roles and addresses open
 - **WHEN** the user saves and continues
-- **THEN** Contact address for this consignment is shown, not the CPH number page
+- **THEN** check your answers is shown, not the CPH number page
 
 #### Scenario: A page opened from Overview has the same address as from any other start, plus only the mark that it was opened from Overview
 **ID**: SCN-FLOW-003-E
@@ -96,8 +93,8 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 **ID**: SCN-FLOW-003-J
 - **GIVEN** the user has just created a notification from the dashboard
 - **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents, roles and addresses and the contact address, in that order
-- **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
+- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents and roles and addresses, in that order
+- **AND** they arrive at check your answers once roles and addresses is saved, without returning to Overview partway through
 
 #### Scenario: Arrival details goes on to transit countries only for rail or road
 **ID**: SCN-FLOW-003-K
@@ -352,7 +349,7 @@ While a notification is being amended, each journey page MUST end with exactly t
 
 ### Requirement: A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-FLOW-014
-The system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and its save-and-return control side by side, and its cancel link on its own line below them, on a draft and while the notification is being amended. Every one of these pages reads "Save and return to overview" and "Cancel and return to overview" except the contact address page, which keeps the same layout with its own words, as `live-animals/journey-pages/contact-address` describes.
+The system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them, on a draft and while the notification is being amended.
 
 #### Scenario: Cancel and return to overview sits on its own line below the two buttons
 **ID**: SCN-FLOW-014-A
@@ -379,13 +376,6 @@ While a notification is being amended, the system MUST make each of a page's sav
 - **THEN** they stay on the page, which shows an error for each missing answer
 - **AND** nothing is saved
 
-#### Scenario: The contact address page refuses either save control with nothing chosen while amending
-**ID**: SCN-FLOW-015-B
-- **GIVEN** the contact address page of a notification being amended, with no address chosen
-- **WHEN** the user selects "Save and continue" or "Save and return to hub"
-- **THEN** they stay on the page, which shows the error that a contact address must be selected
-- **AND** nothing is saved
-
 ### Requirement: A notification started from the Import Notification Service's type question opens at the entry page
 **ID**: REQ-FLOW-017
 The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page, exactly as starting from its own dashboard does.
@@ -399,7 +389,7 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 
 ### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-FLOW-018
-The system MUST send Back on every journey page to where the trader came from: the page saved from, Overview, the review's Change link or a dashboard card, surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview. The origin page, Consignment addresses, Contact address and the county parish holding number page (`live-animals/journey-pages/cph-number` REQ-CPH-006) are exceptions. The trail holds 40 places.
+The system MUST send Back on every journey page to where the trader came from: the page they saved from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, but the origin page goes to where the notification was started, and Consignment addresses goes to Overview after an address book return. The trail holds 40 places.
 
 #### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-FLOW-018-A
@@ -437,7 +427,7 @@ The system MUST send Back on every journey page to where the trader came from: t
 - **GIVEN** the user added an address through the Import Notification Service address book and returned to Consignment addresses
 - **WHEN** they follow the Back link
 - **THEN** Overview is shown
-- **AND** "Save and continue" on Consignment addresses still goes on to Contact address for consignment
+- **AND** "Save and continue" on Consignment addresses still goes on to check your answers
 
 #### Scenario: The origin of the import page goes Back to where the notification was started
 **ID**: SCN-FLOW-018-G

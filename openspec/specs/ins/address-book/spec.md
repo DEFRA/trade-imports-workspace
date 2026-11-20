@@ -964,35 +964,29 @@ The address book service MUST record an address's roles, in the order given with
 - **WHEN** an address is created with roles and an address type
 - **THEN** it is saved, and reads back with its roles and no address type
 
-### Requirement: The address book list is split into four tabs, each a link that loads the list on that tab
+### Requirement: The address book list is split into three tabs, each a link that loads the list on that tab
 **ID**: REQ-INS-ADDR-038
-The system MUST split the address book list into four tabs, 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', in that order, each a link that loads the list on that tab with or without JavaScript, the selected one marked and its panel headed with its name. No tab, or an unknown one, MUST show Origin and Consignor. A search and its pages MUST stay on the selected tab. A tab link MUST open page 1, keeping the search and dropping the Type.
+The system MUST split the address book list into three tabs, 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Transporter', in that order, each a link that loads the list on that tab with or without JavaScript, the selected one marked and its panel headed with its name. No tab, or an unknown one, MUST show Origin and Consignor. A search and its pages MUST stay on the selected tab. A tab link MUST open page 1, keeping the search and dropping the Type.
 
-#### Scenario: The four tabs are shown in order with the selected one marked
+#### Scenario: The three tabs are shown in order with the selected one marked
 **ID**: SCN-INS-ADDR-038-A
 - **GIVEN** the user is signed in
 - **WHEN** they view the address book
-- **THEN** the tabs 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch' are shown in that order
+- **THEN** the tabs 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Transporter' are shown in that order
 - **AND** the selected tab is marked
 
 #### Scenario: Each tab's panel is headed for its address type
 **ID**: SCN-INS-ADDR-038-B
 - **GIVEN** the user is viewing the address book
 - **WHEN** they open each tab in turn
-- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' and 'Branch addresses' respectively
+- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses' and 'Transporter addresses' respectively
 
 #### Scenario: No tab or an unknown tab shows Origin and Consignor
 **ID**: SCN-INS-ADDR-038-C
 - **WHEN** the user opens the address book with no tab chosen
 - **THEN** the 'Origin and Consignor' tab is selected
-- **WHEN** they open it with a tab that is not one of the four
+- **WHEN** they open it with a tab that is not one of the three
 - **THEN** the 'Origin and Consignor' tab is selected
-
-#### Scenario: Following a tab with JavaScript off loads that tab
-**ID**: SCN-INS-ADDR-038-D
-- **GIVEN** JavaScript is switched off
-- **WHEN** the user follows the 'Branch' tab
-- **THEN** the 'Branch' tab is loaded and marked as selected, with its addresses listed
 
 #### Scenario: A search on a tab lists only that tab's matches and its pages keep the tab and the search
 **ID**: SCN-INS-ADDR-038-E
@@ -1010,16 +1004,15 @@ The system MUST split the address book list into four tabs, 'Origin and Consigno
 
 ### Requirement: Each role-backed tab lists the addresses holding one of its roles, with their roles in the Type column; the Transporter tab lists the organisation's transporters
 **ID**: REQ-INS-ADDR-039
-The system MUST list on the selected tab the addresses the address book service returns for that tab's roles (REQ-INS-ADDR-040): place of origin and consignor on 'Origin and Consignor', consignee, importer and place of destination on 'Destination, Consignee and Importer', and branch address on 'Branch'. The Type column MUST show an address's roles by their labels, joined by a comma and a space. The Transporter tab instead lists the organisation's transporters, under their own columns.
+The system MUST list on the selected tab the addresses the address book service returns for that tab's roles (REQ-INS-ADDR-040): place of origin and consignor on 'Origin and Consignor', and consignee, importer and place of destination on 'Destination, Consignee and Importer'. The Type column MUST show an address's roles by their labels, joined by a comma and a space. The Transporter tab instead lists the organisation's transporters, under their own columns.
 
 #### Scenario: Each tab lists the addresses holding its roles
 **ID**: SCN-INS-ADDR-039-A
-- **GIVEN** the address book holds an address with the roles consignee and place of destination, and another with the role branch address
+- **GIVEN** the address book holds an address with the roles consignee and place of destination, and another with the role consignor alone
 - **WHEN** the user opens the 'Destination, Consignee and Importer' tab
 - **THEN** the first address is listed and the second is not
-- **WHEN** they open the 'Branch' tab
+- **WHEN** they open the 'Origin and Consignor' tab
 - **THEN** the second address is listed and the first is not
-- **AND** the 'Origin and Consignor' tab lists neither
 
 #### Scenario: The Type column names the address's roles and the columns are the same on every role-backed tab
 **ID**: SCN-INS-ADDR-039-C
@@ -1030,9 +1023,9 @@ The system MUST list on the selected tab the addresses the address book service 
 
 #### Scenario: Each role has its own label
 **ID**: SCN-INS-ADDR-039-D
-- **GIVEN** the address book holds an address with each of the six roles alone
+- **GIVEN** the address book holds an address with each of the five roles alone
 - **WHEN** the user views the tabs that list them
-- **THEN** the Types read 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination' and 'Branch'
+- **THEN** the Types read 'Place of origin', 'Consignor', 'Consignee', 'Importer' and 'Place of destination'
 
 #### Scenario: The Transporter tab's columns show a commercial transporter's approval number and the not-applicable word on a private one
 **ID**: SCN-INS-ADDR-039-E
@@ -1045,16 +1038,15 @@ The system MUST list on the selected tab the addresses the address book service 
 
 ### Requirement: The address book service lists the addresses holding any of the roles asked for
 **ID**: REQ-INS-ADDR-040
-The address book service MUST, asked for one or more roles, return only the caller's organisation's live addresses holding any of them, combined with the search and country filters, and page and count over those addresses alone. An address with no roles MUST NOT be returned for any role. With no role it MUST list every live address, and it MUST refuse a role outside the six with a 400 bad request.
+The address book service MUST, asked for one or more roles, return only the caller's organisation's live addresses holding any of them, combined with the search and country filters, and page and count over those addresses alone. An address with no roles MUST NOT be returned for any role. With no role it MUST list every live address, and it MUST refuse a role outside the five with a 400 bad request.
 
 #### Scenario: Roles return exactly the addresses holding any of them
 **ID**: SCN-INS-ADDR-040-A
-- **GIVEN** an organisation holds an address with the roles place of origin and consignor, one with consignor, one with importer, one with branch address and one with no roles
+- **GIVEN** an organisation holds an address with the roles place of origin and consignor, one with consignor, one with importer and one with no roles
 - **WHEN** the list is asked for place of origin and consignor
 - **THEN** the first two addresses are returned
 - **AND** asked for consignor alone, the same two addresses are returned
 - **AND** asked for consignee, importer and place of destination, the importer address alone is returned
-- **AND** asked for branch address, the branch address alone is returned
 - **AND** the address with no roles is not returned for any of them
 
 #### Scenario: Roles narrow a search

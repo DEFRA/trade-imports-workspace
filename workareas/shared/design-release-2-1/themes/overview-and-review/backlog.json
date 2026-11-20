@@ -2296,7 +2296,7 @@
         "frontend"
       ],
       "kind": "fix",
-      "status": "todo",
+      "status": "done",
       "gate": null,
       "theme": "overview-and-review",
       "dependsOn": [
@@ -2309,6 +2309,19 @@
         "Nullable answers-changed flag: NotificationAggregate.java:73, NotificationFulfilmentsView.java:21, NotificationService.java:277,316. Pattern on main: the only stored flag is a primitive boolean with a default (AccompanyingDocument.claimed, origin/main AccompanyingDocument.java:59). The frontend's real marshal guards with '=== true' (animals frontend services/persistence/records/real/marshal/document.js:14), which a non-null flag no longer needs.",
         "Stub works the flag out itself: animals frontend services/persistence/records/stub/marshal/document.js:13 compares the amendment with its submitted snapshot through the real backend mapper (fulfilmentToNotification), which origin/main never used under records/stub. Sam's call: the stub keeps the flag as the backend does (false when an amendment starts, worked out on each save, cleared on resubmit or cancel) and reads it back.",
         "Kept by the ruling, not in scope: the backend unit tests that build a real DocumentService on stubbed repositories (NotificationServiceTest.java:106,124; OutboxServiceTest.java:52-65) follow the house rule of not mocking the service's own modules."
+      ],
+      "commit": "0d96e2de47f5e6fe5ff4e0f9e97d5858336b7a70 ce6479dfbb40cba528a7164803a581645f325f67",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/130",
+          "repo": "backend",
+          "number": 130
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/484",
+          "repo": "frontend",
+          "number": 484
+        }
       ]
     },
     {
@@ -2323,7 +2336,8 @@
         "Opening the review page for a notification that does not exist shows the service's standard page not found, with the same status and wording as every other journey page (ruling:sam-2026-11-19 orchestrator's call 6; review:engineering-2026-11-19 'Review page catches notification not found itself')",
         "The end-to-end tests find each live animals review card by its GOV.UK summary card structure and its title, as the plants tests do, so no test depends on a section caption such as '2. Description of the goods' (ruling:sam-2026-11-19 claim 3; review:engineering-2026-11-19 'Animals review cards are found by XPath')",
         "The live animals and plants review page objects each expose one page heading that the shared resume and save-and-continue helpers wait on, as every other page object does, and those helpers take no alternative heading to wait for (ruling:sam-2026-11-19 claim 3; review:engineering-2026-11-19 'The review page object no longer has the standard page heading')",
-        "The Behaviour Spec says what each changed page now shows, and every scenario heading in the plants notification lifecycle spec follows a blank line (ruling:sam-2026-11-19 orchestrator's call 7; review:engineering-2026-11-19 'One plants requirement runs straight into its first scenario')"
+        "The Behaviour Spec says what each changed page now shows, and every scenario heading in the plants notification lifecycle spec follows a blank line (ruling:sam-2026-11-19 orchestrator's call 7; review:engineering-2026-11-19 'One plants requirement runs straight into its first scenario')",
+        "On the live animals review, the Contact address card offers 'Edit details' for a chosen contact address, beside its Change link; saving the edit returns the trader to the review, which shows the edited details, and cancelling returns them to the review with the address as it was. The Behaviour Spec says a copied address can be edited from the consignment addresses page or the review, and an end-to-end test proves editing the contact address from the review changes only this notification (repo:frontend origin/main c944e373 check-answers 'Should give the contact address a link to edit its details too'; repo:tests origin/main a9978e7 addresses-edit 'editing the contact address from the review changes only this notification')"
       ],
       "requirements": [],
       "sources": [
@@ -2334,6 +2348,14 @@
         {
           "source": "review:engineering-2026-11-19",
           "ref": "animals-frontend breaks (one form, card names, Identification heading, not found), plants-frontend 'tasklist label', ins-tests breaks 1-2, workspace 'blank line'. https://claude.ai/artifact/TrAdrBupdoyCP4YJmXjuJL"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "origin/main c944e373 (EUDPA-805 consignment parties, #486): check-answers controller.js:67 partyEditHref; check-answers.test.js:1500 'Should give the contact address a link to edit its details too' (href consignment/contact/edit?return=notification-view)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "origin/main a9978e7 (EUDPA-805 consignment parties, #114): tests/animals/e2e/features/address-book/addresses-edit.spec.ts, test 'editing the contact address from the review changes only this notification' and the review half of 'cancelling an edit returns to where it was started'"
         }
       ],
       "repos": [
@@ -2342,7 +2364,7 @@
         "tests"
       ],
       "kind": "fix",
-      "status": "todo",
+      "status": "done",
       "gate": null,
       "theme": "overview-and-review",
       "dependsOn": [
@@ -2358,7 +2380,30 @@
         "Tests: ins-tests page-objects/animals/notification-view-page.ts:16-28 (heading renamed amendReviewHeading, anyReviewHeading added; plants page object likewise), flows/animals/seeded-journey.ts:137-152 (resumeInUi overloads), page-objects/shared/journey-checks.ts:32-61 (expectSaveAndContinueWalk overloads). No overloads exist in flows/ or page-objects/ on main. Card lookups by XPath: page-objects/animals/notification-view-page.ts:50-52, 74-78, 113, 121-123; plants finds .govuk-summary-card filtered by heading (page-objects/plants/notification-view-page.ts:28, 33-35).",
         "Plants spec blank line: openspec/specs/plants/notification-lifecycle/spec.md:141-142 (REQ-PLANTS-LIFECYCLE-008 runs into SCN-PLANTS-LIFECYCLE-008-A).",
         "Pages here are not signed off: live animals check your answers and overview are 'detailing', plants' are 'exploring'. Test helpers are shared, so the signed-off check at theme end may still see a linked test change.",
-        "Not in scope, by the ruling: the plants journey spec ruling deleted rather than superseded (journey-spec.json:599,603,607), the tests repo docs note on Cancel amend (docs/animals-journey.md:54-60), and the local stack's file uploader restart (docker/stack/infrastructure.compose.yml:26). The three reworded signed-off upload-documents scenarios (review workspace break 1) are the open question on inc-274, not this row."
+        "Not in scope, by the ruling: the plants journey spec ruling deleted rather than superseded (journey-spec.json:599,603,607), the tests repo docs note on Cancel amend (docs/animals-journey.md:54-60), and the local stack's file uploader restart (docker/stack/infrastructure.compose.yml:26). The three reworded signed-off upload-documents scenarios (review workspace break 1) are the open question on inc-274, not this row.",
+        "Contact address edit from review (added 19 Nov after merging origin/main, workspace 503b9092): main's consignment-parties theme (workspace 5f23d166, #273; animals-frontend c944e373, #486; ins-tests a9978e7, #114) moved 'Edit details' for the contact address off the contact page and onto the review's Contact address card, with return=notification-view. This branch's review cards have no such link, so after the merge the contact address edit page is reachable from nowhere. ins-tests on this branch lost main's 'editing the contact address from the review changes only this notification' test and the review steps of 'cancelling an edit returns to where it was started' (consignor and contact, addresses-edit.spec.ts), and the review assertions in 'a copied address offers both Change and Edit details on the hub and the review'. Spec: origin/main openspec/specs/live-animals/addresses/spec.md SCN-ADDR-014-E reads 'on the consignment addresses page or the check-your-answers view'; this branch narrowed it to the consignment addresses page only. Main's coverage linked SCN-ADDR-014-A to the contact-from-review e2e test (openspec/coverage/live-animals/addresses/coverage.json); restore that link. Restore main's removed steps where they still fit the review cards as this row reshapes them (card lookup by GOV.UK structure, not XPath).",
+        "ATTEMPT FAILED: tests e2e gate went red with 5 failed and 4 flaky (npm exited 1). The fix that removed the inline form wrapper around the Amend and Copy forms in the review button group left the refused-review and review visual pages 12px taller at desktop and 120px taller at phone. addresses-task-completion, amend-resubmit, save-and-continue and two contact-address specs timed out under gate load (backend ETIMEDOUT and EPIPE). Merge aborted in none: no repo was mid-merge. Local commits moved back from none: all five repos were 0 ahead of origin. Patches in workareas/shared/design-release-2-1/themes/overview-and-review/logs/: inc-276-preserve-backend.unstaged.patch, inc-276-preserve-frontend.unstaged.patch, inc-276-preserve-insfrontend.unstaged.patch, inc-276-preserve-plantsfrontend.staged.patch, inc-276-preserve-plantsfrontend.unstaged.patch, inc-276-preserve-tests.unstaged.patch. Unresolved paths and status files sit in the same folder. Stash: stash@{0} labelled failed-inc-276 in each of the backend, frontend, insfrontend, plantsfrontend and tests repos. Workspace openspec had no changes, so no stash there."
+      ],
+      "commit": "5c2911b4d8a8ace56ba42549dfd1fde36e97f792 e7ec10caf338805eeea7b0e0a7fc5dfabe61f0fc be2cd032561b5bb025f649d2078149e3ece343c5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/484",
+          "repo": "trade-imports-animals-frontend",
+          "number": 484
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/145",
+          "repo": "trade-imports-plants-frontend",
+          "number": 145
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/112",
+          "repo": "trade-imports-ins-tests",
+          "number": 112
+        }
+      ],
+      "openQuestions": [
+        "For the designer: how should the review write a species Latin name, on the What are you importing? Species row and on each species block heading? The prototype title-cases every word (\"Bos Taurus\"): toTitleCaseLabel at GB-notification-service@04a073b app/routes.js:716-722, used for the review Latin name at app/routes.js:6094, and the row acceptance criterion says \"every word capitalised, for example Bos Taurus\". The behaviour spec says the same in its requirement text (openspec/specs/live-animals/journey-pages/check-your-answers/spec.md:637-639 REQ-CYA-023, :671 REQ-CYA-024) but its scenarios expect the scientific form \"Bos taurus\", \"Bison bison\", \"Mustela putorius furo\" (:283, :645, :653, :661, :678). The code follows the scenarios: speciesDisplayName in trade-imports-animals-frontend src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:10-13 upper-cases only the first letter. Binomial naming convention writes the species epithet in lower case (https://en.wikipedia.org/wiki/Binomial_nomenclature). Options: keep \"Bos taurus\" (then reword REQ-CYA-023/024 and the \"named in capitals\" requirement title to say only the first letter is capitalised), or change to \"Bos Taurus\" (then speciesDisplayName capitalises each word and the scenarios change). Raised by the engineering review of the overview-and-review theme."
       ]
     }
   ]

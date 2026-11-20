@@ -58,3 +58,49 @@ describe('#runUpgradePhase', () => {
     180_000
   )
 })
+
+describe('#runUpgradePhase with --trailer', () => {
+  const COAUTHOR = 'Co-Authored-By: Claude <noreply@anthropic.com>'
+  const SESSION = 'Claude-Session: https://claude.ai/code/session_1'
+
+  const withTrailers = (name) => {
+    const fixtureCase = cases.find((candidate) => candidate.name === name)
+    return {
+      ...fixtureCase,
+      steps: fixtureCase.steps.map(({ phase }) => ({
+        phase: [...phase, '--trailer', COAUTHOR, '--trailer', SESSION]
+      }))
+    }
+  }
+
+  const frontendLogOf = (timRun) =>
+    timRun.repos['trade-imports-animals-frontend'].log.replaceAll(
+      /^[0-9a-f]{7,40} /gm,
+      '<COMMIT> '
+    )
+
+  test('Should end each phase 2 upgrade commit with the trailers in the order given', async () => {
+    const timRun = await recordStartUpgradeCase(
+      withTrailers('phase 2 skips a repo phase 1 never discovered'),
+      registry.url,
+      timPhase
+    )
+
+    expect(frontendLogOf(timRun)).toBe(
+      `<COMMIT> Upgrade lodash 4.17.20 → 4.17.21\n${COAUTHOR}\n${SESSION}\n\n<COMMIT> Fixture repo\n`
+    )
+  }, 180_000)
+
+  test('Should end the phase 4 commit with the trailers in the order given', async () => {
+    const timRun = await recordStartUpgradeCase(
+      withTrailers('phase 4 keeps the overrides the audit and the tests need'),
+      registry.url,
+      timPhase
+    )
+
+    const log = frontendLogOf(timRun)
+    const ending = `\n${COAUTHOR}\n${SESSION}\n\n<COMMIT> Fixture repo\n`
+    expect(log).toMatch(/^<COMMIT> Remove overrides\nRemoved: /)
+    expect(log.slice(-ending.length)).toBe(ending)
+  }, 180_000)
+})

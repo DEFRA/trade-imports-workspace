@@ -194,6 +194,7 @@ const renderBodyFiles = ({
  * @param {string} [args.branch] - The handoff branch; defaults to chore/<ticket>
  * @param {string} [args.reviewer] - The login the bodies name; defaults to (unknown)
  * @param {boolean} [args.dryRun] - Render only: no commit and no push
+ * @param {string[]} [args.trailers=[]] - Lines for the end of the handoff commit message
  * @returns {Promise<{dry_run: boolean, ticket: string, mode: string, branch: string | null, reviewer: string, body_files: {repo: string, pr: number, file: string}[], prs: object[], committed?: boolean}>}
  * @throws {TimError} USAGE with no ticket, a head without one PR and a summary, or a body over GitHub's comment limit; NOT_FOUND with no review, no pull request in scope, or no re-review recorded for a repo in a refresh; DIRTY_TREE when a handoff finds changes outside workareas/shared/
  */
@@ -208,7 +209,8 @@ export const shareReview = async ({
   head,
   branch,
   reviewer = UNKNOWN_REVIEWER,
-  dryRun = false
+  dryRun = false,
+  trailers = []
 }) => {
   if (!ticket?.startsWith(TICKET_PREFIX)) throw new TimError('USAGE', USAGE)
   const summarising = summary || refresh
@@ -246,7 +248,8 @@ export const shareReview = async ({
     workspaceRoot,
     ticket,
     branch: handoffBranch,
-    sharedDir
+    sharedDir,
+    trailers
   })
   return { ...shared, committed }
 }

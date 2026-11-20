@@ -7,6 +7,7 @@ import {
   symlinkSync,
   writeFileSync
 } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
@@ -242,6 +243,79 @@ describe('tim govuk apply matches apply-version.sh', () => {
       (args, env) =>
         recordTimRun(staged, ['govuk', 'apply', ...asTimArgs(args)], { env })
     )
+
+  test('Should end the commit message with each --trailer in the order given', async () => {
+    staged = stageGovukWorkspace()
+    stageApplyRepos(staged)
+    const trailers = [
+      'Co-Authored-By: Claude <noreply@anthropic.com>',
+      'Claude-Session: https://claude.ai/code/session_1'
+    ]
+    const intermediateTodo = applyCases.find(
+      ({ name }) => name === 'intermediate todo'
+    )
+
+    const record = await recordApplyCase(
+      staged,
+      intermediateTodo,
+      (args, env) =>
+        recordTimRun(
+          staged,
+          [
+            'govuk',
+            'apply',
+            ...asTimArgs(args),
+            ...trailers.flatMap((line) => ['--trailer', line])
+          ],
+          { env }
+        )
+    )
+
+    expect(record.exitCode).toBe(OK)
+    expect(
+      execFileSync('git', ['log', '-1', '--format=%B'], {
+        cwd: join(staged.root, 'repos', ADMIN),
+        encoding: 'utf8'
+      })
+    ).toBe(
+      `chore(${RUN_ID}): upgrade govuk-frontend to 5.9.1\n\n${trailers.join('\n')}\n\n`
+    )
+  })
+
+  test('Should show --trailer with an example in the help', async () => {
+    staged = stageGovukWorkspace()
+
+    const help = await recordTimRun(staged, ['govuk', 'apply', '--help'])
+
+    expect(help.stdout).toContain('--trailer <line>')
+    expect(help.stdout).toContain(
+      `  tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"`
+    )
+  })
+
+  test('Should exit 2 and change nothing when a --trailer is not a Name: value line', async () => {
+    staged = stageGovukWorkspace()
+    stageApplyRepos(staged)
+    const stateBefore = stateFileText(staged.root, ADMIN)
+
+    const record = await recordApplyCase(
+      staged,
+      applyCases.find(({ name }) => name === 'intermediate todo'),
+      (args, env) =>
+        recordTimRun(
+          staged,
+          ['govuk', 'apply', ...asTimArgs(args), '--trailer', 'Claude'],
+          { env }
+        )
+    )
+
+    expect(record.exitCode).toBe(USAGE)
+    expect(record.stderr).toBe(
+      '--trailer must be one line in the form "Name: value", such as "Co-Authored-By: Claude <noreply@anthropic.com>". You gave: "Claude"\n'
+    )
+    expect(record.repo.log).toMatch(/^[0-9a-f]{40} Initial commit\n$/)
+    expect(stateFileText(staged.root, ADMIN)).toBe(stateBefore)
+  })
 
   test('Should run npm in the resolved repo folder when the repo is reached through a symlink', async () => {
     staged = stageGovukWorkspace()

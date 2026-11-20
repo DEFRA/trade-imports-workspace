@@ -8,6 +8,7 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
+import { withTrailers } from '../git/commit-message.js'
 import { AUDIT_CONFIG_FILE } from './audit-rules.js'
 import { auditBaselineToLog } from './audit-to-log.js'
 import { hasTrackedChanges, repoCommands } from './repo-commands.js'
@@ -117,7 +118,7 @@ const refreshSteps = async (context) => {
   heading(context, 'git commit')
   const commit = await commands.gitToLog(
     checkout,
-    ['commit', '-m', COMMIT_MESSAGE],
+    ['commit', '-m', withTrailers(COMMIT_MESSAGE, context.trailers)],
     {
       logPath: context.log,
       append: true
@@ -146,6 +147,7 @@ const refreshSteps = async (context) => {
  * @param {string} request.repo
  * @param {string} [request.repoPath] - Refresh this checkout instead of `repos/<repo>`
  * @param {Record<string, string | undefined>} [request.env]
+ * @param {string[]} [request.trailers=[]] - Lines for the end of the commit message
  * @returns {Promise<{exitCode: number, result: {repo: string, status: 'committed' | 'no_change' | 'rolled_back', commit: string | null, reason: string | null, log: string}}>} exitCode 0 committed or nothing to refresh, 1 rolled back
  * @throws {TimError} USAGE for a missing option or repo, or a repo with uncommitted changes
  * @throws {StepFailed} when a git step that has to work fails
@@ -155,7 +157,8 @@ export const refreshLockfile = async ({
   runId,
   repo,
   repoPath,
-  env
+  env,
+  trailers = []
 }) => {
   if (!runId || !repo) throw new TimError('USAGE', REFRESH_USAGE)
   const path = repoPath || join(workspaceRoot, 'repos', repo)
@@ -173,7 +176,8 @@ export const refreshLockfile = async ({
     checkout,
     stateFolder,
     log,
-    commands
+    commands,
+    trailers
   }
   if (await hasTrackedChanges(commands, checkout)) {
     throw new TimError(

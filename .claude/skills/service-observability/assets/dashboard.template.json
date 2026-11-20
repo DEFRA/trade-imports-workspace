@@ -1,9 +1,6 @@
 {
   "title": "<service> (custom)",
-  "tags": [
-    "<service>",
-    "observability"
-  ],
+  "tags": ["<service>", "observability"],
   "timezone": "browser",
   "schemaVersion": 41,
   "time": {
@@ -68,9 +65,7 @@
       ],
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": ["lastNotNull"]
         },
         "colorMode": "background",
         "textMode": "value_and_name"
@@ -473,11 +468,414 @@
     },
     {
       "type": "row",
-      "title": "Dependency call logs",
+      "title": "Requests",
       "collapsed": false,
       "gridPos": {
         "x": 0,
         "y": 39,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests by section",
+      "description": "http.server.requests: SampleCount, per method, section and status class.",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "http.server.requests",
+          "statistic": "SampleCount",
+          "dimensions": {
+            "method": "*",
+            "section": "*",
+            "status.class": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.method')} ${PROP('Dim.section')} ${PROP('Dim.status.class')}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Request time by section",
+      "description": "http.server.requests: p95 and Maximum, per method, section and status class.",
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "http.server.requests",
+          "statistic": "p95",
+          "dimensions": {
+            "method": "*",
+            "section": "*",
+            "status.class": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.method')} ${PROP('Dim.section')} ${PROP('Dim.status.class')} p95"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "http.server.requests",
+          "statistic": "Maximum",
+          "dimensions": {
+            "method": "*",
+            "section": "*",
+            "status.class": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.method')} ${PROP('Dim.section')} ${PROP('Dim.status.class')} slowest"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Journey events",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Journey events",
+      "description": "journey.started, .submitted, .amended, .copied and .deleted, journey.concurrency.conflict and journey.entry.redirect, Sum. Published with no dimensions, so each query matches the empty dimension set exactly.",
+      "gridPos": {
+        "x": 0,
+        "y": 49,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.started",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.started"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.submitted",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.submitted"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.amended",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.amended"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.copied",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.copied"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.deleted",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.deleted"
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.concurrency.conflict",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.concurrency.conflict"
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.entry.redirect",
+          "statistic": "Sum",
+          "dimensions": {},
+          "matchExact": true,
+          "period": "",
+          "label": "journey.entry.redirect"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Validation failures by page",
+      "description": "journey.validation.failure, Sum, per page.",
+      "gridPos": {
+        "x": 12,
+        "y": 49,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "journey.validation.failure",
+          "statistic": "Sum",
+          "dimensions": {
+            "page": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.page')}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Dependency connections",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Connection errors and losses",
+      "description": "external.dependency.error and external.dependency.connection.lost, Sum, per dependency.",
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "external.dependency.error",
+          "statistic": "Sum",
+          "dimensions": {
+            "dependency": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.dependency')} errors"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "external.dependency.connection.lost",
+          "statistic": "Sum",
+          "dimensions": {
+            "dependency": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "${PROP('Dim.dependency')} connections lost"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Dependency call logs",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 66,
         "w": 24,
         "h": 1
       },
@@ -489,7 +887,7 @@
       "description": "From the logs, not metrics: one row per external call, slowest first. event.action is the dependency and operation, as dependency/operation; event.duration is a number in nanoseconds. Lucene query, not DQL.",
       "gridPos": {
         "x": 0,
-        "y": 40,
+        "y": 67,
         "w": 24,
         "h": 10
       },
@@ -568,7 +966,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 50,
+        "y": 77,
         "w": 24,
         "h": 1
       },
@@ -580,7 +978,7 @@
       "description": "@Timed(\"<timed-name>\"), published by EmfMeterRegistry: one value per call, in milliseconds, with the timer's tags (class, method, exception) as dimensions. Calls is SampleCount; Average, p95 and Slowest are over the calls in each period.",
       "gridPos": {
         "x": 0,
-        "y": 51,
+        "y": 78,
         "w": 12,
         "h": 8
       },

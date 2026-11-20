@@ -8,15 +8,16 @@ Project baseline: Pino with `@elastic/ecs-pino-format` for ECS output, `hapi-pin
 
 Performance benchmarks (from Pino docs):
 
-| Logger | Time (basic string log) |
-|--------|------------------------|
-| Pino | ~115ms |
-| Winston | ~270ms |
-| Bunyan | ~377ms |
+| Logger  | Time (basic string log) |
+| ------- | ----------------------- |
+| Pino    | ~115ms                  |
+| Winston | ~270ms                  |
+| Bunyan  | ~377ms                  |
 
 Pino serialises directly to JSON and writes to a stream. It avoids the overhead of Winston's transport abstraction and Bunyan's circular-reference handling.
 
 **Never use `console.log`** in a deployed service. It:
+
 - Has no log levels
 - Produces unstructured output that can't be parsed by log aggregators
 - Has no redaction
@@ -38,12 +39,8 @@ const logger = pino({
     service: 'trade-imports-animals-frontend'
   },
   redact: {
-    paths: [
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'res.headers'
-    ],
-    remove: true  // remove field entirely rather than replacing with [Redacted]
+    paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers'],
+    remove: true // remove field entirely rather than replacing with [Redacted]
   }
 })
 
@@ -66,36 +63,41 @@ Switch format by environment:
 ```js
 const isLocal = process.env.NODE_ENV === 'development'
 
-export const createLogger = () => pino(
-  isLocal
-    ? {
-        level: 'debug',
-        transport: { target: 'pino-pretty', options: { colorize: true } }
-      }
-    : {
-        ...ecsFormat(),
-        level: process.env.LOG_LEVEL ?? 'info',
-        base: { service: 'trade-imports-animals-frontend' },
-        redact: {
-          paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers'],
-          remove: true
+export const createLogger = () =>
+  pino(
+    isLocal
+      ? {
+          level: 'debug',
+          transport: { target: 'pino-pretty', options: { colorize: true } }
         }
-      }
-)
+      : {
+          ...ecsFormat(),
+          level: process.env.LOG_LEVEL ?? 'info',
+          base: { service: 'trade-imports-animals-frontend' },
+          redact: {
+            paths: [
+              'req.headers.authorization',
+              'req.headers.cookie',
+              'res.headers'
+            ],
+            remove: true
+          }
+        }
+  )
 ```
 
 ---
 
 ## 3. Log levels
 
-| Level | When to use |
-|-------|-------------|
-| `trace` | Very fine-grained detail — never in production |
-| `debug` | Diagnostic detail for troubleshooting |
-| `info` | Normal operations — default production level |
-| `warn` | Unexpected but handled (e.g. fallback used, retry succeeded) |
-| `error` | Operation failed, needs attention |
-| `fatal` | Process-ending failure |
+| Level   | When to use                                                  |
+| ------- | ------------------------------------------------------------ |
+| `trace` | Very fine-grained detail — never in production               |
+| `debug` | Diagnostic detail for troubleshooting                        |
+| `info`  | Normal operations — default production level                 |
+| `warn`  | Unexpected but handled (e.g. fallback used, retry succeeded) |
+| `error` | Operation failed, needs attention                            |
+| `fatal` | Process-ending failure                                       |
 
 Set production level to `info`. Only enable `debug` behind an environment variable:
 
@@ -117,7 +119,7 @@ logger.warn({ retryCount, endpoint }, 'Backend request retried')
 
 // Wrong — string concatenation
 logger.info('Notification ' + referenceNumber + ' saved by ' + userId)
-logger.info(`User ${userId} completed action`)  // also wrong
+logger.info(`User ${userId} completed action`) // also wrong
 ```
 
 The message should be a **static string** — identifiers go in the object. This allows log aggregators to group by message type.
@@ -135,10 +137,16 @@ server.route({
 
     try {
       const result = await notificationClient.save(request, referenceNumber)
-      request.logger.info({ referenceNumber, result: result.referenceNumber }, 'Notification saved')
+      request.logger.info(
+        { referenceNumber, result: result.referenceNumber },
+        'Notification saved'
+      )
       return h.redirect('/confirmation')
     } catch (err) {
-      request.logger.error({ err, referenceNumber }, 'Failed to save notification')
+      request.logger.error(
+        { err, referenceNumber },
+        'Failed to save notification'
+      )
       return h.redirect('/error')
     }
   }
@@ -155,13 +163,13 @@ Logging fails here more often by silence than by noise. Support must be able to 
 
 **Carry the ids support searches by.** At least one of these, whichever the code has:
 
-| Id | Key |
-|---|---|
-| Notification reference | `referenceNumber` |
-| Journey | `journeyId` |
-| User or organisation | `userId`, `organisationId` |
-| Request | `request.logger` binds it for you; outside a request, pass the trace id |
-| The thing decided about | for example `portCode`, `uploadId`, `dataset` |
+| Id                      | Key                                                                     |
+| ----------------------- | ----------------------------------------------------------------------- |
+| Notification reference  | `referenceNumber`                                                       |
+| Journey                 | `journeyId`                                                             |
+| User or organisation    | `userId`, `organisationId`                                              |
+| Request                 | `request.logger` binds it for you; outside a request, pass the trace id |
+| The thing decided about | for example `portCode`, `uploadId`, `dataset`                           |
 
 If the branch does not have the id in scope, pass it in. Do not log without it.
 
@@ -201,10 +209,9 @@ If the branch does not have the id in scope, pass it in. Do not log without it.
 ```js
 // Bad
 logger.warn({ integration, durationMs }, 'External call failed')
-
-// Good
-logger.warn({ err, integration, status: err.status, durationMs }, 'External call failed')
 ```
+
+Good: the house external-call line, which carries the cause as `error` and the status as `http.response.status_code`. Its fields are listed once, in [`service-observability/references/LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "The line"; the Node form is in [`references/NODE.md`](../../../.claude/skills/service-observability/references/NODE.md) → "The log line".
 
 **A warning without the thing it warns about.** A Java port-type fallback (`PortType`) warns inside the enum, where the port code is not in scope, so the line cannot say which port. Log where the code is in scope, or pass the code in. In pino:
 
@@ -270,9 +277,9 @@ import pino from 'pino'
 
 pino({
   serializers: {
-    req: pino.stdSerializers.req,   // captures method, url, headers
-    res: pino.stdSerializers.res,   // captures statusCode, headers
-    err: pino.stdSerializers.err    // captures message, type, stack
+    req: pino.stdSerializers.req, // captures method, url, headers
+    res: pino.stdSerializers.res, // captures statusCode, headers
+    err: pino.stdSerializers.err // captures message, type, stack
   }
 })
 ```
@@ -296,7 +303,7 @@ Custom serialiser example:
 ```js
 serializers: {
   user: (user) => ({
-    id: user.id,
+    id: user.id
     // omit name, email — PII
   })
 }
@@ -343,23 +350,25 @@ ECS (Elastic Common Schema) is required by Defra CDP for log aggregation.
 ```js
 import ecsFormat from '@elastic/ecs-pino-format'
 
-const logger = pino(ecsFormat({
-  convertReqRes: true  // automatically serialise req/res using ECS fields
-}))
+const logger = pino(
+  ecsFormat({
+    convertReqRes: true // automatically serialise req/res using ECS fields
+  })
+)
 ```
 
 ECS field mapping:
 
-| Pino field | ECS field |
-|-----------|----------|
-| `time` | `@timestamp` |
-| `level` | `log.level` |
-| `msg` | `message` |
-| `err.message` | `error.message` |
-| `err.stack` | `error.stack_trace` |
-| `err.type` | `error.type` |
-| `req.method` | `http.request.method` |
-| `req.url` | `url.path` |
+| Pino field       | ECS field                   |
+| ---------------- | --------------------------- |
+| `time`           | `@timestamp`                |
+| `level`          | `log.level`                 |
+| `msg`            | `message`                   |
+| `err.message`    | `error.message`             |
+| `err.stack`      | `error.stack_trace`         |
+| `err.type`       | `error.type`                |
+| `req.method`     | `http.request.method`       |
+| `req.url`        | `url.path`                  |
 | `res.statusCode` | `http.response.status_code` |
 
 Always use ECS format in deployed environments. Use `pino-pretty` only for local development — it's too slow for production and breaks log parsing.
@@ -374,9 +383,9 @@ import hapiPino from 'hapi-pino'
 await server.register({
   plugin: hapiPino,
   options: {
-    logPayload: false,           // don't log request bodies (PII risk)
-    logRequestComplete: true,    // log when request completes (timing)
-    ignoredPaths: ['/health', '/healthz'],  // suppress health check noise
+    logPayload: false, // don't log request bodies (PII risk)
+    logRequestComplete: true, // log when request completes (timing)
+    ignoredPaths: ['/health', '/healthz'], // suppress health check noise
     redact: {
       paths: ['req.headers.authorization', 'req.headers.cookie'],
       remove: true
@@ -387,7 +396,7 @@ await server.register({
     },
     // Bind additional fields to every request log
     getChildBindings: (request) => ({
-      requestId: request.info.id,
+      requestId: request.info.id
       // traceId comes from @defra/hapi-tracing automatically
     })
   }
@@ -448,10 +457,10 @@ request.logger.error({ err, referenceNumber }, 'Failed to fetch notification')
 // Logs: { "error": { "type": "Error", "message": "...", "stack_trace": "..." }, "referenceNumber": "...", "message": "Failed to fetch notification" }
 
 // Wrong — loses stack trace and type
-logger.error(err.message)                    // just a string — no stack trace
-logger.error(`Failed: ${err.message}`)      // same problem
-logger.error(err)                           // Pino passes as first arg without err serialiser key
-logger.error({ message: err.message })      // doesn't trigger err serialiser
+logger.error(err.message) // just a string — no stack trace
+logger.error(`Failed: ${err.message}`) // same problem
+logger.error(err) // Pino passes as first arg without err serialiser key
+logger.error({ message: err.message }) // doesn't trigger err serialiser
 ```
 
 Always use `{ err }` as the property name — this is what `pino.stdSerializers.err` keyed on `err` will pick up.
@@ -473,6 +482,7 @@ Always use `{ err }` as the property name — this is what `pino.stdSerializers.
 ## 13. Transports
 
 **Local development:**
+
 ```js
 transport: {
   target: 'pino-pretty',
@@ -481,12 +491,14 @@ transport: {
 ```
 
 **Production:** no transport — raw JSON output, fastest path:
+
 ```js
 // No transport option — writes JSON directly to stdout
 const logger = pino(ecsFormat())
 ```
 
 **Multiple targets** (e.g. different levels to different destinations):
+
 ```js
 transport: {
   targets: [
@@ -527,6 +539,7 @@ Do **not** use async destinations in Lambda or short-lived processes — the pro
 ## 15. Common mistakes
 
 **1. String concatenation instead of structured object**
+
 ```js
 // Wrong
 logger.info('Saving notification ' + referenceNumber + ' for user ' + userId)
@@ -535,6 +548,7 @@ logger.info({ referenceNumber, userId }, 'Saving notification')
 ```
 
 **2. Logging errors without `err` key**
+
 ```js
 // Wrong — loses stack trace
 logger.error('Failed: ' + err.message)
@@ -544,6 +558,7 @@ logger.error({ err, referenceNumber }, 'Failed to save notification')
 ```
 
 **3. Using `console.log`**
+
 ```js
 // Wrong
 console.log('Server started on port', port)
@@ -552,6 +567,7 @@ logger.info({ port }, 'Server started')
 ```
 
 **4. Logging sensitive fields without redaction**
+
 ```js
 // Wrong — logs bearer token
 logger.info({ headers: request.headers }, 'Request received')
@@ -560,6 +576,7 @@ logger.info({ method: request.method, path: request.path }, 'Request received')
 ```
 
 **5. Creating a new logger per request**
+
 ```js
 // Wrong — expensive, loses bindings
 handler: async (request, h) => {
@@ -572,6 +589,7 @@ handler: async (request, h) => {
 ```
 
 **6. Using `error` level for expected/handled cases**
+
 ```js
 // Wrong — 404s are expected, not errors
 logger.error({ referenceNumber }, 'Notification not found')
@@ -580,6 +598,7 @@ logger.info({ referenceNumber }, 'Notification not found — returning 404')
 ```
 
 **7. Not setting a `base` for service identification**
+
 ```js
 // Wrong — can't tell which service this log came from
 const logger = pino()
@@ -588,21 +607,29 @@ const logger = pino({ base: { service: 'trade-imports-animals-frontend' } })
 ```
 
 **8. Using `pino-pretty` in production**
+
 ```js
 // Wrong — slow, breaks ECS parsing
-transport: { target: 'pino-pretty' }
+transport: {
+  target: 'pino-pretty'
+}
 // Correct — no transport in production
 ```
 
 **9. Not flushing async destination on shutdown**
+
 ```js
 // Wrong — last logs may be lost
 process.on('SIGTERM', () => process.exit(0))
 // Correct
-process.on('SIGTERM', () => { logger.flush(); process.exit(0) })
+process.on('SIGTERM', () => {
+  logger.flush()
+  process.exit(0)
+})
 ```
 
 **10. Dynamic message strings**
+
 ```js
 // Wrong — can't group logs by message type
 logger.info(`User ${userId} performed ${action} on ${entity}`)

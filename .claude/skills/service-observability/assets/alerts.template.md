@@ -11,19 +11,19 @@ Grafana cannot import these: CDP issues no service-account tokens and
 
 Every rule shares these settings:
 
-| Field | Value |
-|---|---|
-| Folder | `Playground/<service>-monitoring` |
-| Evaluation group | `<service>-advanced-alerts`, the existing one. `[UNPROVEN]` it evaluates every 5 minutes; the form shows its interval |
-| Data source | CloudWatch, Metric Search, Builder |
-| Namespace | `<service>` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off. Rule 1a is the one exception: `dependency` only |
-| Time range | the same length as the rule's period |
-| Alert condition | the "WHEN QUERY `Last` IS ABOVE …" row under the query. The Advanced options toggle shows the same thing as Reduce and Threshold expressions; either works |
-| Pending period | None. Grafana refuses any pending period shorter than the group's evaluation interval ("Pending period must be greater than or equal to the evaluation interval") |
-| No data | Normal, under "Configure no data and error handling". Leave error handling at its default |
-| Notifications | Use notification policy, not a contact point |
-| Labels | none (promotion adds them) |
+| Field            | Value                                                                                                                                                             |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Folder           | `Playground/<service>-monitoring`                                                                                                                                 |
+| Evaluation group | `<service>-advanced-alerts`, the existing one. `[UNPROVEN]` it evaluates every 5 minutes; the form shows its interval                                             |
+| Data source      | CloudWatch, Metric Search, Builder                                                                                                                                |
+| Namespace        | `<service>`                                                                                                                                                       |
+| Dimensions       | `dependency` = `*`, `operation` = `*`, with Match exact off, for rules 1, 2 and 3. Rules 1a, 1b, 4 and 5 set their own, in their tables                           |
+| Time range       | the same length as the rule's period                                                                                                                              |
+| Alert condition  | the "WHEN QUERY `Last` IS ABOVE …" row under the query. The Advanced options toggle shows the same thing as Reduce and Threshold expressions; either works        |
+| Pending period   | None. Grafana refuses any pending period shorter than the group's evaluation interval ("Pending period must be greater than or equal to the evaluation interval") |
+| No data          | Normal, under "Configure no data and error handling". Leave error handling at its default                                                                         |
+| Notifications    | Use notification policy, not a contact point                                                                                                                      |
+| Labels           | none (promotion adds them)                                                                                                                                        |
 
 Leave the rule named `platform_managed_do_not_delete` alone. Routing to
 Slack is a #cdp-support request (`references/ALERTS.md` → "Route to
@@ -34,14 +34,14 @@ values.
 
 ## 1. <service> dependency unavailable
 
-| Field | Value |
-|---|---|
-| Rule name | `<service> dependency unavailable` |
-| Metric | `external.call.failure` |
-| Statistic | `Minimum` |
-| Period | `300` (5 minutes) |
+| Field           | Value                                                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Rule name       | `<service> dependency unavailable`                                                                                                        |
+| Metric          | `external.call.failure`                                                                                                                   |
+| Statistic       | `Minimum`                                                                                                                                 |
+| Period          | `300` (5 minutes)                                                                                                                         |
 | Alert condition | `Last` `IS EQUAL TO` `1` (every call in the window failed). If the operator list has no "equal to", `IS ABOVE` `0.99` means the same here |
-| Summary | `{{ $labels.dependency }} {{ $labels.operation }}: every call failed in the last 5 minutes` |
+| Summary         | `{{ $labels.dependency }} {{ $labels.operation }}: every call failed in the last 5 minutes`                                               |
 
 Before saving, Preview should show one row per dependency and operation.
 If it shows none, check Match exact is off and both dimensions are set.
@@ -53,29 +53,50 @@ For a database, its availability comes from the driver's heartbeats
 service has a database. The table under "Check" says which of rules 1, 2
 and 3 are built beside it.
 
-| Field | Value |
-|---|---|
-| Rule name | `<service> <database> unavailable` |
-| Metric | `external.dependency.available` |
-| Dimensions | `dependency` = `<database>`, the only dimension, with Match exact off |
-| Statistic | `Maximum` |
-| Period | `300` (5 minutes) |
+| Field           | Value                                                                         |
+| --------------- | ----------------------------------------------------------------------------- |
+| Rule name       | `<service> <database> unavailable`                                            |
+| Metric          | `external.dependency.available`                                               |
+| Dimensions      | `dependency` = `<database>`, the only dimension, with Match exact off         |
+| Statistic       | `Maximum`                                                                     |
+| Period          | `300` (5 minutes)                                                             |
 | Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
-| Summary | `<database> has been unavailable to every task for 5 minutes` |
+| Summary         | `<database> has been unavailable to every task for 5 minutes`                 |
+
+## 1b. <service> Redis unavailable
+
+For a Node service whose session store is Redis. Its availability comes
+from the client's connection events (`references/NODE.md` → "Redis").
+Keep this section only if the service uses Redis. Duplicate rule 1a, or
+build it in full where there is no rule 1a, then set:
+
+| Field           | Value                                                                         |
+| --------------- | ----------------------------------------------------------------------------- |
+| Rule name       | `<service> Redis unavailable`                                                 |
+| Metric          | `external.dependency.available`                                               |
+| Dimensions      | `dependency` = `redis`, the only dimension, with Match exact off              |
+| Statistic       | `Maximum`                                                                     |
+| Period          | `300` (5 minutes)                                                             |
+| Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
+| Summary         | `Redis has been unavailable to every task for 5 minutes`                      |
+
+Never widen rule 1a or 1b to `dependency` = `*`: a Node service also
+publishes `external.dependency.available` for its HTTP dependencies, and
+those are not alerted on (see "Not alerted on").
 
 ## 2. <service> dependency calls failing
 
 Duplicate rule 1 (or rule 1a, where rule 1 is not built), then set:
 
-| Field | Value |
-|---|---|
-| Rule name | `<service> dependency calls failing` |
-| Metric | `external.call.failure` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off |
-| Statistic | `Sum` |
-| Period | `900` (15 minutes) |
-| Alert condition | `Last` `IS ABOVE` `2` (3 or more failed calls) |
-| Summary | `{{ $labels.dependency }} {{ $labels.operation }}: 3 or more failed calls in 15 minutes` |
+| Field           | Value                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| Rule name       | `<service> dependency calls failing`                                                     |
+| Metric          | `external.call.failure`                                                                  |
+| Dimensions      | `dependency` = `*`, `operation` = `*`, with Match exact off                              |
+| Statistic       | `Sum`                                                                                    |
+| Period          | `900` (15 minutes)                                                                       |
+| Alert condition | `Last` `IS ABOVE` `2` (3 or more failed calls)                                           |
+| Summary         | `{{ $labels.dependency }} {{ $labels.operation }}: 3 or more failed calls in 15 minutes` |
 
 Where a database is the only dependency, Preview must show a
 `<database>` row before saving. If it shows none, the database's
@@ -88,38 +109,74 @@ Duplicate rule 2, then set the fields below. One rule covers all
 dependencies when they share a read timeout; otherwise make one rule per
 dependency, setting `dependency` to its name instead of `*`.
 
-| Field | Value |
-|---|---|
-| Rule name | `<service> dependency slow` |
-| Metric | `external.call.duration` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off |
-| Statistic | `p95` (type it in if the list does not offer it) |
-| Period | `900` (15 minutes) |
+| Field           | Value                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Rule name       | `<service> dependency slow`                                                                                            |
+| Metric          | `external.call.duration`                                                                                               |
+| Dimensions      | `dependency` = `*`, `operation` = `*`, with Match exact off                                                            |
+| Statistic       | `p95` (type it in if the list does not offer it)                                                                       |
+| Period          | `900` (15 minutes)                                                                                                     |
 | Alert condition | `Last` `IS ABOVE` `<slow-threshold-ms>` (two thirds of `<read-timeout-ms>`, the read timeout the client actually uses) |
-| Summary | `{{ $labels.dependency }} {{ $labels.operation }}: p95 call time above <slow-threshold-ms> ms over 15 minutes` |
+| Summary         | `{{ $labels.dependency }} {{ $labels.operation }}: p95 call time above <slow-threshold-ms> ms over 15 minutes`         |
 
 Take `<read-timeout-ms>` from the client that makes the call, not from a
 config value: check the value is actually applied (a Feign client with
 no `Request.Options` uses Feign's 60 second default whatever the YAML
 says).
 
+## 4. <service> section slow
+
+`[UNPROVEN]` Not yet built or fired anywhere. Keep this section only if
+the service publishes `http.server.requests` (`references/NODE.md` →
+"Endpoint layer"). Duplicate rule 3, then set:
+
+| Field           | Value                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Rule name       | `<service> section slow`                                                                                                        |
+| Metric          | `http.server.requests`                                                                                                          |
+| Dimensions      | `method` = `*`, `section` = `*`, `status.class` = `*`, with Match exact off                                                     |
+| Statistic       | `p95`                                                                                                                           |
+| Period          | `900` (15 minutes)                                                                                                              |
+| Alert condition | `Last` `IS ABOVE` `<section-slow-ms>` (the team's threshold for a page)                                                         |
+| Summary         | `{{ $labels.method }} {{ $labels.section }} {{ index $labels "status.class" }}: p95 above <section-slow-ms> ms over 15 minutes` |
+
+## 5. <service> concurrency conflicts
+
+`[UNPROVEN]` Not yet built or fired anywhere. Keep this section only if
+the service publishes `journey.concurrency.conflict`. Duplicate rule 2,
+then set:
+
+| Field           | Value                                                                   |
+| --------------- | ----------------------------------------------------------------------- |
+| Rule name       | `<service> concurrency conflicts`                                       |
+| Metric          | `journey.concurrency.conflict`                                          |
+| Dimensions      | none, with Match exact on: the metric is published with no dimensions   |
+| Statistic       | `Sum`                                                                   |
+| Period          | `3600` (60 minutes)                                                     |
+| Alert condition | `Last` `IS ABOVE` `<conflicts-per-hour>` (the team's threshold)         |
+| Summary         | `More than <conflicts-per-hour> concurrency conflicts in the last hour` |
+
 ## Check
 
 The group holds `platform_managed_do_not_delete` and the rules built
 here, each Normal, none in Error:
 
-| The service has | Rules |
-|---|---|
-| No database | 1, 2 and 3 (three rules) |
-| A database and other dependencies | 1, 1a, 2 and 3 (four rules) |
-| A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules) |
-| A database as its only dependency, without its command metrics | 1a (one rule) |
+| The service has                                                   | Rules                       |
+| ----------------------------------------------------------------- | --------------------------- |
+| No database and no Redis                                          | 1, 2 and 3 (three rules)    |
+| A database and other dependencies                                 | 1, 1a, 2 and 3 (four rules) |
+| Redis (a Node service) and other dependencies                     | 1, 1b, 2 and 3 (four rules) |
+| A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules)   |
+| A database as its only dependency, without its command metrics    | 1a (one rule)               |
 
-A database's command metrics are the `external.call.*` meters
-`MongoCommandMetrics` records (`references/METRICS.md` → "A database").
-A heartbeat records none.
+A database's command metrics are the `external.call.*` metrics
+`MongoCommandMetrics` records for MongoDB (`references/METRICS.md` → "A
+database"). Redis records none: its commands are not timed
+(`references/NODE.md` → "Redis"). A heartbeat or a connection event
+records none either.
 
-Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
+Add rule 4 and rule 5 to the count when they are kept. Redis gets rule
+1b, not rule 1a. Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule
 (More → Export → JSON) for Claude to check this sheet against.
 
@@ -128,5 +185,7 @@ Rule 3 counts once more for each extra per-dependency slow rule. Then prove each
 - `external.dependency.available` for an HTTP dependency. It is for the
   dashboard only; rule 1 alerts on `external.call.failure` instead
   (`references/METRICS.md` → "Availability: passive or active" says
-  why). A database's comes from the driver's heartbeats, and rule 1a
-  alerts on it.
+  why). On a Node service it holds the most recent call's outcome
+  (`references/NODE.md` → "Availability of an HTTP dependency"), so one
+  failed call on a quiet dependency would keep an alert firing until a
+  call succeeds.

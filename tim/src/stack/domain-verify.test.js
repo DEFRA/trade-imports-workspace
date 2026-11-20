@@ -95,6 +95,43 @@ describe('#outcomesOf', () => {
     ])
   })
 
+  test('Should tell apart two cases of a parameterised describe sharing a title', () => {
+    const report = {
+      suites: [
+        {
+          file: 'tests/animals/e2e/addresses-read-only.spec.ts',
+          suites: [
+            {
+              title: 'Consignor',
+              specs: [
+                {
+                  title: 'offers no add-address control',
+                  ok: true,
+                  tests: [{}]
+                }
+              ]
+            },
+            {
+              title: 'Place of origin',
+              specs: [
+                {
+                  title: 'offers no add-address control',
+                  ok: true,
+                  tests: [{}]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    expect(outcomesOf(report).specs.map(({ id }) => id)).toEqual([
+      'tests/animals/e2e/addresses-read-only.spec.ts > Consignor > offers no add-address control',
+      'tests/animals/e2e/addresses-read-only.spec.ts > Place of origin > offers no add-address control'
+    ])
+  })
+
   test('Should read an empty report as no specs and no counts', () => {
     expect(outcomesOf({})).toEqual({
       counts: { passed: 0, failed: 0, flaky: 0, skipped: 0 },
@@ -106,6 +143,22 @@ describe('#outcomesOf', () => {
 describe('#compareOutcomes', () => {
   test('Should call the services enough when every spec passed', () => {
     const subset = passing(['starts a replay', 'records an outbox event'])
+
+    expect(compareOutcomes({ subset })).toEqual({
+      sufficient: true,
+      failed: [],
+      onlyOnFullStack: [],
+      brokenOnBoth: []
+    })
+  })
+
+  test('Should call the services enough when the only spec that did not pass was skipped', () => {
+    const subset = outcomesOf(
+      reportOf([
+        { title: 'starts a replay', ok: true, ran: false },
+        { title: 'records an outbox event', ok: true }
+      ])
+    )
 
     expect(compareOutcomes({ subset })).toEqual({
       sufficient: true,

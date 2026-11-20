@@ -15,7 +15,7 @@ describe('tim docker domain list', () => {
 
     expect(
       run.stdout.split('\n').filter((line) => !line.startsWith(' '))
-    ).toEqual(['animals (12)', 'animals-admin (12)', 'ins (11)', 'plants (10)'])
+    ).toEqual(['animals (15)', 'animals-admin (17)', 'ins (17)', 'plants (10)'])
   })
 
   test('Should give each domain its services in --json', async () => {

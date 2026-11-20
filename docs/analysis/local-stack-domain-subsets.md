@@ -1,9 +1,9 @@
 # Local stack: which services each test domain needs
 
-The workspace stack starts 22 containers whatever you are working on. Most of
-them are not needed for any one domain's end-to-end suite. This page records
-which services each domain does need, how that was established, and why a map
-derived from `depends_on` alone is not trustworthy.
+The workspace stack starts 22 containers whatever you are working on. One
+domain's end-to-end suite needs between 10 and 17 of them. This page records
+which, how that was established, and why a map derived from `depends_on` alone
+is not trustworthy.
 
 Written to inform `tim docker up --domain <name>`, which starts one domain's
 subset instead of the whole stack.
@@ -24,16 +24,26 @@ Six services are core: every domain needs them.
 | `trade-imports-defra-id-stub` | OIDC sign-in for all four UIs |
 | `trade-imports-address-book` | Used by all four domains (14 / 1 / 23 / 13 specs) |
 
-Each domain then adds its own:
+Each domain then adds its own, **and whatever other domain's frontend its
+specs drive**:
 
-| Domain | Adds | Total |
-|---|---|---|
-| `plants` | `plants-frontend`, `plants-backend`, `reference-data`, `stub` | **10** |
-| `ins` | `ins-frontend`, `ins-backend`, `routing-proxy`, `reference-data`, `stub` | **11** |
-| `animals` | `animals-frontend`, `animals-frontend-nginx`, `animals-backend`, `reference-data`, `stub`, `cdp-uploader` | **12** |
-| `animals-admin` | `animals-admin`, `animals-backend`, `dynamics-gateway`, `toxiproxy`, `servicebus-emulator`, `mssql` | **12** |
+| Domain | Adds | Total | Proven |
+|---|---|---|---|
+| `plants` | `plants-frontend`, `plants-backend`, `reference-data`, `stub` | **10** | 151 passed, 2.8m |
+| `animals` | the animals chain (`animals-frontend`, `animals-frontend-nginx`, `animals-backend`, `reference-data`, `stub`, `cdp-uploader`), plus `animals-admin`, `ins-frontend`, `ins-backend` | **15** | 461 passed, 11 skipped, 6.2m |
+| `animals-admin` | `animals-admin`, `animals-backend`, `dynamics-gateway`, `toxiproxy`, `servicebus-emulator`, `mssql`, plus the animals frontend chain | **17** | 36 passed, 36s |
+| `ins` | `ins-frontend`, `ins-backend`, `routing-proxy`, `reference-data`, `stub`, plus the animals frontend chain and `plants-frontend`, `plants-backend` | **17** | 174 passed, 39s |
 
-Against 22 for the full stack, so 10 to 12 containers come out.
+Against 22 for the full stack. **Only `plants` is a large saving.** Its specs
+stay within their own domain; the other three drive other domains' frontends,
+so their subsets are close to the whole stack.
+
+| Domain | Fixtures from other domains |
+|---|---|
+| `plants` | none |
+| `animals` | `animalsAdminPages` (1 spec), `insPages` (3) |
+| `animals-admin` | `animalsPages` (1), `animalsJourney` (6), `frontendSeedContext` |
+| `ins` | `animalsPages` (3), `animalsJourney` (6), `plantsPages` (2), `plantsJourney` (1) |
 
 ## What the servicebus chain costs
 
@@ -55,27 +65,34 @@ arm64 image), so on Apple Silicon it runs translated, and
 [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md) already documents it
 being OOM-killed (exit 137) as a routine event on a memory-tight machine.
 
-`cdp-uploader` is likewise `linux/amd64` and needed by `animals` alone.
+`cdp-uploader` is likewise `linux/amd64`.
 
 ## Why `depends_on` is not enough
 
 The obvious way to derive this map is to take each domain's frontend and walk
-`depends_on`. That is wrong, and it is wrong in a way that passes review.
+`depends_on`. That is wrong, and it is wrong in ways that pass review.
 
-`depends_on` describes **boot order**. A test describes **behaviour**. A
-service that one service calls over HTTP at request time, having booted
-independently, appears in neither `depends_on` nor the health wait.
+`depends_on` describes **boot order**. A test describes **behaviour**. Three
+misses came out of that gap, every one found by running a suite, never by
+reading the compose files:
 
-Two misses were found this way, both only by running something:
+1. **`address-book` for `animals-admin`.** Nothing in its `depends_on` or
+   environment names it. The dependency is in the test layer: `addressBookApi`
+   is used in an animals-admin spec, and `outbox-event-created.spec.ts`
+   imports `consignorFixture` from `@flows/shared/address-book-seed`.
 
-1. **`address-book` for `animals-admin`.** Nothing in `animals-admin`'s
-   `depends_on` or environment names it. The dependency is in the test layer:
-   `addressBookApi` is used in an animals-admin spec, and
-   `outbox-event-created.spec.ts` imports `consignorFixture` from
-   `@flows/shared/address-book-seed`.
+2. **`dynamics-gateway` for the admin DLQ page.** A runtime HTTP call with no
+   `depends_on` edge — see the experiment below.
 
-2. **`dynamics-gateway` for `animals-admin`'s DLQ page.** Found by the
-   experiment below.
+3. **The whole animals frontend chain for `animals-admin`, and cross-domain
+   frontends for `animals` and `ins`.** A domain's specs drive another
+   domain's UI. `createFrontendSeedContext` in `fixtures/seed-context.ts` uses
+   `getAnimalsFrontendBaseUrl()`, so every admin spec that seeds a
+   notification goes through the animals frontend. This one was missed by the
+   gateway experiment too, because that experiment ran the whole stack minus
+   the gateway, so the frontend was present throughout. It only surfaced on
+   the first real `tim docker domain verify animals-admin`, which failed 21 of
+   36 specs.
 
 ## The gateway experiment
 
@@ -87,18 +104,11 @@ The reason to doubt it: the seven `outbox-event-*.spec.ts` specs are
 not on Azure Service Bus. Their only mention of Dynamics is the field value
 `source: 'dynamics-contact'`. And the three animals specs under
 `tests/animals/e2e/journeys/dynamics/` are `skipIfComposeEnvironment` — they
-target real PIMS Dynamics and skip locally, so they need nothing of it.
+target real PIMS Dynamics and skip locally.
 
 **Method.** Start the stack with every profile except `servicebus`, and with
 `-e gateway`, then run the animals-admin suite. Then restore both and re-run
 the failing spec as a control.
-
-```bash
-tim docker up --profile database --profile infrastructure --profile stubs \
-              --profile backend --profile frontend -e gateway
-npm --prefix repos/trade-imports-ins-tests run test:docker-compose -- \
-    tests/animals-admin/ --workers=2
-```
 
 **Result.**
 
@@ -107,10 +117,9 @@ npm --prefix repos/trade-imports-ins-tests run test:docker-compose -- \
 | Without gateway and servicebus | 17 | 34 passed, **1 failed**, 1 did not run |
 | With them (control) | 21 | Both DLQ specs pass, 3.5s and 3.7s, no retries |
 
-All seven `outbox-event-*` specs passed without the gateway, so the outbox
-reasoning held. What failed was
-`tests/animals-admin/e2e/features/dlq-events.spec.ts` — "starts a replay of all
-DLQ messages from the admin UI". The cause is a runtime HTTP call:
+All seven `outbox-event-*` specs passed without the gateway. What failed was
+`tests/animals-admin/e2e/features/dlq-events.spec.ts`. The cause is a runtime
+HTTP call:
 
 ```js
 // repos/trade-imports-animals-admin/src/server/common/clients/dlq-client.js
@@ -120,49 +129,32 @@ const dynamicsGatewayUrl = config.get('dynamicsGatewayApi.baseUrl')
 … `${dynamicsGatewayUrl}${DLQ_PATH}/delete-all`
 ```
 
-The admin UI's DLQ page is served by the gateway. Without it the table is
-empty and the spec fails. The control run proves the failure is caused by the
-absence rather than flakiness: the same specs pass in under four seconds with
-the chain back.
+The admin UI's DLQ page is served by the gateway. The control run proves the
+failure is caused by the absence rather than flakiness.
 
-**Conclusion.** `animals-admin` needs `dynamics-gateway`, and so the whole
-chain behind it. No other domain does — `DLQ` appears in no spec under
-`animals`, `ins` or `plants`.
-
-Logs: `workareas/gateway-experiment/` (not committed).
-
-## The plants subset, proven
-
-`tim docker up --domain plants` then the plants suite, on the machine above:
-
-| | Full stack | `--domain plants` |
-|---|---|---|
-| Containers running | 21 | **9** (plus `floci-init`, which exits) |
-| Memory | ~4.8 GiB | **1.77 GiB** |
-| `test:docker-compose:plants` | — | **151 passed, 0 failed, 2.8m** |
+**Conclusion.** `animals-admin` needs `dynamics-gateway` and the chain behind
+it. No other domain does — `DLQ` appears in no spec under `animals`, `ins` or
+`plants`.
 
 ## Keeping the map honest
 
-The map above is a claim about behaviour, and behaviour changes when specs are
-added. A spec that reaches a service the map drops fails confusingly, long
-after the change that caused it.
+The map is a claim about behaviour, and behaviour changes when specs are
+added. A spec that reaches a dropped service fails confusingly, long after the
+change that caused it.
 
 So the map is paired with `tim docker domain verify <name>`. It runs the
 domain's suite against that domain's services alone and names every spec that
-did not pass, exiting 1 when any did. A clean run is the evidence the subset is
+failed, exiting 1 when any did. A clean run is the evidence the subset is
 sufficient.
 
-A failure is evidence the map is missing a service, but not proof — the spec
+A skipped spec is not a failure. A suite skips the cases its environment does
+not offer — the animals suite skips 11 specs that need the frontend in stub
+mode — and those say nothing about which services were up.
+
+A failure is evidence the map is missing a service, but not proof: the spec
 may be broken on any stack. `--against-full` adds the control run on the whole
-stack and separates the two: a spec that fails on the subset and passes on the
-full stack is the map's fault, and the command says so and names the file to
-edit. One that fails on both is not.
-
-The control is opt-in because it doubles the runtime, and most of the time the
-subset run alone answers the question.
-
-Run it when a domain's specs change, and treat a failure as the map being out
-of date rather than the test being wrong.
+stack and separates the two, naming the file to edit when the map is at fault.
+It is opt-in because it doubles the runtime.
 
 `tim docker domain list` prints each domain and the services it starts.
 
@@ -174,5 +166,9 @@ of date rather than the test being wrong.
 - **The `servicebus` profile's place in `ALL_PROFILES`.** It starts by default
   for every domain today. Whether the default should change, rather than being
   narrowed per domain, is a decision for the team.
+- **Whether the cross-domain specs belong where they are.** `ins` driving the
+  animals and plants journeys is what makes its subset nearly the whole stack.
+  Moving those specs, or tagging them, would shrink three of the four domains.
+  That is a test-suite decision, not a stack one.
 - **CI.** Nothing here changes what GitHub Actions runs; that follows
   [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json).

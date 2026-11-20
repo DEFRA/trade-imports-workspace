@@ -150,11 +150,15 @@ export const CORE_SERVICES = [
  * so `--domain` can start one domain's suite instead of the whole stack.
  *
  * A domain lists every service its specs reach, not only the ones compose
- * resolves through `depends_on`. The two are not the same graph: the admin
- * UI's DLQ page calls the dynamics gateway over HTTP at request time, with
- * no `depends_on` edge to show for it, and `address-book` is reached from
- * the test layer alone. Both were found by running a domain's suite without
- * them, never by reading the compose files. See
+ * resolves through `depends_on`, and not only its own. The graphs differ in
+ * two ways. A service can be called over HTTP at request time with no
+ * `depends_on` edge, as the admin UI's DLQ page calls the dynamics gateway.
+ * And a domain's specs can drive another domain's frontend: animals-admin
+ * seeds its notifications through the animals frontend, and ins drives the
+ * animals and plants journeys. Only plants stays within itself.
+ *
+ * Each of those was found by running a suite without a service, never by
+ * reading the compose files. See
  * docs/analysis/local-stack-domain-subsets.md, and prove a change here with
  * `tim docker domain verify <name>`.
  */
@@ -165,7 +169,10 @@ export const DOMAIN_SERVICES = {
     'trade-imports-animals-backend',
     'trade-imports-reference-data',
     'trade-imports-stub',
-    'cdp-uploader'
+    'cdp-uploader',
+    'trade-imports-animals-admin',
+    'trade-imports-ins-frontend',
+    'trade-imports-ins-backend'
   ],
   'animals-admin': [
     'trade-imports-animals-admin',
@@ -173,14 +180,25 @@ export const DOMAIN_SERVICES = {
     'trade-imports-dynamics-gateway',
     'toxiproxy',
     'servicebus-emulator',
-    'mssql'
+    'mssql',
+    'trade-imports-animals-frontend',
+    'animals-frontend-nginx',
+    'trade-imports-reference-data',
+    'trade-imports-stub',
+    'cdp-uploader'
   ],
   ins: [
     'trade-imports-ins-frontend',
     'trade-imports-ins-backend',
     'trade-imports-routing-proxy',
     'trade-imports-reference-data',
-    'trade-imports-stub'
+    'trade-imports-stub',
+    'trade-imports-animals-frontend',
+    'animals-frontend-nginx',
+    'trade-imports-animals-backend',
+    'cdp-uploader',
+    'trade-imports-plants-frontend',
+    'trade-imports-plants-backend'
   ],
   plants: [
     'trade-imports-plants-frontend',

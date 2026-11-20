@@ -173,6 +173,8 @@ describe('tim docker up', () => {
     [
       'animals-admin',
       [
+        'animals-frontend-nginx',
+        'cdp-uploader',
         'floci',
         'floci-init',
         'mongodb',
@@ -183,8 +185,11 @@ describe('tim docker up', () => {
         'trade-imports-address-book',
         'trade-imports-animals-admin',
         'trade-imports-animals-backend',
+        'trade-imports-animals-frontend',
         'trade-imports-defra-id-stub',
-        'trade-imports-dynamics-gateway'
+        'trade-imports-dynamics-gateway',
+        'trade-imports-reference-data',
+        'trade-imports-stub'
       ]
     ]
   ])(
@@ -231,7 +236,7 @@ describe('tim docker up', () => {
     expect({ exitCode: run.exitCode, stderr: run.stderr }).toEqual({
       exitCode: 1,
       stderr:
-        "error: no active profile defines floci, floci-init, mssql, redis, servicebus-emulator, toxiproxy, trade-imports-address-book, trade-imports-animals-admin, trade-imports-animals-backend, trade-imports-defra-id-stub, trade-imports-dynamics-gateway, which domain 'animals-admin' needs\n"
+        "error: no active profile defines animals-frontend-nginx, cdp-uploader, floci, floci-init, mssql, redis, servicebus-emulator, toxiproxy, trade-imports-address-book, trade-imports-animals-admin, trade-imports-animals-backend, trade-imports-animals-frontend, trade-imports-defra-id-stub, trade-imports-dynamics-gateway, trade-imports-reference-data, trade-imports-stub, which domain 'animals-admin' needs\n"
     })
   })
 

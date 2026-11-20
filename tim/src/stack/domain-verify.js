@@ -13,31 +13,38 @@ const TESTS_REPO = join('repos', 'trade-imports-ins-tests')
 /** The npm script in trade-imports-ins-tests that runs one domain's suite. */
 export const suiteScriptFor = (domain) => `test:docker-compose:${domain}`
 
-const specsIn = (suite, filePath) => {
-  const file = suite.file ?? filePath
+const specsIn = (suite, { file: parentFile, titles = [] } = {}) => {
+  const file = suite.file ?? parentFile
+  const under = (spec) => [file, ...titles, spec.title].join(' > ')
   return [
     ...(suite.specs ?? []).map((spec) => ({
-      id: `${file} > ${spec.title}`,
-      status: spec.ok ? 'passed' : 'failed',
-      ran: (spec.tests ?? []).some((test) => test.status !== 'skipped')
+      id: under(spec),
+      status: (spec.tests ?? []).some((test) => test.status !== 'skipped')
+        ? spec.ok
+          ? 'passed'
+          : 'failed'
+        : 'skipped'
     })),
-    ...(suite.suites ?? []).flatMap((inner) => specsIn(inner, file))
+    ...(suite.suites ?? []).flatMap((inner) =>
+      specsIn(inner, {
+        file,
+        titles: inner.title ? [...titles, inner.title] : titles
+      })
+    )
   ]
 }
 
 /**
  * What one Playwright JSON report says happened, as a count per outcome and
- * one entry per spec. A spec Playwright never ran is `skipped`, which is a
- * real outcome here: a suite that stops early leaves specs unrun, and those
- * are not evidence the services under test were enough.
+ * one entry per spec. A spec is named by its file, the describes around it
+ * and its own title, because a title alone repeats across the cases of a
+ * parameterised describe.
  *
  * @param {object} report - A parsed Playwright JSON report
  * @returns {{counts: {passed: number, failed: number, flaky: number, skipped: number}, specs: {id: string, status: string}[]}}
  */
 export const outcomesOf = (report) => {
-  const specs = (report.suites ?? [])
-    .flatMap((suite) => specsIn(suite))
-    .map(({ id, status, ran }) => ({ id, status: ran ? status : 'skipped' }))
+  const specs = (report.suites ?? []).flatMap((suite) => specsIn(suite))
   const stats = report.stats ?? {}
   return {
     counts: {
@@ -52,10 +59,14 @@ export const outcomesOf = (report) => {
 
 /**
  * Whether a domain's services were enough for its suite, from the run
- * against them alone: every spec passed and none was left unrun. A failure
- * here is evidence the domain is missing a service its specs reach, but it
- * is not proof — the spec may be broken on any stack. `full` settles that,
- * when a control run against the whole stack is given.
+ * against them alone: no spec failed. A skipped spec is not a failure —
+ * a suite skips the cases its environment does not offer, such as the
+ * animals specs that only run with the frontend in stub mode, and those say
+ * nothing about which services were up.
+ *
+ * A failure is evidence the domain is missing a service its specs reach,
+ * but it is not proof — the spec may be broken on any stack. `full` settles
+ * that, when a control run against the whole stack is given.
  *
  * @param {object} opts
  * @param {object} opts.subset - outcomesOf the run against the domain's services
@@ -65,7 +76,7 @@ export const outcomesOf = (report) => {
 export const compareOutcomes = ({ subset, full }) => {
   const failedOn = (outcomes) =>
     outcomes.specs
-      .filter(({ status }) => status !== 'passed')
+      .filter(({ status }) => status === 'failed')
       .map(({ id }) => id)
   const failed = failedOn(subset)
   if (!full) {

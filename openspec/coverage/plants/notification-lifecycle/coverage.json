@@ -67,7 +67,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "assertReadOnly: Submitted, zero Change links, no Continue" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "Cancel amendment absent while Submitted" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer the cancel-amend path only while amending, with no Cancel amend link in the journey strip", "strength": "partial", "notes": "a submitted review has no buttons after Continue; not probed red" }
           ]
         }
       ]
@@ -137,9 +137,9 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment on dashboard card while Amend" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amend in the status bar on CYA" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from question page restores submitted answers and read-only CYA", "strength": "full", "notes": "Amend tag and Cancel amend in the status bar on a question page" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Overview and review offer Cancel amend while amending", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Overview offers Cancel amend in its status strip while amending", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should show Cancel amend as a link beside the tag and reference while amending", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer the cancel-amend path only while amending, with no Cancel amend link in the journey strip", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give an amending notification Resume, Cancel amendment and Delete", "strength": "full", "notes": "" }
           ]
         },
@@ -202,7 +202,7 @@
     {
       "id": "REQ-PLANTS-LIFECYCLE-008",
       "name": "A draft or submitted notification can be deleted after confirmation",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-LIFECYCLE-008-A",
@@ -224,9 +224,18 @@
         {
           "id": "SCN-PLANTS-LIFECYCLE-008-D",
           "name": "An amendment's check answers offers no delete",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "partial", "notes": "asserts the amending review's deleteHref is null; not probed against a reverted line" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should follow Continue on an amendment with a secondary Cancel amend button and no Delete", "strength": "full", "notes": "the only button after Continue is Cancel amend" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-008-E",
+          "name": "A draft's check answers opens the delete confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete notification on a draft opens the delete page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Delete notification in the header opens the delete page", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]

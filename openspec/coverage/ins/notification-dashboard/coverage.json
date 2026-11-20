@@ -30,22 +30,23 @@
     {
       "id": "REQ-INS-DASH-002",
       "name": "Opening a notification's link routes by its status",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-DASH-002-A",
           "name": "A submitted notification opens read-only",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "opening a submitted notification links into the read-only notification-view page", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "Should link a submitted notification to its notification view", "strength": "partial", "notes": "asserts the View link's href only; the page it opens belongs to the animals frontend" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts", "test": "the INS dashboard shows a submitted notification with the arrival day entered, and its View link opens it in the owning journey frontend", "strength": "partial", "notes": "clicks View and lands on notification-view headed by the reference with a Submitted tag; does not check the page is read-only; not red-probed" }
           ]
         },
         {
           "id": "SCN-INS-DASH-002-B",
           "name": "A draft notification opens its journey hub, not the read-only view",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "opening a draft notification links back to the journey hub, not notification-view", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "Should link a draft notification to its journey hub", "strength": "partial", "notes": "asserts the View link's href only; does not open the hub" }
           ]
         }
       ]
@@ -153,17 +154,17 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/services/ins-backend/ins-backend.test.js",
-              "test": "Should send the Trade-Imports-Organisation-Id header from the session organisation",
+              "test": "Should GET /notifications with the page, organisation header and trace header",
               "strength": "partial",
-              "notes": "proves the client forwards the organisation id as Trade-Imports-Organisation-Id; takes the id as an argument, not from the session"
+              "notes": "proves the client sends the organisation id it is given as the organisation header; takes the id as an argument, not from the session"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts",
-              "test": "the owning organisation sees its submitted notification on the INS dashboard",
+              "test": "the INS notification list returns none of this notification to another organisation searching by its reference",
               "strength": "partial",
-              "notes": "owner visibility after a live animals submit"
+              "notes": "through the INS backend API after a live animals submit, not the dashboard page: the owner's reference search finds it and another organisation's finds none; the unfiltered list half is the ins-backend IT"
             },
             {
               "type": "e2e",
@@ -192,9 +193,9 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts",
-              "test": "another organisation gets no rows when searching by reference",
+              "test": "the INS notification list returns none of this notification to another organisation searching by its reference",
               "strength": "partial",
-              "notes": "cross-org reference search on the live stack; the unfiltered list half is the ins-backend IT"
+              "notes": "cross-organisation reference search through the INS backend API on the live stack; does not check the dashboard's No notifications found message"
             }
           ]
         },

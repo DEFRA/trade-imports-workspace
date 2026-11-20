@@ -1,6 +1,6 @@
 # Hapi.js — Best Practices
 
-Project baseline: `@hapi/hapi` 21.4.x, Node >= 24, ESM modules throughout. Used in `trade-imports-animals-frontend` and `trade-imports-animals-admin`.
+Project baseline: `@hapi/hapi` 21.4.x, Node >= 26, ESM modules throughout. Used in `trade-imports-animals-frontend` and `trade-imports-animals-admin`.
 
 ---
 

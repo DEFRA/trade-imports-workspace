@@ -47,11 +47,45 @@ Per-version pre-baked CHANGELOG sections sit alongside as
           "why": "Breaking change: serviceName param renamed",
           "change": "Rename `serviceName` to `service.name`"
         }
+      ],
+      "evidence": [                      // unattended runs only; absent otherwise
+        {
+          "item": "Rename the serviceName parameter to service.name",
+          "pattern": "serviceName:",     // fixed string, or null
+          "outcome": "applied",          // "applied" | "not-applicable" | "needs-a-person"
+          "reason": "",                  // needed for not-applicable and needs-a-person
+          "hitsBefore": 2,               // counted by add-evidence; null with no pattern
+          "hitsAfter": 0                 // counted by check-evidence; null until then
+        }
       ]
     }
   ]
 }
 ```
+
+## Evidence rows
+
+An unattended run records one `evidence[]` row per changelog item with
+`tim govuk add-evidence`. A hit is a line in the repo's tracked files,
+uncommitted edits included, that contains the pattern. Untracked files,
+binary files and `package-lock.json` do not count (`tim deps evidence
+count`).
+
+| `outcome` | `add-evidence` accepts it when | Clean after `check-evidence` when |
+|---|---|---|
+| `applied` | the pattern has hits | the pattern has 0 hits |
+| `not-applicable` | it has a reason, and its pattern, if any, has no hits | its pattern, if any, still has 0 hits |
+| `needs-a-person` | it has a reason | never |
+
+A version with no rows is not clean. `tim govuk apply --unattended`
+counts every row again and refuses a version that is not all clean.
+`tim govuk render-evidence` also shows a row that needs a person for a
+version with no changelog section, a version never planned, a failed
+apply, a planned version not yet applied, and a planned version with no
+evidence.
+
+The rows have the same shape as `tim npm` evidence and the `tim deps
+evidence` commands, so one set of rules judges both.
 
 ## Classification values
 
@@ -99,7 +133,12 @@ The writes are in tim too:
 | `tim govuk add-change` | Append a `{file, why, change}` entry to `changes[]` for a `todo`-classified version. |
 | `tim govuk mark-done` | Set `implementation_status = "done"`, stamp `implemented_at`, record `commit_sha`. |
 | `tim govuk mark-failed` | Set `implementation_status = "failed"`, stamp `implemented_at`, record `failure_reason`. |
-| `tim govuk apply` | Apply one version to a repo: package.json, `npm install`, `npm test`, commit, then mark it done (or failed). |
+| `tim govuk apply` | Apply one version to a repo: package.json, `npm install`, `npm test`, commit, then mark it done (or failed). `--unattended` first refuses a version whose evidence is not all clean. |
+| `tim govuk add-evidence` | Append an `evidence[]` row, counting `hitsBefore`. Unattended runs. |
+| `tim govuk check-evidence` | Count every `evidence[]` row of a version again and set `hitsAfter`. Exits 1 when any row is not clean. |
+
+`tim govuk render-evidence` is read-only: the `evidence[]` rows of every
+version of a repo as the pull request table, or `--json` with `allClean`.
 
 Every write goes through a temporary file and a rename, so a
 half-written file is never left behind. Single mutation surface —
@@ -134,7 +173,8 @@ Shape:
 
 ```jsonc
 {
-  "ticket": "EUDPA-XXXXX",
+  "ticket": "EUDPA-XXXXX",             // the key commit messages carry
+  "mode": "unattended",                // unattended runs only; absent otherwise
   "branch": "chore/EUDPA-XXXXX",
   "repos": [
     "trade-imports-animals-frontend",
@@ -144,6 +184,11 @@ Shape:
   "discovered_at": "2026-05-26T10:00:00Z"
 }
 ```
+
+An unattended run's run id is `{ticket}-govuk-frontend-{target}` (for
+example `EUDPA-802-govuk-frontend-6.6.0`) and its branch is
+`chore/{run id}`, while `ticket` stays the bare key (`EUDPA-802` or
+`NO_JIRA`).
 
 `repos[]` is auto-detected by globbing `repos/*/package.json` for a
 `govuk-frontend` dependency — Phase 2 and Phase 3 iterate from this

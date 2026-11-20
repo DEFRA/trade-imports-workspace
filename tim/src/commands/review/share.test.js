@@ -136,4 +136,25 @@ describe('tim review share handoff', () => {
     },
     60_000
   )
+
+  test('Should end the handoff commit with each --trailer in the order given', async () => {
+    const coauthor = 'Co-Authored-By: Claude <noreply@anthropic.com>'
+    const session = 'Claude-Session: https://claude.ai/code/session_1'
+
+    const result = await runGitCase({
+      name: 'a handoff with trailers',
+      shares: 1,
+      args: [...gitCaseArgs({}), '--trailer', coauthor, '--trailer', session]
+    })
+
+    expect(result.git.commits).toEqual([
+      'review(EUDPA-201): handoff artefacts',
+      'Posted by tim review share.',
+      '',
+      coauthor,
+      session,
+      '',
+      '--'
+    ])
+  }, 60_000)
 })

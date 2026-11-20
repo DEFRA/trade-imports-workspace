@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web app (GOV.UK Frontend) providing Defra ID sign-in, a notifications dashboard and an organisation-scoped address-book UI. It is a backend-for-frontend (BFF): it holds the user session and calls the address-book, ins-backend and reference-data APIs on the user's behalf. The README is still the CDP frontend template text; this description is drawn from `src/`.
+Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web app (GOV.UK Frontend) providing Defra ID sign-in, a notifications dashboard and an organisation-scoped address-book UI. It is a backend-for-frontend (BFF): it holds the user session and calls the address-book, ins-backend and reference-data APIs on the user's behalf.
 
 **Target direction (not yet in code):** the INS becomes the front door for all journeys. A trader answers routing questions here and is sent to the right journey, and capabilities shared across journeys (dashboard, address book) live in the INS. See [`architecture-overview.md`](architecture-overview.md#target-direction).
 
@@ -13,6 +13,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 **Owns**
 
 - Sign-in and sign-out via Defra ID (OIDC) using `@hapi/bell` and `@hapi/cookie`. The organisation id is read from `request.auth.credentials.organisationId`; `requireOrganisationId` returns 403 when it is missing.
+- A hidden test sign-in through the real Defra ID (IDM) in CP-Dev, which shows what IDM returns and never signs anyone in to the service. Its routes (`/auth/idm/sign-in`, `/auth/idm/go-to-defra-id`, `/auth/callback`, `/auth/idm/signed-in`, `/auth/signed-out`) are registered whatever `auth.enabled` is, only when `IDM_OIDC_CONFIGURATION_URL` and the IDM client settings are set and IDM discovery succeeds at start-up. No page of the service links to them.
 - Server-side session (Catbox: Redis in production, memory otherwise), CSRF (crumb) and CSP.
 - Pages: dashboard `/` (notification list, sort, reference-number search, pagination, and a Create new button that opens the type question at `/notification-type`), the "What are you importing?" question at `/notification-type`, and address book at `/address-book`, `/address-book/add/address-type` (choose an address type), `/address-book/add`, `/address-book/{id}`, `/edit` and `/delete`. The address book list has three tabs, one per address type (Origin and Consignor; Destination, Consignee and Importer; Branch), and a Type filter that narrows the selected tab to one role. The add form asks what the address can be used for (`roles`), offering the roles of the chosen address type. An address type is this frontend's grouping of roles: it is worked out from an address's roles and never sent to the address book. Routes are only registered when `auth.enabled` is true.
 - The "What are you importing?" question offers no germinal products choice until the germinal products set has a start page in the animals service.
@@ -35,6 +36,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 | Outbound | trade-imports-ins-backend (`TRADE_IMPORTS_INS_BACKEND_URL`, default :8090) | REST `GET /notifications` (`page`, `sort`, `referenceNumber`), header `Trade-Imports-Organisation-Id` | Dashboard notification list |
 | Outbound | trade-imports-reference-data (`TRADE_IMPORTS_REFERENCE_DATA_URL`, default :8086) | REST `GET /countries` | Country names and address country options |
 | Outbound | Defra ID (trade-imports-defra-id-stub locally) | OIDC (`DEFRA_ID_OIDC_CONFIGURATION_URL`) | Sign-in, token refresh, sign-out; the CSP form-action allows the browser-facing Defra ID origin |
+| Outbound | Defra ID IDM in CP-Dev (`IDM_OIDC_CONFIGURATION_URL`, optional) | OIDC: discovery, JWKS and token exchange, metric dependency `idm` | The hidden test sign-in at `/auth/idm/sign-in`, which never signs anyone in to the service |
 | Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start a live animals notification from the type question; return to a live animals notification's origin page from the type question; resume or view a notification; return from the address handshake; follow an address-book page's honoured `return` query to an animals frontend page, given as a URL on that origin or as a `/live-animals` path resolved against this setting |
 | Outbound (browser redirect) | trade-imports-plants-frontend (`TRADE_IMPORTS_PLANTS_FRONTEND_URL`) | Redirect to its start entry | Start a high-risk plants notification from the type question |
 | Outbound | Redis | Catbox Redis | Session cache |

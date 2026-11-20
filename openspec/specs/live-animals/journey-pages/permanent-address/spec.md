@@ -12,13 +12,13 @@ Asks, for each animal on the notification that needs one, whether it lives at th
 
 ### Requirement: The page's chrome names the journey section and returns to the consignment addresses page
 **ID**: REQ-PERM-ADDR-001
-While the page shows no errors, the system MUST caption the page "Consignment parties", head it "Permanent address" and title the browser tab "Permanent address - Import notification service - GOV.UK"; it MUST return the user, when they follow the back link, to the consignment addresses page. See REQ-PERM-ADDR-015 for the title's error-state prefix.
+While the page shows no errors, the system MUST caption the page "Addresses", head it "Permanent address" and title the browser tab "Permanent address - Import notification service - GOV.UK"; it MUST return the user, when they follow the back link, to the consignment addresses page. See REQ-PERM-ADDR-015 for the title's error-state prefix.
 
 #### Scenario: The page shows its caption, heading and browser title, and returns to the consignment addresses page
 **ID**: SCN-PERM-ADDR-001-A
 - **GIVEN** the user has followed "Add a permanent address" from the consignment addresses page, and the page shows no errors
 - **WHEN** the permanent address page loads
-- **THEN** it is captioned "Consignment parties", headed "Permanent address" and titled "Permanent address - Import notification service - GOV.UK"
+- **THEN** it is captioned "Addresses", headed "Permanent address" and titled "Permanent address - Import notification service - GOV.UK"
 - **AND** following the back link returns to the consignment addresses page
 
 ### Requirement: The page warns that a false address is fraud

@@ -1,7 +1,7 @@
 # The frontend-alignment workflow run
 
 A point-in-time record of the first run of
-[`.claude/workflows/frontend-alignment.js`](../../.claude/workflows/frontend-alignment.js)
+`.claude/workflows/frontend-alignment.js`
 on 2026-09-14, kept as the reference for consolidating the workspace's skills
 and workflows. It is the most complete unattended multi-stage build the
 workspace has run: thirteen stages, every one landed green in CI, no human

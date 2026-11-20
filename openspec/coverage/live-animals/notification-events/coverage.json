@@ -6,7 +6,7 @@
     {
       "id": "REQ-EVENTS-001",
       "name": "One outbox event is recorded per meaningful lifecycle transition",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-EVENTS-001-A",
@@ -48,6 +48,15 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-created.spec.ts", "test": "writes a NotificationCreated event with consignor name when a submitted notification is copied", "strength": "full", "notes": "copy of a submitted notification; one NotificationCreated for the copy's aggregateId with consignorParty name and postal address from the source" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-001-F",
+          "name": "Submitting without an ITAHC records the submission event with status code SUBMITTED",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts", "test": "records a NotificationSubmitted outbox event on UI submission", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldBeSubmittedWithTheSubmittedDateAndExactlyTheSubmittedNotificationFields_whenNoDocumentIsUploaded", "strength": "partial", "notes": "integration test; asserts the latest outbox event's status change and notificationStatusCode are SUBMITTED; not probed red" }
           ]
         }
       ]

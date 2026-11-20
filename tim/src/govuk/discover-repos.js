@@ -45,29 +45,56 @@ export const reposUsingGovuk = (workspaceRoot) => {
     .filter((repo) => dependsOnGovuk(join(reposDir, repo, 'package.json')))
 }
 
+const runMetaPath = (workspaceRoot, runId) =>
+  join(runFolder(workspaceRoot, runId), '.run-meta.json')
+
 /**
  * Finds the repos a govuk-frontend upgrade run covers and writes the run's
- * `.run-meta.json`.
+ * `.run-meta.json`. An unattended run also records its mode.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.runId
+ * @param {string} [args.ticket] - The key commit messages carry. Defaults to the run id
+ * @param {boolean} [args.unattended=false]
  * @param {string} [args.branch]
  * @param {string} [args.target] - As given, prefix and all
- * @returns {{path: string, meta: {ticket: string, branch: string|null, target_version: string|null, repos: string[], discovered_at: string}}}
+ * @returns {{path: string, meta: {ticket: string, mode?: 'unattended', branch: string|null, target_version: string|null, repos: string[], discovered_at: string}}}
  * @throws {TimError} NOT_FOUND when the repos folder is missing
  */
-export const writeRunMeta = ({ workspaceRoot, runId, branch, target }) => {
+export const writeRunMeta = ({
+  workspaceRoot,
+  runId,
+  ticket = runId,
+  unattended = false,
+  branch,
+  target
+}) => {
   const meta = {
-    ticket: runId,
+    ticket,
+    ...(unattended ? { mode: 'unattended' } : {}),
     branch: branch || null,
     target_version: target || null,
     repos: reposUsingGovuk(workspaceRoot),
     discovered_at: stateTimestamp()
   }
-  const path = join(runFolder(workspaceRoot, runId), '.run-meta.json')
+  const path = runMetaPath(workspaceRoot, runId)
   writeJsonAtomic(path, meta)
   return { path, meta }
+}
+
+/**
+ * The ticket key a run's commit messages carry: the `ticket` in its
+ * `.run-meta.json`, else the run id.
+ *
+ * @param {string} workspaceRoot
+ * @param {string} runId
+ * @returns {string}
+ */
+export const runTicket = (workspaceRoot, runId) => {
+  const path = runMetaPath(workspaceRoot, runId)
+  if (!existsSync(path)) return runId
+  return JSON.parse(readFileSync(path, 'utf8')).ticket || runId
 }
 
 /**

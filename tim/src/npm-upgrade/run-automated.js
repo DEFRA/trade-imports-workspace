@@ -6,6 +6,7 @@ import { countPackages, listPackages, renderCountsText } from './queries.js'
 import { refreshLockfile } from './refresh-lockfile.js'
 import { StepFailed, repoCommands } from './repo-commands.js'
 import { isFolder, packagesPath, runFolder } from './state.js'
+import { looksLikeRunId } from './unattended/run.js'
 import { upgradePackage } from './upgrade-package.js'
 
 const TESTS_REPO = 'trade-imports-ins-tests'
@@ -16,7 +17,7 @@ const REPO_STOP = 3
 const requireRunnerOptions = async ({ workspaceRoot, runId, repo, warn }) => {
   if (!repo) throw new TimError('USAGE', 'Missing repo-name')
   if (!runId) throw new TimError('USAGE', '--run-id required')
-  if (!/^[A-Z]+-[0-9]+$/.test(runId)) {
+  if (!looksLikeRunId(runId)) {
     await warn(`Warning: --run-id '${runId}' does not match Jira-ticket format`)
   }
   const packagesFile = packagesPath(runFolder(workspaceRoot, runId), repo)
@@ -86,6 +87,7 @@ const upgradeExitCodeOf = async (context, packageName) => {
     allowlistOwner: context.allowlistOwner,
     expiryDays: context.expiryDays,
     env: context.env,
+    trailers: context.trailers,
     say: context.say,
     warn: context.warn
   }).catch(async (error) => {
@@ -158,7 +160,8 @@ const refreshAtEndOfBatch = async (context) => {
     workspaceRoot: context.workspaceRoot,
     runId: context.runId,
     repo: context.repo,
-    env: context.env
+    env: context.env,
+    trailers: context.trailers
   }).catch(async (error) => {
     if (!(error instanceof TimError) && !(error instanceof StepFailed)) {
       throw error
@@ -257,10 +260,12 @@ const runnerSteps = async (context) => {
   await say(`  ❌ Failed:  ${tally.failed}`)
   await say(`  Lockfile refresh: ${refreshStatus}`)
   await say('')
-  if (
-    repo === TESTS_REPO &&
-    (tally.success > 0 || refreshStatus === 'committed')
-  ) {
+  const landedAnything = tally.success > 0 || refreshStatus === 'committed'
+  if (repo === TESTS_REPO && context.unattended) {
+    await context.warn(
+      'Skipped npm run test:docker-compose: an unattended run never starts the Docker stack, so CI\'s "E2E Tests" check is the end-to-end proof.'
+    )
+  } else if (repo === TESTS_REPO && landedAnything) {
     await runEndToEndGate(context, tally.success)
   }
   await sayCounts(context)
@@ -271,7 +276,8 @@ const runnerSteps = async (context) => {
  * Phase 2 for one repo: upgrades every automatic package still pending,
  * one at a time, re-reading the packages file after each, then refreshes
  * the lockfile. In trade-imports-ins-tests it then runs
- * `npm run test:docker-compose` once when anything landed.
+ * `npm run test:docker-compose` once when anything landed. An unattended
+ * run skips that, and says so on `warn`.
  *
  * @param {object} request
  * @param {string} request.workspaceRoot
@@ -279,8 +285,10 @@ const runnerSteps = async (context) => {
  * @param {string} request.repo
  * @param {string} [request.allowlistOwner]
  * @param {string} [request.expiryDays]
+ * @param {boolean} [request.unattended] - Skip the end-of-batch E2E gate
  * @param {string} [request.tmpFolder='/tmp'] - Where the end-of-batch E2E log goes
  * @param {Record<string, string | undefined>} [request.env]
+ * @param {string[]} [request.trailers=[]] - Lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.say
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<number>} 0 done, 1 a cascade or a dirty tree, 3 an audit red or not run before an install
@@ -288,10 +296,11 @@ const runnerSteps = async (context) => {
  */
 export const runAutomatedUpgrades = async ({
   tmpFolder = '/tmp',
+  trailers = [],
   ...request
 }) => {
   const checkout = await requireRunnerOptions(request)
-  const context = { ...request, tmpFolder, checkout }
+  const context = { ...request, tmpFolder, trailers, checkout }
   try {
     await runnerSteps(context)
     return 0

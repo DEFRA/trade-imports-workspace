@@ -6,32 +6,42 @@
 
 **Page**: notification-view
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
+The page on which a whole notification is read back before submission, and read again once submitted. An amendment's review is titled "Review your notification", or "Review before re-submitting" once an answer differs from the submitted version. A draft's review and a submitted notification's view are titled and headed by their notification reference.
 
 ## Requirements
 
-### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
+### Requirement: The review draws six numbered sections, in order, whatever the notification holds, with each card directly under its section heading
 **ID**: REQ-CYA-001
-The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST head every card with a subsection heading of its own. Which cards stand within a section MAY depend on the notification — the commodity group waits on a commodity line, the transit-countries group on an overland arrival — but the six numbered sections themselves MUST NOT be dropped.
+The system MUST group the page under six numbered section headings, in order, however little the notification holds, and MUST stand every card directly under its section heading with no subsection heading between, titled one heading level below it. Which cards stand MAY depend on the notification, but no numbered section MUST be dropped.
 
 #### Scenario: The review draws all six numbered sections in order
 **ID**: SCN-CYA-001-A
 - **GIVEN** the user has just started a notification and answered nothing beyond the entry page
 - **WHEN** they view the review
-- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties" and "6. Contact address", in that order
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents", "5. Addresses" and "6. Contact address", in that order
 
-#### Scenario: Commodity and consignment detail appear within a section, not as numbered sections
+#### Scenario: Every card is titled one heading level below its numbered section, with no subsection heading between
 **ID**: SCN-CYA-001-B
 - **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
-- **THEN** the sub-headings "Where is this consignment coming from?", "Commodity details" and "Additional details" appear inside numbered sections, with each species' card beneath "Commodity details", and none of them is a numbered section in its own right
+- **THEN** every card's title is a heading one level below its numbered section heading
+- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Consignment addresses" or "Contact address for this consignment"
+- **AND** "1. About the consignment" holds the cards "Origin of import", "What are you importing?" and "Main import reason", in that order
 
-#### Scenario: The Documents section stands even when nothing has been uploaded
+#### Scenario: The Uploaded documents section stands even when nothing has been uploaded
 **ID**: SCN-CYA-001-E
 - **GIVEN** a notification with no documents uploaded
 - **WHEN** the user views the review
-- **THEN** the Documents section and its card are still shown, saying no documents have been added yet
+- **THEN** the Uploaded documents section is still shown, with one card titled "Document 1" whose "Document reference" reads "Not applicable"
 - **AND** a Change route to the upload documents page is still offered
+
+#### Scenario: Each uploaded document stands on its own card showing its file name
+**ID**: SCN-CYA-001-I
+- **GIVEN** a notification with two documents uploaded
+- **WHEN** the user views the review
+- **THEN** "4. Uploaded documents" holds a card titled "Document 1" and a card titled "Document 2", in upload order
+- **AND** each card has rows "Document reference", "Document type", "Date of issue" and "Attachment", where "Attachment" reads the uploaded file's name
+- **AND** each card's header Change link opens the upload documents page
 
 #### Scenario: A fully answered notification's check-your-answers reflects every entered value
 **ID**: SCN-CYA-001-C
@@ -43,7 +53,19 @@ The system MUST group the page under the same six numbered section headings the 
 **ID**: SCN-CYA-001-D
 - **GIVEN** the user has selected a party for each of the notification's address roles — place of origin, consignor, consignee, importer, and place of destination
 - **WHEN** they view check-your-answers
-- **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
+- **THEN** the Consignment addresses card, the one card under "5. Addresses", lists all of them, each showing the selected party's name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line, with no telephone number or email address
+- **AND** an address in Great Britain reads "United Kingdom" as its country
+- **AND** its one header Change link opens the consignment addresses page
+
+#### Scenario: The reason, additional details and contact address answers stand on their own titled cards
+**ID**: SCN-CYA-001-H
+- **GIVEN** the user has answered the reason for import, the additional details and the contact address
+- **AND** the additional details page is part of the notification's journey
+- **WHEN** they view the review
+- **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason"
+- **AND** the additional details answers stand on the card titled "Additional details", whose Change link opens the additional details page
+- **AND** "6. Contact address" holds one card titled "Contact address", with a "Contact address" row
+- **AND** that row reads the contact address's name, address lines and country, each on its own line, with no telephone number or email address
 
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
 **ID**: SCN-CYA-001-G
@@ -51,6 +73,12 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** the user views the review
 - **THEN** the "Means of transport to the port of entry" row reads "Road"
 - **AND** an air arrival reads "Air"
+
+#### Scenario: Every card is a region a screen reader announces by the card's own title
+**ID**: SCN-CYA-001-J
+- **GIVEN** a notification with commodities and documents entered
+- **WHEN** the user views the review
+- **THEN** every card is a region whose name is exactly the card's own title, such as "Origin of import" or "Document 1"
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and left blank on one still outstanding
 **ID**: REQ-CYA-002
@@ -77,9 +105,16 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 - **THEN** each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
 - **AND** the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
 
+#### Scenario: A blank answer on any document card of an unfinished documents task is left blank
+**ID**: SCN-CYA-002-D
+- **GIVEN** a notification with two documents uploaded, the second missing its document reference, date of issue and attachment
+- **WHEN** the user views the review
+- **THEN** both document cards carry the "Complete documents" line and the red left border
+- **AND** each blank answer on either card shows no visible text and is announced as "Missing"
+
 ### Requirement: A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard
 **ID**: REQ-CYA-003
-The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview or by its address, and to the dashboard when they opened it from a dashboard card. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
+The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview, and to the dashboard when they opened it from a dashboard card. With none of these, a draft's review MUST go back to the dashboard and an amendment's to Overview. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
 #### Scenario: The review's back link opens the contact address after Save and continue there
 **ID**: SCN-CYA-003-A
@@ -117,9 +152,15 @@ The system MUST return the user from the back link of a draft or amendment revie
 - **WHEN** the user follows a Change link, follows the back link on the page it opens, and then follows the back link on the review
 - **THEN** the dashboard is shown
 
-#### Scenario: A review with nothing saying where the user came from has a back link to Overview
+#### Scenario: A draft review with nothing saying where the user came from has a back link to the dashboard
 **ID**: SCN-CYA-003-G
-- **GIVEN** the review of a draft notification or of an amendment, opened by its address
+- **GIVEN** the review of a draft notification, opened by its address
+- **WHEN** the user follows the back link
+- **THEN** the dashboard is shown
+
+#### Scenario: An amendment review with nothing saying where the user came from has a back link to Overview
+**ID**: SCN-CYA-003-H
+- **GIVEN** the review of an amendment, opened by its address
 - **WHEN** the user follows the back link
 - **THEN** Overview is shown
 
@@ -145,16 +186,32 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
 - **THEN** they go on through the journey to the review
 
-### Requirement: A draft notification offers submission and none of the post-submission actions
+### Requirement: A draft notification ends with a continue action, and its header offers Copy as new and a red Delete
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification, offering a continue action, and MUST NOT offer copy-as-new, delete, or cancel-amendment while it is still a draft.
+The system MUST invite the user to submit a draft notification, ending the review with a continue action alone, and MUST offer, in the draft's header, a "Copy as new" button then a red "Delete" button that opens the notification's delete confirmation. "Copy as new" MUST post from a form of its own carrying only what copying needs, "Delete" MUST be a link outside that form, and every action MUST work without JavaScript. It MUST NOT offer cancel-amendment while the notification is still a draft.
 
-#### Scenario: The draft view invites submission and withholds the post-submission actions
+#### Scenario: The draft view ends with Continue, and its header offers Copy as new and a red Delete
 **ID**: SCN-CYA-005-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** it invites them to submit the notification, offering a continue action
-- **AND** no copy-as-new, delete, or cancel-amendment action is offered
+- **THEN** it invites them to submit the notification, ending with a continue action alone
+- **AND** the header offers "Copy as new" then a red "Delete" button
+- **AND** "Copy as new" posts from a form of its own holding only the fields copying needs, and "Delete" is a link outside it
+- **AND** no cancel-amendment action is offered
+
+#### Scenario: Delete on a draft's review opens the delete confirmation
+**ID**: SCN-CYA-005-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user presses "Delete" in the header
+- **THEN** the notification's delete confirmation opens
+
+#### Scenario: A draft's header actions work without JavaScript
+**ID**: SCN-CYA-005-C
+- **GIVEN** a draft notification's review, with JavaScript off
+- **WHEN** the user uses "Copy as new"
+- **THEN** a new draft copy opens
+- **WHEN** the user uses "Delete"
+- **THEN** the notification's delete confirmation page opens
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
 **ID**: REQ-CYA-006
@@ -175,14 +232,14 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
-The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card, each entry linking to its card, which MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
+The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card and every species short of a count or an identifier, linking each entry to where the answer is shown: the card, or that species' block. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
 
 #### Scenario: An unfinished review names every outstanding card and links to it
 **ID**: SCN-CYA-007-A
 - **GIVEN** a new notification is open on the review with cards still outstanding
 - **WHEN** the user views the page
 - **THEN** an error summary titled "There is a problem" names every unfinished card
-- **AND** each entry links to the card it names, which is itself marked with the same words
+- **AND** each entry for a card links to the card it names, which is itself marked with the same words
 
 #### Scenario: Continuing from an unfinished review is refused, keeping the user on the page
 **ID**: SCN-CYA-007-B
@@ -190,22 +247,99 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **WHEN** the user continues
 - **THEN** they remain on the review page, the error summary is shown, and focus moves to it
 
-### Requirement: A submitted notification offers copy-as-new and delete
+#### Scenario: A new notification's unfinished messages name the origin, reason and additional details cards in their titles' words
+**ID**: SCN-CYA-007-C
+- **GIVEN** a new notification is open on the review with nothing answered beyond the entry page
+- **WHEN** the user views the page
+- **THEN** the unfinished messages, in the error summary and on the card, read "Complete origin of import", "Complete main import reason" and "Complete additional details"
+
+#### Scenario: With no commodity selected the What are you importing? card is marked unfinished
+**ID**: SCN-CYA-007-D
+- **GIVEN** a new notification with no commodity selected
+- **WHEN** the user views the review
+- **THEN** the "What are you importing?" card is marked "Complete what are you importing?"
+- **AND** the error summary entry with those words links to that card
+
+#### Scenario: Incomplete consignment details name commodity details and link to the first commodity card
+**ID**: SCN-CYA-007-E
+- **GIVEN** a notification with a commodity selected and its consignment details incomplete
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Complete commodity details" and links to the first commodity card
+- **AND** no commodity card is marked as unfinished
+
+#### Scenario: A species with no count is named and linked to its block
+**ID**: SCN-CYA-007-F
+- **GIVEN** a notification with two species selected under identified commodities, one with no number of animals
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Enter the number of animals for <species>", the species name in lower case
+- **AND** the entry links to that species' block, which shows no message of its own
+
+#### Scenario: A species with a count and no identifier is named and linked to its block
+**ID**: SCN-CYA-007-G
+- **GIVEN** a notification with two species selected under identified commodities, each with a count and no animal identified
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Enter at least 1 animal identifier for <species>" for each, the species name in lower case
+- **AND** each entry links to that species' block
+- **AND** following the entry for bos taurus moves focus to that species' block, whose heading reads "Bos taurus"
+
+#### Scenario: A single identified species with no identifier is not named
+**ID**: SCN-CYA-007-H
+- **GIVEN** a notification with one species selected under an identified commodity, with a count and no animal identified
+- **WHEN** the user views the review
+- **THEN** the error summary names no species
+
+#### Scenario: A role never answered gives one error summary entry for the Consignment addresses card and none for the role
+**ID**: SCN-CYA-007-I
+- **GIVEN** a draft notification complete except that one role was never answered
+- **WHEN** the user views the review
+- **THEN** the error summary holds the single entry "Complete consignment addresses", linking to the Consignment addresses card
+- **AND** no entry names the role
+
+#### Scenario: A main import reason missing a follow-up answer it asks gives one error summary entry for the main import reason card
+**ID**: SCN-CYA-007-J
+- **GIVEN** a draft notification complete except that its main import reason is answered and a follow-up answer that reason asks is missing
+- **WHEN** the user views the review
+- **THEN** the error summary holds the single entry "Complete main import reason", linking to the main import reason card
+- **AND** the missing answer is left blank
+
+### Requirement: A submitted notification's view offers Amend this notification, Copy as new and Delete in its header
 **ID**: REQ-CYA-008
-The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress, or a submit/continue action to submit it again.
+The system MUST offer, in the header of a submitted notification's view, a primary "Amend this notification" button that starts an amendment, a secondary "Copy as new" button beside it, and a red "Delete" button that opens the delete confirmation. "Amend this notification" and "Copy as new" MUST each post from a form of their own carrying only what that action needs, and "Delete" MUST open the delete confirmation without being part of either form. Every action MUST work without JavaScript. The view MUST NOT offer cancel-amendment, or a submit or continue action to submit it again. A draft's review MUST NOT offer "Amend this notification".
 
 #### Scenario: The submitted view offers the actions open to a submitted notification
 **ID**: SCN-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** copy-as-new and delete actions are offered, and no cancel-amendment action is shown
+- **THEN** the header offers "Amend this notification", then "Copy as new", then "Delete", in that order
+- **AND** "Copy as new" is a secondary button and "Delete" is a red button
+- **AND** "Amend this notification" and "Copy as new" each post from a form of their own holding only the fields that action needs, and "Delete" is a link outside both
+- **AND** no cancel-amendment action is shown
 - **AND** no submit or continue action is shown
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-CYA-008-B
+- **GIVEN** a submitted notification's view
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the notification is opened for amendment and its status bar reads "Amend"
 
 #### Scenario: Delete opens the delete confirmation
 **ID**: SCN-CYA-008-C
 - **GIVEN** a submitted notification's view
 - **WHEN** the user chooses "Delete"
 - **THEN** the delete confirmation opens
+
+#### Scenario: A draft's review offers no Amend this notification
+**ID**: SCN-CYA-008-D
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user views it
+- **THEN** the header offers "Copy as new" then "Delete", and offers no "Amend this notification"
+- **AND** the review ends with "Continue"
+
+#### Scenario: The header actions work without JavaScript
+**ID**: SCN-CYA-008-E
+- **GIVEN** a submitted notification's view, with JavaScript off
+- **WHEN** the user presses "Amend this notification", "Copy as new" or "Delete"
+- **THEN** the amendment review opens, a new draft's Overview opens, or the delete confirmation opens, respectively
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009
@@ -217,21 +351,40 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is
+### Requirement: The review marks each document card found infected as soon as it opens, and marks one still being scanned only once Continue is refused
 **ID**: REQ-CYA-010
-The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
+The system MUST mark each document card on a draft's review as soon as it opens while a stored document has been found infected, and as still being scanned only once the user's continue has been refused for a document still being scanned. The infected message MUST come first, continuing MUST be refused while either holds, and the error summary MUST link to the first document card.
 
-#### Scenario: Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review
+#### Scenario: Continuing while a document is still being scanned is refused, marking each document card on the review
 **ID**: SCN-CYA-010-A
 - **GIVEN** a ready draft notification is open on the review, and one of its documents is still being scanned
 - **WHEN** the user continues
-- **THEN** they are returned to the review, which marks the uploaded-documents card as still being scanned
+- **THEN** they are returned to the review, which marks the document cards as still being scanned
 
-#### Scenario: An infected document marks the uploaded-documents card in preference to one still scanning
+#### Scenario: An infected document marks each document card in preference to one still scanning
 **ID**: SCN-CYA-010-B
 - **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
 - **WHEN** the user continues
-- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document, not as still being scanned
+- **THEN** they are returned to the review, which marks the document cards as holding an infected document, not as still being scanned
+
+#### Scenario: The error summary links to the first of several document cards
+**ID**: SCN-CYA-010-C
+- **GIVEN** a ready draft notification is open on the review, with two documents, one of which is scanned or found infected
+- **WHEN** the user continues
+- **THEN** they are returned to the review, whose error summary link goes to the first document card, not the second
+
+#### Scenario: A draft holding an infected document marks each document card as soon as the review opens
+**ID**: SCN-CYA-010-D
+- **GIVEN** a draft notification holds a document that has been found infected
+- **WHEN** the user opens the review
+- **THEN** each document card is marked as holding an infected document
+- **AND** the error summary links to the first document card
+
+#### Scenario: A draft holding a document still being scanned leaves the document cards unmarked until the user continues
+**ID**: SCN-CYA-010-E
+- **GIVEN** a draft notification holds a document that is still being scanned
+- **WHEN** the user opens the review
+- **THEN** no document card is marked as still being scanned
 
 ### Requirement: Continuing is refused if the notification has changed since the review was shown
 **ID**: REQ-CYA-011
@@ -273,13 +426,13 @@ While a notification is being amended, the system MUST show the review with no e
 
 ### Requirement: Ports, destination and transited countries and document types read back exactly as they were offered
 **ID**: REQ-CYA-013
-The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does, MUST name a territory among the transited countries "<territory> (<country>)", as the transit search does, and MUST name each document's type with the same wording the upload documents page offered that type under.
+The system MUST show the port of entry, and the "Port of exit" of a transit or of a temporary admission, on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>". It MUST name a territory chosen as the destination country, or among the transited countries, "<territory> (<country>)", as the lists offered it, and MUST name each document's type with the wording the upload documents page offered.
 
 #### Scenario: The port of exit row reads the option the user chose
 **ID**: SCN-CYA-013-A
 - **GIVEN** a transit notification whose port of exit is Port of Dover
 - **WHEN** the user views the review
-- **THEN** the port of exit row reads "Port of Dover - GB DVR", the same text as the option they chose
+- **THEN** the "Port of exit" row reads "Port of Dover - GB DVR", the same text as the option they chose
 
 #### Scenario: The port of entry row reads the port's name, a dash and its code
 **ID**: SCN-CYA-013-B
@@ -314,6 +467,7 @@ The system MUST check a draft's chosen species against the commodity reference d
 - **GIVEN** a complete draft holding a species the reference data no longer lists under its code
 - **WHEN** the user continues from the review
 - **THEN** the review is shown again with an error summary naming that species and its code, telling the user to select a species from the list
+- **AND** the entry links to the "What are you importing?" card
 
 #### Scenario: The species is not named before the user continues
 **ID**: SCN-CYA-014-B
@@ -328,9 +482,9 @@ The system MUST check a draft's chosen species against the commodity reference d
 - **THEN** the user moves on to the declaration
 - **AND** that species is not named as one to choose again
 
-### Requirement: The Transport details card shows a private transporter's saved country
+### Requirement: The Transport details card always shows its five rows, with a private transporter's saved country
 **ID**: REQ-CYA-015
-The system MUST show a private transporter's saved country on the Transport details card's Country row.
+The system MUST always show the Name, Address, Country, Approval number and Type rows on the Transport details card, writing an empty answer as "Not applicable", and MUST show a transporter's saved country on the Country row, private or commercial.
 
 #### Scenario: A private transporter's saved country shows on the review
 **ID**: SCN-CYA-015-A
@@ -338,16 +492,30 @@ The system MUST show a private transporter's saved country on the Transport deta
 - **WHEN** the user views the review
 - **THEN** the Transport details card's Country row shows that country
 
+#### Scenario: A transporter with no approval number reads Not applicable
+**ID**: SCN-CYA-015-B
+- **GIVEN** a private transporter has been saved with no approval number
+- **WHEN** the user views the review
+- **THEN** the Transport details card's Approval number row reads "Not applicable"
+- **AND** its Name, Address, Country and Type rows are still shown
+
+#### Scenario: A commercial transporter's five rows read its saved values
+**ID**: SCN-CYA-015-C
+- **GIVEN** a commercial transporter has been chosen
+- **WHEN** the user views the review
+- **THEN** the Transport details card reads the transporter's name, address, country and approval number on the Name, Address, Country and Approval number rows
+- **AND** its Type row reads "Commercial"
+
 ### Requirement: The review shows only the exit answers the main import reason asked for
 **ID**: REQ-CYA-016
-The system MUST show the Destination country, Exit date and Port of exit rows on the review only for the import reasons that ask them: Destination country and Port of exit for transit, Exit date and Port of exit for temporary admission horses, and none of the three for a reason that asks none of them.
+The system MUST show the exit rows on the review only for the import reasons that ask them: "Port of exit" then "Destination country" for transit, "Exit date" then "Port of exit" for temporary admission horses, and none of them for a reason that asks none of them.
 
-#### Scenario: A transit notification shows its destination country and port of exit, and no exit date
+#### Scenario: A transit notification shows its port of exit then its destination country, and no exit date
 **ID**: SCN-CYA-016-A
 - **GIVEN** a notification whose main import reason is transit, with a port of exit and a destination country saved
 - **WHEN** the user views the review
-- **THEN** the Destination country and Port of exit rows show what was saved
-- **AND** no Exit date row is shown
+- **THEN** the Main import reason card shows the "Port of exit" row and then the "Destination country" row, each showing what was saved
+- **AND** no Port of exit or Exit date row is shown
 
 #### Scenario: A temporary admission shows its exit date and port of exit, and no destination country
 **ID**: SCN-CYA-016-B
@@ -362,46 +530,397 @@ The system MUST show the Destination country, Exit date and Port of exit rows on
 - **WHEN** the user views the review
 - **THEN** no Destination country, Exit date or Port of exit row is shown
 
-### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
+### Requirement: A species block's Identification details table heads only the identifiers asked of that line's species
 **ID**: REQ-CYA-017
-The system MUST head a species card's identifier table with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, with one row per saved animal.
+The system MUST head a species block's identifier table "Identification details", with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, and one row per saved animal labelled with the species name and the animal's number. On an editable review the table MUST have its own Change link to the animal identification page.
 
 #### Scenario: The identifier table heads only the columns a line's species was asked for and some animal filled in
 **ID**: SCN-CYA-017-A
 - **GIVEN** a line of a species asked for a microchip, a passport and a horse name, with all three filled in for its one saved animal
-- **WHEN** the user views that species' card on the review
-- **THEN** its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row
-- **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column on its own card
+- **WHEN** the user views that species' block on the review
+- **THEN** its table, headed "Identification details", has columns Animal, Microchip, Passport and Horse name, with that animal's values in its one row
+- **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column in its own block
 
-### Requirement: The roles-and-addresses card lists one row per animal that has a saved permanent address
+#### Scenario: Each animal's row is labelled with its species name and number
+**ID**: SCN-CYA-017-B
+- **GIVEN** a cat line of two saved animals
+- **WHEN** the user views the cat's block on the review
+- **THEN** the first cells of the table's rows read "Felis catus 1" and "Felis catus 2"
+
+#### Scenario: Identification details has its own Change link on an editable review
+**ID**: SCN-CYA-017-C
+- **GIVEN** a draft with a saved animal on a species
+- **WHEN** the user views the review
+- **THEN** the species block's Identification details has a Change link opening the animal identification page
+- **AND** a submitted notification's Identification details has none
+
+#### Scenario: Identification details is a heading one level below its species heading
+**ID**: SCN-CYA-017-D
+- **GIVEN** a draft with a saved animal on a species
+- **WHEN** the user views the review
+- **THEN** "Identification details" is a heading one level below its species block's heading
+- **AND** it is styled as a small heading
+
+### Requirement: The Consignment addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address
 **ID**: REQ-CYA-020
-The system MUST list on the roles-and-addresses card, after the county parish holding row, one row for each animal that has a saved permanent address, keyed by that animal's species common name and number and holding that animal's saved address as a party row reads it. An animal that needs a permanent address and has none MUST have no row, and a line that needs one with no animal counted MUST have none either.
+The system MUST show on the Consignment addresses card, after the county parish holding row, a subsection headed "Permanent address" with one entry for each animal that has a saved permanent address. Each entry MUST be keyed by the animal's species common name and number and hold its name, address lines and country, with no telephone number or email address. An animal with no saved address MUST have no entry, and the subsection MUST be absent when no animal has one.
 
-#### Scenario: The roles-and-addresses card lists a row for each animal that has a saved permanent address
+#### Scenario: The Permanent address subsection lists an entry for each animal that has a saved permanent address
 **ID**: SCN-CYA-020-A
 - **GIVEN** a cat line of two animals, one saved against the place of destination and one with a hand-entered address
 - **WHEN** the user views check-your-answers
-- **THEN** the roles-and-addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
+- **THEN** the Consignment addresses card's "Permanent address" subsection lists an entry for each animal keyed by its species' common name and number
+- **AND** each entry holds that animal's name, address lines and country, with no telephone number or email address
 
-#### Scenario: An animal that still owes a permanent address has no row, while the species and roles-and-addresses cards are both still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no entry, while commodity details and consignment addresses are both still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
-- **THEN** the roles-and-addresses card lists a row for the answered animal alone
-- **AND** the error summary names both the species card and the roles-and-addresses card as needing to be completed
+- **THEN** the "Permanent address" subsection lists an entry for the answered animal alone
+- **AND** the error summary names both commodity details and consignment addresses as needing to be completed
 
-#### Scenario: A line needing a permanent address with no animal counted has no permanent address row
+#### Scenario: A line needing a permanent address with no animal counted gives no Permanent address subsection
 **ID**: SCN-CYA-020-C
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
-- **THEN** the roles-and-addresses card lists no permanent address row
+- **THEN** the Consignment addresses card has no "Permanent address" subsection
 
-### Requirement: The roles-and-addresses card shows the county parish holding number when the notification needs one
+### Requirement: The Origin of import card always shows its three rows
 **ID**: REQ-CYA-021
-The system MUST show, on the roles-and-addresses card, a row for the county parish holding number when the notification's commodities call for one, keyed as the copy keys it, reading the saved number in the slashed county/parish/holding form. The row carries no action of its own: the card's one Change link, in its heading, covers every row.
+The system MUST show the Country of origin, Region of origin code and Internal reference number rows on the Origin of import card, in that order, whether or not a region of origin code was needed, and MUST NOT show a "Region of origin code required" row.
 
-#### Scenario: A saved county parish holding number reads in its slashed form
+#### Scenario: A given region of origin code reads on its row
 **ID**: SCN-CYA-021-A
-- **GIVEN** a notification that needs a county parish holding number and has one saved
+- **GIVEN** a notification whose origin needs a region of origin code and has one saved
+- **WHEN** the user views the review
+- **THEN** the Origin of import card's rows are keyed "Country of origin", "Region of origin code" and "Internal reference number", in that order
+- **AND** the "Region of origin code" row reads the saved code
+
+#### Scenario: A region of origin code that is not needed reads Not applicable
+**ID**: SCN-CYA-021-B
+- **GIVEN** a notification whose origin needs no region of origin code
+- **WHEN** the user views the review
+- **THEN** the Origin of import card's "Region of origin code" row reads "Not applicable"
+
+### Requirement: The Arrival details card dates the arrival at the port of entry and reads the transit countries inside it
+**ID**: REQ-CYA-022
+The system MUST key the arrival date row on the Arrival details card "Arrival date at port of entry". When transit countries apply, it MUST read them in that card under a "Transit countries" subsection, on a row keyed "Countries that the consignment will travel through", comma-separated in the order added, with its own Change link and no separate Transit countries card. A submitted notification's row MUST carry no Change link.
+
+#### Scenario: The arrival date row is keyed at the port of entry
+**ID**: SCN-CYA-022-A
+- **GIVEN** a notification with an arrival date
+- **WHEN** the user views the review
+- **THEN** the Arrival details card reads the date on a row keyed "Arrival date at port of entry"
+
+#### Scenario: A road notification reads its transit countries inside the Arrival details card
+**ID**: SCN-CYA-022-B
+- **GIVEN** a notification arriving by road, with France and Belgium added as transit countries
+- **WHEN** the user views the review
+- **THEN** the Arrival details card holds a "Transit countries" subsection
+- **AND** its "Countries that the consignment will travel through" row reads "France, Belgium"
+- **AND** that row's Change link opens the transit countries page
+- **AND** no card titled "Transit countries" is shown
+
+#### Scenario: An air notification has no transit countries subsection
+**ID**: SCN-CYA-022-C
+- **GIVEN** a notification arriving by air
+- **WHEN** the user views the review
+- **THEN** the Arrival details card holds no "Transit countries" subsection
+
+#### Scenario: A submitted notification's transit countries row has no Change link
+**ID**: SCN-CYA-022-D
+- **GIVEN** a submitted notification arriving by road, with France and Belgium added as transit countries
+- **WHEN** the user views it
+- **THEN** the "Countries that the consignment will travel through" row reads "France, Belgium"
+- **AND** that row has no Change link
+
+### Requirement: The What are you importing? card reads the commodity selection back once, with each species named in capitals
+**ID**: REQ-CYA-023
+The system MUST show a card titled "What are you importing?" between "Origin of import" and "Main import reason" in "1. About the consignment", with rows "Commodity code", "Common name" and "Species" and a Change link to the commodity selection page. It MUST list each selected commodity's code once, and each selected species' common name and Latin name, comma-separated, with every word of a Latin name capitalised. Under "other live mammals" it MUST add each species' own code.
+
+#### Scenario: The card reads the selection back in three rows with a Change link
+**ID**: SCN-CYA-023-A
+- **GIVEN** a notification with Bos taurus selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** the "What are you importing?" card has rows "Commodity code", "Common name" and "Species", reading "0102", "Domestic Cattle" and "Bos taurus"
+- **AND** its Change link opens the commodity selection page
+
+#### Scenario: Two species of one commodity share one code
+**ID**: SCN-CYA-023-B
+- **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** the "Commodity code" row reads "0102" once
+- **AND** the "Common name" row reads "Domestic Cattle, American Bison" and the "Species" row reads "Bos taurus, Bison bison"
+
+#### Scenario: Each species under other live mammals adds its own code and common name
+**ID**: SCN-CYA-023-C
+- **GIVEN** a notification with Felis catus and Mustela putorius furo selected under other live mammals
+- **WHEN** the user views the review
+- **THEN** the "Commodity code" row reads "01061900, 01061900"
+- **AND** the "Common name" row reads "Domestic Cat, Ferret"
+- **AND** the "Species" row reads "Felis catus, Mustela putorius furo"
+
+#### Scenario: A submitted notification's card has no Change link
+**ID**: SCN-CYA-023-D
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the "What are you importing?" card has no Change link
+
+### Requirement: "2. Description of the goods" holds one card per commodity with one block per species
+**ID**: REQ-CYA-024
+The system MUST show one card per selected commodity in "2. Description of the goods", titled by the commodity's code, holding one block per species headed with its Latin name, every word capitalised. A block MUST show the species' counts and no "Commodity code", "Common name" or "Species" row. On an editable review the card and the first row of each block MUST each carry a Change link to the consignment details page.
+
+#### Scenario: Two species of one commodity stand as two blocks in one card
+**ID**: SCN-CYA-024-A
+- **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** "2. Description of the goods" holds one card titled "0102"
+- **AND** the card holds a block headed "Bos taurus" and a block headed "Bison bison"
+
+#### Scenario: A block shows its counts and no commodity or species rows
+**ID**: SCN-CYA-024-B
+- **GIVEN** a notification with 25 Bos taurus and 5 packages
+- **WHEN** the user views the review
+- **THEN** the "Bos taurus" block shows "Number of animals" reading "25" and then "Number of packages (when required)" reading "5"
+- **AND** it shows no "Commodity code", "Common name" or "Species" row
+
+#### Scenario: A blank package count reads Not applicable and a species with no packaging shows no package row
+**ID**: SCN-CYA-024-C
+- **GIVEN** a notification with Bos taurus counted and no package count given, and an ostrich counted
+- **WHEN** the user views the review
+- **THEN** the "Bos taurus" block's "Number of packages (when required)" row reads "Not applicable"
+- **AND** the ostrich block shows "Number of animals" alone
+
+#### Scenario: The card and the first row of each block carry their own Change links to consignment details
+**ID**: SCN-CYA-024-D
+- **GIVEN** a draft notification with a species counted
+- **WHEN** the user views the review
+- **THEN** the commodity card's heading has a Change link opening the consignment details page
+- **AND** the first row of the species block has its own Change link opening the same page
+
+#### Scenario: A submitted notification's commodity cards and blocks have no Change links
+**ID**: SCN-CYA-024-E
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the commodity card and its species blocks have no Change link
+
+#### Scenario: Species under two commodity codes stand as two cards, each holding only its own species' blocks
+**ID**: SCN-CYA-024-F
+- **GIVEN** a notification with Bison bison and Bos taurus selected under commodity code 0102, and Felis catus under commodity code 01061900, each with a number of animals entered
+- **WHEN** the user views the review
+- **THEN** "2. Description of the goods" holds a card titled "0102" and then a card titled "01061900"
+- **AND** the "0102" card holds a "Bison bison" block and a "Bos taurus" block, and the "01061900" card holds a "Felis catus" block alone
+- **AND** each block's "Number of animals" reads the number entered for its species
+
+### Requirement: The review reads the county parish holding number back as its three parts separated by slashes
+**ID**: REQ-CYA-025
+The system MUST show the county parish holding number on the Consignment addresses card as its county, parish and holding parts separated by slashes, such as "12/345/6789". A stored value that is not nine digits MUST be shown as it is stored.
+
+#### Scenario: A stored county parish holding number reads with slashes
+**ID**: SCN-CYA-025-A
+- **GIVEN** a notification whose commodity asks for a county parish holding number, stored as nine digits
+- **WHEN** the user views the review
+- **THEN** the Consignment addresses card's county parish holding row reads "12/345/6789"
+
+#### Scenario: A stored CPH number that is not nine digits reads exactly as stored
+**ID**: SCN-CYA-025-B
+- **GIVEN** a stored CPH number with fewer or more than nine digits
+- **WHEN** the trader views the review
+- **THEN** the CPH row reads the value exactly as stored
+
+### Requirement: An amendment's review ends with Continue, a secondary Cancel amend and a red Delete
+**ID**: REQ-CYA-027
+The system MUST end an amendment's review with "Continue", which goes on to resubmission, then a secondary "Cancel amend" button that opens the cancel-amendment confirmation, then a red "Delete" button that opens the delete confirmation.
+
+#### Scenario: The amendment review ends with its three controls in order
+**ID**: SCN-CYA-027-A
+- **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
-- **THEN** the roles-and-addresses card's county parish holding row reads "12/345/6789"
+- **THEN** the review ends with "Continue", then "Cancel amend", then "Delete"
+- **AND** "Cancel amend" is a secondary button and "Delete" is a red button
+
+#### Scenario: Cancel amend on the review opens the confirmation
+**ID**: SCN-CYA-027-B
+- **GIVEN** a notification is being amended
+- **WHEN** the user presses "Cancel amend" on the review
+- **THEN** the cancel-amendment confirmation opens
+
+#### Scenario: Delete on an amendment's review opens the delete confirmation
+**ID**: SCN-CYA-027-C
+- **GIVEN** a notification is being amended
+- **WHEN** the user presses "Delete" on the review
+- **THEN** the notification's delete confirmation opens
+
+### Requirement: An amendment's review is titled for re-submitting once a notification answer differs from the submitted version
+**ID**: REQ-CYA-028
+The system MUST head and title an amendment's review "Review your notification" when it is first opened. The system MUST head and title it "Review before re-submitting" once any notification answer differs from the submitted version. The system MUST head and title it "Review your notification" again once every changed answer is put back. A new amendment, started after a previous one was resubmitted or cancelled, MUST open as "Review your notification". A change to the uploaded documents alone MUST NOT count as a difference.
+
+#### Scenario: An amendment opened unchanged is headed as a review
+**ID**: SCN-CYA-028-A
+- **GIVEN** a notification is being amended and no answer has changed
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: An amendment is headed for re-submitting after an answer changes
+**ID**: SCN-CYA-028-B
+- **GIVEN** a notification is being amended and a notification answer has changed from the submitted version
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review before re-submitting"
+
+#### Scenario: Adding only a document keeps the review heading
+**ID**: SCN-CYA-028-C
+- **GIVEN** a notification is being amended and only an uploaded document has been added
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: Putting the changed answer back restores the review heading
+**ID**: SCN-CYA-028-D
+- **GIVEN** a notification is being amended and a notification answer was changed and then put back to the submitted value
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+#### Scenario: A new amendment after a cancelled or resubmitted one opens as a review
+**ID**: SCN-CYA-028-E
+- **GIVEN** an amendment with a changed answer was cancelled or resubmitted, and a new amendment is started
+- **WHEN** the user views check-your-answers
+- **THEN** the page is headed and titled "Review your notification"
+
+### Requirement: The Consignment addresses card offers only its heading Change link, and the Contact address card adds Edit details for a chosen contact address
+**ID**: REQ-CYA-026
+The system MUST give the Consignment addresses card no link but the Change link in its heading: no party row carries a link. The system MUST give the Contact address card its heading Change link and, on an editable review (a draft or an amendment) with a chosen contact address, an "Edit details" link on the contact address row that opens that address's edit page and returns to the review. A submitted notification's view and an unanswered contact address MUST carry no "Edit details" link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
+
+#### Scenario: The address cards carry only the links they offer
+**ID**: SCN-CYA-026-A
+- **GIVEN** a draft notification with every role answered
+- **WHEN** the user views the review
+- **THEN** the Consignment addresses card's only link is its heading Change link
+- **AND** the Contact address card's links are its heading Change link, then "Edit details" on its row
+
+#### Scenario: Saving or cancelling a contact address edit from the review returns to the review
+**ID**: SCN-CYA-026-C
+- **GIVEN** a draft notification with a chosen contact address
+- **WHEN** the user chooses "Edit details" on the Contact address card and saves a changed town
+- **THEN** the review opens showing the edited details
+- **WHEN** the user chooses "Edit details" again and cancels
+- **THEN** the review opens with the address as it was
+
+#### Scenario: A role whose copied address breaks the address-book rules is named in the error summary
+**ID**: SCN-CYA-026-B
+- **GIVEN** a role whose copied address breaks the address-book rules, such as a consignor copied with only a country code
+- **WHEN** the trader views the review
+- **THEN** the error summary has an entry naming that role that links to the role's edit page
+- **AND** the role's row shows its address under the error
+
+### Requirement: A submitted notification's view is headed by its reference and status, and dated
+**ID**: REQ-CYA-029
+The system MUST head a submitted notification's view with its reference number and a "Submitted" tag, with no status bar, and title the page with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. An amendment's review MUST keep its own heading, title and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
+**ID**: SCN-CYA-029-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a green "Submitted" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The submitted view and a draft's review are titled by their references, and an amendment keeps its review title
+**ID**: SCN-CYA-029-B
+- **GIVEN** a submitted notification, a draft notification and an amendment
+- **WHEN** the user views each
+- **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** the draft's review is titled by its reference in the same way
+- **AND** the amendment's review is headed "Review your notification" with an "Amend" status bar
+
+#### Scenario: The date submitted is the UK day of the submission
+**ID**: SCN-CYA-029-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user views it
+- **THEN** the header reads "Date submitted: 22 July 2026"
+
+#### Scenario: The date submitted reads the same on a later visit
+**ID**: SCN-CYA-029-D
+- **GIVEN** a submitted notification whose view shows a date submitted
+- **WHEN** the user views it again later
+- **THEN** the header reads the same date submitted
+
+#### Scenario: A notification submitted without its ITAHC is viewed like any submitted notification
+**ID**: SCN-CYA-029-E
+- **GIVEN** a notification submitted without an ITAHC
+- **WHEN** the user views it
+- **THEN** a green "Submitted" tag stands beside the reference heading
+- **AND** its only buttons are Amend this notification, Copy as new and Delete
+- **AND** "4. Uploaded documents" shows a Document 1 card
+
+### Requirement: A notification's view shows its import reference numbers as text to copy
+**ID**: REQ-CYA-030
+The system MUST show, on a draft's review and on a submitted notification's view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C640". The values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+
+#### Scenario: The section shows the warning and both rows
+**ID**: SCN-CYA-030-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its "Notification reference" row reads the notification's reference number
+- **AND** its "Customs document code" row reads "C640"
+
+#### Scenario: The values read as text and no button shows without JavaScript
+**ID**: SCN-CYA-030-B
+- **GIVEN** a submitted notification and a browser with JavaScript off
+- **WHEN** the user views it
+- **THEN** the section shows the warning and both values as text
+- **AND** the section shows no button
+
+#### Scenario: A draft's review shows the warning, the reference and C640 as text
+**ID**: SCN-CYA-030-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its "Notification reference" row reads the notification's reference number and its "Customs document code" row reads "C640", as text with no button
+
+### Requirement: Opening the view of a notification that does not exist shows the standard page not found
+**ID**: REQ-CYA-031
+The system MUST show the service's standard page not found, with the same status and wording as every other journey page, when the user opens the view of a notification that does not exist.
+
+#### Scenario: An unknown notification shows page not found
+**ID**: SCN-CYA-031-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the view of a notification that does not exist
+- **THEN** the page not found status is returned
+- **AND** the page is headed "404" and reads "Page not found"
+
+### Requirement: A draft's review is headed by its reference with a Draft tag and dated by its creation, and stays editable
+**ID**: REQ-CYA-033
+The system MUST head a draft's review with its reference number and a "Draft" tag, with no status bar, and MUST show "Date created: " and the UK day of creation under the header. The review MUST keep a Change link on every card, show the error summary and each incomplete card's message under the header, and end with a continue action.
+
+#### Scenario: A draft's review opened from Overview is headed by its reference with a Draft tag
+**ID**: SCN-CYA-033-A
+- **GIVEN** a draft notification
+- **WHEN** the user opens its review with "Review and submit" on Overview
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a blue "Draft" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The date created is the UK day the notification was created
+**ID**: SCN-CYA-033-B
+- **GIVEN** a draft notification created at 23:30 UTC on 21 July 2026
+- **WHEN** the user views its review
+- **THEN** the header reads "Date created: 22 July 2026"
+
+#### Scenario: Every card on a draft's review keeps its Change link
+**ID**: SCN-CYA-033-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** each card offers a Change link to its question page
+
+#### Scenario: An incomplete draft's error summary and card messages show under the header
+**ID**: SCN-CYA-033-D
+- **GIVEN** a draft notification with incomplete sections
+- **WHEN** the user views its review
+- **THEN** a "There is a problem" error summary lists each incomplete section, each entry linking to its card
+- **AND** an error message shows under each incomplete card's heading
+
+#### Scenario: A draft's review ends with Continue
+**ID**: SCN-CYA-033-E
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** the review ends with a "Continue" button

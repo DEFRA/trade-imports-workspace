@@ -8,7 +8,7 @@ paths:
 
 # Node.js conventions
 
-Editing Node.js source (Node >= 24, ESM throughout). Follow the workspace Node best-practices.
+Editing Node.js source (Node >= 26, ESM throughout). Follow the workspace Node best-practices.
 
 - Always on: `.claude/rules/code-quality.md` holds the house rules inline (comments, ids, history, names, structure, tests, logging). They apply to every Node file and win over any guide below.
 - Topic dir: `docs/best-practices/node/`

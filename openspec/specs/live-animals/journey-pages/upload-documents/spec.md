@@ -403,12 +403,12 @@ The system MUST keep a document the user has filled in, whichever save button th
 - **AND** an error on the file says "Upload a document"
 - **AND** the user stays on the upload documents page
 
-#### Scenario: Save and continue with an untouched form shows Roles and addresses
+#### Scenario: Save and continue with an untouched form shows Consignment addresses
 **ID**: SCN-DOCS-016-C
 **Signed off**: 2026-11-11
 - **GIVEN** the user has added nothing and filled in nothing
 - **WHEN** they save and continue
-- **THEN** Roles and addresses is shown
+- **THEN** Consignment addresses is shown
 
 #### Scenario: Save and return to overview with a part-filled document is refused
 **ID**: SCN-DOCS-016-D
@@ -436,20 +436,20 @@ The system MUST keep a document the user has filled in, whichever save button th
 - **WHEN** they save and return to overview with only the reference filled in
 - **THEN** they stay on the upload documents page with an error for each detail not given, and no document is added
 
-#### Scenario: A complete document saved with Save and continue is added and Roles and addresses is shown
+#### Scenario: A complete document saved with Save and continue is added and Consignment addresses is shown
 **ID**: SCN-DOCS-016-G
 **Signed off**: 2026-11-11
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
 - **WHEN** they save and continue
 - **THEN** the document is added once
-- **AND** Roles and addresses is shown
+- **AND** Consignment addresses is shown
 
-#### Scenario: While amending, Save and continue with an untouched form shows Roles and addresses
+#### Scenario: While amending, Save and continue with an untouched form shows Consignment addresses
 **ID**: SCN-DOCS-016-H
 **Signed off**: 2026-11-11
 - **GIVEN** a notification being amended, with the upload documents page opened from a Change link and nothing filled in
 - **WHEN** the user selects "Save and continue"
-- **THEN** Roles and addresses is shown
+- **THEN** Consignment addresses is shown
 
 #### Scenario: Save and add another with a part-filled document is refused
 **ID**: SCN-DOCS-016-I

@@ -3,6 +3,9 @@ import { join } from 'node:path'
 import { realRepoPath, repoPath } from '../constants/repos.js'
 import { TimError } from '../errors.js'
 import { run, runToLog } from '../exec/exec.js'
+import { withTrailers } from '../git/commit-message.js'
+import { runTicket } from './discover-repos.js'
+import { refuseUncleanEvidence } from './evidence.js'
 import { findVersion, isDirectory, isUnset, requireOptions } from './state.js'
 import {
   markVersionDone,
@@ -94,7 +97,9 @@ const silent = () => undefined
  * commits everything in the repo and marks the version done. A failed npm
  * step marks the version failed instead. An intermediate noop version is
  * only marked done. The target version, or one given as `final`, gets the
- * run's original constraint prefix.
+ * run's original constraint prefix. The commit message carries the ticket
+ * the run recorded, then any trailers. An unattended apply first refuses a changelog-driven
+ * version whose evidence is not all clean, changing nothing.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -102,10 +107,12 @@ const silent = () => undefined
  * @param {string} [args.repo]
  * @param {string} [args.version]
  * @param {boolean} [args.final=false]
+ * @param {boolean} [args.unattended=false]
+ * @param {string[]} [args.trailers=[]] - Lines for the end of the commit message
  * @param {(line: string) => void | Promise<void>} [args.say] - Takes each progress line as it happens
  * @param {(line: string) => void | Promise<void>} [args.warn] - Takes each warning line as it happens
  * @returns {Promise<{outcome: 'applied'|'noop'|'already-done'|'failed', repo: string, version: string, commit?: string, constraint?: string, final?: boolean, installLog?: string, testLog?: string, reason?: string}>}
- * @throws {TimError} USAGE for a missing option, NOT_FOUND for an unplanned version or when the repo, the state file, the version or package.json is missing, UNKNOWN when git cannot stage, commit or read the new commit
+ * @throws {TimError} USAGE for a missing option, NOT_FOUND for an unplanned version or when the repo, the state file, the version or package.json is missing, REFUSED when an unattended apply finds evidence that is not all clean, UNKNOWN when git cannot stage, commit or read the new commit
  */
 export const applyVersion = async ({
   workspaceRoot,
@@ -113,18 +120,25 @@ export const applyVersion = async ({
   repo,
   version,
   final = false,
+  unattended = false,
+  trailers = [],
   say = silent,
   warn = silent
 }) => {
   requireOptions({ 'run-id': runId, repo, 'govuk-version': version })
   const repoDir = checkedRepoPath(workspaceRoot, repo)
-  const { state, entry } = findVersion({ workspaceRoot, runId, repo, version })
+  const found = findVersion({ workspaceRoot, runId, repo, version })
+  const { state, entry } = found
   checkPlanned(entry, version)
   const ids = { workspaceRoot, runId, repo, version }
 
   if (entry.implementation_status === 'done') {
     await warn(`Version ${version} already done.`)
     return { outcome: 'already-done', repo, version }
+  }
+
+  if (unattended) {
+    await refuseUncleanEvidence({ workspaceRoot, repo, version, found })
   }
 
   const isFinal = final || version === state.target_version
@@ -179,7 +193,10 @@ export const applyVersion = async ({
 
   const commit = await commitAll(
     repoDir,
-    `chore(${runId}): upgrade govuk-frontend to ${version}`,
+    withTrailers(
+      `chore(${runTicket(workspaceRoot, runId)}): upgrade govuk-frontend to ${version}`,
+      trailers
+    ),
     { say, warn }
   )
   await say(markVersionDone({ ...ids, commit }).message)

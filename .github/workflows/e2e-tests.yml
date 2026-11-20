@@ -79,7 +79,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
           cache-dependency-path: tim/package-lock.json
 
@@ -286,15 +286,35 @@ jobs:
     needs: e2e
     runs-on: ubuntu-latest
     steps:
+      # The action's own extractor reads a zip front to back and ends an entry
+      # at the first data-descriptor signature whose size field matches, so a
+      # blob report zipped inside the artifact can end its entry early and fail
+      # the download with "unexpected end of file". unzip reads the central
+      # directory instead.
       - name: Download shard artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: shard-*
           path: all-shards/
+          skip-decompress: true
+
+      # Several artifacts download to all-shards/shard-N/; a lone one
+      # downloads to all-shards/shard-1.zip, so it gets its own folder here.
+      - name: Unzip shard artifacts
+        run: |
+          shopt -s nullglob
+          for zip in all-shards/*/*.zip; do
+            unzip -q "$zip" -d "$(dirname "$zip")"
+            rm "$zip"
+          done
+          for zip in all-shards/*.zip; do
+            unzip -q "$zip" -d "all-shards/$(basename "$zip" .zip)"
+            rm "$zip"
+          done
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
 
       - name: Merge Playwright reports
         run: |
@@ -342,11 +362,20 @@ jobs:
     outputs:
       report-url: ${{ steps.url.outputs.report-url }}
     steps:
+      # Unzipped by hand for the reason given at merge-reports' download.
       - name: Download merged report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: e2e-report
           path: report/
+          skip-decompress: true
+
+      - name: Unzip merged report
+        run: |
+          for zip in report/*.zip; do
+            unzip -q "$zip" -d report/
+            rm "$zip"
+          done
 
       - name: Resolve branch tag
         id: branch-tag

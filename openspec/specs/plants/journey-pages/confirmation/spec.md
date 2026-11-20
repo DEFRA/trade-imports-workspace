@@ -29,13 +29,19 @@ The system MUST confirm a completed submission on its own page, showing the refe
 
 ### Requirement: The confirmation page is not shown for a notification that has not yet been submitted
 **ID**: REQ-PLANTS-CONFIRMATION-002
-The system MUST redirect a request for the confirmation page to check-your-answers when the notification it names has not been submitted.
+The system MUST redirect a request for the confirmation page to the notification's declaration page when the notification it names has not been submitted.
 
-#### Scenario: Requesting confirmation for an unsubmitted notification redirects to check-your-answers
+#### Scenario: Requesting confirmation for an unsubmitted notification redirects to its declaration
 **ID**: SCN-PLANTS-CONFIRMATION-002-A
 - **GIVEN** a notification has been started but not submitted
 - **WHEN** its confirmation page is requested directly
-- **THEN** check-your-answers is shown instead
+- **THEN** the declaration, headed "Declaration", is shown instead
+
+#### Scenario: Requesting confirmation for an amendment not yet re-submitted redirects to its declaration
+**ID**: SCN-PLANTS-CONFIRMATION-002-B
+- **GIVEN** a submitted notification has an amendment open that has not been re-submitted
+- **WHEN** its confirmation page is requested directly
+- **THEN** the declaration is shown instead
 
 ### Requirement: The page offers routes to view the notification and return to the dashboard
 **ID**: REQ-PLANTS-CONFIRMATION-003

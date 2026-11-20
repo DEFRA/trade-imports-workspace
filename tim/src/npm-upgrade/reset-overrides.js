@@ -9,6 +9,7 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
+import { withTrailers } from '../git/commit-message.js'
 import { AUDIT_CONFIG_FILE, jqText } from './audit-rules.js'
 import { auditBaselineToLog } from './audit-to-log.js'
 import {
@@ -504,7 +505,10 @@ const copyBackAndCommit = async (context, below) => {
     [
       'commit',
       '-m',
-      `Remove overrides\n\nRemoved: ${removedListOf(rows)}\n\n${keptTableOf(rows)}`
+      withTrailers(
+        `Remove overrides\n\nRemoved: ${removedListOf(rows)}\n\n${keptTableOf(rows)}`,
+        context.trailers
+      )
     ],
     { logPath: commitLog }
   )
@@ -555,7 +559,8 @@ const resetContextOf = async ({
   repo,
   repoPath,
   env,
-  warn
+  warn,
+  trailers = []
 }) => {
   if (!runId || !repo) throw new TimError('USAGE', RESET_USAGE)
   const path = repoPath || join(workspaceRoot, 'repos', repo)
@@ -584,6 +589,7 @@ const resetContextOf = async ({
     logFolder,
     commands,
     warn,
+    trailers,
     original,
     worktree: join(stateFolder, 'override-trial'),
     readRows: () => JSON.parse(readFileSync(stateFile, 'utf8')),
@@ -605,6 +611,7 @@ const resetContextOf = async ({
  * @param {string} [request.repoPath] - Reset this checkout instead of `repos/<repo>`
  * @param {Record<string, string | undefined>} [request.env]
  * @param {(line: string) => Promise<void>} request.warn - Writes a progress line to stderr
+ * @param {string[]} [request.trailers=[]] - Lines for the end of the commit message
  * @returns {Promise<{exitCode: number, result: object}>} exitCode 0 committed, no overrides or unchanged, 1 stopped (the worktree stays for inspection)
  * @throws {TimError} USAGE for a missing option or repo, a repo with uncommitted changes, or a worktree git cannot add
  * @throws {StepFailed} when a git step that has to work fails

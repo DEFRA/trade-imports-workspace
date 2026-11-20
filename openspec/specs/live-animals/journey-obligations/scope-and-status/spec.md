@@ -38,3 +38,41 @@ The system MUST judge a task row's status against the obligations that apply to 
 - **GIVEN** a notification with a task row whose obligations do not apply to it
 - **WHEN** the user reaches check your answers
 - **THEN** that row does not hold the notification back from being submitted
+
+### Requirement: A mandatory obligation that applies holds the notification back from submission until it is answered
+**ID**: REQ-OB-SCOPE-005
+The system MUST hold a notification back from submission while a mandatory obligation that applies to it is unanswered, and MUST name that obligation's card on check your answers. The main import reason, the answers it calls for, what the animals are certified for and the unweaned answer where asked are mandatory, yet MUST be leavable unanswered with Save and return to overview.
+
+#### Scenario: A notification without its main import reason is not ready to submit
+**ID**: SCN-OB-SCOPE-005-A
+- **GIVEN** an otherwise complete notification with no main import reason
+- **WHEN** the user reaches check your answers
+- **THEN** the notification is not ready to submit
+- **AND** the main import reason card is named as unfinished
+
+#### Scenario: A notification missing an answer its import reason calls for is not ready to submit
+**ID**: SCN-OB-SCOPE-005-B
+- **GIVEN** an otherwise complete notification whose import reason calls for an answer, such as the purpose for the internal market, the destination country for transit or transhipment, or the port of exit for transit or temporary admission, and that answer is missing
+- **WHEN** the user reaches check your answers
+- **THEN** the notification is not ready to submit
+- **AND** the main import reason card is named as unfinished
+
+#### Scenario: A notification without what the animals are certified for is not ready to submit
+**ID**: SCN-OB-SCOPE-005-C
+- **GIVEN** an otherwise complete notification with nothing chosen for what the animals are certified for
+- **WHEN** the user reaches check your answers
+- **THEN** the notification is not ready to submit
+- **AND** the additional details card is named as unfinished
+
+#### Scenario: A cattle notification without the unweaned answer is not ready to submit
+**ID**: SCN-OB-SCOPE-005-D
+- **GIVEN** an otherwise complete notification with a cattle line and no answer to whether the consignment contains unweaned animals
+- **WHEN** the user reaches check your answers
+- **THEN** the notification is not ready to submit
+- **AND** the additional details card is named as unfinished
+
+#### Scenario: The main import reason, what the animals are certified for and the unweaned answer can be left blank and are named when the user continues
+**ID**: SCN-OB-SCOPE-005-E
+- **GIVEN** a cattle notification whose main import reason is left blank and whose additional details are saved with nothing chosen for what the animals are certified for and the unweaned answer blank, each with Save and return to overview
+- **WHEN** the user continues from check your answers
+- **THEN** they are returned to check your answers, whose error summary names the main import reason and additional details cards

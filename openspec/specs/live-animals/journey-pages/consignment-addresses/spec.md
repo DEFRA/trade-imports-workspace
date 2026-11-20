@@ -64,38 +64,38 @@ The system MUST return the user, when they follow the back link from the consign
 
 ### Requirement: Overview's task for this page shows Completed once every answer the page asks for has been given
 **ID**: REQ-CONSIGN-ADDR-004
-The system MUST NOT show Overview's "Roles and addresses" task as Completed while an answer the consignment addresses page asks for is missing: a party role with no address, a CPH number the consignment is in scope of and has not given, or an animal identified on a line that needs a permanent address and has none. A line that needs a permanent address with no animal identified yet is asked for no address, so it does not hold the task back.
+The system MUST NOT show Overview's "Consignment addresses" task as Completed while an answer the consignment addresses page asks for is missing: a party role with no address, a CPH number the consignment is in scope of and has not given, or an animal identified on a line that needs a permanent address and has none. A line that needs a permanent address with no animal identified yet is asked for no address, so it does not hold the task back.
 
 #### Scenario: Answering every role marks the Overview task Completed when the page shows no CPH number or permanent address section
 **ID**: SCN-CONSIGN-ADDR-004-A
 - **GIVEN** the user has chosen an address for every party role on the consignment addresses page, and the page shows no CPH number or permanent address section
 - **WHEN** they return to Overview
-- **THEN** the "Roles and addresses" task shows Completed
+- **THEN** the "Consignment addresses" task shows Completed
 
 #### Scenario: A line needing a permanent address with an animal identified holds the Overview task to To do until the animal has one
 **ID**: SCN-CONSIGN-ADDR-004-B
 - **GIVEN** every party role has an address, and an animal identified on a line that needs a permanent address has none
 - **WHEN** the user returns to Overview
-- **THEN** the "Roles and addresses" task shows To do
+- **THEN** the "Consignment addresses" task shows To do
 
 #### Scenario: The Overview task completes once every such animal has a permanent address
 **ID**: SCN-CONSIGN-ADDR-004-C
 - **GIVEN** every party role has an address, and every animal identified on a line that needs a permanent address has one
 - **WHEN** the user returns to Overview
-- **THEN** the "Roles and addresses" task shows Completed
+- **THEN** the "Consignment addresses" task shows Completed
 
 #### Scenario: A consignment the page asks a CPH number of holds the Overview task to To do until the CPH number is given
 **ID**: SCN-CONSIGN-ADDR-004-D
 - **GIVEN** every party role has an address, and the notification has a commodity line the service treats as requiring a CPH number, with no CPH number saved
 - **WHEN** the user returns to Overview
-- **THEN** the "Roles and addresses" task shows To do
+- **THEN** the "Consignment addresses" task shows To do
 - **AND** it shows Completed once the CPH number is saved
 
 #### Scenario: A line needing a permanent address with no animal identified yet does not hold the Overview task back
 **ID**: SCN-CONSIGN-ADDR-004-E
 - **GIVEN** every party role has an address, and a commodity line that needs a permanent address carries an animal count but no animal identified
 - **WHEN** the user returns to Overview
-- **THEN** the "Roles and addresses" task shows Completed
+- **THEN** the "Consignment addresses" task shows Completed
 
 ### Requirement: The page also sets out a CPH number section when a commodity on the notification requires one
 **ID**: REQ-CONSIGN-ADDR-005
@@ -220,11 +220,11 @@ The system MUST offer, in a party section that has no address and whose paired s
 - **WHEN** they change the place of origin to a different address
 - **THEN** the Consignor section still shows the first address
 
-#### Scenario: The review shows the filled party's full details
+#### Scenario: The review reads the filled party back as name, address lines and country
 **ID**: SCN-CONSIGN-ADDR-009-E
 - **GIVEN** the user has filled the Importer section from the consignee using the control
 - **WHEN** they view the review
-- **THEN** the importer's entry shows the consignee's name, address lines, country, phone number and email address
+- **THEN** the importer's entry reads back the consignee's name, address lines and country, without the telephone number or email address
 
 #### Scenario: A request to fill a section the page is not offering changes nothing
 **ID**: SCN-CONSIGN-ADDR-009-F

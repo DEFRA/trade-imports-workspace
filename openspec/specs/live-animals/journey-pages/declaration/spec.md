@@ -56,6 +56,14 @@ The system MUST redirect a request for the declaration page to the confirmation 
 - **WHEN** they request the declaration page for it again
 - **THEN** the confirmation page is shown instead
 
+#### Scenario: Declaring again from a declaration still open after another tab submitted shows the confirmation
+**ID**: SCN-DECLARATION-004-B
+- **GIVEN** the declaration is open in one tab
+- **AND** the same notification is then submitted from another tab
+- **WHEN** the user confirms the declaration in the first tab and submits
+- **THEN** the confirmation page is shown for that notification
+- **AND** the notification is not submitted a second time
+
 ### Requirement: The declaration is reached only by continuing from check your answers
 **ID**: REQ-DECLARATION-005
 The system MUST show the declaration only when the user continues from a check your answers shown in their own browser, and MUST send a user who reaches the declaration by a bookmark or typed address, or by a form altered to post to it before check your answers has been shown for the notification as it now stands in this browser, to check your answers instead.
@@ -133,3 +141,53 @@ The system MUST offer the confirmation as a small GOV.UK checkbox in a group who
 - **GIVEN** a notification is being amended
 - **WHEN** the user continues from check your answers to the declaration
 - **THEN** no status bar, reference number or "Cancel amend" is shown above the heading
+
+### Requirement: A declaration is not submitted while check your answers would refuse the notification
+**ID**: REQ-DECLARATION-008
+The system MUST NOT submit a notification that check your answers would refuse, however the declaration reached it, and MUST return the user to check your answers, which names what stops the submission.
+
+#### Scenario: A confirmed declaration on an unfinished notification returns to check your answers naming every unfinished card
+**ID**: SCN-DECLARATION-008-A
+- **GIVEN** a draft notification with unfinished answers, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming every unfinished card
+
+#### Scenario: A confirmed declaration on a notification with a document still being scanned returns to check your answers marking the document card
+**ID**: SCN-DECLARATION-008-B
+- **GIVEN** an otherwise complete draft notification with a document still being scanned, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with the document card and the error summary saying one or more documents are still being scanned
+
+#### Scenario: A confirmed declaration on a notification with no main import reason returns to check your answers naming the main import reason card
+**ID**: SCN-DECLARATION-008-C
+- **GIVEN** an otherwise complete draft notification whose main import reason was left unanswered, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete main import reason", with the main import reason left blank
+
+#### Scenario: A confirmed declaration on a notification with no certified-for answer returns to check your answers naming the additional details card
+**ID**: SCN-DECLARATION-008-D
+- **GIVEN** an otherwise complete draft notification whose answer to what the animals are certified for was left unanswered, whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete additional details", with the certified for answer left blank
+
+#### Scenario: A confirmed declaration on a notification with no unweaned answer returns to check your answers naming the additional details card
+**ID**: SCN-DECLARATION-008-E
+- **GIVEN** an otherwise complete draft notification with a line that asks the unweaned question, whose unweaned answer was left unanswered, and whose check your answers has been shown in this browser
+- **WHEN** the user's declaration is sent confirmed
+- **THEN** the notification is not submitted and remains a draft
+- **AND** check your answers is shown with an error summary naming only "Complete additional details", with the unweaned answer left blank
+
+### Requirement: A declaration the service cannot save is shown again, ready to retry
+**ID**: REQ-DECLARATION-009
+The system MUST show the declaration again, still confirmed, under a message that the service could not save it, when it cannot save the submission, so the user can try again, and MUST NOT show the confirmation page.
+
+#### Scenario: A submission the service cannot save shows the declaration again with a message
+**ID**: SCN-DECLARATION-009-A
+- **GIVEN** the user has confirmed the declaration
+- **WHEN** the service cannot save the submission
+- **THEN** the declaration is shown again with the confirmation still ticked, under a message that the service could not save it
+- **AND** the confirmation page is not shown

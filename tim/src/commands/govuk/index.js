@@ -3,6 +3,11 @@ import { createNpmRegistryClient } from '../../clients/npm-registry-client.js'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { applyVersion } from '../../govuk/apply.js'
+import {
+  addVersionEvidence,
+  checkVersionEvidence
+} from '../../govuk/evidence.js'
+import { renderRunEvidence } from '../../govuk/render-evidence.js'
 import { startUpgrade } from '../../govuk/start.js'
 import {
   addVersionChange,
@@ -17,6 +22,7 @@ import {
   renderSummariesText
 } from '../../govuk/summaries.js'
 import { makeRunAction } from '../_run-action.js'
+import { addTrailerOption, trailersOf } from '../_trailer-option.js'
 import { writeLine } from '../_write-line.js'
 
 const workspaceRootOf = (opts) =>
@@ -136,18 +142,28 @@ const EXAMPLE_IDS =
 
 const registerStateWrite = (
   govuk,
-  { timVersion, name, description, options, examples, write }
+  {
+    timVersion,
+    name,
+    description,
+    options,
+    examples,
+    helpNotes = '',
+    write,
+    exitCodeForResult
+  }
 ) =>
   options(versionOptions(govuk.command(name).description(description)))
     .addHelpText(
       'after',
-      `\nExamples:\n${examples.map((example) => `  tim govuk ${name} ${EXAMPLE_IDS} ${example}`).join('\n')}`
+      `${helpNotes}\nExamples:\n${examples.map((example) => `  tim govuk ${name} ${EXAMPLE_IDS} ${example}`).join('\n')}`
     )
     .action(
       makeRunAction({
         parseOptions: (opts) => ({ ...versionIdsOf(opts), opts }),
         run: (_context, { opts, ...ids }) => write(ids, opts),
         renderText: ({ message }) => message,
+        exitCodeForResult,
         exitCodeForError: usageOrError,
         timVersion
       })
@@ -204,24 +220,70 @@ const STATE_WRITES = [
       command.option('--reason <text>', 'Why the version failed'),
     examples: ['--reason "npm test failed"'],
     write: (ids, { reason }) => markVersionFailed({ ...ids, reason })
+  },
+  {
+    name: 'add-evidence',
+    description:
+      "Add an evidence row for one changelog item to the end of one version's evidence in a govuk-frontend upgrade run. Counts the lines of the repo's tracked files that contain the pattern now, as the hits before the change.",
+    options: (command) =>
+      command
+        .option('--item <text>', 'The changelog item the row covers')
+        .option(
+          '--outcome <outcome>',
+          'applied, not-applicable or needs-a-person'
+        )
+        .option(
+          '--pattern <text>',
+          'The old form the change removes, as a fixed string. Needed for applied'
+        )
+        .option(
+          '--reason <text>',
+          'Why the repo is not affected, or what a person has to decide'
+        ),
+    helpNotes:
+      '\nOutcomes:\n  applied         the pattern must have hits now\n  not-applicable  needs a reason; a pattern, if given, must have no hits\n  needs-a-person  needs a reason: what the person has to decide\n\nUncommitted edits count as hits. Untracked files, binary files and package-lock.json do not.\n',
+    examples: [
+      '--item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name',
+      '--item "Fix focus style in the accordion" --outcome not-applicable --reason "We use no accordion"',
+      '--item "Change the header link colour" --outcome needs-a-person --reason "Check the header against the design"'
+    ],
+    write: (ids, { item, outcome, pattern, reason }) =>
+      addVersionEvidence({ ...ids, item, outcome, pattern, reason })
+  },
+  {
+    name: 'check-evidence',
+    description:
+      "Count every evidence row's pattern in the repo again, record it as the hits after the change, and say whether every row of the version is clean. Exits 0 when every row is clean and 1 when any row is not, or the version has no rows.",
+    options: (command) => command,
+    helpNotes:
+      '\nAn applied row is clean when its pattern has 0 hits after the change. A not-applicable row is clean when it has a reason and its pattern, if any, still has 0 hits. A needs-a-person row is never clean.\n',
+    examples: ['', '--json'],
+    write: (ids) => checkVersionEvidence(ids),
+    exitCodeForResult: ({ allClean }) => (allClean ? OK : ERROR)
   }
 ]
 
 const registerApply = (govuk, { timVersion }) =>
-  versionOptions(
-    govuk
-      .command('apply')
-      .description(
-        "Apply one version of a govuk-frontend upgrade to a repo: set the version in package.json, run npm install and npm test, commit everything in the repo and mark the version done. A failed npm step marks the version failed and exits 1. An intermediate noop version is only marked done. Edit the repo's source for the version's changes first."
-      )
+  addTrailerOption(
+    versionOptions(
+      govuk
+        .command('apply')
+        .description(
+          "Apply one version of a govuk-frontend upgrade to a repo: set the version in package.json, run npm install and npm test, commit everything in the repo and mark the version done. A failed npm step marks the version failed and exits 1. An intermediate noop version is only marked done. Edit the repo's source for the version's changes first."
+        )
+    )
   )
     .option(
       '--final',
       "Treat the version as the run's target: restore the original constraint prefix"
     )
+    .option(
+      '--unattended',
+      'Refuse the version, changing nothing, when moving govuk-frontend to it is changelog-driven and its evidence, counted again now, is not all clean'
+    )
     .addHelpText(
       'after',
-      `\nnpm install and npm test write their output to /tmp/govuk-install-<repo>-<version>-<stamp>.txt and /tmp/govuk-test-<repo>-<version>-<stamp>.txt.\n\nExamples:\n  tim govuk apply ${EXAMPLE_IDS}\n  tim govuk apply ${EXAMPLE_IDS} --final --json`
+      `\nnpm install and npm test write their output to /tmp/govuk-install-<repo>-<version>-<stamp>.txt and /tmp/govuk-test-<repo>-<version>-<stamp>.txt.\n\nThe policy comes from config/dependency-sets.json. The commit message carries the ticket in the run's .run-meta.json.\n\nExamples:\n  tim govuk apply ${EXAMPLE_IDS}\n  tim govuk apply ${EXAMPLE_IDS} --final --json\n  tim govuk apply ${EXAMPLE_IDS} --unattended\n  tim govuk apply ${EXAMPLE_IDS} --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"`
     )
     .action(function applyAction(...positional) {
       const { json } = this.optsWithGlobals()
@@ -230,7 +292,9 @@ const registerApply = (govuk, { timVersion }) =>
       return makeRunAction({
         parseOptions: (opts) => ({
           ...versionIdsOf(opts),
-          final: opts.final === true
+          final: opts.final === true,
+          unattended: opts.unattended === true,
+          trailers: trailersOf(opts)
         }),
         run: (_context, parsed) => applyVersion({ ...parsed, say, warn }),
         renderText: () => null,
@@ -263,9 +327,13 @@ const registerStart = (govuk, { timVersion }) =>
       '--force',
       'Download the changelog again and reseed every version, losing its plan'
     )
+    .option(
+      '--unattended',
+      'Start a run for a nightly job: takes --ticket only, as a key or NO_JIRA, and names its own branch'
+    )
     .addHelpText(
       'after',
-      '\nThe ticket must be a key of JIRA_PROJECT_KEY, else EUDPA. npm versions come from npm_config_registry when set, else the public npm registry.\n\nExamples:\n  tim govuk start --ticket EUDPA-264\n  tim govuk start --branch chore/EUDPA-264-govuk-6 --target 6.1.0\n  tim govuk start --ticket EUDPA-264 --force --json'
+      '\nThe ticket must be a key of JIRA_PROJECT_KEY, else EUDPA. npm versions come from npm_config_registry when set, else the public npm registry.\n\nWith --unattended the ticket can also be NO_JIRA. The run id is <ticket>-govuk-frontend-<target> and the branch chore/<run id>, the same in every repo, created from origin/main after a fetch. The target defaults to the latest govuk-frontend release and must be X.Y.Z. The run stops before switching any branch if a repo has uncommitted changes.\n\nExamples:\n  tim govuk start --ticket EUDPA-264\n  tim govuk start --branch chore/EUDPA-264-govuk-6 --target 6.1.0\n  tim govuk start --ticket EUDPA-264 --force --json\n  tim govuk start --unattended --ticket NO_JIRA --target 6.6.0'
     )
     .action(function startAction(...positional) {
       const { json } = this.optsWithGlobals()
@@ -277,7 +345,8 @@ const registerStart = (govuk, { timVersion }) =>
           ticket: opts.ticket,
           branch: opts.branch,
           target: opts.target,
-          force: opts.force === true
+          force: opts.force === true,
+          unattended: opts.unattended === true
         }),
         run: (_context, parsed) =>
           startUpgrade({
@@ -293,6 +362,32 @@ const registerStart = (govuk, { timVersion }) =>
       }).apply(this, positional)
     })
 
+const registerRenderEvidence = (govuk, { timVersion }) =>
+  govuk
+    .command('render-evidence')
+    .description(
+      "Print one repo's changelog evidence in a govuk-frontend upgrade run as the markdown for its pull request description: one table across every version, in version order, and a line saying whether every row is clean. It reads the counts as recorded and counts nothing."
+    )
+    .option('--run-id <ticket>', 'The run, such as EUDPA-264')
+    .option('--repo <name>', 'The repo')
+    .addHelpText(
+      'after',
+      '\nA version also gets a needs-a-person row when it has no changelog section, nobody planned it, it failed to apply, it is planned but not applied, or it is planned with no evidence.\n\nExits 0 either way. --json gives allClean.\n\nExamples:\n  tim govuk render-evidence --run-id EUDPA-264 --repo trade-imports-animals-frontend\n  tim govuk render-evidence --run-id EUDPA-264 --repo trade-imports-animals-frontend --json'
+    )
+    .action(
+      makeRunAction({
+        parseOptions: (opts) => ({
+          workspaceRoot: workspaceRootOf(opts),
+          runId: opts.runId,
+          repo: opts.repo
+        }),
+        run: (_context, parsed) => renderRunEvidence(parsed),
+        renderText: ({ markdown }) => markdown,
+        exitCodeForError: usageOrError,
+        timVersion
+      })
+    )
+
 /**
  * `tim govuk`: read and change the state of a govuk-frontend upgrade run.
  *
@@ -303,7 +398,7 @@ export const register = (program, { timVersion }) => {
   const govuk = program
     .command('govuk')
     .description(
-      'Start a govuk-frontend upgrade run, then read and change its state: plans, summaries, one version’s plan, classifying and applying versions'
+      'Start a govuk-frontend upgrade run, then read and change its state: plans, summaries, one version’s plan, classifying versions, recording their changelog evidence and applying them'
     )
   registerStart(govuk, { timVersion })
   registerPlans(govuk, { timVersion })
@@ -313,4 +408,5 @@ export const register = (program, { timVersion }) => {
     registerStateWrite(govuk, { timVersion, ...stateWrite })
   )
   registerApply(govuk, { timVersion })
+  registerRenderEvidence(govuk, { timVersion })
 }

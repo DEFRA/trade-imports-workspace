@@ -1,3 +1,6 @@
+import { isTimError } from '../../errors.js'
+import { putReposOnUnattendedBranch } from '../unattended/branch.js'
+import { NO_JIRA, unattendedRunIdOf } from '../unattended/run.js'
 import { auditPhase } from './audit-phase.js'
 import { discoverPhase } from './discover-phase.js'
 import { handoffPhase } from './handoff-phase.js'
@@ -18,23 +21,52 @@ const PHASES = {
 }
 
 const READS_STATE_ONLY = '3'
+const SWITCHES_BRANCHES = '0'
 
 const stopWith = async (warn, message) => {
   await warn(message)
   throw new PhaseStopped(message)
 }
 
+const isTicketOperand = (operand) =>
+  operand.startsWith('EUDPA-') || operand === NO_JIRA
+
 const ticketOf = async (operands, warn) => {
-  const unknown = operands.find((operand) => !operand.startsWith('EUDPA-'))
+  const unknown = operands.find((operand) => !isTicketOperand(operand))
   if (unknown !== undefined) {
     await stopWith(warn, `Unknown option: ${unknown}\n${UPGRADE_USAGE}`)
   }
   return operands.at(-1)
 }
 
+const unattendedRunIdFor = async (request) => {
+  try {
+    return unattendedRunIdOf(request)
+  } catch (error) {
+    if (!isTimError(error)) throw error
+    return stopWith(request.warn, error.message)
+  }
+}
+
+const runIdFor = async ({ unattended, ...request }) => {
+  if (unattended) return unattendedRunIdFor(request)
+  if (request.ticket === NO_JIRA) {
+    await stopWith(
+      request.warn,
+      'NO_JIRA is for --unattended runs only. Give the ticket key, such as EUDPA-500.'
+    )
+  }
+  return request.ticket
+}
+
 /**
  * Run one phase of an npm upgrade run across its repos. Text mode prints
  * `text`; `--json` puts `result` in the envelope.
+ *
+ * An unattended run takes a ticket key or NO_JIRA, needs a branch named
+ * for it, refuses an allowlist owner and keeps its state under the branch
+ * name without its chore/, fix/ or feat/. Its phase 0 first puts every
+ * repo on that branch.
  *
  * @param {object} request
  * @param {string} request.workspaceRoot
@@ -42,9 +74,12 @@ const ticketOf = async (operands, warn) => {
  * @param {string} [request.phase] - 0, 1, 2, 3 or 4
  * @param {string[]} [request.repos] - Defaults to the roster's npmUpgradeDefault repos
  * @param {string} [request.strategy='latest']
+ * @param {string[]} [request.packages] - Phase 1 discovers only these packages, with * as a wildcard
  * @param {string} [request.branch=''] - Refuse unless every repo is on it
+ * @param {boolean} [request.unattended=false]
  * @param {string} [request.allowlistOwner]
  * @param {string} [request.expiryDays]
+ * @param {string[]} [request.trailers] - Phases 2 and 4: lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<{exitCode: number, result: unknown, text: string}>}
  * @throws {PhaseStopped} for a usage error or a refusal, once it is written to stderr
@@ -54,12 +89,15 @@ export const runUpgradePhase = async ({
   phase,
   repos = [],
   strategy = 'latest',
+  packages = [],
   branch = '',
+  unattended = false,
   ...request
 }) => {
   const { warn } = request
-  const runId = await ticketOf(operands, warn)
-  if (!runId || !phase) await stopWith(warn, UPGRADE_USAGE)
+  const ticket = await ticketOf(operands, warn)
+  if (!ticket || !phase) await stopWith(warn, UPGRADE_USAGE)
+  const runId = await runIdFor({ ...request, ticket, branch, unattended })
   const npmRepos = await selectNpmRepos({
     workspaceRoot: request.workspaceRoot,
     requested: repos,
@@ -70,6 +108,14 @@ export const runUpgradePhase = async ({
       warn,
       'No npm repos left to run after skipping the ones above. Check --repo.'
     )
+  }
+  if (unattended && phase === SWITCHES_BRANCHES) {
+    await putReposOnUnattendedBranch({
+      workspaceRoot: request.workspaceRoot,
+      repos: npmRepos,
+      branch,
+      warn
+    })
   }
   await refuseReposOffBranch({
     workspaceRoot: request.workspaceRoot,
@@ -85,6 +131,8 @@ export const runUpgradePhase = async ({
     runId,
     repos: npmRepos,
     strategy,
-    branch
+    packages,
+    branch,
+    unattended
   })
 }

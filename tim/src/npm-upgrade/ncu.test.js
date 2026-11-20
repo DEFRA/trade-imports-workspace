@@ -74,5 +74,23 @@ describe('#runNcu', () => {
 
       expect(upgrades).toEqual({ gadget: '^4.0.0' })
     })
+
+    test('Should propose only the packages asked for, with * as a wildcard', async () => {
+      serveRegistryPackage('gadget', ['3.0.0', '4.0.0'])
+      serveRegistryPackage('gizmo-core', ['1.0.0', '1.1.0'])
+      repo = writeRegistryRepo(mkdtempSync(join(tmpdir(), 'tim-ncu-')), {
+        widget: '^1.2.3',
+        gadget: '^3.0.0',
+        'gizmo-core': '^1.0.0'
+      })
+
+      const upgrades = await runNcu({
+        cwd: repo,
+        target: 'latest',
+        packages: ['widget', 'gizmo-*']
+      })
+
+      expect(upgrades).toEqual({ widget: '^2.1.0', 'gizmo-core': '^1.1.0' })
+    })
   })
 })

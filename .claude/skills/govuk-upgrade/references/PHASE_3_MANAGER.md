@@ -100,9 +100,55 @@ Summary:
 versions.{repo}.json failure_reason field.}
 ```
 
+## Unattended mode
+
+In an unattended run (SKILL.md "Unattended mode") Steps 1 to 3 change
+like this, and Step 4 is skipped:
+
+- **Step 1.** Do not stop at `Todo: 0 Failed: 0`. Run Step 2 for every
+  repo with a pending version, `noop` included: `tim govuk apply` bumps
+  `package.json` for the target version even when it is `noop`, so a
+  run of `noop` versions still lands the upgrade.
+- **Before 2a.** Read the version's evidence rows:
+
+  ```bash
+  tim govuk render-evidence --run-id {run-id} --repo {repo-name}
+  ```
+
+  A `needs-a-person` row for this version stops the repo here, before
+  any edit. `tim govuk apply --unattended` would refuse it anyway.
+- **2a.** Make only the `changes[]` edits. Then count the version's
+  evidence again and record it, `todo` or `noop`:
+
+  ```bash
+  tim govuk check-evidence --run-id {run-id} --repo {repo-name} --govuk-version {version}
+  ```
+
+  Exit 1 means a row is not clean: an `applied` pattern still has hits,
+  or a `not-applicable` pattern now has some. Fix it with a mechanical
+  change and count again, or put back the edits with
+  `git -C repos/{repo-name} checkout HEAD -- .` and stop this repo.
+- **2b.** Add `--unattended`, and a `--trailer` for each of the
+  session's attribution lines:
+
+  ```bash
+  tim govuk apply --run-id {run-id} --repo {repo-name} --govuk-version {version} --unattended --trailer "Co-Authored-By: {model} <noreply@anthropic.com>" --trailer "Claude-Session: {session link}"
+  ```
+
+  It counts the evidence again and exits 1, changing nothing, when any
+  row is not clean. When it fails on `npm install` or `npm test`, read
+  the log. If a mechanical change fixes it within the stop conditions
+  in `.claude/rules/nightly.md`, make it, run `tim govuk check-evidence`
+  again and re-run `tim govuk apply`. Otherwise stop this repo and do
+  not ask: the failed version shows in the evidence table.
+- **Step 4.** Skip it. Never run `tim docker` or
+  `npm run test:docker-compose`. CI's "E2E Tests" check is the
+  end-to-end proof, watched from SKILL.md U6.
+
 ## Step 4: E2E (only after the last commit lands)
 
-Per Decision 3: run E2E once after the final version commit.
+Interactive mode only. Per Decision 3: run E2E once after the final
+version commit.
 
 ### 4a. Rebuild the stack from local source
 

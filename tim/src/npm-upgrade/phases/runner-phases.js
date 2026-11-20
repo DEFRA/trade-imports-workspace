@@ -55,6 +55,8 @@ const runRepoBatch = async (request, repo) => {
     repo,
     allowlistOwner: request.allowlistOwner ?? '',
     expiryDays: request.expiryDays ?? '',
+    unattended: request.unattended ?? false,
+    trailers: request.trailers,
     say: log.collect,
     warn: log.collect
   }).catch(async (error) => {
@@ -92,6 +94,8 @@ const reposOf = (batches, predicate) =>
  * @param {string[]} request.repos
  * @param {string} [request.allowlistOwner]
  * @param {string} [request.expiryDays]
+ * @param {boolean} [request.unattended] - Each repo's batch skips the end-of-batch E2E gate
+ * @param {string[]} [request.trailers] - Lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<{exitCode: number, result: object, text: string}>} exitCode 1 unless every repo's batch exited 0
  */
@@ -139,6 +143,7 @@ const resetRepo = async (request, repo) => {
       workspaceRoot: request.workspaceRoot,
       runId: request.runId,
       repo,
+      trailers: request.trailers,
       warn: errors.collect
     })
     return { repo, exit_code: exitCode, ...result }
@@ -159,6 +164,7 @@ const resetRepo = async (request, repo) => {
  * @param {string} request.workspaceRoot
  * @param {string} request.runId
  * @param {string[]} request.repos
+ * @param {string[]} [request.trailers] - Lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<{exitCode: number, result: object, text: string}>} exitCode 1 when any repo stopped for a decision
  */

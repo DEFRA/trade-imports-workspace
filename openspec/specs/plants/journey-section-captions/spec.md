@@ -8,7 +8,7 @@ The parts a high-risk plants notification is divided into as named to the user, 
 
 ### Requirement: A question page names the part of the notification it belongs to, above its heading
 **ID**: REQ-PLANTS-CAPTIONS-001
-The system MUST show, above the heading of a question page, the name of the part of the notification that page belongs to. The parts named MUST be: About the consignment, Arrival, Destination, and Consignment parties.
+The system MUST show, above the heading of a question page, the name of the part of the notification that page belongs to. The parts named MUST be: About the consignment, Arrival, Destination, and Addresses.
 
 #### Scenario: A question page is captioned with the part it belongs to
 **ID**: SCN-PLANTS-CAPTIONS-001-A
@@ -35,7 +35,7 @@ The system MUST show a "Dashboard" caption immediately above the dashboard's own
 
 ### Requirement: The parts named in the caption are not the same grouping as the Overview sections
 **ID**: REQ-PLANTS-CAPTIONS-003
-The system MUST name the parts of the notification independently of the four numbered sections Overview groups its tasks under, and MUST NOT be assumed to match them. The caption separates Arrival and Destination, where Overview files both under "Arrival and destination", and it captions consignor and identification numbers as "Consignment parties", where Overview also lists the contact address under that numbered heading while the contact page itself carries no caption.
+The system MUST name the parts of the notification independently of the four numbered sections Overview groups its tasks under, and MUST NOT be assumed to match them. The caption separates Arrival and Destination, where Overview files both under "Arrival and destination", and it captions consignor and identification numbers as "Addresses", where Overview also lists the contact address under that numbered heading while the contact page itself carries no caption.
 
 #### Scenario: A page's caption does not name the Overview section its task sits under
 **ID**: SCN-PLANTS-CAPTIONS-003-A

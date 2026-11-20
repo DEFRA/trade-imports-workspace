@@ -15,6 +15,7 @@ import {
   perfStubProfile
 } from '../../exec/stack-lease.js'
 import { stackOwners } from '../../exec/stack.js'
+import { DOMAIN_NAMES } from '../../stack/definition.js'
 import { TimError } from '../../errors.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
@@ -41,7 +42,14 @@ const acquireSchema = z.object({
     message: `--mode must be one of: ${LEASE_MODES.join(', ')}.`
   }),
   logs: z.string().trim().min(1).optional(),
-  force: z.boolean().optional()
+  force: z.boolean().optional(),
+  domain: z
+    .array(
+      z.enum(DOMAIN_NAMES, {
+        message: `--domain must be one of: ${DOMAIN_NAMES.join(', ')}.`
+      })
+    )
+    .optional()
 })
 
 const releaseSchema = z.object({
@@ -170,7 +178,8 @@ const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
     mode: parsed.mode,
     leasePath,
     logPath: join(logsDirFor(parsed.logs, workspaceRoot), 'lease-acquire.log'),
-    force: parsed.force
+    force: parsed.force,
+    domains: parsed.domain ?? []
   })
   return {
     ok: outcome.acquired,
@@ -279,9 +288,15 @@ export const registerLease = (docker, timVersion) => {
       '--force',
       'Take a lease your holder name holds from another clone of the workspace'
     )
+    .option(
+      '--domain <name>',
+      'Start only the services this test domain needs. Repeat it to start what several need between them. Without it the whole stack starts. A stack already up for fewer domains is restarted. tim build stack-plan says which domains a backlog needs.',
+      (name, named) => [...named, name],
+      []
+    )
     .addHelpText(
       'after',
-      '\nExample:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json'
+      '\nExamples:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --domain plants'
     )
     .action(leaseAction(runAcquire, timVersion))
 

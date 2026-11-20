@@ -11,7 +11,7 @@ const PROFILE_NAMES = [...ALL_PROFILES, ...OPT_IN_PROFILES]
 
 /** `tim docker up --help`, and the start flags `dev` and `restart` take. */
 export const START_USAGE = [
-  'Usage: tim docker up [-b|--branch <name>] [-e|--exclude <label>]... [--profile <name>]... [--domain <name>] [-d|--dev] [--perf] [--force] [-- <docker compose up args>]',
+  'Usage: tim docker up [-b|--branch <name>] [-e|--exclude <label>]... [--profile <name>]... [--domain <name>]... [-d|--dev] [--perf] [--force] [-- <docker compose up args>]',
   '',
   'Starts the workspace stack and waits until every service is healthy.',
   'Images are pulled fresh every time, so a stale :latest or branch tag',
@@ -35,8 +35,9 @@ export const START_USAGE = [
   '                         A service whose dependency is in a profile you',
   '                         leave out will not have it, so use this only when',
   '                         you run that dependency yourself.',
-  '  --domain <name>        Start only the services one test domain needs,',
-  `                         instead of the whole stack. Domains: ${DOMAIN_NAMES.join(', ')}.`,
+  '  --domain <name>        Start only the services a test domain needs,',
+  '                         instead of the whole stack. Can be given more',
+  `                         than once, and starts what they need between them. Domains: ${DOMAIN_NAMES.join(', ')}.`,
   '                         Use it to run the end-to-end suite for one domain',
   '                         on a machine the whole stack is too heavy for.',
   '                         Each domain names every service its specs reach,',
@@ -97,7 +98,9 @@ const LONG_NAMES = {
 
 const withValue = (flags, name, value) => {
   if (name === 'branch') return { ...flags, branch: value }
-  if (name === 'domain') return { ...flags, domain: value }
+  if (name === 'domain') {
+    return { ...flags, domains: [...flags.domains, value] }
+  }
   if (name === 'exclude') {
     return { ...flags, excluded: [...flags.excluded, value] }
   }
@@ -115,7 +118,7 @@ const readArgs = (args) => {
     branch: '',
     excluded: [],
     profiles: [],
-    domain: '',
+    domains: [],
     dev: false,
     perf: false,
     extra: []
@@ -175,7 +178,7 @@ const checkFlags = (flags, env) => {
   }
   checkEach(flags.excluded, SERVICE_LABELS, '--exclude label')
   checkEach(flags.profiles, PROFILE_NAMES, '--profile name')
-  if (flags.domain) checkEach([flags.domain], DOMAIN_NAMES, '--domain name')
+  checkEach(flags.domains, DOMAIN_NAMES, '--domain name')
 }
 
 /**
@@ -187,7 +190,7 @@ const checkFlags = (flags, env) => {
  * @param {string[]} args
  * @param {object} [opts]
  * @param {Record<string, string | undefined>} [opts.env=process.env] - STUB_PROFILE is checked under --perf
- * @returns {{help: boolean, branch: string, excluded: string[], profiles: string[], domain: string, dev: boolean, perf: boolean, extra: string[]}}
+ * @returns {{help: boolean, branch: string, excluded: string[], profiles: string[], domains: string[], dev: boolean, perf: boolean, extra: string[]}}
  * @throws {StartFlagError} when a flag is unknown, lacks its value, names an unknown label, profile or domain, or clashes with another
  */
 export const parseStartFlags = (args, { env = process.env } = {}) => {

@@ -7,7 +7,7 @@ import { composeArgs, devBuildPlatform } from './compose.js'
 import {
   ALL_PROFILES,
   SERVICES,
-  servicesForDomain,
+  servicesForDomains,
   SIDECARS
 } from './definition.js'
 import { parseStartFlags, StartFlagError, START_USAGE } from './flags.js'
@@ -155,13 +155,13 @@ const servicesFromConfig = async ({ compose, env, output }) => {
  * reaches, and that shows up as a confusing test failure rather than a
  * stack that refuses to start.
  */
-const narrowToDomain = ({ active, domain, output }) => {
-  if (!domain) return active
-  const wanted = servicesForDomain(domain)
+const narrowToDomains = ({ active, domains, output }) => {
+  if (domains.length === 0) return active
+  const wanted = servicesForDomains(domains)
   const missing = wanted.filter((service) => !active.includes(service))
   if (missing.length > 0) {
     output.error(
-      `error: no active profile defines ${missing.join(', ')}, which domain '${domain}' needs`
+      `error: no active profile defines ${missing.join(', ')}, which ${domains.join(', ')} needs`
     )
     return null
   }
@@ -355,7 +355,7 @@ const bringUp = async ({ workspaceRoot, flags, output, env, repoUrl }) => {
   })
   const active = await servicesFromConfig({ compose, env: stackEnv, output })
   if (!active) return 1
-  const inDomain = narrowToDomain({ active, domain: flags.domain, output })
+  const inDomain = narrowToDomains({ active, domains: flags.domains, output })
   if (!inDomain) return 1
   const plan = planServices({ active: inDomain, excluded: flags.excluded })
   const tag = flags.branch ? sanitiseBranch(flags.branch) : ''
@@ -365,7 +365,7 @@ const bringUp = async ({ workspaceRoot, flags, output, env, repoUrl }) => {
     perf: flags.perf,
     env: stackEnv,
     tag,
-    domain: flags.domain,
+    domain: flags.domains.join(', '),
     started: plan.up.length,
     total: active.length
   })

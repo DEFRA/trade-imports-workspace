@@ -221,6 +221,17 @@ export const servicesForDomain = (domain) =>
   [...CORE_SERVICES, ...(DOMAIN_SERVICES[domain] ?? [])].sort()
 
 /**
+ * Every compose service a stack for these domains runs, with no repeats.
+ * Naming every domain gives the whole stack.
+ *
+ * @param {string[]} domains - Any of {@link DOMAIN_NAMES}
+ * @returns {string[]} Compose service names, sorted
+ */
+export const servicesForDomains = (domains) => [
+  ...new Set(domains.flatMap((domain) => servicesForDomain(domain)).sort())
+]
+
+/**
  * The folder holding the stack's compose files.
  *
  * @param {string} workspaceRoot

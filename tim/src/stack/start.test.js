@@ -205,6 +205,26 @@ describe('tim docker up', () => {
     }
   )
 
+  test('Should start what two domains need between them', async () => {
+    const run = await recordTimStackRun([
+      'up',
+      '--domain',
+      'plants',
+      '--domain',
+      'animals'
+    ])
+    const started = servicesOf(run.sequence.at(-1).args)
+
+    expect({
+      count: started.length,
+      hasBoth: [
+        started.includes('trade-imports-plants-frontend'),
+        started.includes('trade-imports-animals-frontend')
+      ],
+      hasServicebus: started.includes('mssql')
+    }).toEqual({ count: 17, hasBoth: [true, true], hasServicebus: false })
+  })
+
   test('Should say how many of the stack services a domain starts', async () => {
     const run = await recordTimStackRun(['up', '--domain', 'plants'])
 
@@ -236,7 +256,7 @@ describe('tim docker up', () => {
     expect({ exitCode: run.exitCode, stderr: run.stderr }).toEqual({
       exitCode: 1,
       stderr:
-        "error: no active profile defines animals-frontend-nginx, cdp-uploader, floci, floci-init, mssql, redis, servicebus-emulator, toxiproxy, trade-imports-address-book, trade-imports-animals-admin, trade-imports-animals-backend, trade-imports-animals-frontend, trade-imports-defra-id-stub, trade-imports-dynamics-gateway, trade-imports-reference-data, trade-imports-stub, which domain 'animals-admin' needs\n"
+        'error: no active profile defines animals-frontend-nginx, cdp-uploader, floci, floci-init, mssql, redis, servicebus-emulator, toxiproxy, trade-imports-address-book, trade-imports-animals-admin, trade-imports-animals-backend, trade-imports-animals-frontend, trade-imports-defra-id-stub, trade-imports-dynamics-gateway, trade-imports-reference-data, trade-imports-stub, which animals-admin needs\n'
     })
   })
 

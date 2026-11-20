@@ -158,6 +158,45 @@ It is opt-in because it doubles the runtime.
 
 `tim docker domain list` prints each domain and the services it starts.
 
+## In the build loop
+
+The loop holds one stack for a whole run, not one per row, so the choice is
+made once at launch rather than per increment.
+
+```bash
+tim build stack-plan <workarea>
+```
+
+reads every row the run has left and says what they need between them, and
+why, row by row. A row's domain comes from its own service repos: the
+workspace repo and the tests repo appear in nearly every row and say nothing
+about which domain it is for, so they are left out. The run then takes its
+lease with a `--domain` per chosen domain:
+
+```bash
+tim docker lease acquire --holder "<run id>" --mode dev --domain plants
+```
+
+Three cases fall out of the rule:
+
+| Row builds | Stack |
+|---|---|
+| only `openspec/` or other workspace files | **none** — it proves nothing against a running stack, and CI checks the pull request |
+| plants repos (plus the workspace and tests) | the plants services |
+| the performance suite, or a repo with no scope entry | the whole stack |
+
+A stack already up for fewer domains than a later increment needs is restarted
+for the wider set, so a run that derives a row outside its launch-time domains
+keeps working, at the cost of one restart.
+
+Only a run whose gate takes its end-to-end proof locally asks. An `e2e: "ci"`
+run starts no stack whatever the plan says.
+
+This changes nothing about CI. The GitHub Actions workflow resolves its scope
+through `tim ci scope` and `tim/src/ci/e2e-scope.js`, a separate module from
+the local gate's `tim/src/build/pr-scope.js`; they read the same JSON and share
+no code.
+
 ## What this page does not cover
 
 - **Memory limits per service.** Every Java service carries a flat

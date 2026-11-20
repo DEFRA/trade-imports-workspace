@@ -6,7 +6,7 @@ const NO_FLAGS = {
   branch: '',
   excluded: [],
   profiles: [],
-  domain: '',
+  domains: [],
   dev: false,
   perf: false,
   extra: []
@@ -37,11 +37,15 @@ describe('#parseStartFlags', () => {
         ['--profile', 'database', '--profile=security'],
         { profiles: ['database', 'security'] }
       ],
-      [['--domain', 'plants'], { domain: 'plants' }],
-      [['--domain=animals-admin'], { domain: 'animals-admin' }],
+      [['--domain', 'plants'], { domains: ['plants'] }],
+      [
+        ['--domain', 'plants', '--domain', 'animals'],
+        { domains: ['plants', 'animals'] }
+      ],
+      [['--domain=animals-admin'], { domains: ['animals-admin'] }],
       [
         ['--domain', 'ins', '-d', '-e', 'routing-proxy'],
-        { domain: 'ins', dev: true, excluded: ['routing-proxy'] }
+        { domains: ['ins'], dev: true, excluded: ['routing-proxy'] }
       ],
       [['-d'], { dev: true }],
       [['--dev', '--perf'], { dev: true, perf: true }],

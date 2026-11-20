@@ -49,15 +49,17 @@ export const startStackToLog = async ({
   workspaceRoot,
   mode,
   logPath,
-  env
+  env,
+  domains = []
 }) => {
+  const domainArgs = domains.flatMap((domain) => ['--domain', domain])
   const result = await startStack({
     workspaceRoot,
-    args: START_ARGS[mode],
+    args: [...START_ARGS[mode], ...domainArgs],
     env,
     output: logOutput({
       logPath,
-      commandLine: START_COMMAND_LINES[mode],
+      commandLine: [START_COMMAND_LINES[mode], ...domainArgs].join(' '),
       cwd: workspaceRoot
     })
   })
@@ -221,6 +223,17 @@ export const foreignStackOwner = async ({ workspaceRoot, leasePath, env }) => {
     : null
 }
 
+/**
+ * Whether a stack already up was started for at least the domains now asked
+ * for. A lease with no domains is the whole stack, which covers anything; a
+ * narrowed one that is missing a domain has to be restarted, because the
+ * services that domain's specs reach are not running.
+ */
+const coversDomains = (lease, domains) =>
+  !Array.isArray(lease.domains) ||
+  lease.domains.length === 0 ||
+  domains.every((domain) => lease.domains.includes(domain))
+
 const sameContainers = (recorded, running) =>
   Array.isArray(recorded) &&
   recorded.length === running.length &&
@@ -253,7 +266,8 @@ export const acquireDecision = ({
   holder,
   workspaceRoot,
   force = false,
-  containers = []
+  containers = [],
+  domains = []
 }) => {
   if (!lease) return up ? 'unleased' : 'start'
   if (lease.holder !== holder) {
@@ -265,6 +279,7 @@ export const acquireDecision = ({
   if (isStarting(lease)) return 'starting'
   if (!up) return 'start'
   if (lease.state !== UP) return 'restart'
+  if (!coversDomains(lease, domains)) return 'restart'
   return sameContainers(lease.containers, containers) ? 'reuse' : 'replaced'
 }
 
@@ -448,10 +463,12 @@ const restoreOrClearLease = (
 }
 
 const startUnderLease = async (context, previous) => {
-  const { workspaceRoot, holder, mode, leasePath, logPath, env } = context
+  const { workspaceRoot, holder, mode, leasePath, logPath, env, domains } =
+    context
   const lease = {
     holder,
     mode,
+    domains,
     workspace: workspaceRoot,
     branches: mode === 'dev' ? await repoBranches(workspaceRoot) : {},
     acquiredAt: new Date().toISOString(),
@@ -475,7 +492,13 @@ const startUnderLease = async (context, previous) => {
         : 'Another acquire is taking the workspace stack lease over right now. Try again once it has finished.'
     })
   }
-  const upRun = await startStackToLog({ workspaceRoot, mode, logPath, env })
+  const upRun = await startStackToLog({
+    workspaceRoot,
+    mode,
+    logPath,
+    env,
+    domains
+  })
   if (upRun.exitCode === 0) {
     const containers = await stackContainerIds({ env })
     const held = { ...lease, state: UP, pid: null, containers }
@@ -570,7 +593,8 @@ export const acquireStack = async ({
   leasePath,
   logPath,
   env,
-  force = false
+  force = false,
+  domains = []
 }) => {
   const { up, containers, lease } = await stackStatus({ leasePath, env })
   const decision = acquireDecision({
@@ -579,9 +603,18 @@ export const acquireStack = async ({
     holder,
     workspaceRoot,
     force,
-    containers
+    containers,
+    domains
   })
-  const context = { workspaceRoot, holder, mode, leasePath, logPath, env }
+  const context = {
+    workspaceRoot,
+    holder,
+    mode,
+    leasePath,
+    logPath,
+    env,
+    domains
+  }
   if (decision === 'reuse') return reuseUnderLease(context, lease)
   if (decision === 'start') return startUnderLease(context, lease)
   if (decision === 'restart') return restartUnderLease(context, lease)

@@ -47,7 +47,7 @@ under `.claude/skills/<name>/` and `tools/<name>/`.
   phrase: `tim skill start` takes lower-case letters, digits and
   hyphens, not starting with a hyphen, and the later commands take
   the same as `--run-id`.
-- `state_shape` — see [`docs/best-practices/skills/patterns.md`](../../../docs/best-practices/skills/patterns.md)
+- `state_shape` — see [`docs/best-practices/skills/patterns.md`](../../../../docs/best-practices/skills/patterns.md)
   pattern 1. `json` triggers an `assets/<name>-schema.md` stub and
   a `render-<name>.sh` stub.
 - `dispatcher` — see pattern 2. `true` triggers a

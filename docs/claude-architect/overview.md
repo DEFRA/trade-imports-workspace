@@ -18,7 +18,7 @@ Task tool, MCP servers wired into Claude Code, and CI/CD usage of the
 Pure Anthropic-API material (Agent SDK loops written from scratch, Message
 Batches, raw `tool_use` request/response wiring) is **not** the team's
 current surface. Where it appears here it is informational only — the
-canonical home for that material is [`../api-reference/`](../api-reference/).
+canonical home for that material is [`api-reference/`](api-reference/).
 
 ---
 
@@ -102,7 +102,7 @@ judgement call, but the boundaries below are firm.
 - Cloud-provider-specific config (AWS, GCP, Azure), performance
   benchmarking, prompt-caching internals, token-counting algorithms.
 - Raw Agent-SDK loop wiring and Message Batches — covered under
-  [`../api-reference/`](../api-reference/), not here.
+  [`api-reference/`](api-reference/), not here.
 
 ---
 

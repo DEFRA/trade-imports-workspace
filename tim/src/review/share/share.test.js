@@ -1,4 +1,4 @@
-import { readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { stageShareWorkspace } from '../__fixtures__/review-share.js'
@@ -22,6 +22,50 @@ describe('#shareReview', () => {
       const sharing = shareReview({
         workspaceRoot: staged.root,
         ticket: 'local/trade-imports-stub/feat/x'
+      })
+
+      await expect(sharing).rejects.toMatchObject({
+        code: 'USAGE',
+        message: expect.stringMatching(/^Usage: tim review share EUDPA-XXXXX/)
+      })
+    })
+  })
+
+  test('Should render the comment for a branch review, named by its id', async () => {
+    await withStaged(async (staged) => {
+      const folder = join(staged.root, 'workareas/reviews/fix-EUDPA-9-proxy')
+      mkdirSync(folder, { recursive: true })
+      writeFileSync(
+        join(folder, '.review-meta.json'),
+        JSON.stringify({
+          id: 'fix-EUDPA-9-proxy',
+          ticket: '',
+          branch: 'fix/EUDPA-9-proxy',
+          prs: [{ repo: 'trade-imports-stub', pr: 9, state: 'open' }]
+        })
+      )
+
+      const shared = await shareReview({
+        workspaceRoot: staged.root,
+        ticket: 'fix-EUDPA-9-proxy',
+        repo: 'trade-imports-stub',
+        pr: '9',
+        commentOnly: true,
+        dryRun: true
+      })
+
+      expect(shared.body_files).toEqual([
+        expect.objectContaining({ repo: 'trade-imports-stub', pr: 9 })
+      ])
+      rmSync(shared.body_files[0].file)
+    })
+  })
+
+  test('Should refuse an id whose folder is not a branch review', async () => {
+    await withStaged(async (staged) => {
+      const sharing = shareReview({
+        workspaceRoot: staged.root,
+        ticket: 'no-such-review'
       })
 
       await expect(sharing).rejects.toMatchObject({

@@ -1,0 +1,351 @@
+h3. Background
+
+This theme brings a live animals notification's overview, its review page (check your answers), its view header, the declaration and the notification submitted page up to Design Release 2.1. The review is regrouped into numbered sections of titled cards, and each commodity, document and address reads back the way the design shows it. A submitted notification and a draft each open under a header naming the notification by its reference, with its status, its date and the actions it allows. Submitting now checks more of the answers it needs before it accepts a notification.
+
+This matters to a trader importing live animals into Great Britain, and to anyone who reads their notification afterwards. The review reads like the notification it describes, an unfinished card says what to complete in the card's own words, and the error summary takes the trader straight to it. A trader amending a notification is told whether they are re-submitting changed answers. A notification missing its main import reason, the answers that reason calls for, or what the animals are certified for, is refused at submission rather than sent incomplete.
+
+High-risk plants gets part of this: the view header, the party cards' address read-back, the import reference numbers and the task list regions. It does not get the new review sections, the commodity and document cards, Cancel amend, Copy as new on a draft, the submission checks or the identifier item on the notification submitted page. Its customs document code is C085, where live animals' is C640. The sibling ticket is the high-risk plants one, EUDPA-828. The Import notification service front door's pull request changed only its tests, so it has no ticket.
+
+Two things the theme built along the way are not in the result. A notification submitted without its health certificate was first given a new status, "Submitted action required"; a later row took it out, so such a notification is now plain "Submitted". And one row merged the identification details and permanent address work from {{main}} into this theme's branch: that behaviour is on its own ticket, EUDPA-796, and is not counted here.
+
+This work is merged. It landed on {{main}} on 20 November 2026 in the live animals frontend, the animals backend, the high-risk plants frontend, the Import notification service front door, the end-to-end test suite and the behaviour specification, each through its own pull request. The acceptance criteria below are the behaviour specification as it stands on {{main}}.
+
+h3. What changes for the user
+
+h4. The overview
+
+The task list is one region headed "Notification task list", holding the six numbered sections as regions. The commodity totals are regions named "Animals summary" and "Packages summary". A screen reader reads each task link's status with it. Consignment addresses is the only task with a hint.
+
+h4. The review's sections and cards
+
+Each card's title is a heading one level below its numbered section, and every card is a region named by its title. The reason, additional details and contact address each have a card of their own. Origin shows the region of origin code or "Not applicable". The port of exit reads as the option chosen, and transit countries sit inside the Arrival details card. A "What are you importing?" card reads the commodity back, then each commodity code has a card holding a block per species, with its counts and its identification table. The Consignment addresses card lists each animal's permanent address and reads a CPH number with slashes. Each uploaded document has its own card showing its file name.
+
+h4. Ending the review, and the amendment's heading
+
+An amendment's review ends with Continue, Cancel amend and a red Delete. It is headed "Review your notification" until an answer changes, then "Review before re-submitting". Adding only a document, or putting a changed answer back, keeps the first heading.
+
+h4. The view header
+
+A submitted notification is headed by its reference with a green "Submitted" tag, the UK date submitted, and Amend this notification, Copy as new and Delete. A draft has a blue "Draft" tag, its date created, Copy as new and Delete, and keeps its Change links, errors and Continue. Both show the import reference numbers, with customs document code C640, as text to copy; a Copy button waits on design. Every action works without JavaScript.
+
+h4. Submitting
+
+A notification is not ready to submit without its main import reason, any follow-up answer that reason calls for, what the animals are certified for, or, for cattle, the unweaned answer. Each can be left blank while working and is named when the trader continues. A confirmed declaration on an unfinished notification goes back to check your answers naming every unfinished card, and one the service cannot save shows the declaration again with a message. The notification submitted page lists the animal identifier item when the animals are not all identified, and shows the declaration instead when asked for too early.
+
+h4. What a submission records
+
+A submission is recorded as "Submitted" with its date, with or without the health certificate (ITAHC). Cancelling an amendment returns it to "Submitted" with its original date. Whether an amendment changed any answers is always yes or no, and a change to the documents alone is a no.
+
+h4. Where the journey goes next
+
+The CPH number page and the upload documents page go on to Consignment addresses, which goes on to Contact address.
+
+h3. Acceptance criteria
+
+These are copied from the behaviour specification, which is where they are maintained. This theme added 120 scenarios across 10 specification files for live animals. 30 are written out below, and the other 90 are named by their headings beneath their group: each is a mirror, pair, boundary or neighbour of one that is written out, so nothing is hidden, and Jira's size limit is what decides the number. Every file is linked in full at the foot of this ticket.
+
+h4. The overview's regions and hints
+
+h5. The task list is a region headed Notification task list holding the six numbered sections as named regions
+
+* *GIVEN* a fresh notification
+* *WHEN* the user views Overview
+* *THEN* a region named Notification task list, by its visible heading, holds six regions named 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Addresses and 6. Contact address
+* *AND* the 1. About the consignment region holds the Main import reason task
+
+_Also specified in this group:_ "Consignment addresses is the only row with a hint"; "The two commodity totals are named regions inside the Your commodities region"; "A task link is described by its status".
+
+h4. The review's sections and card titles
+
+h5. Every card is titled one heading level below its numbered section, with no subsection heading between
+
+* *GIVEN* the user is viewing the review for a notification with commodities entered
+* *WHEN* they read down the page
+* *THEN* every card's title is a heading one level below its numbered section heading
+* *AND* no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Consignment addresses" or "Contact address for this consignment"
+* *AND* "1. About the consignment" holds the cards "Origin of import", "What are you importing?" and "Main import reason", in that order
+
+_Also specified in this group:_ "The reason, additional details and contact address answers stand on their own titled cards"; "A new notification's unfinished messages name the origin, reason and additional details cards in their titles' words"; "Every card is a region a screen reader announces by the card's own title".
+
+h4. Origin, import reason and transport rows
+
+h5. A given region of origin code reads on its row
+
+* *GIVEN* a notification whose origin needs a region of origin code and has one saved
+* *WHEN* the user views the review
+* *THEN* the Origin of import card's rows are keyed "Country of origin", "Region of origin code" and "Internal reference number", in that order
+* *AND* the "Region of origin code" row reads the saved code
+
+h5. The port of exit row reads the option the user chose
+
+* *GIVEN* a transit notification whose port of exit is Port of Dover
+* *WHEN* the user views the review
+* *THEN* the "Port of exit" row reads "Port of Dover - GB DVR", the same text as the option they chose
+
+h5. A road notification reads its transit countries inside the Arrival details card
+
+* *GIVEN* a notification arriving by road, with France and Belgium added as transit countries
+* *WHEN* the user views the review
+* *THEN* the Arrival details card holds a "Transit countries" subsection
+* *AND* its "Countries that the consignment will travel through" row reads "France, Belgium"
+* *AND* that row's Change link opens the transit countries page
+* *AND* no card titled "Transit countries" is shown
+
+_Also specified in this group:_ "A transit notification shows its port of exit then its destination country, and no exit date"; "A region of origin code that is not needed reads Not applicable"; "The arrival date row is keyed at the port of entry"; "An air notification has no transit countries subsection"; "A submitted notification's transit countries row has no Change link"; "A commercial transporter's five rows read its saved values"; "A transporter with no approval number reads Not applicable".
+
+h4. What are you importing? and the commodity cards
+
+h5. The card reads the selection back in three rows with a Change link
+
+* *GIVEN* a notification with Bos taurus selected under commodity code 0102
+* *WHEN* the user views the review
+* *THEN* the "What are you importing?" card has rows "Commodity code", "Common name" and "Species", reading "0102", "Domestic Cattle" and "Bos taurus"
+* *AND* its Change link opens the commodity selection page
+
+h5. Species under two commodity codes stand as two cards, each holding only its own species' blocks
+
+* *GIVEN* a notification with Bison bison and Bos taurus selected under commodity code 0102, and Felis catus under commodity code 01061900, each with a number of animals entered
+* *WHEN* the user views the review
+* *THEN* "2. Description of the goods" holds a card titled "0102" and then a card titled "01061900"
+* *AND* the "0102" card holds a "Bison bison" block and a "Bos taurus" block, and the "01061900" card holds a "Felis catus" block alone
+* *AND* each block's "Number of animals" reads the number entered for its species
+
+h5. Each animal's row is labelled with its species name and number
+
+* *GIVEN* a cat line of two saved animals
+* *WHEN* the user views the cat's block on the review
+* *THEN* the first cells of the table's rows read "Felis catus 1" and "Felis catus 2"
+
+h5. A species with a count and no identifier is named and linked to its block
+
+* *GIVEN* a notification with two species selected under identified commodities, each with a count and no animal identified
+* *WHEN* the user views the review
+* *THEN* the error summary reads "Enter at least 1 animal identifier for <species>" for each, the species name in lower case
+* *AND* each entry links to that species' block
+* *AND* following the entry for bos taurus moves focus to that species' block, whose heading reads "Bos taurus"
+
+_Also specified in this group:_ "A block shows its counts and no commodity or species rows"; "Identification details has its own Change link on an editable review"; "Two species of one commodity share one code"; "Each species under other live mammals adds its own code and common name"; "A submitted notification's card has no Change link"; "Two species of one commodity stand as two blocks in one card"; "A blank package count reads Not applicable and a species with no packaging shows no package row"; "The card and the first row of each block carry their own Change links to consignment details"; "A submitted notification's commodity cards and blocks have no Change links"; "Identification details is a heading one level below its species heading"; "With no commodity selected the What are you importing? card is marked unfinished"; "Incomplete consignment details name commodity details and link to the first commodity card"; "A species with no count is named and linked to its block"; "A single identified species with no identifier is not named".
+
+h4. The Addresses and Contact address cards
+
+h5. A role never answered gives one error summary entry for the Consignment addresses card and none for the role
+
+* *GIVEN* a draft notification complete except that one role was never answered
+* *WHEN* the user views the review
+* *THEN* the error summary holds the single entry "Complete consignment addresses", linking to the Consignment addresses card
+* *AND* no entry names the role
+
+h5. Saving or cancelling a contact address edit from the review returns to the review
+
+* *GIVEN* a draft notification with a chosen contact address
+* *WHEN* the user chooses "Edit details" on the Contact address card and saves a changed town
+* *THEN* the review opens showing the edited details
+* *WHEN* the user chooses "Edit details" again and cancels
+* *THEN* the review opens with the address as it was
+
+_Also specified in this group:_ "The Permanent address subsection lists an entry for each animal that has a saved permanent address"; "A stored county parish holding number reads with slashes"; "An animal that still owes a permanent address has no entry, while commodity details and consignment addresses are both still reported outstanding"; "A line needing a permanent address with no animal counted gives no Permanent address subsection"; "A stored CPH number that is not nine digits reads exactly as stored"; "A role whose copied address breaks the address-book rules is named in the error summary"; "The address cards carry only the links they offer"; "The review reads the filled party back as name, address lines and country".
+
+h4. Uploaded documents
+
+h5. Each uploaded document stands on its own card showing its file name
+
+* *GIVEN* a notification with two documents uploaded
+* *WHEN* the user views the review
+* *THEN* "4. Uploaded documents" holds a card titled "Document 1" and a card titled "Document 2", in upload order
+* *AND* each card has rows "Document reference", "Document type", "Date of issue" and "Attachment", where "Attachment" reads the uploaded file's name
+* *AND* each card's header Change link opens the upload documents page
+
+h5. Continuing while a document is still being scanned is refused, marking each document card on the review
+
+* *GIVEN* a ready draft notification is open on the review, and one of its documents is still being scanned
+* *WHEN* the user continues
+* *THEN* they are returned to the review, which marks the document cards as still being scanned
+
+_Also specified in this group:_ "A draft holding an infected document marks each document card as soon as the review opens"; "The Uploaded documents section stands even when nothing has been uploaded"; "A blank answer on any document card of an unfinished documents task is left blank"; "An infected document marks each document card in preference to one still scanning"; "The error summary links to the first of several document cards"; "A draft holding a document still being scanned leaves the document cards unmarked until the user continues".
+
+h4. Ending the review, and the amendment's heading
+
+h5. The amendment review ends with its three controls in order
+
+* *GIVEN* a notification is being amended
+* *WHEN* the user views check-your-answers
+* *THEN* the review ends with "Continue", then "Cancel amend", then "Delete"
+* *AND* "Cancel amend" is a secondary button and "Delete" is a red button
+
+h5. An amendment is headed for re-submitting after an answer changes
+
+* *GIVEN* a notification is being amended and a notification answer has changed from the submitted version
+* *WHEN* the user views check-your-answers
+* *THEN* the page is headed and titled "Review before re-submitting"
+
+_Also specified in this group:_ "Adding only a document keeps the review heading"; "Cancel amend on the review opens the confirmation"; "Delete on an amendment's review opens the delete confirmation"; "An amendment opened unchanged is headed as a review"; "Putting the changed answer back restores the review heading"; "A new amendment after a cancelled or resubmitted one opens as a review".
+
+h4. The view header
+
+h5. The submitted view is headed by its reference with a Submitted tag and no status bar
+
+* *GIVEN* a submitted notification
+* *WHEN* the user views it
+* *THEN* the level-1 heading is the notification's reference number
+* *AND* a green "Submitted" tag stands beside the heading
+* *AND* no status bar is shown above it
+
+h5. The section shows the warning and both rows
+
+* *GIVEN* a submitted notification
+* *WHEN* the user views it
+* *THEN* an "Import reference numbers" section shows the warning
+* *AND* its "Notification reference" row reads the notification's reference number
+* *AND* its "Customs document code" row reads "C640"
+
+h5. A notification submitted without its ITAHC is viewed like any submitted notification
+
+* *GIVEN* a notification submitted without an ITAHC
+* *WHEN* the user views it
+* *THEN* a green "Submitted" tag stands beside the reference heading
+* *AND* its only buttons are Amend this notification, Copy as new and Delete
+* *AND* "4. Uploaded documents" shows a Document 1 card
+
+h5. A draft's review opened from Overview is headed by its reference with a Draft tag
+
+* *GIVEN* a draft notification
+* *WHEN* the user opens its review with "Review and submit" on Overview
+* *THEN* the level-1 heading is the notification's reference number
+* *AND* a blue "Draft" tag stands beside the heading
+* *AND* no status bar is shown above it
+
+h5. The header actions work without JavaScript
+
+* *GIVEN* a submitted notification's view, with JavaScript off
+* *WHEN* the user presses "Amend this notification", "Copy as new" or "Delete"
+* *THEN* the amendment review opens, a new draft's Overview opens, or the delete confirmation opens, respectively
+
+h5. An unknown notification shows page not found
+
+* *GIVEN* a signed-in user
+* *WHEN* they open the view of a notification that does not exist
+* *THEN* the page not found status is returned
+* *AND* the page is headed "404" and reads "Page not found"
+
+_Also specified in this group:_ "The draft view ends with Continue, and its header offers Copy as new and a red Delete"; "The date submitted is the UK day of the submission"; "An incomplete draft's error summary and card messages show under the header"; "Amend this notification starts an amendment"; "A draft's review offers no Amend this notification"; "The values read as text and no button shows without JavaScript"; "The date submitted reads the same on a later visit"; "The submitted view and a draft's review are titled by their references, and an amendment keeps its review title"; "The date created is the UK day the notification was created"; "A draft's review shows the warning, the reference and C640 as text"; "Every card on a draft's review keeps its Change link"; "A draft's review ends with Continue"; "Delete on a draft's review opens the delete confirmation"; "A draft's header actions work without JavaScript"; "A draft review with nothing saying where the user came from has a back link to the dashboard"; "An amendment review with nothing saying where the user came from has a back link to Overview".
+
+h4. Submitting: what must be answered, the declaration and the notification submitted page
+
+h5. A notification missing an answer its import reason calls for is not ready to submit
+
+* *GIVEN* an otherwise complete notification whose import reason calls for an answer, such as the purpose for the internal market, the destination country for transit or transhipment, or the port of exit for transit or temporary admission, and that answer is missing
+* *WHEN* the user reaches check your answers
+* *THEN* the notification is not ready to submit
+* *AND* the main import reason card is named as unfinished
+
+h5. The main import reason, what the animals are certified for and the unweaned answer can be left blank and are named when the user continues
+
+* *GIVEN* a cattle notification whose main import reason is left blank and whose additional details are saved with nothing chosen for what the animals are certified for and the unweaned answer blank, each with Save and return to overview
+* *WHEN* the user continues from check your answers
+* *THEN* they are returned to check your answers, whose error summary names the main import reason and additional details cards
+
+h5. A confirmed declaration on an unfinished notification returns to check your answers naming every unfinished card
+
+* *GIVEN* a draft notification with unfinished answers, whose check your answers has been shown in this browser
+* *WHEN* the user's declaration is sent confirmed
+* *THEN* the notification is not submitted and remains a draft
+* *AND* check your answers is shown with an error summary naming every unfinished card
+
+h5. A submission the service cannot save shows the declaration again with a message
+
+* *GIVEN* the user has confirmed the declaration
+* *WHEN* the service cannot save the submission
+* *THEN* the declaration is shown again with the confirmation still ticked, under a message that the service could not save it
+* *AND* the confirmation page is not shown
+
+h5. A line declaring more animals than it has identified lists the identifier item
+
+* *GIVEN* a notification was submitted with no ITAHC and a commodity line declaring 2 animals with one animal identified
+* *WHEN* the user reads the confirmation page
+* *THEN* the section lists exactly 'upload the ITAHC and any other required documents' then 'complete the animal identifier information in the notification'
+
+h5. An ITAHC uploaded with identifiers incomplete lists only the identifier item
+
+* *GIVEN* a notification was submitted with an ITAHC uploaded and a commodity line declaring more animals than it has identified
+* *WHEN* the user reads the confirmation page
+* *THEN* the section lists exactly 'complete the animal identifier information in the notification'
+
+_Also specified in this group:_ "A confirmed declaration on a notification with no main import reason returns to check your answers naming the main import reason card"; "Requesting confirmation for an unsubmitted notification sends it to its declaration"; "Declaring again from a declaration still open after another tab submitted shows the confirmation"; "A notification without its main import reason is not ready to submit"; "A notification without what the animals are certified for is not ready to submit"; "A cattle notification without the unweaned answer is not ready to submit"; "A main import reason missing a follow-up answer it asks gives one error summary entry for the main import reason card"; "A confirmed declaration on a notification with a document still being scanned returns to check your answers marking the document card"; "A confirmed declaration on a notification with no certified-for answer returns to check your answers naming the additional details card"; "A confirmed declaration on a notification with no unweaned answer returns to check your answers naming the additional details card"; "Requesting confirmation for an amendment not yet re-submitted sends it to its declaration"; "A single-species consignment with no identifier saved lists the identifier item"; "A notification whose identifiers are complete lists no identifier item"; "A line whose species is not asked for identifiers lists no identifier item"; "A later line short of identified animals lists the identifier item".
+
+h4. What a submission records
+
+h5. A submission with no ITAHC is recorded as Submitted
+
+* *GIVEN* a notification with no uploaded documents, or only a veterinary certificate
+* *WHEN* the user submits it
+* *THEN* its status is "Submitted"
+* *AND* its date submitted is the day it was submitted
+
+h5. An amendment reads yes once a saved answer differs, and no once every changed answer is put back
+
+* *GIVEN* a notification being amended
+* *WHEN* a saved notification answer differs from the submitted version
+* *THEN* the answers are reported as differing
+* *AND* once every changed answer is put back, the answers are reported as not differing
+
+_Also specified in this group:_ "Cancelling an amendment returns the notification to Submitted"; "A change to the uploaded documents or the fulfilments payload alone reads no"; "A submission with an ITAHC is recorded as Submitted"; "Submitting without an ITAHC records the submission event with status code SUBMITTED"; "A draft and a submitted notification read no"; "An amendment just started reads no"; "A notification stored with no answer recorded reads no"; "Resubmitting or cancelling an amendment reads no".
+
+h4. Where the journey goes next
+
+h5. Consignment addresses goes on to Contact address, never the CPH number page, even when complete
+
+* *GIVEN* a consignment that needs a CPH number, every other task complete, and consignment addresses open
+* *WHEN* the user saves and continues
+* *THEN* Contact address for this consignment is shown, not the CPH number page
+
+_Also specified in this group:_ "Save and continue with an untouched form shows Consignment addresses"; "The CPH number page goes on to Consignment addresses"; "A complete document saved with Save and continue is added and Consignment addresses is shown"; "While amending, Save and continue with an untouched form shows Consignment addresses".
+
+h3. The work behind this change
+
+Each row below was built and reviewed on its own, in the order shown, apart from the one still blocked. The table holds every row of this theme that changed live animals: built rows, three rows folded into the row named in their state, one row still blocked, and the row that merged {{main}} into the branch. A row appears in more than one of this theme's tickets when it changed more than one service: that is how the theme was built, not duplication. Two further rows were dropped and are not in the table: "Overview totals count only positive numbers" (inc-118), because the service already allows no count below one, and "Fallback warning for an action-required notification's other outstanding items" (inc-119), because nothing the service records would trigger it. The theme's one other row, inc-199, changed high-risk plants alone.
+
+|| Row || What it changed || State ||
+| inc-098 | The overview's commodity totals and task links, for screen readers | Built |
+| inc-100 | The Transit countries task shows only when transit countries are required | Built |
+| inc-101 | The review's sections, card titles and unfinished-card messages | Built |
+| inc-272 | Merged the identification details and permanent address work from {{main}} into this branch \\ _Its behaviour is on EUDPA-796 and is not counted here._ | Built |
+| inc-102 | The origin, import reason, additional details and transport and arrival rows | Built |
+| inc-103 | Arrival and transit task statuses on the overview, and transit countries on the review | Built |
+| inc-104 | The What are you importing? card and species grouped under their commodity | Folded into inc-106 |
+| inc-106 | The commodity read-back, with identification details' heading, animal labels, Change link and per-species unfinished messages | Built |
+| inc-107 | Each uploaded document on its own card, showing its file name | Folded into inc-109 |
+| inc-108 | The Addresses card: permanent addresses, the CPH number format, one header link and a single unfinished entry | Built |
+| inc-109 | Each party's copied address read back as name, address lines and country, and a card for each document | Built |
+| inc-110 | The review ends with Continue and Delete; an amendment's review offers Cancel amend and says when the trader is re-submitting \\ _inc-275 later settled how a changed answer is recorded._ | Built |
+| inc-111 | A submitted notification's view header: reference, status, date submitted, actions and the import reference numbers | Built |
+| inc-112 | The view header's Amend, Copy as new and Delete, and the import reference numbers as text | Folded into inc-111 |
+| inc-113 | Submitting records its date and outstanding items, and gave a notification missing its health certificate the status Submitted action required \\ _inc-273 later took that status out and inc-275 stopped storing the outstanding items; the date submitted stays._ | Built |
+| inc-115 | The notification submitted page sends a notification not yet submitted to its declaration, and lists the ITAHC until one is uploaded | Built |
+| inc-266 | A notification with incomplete identifiers still submits, and the notification submitted page lists the identifier item | Built |
+| inc-267 | Submit is refused without a main import reason, the follow-up answers it calls for and what the animals are certified for | Built |
+| inc-116 | A completed notification shows as complete with no Amend button | Blocked: waits on a real source of completion |
+| inc-117 | Tests prove the review, declaration and confirmation paths no test covered | Built |
+| inc-187 | A draft's review shows the view header with its Draft tag and stays editable | Built |
+| inc-273 | A notification submitted without its health certificate is plain Submitted \\ _Replaces the Submitted action required status inc-113 built._ | Built |
+| inc-274 | One name each for the exit port, the arrival date and the addresses section | Built |
+| inc-275 | No unread list of outstanding items is stored, and whether an amendment changed any answers is always yes or no \\ _Refines the re-submitting heading inc-110 built, and drops the stored outstanding items inc-113 added._ | Built |
+| inc-276 | The view header, review and overview follow the service's own patterns: card regions, actions that work without JavaScript, and page not found for an unknown notification | Built |
+
+h3. Where this is specified
+
+The behaviour specification is the contract this change is held to, and the tests linked to each scenario are the evidence. This theme added 120 scenarios across these 10 files for live animals, now on {{main}}.
+
+|| Specification || Scenarios this theme added ||
+| [journey-pages/check-your-answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md] | 80 |
+| [notification-lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-lifecycle/spec.md] | 9 |
+| [journey-pages/confirmation|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/confirmation/spec.md] | 8 |
+| [journey-pages/declaration|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/declaration/spec.md] | 7 |
+| [journey-obligations/scope-and-status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-obligations/scope-and-status/spec.md] | 5 |
+| [journey-pages/overview|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/overview/spec.md] | 4 |
+| [journey-pages/upload-documents|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/upload-documents/spec.md] | 3 |
+| [journey-flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md] | 2 |
+| [journey-pages/consignment-addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md] | 1 |
+| [notification-events|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-events/spec.md] | 1 |
+| *Total* | *120* |
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it does not go stale as that specification moves on.

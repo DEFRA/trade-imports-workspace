@@ -61,10 +61,12 @@ export const register = (program, { timVersion }) => {
     .addHelpText(
       'after',
       '\nThe repo must be in scope for the sets (see defaults.repos in config/dependency-sets.json) and cloned under repos/.\n' +
+        "tim is the workspace's own tim folder: its file is the workspace's .github/dependabot.yml, with npm updates for /tim and GitHub Actions updates for the workspace's workflows and composite actions.\n" +
         '\nExamples:\n' +
         '  tim deps dependabot trade-imports-animals-frontend\n' +
         '  tim deps dependabot trade-imports-animals-frontend --write\n' +
-        '  tim deps dependabot trade-imports-animals-frontend --check --json'
+        '  tim deps dependabot trade-imports-animals-frontend --check --json\n' +
+        '  tim deps dependabot tim --write'
     )
     .action(
       makeRunAction({

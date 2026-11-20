@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { createCliWorkspace } from './tim-cli.js'
 import { prettierJson } from '../deps/json-layout.js'
+import { depsCheckoutPath } from '../deps/checkout.js'
 
 export const CHECKOUT_WORKSPACE_ROOT = fileURLToPath(
   new URL('../../../', import.meta.url)
@@ -54,7 +55,8 @@ const REPOS_JSON = {
 
 /**
  * A temporary workspace holding dependency sets (the fixture unless given),
- * a small `repos.json` and a clone folder for each repo named in `cloned`.
+ * a small `repos.json` and a checkout folder for each repo named in
+ * `cloned`: a clone under `repos/`, or the workspace's own `tim` folder.
  *
  * @param {object} [options]
  * @param {object} [options.dependencySets]
@@ -74,7 +76,7 @@ export const createDepsWorkspace = ({
     dependencySetsText
   )
   writeFileSync(join(root, 'repos.json'), JSON.stringify(REPOS_JSON))
-  for (const repo of cloned) mkdirSync(join(root, 'repos', repo))
+  for (const repo of cloned) mkdirSync(depsCheckoutPath(root, repo))
   return root
 }
 

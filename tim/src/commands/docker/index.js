@@ -3,6 +3,7 @@ import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { otherCloneOwningStack } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError, TimError } from '../../errors.js'
+import { registerDomain } from './domain.js'
 import { registerLease, registerPerf } from './lease.js'
 import { registerLogs } from './logs.js'
 import { registerOwner } from './owner.js'
@@ -339,6 +340,7 @@ export const register = (program, { timVersion }) => {
   }
   registerBounceBackend(docker, timVersion)
   registerService(docker, timVersion)
+  registerDomain(docker, timVersion)
   registerLease(docker, timVersion)
   registerPerf(docker, timVersion)
   registerLogs(docker, timVersion)

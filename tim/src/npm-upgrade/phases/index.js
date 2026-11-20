@@ -79,6 +79,7 @@ const runIdFor = async ({ unattended, ...request }) => {
  * @param {boolean} [request.unattended=false]
  * @param {string} [request.allowlistOwner]
  * @param {string} [request.expiryDays]
+ * @param {string[]} [request.trailers] - Phases 2 and 4: lines for the end of each commit message
  * @param {(line: string) => Promise<void>} request.warn
  * @returns {Promise<{exitCode: number, result: unknown, text: string}>}
  * @throws {PhaseStopped} for a usage error or a refusal, once it is written to stderr

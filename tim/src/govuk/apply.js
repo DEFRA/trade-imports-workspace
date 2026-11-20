@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { realRepoPath, repoPath } from '../constants/repos.js'
 import { TimError } from '../errors.js'
 import { run, runToLog } from '../exec/exec.js'
+import { withTrailers } from '../git/commit-message.js'
 import { runTicket } from './discover-repos.js'
 import { refuseUncleanEvidence } from './evidence.js'
 import { findVersion, isDirectory, isUnset, requireOptions } from './state.js'
@@ -97,7 +98,7 @@ const silent = () => undefined
  * step marks the version failed instead. An intermediate noop version is
  * only marked done. The target version, or one given as `final`, gets the
  * run's original constraint prefix. The commit message carries the ticket
- * the run recorded. An unattended apply first refuses a changelog-driven
+ * the run recorded, then any trailers. An unattended apply first refuses a changelog-driven
  * version whose evidence is not all clean, changing nothing.
  *
  * @param {object} args
@@ -107,6 +108,7 @@ const silent = () => undefined
  * @param {string} [args.version]
  * @param {boolean} [args.final=false]
  * @param {boolean} [args.unattended=false]
+ * @param {string[]} [args.trailers=[]] - Lines for the end of the commit message
  * @param {(line: string) => void | Promise<void>} [args.say] - Takes each progress line as it happens
  * @param {(line: string) => void | Promise<void>} [args.warn] - Takes each warning line as it happens
  * @returns {Promise<{outcome: 'applied'|'noop'|'already-done'|'failed', repo: string, version: string, commit?: string, constraint?: string, final?: boolean, installLog?: string, testLog?: string, reason?: string}>}
@@ -119,6 +121,7 @@ export const applyVersion = async ({
   version,
   final = false,
   unattended = false,
+  trailers = [],
   say = silent,
   warn = silent
 }) => {
@@ -190,7 +193,10 @@ export const applyVersion = async ({
 
   const commit = await commitAll(
     repoDir,
-    `chore(${runTicket(workspaceRoot, runId)}): upgrade govuk-frontend to ${version}`,
+    withTrailers(
+      `chore(${runTicket(workspaceRoot, runId)}): upgrade govuk-frontend to ${version}`,
+      trailers
+    ),
     { say, warn }
   )
   await say(markVersionDone({ ...ids, commit }).message)

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
+import { withTrailers } from '../git/commit-message.js'
 import { forgetAllowlistEntries, runUpgradeGate } from './audit.js'
 import { AUDIT_CONFIG_FILE } from './audit-rules.js'
 import { auditBaselineToLog } from './audit-to-log.js'
@@ -72,7 +73,6 @@ const MODES = {
           },
     alreadyAtTarget: ({ packageName, target }) =>
       `SUCCESS: ${packageName} already at ${target} (no commit needed)`,
-    trailer: 'Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>',
     commitRefused: (hookOutput, { target }) => ({
       demoteReason: "Commit refused by the repo's pre-commit hook",
       reason: `Commit refused after upgrade to ${target} (pre-commit hook): ${hookOutput}; rolled back; demoted to manual`
@@ -129,7 +129,6 @@ const MODES = {
     }),
     alreadyAtTarget: ({ packageName, target }) =>
       `SUCCESS: ${packageName} already at ${target}`,
-    trailer: 'Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>',
     commitRefused: (hookOutput, { target }) => ({
       demoteReason: '',
       reason: `Commit refused after upgrade to ${target} (pre-commit hook): ${hookOutput}`
@@ -452,13 +451,14 @@ const commitMessageOf = ({
   current,
   target,
   allowlisted,
-  texts
+  trailers
 }) => {
-  const body =
+  const subject = `Upgrade ${packageName} ${current} → ${target}`
+  const message =
     allowlisted.length > 0
-      ? `\nAllowlist ${allowlisted.join(' ')} in ${AUDIT_CONFIG_FILE}: no fixed version yet.\n`
-      : ''
-  return `Upgrade ${packageName} ${current} → ${target}\n${body}\n${texts.trailer}`
+      ? `${subject}\n\nAllowlist ${allowlisted.join(' ')} in ${AUDIT_CONFIG_FILE}: no fixed version yet.`
+      : subject
+  return withTrailers(message, trailers)
 }
 
 const hookOutputOf = (commitLog) =>
@@ -534,11 +534,16 @@ const upgradeSteps = async (context) => {
  * @param {Record<string, string | undefined>} [request.env]
  * @param {(line: string) => Promise<void>} request.say - Writes a progress line to stdout
  * @param {(line: string) => Promise<void>} request.warn - Writes a line to stderr
+ * @param {string[]} [request.trailers=[]] - Lines for the end of the commit message
  * @returns {Promise<number>} 0 done or a controlled failure, 1 a cascade, 2 a dirty tree (manual), 3 an audit red or not run before the install (auto) or after it, a step's own exit code when git or the reinstall fails
  * @throws {TimError} USAGE for a missing option, packages file, package or repo
  */
-export const upgradePackage = async ({ tmpFolder = '/tmp', ...request }) => {
-  const context = await upgradeContextOf({ ...request, tmpFolder })
+export const upgradePackage = async ({
+  tmpFolder = '/tmp',
+  trailers = [],
+  ...request
+}) => {
+  const context = await upgradeContextOf({ ...request, tmpFolder, trailers })
   try {
     await upgradeSteps(context)
     return 0

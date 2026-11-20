@@ -2,7 +2,9 @@ import { execa } from 'execa'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, test } from 'vitest'
 import {
+  cases,
   REPO,
+  replayUpgradeCase,
   RUN_ID,
   stageUpgradeWorkspace
 } from '../../npm-upgrade/__fixtures__/npm-upgrade-workspace.js'
@@ -98,6 +100,116 @@ describe('tim npm upgrade steps', () => {
       ok: true,
       result: { repo: REPO, status: 'no_change', commit: null, reason: null }
     })
+  })
+})
+
+describe('tim npm upgrade steps with --trailer', () => {
+  const COAUTHOR = 'Co-Authored-By: Claude <noreply@anthropic.com>'
+  const SESSION = 'Claude-Session: https://claude.ai/code/session_1'
+
+  const replayWithTrailers = (command, name) => {
+    const fixtureCase = cases[command].find(
+      (candidate) => candidate.name === name
+    )
+    return replayUpgradeCase(command, {
+      ...fixtureCase,
+      args: [...fixtureCase.args, '--trailer', COAUTHOR, '--trailer', SESSION]
+    })
+  }
+
+  test.each([
+    ['upgrade-one', 'a green upgrade commits and marks the package done'],
+    ['run-manual', 'a green upgrade commits and marks the package done']
+  ])(
+    'Should end the %s commit with the trailers in the order given',
+    async (command, name) => {
+      const timRun = await replayWithTrailers(command, name)
+
+      expect(timRun.repo.log).toBe(
+        `<COMMIT 1> Upgrade lodash 4.17.20 → 4.17.21\n${COAUTHOR}\n${SESSION}\n\n<COMMIT 2> Fixture repo\n`
+      )
+    },
+    60_000
+  )
+
+  test('Should end the refresh-lockfile commit with the trailers in the order given', async () => {
+    const timRun = await replayWithTrailers(
+      'refresh-lockfile',
+      'a refreshed lockfile is committed'
+    )
+
+    expect(timRun.repo.log).toBe(
+      `<COMMIT 1> Refresh transitive dependencies\nnpm update within the existing package.json ranges.\n\n${COAUTHOR}\n${SESSION}\n\n<COMMIT 2> Fixture repo\n`
+    )
+  }, 60_000)
+
+  test('Should end every run-auto commit with the trailers in the order given', async () => {
+    const timRun = await replayWithTrailers(
+      'run-auto',
+      'three packages, one failing, then a lockfile refresh'
+    )
+
+    expect(timRun.repo.log).toBe(
+      [
+        `<COMMIT 1> Refresh transitive dependencies\nnpm update within the existing package.json ranges.\n\n${COAUTHOR}\n${SESSION}\n`,
+        `<COMMIT 2> Upgrade hapi 21.0.0 → 21.0.1\n${COAUTHOR}\n${SESSION}\n`,
+        `<COMMIT 3> Upgrade lodash 4.17.20 → 4.17.21\n${COAUTHOR}\n${SESSION}\n`,
+        '<COMMIT 4> Fixture repo\n'
+      ].join('\n')
+    )
+  }, 120_000)
+
+  test('Should end the reset-overrides commit with the trailers in the order given', async () => {
+    const timRun = await replayWithTrailers(
+      'reset-overrides',
+      'every override goes when nothing needs it'
+    )
+
+    const ending = `\n${COAUTHOR}\n${SESSION}\n\n<COMMIT 2> Fixture repo\n`
+    expect(timRun.repo.log).toMatch(/^<COMMIT 1> Remove overrides\nRemoved: /)
+    expect(timRun.repo.log.slice(-ending.length)).toBe(ending)
+  }, 120_000)
+
+  test('Should exit 2 and change nothing when a --trailer is not a Name: value line', async () => {
+    const timRun = await replayUpgradeCase('upgrade-one', {
+      ...cases['upgrade-one'][0],
+      args: [...cases['upgrade-one'][0].args, '--trailer', 'Claude']
+    })
+
+    expect({
+      exitCode: timRun.exitCode,
+      stderr: timRun.stderr,
+      log: timRun.repo.log
+    }).toEqual({
+      exitCode: 2,
+      stderr:
+        '--trailer must be one line in the form "Name: value", such as "Co-Authored-By: Claude <noreply@anthropic.com>". You gave: "Claude"\n',
+      log: '<COMMIT 1> Fixture repo\n'
+    })
+  }, 60_000)
+
+  test('Should show --trailer with an example in the help of every step that commits', async () => {
+    const helps = await Promise.all(
+      [
+        'upgrade-one',
+        'run-manual',
+        'run-auto',
+        'refresh-lockfile',
+        'reset-overrides',
+        'upgrade'
+      ].map(
+        async (command) => (await timIn({}, ['npm', command, '--help'])).stdout
+      )
+    )
+
+    expect(
+      helps.map((help) => [
+        help.includes('--trailer <line>'),
+        help.includes(
+          ' --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"'
+        )
+      ])
+    ).toEqual(Array(6).fill([true, true]))
   })
 })
 

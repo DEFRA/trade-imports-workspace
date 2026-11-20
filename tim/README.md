@@ -2074,10 +2074,19 @@ it, never edited by hand.
 tim deps dependabot trade-imports-animals-frontend                 # print the file the sets generate
 tim deps dependabot trade-imports-animals-frontend --write         # write it into the repo
 tim deps dependabot trade-imports-animals-frontend --check --json  # exit 1 if the file differs or is missing
+tim deps dependabot tim --write                                    # write the workspace's own file
 ```
 
 The repo must be in scope for the sets and cloned under `repos/`. A repo
 outside the scope exits 2. `--write` and `--check` together exit 2.
+
+`tim` is the name the sets give this folder, so a set or hold that lists
+`tim` applies here. tim is not its own GitHub repo, so `tim deps dependabot
+tim` writes the workspace's `.github/dependabot.yml`: its npm update looks
+in `/tim`, and its GitHub Actions update looks in the workspace's workflows
+and in each composite action under `.github/actions/`. tim's own tests
+check that file against the sets, so tim CI fails when a change to the sets
+is not regenerated.
 
 The generated file has:
 

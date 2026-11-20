@@ -1,6 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import yaml from 'js-yaml'
 import { z } from 'zod'
 import { renderDependabotText } from './dependabot.js'
 import { runTimInWorkspace, envelopeOf } from '../../test-support/tim-cli.js'
@@ -78,6 +79,28 @@ describe('tim deps dependabot', () => {
     expect({ exitCode: run.exitCode, errors: envelopeOf(run).errors }).toEqual({
       exitCode: 2,
       errors: [{ code: 'USAGE', message: 'Give --write or --check, not both.' }]
+    })
+  })
+
+  test("Should write tim's config at the workspace root and pass --check after it", async () => {
+    root = createDepsWorkspace({ cloned: ['tim'] })
+    const runForTim = (...args) =>
+      runTimInWorkspace(root, ['deps', 'dependabot', 'tim', ...args, '--json'])
+
+    const written = envelopeSchema.parse(envelopeOf(await runForTim('--write')))
+    const checked = await runForTim('--check')
+
+    expect({
+      path: written.result.path,
+      npmDirectory: yaml
+        .load(readFileSync(join(root, '.github', 'dependabot.yml'), 'utf8'))
+        .updates.find((update) => update['package-ecosystem'] === 'npm')
+        .directory,
+      checkExitCode: checked.exitCode
+    }).toEqual({
+      path: join('.github', 'dependabot.yml'),
+      npmDirectory: '/tim',
+      checkExitCode: 0
     })
   })
 

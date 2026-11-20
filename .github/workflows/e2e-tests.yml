@@ -298,10 +298,17 @@ jobs:
           path: all-shards/
           skip-decompress: true
 
+      # Several artifacts download to all-shards/shard-N/; a lone one
+      # downloads to all-shards/shard-1.zip, so it gets its own folder here.
       - name: Unzip shard artifacts
         run: |
+          shopt -s nullglob
           for zip in all-shards/*/*.zip; do
             unzip -q "$zip" -d "$(dirname "$zip")"
+            rm "$zip"
+          done
+          for zip in all-shards/*.zip; do
+            unzip -q "$zip" -d "all-shards/$(basename "$zip" .zip)"
             rm "$zip"
           done
 

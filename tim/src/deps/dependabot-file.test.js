@@ -96,7 +96,7 @@ describe('#syncDependabotConfig', () => {
 
   test('Should report a hand-edited file as out of date in check mode and leave it as it is', () => {
     root = createDepsWorkspace()
-    const handEdited = generated().replace('default-days: 3', 'default-days: 1')
+    const handEdited = generated().replace('default-days: 7', 'default-days: 1')
     seedConfig(handEdited)
 
     const result = syncDependabotConfig({

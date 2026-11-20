@@ -2105,26 +2105,26 @@ repo whose file lacks a hold that lists it, or still has one that was lifted.
 
 #### The shape of `config/dependency-sets.json`
 
-| Field                   | What it holds                                                                                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defaults.cooldownDays` | Days Dependabot waits after a release before proposing it                                                                                                 |
-| `defaults.majorPolicy`  | The policy every major follows, whatever its set says                                                                                                     |
-| `defaults.repos`        | The repos in scope: each repo in `repos.json` whose flag named by `fromReposJson` is true, plus `include`, less `exclude`                                 |
-| `defaults.dependabot`   | `schedule` (`interval`, `time`, `timezone`), `openPullRequestsLimit` and `versioningStrategy` for the npm update                                          |
-| `sets[].name`           | Lower-case words joined by `-`; the Dependabot group name for a repo set                                                                                  |
-| `sets[].members`        | npm package names, with `*` as a wildcard. Empty for a set npm does not manage                                                                            |
-| `sets[].pins`           | Optional. What a set with no npm members pins instead, such as `.nvmrc` for `node`                                                                        |
-| `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it |
-| `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                  |
-| `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                  |
-| `holds[].package`       | The exact npm name of a package held at its current version. One hold per package                                                                         |
-| `holds[].versions`      | The Dependabot version range held back, such as `4.14.x`, so a later `4.15` is still proposed and tested                                                  |
-| `holds[].repos`         | The repos the hold covers. Each must be in scope                                                                                                          |
-| `holds[].reason`        | Why the package is held, in plain English                                                                                                                 |
-| `holds[].failingTest`   | The test or check the held versions break                                                                                                                 |
-| `holds[].clashesWith`   | Optional. A package whose newer release may clear the hold, such as `govuk-frontend`                                                                      |
-| `holds[].link`          | Optional. A link to the evidence, such as the pull request                                                                                                |
-| `holds[].since`         | The date the hold was added, as `YYYY-MM-DD`                                                                                                              |
+| Field                   | What it holds                                                                                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaults.cooldownDays` | Days Dependabot waits after a release before proposing it. Keep it equal to `min-release-age` in each repo's `.npmrc`, or Dependabot proposes releases `npm ci` then refuses |
+| `defaults.majorPolicy`  | The policy every major follows, whatever its set says                                                                                                                        |
+| `defaults.repos`        | The repos in scope: each repo in `repos.json` whose flag named by `fromReposJson` is true, plus `include`, less `exclude`                                                    |
+| `defaults.dependabot`   | `schedule` (`interval`, `time`, `timezone`), `openPullRequestsLimit` and `versioningStrategy` for the npm update                                                             |
+| `sets[].name`           | Lower-case words joined by `-`; the Dependabot group name for a repo set                                                                                                     |
+| `sets[].members`        | npm package names, with `*` as a wildcard. Empty for a set npm does not manage                                                                                               |
+| `sets[].pins`           | Optional. What a set with no npm members pins instead, such as `.nvmrc` for `node`                                                                                           |
+| `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it                    |
+| `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                                     |
+| `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                                     |
+| `holds[].package`       | The exact npm name of a package held at its current version. One hold per package                                                                                            |
+| `holds[].versions`      | The Dependabot version range held back, such as `4.14.x`, so a later `4.15` is still proposed and tested                                                                     |
+| `holds[].repos`         | The repos the hold covers. Each must be in scope                                                                                                                             |
+| `holds[].reason`        | Why the package is held, in plain English                                                                                                                                    |
+| `holds[].failingTest`   | The test or check the held versions break                                                                                                                                    |
+| `holds[].clashesWith`   | Optional. A package whose newer release may clear the hold, such as `govuk-frontend`                                                                                         |
+| `holds[].link`          | Optional. A link to the evidence, such as the pull request                                                                                                                   |
+| `holds[].since`         | The date the hold was added, as `YYYY-MM-DD`                                                                                                                                 |
 
 `holds` is required; an empty list means nothing is held. After changing
 the file, run `--write` for each repo whose Dependabot config is generated,

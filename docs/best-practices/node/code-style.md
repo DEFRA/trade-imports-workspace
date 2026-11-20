@@ -1,6 +1,6 @@
 # JavaScript / TypeScript — Code Style
 
-Project baseline: Node >= 24, ESM modules throughout. These conventions apply across all Node.js repos in this workspace.
+Project baseline: Node >= 26, ESM modules throughout. These conventions apply across all Node.js repos in this workspace.
 
 The house rules in `.claude/rules/code-quality.md` apply on top of these 16 rules and win where they differ.
 

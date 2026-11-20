@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { parseIssueKey } from './shared.js'
+import { jqlQuoted, parseIssueKey } from './shared.js'
 
 describe('parseIssueKey', () => {
   test('returns the key without surrounding spaces', () => {
@@ -13,5 +13,11 @@ describe('parseIssueKey', () => {
         message: 'Give a Jira ticket key, for example EUDPA-200.'
       })
     )
+  })
+})
+
+describe('jqlQuoted', () => {
+  test('quotes the text and escapes its quotes and backslashes', () => {
+    expect(jqlQuoted('say "hi" \\ there')).toBe('"say \\"hi\\" \\\\ there"')
   })
 })

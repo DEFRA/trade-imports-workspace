@@ -236,7 +236,14 @@ To drop a ticket:
 A new ticket lands in board 13780's backlog. "Move it to the board"
 means taking it out of the backlog, not changing its status: no status
 does that. Use `tim jira move-to-board EUDPA-X`, a dry run until you
-add `--confirm`.
+add `--confirm`. It does not change the ticket's rank.
+
+### Ranking a ticket
+
+"Put it at the top of To Do" means ranking it first in its status:
+`tim jira move-to-top EUDPA-X`, a dry run until you add `--confirm`.
+Rank is one order across the project, so the ticket heads that
+status's column on every board. Only rank a ticket when someone asks.
 
 ### Assigning a ticket
 

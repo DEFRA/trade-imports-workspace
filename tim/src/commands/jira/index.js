@@ -14,6 +14,7 @@ import { register as registerComment } from './comment.js'
 import { register as registerUpdate } from './update.js'
 import { register as registerPrereqs } from './prereqs.js'
 import { register as registerMoveToBoard } from './move-to-board.js'
+import { register as registerMoveToTop } from './move-to-top.js'
 
 const alignColumns = (rows) => {
   const gap = 2
@@ -77,7 +78,7 @@ export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
     .description(
-      "Read and search Jira tickets and comments, list a project's or board's epics and a board's labels, write the ticket-creator's session-start files, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, move a ticket from a board's backlog onto the board, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink, assign and move-to-board are dry run by default; transition is not)"
+      "Read and search Jira tickets and comments, list a project's or board's epics and a board's labels, write the ticket-creator's session-start files, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, move a ticket from a board's backlog onto the board, rank a ticket first in its status, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink, assign, move-to-board and move-to-top are dry run by default; transition is not)"
     )
 
   jira
@@ -129,4 +130,5 @@ export const register = (program, { timVersion }) => {
   registerUpdate(jira, { timVersion })
   registerPrereqs(jira, { timVersion })
   registerMoveToBoard(jira, { timVersion })
+  registerMoveToTop(jira, { timVersion })
 }

@@ -21,3 +21,10 @@ export const parseIssueKey = (value) => {
   }
   return result.data
 }
+
+/**
+ * @param {string} text
+ * @returns {string} The text as a double-quoted JQL string, its quotes and backslashes escaped
+ */
+export const jqlQuoted = (text) =>
+  `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`

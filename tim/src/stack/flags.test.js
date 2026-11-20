@@ -6,6 +6,7 @@ const NO_FLAGS = {
   branch: '',
   excluded: [],
   profiles: [],
+  domains: [],
   dev: false,
   perf: false,
   extra: []
@@ -35,6 +36,16 @@ describe('#parseStartFlags', () => {
       [
         ['--profile', 'database', '--profile=security'],
         { profiles: ['database', 'security'] }
+      ],
+      [['--domain', 'plants'], { domains: ['plants'] }],
+      [
+        ['--domain', 'plants', '--domain', 'animals'],
+        { domains: ['plants', 'animals'] }
+      ],
+      [['--domain=animals-admin'], { domains: ['animals-admin'] }],
+      [
+        ['--domain', 'ins', '-d', '-e', 'routing-proxy'],
+        { domains: ['ins'], dev: true, excluded: ['routing-proxy'] }
       ],
       [['-d'], { dev: true }],
       [['--dev', '--perf'], { dev: true, perf: true }],
@@ -88,6 +99,12 @@ describe('#parseStartFlags', () => {
       [
         ['--profile', 'nope'],
         "error: unknown --profile name 'nope'; valid: database, infrastructure, servicebus, stubs, backend, frontend, security, monitoring",
+        false
+      ],
+      [['--domain'], 'error: --domain requires a value', false],
+      [
+        ['--domain', 'germinal'],
+        "error: unknown --domain name 'germinal'; valid: animals, animals-admin, ins, plants",
         false
       ]
     ])('Should refuse %j with "%s"', (args, message, showUsage) => {

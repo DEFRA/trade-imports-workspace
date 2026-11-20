@@ -22,7 +22,7 @@ with
   cannot ship as it is, what was left out and why, drift, and how to apply.
 - `brief.md`: the same in Markdown, for the repository and a pull request.
 - `ticket.json`: the same story as a `tim-ticket/1` manifest (project, type
-  Story, summary, `descriptionFile`, parent, labels `['UCD']`, priority,
+  Story, summary, `descriptionFile`, parent, labels `['UCD']`,
   attachments, relates), for `references/raise-the-story.md` to raise for
   real.
 - `upstream.patch`: the change as the real team's files, in `git apply`

@@ -223,7 +223,6 @@ describe('runBuildStart — a new increment', () => {
         'h2. Acceptance criteria\n\n* The origin page saves the country'
       ),
       issuetype: { name: 'Task' },
-      priority: { name: 'Medium' },
       labels: [],
       parent: { key: 'EUDPA-1' }
     })

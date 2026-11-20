@@ -29,7 +29,7 @@ const addressedWorkspaceRoot = ({ args, env, cwd }) => {
   try {
     return resolveWorkspaceRoot({
       explicit: workspaceFlagValue(args),
-      env: env.TIM_WORKSPACE,
+      env: env.TIM_WORKSPACE ?? null,
       cwd,
       warn: leaveFallbackWarningToCli
     })

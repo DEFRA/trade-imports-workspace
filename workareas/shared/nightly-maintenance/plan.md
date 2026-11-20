@@ -86,11 +86,11 @@ ends with everything merged.
 |---|---|---|
 | 1.1 | Fix config drift | **Done 19 Nov:** 12 repo PRs and workspace #286, all merged. tim: `engines >=22` against Node 24 in CI, and no `.nvmrc`. schemas: no `.nvmrc`, and a literal `24.22.1` in two CI jobs. animals-backend: Dependabot set to `nuget`. Dependabot is missing in 10 repos: generate each with `tim deps dependabot --write`. npm needs to be at least 11.10 for `min-release-age` (engines floor is 11.6.2). |
 | 1.2 | Drain the open Dependabot PRs | **Done 19 Nov for the first two waves.** 15 superseded PRs closed. The generated configs raised 23 more: 20 merged (5 majors with clean evidence tables: admin #52 and #98, ins-tests #126, performance-tests #42 and #43), 2 closed and held (stylelint 18, typescript 7: a peer no release accepts yet). A third wave of 9: 7 merged, among them MoJ Frontend 12 in three frontends (a mechanical Sass fix pushed to Dependabot's branch: configure govuk-frontend directly, built CSS byte-identical to main) and jsdom 31. animals-frontend #500 (patch-and-minor) conflicts with `main`, and Dependabot no longer knows it (its group was renamed), so the replacement comes from Dependabot's next daily run at 10:30. ins-frontend #95 (nock 15): merged 19 Nov after a test set-up fix (the timeout tests now hold back the headers as well as the body, so the 504 assertions stay; the transporter tests mock the other organisation they name), which the nightly rules now count as mechanical (#300). It was refused with "the base branch policy prohibits the merge" while green until an empty commit re-ran its checks (#301). Holds in `dependency-sets.json`: `@axe-core/playwright` 4.14.x (animals-frontend), stylelint 18.x (four frontends), typescript 7.x (ins-tests). |
-| 1.3 | Node | **Done 20 Nov for Node 24.** `chore/EUDPA-802-node-24.22.3`: `.nvmrc` to 24.22.3 and Dockerfile `PARENT_VERSION` to `3.2.8-node24.22.3` (the newest Node 24 image, 12 Nov) in all ten Node repos, canary animals-frontend #502, all merged with a clean evidence table (24.22.3 is a security release; none of its http2, TLS-server, permission-model or zlib fixes touch code of ours). `engines` floors stay at `>=24.22.1`, which 24.22.3 meets, so no lockfile moved. Workspace CI uses a floating `24`. Node 26 (`3.2.8-node26.13.1`, and `latest` since defra-docker-node 3.2.6) is a major: see open decisions. |
-| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos. **19 Nov:** Dependabot's eslint groups moved animals-frontend, admin, ins-frontend (10.14), plants-frontend, ins-tests and performance-tests to eslint 10.15 (with `neostandard 0.14.1` where used), and its vitest groups moved animals-frontend, ins-frontend, plants-frontend, admin and performance-tests to vitest 5.1. **20 Nov:** Playwright 1.65.0 on `chore/EUDPA-802-playwright-1.65.0` in animals-frontend, ins-frontend, plants-frontend and plants-prototype (from 1.63.0), ins-tests (from 1.64.1, with its `v1.65.0-jammy` image) and tim (workspace #303), canary animals-frontend #504, all merged together once every repo was green. Not 1.65.1: ins-frontend's npm config refuses a release under 7 days old, the others accept it at 3 (see open decisions). On the way, ins-frontend's one-shard E2E run showed that #302's new unzip step missed a lone shard's artifact; #305 fixed it. |
+| 1.3 | Node | **Done 20 Nov for Node 24.** `chore/EUDPA-802-node-24.22.3`: `.nvmrc` to 24.22.3 and Dockerfile `PARENT_VERSION` to `3.2.8-node24.22.3` (the newest Node 24 image, 12 Nov) in all ten Node repos, canary animals-frontend #502, all merged with a clean evidence table (24.22.3 is a security release; none of its http2, TLS-server, permission-model or zlib fixes touch code of ours). `engines` floors stay at `>=24.22.1`, which 24.22.3 meets, so no lockfile moved. Workspace CI uses a floating `24`. **Done 20 Nov for Node 26**, on your go: `chore/EUDPA-802-node-26.13.1` moved `.nvmrc` to 26.13.1, Dockerfile `PARENT_VERSION` to `3.2.8-node26.13.1`, and `engines.node` to `>=26.13.1`, in animals-frontend (canary #509), animals-admin, ins-frontend, plants-frontend, plants-prototype, ins-tests, performance-tests, schemas and the workspace (#327: tim's engines and every workflow's `node-version`, plus the Node baseline in `.claude/rules/node.md` and the Node best-practice docs). All merged with a clean evidence table from the 25.0.0 and 26.0.0 semver-major notes; the one row that needed reading was undici 8, which Node 26 bundles and the frontends already use. ins-tests' Playwright base image already shipped Node 26 (unpinned NodeSource `node_26.x`). defra-id-stub and routing-proxy stay on 24.22.3 until their SonarCloud projects exist. |
+| 1.4 | Coupled sets | eslint (animals-frontend is pinned to `neostandard 0.14.0-next.1`), vitest, and Playwright, which is out of step across repos. **19 Nov:** Dependabot's eslint groups moved animals-frontend, admin, ins-frontend (10.14), plants-frontend, ins-tests and performance-tests to eslint 10.15 (with `neostandard 0.14.1` where used), and its vitest groups moved animals-frontend, ins-frontend, plants-frontend, admin and performance-tests to vitest 5.1. **20 Nov:** Playwright 1.65.0 on `chore/EUDPA-802-playwright-1.65.0` in animals-frontend, ins-frontend, plants-frontend and plants-prototype (from 1.63.0), ins-tests (from 1.64.1, with its `v1.65.0-jammy` image) and tim (workspace #303), canary animals-frontend #504, all merged together once every repo was green. Not 1.65.1: ins-frontend's npm config refused a release under 7 days old (every repo does now; see open decisions), so 1.65.1 comes through Dependabot once it is a week old. On the way, ins-frontend's one-shard E2E run showed that #302's new unzip step missed a lone shard's artifact; #305 fixed it. |
 | 1.5 | govuk-frontend to 6.6.0 | Run in unattended mode while you watch, and compare its evidence table with what you would have done. This step decides whether 2.3 goes ahead. Needs 0.3a and 0.3b. **20 Nov:** run unattended overnight (`EUDPA-802-govuk-frontend-6.6.0`) with every pull request left as a draft and nothing merged, so the comparison is still yours to make. Draft, every evidence row clean (four 6.6.0 items, all not applicable), all CI green: animals-admin #102, animals-frontend #505, ins-frontend #101. defra-id-stub: committed locally with a clean table, but the push gate refuses it (no SonarCloud project). plants-frontend and plants-prototype stopped at 6.4.0 on needs-a-person rows (`govuk-colour("white")` to `inverse-text`; in the prototype, the date input's automatic error state on the plants-working dashboard), so no PR. routing-proxy is already on 6.6.0. Tables: `workareas/govuk-upgrades/EUDPA-802-govuk-frontend-6.6.0/`. Two tool gaps found: `tim govuk apply` could not add commit trailers (fixed, #307, `--trailer`), and tim plans the plants repos from their `^6.3.0` range, though their lockfiles already hold 6.5.1, so 6.4.0's rows ask about code that is already installed. |
-| 1.6 | Full npm-upgrade | Every `npmUpgradeDefault` repo, plus tim. You walk the manual packages. Majors found here are entered into `dependency-sets.json`. Needs 0.3c. **20 Nov, discovery only** (`tim npm discover --record-policy`, run `EUDPA-802-npm-catch-up`, nothing upgraded): 143 outdated across nine repos and tim. Most are already in hand: held (stylelint 18, typescript 7, axe 4.14), in the 1.5 drafts (govuk-frontend), Dependabot's next animals-frontend group, or Playwright 1.65.1 waiting on the age gate. What no bot covers: tim, 23 behind with 8 majors (eslint 10, vitest and coverage-v8 5, nock 15, ink 8, js-yaml 5, execa 10, `@types/node` 26), because the workspace root has no Dependabot; and defra-id-stub (24) and routing-proxy (19, with eslint 10 and vitest 5 still to take), which have no `.github/dependabot.yml` at all and four high advisories in routing-proxy (`@hapi/content`, `joi`, `undici`). Both stubs wait on the Sonar push-gate decision below, since no push reaches them. Discovery also lists `npm` 12.2.3 to 12.2.3 in four repos: a tim bug to fix. |
-| 1.7 | Docs | Deterministic checks first: links, `tools-index.md` against `tools/`, `tim/README.md` against `tim --help`. Then one repo's pages per pass (`docs/repos/<repo>.md`, README, AGENTS.md), across 17 repos, with you reviewing each one. **20 Nov, deterministic checks done:** five broken links and a stale line in `tim/README.md` fixed (#304); `tools-index.md` matches `tools/`; every command and option `tim/README.md` shows is in `tim --help`. `tim build gate-wait\|measure\|rigour` and `tim spec lint\|gaps` have no README entry yet. The per-repo passes are left for you to review one at a time. |
+| 1.6 | Full npm-upgrade | Every `npmUpgradeDefault` repo, plus tim. You walk the manual packages. Majors found here are entered into `dependency-sets.json`. Needs 0.3c. **20 Nov, discovery only** (`tim npm discover --record-policy`, run `EUDPA-802-npm-catch-up`, nothing upgraded): 143 outdated across nine repos and tim. Most are already in hand: held (stylelint 18, typescript 7, axe 4.14), in the 1.5 drafts (govuk-frontend), Dependabot's next animals-frontend group, or Playwright 1.65.1 waiting on the age gate. What no bot covers: tim, 23 behind with 8 majors (eslint 10, vitest and coverage-v8 5, nock 15, ink 8, js-yaml 5, execa 10, `@types/node` 26), because the workspace root has no Dependabot; and defra-id-stub (24) and routing-proxy (19, with eslint 10 and vitest 5 still to take), which have no `.github/dependabot.yml` at all and four high advisories in routing-proxy (`@hapi/content`, `joi`, `undici`). Both stubs wait on the Sonar push-gate decision below, since no push reaches them. Discovery also lists `npm` 12.2.3 to 12.2.3 in four repos: a tim bug to fix. **20 Nov, the manual walk is dropped** (your call): with tim on Dependabot, the bots and the nightly jobs carry every package the discovery found. tim's Dependabot: `tim deps dependabot tim --write` now generates the workspace's `.github/dependabot.yml` (npm in `/tim`, GitHub Actions for the workspace's workflows and composite actions), with a test that keeps the committed file in step with the sets (#313). Its first run should raise about 8 tim PRs: eslint and vitest groups, one patch-and-minor group, and ink 8, js-yaml 5, execa 10, nock 15 and `@types/node` 26 on their own. |
+| 1.7 | Docs | Deterministic checks first: links, `tools-index.md` against `tools/`, `tim/README.md` against `tim --help`. Then one repo's pages per pass (`docs/repos/<repo>.md`, README, AGENTS.md), across 17 repos, with you reviewing each one. **20 Nov, deterministic checks done:** five broken links and a stale line in `tim/README.md` fixed (#304); `tools-index.md` matches `tools/`; every command and option `tim/README.md` shows is in `tim --help`. `tim build gate-wait\|measure\|rigour` and `tim spec lint\|gaps` have no README entry yet. The per-repo passes are left for you to review one at a time. **20 Nov, your call:** the per-repo passes go through as PRs merged on green, and you skim their titles rather than reviewing each one. |
 
 Steps 1.1 to 1.4 need none of 0.3 and can start now.
 
@@ -170,26 +170,43 @@ scheduling if the 7-day restart becomes a chore.
   (`clashesWith: stylelint-config-gds`) stops Dependabot proposing it, and
   the nightly re-check lifts it when a release accepts 18. A `stylelint`
   set is still worth adding so the two move in one PR when that happens.
-- **The Sonar push gate blocks repos with no SonarCloud project.**
-  defra-id-stub and routing-proxy carry the CDP template's
+- **The Sonar push gate blocks repos with no SonarCloud project: waiting,
+  20 Nov.** defra-id-stub and routing-proxy carry the CDP template's
   `sonar-project.properties`, but SonarCloud has no project for them, so
-  every push fails. Create the projects, or have the gate skip a repo
-  whose project does not exist. (On 20 Nov their Node pushes went through:
-  they ran in one shell loop, which the workspace's push hook does not
-  check, so CI's SonarCloud check was the gate for them.)
-- **Node 26.** It is the newest `defradigital/node` image
-  (`3.2.8-node26.13.1`) and the image's `latest` tag since 3.2.6. Moving to
-  it is a major across all ten Node repos and the CDP runtime, so it needs
-  you: say when, and it goes through as a changelog-driven set.
-- **npm's release-age gate differs between repos.** ins-frontend refuses a
-  release under 7 days old, while animals-frontend, plants-frontend,
-  plants-prototype and ins-tests installed Playwright 1.65.1 at 6 days old.
-  That kept Playwright at 1.65.0 on 20 Nov. Pick one age and set it in
-  every repo, ideally generated from `dependency-sets.json` beside the
-  Dependabot `cooldownDays` (3).
-
-- Whether the workspace root needs Dependabot for its GitHub Actions; it has
-  no `package.json`.
+  every push fails. You have asked for the projects to be created. Until
+  then both miss Node 26, the release-age setting (defra-id-stub) and
+  Dependabot, and routing-proxy keeps its four high advisories. Once they
+  exist: Node 26, `min-release-age=7` in defra-id-stub, `tim deps
+  dependabot <repo> --write` in both, and defra-id-stub's local govuk 6.6.0
+  commit. (On 20 Nov their Node 24 pushes went through: they ran in one
+  shell loop, which the workspace's push hook does not check.)
+- **Node 26: done, 20 Nov.** See 1.3.
+- **npm's release age: done, 20 Nov.** Every npm project refuses a release
+  under 7 days old (`min-release-age=7`, as ins-frontend had): animals-admin,
+  animals-frontend, ins-tests, performance-tests, plants-frontend,
+  plants-prototype, schemas and tim (workspace #311 and one PR per repo).
+  Dependabot's `cooldownDays` moved from 3 to 7 to match, so it no longer
+  proposes a release npm then refuses; tim's README says to keep the two
+  equal. defra-id-stub waits on the Sonar decision above.
+- **The workspace has no `main` ruleset.** `gh api
+  repos/DEFRA/trade-imports-workspace/rulesets` returns `[]`, and it is not in
+  `config/main-branch-rules.json`, so nothing stops a red or out-of-date
+  pull request being merged there. If one is added, require only checks
+  that run on every pull request (the `e2e` jobs and `smoke / Smoke run`),
+  not tim CI's `build`, which its path filter skips outside `tim/`.
+- **A tests-repo PR and its service PR merged together turn the tests
+  repo's `main` red for one run.** On 20 Nov ins-tests #112 and
+  animals-frontend #484 (EUDPA-696) merged at 16:19; ins-tests' `main` E2E
+  started at 16:24 and pulled `animals-frontend:latest` before #484's
+  Publish had pushed it, so 12 specs ran the new tests against the old page.
+  Rerunning after the Publish was green. Merge the service first and wait
+  for its Publish, or have the nightly digest treat a red tests-repo `main`
+  that follows a paired merge as "rerun", not "broken".
+- **Nightly jobs must search the workspace's own pull requests.** Its
+  Dependabot PRs (tim and GitHub Actions) are not in `repos.json`, so when
+  the deps-fix and digest skills are written their PR search must include
+  `DEFRA/trade-imports-workspace`.
+- **Workspace root Dependabot: done, 20 Nov.** See 1.6 (#313).
 - Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also
   stops their security updates. If it does, the nightly job must watch
   advisories for them.

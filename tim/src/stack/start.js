@@ -4,7 +4,12 @@ import { execa } from 'execa'
 import { ensureDockerRunning } from '../exec/docker-daemon.js'
 import { run } from '../exec/exec.js'
 import { composeArgs, devBuildPlatform } from './compose.js'
-import { ALL_PROFILES, SERVICES, SIDECARS } from './definition.js'
+import {
+  ALL_PROFILES,
+  SERVICES,
+  servicesForDomains,
+  SIDECARS
+} from './definition.js'
 import { parseStartFlags, StartFlagError, START_USAGE } from './flags.js'
 import { githubRepoUrl, stageInitScripts } from './stage-init-scripts.js'
 
@@ -143,6 +148,26 @@ const servicesFromConfig = async ({ compose, env, output }) => {
   return null
 }
 
+/**
+ * The services a domain run starts: those the domain names and the compose
+ * files define. A service the domain names but no active profile defines is
+ * reported, because the stack it leaves is missing something the suite
+ * reaches, and that shows up as a confusing test failure rather than a
+ * stack that refuses to start.
+ */
+const narrowToDomains = ({ active, domains, output }) => {
+  if (domains.length === 0) return active
+  const wanted = servicesForDomains(domains)
+  const missing = wanted.filter((service) => !active.includes(service))
+  if (missing.length > 0) {
+    output.error(
+      `error: no active profile defines ${missing.join(', ')}, which ${domains.join(', ')} needs`
+    )
+    return null
+  }
+  return active.filter((service) => wanted.includes(service))
+}
+
 const planServices = ({ active, excluded }) => {
   const isExcluded = (label) => excluded.includes(label)
   const left = new Set([
@@ -169,9 +194,23 @@ const planServices = ({ active, excluded }) => {
   }
 }
 
-const printHeadings = ({ output, profiles, perf, env, tag }) => {
+const printHeadings = ({
+  output,
+  profiles,
+  perf,
+  env,
+  tag,
+  domain,
+  started,
+  total
+}) => {
   const { bold, cyan, reset } = output.colours
   output.print(`${bold}Profiles:${reset} ${profiles.join(' ')}\n`)
+  if (domain) {
+    output.print(
+      `${bold}Domain:${reset} ${domain} (${started} of ${total} services)\n`
+    )
+  }
   if (perf) {
     output.print(
       `${bold}Stub latency:${reset} ${env.STUB_PROFILE || 'sla'} (performance mode)\n`
@@ -316,9 +355,20 @@ const bringUp = async ({ workspaceRoot, flags, output, env, repoUrl }) => {
   })
   const active = await servicesFromConfig({ compose, env: stackEnv, output })
   if (!active) return 1
-  const plan = planServices({ active, excluded: flags.excluded })
+  const inDomain = narrowToDomains({ active, domains: flags.domains, output })
+  if (!inDomain) return 1
+  const plan = planServices({ active: inDomain, excluded: flags.excluded })
   const tag = flags.branch ? sanitiseBranch(flags.branch) : ''
-  printHeadings({ output, profiles, perf: flags.perf, env: stackEnv, tag })
+  printHeadings({
+    output,
+    profiles,
+    perf: flags.perf,
+    env: stackEnv,
+    tag,
+    domain: flags.domains.join(', '),
+    started: plan.up.length,
+    total: active.length
+  })
   if (flags.branch && !tag) {
     output.error(`error: branch '${flags.branch}' is empty after sanitisation`)
     return 1
@@ -339,13 +389,13 @@ const bringUp = async ({ workspaceRoot, flags, output, env, repoUrl }) => {
     const upEnv = chooseImages({
       output,
       plan,
-      active,
+      active: inDomain,
       dev: flags.dev,
       tag,
       branchTags,
       env: stackEnv
     })
-    printRemovedSidecars({ output, plan, active })
+    printRemovedSidecars({ output, plan, active: inDomain })
     if (plan.up.length === 0) {
       output.error('error: would start no services')
       return 1

@@ -54,7 +54,7 @@ session:
 - `docs/best-practices/gds/writing.md`
   — GDS plain-English rules for ticket prose.
 - `docs/best-practices/jira/ticket-conventions.md`
-  — Type / priority / AC / named-conventions guidance for the EUDPA
+  — Type / AC / named-conventions guidance for the EUDPA
   project.
 - `.claude/skills/ticket-creator/assets/known-labels.md`
   — accepted EUDPA-project Jira labels (camelCase canonical form).
@@ -122,9 +122,9 @@ codes is out of scope for this skill.
 If **Type == Task** and the user describes the work as tech debt,
 ask once:
 
-> Default this as tech debt — label `technicalImprovement`, priority `Lowest`? (Y/n)
+> Label this as tech debt (`technicalImprovement`)? (Y/n)
 
-If yes, apply both defaults without re-asking. Parent epic is still
+If yes, add the label without re-asking. Parent epic is still
 the user's choice (no specific key is suggested — tech-debt work in
 EUDPA lands under whichever feature epic owns the area).
 
@@ -180,7 +180,10 @@ Skip this step entirely when no parent epic was supplied.
 |-------|------------------|
 | Type | Bug=broken, Story=user-facing, Task=technical |
 | Summary | <80 chars, specific, action-oriented |
-| Priority | Highest/High=blocking; Medium=normal; Low/Lowest=nice-to-have |
+
+Never ask for or set priority. The team orders work by its position
+on the board, so the field carries nothing — see "Priority" in
+`ticket-conventions.md`.
 
 ### Labels
 
@@ -226,7 +229,6 @@ Write the draft to `workareas/ticket-creation/<slug>/draft.md`:
 
 **Type:** [Bug/Story/Task]
 **Summary:** [Summary]
-**Priority:** [Priority]
 **Parent:** [Epic or None]
 **Labels:** [labels or None]
 **Assignee:** [Self or None]
@@ -299,7 +301,6 @@ Write two files under
   "descriptionFile": "description.jira.txt",
   "parent": "<epic key>",
   "labels": ["<label>"],
-  "priority": "<priority>",
   "attachments": ["<filename, relative to this folder>"],
   "relates": []
 }
@@ -307,10 +308,10 @@ Write two files under
 
 Set `project` from `JIRA_PROJECT_KEY`: `EUDPA` for real tickets, or the
 sandbox project the user has pointed it at. If it is unset, ask the user
-rather than guessing. Omit `parent`, `priority`, `labels` or
-`attachments` entirely rather than writing `null` or `""` when the interview
-gave nothing for that field; a manifest with no `priority` is raised as
-Medium. Copy any screenshots or logs the user gave you
+rather than guessing. Never include `priority`: `tim` raises a manifest
+without one as Medium, and that default stands. Omit `parent`, `labels`
+or `attachments` entirely rather than writing `null` or `""` when the
+interview gave nothing for that field. Copy any screenshots or logs the user gave you
 (Bugs) into this same folder and list their filenames in `attachments`.
 
 ### 5.2 Dry run: show the plan
@@ -321,7 +322,7 @@ tim jira create --from workareas/ticket-creation/<slug>/ticket.json --json
 
 This sends no request — `tim` only reads the manifest and the files next to
 it. Read the JSON result and show the user a plain-English plan: type,
-summary, parent, labels, priority, each attachment with its size, and every
+summary, parent, labels, each attachment with its size, and every
 `warnings[]` entry verbatim. A warning almost always means a template
 placeholder was left in (`[Who is this for?`, `[doing what]`, `[Welsh needed]`,
 `EUDPA-XXXX`, `TODO`) or the description is over Jira's 32,767-character
@@ -382,6 +383,15 @@ Dry run first, then add `--confirm` to write it:
 ```bash
 tim jira update EUDPA-XXXXX --description-file workareas/ticket-creation/<slug>/description.jira.txt
 ```
+
+When the user asks to move the ticket to the board, take it out of
+the backlog. This is not a status change:
+
+```bash
+tim jira move-to-board EUDPA-XXXXX
+```
+
+Dry run first, then add `--confirm`.
 
 To assign the ticket to someone other than yourself, or to link it as blocking or
 blocked by another, follow "Workflow facts" in

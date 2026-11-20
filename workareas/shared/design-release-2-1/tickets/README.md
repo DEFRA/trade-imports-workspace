@@ -276,3 +276,47 @@ re-derived with `--branch main --commits-from
 feat/EUDPA-805-design-release-2-1-consignment-parties`, reporting the same
 52/21/4 split. The three tickets are `Deskcheck` and their specification links
 point at `main`.
+
+### Overview and review — 143 scenarios, 14 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `overview-and-review-animals/` | [EUDPA-696](https://eaflood.atlassian.net/browse/EUDPA-696) | Live animals journey | 25 | 120 | 10 |
+| `overview-and-review-plants/` | [EUDPA-828](https://eaflood.atlassian.net/browse/EUDPA-828) | High-risk plants journey | 10 | 23 | 4 |
+
+120 + 23 = 143 scenarios, and 10 + 4 = 14 files, so the per-domain totals are
+the theme's. EUDPA-696 was the theme's stub; the WRITE flow filled it in as the
+animals domain at merge, and `tickets.json` now records `animals` and `plants`
+in place of `stub`. The animals folder's `ticket.created.json` was written by
+hand, since the stub was raised before the folder existed. No front-door ticket:
+ins-frontend #85 changed only its tests, and the one front-door scenario the
+theme added (SCN-INS-DASH-002-C, "Submitted action required" on the dashboard)
+was removed again by inc-273.
+
+The theme holds 28 rows. The two tables hold 35 row entries: the 26 rows left
+once the two dropped ones are out, plus nine that changed both live animals and plants and so
+appear in both tables (inc-098, inc-109, inc-110, inc-111, inc-112, inc-115,
+inc-187, inc-274 and inc-276). inc-274's plants entry only reworded existing
+scenarios, so it adds none to the plants count. inc-199 is plants only. inc-118 and inc-119 were dropped and are named in the animals ticket's
+prose, not its table. inc-104, inc-107 and inc-112 are shown as folded into
+inc-106, inc-109 and inc-111; inc-116 is blocked.
+
+inc-272 merged `main` into the theme branch on 13 November. Its commit carried
+the identification details and permanent address theme's 66 scenarios into
+this diff, so they are excluded through `footprint-overrides.json` (judged
+2026-11-20) and stay on EUDPA-796; before that exclusion the derive counted
+209. Seven scenarios were added and later removed by inc-273 (the "Submitted
+action required" status), so they are not counted. No `outsideFootprint`
+entries. The derive for this theme is in `derived-overview-and-review.json`,
+so `derived.json` still holds consignment parties.
+
+Of the 120 animals scenarios, 30 are written out in that ticket and the other
+90 are named by heading beneath their group, to stay inside Jira's 32,767
+character limit. The plants ticket writes out all 23.
+
+Merged on 20 November. All six pull requests landed on `main` — workspace #266
+(`8e0d3dcf`), animals-backend #130, animals-frontend #484, ins-frontend #85,
+plants-frontend #145 and ins-tests #112. The workspace pull request was
+squashed, so the derive ran with `--branch main --commits-from
+feat/EUDPA-696-overview-and-review`. Both tickets are `Deskcheck` and their
+specification links point at `main`.

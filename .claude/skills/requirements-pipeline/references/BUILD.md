@@ -456,11 +456,48 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    earlier rows copied set-up goes `baseline-red` on that rung: a person moves
    the set-up into the helper on the branch, then launches again.
 
+   **Ask which stack a local-E2E run should start, before it launches.** Only
+   when this machine's gate runs E2E locally — `config/machine.json` has no
+   `e2e` key, or it is `"local"`. An `e2e: "ci"` run starts no stack at all, so
+   there is nothing to ask.
+
+   ```bash
+   tim build stack-plan <workarea>
+   ```
+
+   It reads every row the run has left to build and says which services they
+   need between them, and why, row by row. A row's domain comes from its own
+   service repos: the workspace repo and the tests repo appear in nearly every
+   row and say nothing about which domain it is for, so they are left out. A
+   row that changes no service repo needs no stack — an `openspec/` edit proves
+   nothing against a running stack, and its pull request is checked by CI like
+   any other. A row that builds the performance suite, or a repo with no entry
+   in `config/e2e-tests-pr-scope.json`, needs the whole stack.
+
+   Put the plan to the user and let them choose:
+
+   - **Narrowed** — `--domain <name>` per domain on the acquire below. Fewer
+     containers, so the machine has room for the suites running beside them.
+   - **The whole stack** — no `--domain`. Nothing can be missing, at the cost
+     of every container being up for the whole run.
+
+   Narrowing is the better default on a machine where the stack and a suite do
+   not fit together; see
+   [`machine-tuning.md`](machine-tuning.md) and
+   [`../../../../docs/analysis/local-stack-domain-subsets.md`](../../../../docs/analysis/local-stack-domain-subsets.md),
+   which carries each domain's services and the runs that proved them. Say
+   which rows drove the answer rather than only the number, so the user can
+   see what a narrowed stack would leave out.
+
    **The run holds the workspace stack.** Before its first increment the loop
    takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
-   which starts the stack from local source. The stack stays up across every
+   with a `--domain` for each domain the user chose, which starts the stack
+   from local source. The stack stays up across every
    increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. A service that caches another
+   reuses it and rebuilds only what changed. A stack already up for fewer
+   domains than a later increment needs is restarted for the wider set, so a
+   run that derives a row outside the launch-time domains keeps working; it
+   costs one stack restart, which the log names. A service that caches another
    service's answers names it under `x-refresh-with` in
    `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
    service is rebuilt or restarted. Reference-data names the stub, because it

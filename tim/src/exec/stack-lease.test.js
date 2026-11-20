@@ -19,6 +19,7 @@ import {
 } from '../test-support/fake-docker.js'
 import { stackFilesFingerprint } from './stack-fingerprints.js'
 import {
+  acquireDecision,
   acquireStack,
   releaseStack,
   readLease,
@@ -1187,5 +1188,41 @@ describe('foreignStackRefusal', () => {
     expect(foreignStackRefusal(OTHER_CLONE)).toBe(
       `The stack belongs to ${OTHER_CLONE}. Run E2E there, or push and let GitHub Actions run it.`
     )
+  })
+})
+
+describe('#acquireDecision with domains', () => {
+  const upLease = (domains) => ({
+    holder: 'run-1',
+    state: 'up',
+    workspace: '/w',
+    containers: ['a'],
+    ...(domains === undefined ? {} : { domains })
+  })
+
+  const decisionFor = (leaseDomains, asked) =>
+    acquireDecision({
+      up: true,
+      lease: upLease(leaseDomains),
+      holder: 'run-1',
+      workspaceRoot: '/w',
+      containers: ['a'],
+      domains: asked
+    })
+
+  test('Should reuse a whole stack whatever domains are asked for', () => {
+    expect(decisionFor([], ['plants', 'animals'])).toBe('reuse')
+  })
+
+  test('Should reuse a lease from before domains existed', () => {
+    expect(decisionFor(undefined, ['plants'])).toBe('reuse')
+  })
+
+  test('Should reuse a narrowed stack that already covers what is asked', () => {
+    expect(decisionFor(['plants', 'animals'], ['plants'])).toBe('reuse')
+  })
+
+  test('Should restart a narrowed stack that is missing a domain', () => {
+    expect(decisionFor(['plants'], ['plants', 'animals'])).toBe('restart')
   })
 })

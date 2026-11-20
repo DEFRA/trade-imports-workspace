@@ -230,12 +230,12 @@ export const createJiraClient = ({
       action
     )
 
-  const postForNoContent = async (path, body, action) => {
+  const sendForNoContent = async (method, path, body, action) => {
     const url = `${normalisedBase}${path}`
     let response
     try {
       response = await fetch(url, {
-        method: 'POST',
+        method,
         headers: {
           Authorization: authHeader(user, token),
           'Content-Type': 'application/json',
@@ -262,6 +262,9 @@ export const createJiraClient = ({
       `${action}: Jira answered ${response.status}, not 204${reasons.length ? `: ${reasons.join('; ')}` : '.'}`
     )
   }
+
+  const postForNoContent = (path, body, action) =>
+    sendForNoContent('POST', path, body, action)
 
   const deleteForNoContent = async (path, { action, missing }) => {
     const url = `${normalisedBase}${path}`
@@ -731,6 +734,25 @@ export const createJiraClient = ({
         `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/issue`,
         { issues: keys },
         `moveToBoard(${boardId}, ${keys.join(', ')})`
+      )
+    },
+
+    /**
+     * Rank one issue directly above another. Rank is one order across the
+     * project, so this moves the issue on every board and backlog that
+     * shows both.
+     *
+     * @param {string} key - The issue to move, such as `'EUDPA-300'`
+     * @param {string} beforeKey - The issue it should sit above
+     * @returns {Promise<void>}
+     * @throws {TimError} UNKNOWN when Jira answers anything but 204, naming the reasons it gave
+     */
+    rankBefore: async (key, beforeKey) => {
+      await sendForNoContent(
+        'PUT',
+        '/rest/agile/1.0/issue/rank',
+        { issues: [key], rankBeforeIssue: beforeKey },
+        `rankBefore(${key}, ${beforeKey})`
       )
     },
 

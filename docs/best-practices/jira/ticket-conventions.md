@@ -234,6 +234,13 @@ To drop a ticket:
 3. If neither is available, leave the ticket in `To Do` with the
    comment. Never move it to `Done` or `CLOSED` to tidy the board.
 
+### Ranking a ticket
+
+"Put it at the top of To Do" means ranking it first in its status:
+`tim jira move-to-top EUDPA-X`, a dry run until you add `--confirm`.
+Rank is one order across the project, so the ticket heads that
+status's column on every board. Only rank a ticket when someone asks.
+
 ### Assigning a ticket
 
 `tim jira assign EUDPA-X <accountId|me>` assigns a ticket, a new one

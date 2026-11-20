@@ -152,6 +152,7 @@ tim jira epics [--board <id>]                  # list open epics in a project or
 tim jira labels --board <id>                   # count the labels in a board's backlog (read-only)
 tim jira search <words> [--open] | --jql <q>   # find tickets by text or JQL (read-only)
 tim jira transition EUDPA-X "Done"             # move a ticket's status straight away (no dry run); --list shows what it offers
+tim jira move-to-top EUDPA-X                   # rank a ticket first in its status's column; dry run by default, --confirm to rank
 tim nightly check --fetch         # is this session ready to run the nightly jobs; tim nightly stopped reads the kill switch
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
 ```

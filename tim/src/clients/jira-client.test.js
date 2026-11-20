@@ -1290,6 +1290,51 @@ describe('moveToBoard', () => {
   })
 })
 
+describe('rankBefore', () => {
+  test('puts the issue and the one to sit above, and accepts a 204', async () => {
+    let sent = null
+    mockPool(BASE)
+      .put('/rest/agile/1.0/issue/rank', (body) => {
+        sent = body
+        return true
+      })
+      .reply(204)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await client.rankBefore('EUDPA-300', 'EUDPA-100')
+
+    expect(sent).toEqual({
+      issues: ['EUDPA-300'],
+      rankBeforeIssue: 'EUDPA-100'
+    })
+  })
+
+  test('treats a 207 as a failure, naming the reasons', async () => {
+    mockPool(BASE)
+      .put('/rest/agile/1.0/issue/rank')
+      .reply(207, {
+        errorMessages: ['Issue EUDPA-100 is not on a board.']
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.rankBefore('EUDPA-300', 'EUDPA-100')
+    ).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message:
+        'rankBefore(EUDPA-300, EUDPA-100): Jira answered 207, not 204: Issue EUDPA-100 is not on a board.'
+    })
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE).put('/rest/agile/1.0/issue/rank').reply(401, {})
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.rankBefore('EUDPA-300', 'EUDPA-100')
+    ).rejects.toMatchObject({ code: 'AUTH' })
+  })
+})
+
 describe('isInBoardBacklog', () => {
   const BACKLOG_PATH =
     '/rest/agile/1.0/board/13780/backlog?jql=key%20%3D%20EUDPA-300&fields=summary&maxResults=1'

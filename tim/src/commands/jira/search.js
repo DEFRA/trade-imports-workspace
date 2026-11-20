@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createJiraClient } from '../../clients/jira-client.js'
 import { TimError } from '../../errors.js'
 import { makeRunAction } from '../_run-action.js'
+import { jqlQuoted } from './shared.js'
 
 const MAX_LIMIT = 500
 
@@ -17,8 +18,6 @@ const argsSchema = z.object({
     .max(MAX_LIMIT, `--limit can be at most ${MAX_LIMIT}.`)
     .default(50)
 })
-
-const quoted = (text) => `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
 
 /**
  * Validate `search`'s words and options before any request is sent, and
@@ -60,7 +59,7 @@ export const parseSearchArgs = (input) => {
   }
   const clauses = [
     `project = ${project}`,
-    `text ~ ${quoted(text)}`,
+    `text ~ ${jqlQuoted(text)}`,
     ...(open ? ['statusCategory != Done'] : [])
   ]
   return { jql: `${clauses.join(' AND ')} ORDER BY updated DESC`, limit }

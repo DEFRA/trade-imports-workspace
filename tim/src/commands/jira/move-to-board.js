@@ -3,6 +3,7 @@ import { TimError } from '../../errors.js'
 import { parseIssueKey } from './shared.js'
 import { makeRunAction } from '../_run-action.js'
 import { resolveBoardId } from './board-id.js'
+import { readBackUntilLanded } from './read-back.js'
 
 /**
  * Validate `move-to-board`'s options before any side-effect runs.
@@ -16,17 +17,15 @@ export const parseMoveToBoardOptions = (opts) => ({
   confirm: Boolean(opts.confirm)
 })
 
-const pause = (milliseconds) =>
-  new Promise((resolve) => setTimeout(resolve, milliseconds))
-
 const confirmLeftBacklog = async (
   client,
   { board, key, attempts, delayMs }
 ) => {
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    await pause(delayMs)
-    if (!(await client.isInBoardBacklog(board, key))) return
-  }
+  const leftBacklog = await readBackUntilLanded(
+    async () => !(await client.isInBoardBacklog(board, key)),
+    { attempts, delayMs }
+  )
+  if (leftBacklog) return
   throw new TimError(
     'UNKNOWN',
     `Jira accepted the move, but ${key} is still in board ${board}'s backlog. Check the board in Jira.`

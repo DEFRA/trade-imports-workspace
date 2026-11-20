@@ -6,19 +6,19 @@
 
 **Page**: notification-view
 
-The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers".
+The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. An amendment's check answers is titled "Check your answers". A draft and a submitted notification are titled and headed by their notification reference.
 
 ## Requirements
 
 ### Requirement: Check-your-answers numbers three sections over the answers it renders
 **ID**: REQ-PLANTS-CYA-001
-The system MUST group the page under three numbered section headings — About the consignment, Arrival and destination, and Consignment parties — showing the entered values as cards under those headings.
+The system MUST group the page under three numbered section headings — About the consignment, Arrival and destination, and Addresses — showing the entered values as cards under those headings.
 
 #### Scenario: Check-your-answers shows the three numbered sections
 **ID**: SCN-PLANTS-CYA-001-A
 - **GIVEN** the user has completed every section of a potato notification
 - **WHEN** they view check-your-answers
-- **THEN** the numbered section headings read "1. About the consignment", "2. Arrival and destination" and "3. Consignment parties"
+- **THEN** the numbered section headings read "1. About the consignment", "2. Arrival and destination" and "3. Addresses"
 
 #### Scenario: A fully answered notification's check-your-answers reflects entered values
 **ID**: SCN-PLANTS-CYA-001-B
@@ -33,7 +33,7 @@ The system MUST omit the consignor card for a potatoes notification, and MUST sh
 #### Scenario: A potatoes notification omits the consignor card
 **ID**: SCN-PLANTS-CYA-002-A
 - **GIVEN** a potatoes notification is open on check-your-answers
-- **WHEN** the user reads the Consignment parties section
+- **WHEN** the user reads the Addresses section
 - **THEN** no "Consignor" card is shown
 
 #### Scenario: A plants-for-planting notification shows the consignor card
@@ -42,15 +42,22 @@ The system MUST omit the consignor card for a potatoes notification, and MUST sh
 - **WHEN** the user views check-your-answers after submission
 - **THEN** the "Consignor" card shows that party's name
 
-### Requirement: The contact card shows the selected party's details
+### Requirement: The party cards show the selected party's name and address
 **ID**: REQ-PLANTS-CYA-003
-The system MUST show the selected consignment contact's name, address, telephone number and email address on the Contact card.
+The system MUST show the selected party's name and address on the Place of destination, Consignor and Contact cards, reading the address one address line per line followed by the country, and MUST NOT show a telephone number or email address row on them. A copy whose telephone number or email address breaks the address book's rules MUST show that message above the Name row.
 
-#### Scenario: Contact details appear on the Contact card
+#### Scenario: Party details appear on the party cards
 **ID**: SCN-PLANTS-CYA-003-A
-- **GIVEN** a notification has a consignment contact selected
+- **GIVEN** a notification has a place of destination, a consignor and a consignment contact selected
 - **WHEN** the user views check-your-answers
-- **THEN** the Contact card shows that party's name, address lines, telephone number and email address
+- **THEN** each of those cards has a "Name" row and an "Address" row, and no "Telephone number" or "Email address" row
+- **AND** each card's "Address" row reads each non-empty address line on its own line, followed by the country on its own line
+
+#### Scenario: A copy whose email breaks the address book's rules shows that message on the Name row
+**ID**: SCN-PLANTS-CYA-003-B
+- **GIVEN** a notification whose copied party has an email address that breaks the address book's rules
+- **WHEN** the user views check-your-answers
+- **THEN** that party's card shows the email message above the name, on its "Name" row
 
 ### Requirement: Anything not yet answered is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004
@@ -74,16 +81,25 @@ The system MUST open the page that collects an answer when the user follows its 
 - **WHEN** they follow a Change link for a commodity line, change its quantity and save and continue through the commodities list
 - **THEN** they arrive at check-your-answers, showing the new quantity
 
-### Requirement: A draft notification invites submission and withholds post-submission actions
+### Requirement: A draft notification invites submission and offers a red Delete notification in its header
 **ID**: REQ-PLANTS-CYA-006
-The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST NOT offer delete or cancel-amendment while it is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
+The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST keep "Save and return to overview" and the "Cancel and return to overview" link. It MUST offer a red "Delete notification" button in the draft's header, opening the delete page, and MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
 
-#### Scenario: The draft view invites submission and withholds delete and cancel-amendment
+#### Scenario: The draft view invites submission, and its header offers Delete notification
 **ID**: SCN-PLANTS-CYA-006-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to continue to the declaration to submit
-- **AND** no delete or cancel-amendment action is offered
+- **AND** the continue action is followed by "Save and return to overview"
+- **AND** the "Cancel and return to overview" link stays below the buttons
+- **AND** a red "Delete notification" button is offered in the header, not beside the continue action
+- **AND** no cancel-amendment action is offered
+
+#### Scenario: Delete notification on a draft opens the delete page
+**ID**: SCN-PLANTS-CYA-006-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user presses "Delete notification" in the header
+- **THEN** the notification's delete page opens
 
 ### Requirement: Continuing from a ready draft moves on to the declaration
 **ID**: REQ-PLANTS-CYA-007
@@ -95,17 +111,25 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **WHEN** the user continues
 - **THEN** the declaration page opens
 
-### Requirement: A submitted notification is read-only and offers delete
+### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only — with no Change or Edit details links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.
+The system MUST show a submitted notification read-only, with no Change or Edit details links and no continue action. Its header MUST offer a primary "Amend this notification" button that starts an amendment and a red "Delete notification" button that leads to the delete page. "Amend this notification" MUST post from a form of its own carrying only what it needs, "Delete notification" MUST be a link outside that form, and both MUST work without JavaScript. The foot MUST NOT offer Delete notification again. The view MUST NOT offer "Copy as new" or cancel-amendment. What delete does is owned by `plants/notification-lifecycle`.
 
-#### Scenario: The submitted view is read-only and offers delete
+#### Scenario: The submitted view is read-only and offers Amend this notification and Delete notification
 **ID**: SCN-PLANTS-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** the status shown is "Submitted"
+- **THEN** the status tag in the header reads "Submitted"
 - **AND** no Change or Edit details links and no continue action are offered
-- **AND** a delete action is offered, and no cancel-amendment action is shown
+- **AND** the header offers "Amend this notification", posting from a form of its own, and a red "Delete notification" link outside it
+- **AND** no "Copy as new" or cancel-amendment action is shown
+- **AND** Delete notification is offered only in the header, and not at the foot of the view
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-PLANTS-CYA-008-C
+- **GIVEN** a submitted notification is open on check-your-answers
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the notification is opened for amendment and its status bar reads "Amend"
 
 #### Scenario: A submitted notification can be deleted from check-your-answers
 **ID**: SCN-PLANTS-CYA-008-B
@@ -114,15 +138,24 @@ The system MUST show a submitted notification read-only — with no Change or Ed
 - **THEN** they return to the dashboard with the notification no longer listed
 - **AND** a deleted banner is shown
 
+#### Scenario: The header actions work without JavaScript
+**ID**: SCN-PLANTS-CYA-008-D
+- **GIVEN** a submitted notification's view, with JavaScript off
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the amendment opens
+- **WHEN** the user uses "Delete notification"
+- **THEN** the delete confirmation page opens
+
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
-The system MUST offer "Cancel amend" in the status bar of check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
+While a notification is being amended, check-your-answers MUST offer "Cancel amend" only as a secondary button beside the continue action, and MUST NOT show a "Cancel amend" link in the status bar under the heading. The button MUST open the cancel-amendment confirmation. Check-your-answers MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: Cancel amendment is offered only while amending
 **ID**: SCN-PLANTS-CYA-009-A
 - **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
-- **THEN** "Cancel amend" is offered in the status bar
+- **THEN** a secondary "Cancel amend" button sits beside the continue action, before "Save and return to overview", and opens the cancel-amendment confirmation
+- **AND** no "Cancel amend" link is shown in the status bar under the heading
 - **AND** no delete action is offered
 
 #### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers
@@ -266,3 +299,98 @@ The system MUST show the proposed place of landing exactly as the port was offer
 - **GIVEN** a notification whose country of origin is the Canary Islands
 - **WHEN** the user views check-your-answers
 - **THEN** the country of origin row reads "Canary Islands (Spain)"
+
+### Requirement: A submitted notification's read-only view is headed by its reference and status, and dated
+**ID**: REQ-PLANTS-CYA-016
+The system MUST head a submitted notification's read-only view with its reference number and a "Submitted" tag, with no status bar, and start the browser title with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. An amendment's review MUST keep its own heading, title and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
+**ID**: SCN-PLANTS-CYA-016-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a green "Submitted" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The submitted view and a draft's check answers are titled by their references, and an amendment keeps its title
+**ID**: SCN-PLANTS-CYA-016-B
+- **GIVEN** a submitted notification, a draft notification and an amendment
+- **WHEN** the user views each
+- **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** the draft's check answers is titled by its reference in the same way
+- **AND** the amendment's review is headed "Check your answers" with an "Amend" status bar
+
+#### Scenario: The date submitted is the UK day of the submission
+**ID**: SCN-PLANTS-CYA-016-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user views it
+- **THEN** the header reads "Date submitted: 22 July 2026"
+
+### Requirement: A notification's view shows its import reference numbers as text to copy
+**ID**: REQ-PLANTS-CYA-017
+The system MUST show, on a draft's check answers and on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C085". Both values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+
+#### Scenario: The section shows the warning, the reference row and the customs document code row
+**ID**: SCN-PLANTS-CYA-017-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its rows are "Notification reference", reading the notification's reference number, and "Customs document code", reading "C085"
+
+#### Scenario: The values read as text and no button shows without JavaScript
+**ID**: SCN-PLANTS-CYA-017-B
+- **GIVEN** a submitted notification and a browser with JavaScript off
+- **WHEN** the user views it
+- **THEN** the section shows the warning, the reference and "C085" as text
+- **AND** the section shows no button
+
+#### Scenario: A draft shows the warning, the notification reference and the customs document code
+**ID**: SCN-PLANTS-CYA-017-C
+- **GIVEN** a draft notification
+- **WHEN** the user opens its check answers
+- **THEN** the "Import reference numbers" section shows its warning, a "Notification reference" row and a "Customs document code" row reading "C085" as text
+- **AND** the section has no Copy button
+
+### Requirement: Opening the view of a notification that does not exist shows the standard page not found
+**ID**: REQ-PLANTS-CYA-018
+The system MUST show the service's standard page not found, with the same status and wording as every other journey page, when the user opens the view of a notification that does not exist.
+
+#### Scenario: An unknown notification shows page not found
+**ID**: SCN-PLANTS-CYA-018-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the view of a notification that does not exist
+- **THEN** the page not found status is returned
+- **AND** the page is headed "404" and reads "Page not found"
+
+### Requirement: A draft's check answers is headed by its reference with a Draft tag, dated by its creation, and stays editable
+**ID**: REQ-PLANTS-CYA-019
+The system MUST head a draft's check answers with its reference number and a "Draft" tag, with no status bar, and MUST show "Date created: " and the UK day of creation under the header. The header MUST offer only a red "Delete notification" button, with no "Copy as new". The page MUST keep its Change links and error summary, and end with a continue action.
+
+#### Scenario: A draft's check answers is headed by its reference with a Draft tag and no status bar
+**ID**: SCN-PLANTS-CYA-019-A
+- **GIVEN** a draft notification
+- **WHEN** the user views its check answers
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a blue "Draft" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The date created is the UK day the notification was created
+**ID**: SCN-PLANTS-CYA-019-B
+- **GIVEN** a draft notification created at 23:30 UTC on 21 July 2026
+- **WHEN** the user views its check answers
+- **THEN** the header reads "Date created: 22 July 2026"
+
+#### Scenario: The header offers only Delete notification
+**ID**: SCN-PLANTS-CYA-019-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its check answers
+- **THEN** the header offers a red "Delete notification" button
+- **AND** the header offers no "Copy as new" and no "Amend this notification"
+
+#### Scenario: Change links, errors and Continue stay
+**ID**: SCN-PLANTS-CYA-019-D
+- **GIVEN** a draft notification with incomplete sections
+- **WHEN** the user views its check answers
+- **THEN** its cards keep their Change links
+- **AND** the error summary lists each incomplete section
+- **AND** the page ends with a continue action

@@ -8,7 +8,7 @@ The parts a notification is divided into as named to the user, shown above the h
 
 ### Requirement: A question page names the part of the notification it belongs to, above its heading
 **ID**: REQ-CAPTIONS-001
-The system MUST show, above the heading of a question page, the name of the part of the notification that page belongs to. The parts named MUST be: About the consignment, Description of the goods, Commodity details, Consignment parties, Movement, Transport and arrival, Add a new transporter, and Documents.
+The system MUST show, above the heading of a question page, the name of the part of the notification that page belongs to. The parts named MUST be: About the consignment, Description of the goods, Commodity details, Addresses, Movement, Transport and arrival, Add a new transporter, and Documents.
 
 #### Scenario: A question page is captioned with the part it belongs to
 **ID**: SCN-CAPTIONS-001-A

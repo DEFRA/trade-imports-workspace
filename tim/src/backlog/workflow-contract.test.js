@@ -3756,6 +3756,8 @@ describe('increment-build-loop', () => {
           '32:15. **The transit controller\'s refusal branches log, under bounded tidy-up.** Nothing upstream logs them: not `kit.js`, the engine, nor `server.js`\'s catch-all, which logs only 500 and above. House rule, Logging and errors: "Every branch that changes an outcome (refusal, redirect, retry, fallback, state switch) logs once, with the ids support searches by." `pino-logging.md` §4a: "`info` for an expected refusal, such as a validation error". So each of the three logs once, at info, at the branch that decides.'
         const QUOTED_REPO_DOC_AND_RULE =
           '35:14. **The capacity refusal logs, although it now re-renders as a field error with 400.** `architecture.md:169-170` exempts "a validation 400 that re-renders the page". That is a business refusal, the same kind as the declaration refusal the architecture doc logs as its canonical example. The house rule ("every branch that changes an outcome (refusal …) logs once") wins in any case.'
+        const CITED_LOG_TEXT =
+          '272:- `.../dashboard/controller.js:141` log text "Amendment started, sent to the review page" — untrue for the Overview landing: the line must state only that the amendment started, with the landing as a field (section 2).'
         const NAMES_CARRY_WHAT_COMMENTS_SAID =
           '108:The comments at `:35` and `:64` go. The constants below them are renamed where needed so their names carry what the comments said (decision 15).'
         const NAMES_STATE_WHAT_DOC_COMMENT_SAID =
@@ -3955,7 +3957,7 @@ describe('increment-build-loop', () => {
           expect(stageLabels(run)).toContain('inc-900 implement')
         })
 
-        test('passes without a replan a plan that only quotes rules, existing titles, UI copy or what a probe log shows, says what not to copy, or runs checks', async () => {
+        test("passes without a replan a plan that only quotes rules, existing titles, UI copy, a cited line's log text or what a probe log shows, says what not to copy, or runs checks", async () => {
           const run = await runPlannedWith(
             {
               'inc-900 plan lint': lintFound(
@@ -3964,6 +3966,7 @@ describe('increment-build-loop', () => {
                 COMMENTS_NOT_COPIED,
                 QUOTED_HOUSE_RULE,
                 QUOTED_REPO_DOC_AND_RULE,
+                CITED_LOG_TEXT,
                 GREP_CHECK,
                 JQ_CHECK,
                 FENCED_CHECK,

@@ -146,7 +146,8 @@ The system MUST copy the chosen address-book record onto the notification when t
 **ID**: SCN-ADDR-002-C
 - **GIVEN** a consignment role has no address chosen
 - **WHEN** the user picks a record from the address book for it
-- **THEN** the notification shows that record's name, address lines, town or city, county, postcode, country, telephone and email
+- **THEN** the notification holds that record's name, address lines, town or city, county, postcode, country, telephone and email
+- **AND** the review reads back its name, address lines and country, each on its own line, without the telephone number or email address
 
 #### Scenario: Editing the record in the address book leaves a draft notification unchanged
 **ID**: SCN-ADDR-002-A
@@ -194,7 +195,7 @@ The system MUST let the user edit the details of an address copied onto the noti
 #### Scenario: A copied address offers both choosing another address and editing its details
 **ID**: SCN-ADDR-014-E
 - **GIVEN** a role's address has been chosen for a draft notification
-- **WHEN** the user views that role on the consignment addresses page or the check-your-answers view
+- **WHEN** the user views that role on the consignment addresses page, or views the contact address on the review
 - **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
 - **AND** a role with no address chosen offers only adding one
 

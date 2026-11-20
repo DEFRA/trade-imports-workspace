@@ -71,7 +71,7 @@ The system MUST accept a save of the CPH number page with every box left empty, 
 **ID**: SCN-CPH-010-C
 - **GIVEN** a notification whose commodities call for a CPH number and whose CPH section has no number added
 - **WHEN** the user tries to continue from the review
-- **THEN** the review refuses to continue, naming roles and addresses as outstanding
+- **THEN** the review refuses to continue, naming consignment addresses as outstanding
 
 ### Requirement: Each box is validated on its own length and digits, and every wrong box is named at once
 **ID**: REQ-CPH-004

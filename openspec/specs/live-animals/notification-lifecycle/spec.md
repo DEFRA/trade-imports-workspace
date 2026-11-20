@@ -204,3 +204,68 @@ The backend MUST persist each new notification under the `Trade-Imports-Organisa
 - **GIVEN** organisation A owns a notification with upload sessions registered
 - **WHEN** organisation B calls register, session lookup, or list document-upload routes for that reference
 - **THEN** the backend responds as if the notification were not found for organisation B
+
+### Requirement: Submitting records Submitted whether or not an ITAHC passed its virus scan
+**ID**: REQ-LIFECYCLE-010
+The system MUST record a notification as "Submitted" with the date it was submitted when it is submitted, whether or not an uploaded ITAHC passed its virus scan, and MUST return a cancelled amendment to "Submitted" with its original date submitted.
+
+#### Scenario: A submission with no ITAHC is recorded as Submitted
+**ID**: SCN-LIFECYCLE-010-A
+- **GIVEN** a notification with no uploaded documents, or only a veterinary certificate
+- **WHEN** the user submits it
+- **THEN** its status is "Submitted"
+- **AND** its date submitted is the day it was submitted
+
+#### Scenario: A submission with an ITAHC is recorded as Submitted
+**ID**: SCN-LIFECYCLE-010-B
+- **GIVEN** a notification with an ITAHC uploaded and scanned clean
+- **WHEN** the user submits it
+- **THEN** its status is "Submitted"
+- **AND** its date submitted is the day it was submitted
+
+#### Scenario: Cancelling an amendment returns the notification to Submitted
+**ID**: SCN-LIFECYCLE-010-C
+- **GIVEN** a notification submitted without an ITAHC, on which an amendment has been started
+- **WHEN** the user cancels the amendment
+- **THEN** its status is "Submitted" again, with its original date submitted
+
+### Requirement: The fulfilments read always says whether an amendment's answers differ from the submitted version
+**ID**: REQ-LIFECYCLE-011
+The backend's fulfilments read MUST always answer yes or no to whether the notification's answers differ from the submitted version, and MUST NOT leave the answer empty. Only a change to a notification answer counts as a difference: a change to the uploaded documents or the fulfilments payload MUST NOT.
+
+#### Scenario: A draft and a submitted notification read no
+**ID**: SCN-LIFECYCLE-011-A
+- **GIVEN** a draft notification, or a submitted one
+- **WHEN** its fulfilments are read
+- **THEN** the answers are reported as not differing
+
+#### Scenario: An amendment just started reads no
+**ID**: SCN-LIFECYCLE-011-B
+- **GIVEN** a notification on which an amendment has just been started
+- **WHEN** its fulfilments are read
+- **THEN** the answers are reported as not differing
+
+#### Scenario: An amendment reads yes once a saved answer differs, and no once every changed answer is put back
+**ID**: SCN-LIFECYCLE-011-C
+- **GIVEN** a notification being amended
+- **WHEN** a saved notification answer differs from the submitted version
+- **THEN** the answers are reported as differing
+- **AND** once every changed answer is put back, the answers are reported as not differing
+
+#### Scenario: A notification stored with no answer recorded reads no
+**ID**: SCN-LIFECYCLE-011-D
+- **GIVEN** a notification stored with no record of whether its answers differ
+- **WHEN** its fulfilments are read
+- **THEN** the answers are reported as not differing
+
+#### Scenario: Resubmitting or cancelling an amendment reads no
+**ID**: SCN-LIFECYCLE-011-E
+- **GIVEN** an amendment whose answers differ from the submitted version
+- **WHEN** the user resubmits it, or cancels it
+- **THEN** the answers are reported as not differing
+
+#### Scenario: A change to the uploaded documents or the fulfilments payload alone reads no
+**ID**: SCN-LIFECYCLE-011-F
+- **GIVEN** a notification on which an amendment has been started
+- **WHEN** only its fulfilments payload or uploaded documents change
+- **THEN** the answers are reported as not differing

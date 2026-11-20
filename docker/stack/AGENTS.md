@@ -423,10 +423,26 @@ cache, which covers every `extends`, `include` and `import`, and
 `@hapi/vision`'s cache of the top-level view named in `h.view()`. Both follow
 `NUNJUCKS_NO_CACHE`. `frontend.compose.yml` defaults it to `false`, so
 published images cache, which saves about a third of E2E time.
-`dev.compose.yml` sets `NUNJUCKS_NO_CACHE=true` and `NUNJUCKS_WATCH=false`.
-The two files disagree on purpose.
+`dev.compose.yml` sets `NUNJUCKS_WATCH=false` for every frontend, and
+`NUNJUCKS_NO_CACHE=true` for admin and ins-frontend, and `false` for the
+animals and plants frontends. The two files disagree on purpose.
 
-- **Dev mode turns the cache off rather than watching it.** The nunjucks
+- **The animals and plants frontends cache in dev mode.** Their nodemon
+  restarts the app on every `.njk` save, which rebuilds both caches, so a
+  cached template is never stale. With the cache off, every GOV.UK macro call
+  re-reads and recompiles its `template.njk`. Their address-book pickers list
+  every record on one page, each row with its own `govukRadios`, so with the
+  cache off one picker with a few hundred records costs half a second or more
+  of the event loop, and the cost grows as the E2E run adds records. It timed
+  out the plants amendment specs. In animals the pickers averaged over
+  2 seconds a page across a full E2E run, against about 100ms for the cached
+  plants pickers.
+- **A starved event loop looks like a network fault.** Node gives each
+  connect attempt 250ms. A frontend busy rendering misses that timer, so its
+  backend calls fail with `ETIMEDOUT` in `internalConnectMultiple`, and a
+  browser that has given up on a slow page leaves a `write EPIPE`. Look for a
+  slow route before suspecting the backend.
+- **Dev mode otherwise turns the cache off rather than watching it.** The nunjucks
   watcher clears only nunjucks' cache. vision reads the top-level view itself,
   so with cache on and watch on, partials refresh while `h.view()` templates
   go stale, and a stale page looks like a broken edit. With the cache off a

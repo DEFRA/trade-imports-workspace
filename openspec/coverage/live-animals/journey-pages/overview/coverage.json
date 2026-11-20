@@ -36,7 +36,7 @@
           "name": "The Review and submit button opens the review before every task is answered",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "opens the review from a notification with only the origin answered", "strength": "full", "notes": "button has a live href straight to the review page after only origin is answered; CANNOT_START_STATUS asserted absent in the sibling 'leads the secondary Return to dashboard button' test" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "opens the review from a notification with only the origin answered", "strength": "full", "notes": "button has a live href straight to the review page after only origin is answered; the sibling 'leads the secondary Return to dashboard button' test asserts every task reads Complete or To do" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "opens the review once every answer section is complete", "strength": "full", "notes": "second, weaker piece of evidence that the review also opens once the notification is complete" }
           ]
         }
@@ -147,15 +147,15 @@
     },
     {
       "id": "REQ-OVERVIEW-007",
-      "name": "Only the Roles and addresses row carries hint text",
+      "name": "Only the Consignment addresses row carries hint text",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OVERVIEW-007-A",
-          "name": "Roles and addresses is the only row with a hint",
+          "name": "Consignment addresses is the only row with a hint",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: only the roles and addresses row carries a hint", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: only the consignment addresses row carries a hint", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -267,7 +267,8 @@
           "name": "Rail or road without a country of origin or a commodity has no Transit countries task",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should hide the transit row for %s while %s is not answered", "strength": "full", "notes": "road and rail, each with no country of origin and with no commodity: no transit row, arrival details still shown; red for all four with the hub hiding conditional rows only when not applicable" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should hide the transit row for %s while %s is not answered", "strength": "full", "notes": "road and rail, each with no country of origin and with no commodity: no transit row, arrival details still shown; red for all four with the hub hiding conditional rows only when not applicable" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the overview lists the transit-countries task for road only once a commodity is saved", "strength": "partial", "notes": "road with a country of origin and no commodity saved: no Transit countries task, then it appears once a commodity is saved; the no-country-of-origin half and rail are not proven through the stack; red with the hub's no-page-opens clause removed" }
           ]
         }
       ]
@@ -292,6 +293,41 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should walk the additional-details row through Not yet started, In progress and Completed on its own two answers, with no import reason saved", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-015",
+      "name": "Overview marks its commodity totals, task list and numbered sections as named regions for assistive technology",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-015-A",
+          "name": "The two commodity totals are named regions inside the Your commodities region",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "both boxes read 0 before a commodity is added", "strength": "full", "notes": "finds the two boxes as regions by exact name inside the Your commodities region" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub marks its commodity totals as two named regions inside the Your commodities region", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-015-B",
+          "name": "The task list is a region headed Notification task list holding the six numbered sections as named regions",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should head the whole task list \"Notification task list\"", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "the task list is headed \"Notification task list\" over the six numbered design sections in order, with nothing after them", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "the task list is a region of one named region per numbered section, each holding its heading and one task list, with Main import reason under About the consignment", "strength": "partial", "notes": "proves the six sections and their task lists, not the heading name" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings, with nothing after them", "strength": "partial", "notes": "proves the six section regions, in order, each with its exact task list, not the heading name" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-015-C",
+          "name": "A task link is described by its status",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: only the consignment addresses row carries a hint", "strength": "full", "notes": "Consignment addresses reads its hint then its status; every other task link reads its status alone" }
           ]
         }
       ]

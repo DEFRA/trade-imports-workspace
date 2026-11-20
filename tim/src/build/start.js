@@ -196,7 +196,6 @@ const raiseTicket = async ({ jira, path, workarea, row, config }) => {
       summary,
       description: ticketDescription({ workarea, row }),
       issuetype: { name: 'Task' },
-      priority: { name: 'Medium' },
       labels: [],
       parent: { key: config.epic }
     })

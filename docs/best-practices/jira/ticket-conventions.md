@@ -38,15 +38,12 @@ Good:
 > *As* a trader ... *Given* the trader has more than 8 transporters
 > *When* the trader opens the page
 
-## Priority guidance
+## Priority
 
-| Priority | Use when |
-|----------|----------|
-| **Highest** | Production-blocking or live-incident workstream. |
-| **High** | Blocks other work in flight or another team. |
-| **Medium** | Default. Normal planned work. |
-| **Low** | Nice-to-have; can drift without harm. |
-| **Lowest** | Backlog hygiene, opportunistic clean-up, tech debt (see [Field-default modifiers](#field-default-modifiers-opt-in)). |
+Do not ask for or set the priority field. The team orders work by its
+position on the board, so the field means nothing in practice. Leave
+it at the Medium that `tim jira create` sends when a manifest has none. When you need to say
+how urgent something is, move it up the board.
 
 ## Labels
 
@@ -234,6 +231,13 @@ To drop a ticket:
 3. If neither is available, leave the ticket in `To Do` with the
    comment. Never move it to `Done` or `CLOSED` to tidy the board.
 
+### Moving a ticket onto the board
+
+A new ticket lands in board 13780's backlog. "Move it to the board"
+means taking it out of the backlog, not changing its status: no status
+does that. Use `tim jira move-to-board EUDPA-X`, a dry run until you
+add `--confirm`.
+
 ### Assigning a ticket
 
 `tim jira assign EUDPA-X <accountId|me>` assigns a ticket, a new one
@@ -299,13 +303,9 @@ Pair with `tim jira ticket EUDPA-X` for verification
 
 ## Field-default modifiers (opt-in)
 
-When the user describes their Task as tech-debt, the skill defaults
-two fields without re-asking:
-
-| Field | Default | Why |
-|-------|---------|-----|
-| Label | `technicalImprovement` | Canonical EUDPA tech-debt label (8 backlog issues on 2026-05-26 used it). |
-| Priority | `Lowest` | EUDPA convention for tech-debt — tracked but not urgent. |
+When the user describes their Task as tech-debt, the skill adds the
+label `technicalImprovement` without re-asking. It is the canonical
+EUDPA tech-debt label (8 backlog issues on 2026-05-26 used it).
 
 Parent epic is still asked for normally — the modifier does not
 suggest a specific key. The user picks the feature epic that owns

@@ -71,8 +71,8 @@ Ask the user which ticket this upgrade tracks. Three paths:
    `chore/EUDPA-XXXXX`. Proceed to Step 2.
 2. **Create a new ticket** — write a `tim-ticket/1` manifest with
    DevOps conventions (`project` from `JIRA_PROJECT_KEY`, type `Task`,
-   parent `EUDPA-144`, labels `DevOps` + `tech-improvement`, priority
-   `Medium`) and raise it with
+   parent `EUDPA-144`, labels `DevOps` + `tech-improvement`, no
+   priority) and raise it with
    `tim jira create --from ticket.json` (a dry run), then
    `--confirm <planId>` once the user approves. See the
    `ticket-creator` skill for the manifest and the GDS

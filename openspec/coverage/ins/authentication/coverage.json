@@ -48,7 +48,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/plugins/auth.test.js",
-              "test": "redirectTo builds /auth/sign-in redirect including pathname and search",
+              "test": "Should build the /auth/sign-in redirect from the pathname and search",
               "strength": "partial",
               "notes": "proves the return-URL redirect is constructed; does not exercise the browser sign-in round trip"
             },
@@ -56,7 +56,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/plugins/auth.test.js",
-              "test": "redirectTo encodes the return URL query string",
+              "test": "Should encode the return URL query string in the /auth/sign-in redirect",
               "strength": "partial",
               "notes": "encodes an address-book return path with query; still not the full unauthenticated round trip"
             }
@@ -81,6 +81,188 @@
               "test": "signing in to animals, then ins, then plants in one browser keeps all three sessions",
               "strength": "partial",
               "notes": "run green; reopens each dashboard without sign-in and asserts the three auth cookie names; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-AUTH-003",
+      "name": "A hidden sign-in through the real Defra ID shows what it returned, and leaves the service's own sign-in alone",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-AUTH-003-A",
+          "name": "Without IDM configured, the IDM sign-in pages do not exist",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should not serve %s",
+              "strength": "full",
+              "notes": "test.each over every IDM path; red-probed by serving the routes without a discovery URL"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-B",
+          "name": "The start page's button starts the sign-in at IDM",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show a start page whose Sign in with Defra ID button links to the route that goes to IDM",
+              "strength": "full",
+              "notes": "asserts the button's text and its target; red-probed by pointing the button elsewhere"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should send the browser to the IDM authorize endpoint with the IDM client, service, policy and callback",
+              "strength": "full",
+              "notes": "against a mock IDM discovery document; red-probed by changing the policy. The real CP-Dev round trip is checked by hand"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-C",
+          "name": "A completed IDM sign-in shows the ID token claims, the access token claims and the token response",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should list every ID token claim with its value and the token response, and say the access token is the ID token",
+              "strength": "full",
+              "notes": "compares every claim name and shown value with the signed token's payload; the ID token is verified against served keys. Red-probed by rendering a wrong claim value"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should list every access token claim with its value when the access token is not the ID token",
+              "strength": "full",
+              "notes": "compares every claim name and shown value with the access token's payload; red-probed by rendering a wrong claim value"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should exchange the code at IDM, show the token response IDM returned and measure the exchange as idm token-exchange",
+              "strength": "full",
+              "notes": "runs the callback through the IDM Bell strategy against a nocked IDM token endpoint; red-probed by mis-mapping expires_in"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/auth/verify-token.test.js",
+              "test": "Should resolve for a token issued to the IDM client when checked against IDM, and measure the key fetch as idm jwks",
+              "strength": "partial",
+              "notes": "proves the IDM token check passes for its own client and issuer; not the page"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-D",
+          "name": "The IDM identity never reaches the rest of the service",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should leave the caller's session in the cache and set or clear no session cookie",
+              "strength": "full",
+              "notes": "the callback carries a real sealed service session cookie for the cached session; red-probed by clearing the service session cookie in the callback"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-E",
+          "name": "An error from IDM shows a generic page with a link to try again",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the unable to sign in page, linking back to the start page, and log the error in full, when IDM returns an error",
+              "strength": "full",
+              "notes": "red-probed by dropping the start-page link target and by dropping the IDM error fields from the log"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the unable to sign in page, and log the refusal with the state and the IDM ids, when the ID token is signed by a key IDM does not serve",
+              "strength": "partial",
+              "notes": "the unverifiable-token branch; not red-probed on its own"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-F",
+          "name": "The signed-in page with no IDM sign-in sends the user to the start page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should send a visitor with no IDM sign-in from the signed-in page to the start page",
+              "strength": "full",
+              "notes": "red-probed by redirecting elsewhere"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-G",
+          "name": "The signed-out page needs no sign-in",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the signed-out page without a session",
+              "strength": "full",
+              "notes": "red-probed by changing the heading"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-H",
+          "name": "An error IDM sends to the signed-out page shows the generic page, not signed out",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should show the unable to sign in page, not the signed-out page, and log the error in full, when IDM returns an error to the signed-out page",
+              "strength": "full",
+              "notes": "red-probed by rendering the signed-out page whatever the query"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-AUTH-003-I",
+          "name": "No page of the service links to the IDM sign-in",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/auth/idm-sign-in.test.js",
+              "test": "Should name no IDM sign-in page in any template or module of the service",
+              "strength": "partial",
+              "notes": "reads every template and module under src/server/app for an IDM sign-in path; a link built elsewhere, or from config, would not be caught. Red-probed by adding a template that links to the start page"
             }
           ]
         }

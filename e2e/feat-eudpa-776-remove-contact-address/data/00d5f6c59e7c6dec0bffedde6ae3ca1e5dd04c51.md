@@ -1,0 +1,210 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: plants/e2e/features/destination.spec.ts >> High-risk plants destination section >> search narrows the organisation address book, and a term nothing matches says so
+- Location: tests/plants/e2e/features/destination.spec.ts:59:3
+
+# Error details
+
+```
+Error: expect(locator).toHaveText(expected) failed
+
+Locator: getByRole('heading', { name: 'Select an address', level: 2 }).locator('xpath=following-sibling::*[1][self::p]')
+Expected pattern: /Showing 5 out of \d+ results/
+Received string:  "Showing 38 out of 38 results"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toHaveText" getByRole('heading', { name: 'Select an address', level: 2 }).locator('xpath=following-sibling::*[1][self::p]') with timeout 5000ms
+  - waiting for getByRole('heading', { name: 'Select an address', level: 2 }).locator('xpath=following-sibling::*[1][self::p]')
+    14 × locator resolved to <p class="govuk-body">Showing 38 out of 38 results</p>
+       - unexpected value "Showing 38 out of 38 results"
+
+```
+
+```yaml
+- paragraph: Showing 38 out of 38 results
+```
+
+# Test source
+
+```ts
+  1   | import { test, expect } from '@fixtures';
+  2   | import { PLANTS_FOR_PLANTING, POTATOES, nurseryAddress } from '@flows/plants/journey';
+  3   | import { ALREADY_ARRIVED } from '@domain/plants/constants/arrival-status-page';
+  4   | 
+  5   | const DESTINATION_TASK_ROW = 'Place of destination';
+  6   | 
+  7   | const PRE_ARRIVAL_DESTINATION_HEADING = 'Place of destination';
+  8   | const POST_ARRIVAL_DESTINATION_HEADING = 'Where is the consignment now?';
+  9   | 
+  10  | const INTENDED_DESTINATION_DESCRIPTION =
+  11  |   'Where the goods will be kept after arrival. This is where a plant health inspector may carry out a spot check.';
+  12  | const POST_ARRIVAL_DESTINATION_DESCRIPTION =
+  13  |   'Give the address where the consignment is being kept. If it is still on its way to its intended destination, give that destination. A plant health inspector may carry out a spot check here.';
+  14  | 
+  15  | const PICKER_PAGE_SIZE = 5;
+  16  | 
+  17  | const FULL_BOOK_COUNT = new RegExp(`Showing ${PICKER_PAGE_SIZE} out of \\d+ results`);
+  18  | 
+  19  | test.describe('High-risk plants destination section', () => {
+  20  |   test('the question is asked in the state the arrival answer put the notification in', async ({ pages, plantsPages, plantsJourney }) => {
+  21  |     const reference = await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  22  | 
+  23  |     await expect(pages.page).toHaveURL(plantsPages.placeOfDestination.expectedUrlPattern(reference));
+  24  |     await expect(plantsPages.placeOfDestination.headingNamed(PRE_ARRIVAL_DESTINATION_HEADING)).toBeVisible();
+  25  |     await expect(plantsPages.placeOfDestination.descriptionNamed(INTENDED_DESTINATION_DESCRIPTION)).toBeVisible();
+  26  | 
+  27  |     await plantsPages.arrivalStatus.open(reference);
+  28  |     await plantsJourney.answerArrivalStatus(ALREADY_ARRIVED);
+  29  | 
+  30  |     await plantsPages.placeOfDestination.open(reference);
+  31  |     await expect(plantsPages.placeOfDestination.headingNamed(POST_ARRIVAL_DESTINATION_HEADING)).toBeVisible();
+  32  |     await expect(plantsPages.placeOfDestination.descriptionNamed(POST_ARRIVAL_DESTINATION_DESCRIPTION)).toBeVisible();
+  33  |   });
+  34  | 
+  35  |   test('a potato notification is asked for the place of destination', async ({ pages, plantsPages, plantsJourney }) => {
+  36  |     const reference = await plantsJourney.toDestinationOfNewNotification(POTATOES);
+  37  | 
+  38  |     await expect(pages.page).toHaveURL(plantsPages.placeOfDestination.expectedUrlPattern(reference));
+  39  |     await expect(plantsPages.placeOfDestination.headingNamed(PRE_ARRIVAL_DESTINATION_HEADING)).toBeVisible();
+  40  |     await expect(plantsPages.placeOfDestination.descriptionNamed(INTENDED_DESTINATION_DESCRIPTION)).toBeVisible();
+  41  |   });
+  42  | 
+  43  |   test('saving with nothing chosen moves on to the consignor page and leaves the destination not yet started', async ({
+  44  |     pages,
+  45  |     plantsPages,
+  46  |     plantsJourney,
+  47  |   }) => {
+  48  |     const reference = await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  49  | 
+  50  |     await plantsPages.placeOfDestination.saveAndContinue.click();
+  51  | 
+  52  |     await expect(pages.page).toHaveURL(plantsPages.consignorSelect.expectedUrlPattern(reference));
+  53  |     await expect(plantsPages.consignorSelect.heading).toBeVisible();
+  54  | 
+  55  |     await plantsPages.overview.open(reference);
+  56  |     await expect(plantsPages.overview.taskRow(DESTINATION_TASK_ROW)).toContainText('Not yet started');
+  57  |   });
+  58  | 
+  59  |   test('search narrows the organisation address book, and a term nothing matches says so', async ({
+  60  |     plantsPages,
+  61  |     plantsJourney,
+  62  |     addressBookApi,
+  63  |   }) => {
+  64  |     const token = `Kirkcaldy${Date.now()}`;
+  65  |     const matches = [`Highland Nurseries ${token}`, `Tayside Growers ${token}`];
+  66  |     for (const name of matches) {
+  67  |       await addressBookApi.createAddress(nurseryAddress(name));
+  68  |     }
+  69  | 
+  70  |     await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  71  | 
+> 72  |     await expect(plantsPages.placeOfDestination.resultsSummary).toHaveText(FULL_BOOK_COUNT);
+      |                                                                 ^ Error: expect(locator).toHaveText(expected) failed
+  73  | 
+  74  |     await plantsPages.placeOfDestination.searchFor(token);
+  75  | 
+  76  |     await expect(plantsPages.placeOfDestination.resultsSummary).toHaveText('Showing 2 out of 2 results');
+  77  |     await expect(plantsPages.placeOfDestination.address(matches[0])).toBeVisible();
+  78  |     await expect(plantsPages.placeOfDestination.address(matches[1])).toBeVisible();
+  79  | 
+  80  |     await plantsPages.placeOfDestination.searchFor(`${token} Ardnamurchan`);
+  81  | 
+  82  |     await expect(plantsPages.placeOfDestination.noMatchesMessage).toBeVisible();
+  83  | 
+  84  |     await plantsPages.placeOfDestination.searchFor('');
+  85  |     await expect(plantsPages.placeOfDestination.resultsSummary).toHaveText(FULL_BOOK_COUNT);
+  86  |   });
+  87  | 
+  88  |   test('results are paged five at a time, and a row ticked on a later page is the one that saves', async ({
+  89  |     pages,
+  90  |     plantsPages,
+  91  |     plantsJourney,
+  92  |     addressBookApi,
+  93  |   }) => {
+  94  |     const token = `Peterhead${Date.now()}`;
+  95  |     const target = `Target Nursery ${token}`;
+  96  |     await addressBookApi.createAddress(nurseryAddress(target));
+  97  |     for (let newer = 0; newer < PICKER_PAGE_SIZE; newer += 1) {
+  98  |       await addressBookApi.createAddress(nurseryAddress(`Newer Than Target ${token} ${newer}`));
+  99  |     }
+  100 | 
+  101 |     const reference = await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  102 |     await plantsPages.placeOfDestination.searchFor(token);
+  103 | 
+  104 |     await expect(plantsPages.placeOfDestination.resultsSummary).toHaveText('Showing 5 out of 6 results');
+  105 |     await expect(plantsPages.placeOfDestination.address(target)).toHaveCount(0);
+  106 | 
+  107 |     await plantsPages.placeOfDestination.paginationPageLink(2).click();
+  108 |     await expect(plantsPages.placeOfDestination.resultsSummary).toHaveText('Showing 1 out of 6 results');
+  109 | 
+  110 |     await plantsPages.placeOfDestination.address(target).check();
+  111 |     await plantsPages.placeOfDestination.saveAndContinue.click();
+  112 | 
+  113 |     await expect(pages.page).toHaveURL(plantsPages.consignorSelect.expectedUrlPattern(reference));
+  114 | 
+  115 |     await plantsPages.overview.open(reference);
+  116 |     await expect(plantsPages.overview.taskRow(DESTINATION_TASK_ROW)).toContainText('Completed');
+  117 | 
+  118 |     await plantsPages.placeOfDestination.open(reference);
+  119 |     await expect(plantsPages.placeOfDestination.selectedAddress(target)).toBeVisible();
+  120 |     await expect(plantsPages.placeOfDestination.address(target)).toHaveCount(0);
+  121 |   });
+  122 | 
+  123 |   test(
+  124 |     'deleting the chosen address from the address book leaves its copy on the notification',
+  125 |     { tag: '@address-book' },
+  126 |     async ({ pages, plantsPages, plantsJourney, addressBookApi }) => {
+  127 |       const token = `Montrose${Date.now()}`;
+  128 |       const name = `Deleted Nursery ${token}`;
+  129 |       const record = await addressBookApi.createAddress(nurseryAddress(name));
+  130 | 
+  131 |       const reference = await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  132 |       await plantsJourney.chooseDestination(name);
+  133 | 
+  134 |       await expect(pages.page).toHaveURL(plantsPages.consignorSelect.expectedUrlPattern(reference));
+  135 | 
+  136 |       await addressBookApi.deleteAddress(record.id);
+  137 | 
+  138 |       await plantsPages.overview.open(reference);
+  139 |       await expect(plantsPages.overview.taskRow(DESTINATION_TASK_ROW)).toContainText('Completed');
+  140 | 
+  141 |       await plantsPages.placeOfDestination.open(reference);
+  142 |       await expect(plantsPages.placeOfDestination.headingNamed(PRE_ARRIVAL_DESTINATION_HEADING)).toBeVisible();
+  143 |       await expect(plantsPages.placeOfDestination.selectedAddressInset).toHaveCount(0);
+  144 |       await expect(plantsPages.placeOfDestination.currentAddress).toContainText(name);
+  145 |       await expect(plantsPages.placeOfDestination.currentAddress).toContainText('PH1 5EX');
+  146 |     },
+  147 |   );
+  148 | 
+  149 |   test('Edit details on the picker changes the copy on this notification, not the address book record', async ({
+  150 |     pages,
+  151 |     plantsPages,
+  152 |     plantsJourney,
+  153 |     addressBookApi,
+  154 |   }) => {
+  155 |     const token = `Forfar${Date.now()}`;
+  156 |     const name = `Copied Nursery ${token}`;
+  157 |     const editedName = `Edited Nursery ${token}`;
+  158 |     const record = await addressBookApi.createAddress(nurseryAddress(name));
+  159 | 
+  160 |     const reference = await plantsJourney.toDestinationOfNewNotification(PLANTS_FOR_PLANTING);
+  161 |     await plantsJourney.chooseDestination(name);
+  162 | 
+  163 |     await plantsPages.placeOfDestination.open(reference);
+  164 |     await plantsPages.placeOfDestination.editCurrentAddress.click();
+  165 | 
+  166 |     const form = plantsPages.placeOfDestinationEdit;
+  167 |     await expect(pages.page).toHaveURL((url) => url.pathname === form.expectedUrl(reference));
+  168 |     await expect(form.heading).toBeVisible();
+  169 |     await expect(form.roleCaption).toBeVisible();
+  170 |     await expect(form.name).toHaveValue(name);
+  171 |     await expect(form.postcode).toHaveValue('PH1 5EX');
+  172 | 
+```

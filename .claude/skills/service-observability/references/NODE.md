@@ -63,11 +63,15 @@ site's caller:
 Redis commands are not timed, so `redis` has no choke point here and
 publishes no `external.call.*` ("Redis" below).
 
-A call that throws on a refusal names its operation in the error,
-`Failed to <operation>: <status> <status text>`
-(`failedResponse` in `src/server/app/services/http/trace-headers.js`,
-`BackendRequestError` in
-`src/server/app/services/persistence/records/errors.js`).
+A call that throws on a refusal throws a `RefusedCallError`
+(`src/server/app/services/http/dependency-error.js`), whose message names
+the dependency and the action in words,
+`<dependency> refused to <action>: <status> <status text>`, such as
+`animals-backend refused to get document upload status: 503 Service Unavailable`.
+The action is the operation id read as words unless the call gives one
+(the cdp-uploader calls do); the metric operation id is unchanged. The
+records client's `BackendRequestError`
+(`src/server/app/services/persistence/records/errors.js`) extends it.
 
 Rules that held:
 
@@ -80,7 +84,7 @@ Rules that held:
   rule holds whether the status comes back on a response
   (`measureExternalResponse`) or on a thrown error: `measureExternalCall`
   judges an error carrying the status the dependency answered with
-  (`error.status`, as `failedResponse` sets for cdp-uploader, or a Wreck
+  (`error.status`, as `RefusedCallError` sets for cdp-uploader, or a Wreck
   response error's `data.res.statusCode` for Defra ID) by the same
   rule, and always rethrows it. The status is on the log line as
   `http.response.status_code`. Bell's token exchange is the exception:

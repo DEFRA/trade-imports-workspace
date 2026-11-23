@@ -756,12 +756,6 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **WHEN** they search for 'Consignor'
 - **THEN** the list shows the added address
 
-#### Scenario: A role label the Type filter shows finds an address whose Type column reads otherwise
-**ID**: SCN-INS-ADDR-032-G
-- **GIVEN** the address book holds an address with the branch address role whose name and address do not contain the word 'branch'
-- **WHEN** the user searches the Branch tab for 'branch address'
-- **THEN** the list shows that address, with 'Branch' as its Type
-
 ### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
 **ID**: REQ-INS-ADDR-033
 The system MUST head the add page 'Add address and contact details' under the caption 'Add new address', from the address book or from a notification journey. Reached from a journey's 'Add a new address', it MUST also show the notification's status block above the caption, and keep it when a refused save shows the page again.

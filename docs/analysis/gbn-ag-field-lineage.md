@@ -194,7 +194,8 @@ page, including its own "Out of Scope Data Elements" table, while scoping EUDPA-
   four that are actually emitted (`EAR_TAG`, `PASSPORT`, `MICROCHIP`, `TATTOO`). Either
   implement it or strike it from that row — today a PIMS reader of the mapping doc would
   reasonably expect it.
-- **`exchangedDocument.issuer` / "Person Responsible for Load"** — refines the §2
+- **`exchangedDocument.issuer` / "Person Responsible for Load"** (superseded 2026-11-20,
+  EUDPA-776: `issuer` was removed rather than filled) — refines the §2
   correction below: this field *is* on the V4 page, explicitly marked "Consumed on
   authentication" / sourced from "gov identity." By design it should come from the
   notifier's authenticated Defra ID/organisation record, not a journey page — so "no
@@ -650,12 +651,10 @@ fields. **Establish which `schemaVersion` a complaint refers to before investiga
   populated. See §2's ticket-landscape table for who to talk to and why it stayed hidden.
 - **`LEG_RING`** — either implement it or strike it from `pims-data-mapping.md`'s
   "established typeCodes" list (§1 correction).
-- **Responsible Person for Load + Contact Address** (`exchangedDocument.issuer`) — still
-  null; both **Confirmed** by PIMS (rows 14 and 30); knowingly deferred by the EUDPA-369
-  decision of 2026-09-14 pending a follow-up ticket that **still has not been raised**.
-  Note the generic schema marks `issuer` **required**, so the generic event violates its
-  own schema — the same class of defect as the `finalDestinationLocation.postalAddress`
-  mismatch already recorded in §3.
+- **Responsible Person for Load + Contact Address** (`exchangedDocument.issuer`) —
+  Update (2026-11-20, EUDPA-776): the contact page and `issuer` were removed from the
+  journey, the internal schema and PIMS v0.4.0, so nothing is owed here. The 2026-09-14
+  deferral to a follow-up ticket no longer applies.
 
 ### Confirmed unchanged by this pass
 
@@ -684,7 +683,7 @@ decision D8). They are included so §6 covers everything v0.3.0 needs to carry.
 | 1 | Animals certified as | `GOODS_CERTIFIED_AS` clause, `content` = one of 16 frontend kebab-case keys | No published list; schema implies TRACES `ched_consignment_clause` codes, which we don't use | A Defra codelist of the 16 values, `urlId` on the clause | schemas, backend, gateway, PIMS schema |
 | 2 | Internal market purpose | **Nothing** | **Defect:** the backend only emits the clause when the reason is `INTERNAL_MARKET`, but the frontend stores `internalMarket`; and the clause's `content` is hardcoded `null` | Fix the condition, map `purposeInInternalMarket`, plus a codelist of the 11 values | backend, schemas, gateway, PIMS schema |
 | 3 | Purpose (reason for import) | `PURPOSE` clause, `content` = one of 5 camelCase keys | No published list; docs and samples spell it `INTERNAL_MARKET`, the code sends `internalMarket` | Agree one spelling, a codelist, `urlId` on the clause | schemas, backend, gateway, PIMS schema |
-| 4 | Person responsible | **Nothing** | `exchangedDocument.issuer` is hardcoded `null` on the generic event (breaking its own schema, which requires it), and is not in the PIMS v0.2.0 schema at all | Map the consignment contact the journey already collects into `issuer`; add `issuer` to PIMS v0.3.0 | backend, gateway, PIMS schema |
+| 4 | Person responsible | **Nothing** | `exchangedDocument.issuer` is hardcoded `null` on the generic event (breaking its own schema, which requires it), and is not in the PIMS v0.2.0 schema at all | Update (2026-11-20, EUDPA-776): the contact page and `issuer` were removed rather than mapped, so nothing is owed | backend, gateway, PIMS schema |
 | 5 | Document type | `referenceDocument[].typeCode` from the 14-code Defra list, **without** `urlId` | The codelist exists in schemas but isn't published anywhere PIMS can read; v0.2.0 drops `urlId` (EUDPA-310 D8) | Share or host the codelist; carry `urlId` in v0.3.0 | schemas, gateway, PIMS schema |
 | 6 | Animal identifier | `identifier[]` entries with `typeCode` (`EAR_TAG`, `PASSPORT`, `MICROCHIP`, `TATTOO`) and `content`, **no** `urlId` | No codelist file; backend sends `urlId: null` against a `const` in the generic schema; docs list `LEG_RING`, `IDENTIFICATION_DETAILS`, `DESCRIPTION`, which are never sent | A codelist of the 4 values, `urlId` populated, stale codes struck from the docs | schemas, backend, gateway, PIMS schema |
 | 7 | Document URL | **Nothing** | No event carries a storage id or a link, and there is no caseworker-facing document view anywhere | A decision (static link vs PIMS builds it), a caseworker-accessible download route, and a slot in v0.3.0 | backend (+ a viewer), schemas, gateway, PIMS schema |
@@ -796,7 +795,7 @@ offers (as `gbn-ag-document-types.json` does for documents), or map our keys ont
 values; the second only helps if PIMS already holds the TRACES list. Either way, agree one
 spelling per value, and decide whether the event sends the frontend key or a code.
 
-### 4. Person responsible
+### 4. Person responsible (updated 2026-11-20, EUDPA-776)
 
 The live animals journey no longer collects a consignment contact address. The frontend
 does not send `consignment`, the backend does not store it, and `exchangedDocument.issuer`
@@ -919,7 +918,7 @@ stays a consumer-side concern; not added to the schema", which this request reve
 
 1. **Internal market purpose never emitted** — the `INTERNAL_MARKET` / `internalMarket` mismatch
    plus hardcoded `null` content (items 1–3).
-2. **Generic event breaks its own schema twice** — required `issuer` always absent (item 4), and
+2. **Generic event breaks its own schema twice** — required `issuer` absent by design since EUDPA-776 (item 4), and
    identifier `urlId` sent as `null` against a `const` (item 6). The same class as the
    `finalDestinationLocation.postalAddress` mismatch in §3.
 3. **Test fixtures and samples use values the frontend never sends**, which hid defect 1.
@@ -931,7 +930,7 @@ stays a consumer-side concern; not added to the schema", which this request reve
 2. One spelling per value, and whether the event sends the frontend key or a code (items 1–3, 6).
 3. Where the codelists are published so PIMS can read them: share the files, or host them (the
    EUDPA-429 ownership question) (items 1–3, 5, 6).
-4. Person responsible: confirm the consignment contact is the right source, and that no named
+4. Person responsible: removed by EUDPA-776 (2026-11-20), so confirm that no named
    person is acceptable (item 4).
 5. `LEG_RING`: implement it or strike it (item 6).
 6. Document URL: who builds it, and where caseworkers open documents (item 7). The route is

@@ -1,0 +1,29 @@
+{
+  "file": "src/server/common/helpers/start-server.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:06:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The httpProxy reset is a correct local-flake fix from rebase commit 714a8f5 (not EUDPA-776 work, not a revert of EUDPA-696), but it is set in beforeAll and restored afterEach, and one test title names no expectation.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Lines 33 and 37: 'When server starts' sets httpProxy to null in beforeAll but restores it with restoreConfigAfterEach, whose afterEach puts the original back after the first test. The two later tests (lines 55, 59) run with the original httpProxy, so the block reads as 'httpProxy is null here' when it holds only for the first test; it passes only because startServer reads the config once in beforeAll. The added lines are a local-proxy flake fix from rebase commit 714a8f5, not EUDPA-776 work and not a revert of EUDPA-696.",
+      "fix": "Must: the config the block sets holds for the whole block and is restored once, after the block. One way: set httpProxy in beforeAll and restore the original in the existing afterAll (or add a restoreConfigAfterAll helper beside restoreConfigAfterEach), dropping restoreConfigAfterEach from this describe."
+    },
+    {
+      "id": 2,
+      "line": 45,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Test title 'Should start up server as expected' (line 45) does not say what its assertions prove: they check that GET /health answers 200 with { message: 'success' } after startServer. 'as expected' names no expectation.",
+      "fix": "Must: the title states what the assertions prove. One way: 'starts a server that answers GET /health with success'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

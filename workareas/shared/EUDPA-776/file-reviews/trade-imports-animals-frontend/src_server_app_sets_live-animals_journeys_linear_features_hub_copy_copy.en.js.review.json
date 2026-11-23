@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:12Z",
-  "verdict": "SAFE",
-  "verdict_reason": "It removes the contact-address group and row copy and keeps the 1-5 section numbering.",
-  "todos": [],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-23T10:04:04Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase fix reverts three hub strings main set in EUDPA-696 and re-baselines their tests, which is a behaviour change the ticket does not ask for. Removing the contact address group and row is correct.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The rebase-fix commit 714a8f5 ('Fix rebase onto main...') reverts copy that main set in EUDPA-696 (#484, inc-274 and inc-276), none of which this ticket asks for: taskListHeading goes back from 'Notification task list' to 'Notification tasklist' (line 18), group 5 from '5. Addresses' to '5. Consignment parties' (line 24), and the addresses row title from 'Consignment addresses' to 'Roles and addresses' (line 55). copy.test.js was re-baselined to match (lines 58, 122-123, 195), so the unit tests absorb the change, and hub.fit.spec.js:151 still titles its test 'headed \"Notification task list\"'. The same revert reaches check-answers copy.en.js:18,29,38 and the Welsh copy. EUDPA-776 only needs the 'contact-address' group (line 25 on main) and the 'contact' row removed.",
+      "fix": "Must: the PR's only change to the live-animals hub copy (English and Welsh) and its tests is removing the contact-address group and the contact row; every other string matches main after EUDPA-696. One way: take main's copy.en.js, copy.cy.js and copy.test.js for hub and check-answers, delete only the contact-address entries, and if the workspace openspec overview spec still says '5. Consignment parties' and 'Roles and addresses', bring it to main's frontend wording in the workspace PR rather than changing the frontend to match the spec."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
 }

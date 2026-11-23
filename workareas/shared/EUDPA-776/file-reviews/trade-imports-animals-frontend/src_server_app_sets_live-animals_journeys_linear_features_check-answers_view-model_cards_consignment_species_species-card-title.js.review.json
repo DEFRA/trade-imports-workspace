@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:05:10Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The file is a pre-EUDPA-696 module brought back by a bad rebase resolution, and it reverts main's commodity-grouped review cards, which is outside this ticket's scope.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Commit 714a8f5 ('Fix rebase onto main') re-adds this file, which main deleted in EUDPA-696 (#484, commit 32236d4) when the review moved to one card per commodity with a species block per species (species-block.js, commodity-cards.js). On the PR head, sections/description-of-goods.js imports speciesCards (species-cards.js:6,19 calls speciesCardTitle) instead of main's commodityCards, so commodity-cards.js and species-block.js have no importer and the live-animals review reverts to the pre-Design-Release-2.1 per-species cards titled by lineTitle. EUDPA-776 asks only to remove the contact address page; rolling back merged EUDPA-696 review behaviour is outside its scope and breaks that ticket's agreed review layout. The same revert brings back species-card-title.test.js, species-cards.js, species-card-rows.js, species-card-actions.js, units-for-commodity-line.js, identifier-table.js and commodities/line-title.js.",
+      "fix": "Must: the PR's diff against main contains no species-card-title.js (or the other files EUDPA-696 deleted), and the review's Description of the goods section builds its cards from main's commodityCards/speciesBlock, with only the contact-address removal on top. One way: re-resolve the rebase by taking main's check-answers view-model (description-of-goods.js, cards/consignment/*) and reapplying only the EUDPA-776 contact-address deletions, then delete this file and the other resurrected pre-EUDPA-696 modules and tests"
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

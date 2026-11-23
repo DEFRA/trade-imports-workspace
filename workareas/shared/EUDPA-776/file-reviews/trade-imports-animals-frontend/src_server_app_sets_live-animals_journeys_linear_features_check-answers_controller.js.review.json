@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:05:00Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase-fix commit reverts main's check-answers controller (view header, amend and cancel-amend controls, species-block errors, anchor links, draft back link), none of which EUDPA-776 asks for.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 122,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Commit 714a8f5 ('restore the pre-rebase check-answers view model') reverts main's check-answers controller (EUDPA-696 #484, EUDPA-796 #476) instead of removing only the contact address. Against main (merge base 32236d4 = origin/main) the controller drops: viewHeader (reference heading, status, date created/submitted, Amend/Copy/Delete actions, import references for draft and submitted; view-header.js and its test still exist but nothing imports it), the cancel-amend button (cancelAmendButtonFor), the Delete button while amending (deleteButtonFor), the 'resubmitting' title when amended answers differ (reviewTitle), per-species-block errors (speciesErrors from view-model/species-errors.js, mergeCardErrorsByPrecedence speciesBlocks), page-anchor-aware error links (reviewErrorAnchorHref + anchorsOf, replaced by cardAnchorHref), and changes backLinkFor so a DRAFT now falls back to the hub instead of the dashboard (lines 79-85). It also brings back the older copyAction/deleteHref props shown only when readOnly (lines 146-150), with no Amend action. None of this is in EUDPA-776's acceptance criteria, which ask only that the contact address page, row, obligation and consignment party go.",
+      "fix": "Must: the PR's controller.js equals origin/main's except for the lines that served the contact address (none of main's view-header, amend, cancel-amend, species-block error, page-anchor or back-link behaviour changes), and the same is true of the other files 714a8f5 restored (template.njk, refusal.js, incomplete-cards.js, view-model cards/sections, copy, hub copy, line-title). One way: reset these files to origin/main and re-apply only the contact-address removals, then run the check-answers unit and fit suites against main's tests rather than the pre-rebase ones."
+    },
+    {
+      "id": 2,
+      "line": 216,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The diff renames renderAndRecordReviewed back to get (lines 216, 225). The handler renders the view and also calls recordReviewed for any non-submitted journey, a state change the name get hides; main's name said both.",
+      "fix": "Must: the GET handler's name says it records the review as well as rendering it. One way: keep main's renderAndRecordReviewed and pageRoutes(page, { get: renderAndRecordReviewed })."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

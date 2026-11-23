@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:04:44Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase resolution drops main's exitsAsTransit and re-adds regionCodeApplies, reverting main's check-answers card changes outside the ticket's scope and leaving main-import-reason.js importing a missing export.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Rebase resolution reverts main's check-answers restructure, out of EUDPA-776's scope. This file drops exitsAsTransit (main line 15), which main's main-import-reason.js:11,56 uses to list port of exit before destination country for a transit import, and re-adds regionCodeApplies (line 9), which main removed when origin-of-import.js started always showing the region code row. Together with sections/about-consignment.js now calling the PR's older import-details.js and reason-for-import.js, the review page loses main's transit exit-row order and its whatAreYouImporting card, and main-import-reason.js, origin-of-import.js and what-are-you-importing.js are left as orphans; main-import-reason.js still imports the now-missing exitsAsTransit, so any test or caller that loads it fails with a missing-export SyntaxError. The ticket only removes the contact address page.",
+      "fix": "Must: applicability.js differs from main only where removing the contact address needs it, so main's exitsAsTransit stays, regionCodeApplies is not re-added, and the about-consignment section keeps main's cards (origin-of-import, what-are-you-importing, main-import-reason). One way: take main's version of applicability.js and of the consignment cards and about-consignment.js, drop the PR's import-details.js and reason-for-import.js, and re-run the check-answers tests."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

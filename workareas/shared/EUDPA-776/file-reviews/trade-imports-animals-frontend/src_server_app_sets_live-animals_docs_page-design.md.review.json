@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/docs/page-design.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:04:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The contact address removal is described correctly, but two rewritten lines misstate the destination party key mapping and where Save and continue on consignment addresses leads.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 422,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Two doc lines this PR rewrote state behaviour the code does not have. Line 422-423 says party keys match between backend and journey 'including placeOfDestination', but frozen-parties.js:10 still maps the backend's 'destination' to the journey's 'placeOfDestination' (only the consignment/contactAddress pair went away). Line 448-449 says Save and continue goes on toward check your answers 'when every party and CPH owed is answered', but addresses/controller.js:282 calls kit.nextTarget, and navigation.js:51-71 plus kit.js:211-212 send it to the check your answers path whatever is answered (the check answers page does its own readiness refusal).",
+      "fix": "Must: both lines describe the code as it is: the backend names the place of destination 'destination' while the journey says 'placeOfDestination', and Save and continue on the consignment addresses page goes on to check your answers with no condition on parties or CPH. One way: restore the first bullet to 'The backend names the place of destination destination; the journey says placeOfDestination. Every other role has the same name in both.' and end the second sentence at 'Save and continue here goes on to check your answers.'"
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

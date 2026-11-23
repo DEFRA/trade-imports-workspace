@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:23Z",
-  "verdict": "SAFE",
-  "verdict_reason": "Every contactAddress key is removed from sections, groups, cards, rows, hidden text and errors, in step with the Welsh copy, leaving nothing orphaned.",
-  "todos": [],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-23T10:04:06Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase resolution reverted main's merged EUDPA-696 Design Release 2.1 review copy in place of removing only the contact address keys.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The rebase resolution (714a8f5, 7b5a259) put back the pre-EUDPA-696 review copy and dropped main's Design Release 2.1 review copy (32236d4c, #484). Against main this file renames sections.documents '4. Uploaded documents' to '4. Documents' and sections.addresses '5. Addresses' to '5. Consignment parties'. It swaps cards (originOfImport, whatAreYouImporting, consignmentAddresses) for importDetails, reasonForImport and rolesAndAddresses, and groups.permanentAddress for whereFrom and uploadDocuments. It puts back rows.regionCodeRequired, which 696 removed, renames identificationDetails to identifierTable ('Animal details'), and deletes hidden.numberOfAnimals, hidden.identificationDetails, hidden.document, errors.species.noCount and noIdentifier. git diff 32236d4c^ 714a8f5 on this file shows only the contact-address removals. The same revert runs through the CYA stack (controller.js, template.njk, view-model/cards/*, copy.cy.js, check-answers.test.js and fit spec, -3159/+1383 lines), so tests stay green while merged EUDPA-696/796/805 review behaviour goes. The ticket only asks to remove the contact address row.",
+      "fix": "Must: against origin/main, this file and the rest of the check-answers stack change only by removing the contact address (sections.contactAddress, cards.contactAddress, rows.contactAddress, hidden.cards.contactAddress, errors.cards.contactAddress, errors.parties.contactAddress) and keep every EUDPA-696 Design Release 2.1 key and string. One way: reset the check-answers feature folder to origin/main, then apply the contact-address removal again on top (delete contact-address card and section, drop the keys above in copy.en.js and copy.cy.js, update the tests)."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
 }

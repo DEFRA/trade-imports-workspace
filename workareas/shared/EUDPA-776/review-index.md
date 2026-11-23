@@ -4,6 +4,7 @@
 **Reviewer:** Claude Code Agent
 **Date:** 2026-11-20
 **Verdict:** FAIL
+**Last Updated:** 2026-11-23 (animals-frontend #487 refreshed at 714a8f5 only; the other PRs were not re-reviewed)
 **Notes:** Rebase the workspace, ins-frontend and ins-tests PRs onto main before anything else: they currently revert EUDPA-805 content. The Data Fields v4 Confluence page update is a manual step and was not checked.
 
 ## Summary
@@ -16,7 +17,7 @@ The contact address page, its obligation, the `consignment` party and the GBN-AG
 | Repository | PR | Merge Commit | Files Changed | Verdict | Review |
 |------------|-----|--------------|---------------|---------|--------|
 | trade-imports-animals-backend | #133 | b73a5d0 (head) | 10 | NEEDS ATTENTION | [review.trade-imports-animals-backend.md](review.trade-imports-animals-backend.md) |
-| trade-imports-animals-frontend | #487 | 08f4558 (head) | 66 | NEEDS ATTENTION | [review.trade-imports-animals-frontend.md](review.trade-imports-animals-frontend.md) |
+| trade-imports-animals-frontend | #487 | 714a8f5 (head, refreshed 2026-11-23; first reviewed 08f4558) | 101 | RISKY | [review.trade-imports-animals-frontend.md](review.trade-imports-animals-frontend.md) |
 | trade-imports-dynamics-gateway | #35 | 9e3e3ac (head) | 48 | NEEDS ATTENTION | [review.trade-imports-dynamics-gateway.md](review.trade-imports-dynamics-gateway.md) |
 | trade-imports-ins-frontend | #88 | f2c6e6a (head) | 7 | RISKY | [review.trade-imports-ins-frontend.md](review.trade-imports-ins-frontend.md) |
 | trade-imports-ins-tests | #115 | 47d3968 (head) | 28 | NEEDS ATTENTION | [review.trade-imports-ins-tests.md](review.trade-imports-ins-tests.md) |

@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "714a8f50aa01d632e7e3fa7038b758b98e7cd8f8",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T10:05:03Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase resolution reverts this card to its pre-EUDPA-696 shape, undoing merged Design Release 2.1 review behaviour outside the ticket's scope.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The rebase fix commit 714a8f5 resolved this file to the pre-EUDPA-696 version (byte-identical to c944e37:roles-and-addresses.js), silently reverting behaviour main merged in EUDPA-696 (#484, inc-108 and inc-274), none of which EUDPA-776 asks for: the card is renamed back from consignmentAddressesCard / id 'consignmentAddresses' / title 'Consignment addresses' to rolesAndAddressesCard / 'rolesAndAddresses' / 'Roles and addresses' (lines 34, 44-45, 51); every party row gets an 'Edit details' editHref again (lines 60-63), where main offers only the card header Change link; and the 'Permanent address' group (main's permanentAddressGroups, copy.groups.permanentAddress) is flattened into plain rows (lines 66-68). The same resolution reverts the rest of the CYA stack (consignment-parties.js section, copy keys, change-link.js changeAction to cardAction, re-added consignment/import-details.js etc.), so the PR reads as a contact-page removal while undoing the Design Release 2.1 review page.",
+      "fix": "Must: against origin/main, the only change this PR makes to the addresses review card is what removing the contact address needs; the card keeps main's name, id, title, header-only Change link, no per-row edit links and the Permanent address subsection. One way: restore consignment-addresses.js (and the rest of the check-answers view-model, copy, template and change-link.js) from origin/main 32236d4, re-apply only the EUDPA-776 contact-address deletions on top, then rerun the check-answers unit and FIT suites."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
+}

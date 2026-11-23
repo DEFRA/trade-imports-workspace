@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:21Z",
-  "verdict": "SAFE",
-  "verdict_reason": "Every contactAddress key is removed, in step with copy.en.js, and section numbering stays 1 to 5.",
-  "todos": [],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-23T10:04:08Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The rebase resolution reverts main's EUDPA-696 Welsh check-answers copy wholesale rather than only removing the contact-address keys.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The rebase conflict resolution (7b5a259, 714a8f5) reverted main's EUDPA-696 (#484, 32236d4) Welsh check-answers copy instead of only dropping contact address: against base 32236d4 the PR restores the pre-#484 shape from c4aec87 (cards/groups swapped back to importDetails/reasonForImport/rolesAndAddresses, sections documents '4. Dogfennau' and consignmentParties '5. Partïon y llwyth', identifierTable in place of identificationDetails 'Manylion adnabod', hidden.numberOfAnimals/identificationDetails/document/rows removed, errors.species.noCount/noIdentifier removed, groups.permanentAddress removed, importReferences warning reworded). copy.en.js and the rest of the CYA stack (39 files, +1383/-3159) are reverted the same way. EUDPA-776 asks only to remove the contact address page; merging this undoes Design Release 2.1's overview and review page.",
+      "fix": "Must: against main, this file's only change is the removal of the contact-address keys (sections.contactAddress, cards.contactAddress, rows.contactAddress, hidden.cards.contactAddress, errors.cards.contactAddress, the invalid-party contactAddress message); every key and string #484 added is kept. One way: git checkout origin/main -- the check-answers folder, then re-apply only the contact-address removals (and the matching ones in copy.en.js, the view-model, template and tests)."
+    }
+  ],
+  "reconciled_at": "2026-11-23T10:06:16Z"
 }

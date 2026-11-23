@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { closeHttpMocks, installHttpMocks } from '../test-support/http-mock.js'
+import {
+  closeHttpMocks,
+  installHttpMocks,
+  replyAfter
+} from '../test-support/http-mock.js'
 import { createChangelogSourceClient } from './changelog-source-client.js'
 
 const REGISTRY = 'https://registry.npmjs.org'
@@ -81,8 +85,7 @@ describe('#downloadText', () => {
   test('Should give up as NETWORK when the server is slower than the timeout', async () => {
     mockPool(RAW)
       .get('/lodash/lodash/main/CHANGELOG.md')
-      .delay(200)
-      .reply(200, 'late')
+      .reply(replyAfter(200, 200, 'late'))
 
     await expect(
       createChangelogSourceClient({ timeoutMs: 20 }).downloadText(url)

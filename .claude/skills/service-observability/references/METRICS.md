@@ -317,7 +317,7 @@ the outcome of the calls it already makes.
 - **Passive (used on reference-data and animals-frontend).** Report the
   outcome of the most recent real call, kept in `LastCallOutcomes` ("A
   service built the old way"), or in Node in
-  `recordDependencyCallOutcome` (`NODE.md` → "Availability of an HTTP
+  `recordDependencyAvailability` (`NODE.md` → "Availability of an HTTP
   dependency"). No extra traffic. The cost: the value is as old as
   the last call, and nothing is published until the first call after
   start-up. Where a cache sits in front of the dependency, that can be

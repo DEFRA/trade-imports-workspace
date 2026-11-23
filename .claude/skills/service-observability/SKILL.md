@@ -13,13 +13,14 @@ CDP dev Grafana. Claude never uses a browser to reach Grafana ("Who
 does what").
 
 Its dashboard and alert steps come from a spike on
-`trade-imports-reference-data`, and its code recipe from the reference
-implementation on `trade-imports-address-book`. For a Java service, every metric is a
+`trade-imports-reference-data`, its Java code recipe from the reference
+implementation on `trade-imports-address-book`, and its Node code recipe
+from `trade-imports-animals-frontend`. For a Java service, every metric is a
 Micrometer meter published by `EmfMeterRegistry` (`references/METRICS.md`
 → "Publish"). That is the one way this skill builds metrics for Java.
 For a Node (hapi) service, every metric is one EMF document written
-through `@defra/cdp-metrics` at a choke point, the recipe proven on
-`trade-imports-animals-frontend` (`references/NODE.md`). Every metric and dimension is named in dot case
+through `@defra/cdp-metrics` at a choke point (`references/NODE.md`).
+Every metric and dimension is named in dot case
 (`external.call.duration`). Read "What is proven" before trusting any
 step.
 

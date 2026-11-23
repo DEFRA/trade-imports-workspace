@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Deletion is complete with no dangling imports or routes, but it leaves addressSummaryEndingAtPostcode as dead code and the set's docs still describe the contact page.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Deleting this controller leaves addressSummaryEndingAtPostcode (features/addresses/address-summary.js:20-21, with ADDRESS_PARTS_TO_POSTCODE split out only to serve it) with no production caller: grep over src and fit finds it only in address-summary.js and address-summary.test.js. The house rule 'Build only what this change makes reachable' makes it dead code kept alive by its own test.",
+      "fix": "Must: address-summary.js exports only what production code calls, and its test covers only those exports. One way: delete addressSummaryEndingAtPostcode and its tests, and fold ADDRESS_PARTS_TO_POSTCODE back into ADDRESS_LINE_PARTS if nothing else reads it."
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The set's own docs still describe the deleted contact address page as live: sets/live-animals/docs/page-design.md:55-56 (contact page reads 'Save and return to hub'), :60-62 ('Hub' reaches the screen only on the contact address page), :95-96 (the 'Contact address' check-answers row), :374-376 (journey says contactAddress for the backend's consignment party), :401 (roles-and-addresses Save and continue 'goes on to the contact address'); and docs/journey-flow-and-gates.md:24 (Roles and addresses goes on to the contact address), :177-180 (Contact address for consignment task's Back goes to the Overview), :285 (contact address page has no caption). None of these docs is in the PR diff.",
+      "fix": "Must: no doc under sets/live-animals/docs describes a contact address page, row, task, contactAddress key or consignment party, and each flow statement names the page that now follows Roles and addresses (check your answers). One way: delete the contact-only bullets and sentences and reword the flow lines at page-design.md:401 and journey-flow-and-gates.md:24 to the new next page."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

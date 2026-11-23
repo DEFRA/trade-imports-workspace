@@ -1,0 +1,37 @@
+{
+  "file": "openspec/coverage/ins/address-book/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:12:38Z",
+  "verdict": "RISKY",
+  "verdict_reason": "SCN-INS-ADDR-045-A links a test the PR deletes, and the germinal products requirement REQ-INS-ADDR-048 is removed although that journey is still served.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5734,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-INS-ADDR-045-A, a scenario this PR renamed, still links the unit test 'POST from the consignment contact handshake saves the address as a Branch address' in add.controller.test.js, but the ins-frontend PR deletes that test (ins-frontend diff line 68; absent from the review clone at f2c6e6a). The coverage claim names a test that no longer exists.",
+      "fix": "Must: every tests[] link on SCN-INS-ADDR-045-A names a test that exists at the PR-set commits and asserts an address added from a role's picker is saved with that role, and the scenario's coverage value is derived from the links that remain. One way: drop the deleted test's entry and re-run tim spec lint / coverage derivation."
+    },
+    {
+      "id": 2,
+      "line": 6033,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The PR deletes REQ-INS-ADDR-048 ('The add page serves every notification journey the service registers...') and all four germinal products scenarios (048-A to 048-D) from this coverage file and from openspec/specs/ins/address-book/spec.md, and the ins-frontend PR deletes their germinal unit and fit tests. But the behaviour still ships: journey-registry.js:43-45 at ins-frontend f2c6e6a still registers JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS with its set base, and tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts still exists at ins-tests 47d3968. EUDPA-776's scope is the live animals contact page and branch address only (germinal products is not mentioned), so the spec now says nothing about a served journey, including the 048-C rule that a request cannot redirect the trader elsewhere.",
+      "fix": "Must: REQ-INS-ADDR-048 and its scenarios stay in the spec and this coverage file as long as the add page serves the germinal products journey, each linked to tests that exist; only the consignment-contact part (048-D's 'germinal products consignment contact handshake' link) is removed. One way: restore the REQ-INS-ADDR-048 block here and in spec.md, restore the germinal consignor tests in ins-frontend (rebuilding GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY without the contact fulfilment id), and drop only the Branch-address contact link."
+    },
+    {
+      "id": 3,
+      "line": 2669,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Link notes still describe the removed consignment contact handshake: line 2669 (on SCN-INS-ADDR-027-D, which this PR renamed to drop the contact page) 'place of origin, consignor and consignment contact handshakes', and likewise lines 298 and 1444. The tests they annotate no longer run a contact handshake.",
+      "fix": "Must: no note in this file names the consignment contact handshake. One way: drop 'and consignment contact' from the notes at lines 298, 1444 and 2669."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

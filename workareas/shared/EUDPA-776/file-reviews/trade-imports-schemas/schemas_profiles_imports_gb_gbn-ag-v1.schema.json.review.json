@@ -1,0 +1,21 @@
+{
+  "file": "schemas/profiles/imports/gb/gbn-ag-v1.schema.json",
+  "repo": "trade-imports-schemas",
+  "commit": "8de0f3b310656024062b696f0c9f6e2b55ef95fd",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:24Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Dropping issuer from required leaves it defined through the core CertificatePayload, so the schema still carries exchangedDocument.issuer contrary to the AC.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The AC says gbn-ag-v1.schema.json has no exchangedDocument.issuer, but only 'issuer' was dropped from exchangedDocument.required (line 21). The profile's allOf (line 10) still pulls in defra-unvtd-canonical-core-v1.schema.json#/$defs/CertificatePayload, whose ExchangedDocument defines issuer as a TradeParty (core line 854). So the GBN-AG schema still defines and accepts issuer as an optional property. Evidence: 'npm run validate-coherence' still reports '[C2] gbn-ag :: schema property \"issuer\"', 'npm run build-dictionary:gbn-ag' writes an issuer row (required: no) back into the dictionary, and the GBN-AG samples (samples/imports/gb/gbn-ag/json/gbn-ag-v1-example.json:9, events/gbn-ag-event-notification-*-v1.json) still carry issuer and still validate.",
+      "fix": "Must: the GBN-AG v1 profile does not define exchangedDocument.issuer, so the generated dictionary and the coherence check no longer list it, and no GBN-AG sample carries it. One way: add \"issuer\": false under exchangedDocument.properties in the profile (and teach build-data-dictionary.js to skip false-schema properties if it does not already), remove issuer from the gbn-ag-v1 samples and event samples, then regenerate the dictionary."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

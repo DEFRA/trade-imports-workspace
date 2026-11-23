@@ -1,0 +1,153 @@
+{
+  "ticket": "EUDPA-776",
+  "repo": "trade-imports-animals-backend",
+  "items": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Removing the consignment field leaves its test fixture behind: NotificationTestData.consignments() (src/test/java/.../utils/NotificationTestData.java:37) now has no caller, and three test classes still statically import it unused (NotificationCopyMapperTest.java:5, NotificationControllerTest.java:26, NotificationServiceTest.java:25). Checkstyle (config/checkstyle/code-quality.xml) has no UnusedImports rule, so the build will not catch it.",
+      "fix": "Must: no test code names the removed consignment party; the backend test sources hold no consignments() fixture and no import of it. One way: delete NotificationTestData.consignments() and the three static imports in this PR.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 2,
+      "line": 9,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The class Javadoc this PR edits is still untrue of toCopyDto: line 9 says commodity identity keeps 'type', but Commodity has no type field (Commodity.java:16-25 holds name, commodityCode, description, counts, species) and mapCommoditiesForCopy (lines 62-66) copies name, commodityCode and description only; line 10 says 'party addresses' are kept, but mapConsignmentParty (lines 40-45) also copies name, email and phone.",
+      "fix": "Must: every claim in the class Javadoc matches what toCopyDto copies and resets, or the Javadoc is gone (code-quality.md: a stale comment is deleted, not reworded). One way: drop 'type' from the commodity list and say 'parties (name, email, phone, address)' in place of 'party addresses', or delete the field-by-field lists and leave the one-line contract 'Maps a NotificationAggregate to a NotificationDto for copy-as-new', with NotificationCopyMapperTest as the record of what is kept.",
+      "best_practice": "java/modern-java.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 2817,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Removing '.consignment(NotificationTestData.consignments().getFirst())' here (and the matching lines in NotificationControllerTest, NotificationServiceTest and NotificationCopyMapperTest) leaves NotificationTestData.consignments() (utils/NotificationTestData.java:37) with no caller anywhere in src/. It is a fixture for a party the notification no longer has, so the consignment-contact concept survives in test support after the PR removes it from the model.",
+      "fix": "Must: no test helper builds a consignment-contact party; NotificationTestData exposes only parties the notification still holds. One way: delete NotificationTestData.consignments() in this PR.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 4,
+      "line": 2817,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "AC 'A new live animals notification saves no consignment party' has no test. The PR deletes every consignment assertion (here at old 2054, 2080, 2822 and in the unit tests) and adds none in their place. Frontend and backend deploy independently, so during rollout an older frontend still sends a 'consignment' key on save; nothing proves the backend accepts that body (no 400 from strict deserialisation) and stores no 'consignment' on the Mongo document. A later switch to FAIL_ON_UNKNOWN_PROPERTIES, or a re-added field, would go unnoticed.",
+      "fix": "Must: an integration test fails if a save request carrying a 'consignment' party is rejected or if the stored notification document holds a 'consignment' key. One way: in NotificationIT, POST a raw JSON save body that includes a 'consignment' object, assert 2xx, then read the raw document from mongoTemplate and assert its notification map has exactly the expected keys (no 'consignment').",
+      "best_practice": "java/testing/integration.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 26,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Line 26 still imports NotificationTestData.consignments, but the PR removed the last call in this file (and the other callers), so the import is unused and the helper (NotificationTestData.java:37, not in the diff) has no callers anywhere. It still builds ConsignmentParty test data for a party the notification no longer has. The same import block also imports TraderOrganisationHeaderFilter twice (lines 22 and 53).",
+      "fix": "Must: the test imports only what it uses, and no test-data helper builds a consignment party the notification no longer carries. One way: delete the consignments import on line 26 (and in NotificationCopyMapperTest and NotificationServiceTest), delete NotificationTestData.consignments(), and drop the duplicate TraderOrganisationHeaderFilter import on line 22.",
+      "best_practice": "java/modern-java.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 6,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Deleting toCopyDto_shouldOmitConsignment left the static import of NotificationTestData.consignments at line 5 with no use in this file, and consignments() (NotificationTestData.java:37) now has no caller anywhere in src/. The test data still models the consignment contact party the ticket removes.",
+      "fix": "Must: no test code imports or defines test data for the removed consignment party. One way: drop the consignments import here and delete consignments() from NotificationTestData.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapperTest.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 7,
+      "line": 25,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The PR removed every call to consignments() in this file, but left the static import at line 25 (import static ...NotificationTestData.consignments). Nothing in src/ calls the helper now: NotificationTestData.java:37 public static List<ConsignmentParty> consignments() is dead test data for a party that no longer exists.",
+      "fix": "Must: no test data or import for the removed consignment contact party is left in the test sources. One way: delete the consignments import at NotificationServiceTest.java:25 and the consignments() helper at NotificationTestData.java:37.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 8,
+      "line": 393,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "saveNotification_shouldPersistInlinePartyDetailsFromTheDto_byteFaithfully now sends and asserts only placeOfOrigin (lines 405-414) after the PR removed the contact party. The title still claims inline party details in general, but the test proves one party only.",
+      "fix": "Must: the test title states what its assertions prove. One way: rename it to saveNotification_shouldPersistThePlaceOfOriginFromTheDtoExactly, or set and assert every inline party the DTO carries (consignor, consignee, importer, placeOfOrigin, destination) so the plural title is true.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 329,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "shouldOmitIssuerKey_whenNoConsignmentContact (lines 329-332) is left over from the issuer mapping this PR removes. Its title names a condition, 'no consignment contact', that no longer exists: issuer is now never sent, whatever the notification holds. It also runs only in MinimalAndDefaults, a DRAFT notification with nothing answered. The AC 'The GBN-AG event for a submitted notification has no issuer' is therefore proven only on an empty draft, and only as an absence check. An exact positive assertion is possible there. Now that the HappyPath fixture's consignment party is deleted (old lines 1171-1176), no test sends a fully populated, submitted notification through to JSON and checks for issuer.",
+      "fix": "Must: a test on the fully populated, SUBMITTED HappyPath notification proves the serialised exchangedDocument carries no issuer, ideally by asserting its exact set of keys. Its title states that unconditionally, and no test title in the file mentions a consignment contact. One way: replace the MinimalAndDefaults test with a HappyPath test, e.g. shouldSendExactlyTheExchangedDocumentKeysPimsReads, that asserts the field names of new ObjectMapper().valueToTree(result.exchangedDocument()) equal identifier, traderAssignedId, notificationStatusCode, versionId, issueDateTime, firstSignatoryAuthentication and referenceDocument.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgMapperTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "file": "docs/design-notes.md",
+      "line": "123",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "docs/design-notes.md:123 still says exchangedDocument.issuer is the consignment contact; the event now carries no issuer and no consignment contact is collected",
+      "fix": "Must: the design notes state that the GBN-AG event carries no exchangedDocument.issuer. One way: replace the sentence with 'The event carries no exchangedDocument.issuer: the contact address page is out of the journey.'",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentParty.java",
+      "line": "9",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "ConsignmentParty Javadoc (lines 9-10) lists 'the consignment contact' among the parties; no consignment contact party exists any more",
+      "fix": "Must: the Javadoc names only parties that use ConsignmentParty, or is deleted. One way: drop 'or the consignment contact' (and add the animal's permanent address, which AnimalIdentifier.permanentAddress uses).",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 12,
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/utils/NotificationTestData.java",
+      "line": "37",
+      "severity": "Major",
+      "category": "structure",
+      "issue": "One rule, 5 findings: #1, #3, #5, #6, #7 — the removed consignment party's test fixture consignments() and its three static imports are left behind",
+      "fix": "Must: one owner holds the rule that test data offers no consignment party: consignments() is deleted and no test imports it. One way: delete consignments() from NotificationTestData and the imports in NotificationControllerTest, NotificationCopyMapperTest and NotificationServiceTest in one commit.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

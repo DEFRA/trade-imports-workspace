@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/services/persistence/records/mapper-a-contract.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:09:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The exact-payload test correctly drops consignment, but two tests left behind assert an absence that cannot fail and carry titles that over-claim after the contactAddress answer was removed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 133,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "expect(payload).not.toHaveProperty('consignment') at lines 133 and 147 cannot fail: neither the happy-path fixture nor the answers in the third test hold a contactAddress any more, so even a restored consignment mapping in direct-fields.js would emit nothing. It is an absence check that records the removed party (history), and the first test's exact toEqual at line 35 already proves the payload has no consignment key.",
+      "fix": "Must: these two tests assert only what their own set-up can make true or false, with no assertion that names the removed consignment party; the removal is proven by the exact payload in the first test. One way: delete both not.toHaveProperty('consignment') lines.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 136,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'carries only a party answer’s details, dropping pickedFromId and any other key' over-claims: the diff removed the contactAddress answer that carried the 'unrelated: dropped' key, so the test now feeds only pickedFromId as an extra key and no longer proves any other key is dropped. Deleting the compact({ name, email, phone, address }) whitelist in toParty in favour of a spread that omits only pickedFromId would keep it green.",
+      "fix": "Must: the test's assertions prove every claim in its title. One way: add an unrelated key to the placeOfOrigin answer (placeOfOrigin: { ...placeOfOrigin, pickedFromId: 'origin-farm', unrelated: 'dropped' }) so the toEqual proves both keys are dropped.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 126,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'emits each party answer as its details' now asserts only payload.placeOfOrigin (plus the absence check), so it proves one party, not each, and repeats what the first test's exact toEqual already proves for placeOfOrigin with the same happy-path input. A broken consignor, consignee, importer or destination mapping leaves it green.",
+      "fix": "Must: the test's title states exactly what its assertions prove, and the test is not a weaker copy of the first test. One way: delete the test, since the first test's exact payload covers every party, or retitle it to the one party it asserts and give it an input the first test does not use.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

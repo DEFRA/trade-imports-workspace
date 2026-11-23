@@ -1,0 +1,90 @@
+{
+  "ticket": "EUDPA-776",
+  "repo": "trade-imports-schemas",
+  "items": [
+    {
+      "id": 1,
+      "line": 37,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The dictionary is generated output ('npm run build-dictionary:gbn-ag', scripts/build-data-dictionary.js walks the profile into the core schema), but this PR edits it by hand: it deletes the issuer row (old line 37) and the 'the issuer' phrase in the exchangedDocument row (line 17). Regenerating from the PR's own schemas puts both back, with issuer as 'TradeParty | no', because the core ExchangedDocument still defines issuer. The committed dictionary no longer matches what its generator produces from the schema it documents, and the next regeneration silently reverts this AC.",
+      "fix": "Must: the committed dictionary is byte-identical to the output of 'npm run build-dictionary:gbn-ag' and has no exchangedDocument.issuer row or mention. One way: remove issuer from the GBN-AG profile's effective shape (see the gbn-ag-v1.schema.json finding), reword the core ExchangedDocument description if it should not mention the issuer for GBN-AG, then regenerate rather than hand-edit.",
+      "file": "schemas/profiles/imports/gb/gbn-ag-data-dictionary.md",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 21,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The AC says gbn-ag-v1.schema.json has no exchangedDocument.issuer, but only 'issuer' was dropped from exchangedDocument.required (line 21). The profile's allOf (line 10) still pulls in defra-unvtd-canonical-core-v1.schema.json#/$defs/CertificatePayload, whose ExchangedDocument defines issuer as a TradeParty (core line 854). So the GBN-AG schema still defines and accepts issuer as an optional property. Evidence: 'npm run validate-coherence' still reports '[C2] gbn-ag :: schema property \"issuer\"', 'npm run build-dictionary:gbn-ag' writes an issuer row (required: no) back into the dictionary, and the GBN-AG samples (samples/imports/gb/gbn-ag/json/gbn-ag-v1-example.json:9, events/gbn-ag-event-notification-*-v1.json) still carry issuer and still validate.",
+      "fix": "Must: the GBN-AG v1 profile does not define exchangedDocument.issuer, so the generated dictionary and the coherence check no longer list it, and no GBN-AG sample carries it. One way: add \"issuer\": false under exchangedDocument.properties in the profile (and teach build-data-dictionary.js to skip false-schema properties if it does not already), remove issuer from the gbn-ag-v1 samples and event samples, then regenerate the dictionary.",
+      "file": "schemas/profiles/imports/gb/gbn-ag-v1.schema.json",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 357,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The 'Contact Address' section (lines 353-357) is untouched and now untrue: its schema path is exchangedDocument.issuer.postalAddress and line 357 says 'From PIMS v0.3.0: the address is that of the contact the notifier picks for the consignment from their organisation's address book.' This PR removes that page and stops sending issuer on every stream (line 54-55), so no PIMS version carries a contact address any more. The 'Person responsible' entry was updated, its sibling was not.",
+      "fix": "Must: the Contact Address section says, as the Person responsible entry does, that no PIMS stream sends exchangedDocument.issuer.postalAddress while the contact address page is out of the journey, and v0.4.0 has no such path. One way: replace line 357 with the same two lines as 54-55, scoped to postalAddress.",
+      "file": "schemas/profiles/imports/gb/pims-data-mapping.md",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 20,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "The file ends with no trailing newline ('\\ No newline at end of file' in the diff, line 20), unlike its sibling gbn-ag-pims-v0.3.0-changes.md, which ends with one.",
+      "fix": "Must: the file ends with a single newline. One way: add one after 'Not yet confirmed by PIMS.'",
+      "file": "schemas/profiles/imports/gb/pims/gbn-ag-pims-v0.4.0-changes.md",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 1,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Every earlier PIMS schema has a worked sample that 'npm run validate-samples' (CI: check-pull-request.yml:42) validates against it: samples/imports/gb/gbn-ag/json/pims/gbn-ag-pims-v0.1.0.json, v0.2.0.json and v0.3.0.json. The PR adds no gbn-ag-pims-v0.4.0.json, so CI only compiles the new schema and nothing shows a v0.4.0 payload without issuer, the shape the gateway now publishes.",
+      "fix": "Must: a v0.4.0 PIMS sample with no exchangedDocument.issuer exists beside the earlier ones and is validated against gbn-ag-pims-v0.4.0.schema.json in CI. One way: copy gbn-ag-pims-v0.3.0.json to gbn-ag-pims-v0.4.0.json, drop issuer, set $schema and metadata.schemaVersion to v0.4.0.",
+      "file": "schemas/profiles/imports/gb/pims/gbn-ag-pims-v0.4.0.schema.json",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 55,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The newly minted v0.4.0 schema copies v0.3.0's version-history and ticket narration into its published descriptions: 'New in v0.2.0 ... Previously dropped entirely (PR #52)' (lines 41, 55, 63), 'the EUDPA-370 planning notes' (line 55), 'until EUDPA-369 wired ...' (line 63), 'previously hardcoded null (moot until EUDPA-369 ...)' and 'gap G18' (tradeLineItem, ~line 304), and 'New in v0.2.0/v0.3.0 ... previously omitted, PR #52' on most $defs. A consumer reading v0.4.0 is told what changed two and three versions ago, with internal ticket and PR ids; the version-to-version diff already lives in the gbn-ag-pims-v0.N.0-changes.md files.",
+      "fix": "Must: descriptions in gbn-ag-pims-v0.4.0.schema.json state what each field holds now, with no 'New in vX', 'previously', PR numbers, Jira keys or gap ids; version history lives only in the *-changes.md files. One way: strip those clauses from each description, keeping the sentences that define the field.",
+      "file": "schemas/profiles/imports/gb/pims/gbn-ag-pims-v0.4.0.schema.json",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "file": "schemas/core/defra-unvtd-canonical-core-v1.schema.json",
+      "line": "856",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Core ExchangedDocument.issuer description says Defra import pre-notifications carry the responsible-person organisation with a named contact; GBN-AG (a Defra import pre-notification) no longer carries issuer",
+      "fix": "Must: the core description does not claim GBN-AG carries issuer. One way: 'For TRACES CHED … GBN-AG does not carry it.'",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

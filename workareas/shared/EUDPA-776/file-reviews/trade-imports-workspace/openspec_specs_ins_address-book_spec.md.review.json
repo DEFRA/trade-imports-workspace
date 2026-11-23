@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/ins/address-book/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:38Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Consignment-contact wording is removed correctly, but the PR also deletes the still-true germinal products requirement REQ-INS-ADDR-048 and keeps the branch address the AC says must go.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1349,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The PR deletes REQ-INS-ADDR-048 and its four scenarios (SCN-INS-ADDR-048-A..D: the add page serves every registered notification journey, germinal products included, and returns only through that journey's registered pages). That rule has nothing to do with the contact address and still holds: the ins-frontend at f2c6e6a keeps the JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS registry entry (features/address-book/journey-registry.js:43-47) with its returnPathTemplate. The spec now understates the code and drops the open-redirect guard from the contract, which is outside EUDPA-776's AC.",
+      "fix": "Must: REQ-INS-ADDR-048 and SCN-INS-ADDR-048-A..D stay in the spec with their coverage links, as on main. One way: restore the block from origin/main and only drop the consignment-contact wording elsewhere."
+    },
+    {
+      "id": 2,
+      "line": 84,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The AC says 'The address book has no branch address. A branch address is the same as the contact address, so it goes with the contact address page'. The spec still specifies a Branch type and branch address role throughout: SCN-INS-ADDR-005-B (line 84), the 'Branch' tab in REQ-INS-ADDR-03x (lines 969-995), branch listing (1013-1020, 1052-1057), the type picker offering 'Branch' (1088, 1159, 1172) and the Branch add-form scenarios (1260-1289). The ins-frontend PR keeps the Branch tab too (address-book-tabs.js:29), so the spec matches the code but neither delivers that AC, and the spec claims an address book the ticket says should not exist.",
+      "fix": "Must: the spec and the ins-frontend agree with the ticket on whether the address book has a branch address. One way: remove the Branch type, tab and role from the ins-frontend and these scenarios; or, if branch addresses are staying, have the ticket's AC corrected and record that decision in the PR."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

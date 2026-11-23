@@ -1,0 +1,29 @@
+{
+  "file": "schemas/profiles/imports/gb/pims/gbn-ag-pims-v0.4.0.schema.json",
+  "repo": "trade-imports-schemas",
+  "commit": "8de0f3b310656024062b696f0c9f6e2b55ef95fd",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly v0.3.0 minus issuer, but it has no validated sample and carries copied version history and ticket keys in its descriptions.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Every earlier PIMS schema has a worked sample that 'npm run validate-samples' (CI: check-pull-request.yml:42) validates against it: samples/imports/gb/gbn-ag/json/pims/gbn-ag-pims-v0.1.0.json, v0.2.0.json and v0.3.0.json. The PR adds no gbn-ag-pims-v0.4.0.json, so CI only compiles the new schema and nothing shows a v0.4.0 payload without issuer, the shape the gateway now publishes.",
+      "fix": "Must: a v0.4.0 PIMS sample with no exchangedDocument.issuer exists beside the earlier ones and is validated against gbn-ag-pims-v0.4.0.schema.json in CI. One way: copy gbn-ag-pims-v0.3.0.json to gbn-ag-pims-v0.4.0.json, drop issuer, set $schema and metadata.schemaVersion to v0.4.0."
+    },
+    {
+      "id": 2,
+      "line": 55,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The newly minted v0.4.0 schema copies v0.3.0's version-history and ticket narration into its published descriptions: 'New in v0.2.0 ... Previously dropped entirely (PR #52)' (lines 41, 55, 63), 'the EUDPA-370 planning notes' (line 55), 'until EUDPA-369 wired ...' (line 63), 'previously hardcoded null (moot until EUDPA-369 ...)' and 'gap G18' (tradeLineItem, ~line 304), and 'New in v0.2.0/v0.3.0 ... previously omitted, PR #52' on most $defs. A consumer reading v0.4.0 is told what changed two and three versions ago, with internal ticket and PR ids; the version-to-version diff already lives in the gbn-ag-pims-v0.N.0-changes.md files.",
+      "fix": "Must: descriptions in gbn-ag-pims-v0.4.0.schema.json state what each field holds now, with no 'New in vX', 'previously', PR numbers, Jira keys or gap ids; version history lives only in the *-changes.md files. One way: strip those clauses from each description, keeping the sentences that define the field."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

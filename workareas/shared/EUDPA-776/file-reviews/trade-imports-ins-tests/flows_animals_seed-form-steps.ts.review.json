@@ -1,0 +1,29 @@
+{
+  "file": "flows/animals/seed-form-steps.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:13:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The contact seed step and role are removed, but the replacement step function has an invented name and the party types are left as a pass-through duplicate of PartyAnswers.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 164,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "openingRunTailSteps (164-167) names an 'opening run' and a 'tail' that appear nowhere else in this repo or the animals frontend (the ticket calls it the opening sequence), so the name does not tell the reader what the steps do: post an empty Continue on accompanying-documents and then on addresses, the second of which addressSteps already posts at 138. Why addresses is posted twice is left for the reader to guess.",
+      "fix": "Must: the function's name says in the repo's own words what the steps do and where the draft ends up (the Continue posts that finish the Save and continue walk on check your answers), with no invented metaphor. One way: rename to e.g. continueToCheckYourAnswersSteps, and if the second addresses post is not needed, drop it."
+    },
+    {
+      "id": 2,
+      "line": 12,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "With contact gone, partyNamesFrom (12-14) only copies answers.parties, and PartyNames/PartyRole (6-8) now restate the five keys PartyAnswers already defines in domain/animals/constants/journey-options.ts:42. One concept, the five-party record, now has two types and a pass-through function; PartyRole also clashes with the display-label PartyRole in page-objects/animals/addresses-page.ts, forcing the AddressesPartyRole alias in seeded-journey.ts:3.",
+      "fix": "Must: one type owns the five party roles by key, and seedSteps passes the answers' parties to resolveParties without a pass-through wrapper. One way: delete partyNamesFrom and PartyNames, type resolveParties as (names: PartyAnswers) => Promise<PartyIds>, derive PartyIds as Record<keyof PartyAnswers, string>, and call resolveParties(answers.parties)."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

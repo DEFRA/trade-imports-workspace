@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:14:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The journey now correctly goes from addresses to the review, but the change leaves a repeated URL assertion and adds a second test with the same set-up and action.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 79,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two problems from this change. (1) In 'ends on the review page after Save and continue ...', the same assertion, toHaveURL(animalsPages.notificationView.expectedUrlPattern(referenceNumber)), now appears on line 79 and again on line 81. (2) The new test 'roles and addresses saved with parties missing goes to check your answers, naming what is outstanding' (lines 157-174) repeats that test's set-up and action: walkToRolesAndAddressesWithoutCph, addresses Continue, then the review heading and URL. Its error-list assertion is a stricter version of the earlier test's two toContainText checks.",
+      "fix": "Must: one test owns 'Continue from the addresses page on an incomplete notification lands on the review and names what is outstanding', asserting the exact error list, and no assertion is repeated within a test. One way: delete the duplicate toHaveURL line, move the exact errorSummaryLinks list into the existing test in place of its two toContainText checks, and delete the new test.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

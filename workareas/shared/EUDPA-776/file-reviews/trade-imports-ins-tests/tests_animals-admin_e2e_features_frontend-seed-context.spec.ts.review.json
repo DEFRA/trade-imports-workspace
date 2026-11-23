@@ -1,0 +1,30 @@
+{
+  "file": "tests/animals-admin/e2e/features/frontend-seed-context.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:14:14Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new consignment assertion is an absence check its own set-up already guarantees, so it cannot catch a consignment party coming back, and the test model still declares the field.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 106,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "expect(notification.consignment).toBeUndefined() (106) cannot fail on this ticket's change: the seeded journey no longer posts a contact step (seed-form-steps.ts), so the set-up never chooses a contact address and consignment is undefined whether or not the frontend and backend still support it. It is also an absence check where an exact positive one is possible, and NotificationDocument still declares consignment?: StoredParty (domain/animals/models/db/notification-document.ts:93), so the test model keeps a field the backend no longer has.",
+      "fix": "Must: the assertion states exactly what the seeded notification holds now, so it would go red if a consignment party came back, and the NotificationDocument type has no consignment field. One way: assert the notification's top-level keys with toEqual on a sorted list, and delete consignment from NotificationDocument (and ConsignmentParty from domain/animals/models/api/notification.ts:110 if unused).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The comment above the describe (18-19), 'Auth state is minted per Playwright project, so this proof only holds from the admin project: an e2e-project session is already a frontend session.', describes the Playwright project config and auth fixtures, not the lines below, and is rationale in code.",
+      "fix": "Must: no comment describing other modules or rationale sits above the describe; the reason this spec lives under animals-admin is recorded in the tests repo docs if it is needed. One way: delete the comment and add the sentence to the tests repo's docs on Playwright projects."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

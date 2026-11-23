@@ -1,0 +1,37 @@
+{
+  "file": "openspec/coverage/live-animals/journey-flow/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:14:34Z",
+  "verdict": "RISKY",
+  "verdict_reason": "SCN-FLOW-003-D links a cph-scope test title that no longer exists, and its 'even when complete' rule lost its only unit witness.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 80,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-FLOW-003-D, which this PR rewrote, links cph-scope.spec.ts by the title 'a saved CPH number shows as 123456789 on the addresses page, ...', but the test at ins-tests 47d3968 (cph-scope.spec.ts:30) is titled 'a saved CPH number shows as 12/345/6789 on the addresses page, ...'. Commit ef8ad11 corrected this title in the consignment-addresses and cph-number coverage files but missed this one, so the link names a test that does not exist.",
+      "fix": "Must: every link on SCN-FLOW-003-D names a test title that exists at the PR-set commit. One way: change '123456789' to '12/345/6789' in the line 80 test title, as ef8ad11 did in the sibling coverage files."
+    },
+    {
+      "id": 2,
+      "line": 75,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "SCN-FLOW-003-D now says Roles and addresses goes on to check your answers 'never the CPH number page, even when complete', and drops from full to partial: the animals-frontend PR deletes the probed dispatch.test.js unit 'Should go from Roles and addresses to Contact address even when every other task is complete' (nextSlug('addresses', completeAnswers)) instead of retargeting it, and the two remaining e2e links (save-and-continue.spec.ts:67, cph-scope.spec.ts:30) both start from an incomplete notification, so nothing proves the 'even when complete' half of the changed rule. REQ-FLOW-003 drops to partial with it.",
+      "fix": "Must: a test proves Save and continue from Roles and addresses on a complete notification lands on check your answers and not the CPH number page, and it is linked here at full strength. One way: in dispatch.test.js add 'Should go from Roles and addresses to nothing, the review page being the fallback, even when every other task is complete' asserting nextSlug('addresses', completeAnswers) is undefined, red-probe it, and link it."
+    },
+    {
+      "id": 3,
+      "line": 404,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "SCN-FLOW-012-A (a page reached via a detour offers only its primary action) loses its hub-picker.fit.spec.js link 'ends with Save and continue alone, offering no return control', though that test still exists at animals-frontend 08f4558 (hub-picker.fit.spec.js:613) and the address picker has nothing to do with the contact page. The note on the dropped link said it 'proves the page-level ending the macro test cannot'.",
+      "fix": "Must: SCN-FLOW-012-A keeps every link whose test still exists and still witnesses it. One way: restore the hub-picker.fit.spec.js entry."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "b73a5d07214320b9379342b28e8a8ec86498b08c",
+  "pr": 133,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:09:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The consignment field removal is correct and has no remaining main-source callers, but it leaves a dead consignments() test fixture and three unused imports of it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Removing the consignment field leaves its test fixture behind: NotificationTestData.consignments() (src/test/java/.../utils/NotificationTestData.java:37) now has no caller, and three test classes still statically import it unused (NotificationCopyMapperTest.java:5, NotificationControllerTest.java:26, NotificationServiceTest.java:25). Checkstyle (config/checkstyle/code-quality.xml) has no UnusedImports rule, so the build will not catch it.",
+      "fix": "Must: no test code names the removed consignment party; the backend test sources hold no consignments() fixture and no import of it. One way: delete NotificationTestData.consignments() and the three static imports in this PR."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

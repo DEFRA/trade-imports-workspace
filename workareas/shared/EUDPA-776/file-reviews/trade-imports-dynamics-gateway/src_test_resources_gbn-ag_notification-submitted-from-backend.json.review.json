@@ -1,0 +1,21 @@
+{
+  "file": "src/test/resources/gbn-ag/notification-submitted-from-backend.json",
+  "repo": "trade-imports-dynamics-gateway",
+  "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
+  "pr": 35,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:23:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The fixture matches the post-change backend, but nothing covers the issuer-carrying events the deployed backend still sends, which the strict gateway record would reject.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The fixture is meant to be the event 'as the backend sends it'. It now holds only the shape after backend PR 133. The backend on main still writes exchangedDocument.issuer (backend outbox/gbnag/ExchangedDocument.java), and the gateway's ExchangedDocument is @JsonIgnoreProperties(ignoreUnknown = false). An event from the backend now deployed therefore fails PimsPayloadMapper.parse with SqsNonRetryableException, and v0.1.0, the required stream, is lost. Nothing in the PR set pins that contract or the deploy order (backend first) that avoids it.",
+      "fix": "Must: either the gateway accepts an event that still carries exchangedDocument.issuer and forwards it without issuer, proved by a test from a fixture of that shape, or the PR set records and enforces that the backend deploys first. One way: keep a fixture copy with issuer and a test that parses it and asserts every version is sent with no issuer, and allow that one known property on ExchangedDocument until the backend change is live."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

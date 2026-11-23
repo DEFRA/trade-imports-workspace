@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/contract.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:08:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The diff correctly drops the deleted contact controller's import and contract case with no remaining contact references, but the file carries Major code-quality findings on comments, alias names and one over-claiming test title.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 69,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe other modules and carry rationale: lines 69-70 (why ARRIVAL_DATE is derived from the window), 149-151 (how the reason page asks its questions), 377-378 (the shared picker serving 'all five spokes', a count), 420-422 (what the transporter list and add spokes declare).",
+      "fix": "Must: no comment in the file describes another module, carries rationale or counts; any rationale worth keeping lives in the repo's docs/ or the behaviour spec, and names (e.g. a helper like arrivalDateInsideWindow) say what the comments said. One way: delete the four comments and rename ARRIVAL_DATE / REASON_REVEALS if a name needs to carry the point.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 67,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Two aliases give existing values a second name: 'const drive = driveHandler' (line 67) and 'const committableKeys = obligationNames' (line 79, used once at line 82).",
+      "fix": "Must: each value has one name in the file. One way: call driveHandler directly and filter obligationNames in committedIds, deleting both aliases.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 472,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should commit the same transporter answers from the add spokes the list declares them for' over-claims: the list declares transporterType, commercialTransporter and privateTransporter, but the assertions only show the chooser commits nothing and each details spoke commits its one party (transporterType is seeded, not committed); nothing compares against transporters.meta.collects.",
+      "fix": "Must: the title states what the assertions prove, or the assertions prove the title. One way: retitle to 'Should commit each typed-in transporter from its details spoke and nothing from the type chooser'.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

@@ -1,0 +1,38 @@
+{
+  "file": "src/test/java/uk/gov/defra/cdp/dynamicsgateway/notification/PimsEventMapperV4Test.java",
+  "repo": "trade-imports-dynamics-gateway",
+  "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
+  "pr": 35,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:23:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "A copied v3 suite with a title that still says v0.3.0, an over-claiming 'All' title, and comment banners.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 61,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles do not match their assertions. map_shouldStampV030SchemaVersionAndUriAndKeepTheIncomingCorrelationId (line 61) asserts schemaVersion '0.4.0' and the v0.4.0 schema URI; the title was copied from the v3 test. map_shouldPassThroughAllEnvelopeFields (line 44) asserts seven fields, but PimsEventV4 also carries metadata, actor and statusChanges, so 'All' over-claims. The v3 original said 'IdentityFields'.",
+      "fix": "Must: each title states what its assertions prove. One way: map_shouldStampV040SchemaVersionAndUriAndKeepTheIncomingCorrelationId and map_shouldPassThroughEnvelopeIdentityFields."
+    },
+    {
+      "id": 2,
+      "line": 24,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "PimsEventMapperV4Test is PimsEventMapperV3Test copied. Apart from type names and the 0.4.0 metadata values, the only changes are dropping the v3 issuer assertion, two title edits and a new '// --- Helpers ---' banner. The mapper graph in its field initialiser (lines 24-36) is also built by hand again, as it is in PimsPayloadMapperTest and NotificationSqsListenerTest.",
+      "fix": "Must: event-mapping behaviour shared by v0.3.0 and v0.4.0 is tested once; this class tests only what is specific to v0.4.0 (its metadata) and gets its mapper from a shared test helper. One way: keep only the metadata test here and build the mapper through the shared PimsPayloadMapper test factory raised on NotificationSqsListenerTest."
+    },
+    {
+      "id": 3,
+      "line": 157,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The new file brings in '// Given', '// When', '// Then' and '// When / Then' comments (lines 97, 106, 109, 122, 127, 134, 145) and a '// --- Helpers ---' section banner (line 157).",
+      "fix": "Must: no Given/When/Then comments and no section banners in the file. One way: delete them and separate set-up, action and assertions with blank lines.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

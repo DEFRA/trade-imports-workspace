@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:14:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The issuer check is an absence assertion that its own set-up makes hard to fail, and the outbox model type still declares issuer.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 94,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "expect(data.exchangedDocument.issuer).toBeUndefined() (94) proves the removal with an absence check where an exact positive assertion is possible, and the UI submission no longer visits a contact page, so the set-up gives the backend no consignment to build an issuer from either way. GbnAgExchangedDocument still declares issuer?: GbnAgTradeParty (domain/animals/models/db/outbox-event-document.ts:54), so the model keeps a field the event schema dropped.",
+      "fix": "Must: the test asserts exactly which fields exchangedDocument carries now, so a returning issuer turns it red, and GbnAgExchangedDocument has no issuer field. One way: expect(Object.keys(data.exchangedDocument).sort()).toEqual([...the fields the event now sends]), and delete issuer from GbnAgExchangedDocument.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:52Z"
+}

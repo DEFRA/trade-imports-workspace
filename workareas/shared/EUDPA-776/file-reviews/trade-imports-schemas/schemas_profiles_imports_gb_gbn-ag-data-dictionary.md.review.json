@@ -1,0 +1,21 @@
+{
+  "file": "schemas/profiles/imports/gb/gbn-ag-data-dictionary.md",
+  "repo": "trade-imports-schemas",
+  "commit": "8de0f3b310656024062b696f0c9f6e2b55ef95fd",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Hand-edited generated output that regeneration reverts, because the schema still defines issuer.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 37,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The dictionary is generated output ('npm run build-dictionary:gbn-ag', scripts/build-data-dictionary.js walks the profile into the core schema), but this PR edits it by hand: it deletes the issuer row (old line 37) and the 'the issuer' phrase in the exchangedDocument row (line 17). Regenerating from the PR's own schemas puts both back, with issuer as 'TradeParty | no', because the core ExchangedDocument still defines issuer. The committed dictionary no longer matches what its generator produces from the schema it documents, and the next regeneration silently reverts this AC.",
+      "fix": "Must: the committed dictionary is byte-identical to the output of 'npm run build-dictionary:gbn-ag' and has no exchangedDocument.issuer row or mention. One way: remove issuer from the GBN-AG profile's effective shape (see the gbn-ag-v1.schema.json finding), reword the core ExchangedDocument description if it should not mention the issuer for GBN-AG, then regenerate rather than hand-edit."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

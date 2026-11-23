@@ -1,0 +1,49 @@
+{
+  "file": "docs/best-practices/playwright/BEST_PRACTICES.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "An unrelated, partly inaccurate multi-commodity guide section rides on this ticket, tells authors to put ticket keys in code, and orphans the Faker example.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 121,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Out of scope: the whole 'Animals domain: answers as data, journeys as translators' section (lines 121-159) and the three new review-flag rows (lines 307-309) document the multi-commodity cow/cat test pattern, which has nothing to do with removing the contact address page. It arrives in commit 6198c49b 'docs(playwright): ...' with no ticket key, riding on the EUDPA-776 PR, so a best-practice change that binds every Playwright author gets reviewed and merged as part of an unrelated ticket.",
+      "fix": "Must: the EUDPA-776 PR changes only what the ticket needs; the animals answers-as-data guidance is reviewed in its own PR on its own ticket branch. One way: revert 6198c49b from this branch and raise it as a separate PR (e.g. chore/EUDPA-XXXX-animals-answers-as-data).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 123,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The new section describes code that is not there at this commit (ins-tests a00 review clone): line 123 names 'domain/animals/fixtures/seed-form-steps.ts', which does not exist - the file is 'flows/animals/seed-form-steps.ts', as line 115 of the same guide says; line 144 tells authors to add species in 'commodities.ts' and 'commodity-species.ts', and lines 149/309 name a 'commoditySpecies' constant, none of which exist (species live in 'domain/animals/constants/commodity-lines.ts' and 'journey-commodity-line-answers.ts'); line 127 says 'Today MANDATORY_ANSWERS and ALL_ANSWERS describe a single cattle line' and line 128 says multi-commodity scenarios 'extend the model with commodityLines', but 'journey-options.ts:58' already declares 'commodityLines: CommodityLineAnswer[]' and MANDATORY_ANSWERS sets it (line 107). An author following the guide would create files beside the real ones.",
+      "fix": "Must: every path, file and constant the section names exists in trade-imports-ins-tests and the section states the model as it is now (commodityLines is the model), with no 'Today' narration. One way: point to flows/animals/seed-form-steps.ts and domain/animals/constants/commodity-lines.ts, drop the commodities.ts/commodity-species.ts/commoditySpecies references, and rewrite 'One cow by default' as 'answers hold a commodityLines list; variants spread it'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 159,
+      "severity": "Major",
+      "category": "history",
+      "issue": "Line 159 tells authors to 'add a TODO with a ticket key' when keeping a legacy field, which contradicts the house rule in .claude/rules/code-quality.md ('No ticket keys (EUDPA-565) ... in code, comments or test titles'; 'No history') - and the house rules win over any guide under docs/best-practices/. Line 127's 'Today ...' is the same before/after narration.",
+      "fix": "Must: the guide gives no instruction that breaks a house rule; a legacy field's removal is tracked outside the code. One way: replace line 159 with 'track its removal in a Jira ticket linked from the PR; leave no ticket key in code', and drop 'Today'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 4,
+      "line": 161,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The new section was inserted between the 'Test data is copied, never invented' bullets (lines 113-119) and their Faker Bad/Good example (lines 161-167), so that example now sits under '### Legacy document fields' and illustrates nothing there, while the Faker rule has lost its example. The section's '### Assertions' (line 153) also sits apart from the guide's own '## Assertions' (line 177), giving the identifier rule a second home.",
+      "fix": "Must: the Faker Bad/Good block sits directly under the Faker rule it illustrates, and each assertion rule lives under the guide's single '## Assertions' section. One way: move the new section to after the Faker example (before '## Locators'), and move the '??' identifier rule into '## Assertions'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "openspec/coverage/live-animals/addresses/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:13:34Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Contact-page scenarios are removed correctly and SCN-ADDR-001-D's links resolve, but the role-scoped list and one-page list requirements (REQ-ADDR-018, REQ-ADDR-017) are deleted although that behaviour still ships and is tested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The PR deletes REQ-ADDR-018 (each consignment role's list offers only that role's addresses, a two-role address is on both, a role-less address is on every list) and REQ-ADDR-017 (the role's list shows every address on one page) whole, from this coverage file and from openspec/specs/live-animals/addresses/spec.md, and they are not moved anywhere under openspec/specs/live-animals. Only the contact-page halves (018-C's 'and on the consignment contact page', 018-D) belong to EUDPA-776. The role-list behaviour still ships and is still tested at the PR-set commits: animals-frontend 08f4558 address-book.test.js 'Should not return a record whose roles belong to another role' and 'Should return a record carrying two roles...', party-picker.controller.test.js 'Should give each spoke the stub records carrying its own role...', hub-picker.fit.spec.js 'picker offers every consignor address as one group ... with no page links'; ins-tests 47d3968 addresses-picker.spec.ts:13. The AC asks the addresses spec to 'match the journey without the page', which it now understates.",
+      "fix": "Must: the live-animals addresses spec and this coverage file still state and link the role-scoped list rule (018-A, 018-B, the five-role half of 018-C) and the one-page list rule (017-A), with only the consignment contact and branch-address wording removed. One way: restore REQ-ADDR-018 with 018-D deleted and 018-C reworded to 'listed on every role's list' (dropping the contact.fit.spec.js link), and restore REQ-ADDR-017 unchanged, in both spec.md and coverage.json."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:53Z"
+}

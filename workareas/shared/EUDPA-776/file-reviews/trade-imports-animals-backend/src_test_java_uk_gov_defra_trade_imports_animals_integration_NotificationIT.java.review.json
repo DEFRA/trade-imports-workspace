@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "b73a5d07214320b9379342b28e8a8ec86498b08c",
+  "pr": 133,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:09:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The three removed consignment lines correctly follow the field's removal from NotificationBase, but they orphan NotificationTestData.consignments() and leave the 'saves no consignment party' AC without a test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 2817,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Removing '.consignment(NotificationTestData.consignments().getFirst())' here (and the matching lines in NotificationControllerTest, NotificationServiceTest and NotificationCopyMapperTest) leaves NotificationTestData.consignments() (utils/NotificationTestData.java:37) with no caller anywhere in src/. It is a fixture for a party the notification no longer has, so the consignment-contact concept survives in test support after the PR removes it from the model.",
+      "fix": "Must: no test helper builds a consignment-contact party; NotificationTestData exposes only parties the notification still holds. One way: delete NotificationTestData.consignments() in this PR."
+    },
+    {
+      "id": 2,
+      "line": 2817,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "AC 'A new live animals notification saves no consignment party' has no test. The PR deletes every consignment assertion (here at old 2054, 2080, 2822 and in the unit tests) and adds none in their place. Frontend and backend deploy independently, so during rollout an older frontend still sends a 'consignment' key on save; nothing proves the backend accepts that body (no 400 from strict deserialisation) and stores no 'consignment' on the Mongo document. A later switch to FAIL_ON_UNKNOWN_PROPERTIES, or a re-added field, would go unnoticed.",
+      "fix": "Must: an integration test fails if a save request carrying a 'consignment' party is rejected or if the stored notification document holds a 'consignment' key. One way: in NotificationIT, POST a raw JSON save body that includes a 'consignment' object, assert 2xx, then read the raw document from mongoTemplate and assert its notification map has exactly the expected keys (no 'consignment').",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

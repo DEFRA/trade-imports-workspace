@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:11:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the contact-address refusal case is correct, but the fullyAnswered helper seeds only a port and a consignor, so its name mispredicts what it builds.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 65,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The helper fullyAnswered (lines 65-69) suggests a notification with every answer filled in. It seeds only portOfEntry and a consignor, and the tests pass only because beforeEach stubs readiness with configureReadyForCheckYourAnswers(SET_ID, () => true) (line 96). Its callers (lines 122, 131, 138, 148, 158, 168, 176, 184, 209) read as if the notification were complete. This PR removed the fullyAnswered({ contactAddress }) case, so this file is in scope.",
+      "fix": "Must: the helper's name says what it seeds: a known port of entry and a valid copied consignor, with readiness supplied by the stub. One way: rename it to validPortAndConsignor (or answersThatPassTheirRules) and update every caller."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

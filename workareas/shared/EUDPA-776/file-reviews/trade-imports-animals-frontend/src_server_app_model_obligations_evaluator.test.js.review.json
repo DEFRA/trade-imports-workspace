@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/model/obligations/evaluator.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-20T14:09:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing contactAddress from the lists is correct, but a block comment still states the old count and the obligation count is built into names and titles, so every change to the manifest means renaming them.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1343,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The block comment above the always-in-scope describe (lines 1328-1344) is now untrue: line 1343 still says 'Expected split: 17 mandatory + 1 optional' after the PR removed contactAddress, leaving 16 mandatory entries in trivialAlwaysMandatoryObligations (1347-1363). The PR edited the '18' counts on lines 1331 and 1337 but missed this one. The block also breaks the house comment rules: it gives counts, and it describes other modules (the classifier, unindexedImplication, 'the constructor') rather than the lines below it.",
+      "fix": "Must: no comment above this describe states a count or describes code outside the block. Every true statement it makes is already in the test titles and assertions. One way: delete the whole block comment (1328-1344). The it.each titles already say each obligation evaluates to { inScope: true, status } on empty input."
+    },
+    {
+      "id": 2,
+      "line": 1346,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The obligation count is built into a variable name and three test titles: allSeventeenObligations (1366, 1385, 1392), 'trivial applyTo drop fidelity (17 always-in-scope obligations)' (1346), 'none of the 17 obligations carry an applyTo closure' (1384) and 'none of the 17 obligations carry a dependsOn key' (1391). Removing one obligation forced this PR to rename all of them (allEighteenObligations to allSeventeenObligations), and the next change to the manifest will do the same. 'trivial applyTo drop fidelity' also names a past refactor (dropping applyTo closures), not what the assertions prove.",
+      "fix": "Must: the variable and titles say what the list holds and what the assertions prove, with no count and no refactor history, so adding or removing an obligation changes only the list. One way: rename allSeventeenObligations to alwaysInScopeObligations, retitle the describe 'always-in-scope obligations', and retitle the two its 'none of the always-in-scope obligations carry an applyTo closure' and '... a dependsOn key'."
+    }
+  ],
+  "reconciled_at": "2026-11-20T14:34:51Z"
+}

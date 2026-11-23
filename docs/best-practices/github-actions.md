@@ -1,6 +1,6 @@
 # GitHub Actions — Best Practices
 
-Applies to every repo in the trade-imports workspace. Covers the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse), the checkout-depth knobs that interact with it, how a pipeline calls a repo's tests (§7), how to read a red or missing E2E or Lighthouse check (§8), and the rule that protects `main` (§9). Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here.
+Applies to every repo in the trade-imports workspace. Covers the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse), the checkout-depth knobs that interact with it, how a pipeline calls a repo's tests (§7), how to read a red or missing E2E or Lighthouse check (§8), the rule that protects `main` (§9), and how to rebuild a published commit with a hotfix (§10). Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here.
 
 ---
 
@@ -179,6 +179,33 @@ Every repo protects `main` with one repository ruleset, `Protect main branch`. I
 - A pull request opened with `GITHUB_TOKEN` (the plants prototype's upstream sync) starts no workflows, so its required checks never report.
 
 **Changing the rule.** Edit `config/main-branch-rules.json` first, then apply it with `gh api -X PUT repos/DEFRA/<repo>/rulesets/<id>`. Check the result with `gh api repos/DEFRA/<repo>/rules/branches/main`. Keep **Update branch** turned on (`allow_update_branch`) in every repo.
+
+---
+
+## 10. Rebuilding a published commit: the hotfix branch needs a commit of its own
+
+Sometimes a service needs a fresh image with no code change, for example to pick up a patched base image. `publish.yml` runs only on a push to `main`. `publish-hotfix.yml` can be started by hand, but `DEFRA/cdp-build-action/build-hotfix` refuses to run on `main`, so start it on a branch.
+
+Give that branch at least one commit that is not on `main`:
+
+```bash
+git checkout -b fix/EUDPA-XXXX-rebuild origin/main
+git commit --allow-empty -m "fix(EUDPA-XXXX): rebuild on the patched base image"
+git push -u origin fix/EUDPA-XXXX-rebuild
+gh workflow run publish-hotfix.yml --repo DEFRA/<repo> --ref fix/EUDPA-XXXX-rebuild
+```
+
+**Why.** The action gets its version from `anothrNick/github-tag-action`. When the branch's head already has a version tag, which is true of any commit `publish.yml` has published, the tag action logs `No new commits since previous tag. Skipping...` and returns that tag. The action builds anyway and pushes the new image to ECR and Docker Hub under the existing version, replacing the image published there. Two different images have then shipped as one version, and a running service only gets the new one when that version is deployed again. With a commit of its own, the branch gets a new pre-release version (`<next patch>-<branch>.0`) and the published version stays as it was.
+
+**Check the version before you deploy.** Read it from the run log:
+
+```bash
+gh run view <run-id> --repo DEFRA/<repo> --log | grep -E "Skipping|naming to docker.io"
+```
+
+If it says `Skipping`, the image went out under an existing version. Deploy that version again everywhere it runs, and check each service's startup log rather than its version number.
+
+Refusing to publish over an existing version is a fix for `DEFRA/cdp-build-action`, which the CDP platform team owns.
 
 ---
 

@@ -68,7 +68,7 @@ every section collapsed.
 | `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
 | Caches                                 | Cache hits and misses                        |
 | Business events                        | One panel per business metric                |
-| Requests                               | Requests by section, Request time by section |
+| Requests                               | Requests by area, Request time by area       |
 | Journey events                         | Journey events, Validation failures by page  |
 | Dependency connections                 | Connection errors and losses                 |
 | Dependency call logs                   | Slowest dependency calls                     |
@@ -102,8 +102,8 @@ listing the values. Two exceptions:
 | Call time: average, 95th percentile, slowest | `external.call.duration`                                                                                                     | `Average`, `p95`, `Maximum`            | `operation`, with `dependency` set to the row's                                                   |
 | Cache hits and misses                        | `cache.hit`, `cache.miss`                                                                                                    | `Sum`                                  | `cache`                                                                                           |
 | Business events                              | the service's own metric                                                                                                     | `Sum`                                  | its dimension                                                                                     |
-| Requests by section                          | `http.server.requests`                                                                                                       | `SampleCount`                          | `method`, `section`, `status.class`                                                               |
-| Request time by section                      | `http.server.requests`                                                                                                       | `p95`, `Maximum`                       | `method`, `section`, `status.class`                                                               |
+| Requests by area                             | `http.server.requests`                                                                                                       | `SampleCount`                          | `method`, `area`, `status.class`                                                                  |
+| Request time by area                         | `http.server.requests`                                                                                                       | `p95`, `Maximum`                       | `method`, `area`, `status.class`                                                                  |
 | Journey events                               | `journey.started`, `.submitted`, `.amended`, `.copied`, `.deleted`, `journey.concurrency.conflict`, `journey.entry.redirect` | `Sum`                                  | none: each is published with no dimensions, so its query sets no dimension, with "match exact" on |
 | Validation failures by page                  | `journey.validation.failure`                                                                                                 | `Sum`                                  | `page`                                                                                            |
 | Connection errors and losses                 | `external.dependency.error`, `external.dependency.connection.lost`                                                           | `Sum`                                  | `dependency`                                                                                      |
@@ -202,7 +202,7 @@ Claude writes the service's dashboard to
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
    has no cache. Delete the Requests row and its panels if the service
-   publishes no `http.server.requests` tagged `method`, `section` and
+   publishes no `http.server.requests` tagged `method`, `area` and
    `status.class` (`METRICS.md` → "Options any service can use"), and
    the Dependency connections
    row if it publishes neither connection metric. In the Journey events

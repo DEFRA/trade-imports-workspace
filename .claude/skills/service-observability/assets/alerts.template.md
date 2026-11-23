@@ -124,21 +124,21 @@ config value: check the value is actually applied (a Feign client with
 no `Request.Options` uses Feign's 60 second default whatever the YAML
 says).
 
-## 4. <service> section slow
+## 4. <service> area slow
 
 `[UNPROVEN]` Not yet built or fired anywhere. Keep this section only if
 the service publishes `http.server.requests` (`references/NODE.md` →
 "Endpoint layer"). Duplicate rule 3, then set:
 
-| Field           | Value                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Rule name       | `<service> section slow`                                                                                                        |
-| Metric          | `http.server.requests`                                                                                                          |
-| Dimensions      | `method` = `*`, `section` = `*`, `status.class` = `*`, with Match exact off                                                     |
-| Statistic       | `p95`                                                                                                                           |
-| Period          | `900` (15 minutes)                                                                                                              |
-| Alert condition | `Last` `IS ABOVE` `<section-slow-ms>` (the team's threshold for a page)                                                         |
-| Summary         | `{{ $labels.method }} {{ $labels.section }} {{ index $labels "status.class" }}: p95 above <section-slow-ms> ms over 15 minutes` |
+| Field           | Value                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Rule name       | `<service> area slow`                                                                                                     |
+| Metric          | `http.server.requests`                                                                                                    |
+| Dimensions      | `method` = `*`, `area` = `*`, `status.class` = `*`, with Match exact off                                                  |
+| Statistic       | `p95`                                                                                                                     |
+| Period          | `900` (15 minutes)                                                                                                        |
+| Alert condition | `Last` `IS ABOVE` `<area-slow-ms>` (the team's threshold for a page)                                                      |
+| Summary         | `{{ $labels.method }} {{ $labels.area }} {{ index $labels "status.class" }}: p95 above <area-slow-ms> ms over 15 minutes` |
 
 ## 5. <service> concurrency conflicts
 

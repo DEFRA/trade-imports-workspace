@@ -27,7 +27,7 @@ by copying `assets/alerts.template.md` and filling in:
   `Request.Options`, so Feign's 60 second default applies. If
   dependencies differ, split "dependency slow" into one rule per
   dependency, as the sheet says;
-- `<section-slow-ms>` and `<conflicts-per-hour>` for rules 4 and 5,
+- `<area-slow-ms>` and `<conflicts-per-hour>` for rules 4 and 5,
   from the team, when the service publishes those metrics.
 
 The build sheet and the table below must agree; a change to one is a
@@ -72,14 +72,14 @@ agree, not tested values.
 | Redis unavailable (a Node service whose session store is Redis)                                          | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = `redis`      | Normal              |
 | Dependency calls failing                                                                                 | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation`                                               | Normal              |
 | Dependency slow                                                                                          | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation`           | Normal              |
-| Section slow (a service publishing `http.server.requests`)                                               | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `section` and `status.class`               | Normal              |
+| Area slow (a service publishing `http.server.requests`)                                                  | `http.server.requests`, `p95`, above a threshold the team sets, over 15 minutes, per `method`, `area` and `status.class`                  | Normal              |
 | Concurrency conflicts (a service publishing `journey.concurrency.conflict`)                              | `journey.concurrency.conflict`, `Sum`, above a threshold the team sets over 60 minutes, with no dimensions                                | Normal              |
 
-`[UNPROVEN]` The section and concurrency rules (4 and 5 in
+`[UNPROVEN]` The area and concurrency rules (4 and 5 in
 `assets/alerts.template.md`) have not been built or fired anywhere. They
 are built for the names `trade-imports-animals-frontend` publishes
 (`NODE.md`). CDP's own advanced HTTP alerts already cover the whole
-service's p95 and 5xx rate, so rule 4 adds only the split by section.
+service's p95 and 5xx rate, so rule 4 adds only the split by area.
 
 **Query every call alert by `dependency` and `operation`.** Both
 external call metrics are published with that one dimension set
@@ -248,9 +248,9 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   and 1b.
   Once Slack routing is in place, also check the alert arrives in
   `trade-imports-team-alerts-non-prod`.
-- **Dev, section slow (rule 4).** Open a few pages of the service, then
+- **Dev, area slow (rule 4).** Open a few pages of the service, then
   lower the threshold to `IS ABOVE 0`: any page request's time is
-  above 0. Check the summary shows the method, section and status
+  above 0. Check the summary shows the method, area and status
   class of each firing series, such as `GET dashboard 2xx`.
 - **Dev, concurrency conflicts (rule 5): a real conflict.**
   `journey.concurrency.conflict` is published only when a save is
@@ -295,7 +295,7 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   read-only there, so make more stale saves than `<conflicts-per-hour>`
   within an hour, two tabs at a time as in dev. A refused save writes
   nothing: the service sends the browser back to the page.
-- **Test, section slow (rule 4).** `[UNPROVEN]` No practical real test:
+- **Test, area slow (rule 4).** `[UNPROVEN]` No practical real test:
   making a page slower than the team's threshold means breaking it. The
   evidence is the dev Firing from the lowered threshold, plus the same
   rule shown in test after promotion. Record it on the ticket as not

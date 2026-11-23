@@ -212,7 +212,8 @@ Claude writes the service's dashboard to
    counters (drop the targets for any it does not publish). Delete the
    row when both panels are gone; a panel left alone stays where it is.
    Move every row and panel below a deleted row up by its height: 9 for
-   each of these three rows.
+   each of Caches, Business events, Requests, Journey events and
+   Dependency connections, whether step 4 or this step deleted it.
 6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No

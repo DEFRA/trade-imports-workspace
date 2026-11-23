@@ -165,6 +165,10 @@ page, including its own "Out of Scope Data Elements" table, while scoping EUDPA-
   frontend and the V4 page, not just unmapped downstream. See §4 point 3, which already
   flags these as needing a new schema slot; this confirms there's no frontend
   collection to build against yet either. New scope — not yet raised with Monica/Judith.
+  **Correction (2026-11-23): Transporter Status is no longer required.** The
+  [INS Portal to PIMS data mapping](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6525093960)
+  page (v22) says on its transporter row: "Confirmed that transporter status is no
+  longer required". Weight stays open.
 - **Species Family Name / Species Class Name / Species Type Name** (domestic vs game) —
   absent from both the frontend and the V4 page. The PIMS mapping page itself marks
   these tentative ("TBC"/"may also be required"), not confirmed. "Domestic"/"game"
@@ -532,6 +536,12 @@ are worth raising as tickets:
    the frontend implements 6; Leg Ring's close cousin "Wing Ring" was explicitly
    de-scoped by Monica Rivera on 2026-05-29, so this one may already be a deliberate
    cut rather than a gap — Microchip has no such precedent and still needs a decision).
+
+   **Correction (2026-11-23):** Transporter Status no longer needs a slot. The PIMS
+   mapping page (v22) confirms it is no longer required, so only Weight still needs
+   one. Transporter Approval Number goes to PIMS from v0.2.0. The page's
+   transporter row also leaves Ben Letton to settle how Transporter Type maps, since
+   `partyTypeCode` is a list of coded values and the PIMS field is a plain string.
 4. **The PIMS schema is a mirror, not a contract — which hides its own gaps.**
    `gbn-ag-pims-v0.1.0.schema.json`'s own description says it's "a point-in-time
    description of what the backend currently serialises," not derived from the
@@ -649,8 +659,9 @@ fields. **Establish which `schemaVersion` a complaint refers to before investiga
 
 ### Confirmed unchanged by this pass
 
-- No schema slot anywhere for Weight, Transporter Status, Species id, or Species
-  Family/Class/Type Name (§4 point 3 — unchanged).
+- No schema slot anywhere for Weight, Species id, or Species Family/Class/Type Name
+  (§4 point 3 — unchanged). Transporter Status was on this list until PIMS confirmed it
+  is no longer required (correction of 2026-11-23, §4 point 3).
 
 ---
 

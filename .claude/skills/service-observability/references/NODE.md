@@ -235,7 +235,7 @@ registering its own hooks:
   `valuesOf(name)`, `publishesOf(name)` (each publish's `value`, `unit`
   and `dimensions`), `onlyDocument()`, `externalCalls()`,
   `onlyExternalCall()` (`dependency`, `operation`, `failure`) and
-  `earlierPublishesFlushed()`.
+  `publishMarkerAndAwaitEarlierPublishes()`, which publishes a marker metric, kept out of `documents()`, and waits for it to be written.
 - `recordEcsLogLines()` (`src/server/common/test-helpers/ecs-log-lines.js`)
   raises the module logger to the configured level, sends its lines and
   its child loggers' lines to itself through `writeLogsTo`, and keeps the

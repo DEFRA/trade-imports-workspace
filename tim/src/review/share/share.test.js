@@ -1,7 +1,11 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { stageShareWorkspace } from '../__fixtures__/review-share.js'
+import {
+  makeWorkspaceRepo,
+  shareEnv,
+  stageShareWorkspace
+} from '../__fixtures__/review-share.js'
 import { shareReview, sharedReviewText } from './share.js'
 
 const withStaged = async (use) => {
@@ -88,6 +92,30 @@ describe('#shareReview', () => {
       await expect(sharing).rejects.toMatchObject({
         code: 'USAGE',
         message: '--pr must be a number. Got "twelve".'
+      })
+    })
+  })
+
+  test('Should refuse a dry-run handoff when the workspace has an untracked file outside workareas/shared/', async () => {
+    await withStaged(async (staged) => {
+      await makeWorkspaceRepo(staged, shareEnv(staged))
+      writeFileSync(join(staged.root, 'notes.txt'), 'notes\n')
+
+      const sharing = shareReview({
+        workspaceRoot: staged.root,
+        ticket: 'EUDPA-201',
+        repo: 'trade-imports-animals-frontend',
+        pr: '12',
+        dryRun: true
+      })
+
+      await expect(sharing).rejects.toMatchObject({
+        code: 'DIRTY_TREE',
+        message: [
+          'Workspace has uncommitted changes outside workareas/shared/:',
+          '?? notes.txt',
+          'Commit or stash before running tim review share, or pass --comment-only to post without a handoff branch.'
+        ].join('\n')
       })
     })
   })

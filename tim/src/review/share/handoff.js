@@ -31,8 +31,12 @@ const hasRef = async (workspaceRoot, ref) =>
     ])
   ).exitCode === 0
 
-const refuseChangesOutsideShared = async (git) => {
-  const changes = (await git('status', '--porcelain', '-uall'))
+/**
+ * @param {string} workspaceRoot
+ * @throws {TimError} DIRTY_TREE when the workspace has changes outside workareas/shared/; UNKNOWN when git status fails
+ */
+export const refuseChangesOutsideShared = async (workspaceRoot) => {
+  const changes = (await gitIn(workspaceRoot)('status', '--porcelain', '-uall'))
     .split('\n')
     .filter((line) => line !== '' && !line.includes(SHARED_PREFIX))
   if (changes.length > 0) {
@@ -114,7 +118,8 @@ const commitSharedCopy = async ({ workspaceRoot, git, ticket, trailers }) => {
  * pushes the branch to origin, then returns the workspace to the branch it
  * was on. The branch is the local one when it exists, else origin's,
  * tracked, else a new one from the current branch. The push is never
- * forced.
+ * forced. The caller checks the workspace first with
+ * {@link refuseChangesOutsideShared}.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -123,7 +128,7 @@ const commitSharedCopy = async ({ workspaceRoot, git, ticket, trailers }) => {
  * @param {string} args.sharedDir - workareas/shared/<ticket>, already copied
  * @param {string[]} [args.trailers=[]] - Lines for the end of the commit message
  * @returns {Promise<{committed: boolean}>} committed is false when the branch already held this copy
- * @throws {TimError} DIRTY_TREE when the workspace has changes outside workareas/shared/; UNKNOWN when a git step fails
+ * @throws {TimError} UNKNOWN when a git step fails
  */
 export const pushHandoffBranch = async ({
   workspaceRoot,
@@ -133,7 +138,6 @@ export const pushHandoffBranch = async ({
   trailers = []
 }) => {
   const git = gitIn(workspaceRoot)
-  await refuseChangesOutsideShared(git)
   const startingBranch = (await git('rev-parse', '--abbrev-ref', 'HEAD')).trim()
   await switchKeepingSharedCopy({ workspaceRoot, git, branch, sharedDir })
   try {

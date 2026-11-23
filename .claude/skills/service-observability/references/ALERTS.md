@@ -8,11 +8,12 @@ been built or fired anywhere. Each fact that comes only from the CDP
 monitoring docs is marked `[UNPROVEN]`.
 
 The developer builds the alerts by hand in Grafana, from a build sheet
-Claude writes. Nothing can push them for us: writing to the dev Grafana
-needs a signed-in Editor and CDP issues no service-account tokens (see
-`DASHBOARD.md`). `[UNPROVEN]` Grafana's UI has no import for
-Grafana-managed alert rules; if a run finds one, add an importable
-template beside the build sheet and record it here.
+Claude writes. Claude never uses a browser to reach Grafana (`SKILL.md`
+→ "Who does what"). Nothing else can push them for us: writing to the
+dev Grafana needs a signed-in Editor and CDP issues no service-account
+tokens (see `DASHBOARD.md`). `[UNPROVEN]` Grafana's UI has no import for
+Grafana-managed alert rules; if the developer finds one, Claude adds an
+importable template beside the build sheet and records it here.
 
 Claude writes the sheet to
 `workareas/ticket-planning/<ticket>/grafana/alerts.md`
@@ -31,6 +32,9 @@ The build sheet and the table below must agree; a change to one is a
 change to both.
 
 ## Build
+
+The developer does everything in this section in Grafana. Claude only
+writes the build sheet.
 
 | Thing | Value |
 |---|---|
@@ -158,10 +162,12 @@ each with #cdp-support on the first promotion:
 ## Prove they fire
 
 An alert that has never fired is not known to work. For each alert, in
-dev and then in test, watch it fire, reach the Slack channel, and
-resolve.
+dev and then in test, the developer watches it fire, reach the Slack
+channel, and resolve. The developer makes every change in Grafana, the
+Portal and OpenSearch below. Claude gives the steps and records what
+they report.
 
-**Make the calls yourself.** The call alerts only see dependency calls
+**The developer makes the calls.** The call alerts only see dependency calls
 that happened, and few happen on their own (the database alert needs no
 calls: its gauge is published every minute once the driver has checked
 the database):

@@ -173,7 +173,7 @@ Logging fails here more often by silence than by noise. Support must be able to 
 
 If the branch does not have the id in scope, pass it in. Do not log without it.
 
-**Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain.
+**Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain. The house external-call line is the one exception: it writes `error: { type, message, code }` and no `err`, because the caller that handles the error logs `{ err }` once, so the stack is written once.
 
 **No bodies at INFO.** Never log a request or response body at `info`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs. If a body is the only way to tell two failures apart, log a bounded excerpt at `warn` on the failure path only.
 
@@ -463,7 +463,7 @@ logger.error(err) // Pino passes as first arg without err serialiser key
 logger.error({ message: err.message }) // doesn't trigger err serialiser
 ```
 
-Always use `{ err }` as the property name — this is what `pino.stdSerializers.err` keyed on `err` will pick up.
+Always use `{ err }` as the property name — this is what `pino.stdSerializers.err` keyed on `err` will pick up. The house external-call line is the one exception (see section 4a, "Log the error as `{ err }`").
 
 ---
 

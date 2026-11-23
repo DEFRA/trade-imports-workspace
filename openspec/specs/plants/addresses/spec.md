@@ -75,9 +75,9 @@ The system MUST copy the chosen address-book record onto the notification when t
 - **WHEN** the user picks a record from the address book for it
 - **THEN** the notification holds that record's name, address lines, town or city, county, postcode, country, telephone and email
 
-### Requirement: The picker offers a search of its own list, reporting how many matched, and shows eight matches a page
+### Requirement: The picker offers a search of its own list, reporting how many matched, and shows eight of the addresses it found a page
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total, offer them as one group with that name, and show eight a page. Where the list holds more than eight it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page and the address already chosen; where it holds eight or fewer it MUST offer none. A submitted search MUST start again at the first page, and a page past the last page MUST serve the last page. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list.
+The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total found, offer them as one group with that name, and show eight a page of the addresses it found — the picker's whole list, or the matches when a search narrows it. Where more than eight were found it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page, the address held as chosen and the trail the trader arrived on; where eight or fewer were found it MUST offer none. A submitted search MUST start again at the first page. A page past the last page MUST serve the last page, and a page that is not a page number MUST serve the first; each MUST be logged once with the page asked for and the page served. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list, from its first page.
 
 #### Scenario: The picker shows eight of its list a page, counted against the whole list
 **ID**: SCN-PLANTS-ADDR-002-A
@@ -98,6 +98,18 @@ The system MUST search the picker's list on the server, from the button named "S
 - **WHEN** they move to another page
 - **THEN** the search term is still in the box, the page holds only addresses matching it, and the chosen address is still chosen
 
+#### Scenario: Moving to another page keeps the page the trader came from
+**ID**: SCN-PLANTS-ADDR-002-I
+- **GIVEN** the user has opened a picker from the overview or the review, and its list runs to more than one page
+- **WHEN** they move to another page
+- **THEN** Back still answers the page they came from, and saving still returns them to it
+
+#### Scenario: A page past the last page serves the last page, and one that is not a page number serves the first
+**ID**: SCN-PLANTS-ADDR-002-J
+- **GIVEN** the user opens a picker
+- **WHEN** the page they ask for is past the last page, or is not a whole number of one or more
+- **THEN** the last page, or the first, is shown, and the page asked for and the page served are logged once
+
 #### Scenario: Searching narrows the list to the matching term
 **ID**: SCN-PLANTS-ADDR-002-B
 - **GIVEN** the user is on the picker
@@ -115,7 +127,7 @@ The system MUST search the picker's list on the server, from the button named "S
 **ID**: SCN-PLANTS-ADDR-002-D
 - **GIVEN** the user has searched the picker's list
 - **WHEN** they clear the search and search again with nothing entered
-- **THEN** the whole list is shown again
+- **THEN** the first page of the whole list is shown again
 
 #### Scenario: Without JavaScript, Enter in the search box narrows the list
 **ID**: SCN-PLANTS-ADDR-002-E
@@ -264,7 +276,7 @@ Once a notification is submitted, the system MUST show the address details copie
 
 ### Requirement: Reopening the picker shows the address already chosen checked, and keeps it on a blank save
 **ID**: REQ-PLANTS-ADDR-012
-The system MUST name the record a role's address was chosen from above the results as "Selected address: <name>" whenever the user reopens the picker, whichever page they are on, show it as the ticked row on the page that holds it, and keep the address already on the notification when they save with nothing ticked. It MUST show no row ticked, and name no address above the results, once the address's details have been edited on the notification, or once that record has been deleted from the address book.
+The system MUST name the record a role's address was chosen from above the results as "Selected address: <name>" whenever the picker holds one as chosen — saved, carried in the query string or just posted — on every page and after a search, show it as the ticked row on the page that holds it, and keep the address already on the notification when they save with nothing ticked. It MUST show no row ticked, and name no address above the results, once the address's details have been edited on the notification, or once that record has been deleted from the address book.
 
 #### Scenario: Reopening the picker names the record the address was chosen from above the results, and ticks it on its page
 **ID**: SCN-PLANTS-ADDR-012-A

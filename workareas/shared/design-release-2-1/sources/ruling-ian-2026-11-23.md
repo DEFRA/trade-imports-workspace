@@ -24,14 +24,17 @@ it had been there.
 ## Decided
 
 1. **The pickers page at eight, and the one-page clause of `inc-087`'s criteria 7, 8 and 9 is
-   dropped.** Eight is the figure the INS address book list and the transporter list already use.
-   Paging comes back on top of the role filtering, which is correct and stays.
+   dropped.** Eight is the figure the INS address book list already uses
+   (`insfrontend:src/server/app/features/address-book/list/list.controller.js:49`, `REQ-INS-ADDR-013`).
+   The animals transporter list is **not** a precedent: it renders no pagination today, and
+   EUDPA-824, the ticket to split it into pages of eight, is still To Do. Paging comes back on top of
+   the role filtering, which is correct and stays.
 
 2. **It was a distillation error, and the error is identifiable.** The clause rests on
    `ruling-sam-2026-10-09-pm-p3-041`, which is the orchestrator's application of Sam's principle,
    not a ruling of Sam's on paging:
 
-   - `sources/ruling-sam-2026-10-09-pm.md:270` heads the bullet the claim is read from "Design
+   - `sources/ruling-sam-2026-10-09-pm.md:271` heads the bullet the claim is read from "Design
      question 5, live filtering (claim 9). **Applied by the orchestrator from Sam's principle (point
      3b)**".
    - Sam's point 3b (`:233-242`) is about live filtering alone. It says filtering as the trader types
@@ -46,9 +49,16 @@ it had been there.
    page holds. Eight is the one with a requirement behind it.
 
 4. **The prototype's single page is a fixture, not a requirement.** `prototype-dr2-1-source-p8-063`
-   reads one page off the prototype's own address book, which holds too few records to need paging.
-   `ruling:ian-2026-11-11` point 2 already bars a row from resting on what the prototype happened to
-   hard-code.
+   reads one page off the prototype's own address book, which holds too few records to need paging,
+   so the prototype could not show paging whether it wanted it or not.
+
+   This does **not** rest on `ruling:ian-2026-11-11` point 2: that point is scoped to the prototype's
+   `app/data/*.js` files and to `data` claims about "what data a notification captures, which values
+   a field offers, or which commodities a rule covers" (`sources/ruling-ian-2026-11-11.md:25-28`),
+   and p8-063 is a page-behaviour claim, not a data one. It rests instead on
+   `ruling-sam-2026-10-09-p1-116`, "Prototype is the authority for how things look and feel not how
+   they are architected": how many rows a page holds over a real dataset that grows is not look and
+   feel, and `ruling:ian-2026-11-16` turned down a clause on the same ground.
 
 5. **The restatement of the chosen address comes back with the paging.** `req-595` dropped the
    "Selected address: `<name>`" inset, and its stated reason is "The inset exists only because the

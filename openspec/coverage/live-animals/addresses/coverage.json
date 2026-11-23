@@ -54,7 +54,7 @@
     },
     {
       "id": "REQ-ADDR-017",
-      "name": "The list shows eight of the role's addresses a page",
+      "name": "The list shows eight of the addresses it found a page",
       "coverage": "full",
       "scenarios": [
         {
@@ -62,7 +62,7 @@
           "name": "A role holding more than eight addresses shows the first eight with pagination",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, with a link to the page holding the rest", "strength": "full", "notes": "red-probed: fails with the page size widened past the stub book's consignor-role count, which leaves the group holding nine radios and renders no page links" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, numbering every page of the role", "strength": "full", "notes": "red-probed: fails with the page size widened past the stub book's consignor-role count, which leaves the group holding nine radios and renders no page links" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should open on the first eight consignor-role addresses, counted against every one the role holds", "strength": "full", "notes": "red-probed: fails with the page size widened, which lists all nine and counts nine out of nine" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should offer the paging links under the results, naming each page it holds", "strength": "full", "notes": "red-probed: fails when the govukPagination call is taken out of the results macro" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker shows eight matches a page and keeps the search term and the chosen address as the trader moves to the next page", "strength": "full", "notes": "seeds nine consignor records behind one search token, so the count is exact whatever else the organisation's book holds" }
@@ -101,6 +101,31 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should serve the last page, logged once, when the page asked for is past it", "strength": "full", "notes": "asserts the rows of the last page and the one info line, with the page asked for and the page served" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-F",
+          "name": "A search narrowing a long list to eight or fewer shows them all, with no pagination",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "searches the nine-record consignor list down to two and reads the count as two out of two, which the paging threshold is measured against" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should filter the consignor list down to the search matches", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-G",
+          "name": "A submitted search starts again at the first page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should start a search again at the first page", "strength": "full", "notes": "posts a search from page two and asserts the page served and its rows" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-H",
+          "name": "A page that is not a page number serves the first page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should serve the first page, logged once, when the page asked for is not a page number", "strength": "full", "notes": "asserts the first page's rows and the one info line, with the value asked for and the page served" }
           ]
         }
       ]
@@ -418,10 +443,10 @@
         },
         {
           "id": "SCN-ADDR-006-B",
-          "name": "Clearing the search restores the role's whole list",
+          "name": "Clearing the search restores the role's whole list, from its first page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "clearing the search and searching with nothing entered lists every consignor address again, on one page", "strength": "full", "notes": "red with an empty search still filtering the stub book" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "clearing the search and searching with nothing entered opens the whole consignor list again, from its first page", "strength": "full", "notes": "red with an empty search still filtering the stub book" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown", "strength": "partial", "notes": "clears the search by searching for the chosen name, not an empty term" }
           ]
         },
@@ -438,7 +463,7 @@
           "name": "The listed addresses are one group named \"Select an address\"",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, with a link to the page holding the rest", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, numbering every page of the role", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should hold the table in one fieldset named by a visually hidden legend, after the count", "strength": "full", "notes": "" }
           ]
         }

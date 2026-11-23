@@ -65,7 +65,7 @@ The system MUST offer a search of the place-of-destination role's addresses by n
 - **WHEN** the results are shown
 - **THEN** a message says nothing matched, not an empty table
 - **WHEN** they clear the search
-- **THEN** the whole list is shown again
+- **THEN** the first page of the whole list is shown again
 
 ### Requirement: A checked row survives a further search
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-003

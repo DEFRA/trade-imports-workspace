@@ -21,9 +21,10 @@ The system MUST ask which address is the consignor, showing the parties section 
 
 #### Scenario: The page lists the organisation's consignor-role addresses, and any saved with no role, across its pages
 **ID**: SCN-PLANTS-CONSIGNOR-001-B
-- **GIVEN** the organisation has an address saved for the consignor role, an address saved with no role, and an address saved for the place of destination role
+- **GIVEN** the organisation has more than eight addresses saved for the consignor role, an address saved with no role, and an address saved for the place of destination role
 - **WHEN** the user opens the consignor page and moves through its pages
-- **THEN** the consignor-role and role-less addresses are listed, eight a page, and the place-of-destination address is not
+- **THEN** the consignor-role and role-less addresses are listed, eight a page
+- **AND** the place-of-destination address is on none of its pages
 
 ### Requirement: The page is reachable from Overview's consignor task row
 **ID**: REQ-PLANTS-CONSIGNOR-002

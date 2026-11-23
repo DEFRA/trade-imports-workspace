@@ -14,20 +14,20 @@ Every rule shares these settings:
 | Field | Value |
 |---|---|
 | Folder | `Playground/<service>-monitoring` |
-| Evaluation group | `<service>-advanced-alerts`, the existing one. `[UNPROVEN]` it evaluates every 5 minutes; the form shows its interval |
+| Evaluation group | `<service>-advanced-alerts`, the existing one. It evaluates every 5 minutes |
 | Data source | CloudWatch, Metric Search, Builder |
 | Namespace | `<service>` |
-| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off. Rule 1a is the one exception: `dependency` only |
+| Dimensions | `dependency` = `*`, `operation` = `*`, with Match exact off. Rule 1a and the business rules set their own |
 | Time range | the same length as the rule's period |
 | Alert condition | the "WHEN QUERY `Last` IS ABOVE …" row under the query. The Advanced options toggle shows the same thing as Reduce and Threshold expressions; either works |
 | Pending period | None. Grafana refuses any pending period shorter than the group's evaluation interval ("Pending period must be greater than or equal to the evaluation interval") |
 | No data | Normal, under "Configure no data and error handling". Leave error handling at its default |
-| Notifications | Use notification policy, not a contact point |
+| Notifications | Contact point `<service>`, which CDP has already made |
 | Labels | none (promotion adds them) |
 
-Leave the rule named `platform_managed_do_not_delete` alone. Routing to
-Slack is a #cdp-support request (`references/ALERTS.md` → "Route to
-Slack"), not a field here.
+Leave the rule named `platform_managed_do_not_delete` alone. Check the
+contact point posts to the team's channel (`references/ALERTS.md` →
+"Route to Slack").
 
 The thresholds are a first guess for the team to agree, not tested
 values.
@@ -45,6 +45,8 @@ values.
 
 Before saving, Preview should show one row per dependency and operation.
 If it shows none, check Match exact is off and both dimensions are set.
+A dependency with no calls in the window shows as a row with operation
+`--` and no value: that is no data, and Normal.
 
 ## 1a. <service> <database> unavailable
 
@@ -101,7 +103,31 @@ dependency, setting `dependency` to its name instead of `*`.
 Take `<read-timeout-ms>` from the client that makes the call, not from a
 config value: check the value is actually applied (a Feign client with
 no `Request.Options` uses Feign's 60 second default whatever the YAML
-says).
+says). Once dev has traffic, agree a tighter value from the real call
+times (`references/ALERTS.md` → "Build").
+
+Leave out an operation whose time is not a latency, such as an SQS long
+poll: set `operation` to every other value instead of `*` (Grafana
+searches the list with OR).
+
+## 4. Business rules
+
+One rule per alert agreed on the service's own metrics
+(`references/ALERTS.md` → "Alerts on the service's own metrics").
+Duplicate rule 2, then set, for each:
+
+| Field | Value |
+|---|---|
+| Rule name | `<service> <what it watches>` |
+| Metric | the metric |
+| Dimensions | every dimension it is published with, each `*` or the one value the rule watches, with Match exact off |
+| Statistic | `Sum` for a counter; `Minimum` or `Maximum` for a gauge, as the rule needs |
+| Period | as agreed |
+| Alert condition | as agreed |
+| Summary | what happened and what it means, in words: the dimensions are fixed, so there are no labels to show |
+
+Do not build one that repeats a CDP alert, such as the dead-letter
+queue alert every service with an SQS queue has.
 
 ## Check
 
@@ -119,7 +145,8 @@ A database's command metrics are the `external.call.*` meters
 `MongoCommandMetrics` records (`references/METRICS.md` → "A database").
 A heartbeat records none.
 
-Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
+Rule 3 counts once more for each extra per-dependency slow rule, and
+each business rule adds one. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule
 (More → Export → JSON) for Claude to check this sheet against.
 

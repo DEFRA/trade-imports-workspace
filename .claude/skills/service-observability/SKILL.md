@@ -8,8 +8,8 @@ defaults do not: custom metrics, a searchable log line per dependency
 call, a custom Grafana dashboard, and alerts that reach the team in
 Slack. One service per run. The code lands in the service's repo.
 Claude generates the dashboard JSON and an alert build sheet from the
-templates in `assets/`; the developer imports and builds them in the
-CDP dev Grafana, because nothing else can write to it.
+templates in `assets/`. The developer imports and builds them by hand
+in the CDP dev Grafana.
 
 Its dashboard and alert steps come from a spike on
 `trade-imports-reference-data`, and its code recipe from the reference
@@ -49,12 +49,13 @@ skill and point its plan at these steps.
 
 | Part | State |
 |---|---|
-| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; it has moved to this way, proven by its own tests (including Caffeine cache hits and misses through a `StatsCounter`), which renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way"). `[UNPROVEN]` in dev CloudWatch for reference-data until that release is checked there. dynamics-gateway has moved to this way too, proven by its own tests: every SQS call through an AWS SDK `ExecutionInterceptor` (against Floci), the Service Bus send against the emulator, an `@Timed` `@SqsListener` method through the proxy, and the `sqs.queue.depth` gauge read from SQS at publish. `[UNPROVEN]` in dev CloudWatch for the gateway until that release is checked there |
-| Log line, Java service | Proven by tests on `trade-imports-address-book`: `EcsEventEncoderTest` and `ExternalCallRecorderIT` check that the encoded JSON holds a nested `event` object with a numeric duration, and a failure's flat `error.type` and `error.message` with no stack trace (`references/LOGGING.md` → "How to write the fields"). The same encoder's line reached dev OpenSearch from reference-data 0.27.0 on 2026-10-21; CDP dropped the earlier MDC version (`references/LOGGING.md` → "What was learned on reference-data"). `[UNPROVEN]` in dev OpenSearch for address-book until its release is checked there |
+| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; it has moved to this way, proven by its own tests (including Caffeine cache hits and misses through a `StatsCounter`), which renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way"). `[UNPROVEN]` in dev CloudWatch for reference-data until that release is checked there. dynamics-gateway has moved to this way too, proven by its own tests: every SQS call through an AWS SDK `ExecutionInterceptor` (against Floci), the Service Bus send against the emulator, an `@Timed` `@SqsListener` method through the proxy, and the `sqs.queue.depth` gauge read from SQS at publish. In dev CloudWatch for the gateway: 0.32.0 published every metric under its dot-case name and dimensions, seen through the dashboard on 2026-11-23 |
+| Log line, Java service | Proven by tests on `trade-imports-address-book`: `EcsEventEncoderTest` and `ExternalCallRecorderIT` check that the encoded JSON holds a nested `event` object with a numeric duration, and a failure's flat `error.type` and `error.message` with no stack trace (`references/LOGGING.md` → "How to write the fields"). The same encoder's line reached dev OpenSearch from reference-data 0.27.0 on 2026-10-21; CDP dropped the earlier MDC version (`references/LOGGING.md` → "What was learned on reference-data"). `[UNPROVEN]` in dev OpenSearch for address-book until its release is checked there. The gateway's lines (0.32.0) reached dev OpenSearch with `event.action`, `event.outcome` and a numeric `event.duration`, seen on 2026-11-23 |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`, which publishes the old PascalCase names (`references/METRICS.md` → "A service built the old way"); the first Node ticket adds a Node reference here |
 | Dashboard and alerts, PascalCase names | Done on reference-data in dev: the dashboard imported and showing CloudWatch and OpenSearch data on 2026-10-21, and the alerts built and fired on 2026-10-22 (`references/ALERTS.md` → "Prove they fire"). Not routed to Slack or promoted |
-| Dashboard and alert templates, dot-case names | Written for the names address-book publishes, from the CDP docs and the PascalCase versions above. `[UNPROVEN]`: not yet imported into Grafana or fired anywhere. Nor are the database rule 1a and the `<timed-name>` panel, which had no PascalCase version |
-| Slack routing, promotion, alert tests in test and prod | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
+| Dashboard and alert templates, dot-case names | Done on dynamics-gateway in dev on 2026-11-23: the dashboard imported with every panel showing CloudWatch or OpenSearch data (`<timed-name>` panels included), and rules 1, 2 and 3 built, fired with a lowered threshold and restored. `[UNPROVEN]`: the database rule 1a, which the gateway has no database for |
+| Slack routing | Done in dev for dynamics-gateway: its contact point `trade-imports-dynamics-gateway` already posted to `trade-imports-team-alerts-non-prod`, and sent its custom alerts with no error on 2026-11-23 (`references/ALERTS.md` → "Route to Slack"). `[UNPROVEN]` in prod |
+| Promotion, alert tests in test and prod | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
 
 When a run settles an `[UNPROVEN]` fact, edit the file that states it
 (this SKILL.md or the reference): replace the marker with what happened. Do the same when a step turns out wrong.
@@ -63,14 +64,15 @@ as the service's branch (CLAUDE.md rule 2).
 
 ## Who does what
 
-Claude can read and change the service's code and run its tests. Claude
-cannot write to Grafana, OpenSearch, the CDP Portal or Slack: the dev
-Grafana needs a signed-in Editor to write, and CDP issues no
+Claude can read and change the service's code and run its tests. The
+dev Grafana needs a signed-in Editor to write, and CDP issues no
 service-account tokens. For Steps 4 and 5 Claude writes the dashboard
 JSON and the alert build sheet to
-`workareas/ticket-planning/<ticket>/grafana/`;
-for Step 6 it gives the exact messages. The developer does the Grafana,
-Portal and Slack parts, and Claude records what they report back.
+`workareas/ticket-planning/<ticket>/<service>/grafana/` (one folder per
+service: a ticket often covers several), and the developer does the
+Grafana parts by hand. Claude cannot write to the CDP Portal or
+Slack: for Step 6 it gives the exact messages, the developer sends
+them, and Claude records what they report back.
 
 A run takes days and several sessions. Its progress lives in the
 ticket's plan,
@@ -90,7 +92,12 @@ the developer posts it.
 No code. The developer checks in the dev Grafana
 (`https://metrics.dev.cdp-int.defra.cloud/`):
 
-- the service has its default dashboard;
+- the service has its default dashboards, in the folder
+  `CDP_Tenants/<service>`: `<service> (service)` always, and
+  `<service> (SQS)`, `<service> (mongodb)` and `<service> (mongodb -
+  historical data)` for the resources CDP created for it. Seen for
+  dynamics-gateway on 2026-11-23. The custom dashboard links to these
+  rather than repeat them (`references/DASHBOARD.md` → "Panels");
 - the service has default alerts. They are deployed per service on
   request, so they may be missing: on 2026-10-15 animals-backend had
   them and reference-data had none. They live in the `CDP_Tenants`
@@ -100,7 +107,15 @@ No code. The developer checks in the dev Grafana
   and spike detection, p95 response time, slow requests percentage).
   Check with the rules listing below, filtered on the service name. If
   either group is missing, ask #cdp-support to deploy it in every
-  environment, naming a service that has it;
+  environment, naming a service that has it. A service with an SQS
+  queue also has `<service> sqs-sns`, holding CDP's dead-letter queue
+  alert (`<queue>-dlq`, on `AWS/SQS` `ApproximateNumberOfMessagesVisible`):
+  do not build a second one (`references/ALERTS.md` → "Build");
+- the contact point `<service>` exists (seen for address-book,
+  dynamics-gateway and reference-data on 2026-11-23), and the custom
+  alerts send to it. dynamics-gateway's is Slack, posting to
+  `trade-imports-team-alerts-non-prod` (`references/ALERTS.md` → "Route
+  to Slack");
 - the folder `Playground/<service>-monitoring` exists, with an alert
   evaluation group `<service>-advanced-alerts` holding one alert named
   `platform_managed_do_not_delete`. (Seen 2026-10-15 for reference-data
@@ -115,7 +130,10 @@ metrics, dashboard panels and alerts in `references/METRICS.md` → "A
 database". The one exception is a database that is configured but that
 nothing reads or writes through: leave it out, say why on the ticket,
 and raise a ticket to remove the configuration. (On reference-data,
-MongoDB is configured but unused, so it is left out.) Do not measure,
+MongoDB is configured but unused, so it is left out.) A CDP mongodb
+dashboard is not proof the service uses a database: dynamics-gateway
+has one and no MongoDB in its code. Removing the database CDP created
+is a #cdp-support request, not a code change. Do not measure,
 show or alert on a dependency that is not on that list.
 
 ## Step 2: Agree the metric list

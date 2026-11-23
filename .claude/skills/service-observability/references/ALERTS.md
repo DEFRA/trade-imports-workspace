@@ -3,19 +3,20 @@ prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
 `SKILL.md` → "What is proven" says which parts have been done on a real
-service. `[UNPROVEN]` These dot-case rules, rule 1a among them, have not
-been built or fired anywhere. Each fact that comes only from the CDP
-monitoring docs is marked `[UNPROVEN]`.
+service. Rules 1, 2 and 3 in these dot-case names were built on
+dynamics-gateway in dev on 2026-11-23, fired with a lowered threshold,
+reached Slack and were restored. `[UNPROVEN]` Rule 1a has not been built
+anywhere. Each fact that comes only from the CDP monitoring docs is
+marked `[UNPROVEN]`.
 
-The developer builds the alerts by hand in Grafana, from a build sheet
-Claude writes. Nothing can push them for us: writing to the dev Grafana
-needs a signed-in Editor and CDP issues no service-account tokens (see
-`DASHBOARD.md`). `[UNPROVEN]` Grafana's UI has no import for
-Grafana-managed alert rules; if a run finds one, add an importable
-template beside the build sheet and record it here.
+The alerts are built from a build sheet Claude writes. Writing to the
+dev Grafana needs a signed-in Editor and CDP issues no service-account
+tokens (see `DASHBOARD.md`), so they are built under the developer's
+session, by hand from the sheet. `[UNPROVEN]` Grafana's UI has no
+import for Grafana-managed alert rules.
 
 Claude writes the sheet to
-`workareas/ticket-planning/<ticket>/grafana/alerts.md`
+`workareas/ticket-planning/<ticket>/<service>/grafana/alerts.md`
 by copying `assets/alerts.template.md` and filling in:
 
 - `<service>`;
@@ -26,6 +27,23 @@ by copying `assets/alerts.template.md` and filling in:
   `Request.Options`, so Feign's 60 second default applies. If
   dependencies differ, split "dependency slow" into one rule per
   dependency, as the sheet says.
+
+Two thirds of the timeout is the starting value. Once the service has
+traffic in dev, read each dependency's real call times and agree a
+tighter value with the team: the highest 15-minute `p95` over the last
+7 days and the slowest single call, from `external.call.duration` with
+period `900`. On
+dynamics-gateway the Service Bus timeout gave 40000 ms against a worst
+`p95` of 417 ms, so the team set 2000 ms; SQS gave 20000 ms against
+47 ms, so 1000 ms.
+
+Leave out of a slow rule any operation whose time is not a latency,
+such as an SQS long poll (`receive-message` waits up to its wait time
+when the queue is empty). A dimension can take a list of values, which
+Grafana searches with OR: set `operation` to every value but that one
+(`"operation": ["delete-message", "get-queue-attributes", …]` in the
+query model; pick each in the form's operation box). Checked on
+dynamics-gateway, 2026-11-23.
 
 The build sheet and the table below must agree; a change to one is a
 change to both.
@@ -40,8 +58,13 @@ change to both.
 The folder and evaluation group already exist, holding one alert named
 `platform_managed_do_not_delete` (seen 2026-10-15 for reference-data and
 animals-backend). Leave that alert alone. `[UNPROVEN]` The alerts must
-be in that evaluation group; it evaluates every 5 minutes. No labels are
-needed: promotion adds them.
+be in that evaluation group. It evaluates every 5 minutes, on the
+minute (dynamics-gateway: 13:00:00, 13:05:00 on 2026-11-23). No labels
+are needed: promotion adds them.
+
+Each rule sends to the contact point `<service>`, which CDP has already
+made (`SKILL.md` → "Step 1"): reference-data's rules do, and
+dynamics-gateway's were sent to Slack through it.
 
 What the form does, seen building reference-data's alerts on
 2026-10-19:
@@ -104,6 +127,20 @@ Normal, or Keep Last State.
 Only alert on a dependency the service really uses. A configured
 database counts (`METRICS.md` → "A database").
 
+**Alerts on the service's own metrics** come from the agreed list
+(Step 2): one rule per thing a person would act on, each on that
+metric's full dimension set, with "no data" Normal. dynamics-gateway's,
+built 2026-11-23 (`assets/alerts.template.md` → "4. Business rules"):
+
+| Alert | Fires when |
+|---|---|
+| Notification backlog | `sqs.queue.depth`, `Minimum`, `queue` = `notification`, above 100 over 15 minutes (the backlog never dropped to 100 in the window) |
+| Notifications discarded | `notification.error`, `Sum`, `action` = `discarded`, above 0 over 15 minutes (each one is lost) |
+
+Do not repeat an alert CDP already has. A service with an SQS queue has
+CDP's dead-letter queue alert (`SKILL.md` → "Step 1"), so the gateway
+has no dead-letter rule of its own.
+
 **The call alerts cannot see an outage nobody calls through.** If the
 service and its callers are serving from caches, no call reaches the
 dependency, so no call alert fires. The database alert is different: it
@@ -123,15 +160,19 @@ The team's channels are shared across services:
 | dev, test | `trade-imports-team-alerts-non-prod` |
 | prod | `trade-imports-team-alerts-prod` |
 
-1. Check both channels exist and are public.
-2. Ask #cdp-support to route the service's alerts, default and custom,
-   to these two channels.
+1. Check the service's contact point `<service>` is Slack with the
+   channel above as its recipient (Alerting → Contact points).
+2. Only if it is missing or points elsewhere, ask #cdp-support to route
+   the service's alerts, default and custom, to these channels.
 
-`[UNPROVEN]` CDP's docs expect one pair of channels per service, named
-`<service>-team-alerts-non-prod` and `<service>-team-alerts-prod`. These
-are shared team channels with a different name. Ask #cdp-support to
-confirm that works, and record the answer here: it decides the routing
-for every service that follows.
+CDP's docs expect one pair of channels per service, named
+`<service>-team-alerts-non-prod` and `<service>-team-alerts-prod`. The
+shared team channel works instead: dynamics-gateway's contact point was
+already Slack with recipient `trade-imports-team-alerts-non-prod` and
+resolved messages on, and its custom alerts were sent through it on
+2026-11-23 with no error. `[UNPROVEN]` That prod routes to
+`trade-imports-team-alerts-prod` the same way; check the prod contact
+point on the first promotion.
 
 `[UNPROVEN]` Where alerts from perf-test and ext-test go. Assumed
 non-prod.
@@ -204,9 +245,12 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   no labels: it shows the database name as written in the rule. With
   no failures the failure metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
   failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
-  use `IS BELOW 2` for the database alert. Once Slack routing is in
-  place, also check the alert arrives in
-  `trade-imports-team-alerts-non-prod`.
+  use `IS BELOW 2` for the database alert. Also check the alert
+  arrives in `trade-imports-team-alerts-non-prod`. A dependency with no
+  calls in the rule's window has no data: for that check only, widen
+  its time range and period to `86400`. Done on dynamics-gateway on
+  2026-11-23: all six Firing at the next evaluation with their labels
+  filled in, sent to Slack, then all Normal once restored.
 - **Dev, the database alert: no real failure.** Pointing the service at
   a database that does not exist stops it starting (address-book needs
   its database to build indexes), so no task publishes the gauge and the

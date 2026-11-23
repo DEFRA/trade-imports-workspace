@@ -2,17 +2,17 @@ Build the service's custom Grafana dashboard in the CDP dev playground.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
 `SKILL.md` → "What is proven" says which parts have been done on a real
-service. `[UNPROVEN]` This dot-case template has not been imported
-anywhere. Each fact that comes only from the CDP monitoring docs is
-marked `[UNPROVEN]`.
+service. This dot-case template was imported on dynamics-gateway in dev
+on 2026-11-23, and every panel showed data. Each fact that comes only
+from the CDP monitoring docs is marked `[UNPROVEN]`.
 
 Claude generates the dashboard JSON from
-`assets/dashboard.template.json`; the developer imports it in Grafana.
-Nothing can push to Grafana for us: anyone on the network can read the
+`assets/dashboard.template.json`. Anyone on the network can read the
 dev Grafana API without signing in, but writing needs Editor rights, and
-CDP does not issue service-account tokens. So the import is always done
-by a signed-in person. (Checked 2026-10-15: an anonymous search returned
-200, an anonymous create returned 403 `dashboards:create`.)
+CDP does not issue service-account tokens. (Checked 2026-10-15: an
+anonymous search returned 200, an anonymous create returned 403
+`dashboards:create`.) So the import is done under a signed-in person's
+session.
 
 ## Before starting
 
@@ -51,8 +51,20 @@ which defaults to the service name). The template picks its data
 sources through two dashboard variables, `cloudwatch` and `opensearch`,
 so it carries no data source ids. The OpenSearch variable's plugin type,
 `grafana-opensearch-datasource`, works (the log panel showed data on
-reference-data, 2026-10-21). `[UNPROVEN]` that the CloudWatch region
-`default` is right for CDP.
+reference-data, 2026-10-21). The CloudWatch region `default` finds the
+service's metrics (dynamics-gateway, 2026-11-23).
+
+CDP's own dashboards for the service (`SKILL.md` → "Step 1") already
+show its platform metrics: ECS, SQS from `AWS/SQS`, MongoDB. Do not
+repeat them. Where a custom panel sits next to one (the gateway's queue
+depth beside CDP's SQS dashboard), give it a panel link to that
+dashboard (`links: [{ title, url: "/d/<uid>/<slug>", targetBlank: true }]`)
+and say in its description what the CDP one shows that it does not.
+
+**Title every panel in plain English**, for what it shows: "Calls",
+"Messages waiting, by queue", "Publish an event: endpoint". Never the
+metric or timer name: it goes first in the description, where a search
+for it still finds the panel.
 
 The panels sit in Grafana rows, one section each, and every row can be
 collapsed with the arrow beside its title. A collapsed row runs none of
@@ -83,7 +95,13 @@ alone.
 | Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's |
 | Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
 | Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
-| Business events | the service's own metric | `Sum` | its dimension |
+| Business events, a counter | the service's own metric | `Sum` | every dimension it is published with |
+| Business events, a gauge | the service's own metric | `Maximum` (each task publishes the same reading of a shared thing, such as a queue's depth, so `Sum` would multiply it by the task count) | every dimension it is published with |
+
+A business metric with more than one dimension sets each to `*` and
+labels the series with all of them:
+`${PROP('Dim.outcome')} ${PROP('Dim.schema.version')}`. A dimension name
+with a dot in it works in `PROP` (dynamics-gateway, 2026-11-23).
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
@@ -103,7 +121,7 @@ the `@Timed` tags `class`, `method` and `exception` as dimensions.
 
 | Panel title | Series | Query |
 |---|---|---|
-| `<timed-name>` | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
+| `<timer-title>`: what the method does, then `endpoint`, `service` or `listener` (`List dead-letter messages: endpoint`) | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
 | | Calls | `<timed-name>`, `SampleCount`, on the right axis |
 
 Every query sets all three dimensions, `class`, `method` and
@@ -122,7 +140,16 @@ One panel reads logs, not metrics:
 
 Grafana queries OpenSearch with Lucene, not DQL: build the query in
 OpenSearch Dashboards with DQL switched off, then copy it across. The
-template's query works as written (reference-data, 2026-10-21). This
+template's query works as written (reference-data, 2026-10-21).
+
+The table sorts only the newest 500 matching lines, not the whole time
+range. A dependency called all the time fills all 500 and pushes every
+other dependency out. On dynamics-gateway, SQS acknowledgements and
+queue-depth reads filled them, so no Service Bus send showed. There,
+narrow the query to the dependencies that matter and any failure:
+`… AND (event.action:"azure-service-bus/send-message" OR event.outcome:"failure")`,
+and say so in the description. Check the table shows a row for each
+dependency that matters. This
 panel finds nothing unless the service writes the `event.*` fields as a
 nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.
@@ -139,7 +166,7 @@ other command as `other` (`METRICS.md` → "A database").
 ## Generate
 
 Claude writes the service's dashboard to
-`workareas/ticket-planning/<ticket>/grafana/dashboard.json`:
+`workareas/ticket-planning/<ticket>/<service>/grafana/dashboard.json`:
 
 1. Copy `assets/dashboard.template.json`.
 2. Replace every `<service>` with the service name. If the service's
@@ -154,11 +181,12 @@ Claude writes the service's dashboard to
    `y` in the second copy, 34 in the third, and so on, and move every
    row and panel after the last copy down by 17 for each dependency
    past the first.
-4. Make one copy of the `<business-metric> by <business-dimension>`
-   panel per business metric on the agreed list (Step 2), filling in the
-   metric and its dimension everywhere they appear in the panel (the
-   title, description, `metricName`, `dimensions` and the legend
-   `label`), and laying the copies out two to a row under "Business
+4. Make one copy of the `<business-title>` panel per business metric
+   on the agreed list (Step 2): a plain-English title, and the metric
+   and its dimensions everywhere else they appear (the description,
+   `metricName`, `dimensions` and the legend `label`; add a dimension
+   for each one it is published with). Set the statistic for a gauge
+   ("Panels" above). Lay the copies out two to a row under "Business
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
    has no cache.
@@ -167,10 +195,11 @@ Claude writes the service's dashboard to
    Each line is `@Timed("<name>"`; the name is between the quotes. No
    output means the service has no timers, a Node service included:
    delete the panel and its "Timers" row.
-   Otherwise make one copy of the `<timed-name>` panel per name, replacing
-   `<timed-name>` everywhere in the copy (title, description and each
-   `metricName`), and lay the copies out two to a row from the template
-   panel's position down. Where a controller and a service time the same
+   Otherwise make one copy of the `<timer-title>` panel per name,
+   replacing `<timed-name>` everywhere in the copy (description and each
+   `metricName`) and `<timer-title>` with its plain-English title
+   ("Panels" above), and lay the copies out two to a row from the
+   template panel's position down. Where a controller and a service time the same
    operation (`controller.list.time`,
    `service.list.time`), put the pair on one row, controller on
    the left, so the time spent outside the service reads across. Check
@@ -179,8 +208,8 @@ Claude writes the service's dashboard to
    "Rules"); a denied timer publishes nothing.
 7. Check the result is valid JSON (`jq empty <file>`) and that no
    placeholder is left
-   (`grep -nE '<service>|<dependency>|<business-|<timed-' <file>` finds
-   nothing).
+   (`grep -nE '<service>|<dependency>|<business-|<timed-|<timer-' <file>`
+   finds nothing).
 
 ## Import
 
@@ -194,6 +223,9 @@ Signed in to the dev Grafana with Editor rights on the folder:
   `/d/<uid>/…`), then import; Grafana offers to overwrite it. Or open the
   dashboard → Settings → JSON Model, replace `panels` and `templating`
   with the file's, and save.
+
+Add the saved dashboard's `uid` to the file so a later import
+overwrites it.
 
 Then check each panel shows data. Drive some requests first: where a
 cache sits in front of a dependency, calls only happen on a miss.

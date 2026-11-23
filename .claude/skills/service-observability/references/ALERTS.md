@@ -12,8 +12,7 @@ marked `[UNPROVEN]`.
 The alerts are built from a build sheet Claude writes. Writing to the
 dev Grafana needs a signed-in Editor and CDP issues no service-account
 tokens (see `DASHBOARD.md`), so they are built under the developer's
-session: by hand from the sheet, or by Claude through their browser
-with the ruler API (`GRAFANA_API.md`). `[UNPROVEN]` Grafana's UI has no
+session, by hand from the sheet. `[UNPROVEN]` Grafana's UI has no
 import for Grafana-managed alert rules.
 
 Claude writes the sheet to
@@ -33,7 +32,7 @@ Two thirds of the timeout is the starting value. Once the service has
 traffic in dev, read each dependency's real call times and agree a
 tighter value with the team: the highest 15-minute `p95` over the last
 7 days and the slowest single call, from `external.call.duration` with
-period `900` (`GRAFANA_API.md` → "Run a panel's query"). On
+period `900`. On
 dynamics-gateway the Service Bus timeout gave 40000 ms against a worst
 `p95` of 417 ms, so the team set 2000 ms; SQS gave 20000 ms against
 47 ms, so 1000 ms.
@@ -162,8 +161,7 @@ The team's channels are shared across services:
 | prod | `trade-imports-team-alerts-prod` |
 
 1. Check the service's contact point `<service>` is Slack with the
-   channel above as its recipient (`GRAFANA_API.md` → "Contact point
-   and its last send", or Alerting → Contact points).
+   channel above as its recipient (Alerting → Contact points).
 2. Only if it is missing or points elsewhere, ask #cdp-support to route
    the service's alerts, default and custom, to these channels.
 
@@ -240,19 +238,6 @@ Check the calls happened before waiting on an alert:
 `event.category:"external-call" AND event.outcome:"failure" AND
 service.name:"<service>"` in OpenSearch shows one line per failed call.
 
-- **Dev, every rule at once, through the browser.** Claude can do the
-  lowered-threshold check below for the whole group in one go
-  (`GRAFANA_API.md`): save the group to `localStorage`, write it back
-  with every threshold lowered, wait for the next evaluation, read each
-  rule's state and summary and the contact point's last send, then
-  write the saved group back and check it equals what was saved. A
-  dependency with no calls in the rule's window has no data: for that
-  check only, widen its window (`relativeTimeRange.from` and `period`
-  to `86400`). Done on dynamics-gateway on 2026-11-23: lowered 12:57:54
-  UTC, all six Firing at 13:00:00 with their labels filled in, Slack
-  sent at 13:00:37, restored at 13:01:22, all Normal at 13:05:00.
-  Restoring drops the firing alerts rather than resolving them, so the
-  "resolved" message waits for Alertmanager's timeout.
 - **Dev, every rule: lower the threshold.** Change the condition so
   ordinary traffic breaks it, wait for Firing, check the summary shows
   the dependency and operation (not blanks), then put the threshold
@@ -261,7 +246,11 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   no failures the failure metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
   failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
   use `IS BELOW 2` for the database alert. Also check the alert
-  arrives in `trade-imports-team-alerts-non-prod`.
+  arrives in `trade-imports-team-alerts-non-prod`. A dependency with no
+  calls in the rule's window has no data: for that check only, widen
+  its time range and period to `86400`. Done on dynamics-gateway on
+  2026-11-23: all six Firing at the next evaluation with their labels
+  filled in, sent to Slack, then all Normal once restored.
 - **Dev, the database alert: no real failure.** Pointing the service at
   a database that does not exist stops it starting (address-book needs
   its database to build indexes), so no task publishes the gauge and the

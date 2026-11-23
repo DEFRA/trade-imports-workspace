@@ -8,8 +8,6 @@ Duplicate, setting every field their tables list.
 
 Grafana cannot import these: CDP issues no service-account tokens and
 `[UNPROVEN]` the UI has no import for Grafana-managed alert rules.
-Claude can build them instead through the developer's signed-in
-browser, with the ruler API (`references/GRAFANA_API.md`).
 
 Every rule shares these settings:
 

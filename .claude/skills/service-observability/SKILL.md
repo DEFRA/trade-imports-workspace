@@ -8,9 +8,8 @@ defaults do not: custom metrics, a searchable log line per dependency
 call, a custom Grafana dashboard, and alerts that reach the team in
 Slack. One service per run. The code lands in the service's repo.
 Claude generates the dashboard JSON and an alert build sheet from the
-templates in `assets/`. They are imported and built in the CDP dev
-Grafana under the developer's sign-in: by the developer by hand, or by
-Claude through their browser when they ask (`references/GRAFANA_API.md`).
+templates in `assets/`. The developer imports and builds them by hand
+in the CDP dev Grafana.
 
 Its dashboard and alert steps come from a spike on
 `trade-imports-reference-data`, and its code recipe from the reference
@@ -57,7 +56,6 @@ skill and point its plan at these steps.
 | Dashboard and alert templates, dot-case names | Done on dynamics-gateway in dev on 2026-11-23: the dashboard imported with every panel showing CloudWatch or OpenSearch data (`<timed-name>` panels included), and rules 1, 2 and 3 built, fired with a lowered threshold and restored. `[UNPROVEN]`: the database rule 1a, which the gateway has no database for |
 | Slack routing | Done in dev for dynamics-gateway: its contact point `trade-imports-dynamics-gateway` already posted to `trade-imports-team-alerts-non-prod`, and sent its custom alerts with no error on 2026-11-23 (`references/ALERTS.md` → "Route to Slack"). `[UNPROVEN]` in prod |
 | Promotion, alert tests in test and prod | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
-| Grafana through the developer's browser | Done on dynamics-gateway on 2026-11-23: dashboard imported and updated, alert rules built, evaluated, lowered and restored (`references/GRAFANA_API.md`) |
 
 When a run settles an `[UNPROVEN]` fact, edit the file that states it
 (this SKILL.md or the reference): replace the marker with what happened. Do the same when a step turns out wrong.
@@ -71,10 +69,8 @@ dev Grafana needs a signed-in Editor to write, and CDP issues no
 service-account tokens. For Steps 4 and 5 Claude writes the dashboard
 JSON and the alert build sheet to
 `workareas/ticket-planning/<ticket>/<service>/grafana/` (one folder per
-service: a ticket often covers several). When the developer asks, and
-Claude in Chrome is connected, Claude does the Grafana parts in their
-signed-in browser (`references/GRAFANA_API.md`); otherwise the
-developer does them by hand. Claude cannot write to the CDP Portal or
+service: a ticket often covers several), and the developer does the
+Grafana parts by hand. Claude cannot write to the CDP Portal or
 Slack: for Step 6 it gives the exact messages, the developer sends
 them, and Claude records what they report back.
 
@@ -94,8 +90,7 @@ the developer posts it.
 ## Step 1: Check what CDP already gives the service
 
 No code. The developer checks in the dev Grafana
-(`https://metrics.dev.cdp-int.defra.cloud/`), or Claude does through
-their browser (`references/GRAFANA_API.md`):
+(`https://metrics.dev.cdp-int.defra.cloud/`):
 
 - the service has its default dashboards, in the folder
   `CDP_Tenants/<service>`: `<service> (service)` always, and
@@ -172,14 +167,13 @@ dependency goes down. Availability is a metric, never a health check.
 ## Step 4: Build the dashboard
 
 Follow `references/DASHBOARD.md` → "Generate" (Claude, from
-`assets/dashboard.template.json`), then "Import" (the developer, or
-Claude through their browser).
+`assets/dashboard.template.json`), then "Import" (the developer).
 
 ## Step 5: Build the alerts and route them to Slack
 
 Follow `references/ALERTS.md` → "Build" (Claude writes the build sheet
-from `assets/alerts.template.md`; the developer builds each rule, or
-Claude does through their browser) and "Route to Slack".
+from `assets/alerts.template.md`; the developer builds each rule) and
+"Route to Slack".
 
 ## Step 6: Promote, then prove each alert fires
 

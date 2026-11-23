@@ -12,8 +12,7 @@ dev Grafana API without signing in, but writing needs Editor rights, and
 CDP does not issue service-account tokens. (Checked 2026-10-15: an
 anonymous search returned 200, an anonymous create returned 403
 `dashboards:create`.) So the import is done under a signed-in person's
-session: by them, or by Claude through their browser
-(`GRAFANA_API.md`).
+session.
 
 ## Before starting
 
@@ -149,8 +148,8 @@ other dependency out. On dynamics-gateway, SQS acknowledgements and
 queue-depth reads filled them, so no Service Bus send showed. There,
 narrow the query to the dependencies that matter and any failure:
 `… AND (event.action:"azure-service-bus/send-message" OR event.outcome:"failure")`,
-and say so in the description. Check by running the panel's query
-(`GRAFANA_API.md`) and counting the rows per `event.action`. This
+and say so in the description. Check the table shows a row for each
+dependency that matters. This
 panel finds nothing unless the service writes the `event.*` fields as a
 nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.
@@ -225,14 +224,11 @@ Signed in to the dev Grafana with Editor rights on the folder:
   dashboard → Settings → JSON Model, replace `panels` and `templating`
   with the file's, and save.
 
-Or Claude imports it through the developer's browser
-(`GRAFANA_API.md` → "How"), checks the saved copy against the file by
-hash, and adds its `uid` to the file so a later import overwrites it.
+Add the saved dashboard's `uid` to the file so a later import
+overwrites it.
 
 Then check each panel shows data. Drive some requests first: where a
 cache sits in front of a dependency, calls only happen on a miss.
-Claude can run every panel's queries and count the series and points
-each returns (`GRAFANA_API.md`), rather than read screenshots.
 
 ## Promote
 

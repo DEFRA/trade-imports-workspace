@@ -140,9 +140,10 @@ database counts (`METRICS.md` → "A database").
 **The call alerts cannot see an outage nobody calls through.** If the
 service and its callers are serving from caches, no call reaches the
 dependency, so no call alert fires. Nor does a passive availability
-reading change, as it comes from the same calls. A database's
-availability is different: it reads the driver's own monitoring, which
-runs with no calls at all. On reference-data, a frontend instance
+reading change, as it comes from the same calls. A database's or
+Redis's availability is different: it comes from the driver's own
+monitoring or the client's connection events, which run with no calls
+at all. On reference-data, a frontend instance
 that has loaded its countries and ports never asks again, so an MDM
 outage only shows once a frontend restarts or a request misses
 reference-data's 60-minute cache. Users are not affected until then

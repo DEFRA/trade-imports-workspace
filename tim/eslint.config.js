@@ -1,7 +1,7 @@
-import neostandard from 'neostandard'
+import { neostandard, resolveIgnoresFromGitignore } from 'neostandard'
 
 export default neostandard({
   env: ['node', 'vitest'],
-  ignores: [...neostandard.resolveIgnoresFromGitignore()],
+  ignores: [...resolveIgnoresFromGitignore()],
   noStyle: true
 })

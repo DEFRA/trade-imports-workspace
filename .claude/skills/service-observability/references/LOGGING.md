@@ -25,17 +25,17 @@ after the operation,
 
 This table is the one list of the line's fields, for both languages:
 
-| Field                       | Value                                                                           | Written by                                                                     | Example                             |
-| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
-| `event.category`            | Always `external-call`                                                          | Every service                                                                  | `external-call`                     |
-| `event.action`              | `<dependency>/<operation>`                                                      | Every service                                                                  | `mdm/get-countries`                 |
-| `event.outcome`             | `success` or `failure`                                                          | Every service                                                                  | `success`                           |
-| `event.duration`            | Nanoseconds                                                                     | Every service                                                                  | `2882625`                           |
-| `http.response.status_code` | The HTTP status the dependency answered with, when it answered                  | Node, on every answered HTTP call; reference-data, on a failure of 400 or over | `503`                               |
-| `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service                                                                  | `com.mongodb.MongoCommandException` |
-| `error.message`             | A failure with a cause only: the cause's message                                | Every service                                                                  | —                                   |
-| `error.code`                | A failure only: the cause's `cause.code`, when it has one                       | Node                                                                           | `ECONNREFUSED`                      |
-| `trace.id`                  | Set by the request filter or the logger's mixin, not by this code               | Every service                                                                  | —                                   |
+| Field                       | Value                                                                           | Written by                        | Example                             |
+| --------------------------- | ------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------- |
+| `event.category`            | Always `external-call`                                                          | Every service                     | `external-call`                     |
+| `event.action`              | `<dependency>/<operation>`                                                      | Every service                     | `mdm/get-countries`                 |
+| `event.outcome`             | `success` or `failure`                                                          | Every service                     | `success`                           |
+| `event.duration`            | Nanoseconds                                                                     | Every service                     | `2882625`                           |
+| `http.response.status_code` | The HTTP status the dependency answered with, when it answered                  | Node, on every answered HTTP call | `503`                               |
+| `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service                     | `com.mongodb.MongoCommandException` |
+| `error.message`             | A failure with a cause only: the cause's message                                | Every service                     | —                                   |
+| `error.code`                | A failure only: the cause's `cause.code`, when it has one                       | Node                              | `ECONNREFUSED`                      |
+| `trace.id`                  | Set by the request filter or the logger's mixin, not by this code               | Every service                     | —                                   |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
 field that is not on the list is dropped.
@@ -129,12 +129,19 @@ service.name:"<service>"` finds the lines, and Grafana's "Slowest
   line reaches OpenSearch with `event.outcome:failure` and no reason.
   `[UNPROVEN]` Check a failure line in dev OpenSearch before relying on
   the reason.
-- **The exception's type and message are logged, but not the HTTP
-  status.** When a call throws, the line carries `error.type` and
-  `error.message`. A call that returns a failure status with no
-  exception has only `event.outcome:failure`. A Java service that
-  wants the status adds `http.response.status_code`, as reference-data
-  and the Node line do.
+- **No Java service writes `http.response.status_code` yet.** When a
+  call throws, the line carries `error.type` and `error.message`. A
+  call that returns a failure status with no exception has only
+  `event.outcome:failure` among its fields. Reference-data names the status in the
+  message,
+  `External call <action> failure in <ms> ms with status 503`, and
+  also sets `http.response.status_code` as a key-value pair,
+  but its `EcsEventEncoder` writes only `event.*` pairs, so the field
+  never reaches the JSON. A Java service that wants the field sets the
+  pair and extends its copy of `EcsEventEncoder` to write `http.*`
+  pairs, nested or flat as CDP's ECS list takes them, with a test of
+  the encoded JSON. `[UNPROVEN]` until the field is seen in dev
+  OpenSearch.
 
 ### Tests
 

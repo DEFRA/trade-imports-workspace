@@ -233,27 +233,44 @@ false` with the names allowed. A name not on it gets a no-op meter:
 
 ### A service built the old way
 
-These services write EMF directly and publish the older PascalCase
-names, not the dot-case names above (their `main`, checked 2026-11-06).
-`trade-imports-reference-data` and `trade-imports-dynamics-gateway`
-were among them and have moved; the tables below record how, as the
-worked example. `trade-imports-animals-frontend` has moved too
-(EUDPA-674, PR #488): `NODE.md` is the recipe it proved.
+This section is the one record of which services still publish the
+older PascalCase names, where, and how each moves to the dot-case names
+above (checked 2026-11-23). `trade-imports-reference-data` and
+`trade-imports-dynamics-gateway` were among them and have moved; the
+tables below record how, as the worked example.
+`trade-imports-animals-frontend` has moved too (EUDPA-674, PR #488):
+`NODE.md` is the recipe it proved.
 
-| Service                                          | Where                                                | Publishes                                                                           |
-| ------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `trade-imports-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+Each frontend's external calls:
 
+| Service                          | Where                                                        | Publishes                                                                                    |
+| -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `trade-imports-animals-frontend` | `src/server/common/helpers/metrics/external-call-metrics.js` | New: `external.call.duration`, `external.call.failure`, dimensions `dependency`, `operation` |
+| `trade-imports-plants-frontend`  | `src/server/common/helpers/metrics/external-call-metrics.js` | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
+| `trade-imports-ins-frontend`     | `src/server/common/helpers/external-call-metrics.js`         | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
+
+The page-request counts have one name set, `page.request.backend.calls`
+and `page.request.session.resolutions` with dimension `request.kind`.
+animals-frontend and plants-frontend both publish it from
+`src/server/common/helpers/metrics/page-request-metrics.js`, and have
+moved off `BackendCalls`, `SessionResolutions` and `RequestKind`.
+ins-frontend publishes no page-request counts, and
 `trade-imports-animals-admin` publishes none of these metrics.
 
-When this skill runs on one of them, move it to the new names first. A
-Java service moves to the one way above as well. A Node service replaces
-its old `src/server/common/helpers/external-call-metrics.js` with the
-helpers `NODE.md` names, which publish the new names and measure the
-calls it missed. The CloudWatch metrics then change name, so
-regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
-alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
-the old ones go quiet.
+When this skill runs on a service still on the old names, move it to
+the new names first. A Java service moves to the one way above as well.
+A Node service:
+
+- replaces its old `external-call-metrics.js` (table above) with the
+  helpers `NODE.md` names, which publish the new names and measure the
+  calls it missed;
+- makes each call that throws on a refusal name its operation in the
+  error, `Failed to <operation>: <status> <status text>` (`NODE.md`,
+  below its dependency table).
+
+The CloudWatch metrics then change name, so regenerate its dashboard
+(`DASHBOARD.md` → "Generate") and rebuild its alerts from a new build
+sheet (`ALERTS.md` → "Build") in the same run; the old ones go quiet.
 
 Change every reader of the old names in the same run, on a branch with
 the same name as the service's (CLAUDE.md rule 2). A reader left on an
@@ -262,20 +279,19 @@ old name finds no data and says nothing:
 - the service's dashboard and alerts, above;
 - `trade-imports-performance-tests`, whose reports read the external
   call metrics and their dependency and operation dimensions
-  (`src/config/external-calls.js`, `src/lib/external-calls.js`) and
-  the page-request counts and their request-kind dimension
-  (`src/config/call-ratios.js`). One reader serves every frontend, so
-  it reads each frontend by the names that frontend publishes until
-  they have all moved.
+  (`src/config/external-calls.js`, `src/lib/external-calls.js`) by
+  each service's own names: set the service's entry in
+  `SCHEME_BY_SERVICE` to `dotted`. It reads the page-request counts
+  (`src/config/call-ratios.js`) by their one name set, so they need no
+  change.
 
-| Old                                                                                               | New                                                                                        |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `ExternalCallDuration`, `ExternalCallFailure`                                                     | `external.call.duration`, `external.call.failure`                                          |
-| `BackendCalls`, `SessionResolutions`, dimension `RequestKind` (animals-frontend, plants-frontend) | `page.request.backend.calls`, `page.request.session.resolutions`, dimension `request.kind` |
-| `DependencyAvailable`                                                                             | `external.dependency.available`                                                            |
-| `CacheHit`, `CacheMiss`                                                                           | `cache.hit`, `cache.miss`                                                                  |
-| `Lookup`                                                                                          | `lookup`                                                                                   |
-| Dimensions `Dependency`, `Operation`, `Cache`, `LookupType`                                       | `dependency`, `operation`, `cache`, `lookup.type`                                          |
+| Old                                                         | New                                               |
+| ----------------------------------------------------------- | ------------------------------------------------- |
+| `ExternalCallDuration`, `ExternalCallFailure`               | `external.call.duration`, `external.call.failure` |
+| `DependencyAvailable`                                       | `external.dependency.available`                   |
+| `CacheHit`, `CacheMiss`                                     | `cache.hit`, `cache.miss`                         |
+| `Lookup`                                                    | `lookup`                                          |
+| Dimensions `Dependency`, `Operation`, `Cache`, `LookupType` | `dependency`, `operation`, `cache`, `lookup.type` |
 
 The Java classes move as follows. Rows that name a class only one
 service has apply to that service.

@@ -9,7 +9,8 @@ call, a custom Grafana dashboard, and alerts that reach the team in
 Slack. One service per run. The code lands in the service's repo.
 Claude generates the dashboard JSON and an alert build sheet from the
 templates in `assets/`; the developer imports and builds them in the
-CDP dev Grafana, because nothing else can write to it.
+CDP dev Grafana. Claude never uses a browser to reach Grafana ("Who
+does what").
 
 Its dashboard and alert steps come from a spike on
 `trade-imports-reference-data`, and its code recipe from the reference
@@ -63,14 +64,25 @@ as the service's branch (CLAUDE.md rule 2).
 
 ## Who does what
 
-Claude can read and change the service's code and run its tests. Claude
-cannot write to Grafana, OpenSearch, the CDP Portal or Slack: the dev
-Grafana needs a signed-in Editor to write, and CDP issues no
-service-account tokens. For Steps 4 and 5 Claude writes the dashboard
-JSON and the alert build sheet to
+Claude reads and changes the service's code and runs its tests.
+
+Claude never opens, reads, creates, updates or deletes anything in
+Slack, the CDP Portal, OpenSearch or the CDP Grafana (dev, test or
+prod) through a browser. That covers claude-in-chrome, computer use,
+Playwright and any other browser automation. It covers dashboards,
+alert rules, contact points, folders and Explore, and it covers just
+looking. A signed-in Chrome on the developer's machine does not change
+this.
+
+For Steps 4 and 5 Claude only writes the dashboard JSON and the alert
+build sheet to
 `workareas/ticket-planning/<ticket>/grafana/`;
-for Step 6 it gives the exact messages. The developer does the Grafana,
-Portal and Slack parts, and Claude records what they report back.
+for Step 6 it gives the exact messages. The developer does everything in
+Grafana, the Portal, OpenSearch and Slack, and reports back. Claude
+records what they say.
+
+The anonymous, read-only `curl` of the alert rules listing in Step 1 is
+still allowed, because it is not a browser.
 
 A run takes days and several sessions. Its progress lives in the
 ticket's plan,
@@ -98,14 +110,15 @@ No code. The developer checks in the dev Grafana
   storage, average response time, HTTP status code, log ingestion
   errors) and `<service> advanced http alerts` (4xx and 5xx percentage
   and spike detection, p95 response time, slow requests percentage).
-  Check with the rules listing below, filtered on the service name. If
+  Claude can check this with the rules listing below, filtered on the
+  service name. If
   either group is missing, ask #cdp-support to deploy it in every
   environment, naming a service that has it;
 - the folder `Playground/<service>-monitoring` exists, with an alert
   evaluation group `<service>-advanced-alerts` holding one alert named
   `platform_managed_do_not_delete`. (Seen 2026-10-15 for reference-data
   and animals-backend.) Anyone can list the dev alert rules without
-  signing in:
+  signing in, and Claude may run this, because it is not a browser:
   `curl -s 'https://metrics.dev.cdp-int.defra.cloud/api/prometheus/grafana/api/v1/rules' | jq -r '.data.groups[] | "\(.file) | \(.name) | \([.rules[].name] | join(", "))"'`.
 
 Then list the service's real dependencies from its code, not from the
@@ -160,7 +173,9 @@ from `assets/alerts.template.md`; the developer builds each rule) and
 ## Step 6: Promote, then prove each alert fires
 
 Follow `references/ALERTS.md` → "Promote" and "Prove they fire", and
-`references/LOGGING.md` → "Follow a request by trace.id".
+`references/LOGGING.md` → "Follow a request by trace.id". The developer
+does every Grafana part of these; Claude gives the steps and records
+what they report.
 
 ## Completion output
 

@@ -133,8 +133,9 @@ export const mockConfluence = (mockPool) => {
   mockPool(CONFLUENCE_ORIGIN)
     .persist()
     .get(() => true)
-    .reply((uri) => {
-      const { status, body } = answer(uri)
+    .reply((request) => {
+      const { pathname, search } = new URL(request.url)
+      const { status, body } = answer(`${pathname}${search}`)
       return [status, body, { 'content-type': 'application/json' }]
     })
 }

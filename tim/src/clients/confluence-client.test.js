@@ -281,7 +281,7 @@ describe('error mapping', () => {
   test('maps a fetch failure (no response) to TimError(NETWORK)', async () => {
     mockPool(BASE)
       .get('/wiki/rest/api/user/current')
-      .replyWithError({ message: 'connection reset' })
+      .replyWithError(new Error('connection reset'))
     const client = createConfluenceClient({
       user: 'u',
       token: 't',

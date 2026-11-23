@@ -25,8 +25,9 @@ const RAW = 'https://raw.githubusercontent.com'
 
 let staged
 
-const answerAs = (origin) => (path) => {
-  const body = RESPONSES[`${origin}${path}`]
+const answerAs = (origin) => (request) => {
+  const { pathname, search } = new URL(request.url)
+  const body = RESPONSES[`${origin}${pathname}${search}`]
   return body === undefined ? [404, 'Not Found'] : [200, body]
 }
 

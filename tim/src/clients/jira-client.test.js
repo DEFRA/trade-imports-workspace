@@ -277,7 +277,7 @@ describe('error mapping', () => {
   test('maps a fetch failure (no response) to TimError(NETWORK)', async () => {
     mockPool(BASE)
       .get('/rest/api/2/myself')
-      .replyWithError({ message: 'connection reset' })
+      .replyWithError(new Error('connection reset'))
     const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
     await expect(client.whoami()).rejects.toMatchObject({
       name: 'TimError',
@@ -501,9 +501,9 @@ describe('attachFiles', () => {
     let capturedBody
     mockPool(BASE)
       .post('/rest/api/2/issue/EUDPA-200/attachments')
-      .reply(function replyWithCapture(uri, requestBody) {
-        capturedHeaders = this.req.headers
-        capturedBody = requestBody
+      .reply(async (request) => {
+        capturedHeaders = Object.fromEntries(request.headers)
+        capturedBody = await request.text()
         return [200, loadFixture('attachment-created.json')]
       })
 

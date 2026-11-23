@@ -1,0 +1,29 @@
+{
+  "file": "openspec/coverage/plants/journey-pages/consignor-select/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:35Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The 003-A and role-filter links check out, but SCN-PLANTS-CONSIGNOR-001-B is marked full against a consignor fixture of exactly 8 addresses, so no linked test proves the eight-a-page paging the scenario now claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-CONSIGNOR-001-B now claims 'eight a page' and listing 'across its pages', and its fit link is marked strength full, but the consignor picker is declared with wholeCount: 8 (consignor-select.fit.spec.js:109, controller.test.js:76 at plants-frontend ad743ba), so the page holds every address on one page, no pagination renders and openLastPageOfPicker (fit/high-risk-plants-journey.js:1041) clicks nothing. A page size of 9, 10 or unlimited still passes the linked test, so no link proves the eight-a-page cap or paging for this picker, which the ticket AC requires ('each is linked to a test that proves it').",
+      "fix": "Must: SCN-PLANTS-CONSIGNOR-001-B is linked, at strength full, to a test that turns red if the consignor picker shows more than eight addresses on a page or stops listing the role-less address on a later page; otherwise the fit link is downgraded to partial with a note saying paging is not exercised. One way: add a ninth consignor-role (or role-less) stub address so the consignor fixture holds more than eight, raise wholeCount to match, and keep the link full; or link the consignment-contact picker's paging test only if the scenario is reworded to the shared picker rule."
+    },
+    {
+      "id": 2,
+      "line": 26,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-CONSIGNOR-001-B now claims 'eight a page' and listing 'across its pages', and its fit link is marked strength full, but the consignor picker is declared with wholeCount: 8 (consignor-select.fit.spec.js:109, controller.test.js:76 at plants-frontend ad743ba), so every address fits on one page, no pagination renders and openLastPageOfPicker (fit/high-risk-plants-journey.js:1041) clicks nothing. A page size of 9, 10 or unlimited still passes the linked test, so no link proves the eight-a-page cap or paging for this picker, which the ticket AC requires.",
+      "fix": "Must: SCN-PLANTS-CONSIGNOR-001-B is linked at strength full to a test that turns red if the consignor picker shows more than eight addresses on a page or stops listing the role-less address on a later page; otherwise the fit link is downgraded to partial with a note that paging is not exercised. One way: add a ninth consignor-role or role-less stub address so the consignor fixture holds more than eight, raise wholeCount to match, and keep the link full."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

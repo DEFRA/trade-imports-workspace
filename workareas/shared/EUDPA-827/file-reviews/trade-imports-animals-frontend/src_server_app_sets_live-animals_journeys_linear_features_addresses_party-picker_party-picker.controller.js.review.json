@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging is threaded correctly through GET, search, refusal and save-failure paths with the past-the-end clamp logged, but the save-failure path carrying the page has no test that would fail without it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 210,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The save-failure re-render now carries the page the trader was on (commitSelection form { query, page: pageNumber(payload.page) }, line 208-211), but no test proves it. The only recoverable-save test ('Should re-render the picker when saving the selection fails', party-picker.controller.test.js:682) posts no page and asserts only the fallback log and status. Deleting the page key leaves render with page undefined, so servedPageOf returns NaN, addressesOnPage slices nothing and the clamp log fires, and every test still passes.",
+      "fix": "Must: a test fails when a failed save re-renders on any page other than the one the trader posted from. One way: in the recoverable-save describe, post { action: 'save', party: ALPINE_DAIRY_ID, page: '2' } with refusingSaves and assert the rendered picker.page is 2 alongside the existing fallback assertions."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

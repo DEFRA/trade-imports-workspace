@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new pagination, chosen-address and page-field tests are sound, but the template's client paging-selection hook is untested, one title over-claims and an empty '//' comment steers formatting.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 248,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "A bare trailing '//' after renderPicker(...) on line 248 is an empty comment used only to steer Prettier's line break; it says nothing and the reader has to work out why it is there.",
+      "fix": "Must: the test has no empty comment; its lines are whatever Prettier produces. One way: assign the document first (const document = documentOf(renderPicker(pickerShowing({ selected: row })))) then const form = document.querySelector('form'), matching the other tests, and drop the '//'.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 270,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should carry the page being shown in the form, so a search and a save know it' claims that a search and a save learn the page, but the test only asserts the hidden input[name=page] value is '2'; the 'so a search and a save know it' clause is rationale about callers the assertions do not prove.",
+      "fix": "Must: the title states only what the assertions prove. One way: 'Should hold the page being shown in a hidden page field of the form', leaving the search/save behaviour to the controller tests that prove it.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 270,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR adds data-module=\"app-picker-paging-selection\" to the picker form (_address-picker.njk:63) so a radio ticked but not yet saved is carried onto the paging links (AC: 'the chosen address is still chosen' on another page). No test proves the template wires it: picker-paging-selection.test.js builds its own form markup, and the new ins-tests E2E (addresses-picker.spec.ts) only pages after a saved choice. Deleting the attribute from the template leaves every test green.",
+      "fix": "Must: removing the data-module attribute from the addressPicker form turns a test red. One way: in this file's addressPicker describe, assert documentOf(renderPicker(pickerShowing())).querySelector('form').dataset.module equals PickerPagingSelection.moduleName (import it), or add an E2E step that ticks an address on page 1, follows the page 2 link and asserts it is still chosen on return."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

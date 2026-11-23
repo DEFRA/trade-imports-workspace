@@ -1,0 +1,21 @@
+{
+  "file": "openspec/specs/plants/journey-pages/place-of-destination/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:35Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The paging rule says pagination depends on the role's whole list, but the picker pages over the search results, so the spec is wrong for any searched list.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 45,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-PLANTS-PLACE-OF-DESTINATION-002 (line 45) and SCN-002-A (line 53) tie pagination to how many addresses the role holds ('where the role holds more than eight and none where it holds eight or fewer'), but the picker pages over the addresses found: view-model.js:58 passes pageCountOf(found.length) to paginationLinks, and the count reads resultsCount(rows.length, found.length). A role holding 20 addresses searched down to 3 matches shows no pagination, which the requirement says it must offer; the ticket AC also says results stay filtered by the search across pages. Scenario 002-B (search) gives no paging rule at all, so the spec states the wrong rule for any searched list.",
+      "fix": "Must: the requirement and SCN-002-A say pagination is offered where the addresses found (the role's whole list with no search, its matches with one) number more than eight, and none where they number eight or fewer, matching pageCountOf(found.length). One way: reword line 45 to 'MUST offer GOV.UK pagination under the table where more than eight addresses are found, and none where eight or fewer are', and change the 002-A AND line to 'GOV.UK pagination is offered only where more than eight are found'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

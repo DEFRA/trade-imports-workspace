@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/live-animals/addresses/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:49Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The paging scenarios match the AC, but REQ-ADDR-017 measures the count and the pagination threshold against the whole role rather than the search results, and the chosen-address wording leaves out when the inset shows and that carrying a new tick needs JavaScript.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 40,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "REQ-ADDR-017 measures the count and the pagination threshold against 'every address the role holds' / 'where the role holds more than eight', but the code measures both against the addresses the search found: view-model/index.js sets resultsCount: copy.resultsCount(rows.length, found.length) and totalPages: pageCountOf(found.length). A role with 20 addresses searched down to 3 shows 'Showing 3 out of 3 results' and no pagination, which the requirement as written says is wrong.",
+      "fix": "Must: REQ-ADDR-017 states the count total and the more-than-eight pagination rule in terms of the addresses the list currently holds after any search, matching the code. One way: say 'the count of the rows shown out of every address the list holds' and 'where the list holds more than eight', with 'the list' already defined as the role's addresses matching any search term."
+    },
+    {
+      "id": 2,
+      "line": 369,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Two claims about the chosen address do not match the code. (1) REQ-ADDR-011 (line 369) says the 'Selected address: <name>' inset shows 'whenever the user reopens the list', but _address-picker.njk shows it whenever picker.selected resolves, and party-picker.controller.js:126 takes selectedId from request.query.selected first, so the inset also appears for a row ticked during this visit once the user searches or follows a page link. (2) REQ-ADDR-017 (line 40) and SCN-ADDR-017-C (line 56) say page links carry 'the address already chosen' with no caveat. The animals page-design.md in this PR set says a row ticked on this visit crosses a page link only through the client component that rewrites the links, so without JavaScript the tick is lost. REQ-ADDR-011 makes working without JavaScript an explicit rule, so leaving it out here overstates what the page does.",
+      "fix": "Must: the spec says the inset names any chosen address, whether saved or ticked on this visit, and says that a row ticked on this visit is carried across a page link only with client-side JavaScript, while the saved choice is carried without it. One way: reword REQ-ADDR-011's inset sentence to 'whenever an address is chosen', and add a sentence to REQ-ADDR-017 that names the client-side dependency for a row ticked but not yet saved."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

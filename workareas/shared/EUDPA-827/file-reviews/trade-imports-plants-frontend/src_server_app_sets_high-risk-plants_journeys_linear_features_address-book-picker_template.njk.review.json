@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "GOV.UK inset and client module are wired correctly and the inset is covered end to end, but the new hidden page input that keeps a refused save on its page has no test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 20,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new hidden 'page' input (template.njk:20) is what keeps a refused save on the page the trader was on: postedPickerState reads payload.page (picker-routes.js:29) for the not-in-book 400 and the save-failure 500 re-renders. No test posts a page: the only page values in the picker tests are GET query strings (paging-test-support.js:13, :69) and href checks. Deleting line 20 turns nothing red, and a refused save on page 2 would silently drop back to page 1.",
+      "fix": "Must: a test fails when a refused save posted from a later page re-renders any page other than that one. One way: in paging-test-support.js, post { page: '2', selected: <id not in the book> } to a picker holding more than 8 addresses and assert the 400 response serves page 2 and its hidden page input holds 2."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

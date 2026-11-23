@@ -1,0 +1,54 @@
+{
+  "file": "page-objects/shared/address-picker-results.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "9c67c82d92b62e70df8414390a4d36f60cd4095b",
+  "pr": 138,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Helpers work, but pagination locators duplicate BasePage, the chosen-address check has two mechanisms, two exports are now dead and two comments describe callers or rationale.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "pickerPagination (line 17) and pickerPageLink (line 21) re-declare locators BasePage already owns: BasePage.pagination ('navigation' named 'Pagination', exact) and BasePage.paginationPageLink(pageNumber) (page-objects/shared/base-page.ts:97-111). AnimalsPartyPickerPage extends NotificationPage extends BasePage, so it already has both, yet adds paging/pageLink getters over these new copies. The copies also drift: no exact match on the nav name, and the page link is not scoped to the pagination nav, so any 'Page 2' link on the page matches.",
+      "fix": "Must: one home for the pagination locators; the picker page uses BasePage.pagination and paginationPageLink and no second copy exists. One way: delete pickerPagination and pickerPageLink here and the paging/pageLink getters in party-picker-page.ts, and have the spec call picker.pagination and picker.paginationPageLink(2)."
+    },
+    {
+      "id": 2,
+      "line": 25,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two mechanisms check one rule, 'the chosen address is named above the results': pickerSelectedAddress (line 25, a .govuk-inset-text locator asserted toHaveText('Selected address: X') in animals addresses-picker.spec.ts:161,168) and expectChosenAddressNamedAboveResults (line 106, a text slice between Search and the results heading, asserted toBe('Selected address: X')). The copy 'Selected address: ' is written in both the helper and the spec. The concept also has three names: selected (pickerSelectedAddress), chosen (chosenAddressAboveResults, expectChosenAddressNamedAboveResults) and inset.",
+      "fix": "Must: one owner for the chosen-address check and its copy, used by every picker spec, under one name for the concept. One way: keep expectChosenAddressNamedAboveResults (it also proves position), call it from the animals paging test, and delete pickerSelectedAddress and the chosenAddressAboveResults getter."
+    },
+    {
+      "id": 3,
+      "line": 26,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "pickerSelectedAddress locates by the CSS class '.govuk-inset-text' (line 26), which the Playwright guide says to avoid because it breaks on styling, and which matches any inset text on the page, not only the chosen address.",
+      "fix": "Must: the chosen-address locator finds the element by role, label or text, not a CSS class. One way: resolve with the duplication finding on line 25 by dropping this locator in favour of expectChosenAddressNamedAboveResults; otherwise locate by getByText(/^Selected address: /).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 4,
+      "line": 15,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "After this PR nothing calls WHOLE_LIST_COUNT (line 15) or expectNothingBetweenSearchAndResults (line 98): the diff removes their last uses from animals addresses-picker.spec.ts and from plants addresses-picker.spec.ts and destination.spec.ts. The PR also refactors expectNothingBetweenSearchAndResults to share textBetweenSearchAndResults, so it keeps a dead export alive.",
+      "fix": "Must: the module exports only what a spec or page object calls. One way: delete WHOLE_LIST_COUNT and expectNothingBetweenSearchAndResults."
+    },
+    {
+      "id": 5,
+      "line": 10,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe callers and rationale, not their own lines. Line 10-12 on PAGED_LIST_COUNT says the book 'grows as other tests add to it', describing other tests, and explains a name that does not say it: the regex matches any 'Showing N out of M results', paged or not, so 'PAGED' mispredicts and the comment decodes it. Line 104-105 on expectChosenAddressNamedAboveResults gives rationale ('so the choice shows on a page that does not hold its row'), which belongs in the behaviour spec.",
+      "fix": "Must: no comment describes other tests or rationale, and the count regex has a name that says it matches any result count, with its comment removed. One way: rename PAGED_LIST_COUNT to ANY_RESULTS_COUNT, delete both comments, and keep the 'shown on any page' rule in the picker spec."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:23Z"
+}

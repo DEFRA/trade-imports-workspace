@@ -1,0 +1,29 @@
+{
+  "file": "openspec/coverage/plants/journey-pages/place-of-destination/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:33Z",
+  "verdict": "RISKY",
+  "verdict_reason": "SCN-002-A claims full coverage while no linked test proves its pagination Then and the place-of-destination picker (6 addresses) never exercises the paged branch; its unit link also names the wrong file.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 58,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-PLACE-OF-DESTINATION-002-A is marked coverage full, but neither linked test proves its third Then ('GOV.UK pagination is offered only where the role holds more than eight'). The fit test 'opens on a page of the role's addresses...' (fit/high-risk-plants-journey.js:1213) and the unit test 'Should open on a page...' (paging-test-support.js:37) assert only the row count and the results count; openLastPageOfPicker (fit/high-risk-plants-journey.js:1041) silently does nothing when there are no pagination links. The tests that do assert it, fit 'offers paging only where the role holds more addresses than a page...' (fit/high-risk-plants-journey.js:1270) and unit 'Should offer paging only where the role holds more addresses than a page' (paging-test-support.js:56), are not linked. Also, this picker's stub holds 6 addresses (place-of-destination.fit.spec.js:117, controller.test.js:103), so the more-than-eight branch the ticket's first AC needs is never exercised for place of destination. Checked at plants-frontend review clone, PR 164 commit ad743ba.",
+      "fix": "Must: every Then of SCN-002-A is witnessed by a linked test, including pagination shown when the role holds more than eight and absent when it holds eight or fewer, run against the place-of-destination picker; otherwise the scenario's coverage is partial, not full. One way: link the two 'offer(s) paging only where...' tests, and give the place-of-destination picker (or a second seed) more than eight role addresses so the paged branch runs; until then set the scenario and requirement to partial."
+    },
+    {
+      "id": 2,
+      "line": 62,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The unit link on SCN-PLANTS-PLACE-OF-DESTINATION-002-A names address-book-picker/controller-test-support.js, but the test 'Should open on a page of the role's addresses, counted against every one the role holds' is declared in address-book-picker/paging-test-support.js:37 (controller-test-support.js:568 only calls describePaging). Every other unit link in this file names the file that declares the title, with 'run through' notes for the runner, so a reader or a title search following this link lands on a file without the test.",
+      "fix": "Must: the link's file is the file that declares the test title. One way: set file to src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/paging-test-support.js and keep the note 'run through place-of-destination/controller.test.js'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

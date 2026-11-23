@@ -1,0 +1,21 @@
+{
+  "file": "src/client/javascripts/components/picker-paging-selection.test.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests prove links carry the ticked address and keep q and page, but nothing pins the radio-only guard against change events from the search box in the same form.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 35,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test covers the radio-only guard in picker-paging-selection.js:20 (target.matches(RADIO_SELECTOR)). The picker form also holds the search box (address-book-picker/template.njk: appSubmittedSearch id q inside the form with data-module), so a change event on it reaches the listener; deleting the guard would write selected=<search text> into every paging link and no test in this file would go red. render() builds the form without a search input, so the case cannot be exercised today.",
+      "fix": "Must: a test fails when the module rewrites paging links on a change event from a non-radio control in the picker form, such as the search box. One way: add a text input name=q to render()'s markup and a test 'Should leave the paging links alone when the search text changes' that dispatches change on it and asserts the exact original hrefs."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

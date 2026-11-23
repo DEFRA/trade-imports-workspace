@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination/page-numbers.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests exercise paginationItems through its output, but one title claims a single-page-gap rule the set-up never reaches and the code does not have, and another claims every link while asserting one.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles claim more than their assertions prove. Line 21 'Should skip the ellipsis where the gap is a single page' runs shapeOf(3, 5), whose shown numbers 1,2,3,4,5 have no gap at all, so nothing is skipped; and the code does the opposite of the title: itemsWithEllipses adds an ellipsis whenever number - previous > 1, so page 4 of 7 gives [1, '…', 3, 4, 5, '…', 7] with an ellipsis standing for the single page 2. Line 25 'Should open each page link with its own page number' asserts only item [0] of paginationItems(2, 4, hrefFor).",
+      "fix": "Must: each title states exactly what its assertions prove, and the single-page-gap case is pinned by an assertion on a set-up that has a one-page gap. One way: retitle line 21 to 'Should number every page with no ellipsis when the neighbours of the current page reach both ends' and add a case such as expect(shapeOf(4, 7)).toEqual([1, '…', 3, 4, 5, '…', 7]) titled for what it shows (an ellipsis stands even for one hidden page); retitle line 25 to name the first item, or map every item's href and assert the full list.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

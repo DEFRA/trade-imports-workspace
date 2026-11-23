@@ -1,0 +1,53 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:41Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Paging links drop the 'from' trail, so after one page change the back link and the save destination are lost; also untested q-carry and ellipsis logic, a rationale comment, single-use module constants and a duplicated FIRST_PAGE.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 29,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "resultsHref (line 29-42) builds paging links from q, page and selected only, so the 'from' trail (shared/trail.js TRAIL_PARAMETER) is dropped on the first page change. The form posts to the current URL (template.njk has no action) and the save redirects through kit.nextTarget -> pushTrail(request, ...), and the back link comes from kit.trailBackLink(request); both read request.query.from. A trader who opens a picker from the overview or check answers (the ticket's own Dev example is '.../place-of-origin/select?from=overview') and pages once loses the back link and is sent onward through the flow on save instead of back. The animals twin's paginationLinks passes 'trail' into resultsHref (party-picker/view-model/pagination/index.js), so the twins also diverge.",
+      "fix": "Must: every paging link carries the request's trail, so the back link and the save destination after paging are the same as before paging, mirroring the animals twin; a test opens a picker with ?from=overview, follows a paging link's href and asserts 'from=overview' is kept. One way: pass kit.requestTrail(request) from render.js through the view model into paginationLinks and have resultsHref add it with withTrail (shared/trail.js) or set TRAIL_PARAMETER."
+    },
+    {
+      "id": 2,
+      "line": 26,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The JSDoc on resultsHref (lines 26-28) carries rationale and describes the UI: 'because paging is a link and not a submit'. House rule: rationale goes in docs/ or the behaviour spec, never in code; a doc comment states only the exported contract.",
+      "fix": "Must: resultsHref's doc comment states only what it returns (the picker results link carrying the search term, the page and the ticked row), with no reason or UI description. One way: drop the 'because paging is a link and not a submit' clause."
+    },
+    {
+      "id": 3,
+      "line": 7,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MINIMUM_PAGES_TO_PAGINATE (line 7) is used only by paginationLinks (line 67) and PAGES_EITHER_SIDE_OF_CURRENT (line 8) only by numbersToShow (lines 47, 49), yet both sit at module scope. House rule: a literal value used by one function lives in that function; module scope is for shared values. FIRST_PAGE and ADDRESSES_A_PAGE are shared and stay.",
+      "fix": "Must: each single-use literal lives inside the one function that uses it, matching the animals twin's layout once it moves too. One way: declare PAGES_EITHER_SIDE_OF_CURRENT inside numbersToShow and MINIMUM_PAGES_TO_PAGINATE inside paginationLinks."
+    },
+    {
+      "id": 4,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The first-page rule has two homes in one feature folder: pagination.js declares FIRST_PAGE = 1 (line 6) and picker-routes.js declares its own FIRST_PAGE = 1 and pageNumber() floor beside it. Both describe where a picker's pages start.",
+      "fix": "Must: one module owns the picker's first page number (and the parse of a requested page), and picker-routes.js imports it. One way: export FIRST_PAGE (or a requestedPageOf parser) from pagination.js and delete the copy in picker-routes.js."
+    },
+    {
+      "id": 5,
+      "line": 44,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No plants test exercises numbersToShow/itemsWithEllipses (lines 44-59) or the search term in paging links: the paging cases in test-support.js and paging-test-support.js build at most 9 addresses (two pages, so no ellipsis ever appears) and assert only 'page=2' and 'selected=record-3' in hrefs, never 'q='. AC 2 requires the search text to survive a page change. Deleting params.set('q', query) at line 32, or the ellipsis branch at line 58, leaves every test green. The animals twin has pagination/index.test.js for the same logic.",
+      "fix": "Must: a test fails when the search term is dropped from a paging link, and a test fails when the page-number window or its ellipses change (e.g. page 5 of 10 gives 1, ellipsis, 4, 5, 6, ellipsis, 10 with page 5 current). One way: add a pagination.test.js mirroring the animals twin's index.test.js, plus a paging case in test-support.js that sets a query and asserts every item href contains 'q='."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

@@ -1,0 +1,53 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/test-support.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging cases exercise the right behaviour, but one cannot fail for its titled claim (page-offset numbering), one over-claims 'every paging link', and the page size is redeclared beside pagination.js's export.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 205,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The case titled 'Should number the rows of the page after the first from where that page starts' (lines 205-216) asserts only that page 2's one row gets the bare field name. The first row of any page always gets the bare name (view-model.js:11, index === 0), so nothing here sees the page offset: removing 'from +' from idPrefixFor leaves the test green. The title claims numbering from the page start; the assertion proves only the first-row rule.",
+      "fix": "Must: the test goes red if row numbering on a later page ignores the page offset, and its title states exactly what it asserts. One way: build ADDRESSES_A_PAGE + 2 records, open page 2, and assert the idPrefixes equal [fieldName, `${fieldName}-10`]."
+    },
+    {
+      "id": 2,
+      "line": 196,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should carry the ticked address through every paging link' (lines 196-203) loops over pagination.items only. The next link (pagination.next.href) is a paging link too and is never checked, so the title over-claims; a regression that dropped 'selected' from the previous/next hrefs would stay green.",
+      "fix": "Must: the assertions cover every link the title names (numbered items and the previous/next link present on that page), or the title names only the numbered links. One way: collect [...items.map(i => i.href), pagination.next.href] and assert each contains 'selected=record-3'."
+    },
+    {
+      "id": 3,
+      "line": 133,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Line 133 declares its own 'const ADDRESSES_A_PAGE = 8', the same name pagination.js:4 already exports, and the sibling paging-test-support.js:6 imports that export. Two test-support modules of one feature take the page size from different homes under one name, so a change to the page size updates one suite and not the other.",
+      "fix": "Must: the picker's test support has one source for the page size, used by both test-support.js and paging-test-support.js. One way: import ADDRESSES_A_PAGE from './pagination.js' here and delete the local declaration (or, if the suites must pin 8 independently, give the pinned literal its own name in one shared place and use it in both)."
+    },
+    {
+      "id": 4,
+      "line": 138,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "pageOfAddresses(count) (line 138) returns 'count' numbered address records, not a page: every call but one passes OVER_A_PAGE (lines 153, 169, 198, 210), i.e. more than a page holds, so the name mispredicts what it returns.",
+      "fix": "Must: the helper's name says it returns that many numbered address records, whatever the count. One way: rename to numberedAddresses(count) at the declaration and all four call sites."
+    },
+    {
+      "id": 5,
+      "line": 63,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Literals used by one function sit at module scope: JOURNEY_ID and GIVEN_SLUG (lines 63-64) are used only inside viewModelBoundFor, and SECOND_PAGE and LAST_OF_OVER_A_PAGE (lines 135-136) only inside pagingCases. The house rule keeps a literal used by one function in that function.",
+      "fix": "Must: each literal used by a single function lives inside that function; module scope keeps only values the module shares. One way: move JOURNEY_ID and GIVEN_SLUG into viewModelBoundFor, and SECOND_PAGE and LAST_OF_OVER_A_PAGE into pagingCases."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

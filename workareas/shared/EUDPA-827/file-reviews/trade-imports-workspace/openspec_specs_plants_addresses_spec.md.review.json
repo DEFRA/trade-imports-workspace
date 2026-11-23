@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/plants/addresses/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:59Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging scenarios match the AC and the plants picker code, but REQ-012 understates when the 'Selected address' line shows, and two new MUSTs in REQ-002 have no scenario to carry coverage.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 267,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "REQ-PLANTS-ADDR-012 (lines 265-273) says the 'Selected address: <name>' line appears when the user reopens the picker, naming the record the saved address was chosen from. The code shows it for any ticked record, saved or not. render.js sets tickedRecord = chosenFor(orgId, selectedId, role), and selectedId comes from request.query.selected (the paging link) or the posted radio/selected field (picker-routes.js postPicker). So a row ticked but not saved, then carried across a search or a page link, is also named above the results. SCN-PLANTS-ADDR-002-H ('the chosen address is still chosen', line 99) and SCN-PLANTS-ADDR-003-A don't say how a chosen address whose row is on another page, or filtered out, shows to the user. That inset is the only visible evidence for the AC 'the chosen address is still chosen'. The spec understates the behaviour the PR adds.",
+      "fix": "Must: the spec says the 'Selected address: <name>' line names whichever address is currently ticked, saved or not, on every page and after a search, and 002-H's Then says the chosen address is named above the results when its row is not on the page shown. One way: move the naming rule out of REQ-012 into REQ-002/REQ-003 as 'names the ticked address above the results', add an AND to 002-H, and keep REQ-012 to the reopen-and-tick case."
+    },
+    {
+      "id": 2,
+      "line": 80,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "REQ-PLANTS-ADDR-002 (line 80) adds two MUSTs that no scenario states: 'A submitted search MUST start again at the first page' (picker-routes.js postPicker passes page: FIRST_PAGE on a search) and 'a page past the last page MUST serve the last page' (pagination.js servedPageOf, with an info log in render.js). Coverage rolls up from scenarios only, so these rules carry no coverage claim and tim spec gaps cannot report them. The ticket asks that each picker scenario be linked to a test that proves it.",
+      "fix": "Must: each rule in REQ-PLANTS-ADDR-002 has a scenario with a stable ID and a coverage link to a test that proves it. One way: add SCN-PLANTS-ADDR-002-I (searching from a later page shows the first page of the matches) and SCN-PLANTS-ADDR-002-J (asking for a page past the last shows the last page), linked to the unit tests on servedPageOf and the search POST."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

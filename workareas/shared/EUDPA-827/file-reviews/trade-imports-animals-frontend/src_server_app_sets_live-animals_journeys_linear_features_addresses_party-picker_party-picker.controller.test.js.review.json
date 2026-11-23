@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The paging tests cover role filtering across pages, the page-past-the-end fallback, search resets and refusals well. One retitled test claims a View link it never checks, and no test proves page 2 of a search stays filtered and keeps its selection (AC2).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 191,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The diff retitled this test 'Should carry the selection into the View link return', but its assertions (lines 197-198) only check NORDVIK_ID is among the rows and picker.selected.name is DANISH_MEAT_NAME. Nothing reads a row's viewHref, and in stub mode rows have no View link at all (see line 664, withViewLinks false), so the title claims behaviour the test cannot prove.",
+      "fix": "Must: the title states only what the assertions prove (the ticked address from the query is shown as selected while the full row list stays), or the test asserts the View link return carrying selected. One way: retitle to 'Should show the address ticked in the query as selected, keeping every row listed', since the View link return with selection is already proven at line 603."
+    },
+    {
+      "id": 2,
+      "line": 135,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "AC2 says that on another page 'the results stay filtered by [the search]'. The test at 135-145 only checks the next link's href contains the substrings 'q=a', 'selected=...' and 'page=2'. No test drives GET with q and page=2 together and asserts the rows are the second page of the filtered matches with the selected address still selected. The fit spec (hub-picker.fit.spec.js:876) proves only that the chosen address is kept, not the search. Substring checks also pass for an href like '?q=abc', and only next is checked although the title says 'the paging links'.",
+      "fix": "Must: a test fails if page 2 of a search drops the search filter or the selection, and the paging-link test proves each link it names in its title. One way: assert the next href exactly (pagePath(...)?q=a&selected=...&page=2 in resultsHref's order), and add a test driving getConsignor with { q, selected, page: '2' } over a listing of more than 8 matches plus non-matches, asserting idsOf equals the filtered list's slice(8) and picker.selected.id is the selected id."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

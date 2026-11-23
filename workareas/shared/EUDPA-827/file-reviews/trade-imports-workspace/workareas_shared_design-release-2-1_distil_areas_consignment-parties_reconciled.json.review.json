@@ -1,0 +1,29 @@
+{
+  "file": "workareas/shared/design-release-2-1/distil/areas/consignment-parties/reconciled.json",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:16:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "c-094's rewritten outcome is right on paging at eight, but it contradicts the stale req-594 and req-595 in the same area file, and it claims role filtering for the consignment contact picker, which does not filter by role.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 2437,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "c-094's outcome (line 2437) now says req-594 and req-595 build paging at eight and the 'Selected address' inset, but the same file's req-594 (line 926) still says 'lists every address it offers on one page, with no pagination' and req-595 (line 993) still says the pickers 'no longer show a Selected address inset', with whys citing ruling sam-2026-10-09-pm. The PR rewrote both in distil/requirements.json but not in this area file, so the area file contradicts itself and disagrees with requirements.json. DISTIL.md step 5 builds requirements.json from these area files with tim distil merge-reconcile, so re-running the merge brings the one-page, no-inset wording back, which the ticket's AC ('so a re-distil does not drop paging again') rules out.",
+      "fix": "Must: this area file's req-594 and req-595 statement and why match distil/requirements.json word for word (eight a page with GOV.UK pagination, inset restored, ruling ian-2026-11-23), so c-094's outcome and the requirements it cites agree, and a re-merge of the areas gives the same requirements.json. One way: copy the two rewritten requirement entries from requirements.json into this file and check with tim distil merge-reconcile --area consignment-parties."
+    },
+    {
+      "id": 2,
+      "line": 2437,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "c-094's new outcome says the pickers built on 'plants' consignor, place of destination and consignment contact pickers' show 'eight of the role's addresses a page ... landing with role filtering (req-608)'. The consignment contact picker is not role-filtered: its spec (openspec/specs/plants/journey-pages/consignment-contact-select/spec.md, REQ-PLANTS-CONTACT-SELECT-001, changed in this PR) offers 'the address book' and shows 'up to eight of the addresses the organisation holds', and req-608 (line 1365) covers only plants' consignor and place of destination. The outcome therefore claims role filtering where none is built or required. The identical sentence is in distil/conflicts.json line 3238.",
+      "fix": "Must: c-094's outcome, here and in distil/conflicts.json, says the consignment contact picker pages the organisation's whole address book at eight, and ties role filtering (req-608) only to the pickers req-608 names. One way: split the sentence, e.g. 'eight of the role's addresses a page on the role-filtered pickers (req-608), and eight of the whole book a page on plants' consignment contact picker'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

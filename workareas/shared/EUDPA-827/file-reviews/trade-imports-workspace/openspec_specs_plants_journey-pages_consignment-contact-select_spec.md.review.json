@@ -1,0 +1,21 @@
+{
+  "file": "openspec/specs/plants/journey-pages/consignment-contact-select/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The paging spec matches the AC and the plants-frontend code (eight a page, GOV.UK pagination, Showing <shown> out of <total>), but the page restates the shared plants/addresses paging rule with a conditional Then instead of citing it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "REQ-PLANTS-CONTACT-SELECT-001 (line 13) and SCN-PLANTS-CONTACT-SELECT-001-A (lines 18-19) restate the picker paging rule that this PR gives its own home in plants/addresses REQ-PLANTS-ADDR-002 (SCN-002-A 'first eight are shown, with GOV.UK pagination', SCN-002-G 'eight or fewer ... no pagination'). The restatement is weaker than its owner: the Then is conditional ('pagination is offered only where the organisation holds more than eight') under a Given that does not fix how many addresses there are, so one scenario carries both AC branches and neither is a single observable case; and 'up to eight' drops the AC's 'the first 8'. openspec/config.yaml: 'Cross-cutting mechanisms (obligations, addresses ...) get their own capability, not scatter across screens' and 'One subject, one capability. Cross-reference owners'.",
+      "fix": "Must: the paging rule (eight a page, pagination only over eight, first page first) is stated once, in plants/addresses REQ-PLANTS-ADDR-002, and this page spec cites it rather than restating it with a conditional Then. One way: cut the paging clause from REQ-PLANTS-CONTACT-SELECT-001 down to 'paged as `plants/addresses` REQ-PLANTS-ADDR-002 says', and drop the pagination AND line from SCN-001-A so its Then reads 'it shows the first page of the addresses the organisation holds, reading \"Showing <shown> out of <total> results\" ...'; apply the same to the place-of-destination and consignor-select page specs so the three pickers read alike."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

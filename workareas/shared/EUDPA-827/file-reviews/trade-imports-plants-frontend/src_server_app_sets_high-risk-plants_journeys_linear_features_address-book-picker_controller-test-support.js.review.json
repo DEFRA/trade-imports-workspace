@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one-page listing test moves cleanly into describePaging, but no controller test covers the new POST page handling, and describeRefusalKeepsSearchAndPage is named for a page it never asserts.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 374,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR adds page handling to the POST route (picker-routes.js:29 postedPickerState reads payload.page; :155 a search resets to FIRST_PAGE), but the shared controller tests never post a page. Nothing proves that a refused save serves the page the trader was on, or that a search goes back to page 1. Removing either line in picker-routes.js leaves every test green. describePaging only drives GET.",
+      "fix": "Must: the shared controller tests prove a refused save (each save control) posted with page 2 serves page 2 of the same results, and a search posted with page 2 serves page 1; each test fails if its line in picker-routes.js is removed. One way: in describeRefusalKeepsSearchAndPage add an it.each over saveControlsFor asserting result.view.context.picker.page is 2 for { ...savePayload, page: '2', [fieldName]: NOT_IN_THE_BOOK } on a picker with wholeCount > ADDRESSES_A_PAGE, and in describeSearching assert picker.page is 1 for { action: 'search', q: '', page: '2' }.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 374,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "describeRefusalKeepsSearchAndPage (lines 374 and 573) promises that a refused save keeps the page, but its describe title says only 'a refused save keeps the search' and no test inside it posts or asserts a page. Now that the pickers page their results, the name claims behaviour the group does not test.",
+      "fix": "Must: the group's name and its describe title both state what its tests prove. One way: add the refused-save page tests from the coverage-gap finding to this group and say 'keeps the search and the page' in its describe title, or, if they go elsewhere, rename it describeRefusalKeepsSearch."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

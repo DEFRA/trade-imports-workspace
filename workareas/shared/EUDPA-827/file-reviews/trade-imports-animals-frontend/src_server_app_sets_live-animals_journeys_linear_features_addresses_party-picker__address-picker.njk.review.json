@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging markup and selected-address inset are sound GOV.UK usage, but the chosen record is named differently from the plants twin and carrying a newly ticked address across pages depends on client JavaScript.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 67,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One concept, two names across the twin pickers: this template reads the chosen address as picker.selected (lines 67-68, 81-82), while the plants twin added in the same ticket reads the same record as picker.tickedRecord (trade-imports-plants-frontend address-book-picker/template.njk, hidden 'selected' input and inset text). Both feed the same hidden 'selected' field and the same selectedAddress copy.",
+      "fix": "Must: the chosen-address record has one view-model name in both frontends' pickers, used by the template, view model and tests in each. One way: pick 'selected' (it matches the 'selected' form field and query param and the selectedAddress copy key) and rename plants' tickedRecord to it, or the other way round."
+    },
+    {
+      "id": 2,
+      "line": 49,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Without JavaScript, an address ticked on one page is lost when the trader follows a pagination link. govukPagination (line 50) renders plain GET links that do not submit the form, so the ticked 'party' radio never reaches the server; only the app-picker-paging-selection module (line 63, src/client/javascripts/components/picker-paging-selection.js) rewrites the links to carry ?selected=. The hidden 'selected' input (line 68) only carries a choice the server already knew. With JS off or failed to load, the AC 'the chosen address is still chosen' after moving page fails for a newly ticked address.",
+      "fix": "Must: an address ticked on one page is still chosen after moving to another page whether or not the client script runs, or the JS dependency is recorded as an accepted decision in the behaviour spec. One way: make each page move a form submission (for example a submit with name='page' handled by the POST like the search action) so the ticked radio posts with it, keeping the govukPagination markup as the enhanced path."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

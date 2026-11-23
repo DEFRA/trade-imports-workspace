@@ -1,0 +1,39 @@
+{
+  "file": "fit/high-risk-plants-journey.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The paging test helpers work for today's stub counts, but one doc comment is now false and the paging tests branch on wholeCount and use a helper that silently no-ops, so each picker proves only half the paging behaviour.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1060,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The JSDoc on expectPickerResultsLayout (lines 1058-1062) still says it 'lists every row on the one page with no page links', but this PR deleted the page-links assertion and the helper now runs on paged pickers where page links are present. The comment states a check the function no longer makes.",
+      "fix": "Must: the doc comment on expectPickerResultsLayout describes only what the function now asserts, with no claim about one page or no page links. One way: delete the 'lists every row on the one page with no page links' clause."
+    },
+    {
+      "id": 2,
+      "line": 1275,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The new test 'offers paging only where the role holds more addresses than a page, and the last page holds what is left' branches on wholeCount (line 1275: if (wholeCount <= ADDRESSES_A_PAGE) { ... return }). Each picker runs only one branch: consignor-select (8) and place-of-destination (6) check only the no-paging case, consignment contact (14) only the paged case. So every report shows one title passing for two different behaviours, and neither half is visible from the title alone.",
+      "fix": "Must: the no-paging case and the paged case are separate tests with separate titles, and the shared helper registers each only for the pickers it applies to, with no if in a test body. One way: add test('shows no paging when the role holds a page or fewer') and test('pages the role's addresses and the last page holds what is left'), and register each one according to wholeCount when describeAddressPicker builds the group (or with an explicit option such as pages: true).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 1041,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "openLastPageOfPicker (lines 1041-1047) finds the page links with a CSS class selector ('.govuk-pagination__item a') and, when there are none, clicks nothing and returns as if it had opened the last page. In the first listing test (line 1228), for consignor-select and place-of-destination this makes 'lists the role-less address across its pages' quietly check page 1 only, and a regression that dropped the pagination block for consignment contact would also leave the step passing instead of failing at it. Its local lastPage holds a zero-based link index, not a page number.",
+      "fix": "Must: the helper finds the last page link by role and accessible name under the Pagination navigation, fails when the picker shows no pagination, and is called only where the picker pages; its local is named for what it holds. One way: page.getByRole('navigation', { name: 'Pagination' }).getByRole('link', { name: String(pageCount) }).click(), with the first listing test checking the role-less address on page 1 for pickers of a page or fewer and on the last page otherwise, in separate tests.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

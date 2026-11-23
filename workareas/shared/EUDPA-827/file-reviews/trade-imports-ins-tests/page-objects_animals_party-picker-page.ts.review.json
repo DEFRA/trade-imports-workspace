@@ -1,0 +1,29 @@
+{
+  "file": "page-objects/animals/party-picker-page.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "9c67c82d92b62e70df8414390a4d36f60cd4095b",
+  "pr": 138,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:58Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new getters work for the paging test but duplicate the pagination locators BasePage already gives the class, and the chosen-address getter's name promises a position and a word the locator does not match.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 87,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "paging (line 87) and pageLink(number) (line 91) re-add locators the class already inherits: BasePage (page-objects/shared/base-page.ts:97, :109) defines get pagination() for navigation 'Pagination' and paginationPageLink(pageNumber), scoped to that nav, and AnimalsPartyPickerPage extends NotificationPage extends BasePage. The picker now has two names for one pagination block (paging/pagination) and two page-link locators, the new one unscoped (any link named 'Page N' on the page).",
+      "fix": "Must: the picker page uses the inherited BasePage pagination and paginationPageLink, with no second getter for the same block. One way: delete paging and pageLink from this class, change addresses-picker.spec.ts:160 and :163 to picker.pagination and picker.paginationPageLink(2), and delete pickerPagination and pickerPageLink from shared/address-picker-results.ts, which have no other caller."
+    },
+    {
+      "id": 2,
+      "line": 95,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "chosenAddressAboveResults (line 95) mispredicts: it returns pickerSelectedAddress(page), any .govuk-inset-text anywhere on the page, so 'AboveResults' promises a position the locator never checks (expectChosenAddressNamedAboveResults in shared/address-picker-results.ts:106 is what checks position). It also names one concept two ways: 'chosen' here, 'selected' in pickerSelectedAddress and the page copy 'Selected address: ...'.",
+      "fix": "Must: the getter's name says only what it locates, using the same word for the concept as the shared helper it calls and the page copy. One way: rename it to selectedAddress (or rename both it and pickerSelectedAddress to one shared word), drop 'AboveResults', and update addresses-picker.spec.ts:161 and :168."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:23Z"
+}

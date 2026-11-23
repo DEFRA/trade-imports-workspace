@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging is wired in correctly, with the past-the-last-page fallback logged with the journey id and covered by the shared paging tests; one Major naming finding: 'page' names both the results page number and the journey page in renderPicker.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 71,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "renderPicker now takes two different things called 'page': state.page is a results page number (JSDoc line 52, 'the page of results asked for') and binding.page is the journey page's id and slug (line 57, line 73). The clash forces the rename 'page: requestedPage' in the destructuring at line 71, and the view-model state then carries 'page: servedPage' (line 123) beside 'page.slug' (line 120). One name, two concepts in one function.",
+      "fix": "Must: in renderPicker, its JSDoc and the picker state it builds, the results page number and the journey page have different names, so no destructuring rename is needed to tell them apart. One way: call the number 'resultsPage' (or 'pageNumber', matching the existing pageNumber() in picker-routes.js) in the picker state passed from picker-routes.js, in renderPicker and in the pickerViewModel state, and keep 'page' for the journey page."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

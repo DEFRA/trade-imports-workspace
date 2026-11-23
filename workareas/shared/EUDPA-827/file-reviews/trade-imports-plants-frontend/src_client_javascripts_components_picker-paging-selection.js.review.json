@@ -1,0 +1,38 @@
+{
+  "file": "src/client/javascripts/components/picker-paging-selection.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The component is registered in application.js and tested, but carrying the chosen address across pages depends on JavaScript, and two structure rules are breached (single-use module-scope selectors, a branching inline callback).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 19,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Carrying the chosen address across pages works only with JavaScript. The paging links (results.njk govukPagination) are plain GET anchors, and this module is the only thing that adds the newly ticked radio's value to them (lines 19-34). With JavaScript off, a trader who ticks an address on page 1 and follows 'Next' loses the tick, which breaks the AC 'the chosen address is still chosen' and the house rule that every page works fully without JavaScript and JavaScript only enhances it.",
+      "fix": "Must: a trader with JavaScript off who ticks an address and moves to another page still has that address chosen, and this module only enhances that behaviour. One way: make paging a form submit (for example page buttons named 'page' in the picker form, handled by postPicker like the search submit, which already carries the ticked radio via payload[fieldName]), and keep this module, or drop it, as the progressive enhancement over that.",
+      "best_practice": "gds/components.md"
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "RADIO_SELECTOR (line 1) and PAGING_LINK_SELECTOR (line 2) sit at module scope but are each used by one function only, the change listener in the constructor (lines 21, 25). The house rule puts a literal used by one function in that function; module scope is for shared values or values a test imports, and the test imports neither.",
+      "fix": "Must: each selector lives in the one function that uses it. One way: move both into the change handler (or into the named helper that rewrites the links), and delete the module-scope constants. Mirror the change in trade-imports-animals-frontend's identical picker-paging-selection.js."
+    },
+    {
+      "id": 3,
+      "line": 20,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The change listener (lines 20-35) is an inline callback that branches (the radio guard) and then runs a nested loop that rebuilds every paging link's href, so the constructor reads as mechanics rather than a few named steps. The house rule gives a callback that branches or takes several steps a named helper.",
+      "fix": "Must: the constructor reads as named steps: listen for a ticked radio, then carry its value into the paging links. One way: extract a module function such as carrySelectionIntoPagingLinks(, addressId) holding the loop, so the listener is the guard plus one call. Mirror the change in trade-imports-animals-frontend's identical file."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

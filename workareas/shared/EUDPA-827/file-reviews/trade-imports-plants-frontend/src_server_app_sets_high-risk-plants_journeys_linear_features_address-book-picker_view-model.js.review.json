@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:19Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging, the full-found count and pagination links are correct against the AC, but the new page offset in row id prefixes is unobservable, leaves a gap in the numbering and is guarded by a test that cannot fail.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "idPrefixFor (lines 10-11) now offsets every row but the first by the addresses before the page: index === 0 ? fieldName : `${fieldName}-${from + index + 1}`. On page 2 the ids run consignor, consignor-10, consignor-11 … so -9 never exists and the first row is the only one not numbered from where the page starts. Ids are already unique within one rendered page without the offset, so 'from' buys nothing the page can observe. The one test of it (test-support.js:205-216, 'Should number the rows of the page after the first from where that page starts') renders a single row on page 2 and expects [fieldName], which passes with or without the offset, so the change is unproven and its title over-claims. The animals twin (party-picker/view-model/index.js:15) carries the same rule.",
+      "fix": "Must: the row id rule is the simplest one that gives unique ids on a rendered page, numbers rows consistently, is mirrored in the animals twin, and a test fails when it is broken. One way: drop the 'from' parameter from idPrefixFor and resultRow so ids are index-based per page (fieldName, fieldName-2 …), as transporters/rows.js:50 does, and replace the page-2 idPrefix test with one over at least two rows on page 2 asserting the exact ids."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

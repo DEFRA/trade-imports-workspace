@@ -1,0 +1,29 @@
+{
+  "file": "openspec/specs/plants/journey-pages/consignor-select/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:42Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The paging rewrite of SCN-PLANTS-CONSIGNOR-001-B keeps a three-address set-up that cannot page, and its full-coverage link checks other-role exclusion on the first page only, so the scenario neither states nor proves AC 4.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 25,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "SCN-PLANTS-CONSIGNOR-001-B now says the user 'moves through its pages' and the addresses are listed 'eight a page', but its GIVEN (line 24) still sets up only three addresses, one consignor-role, one role-less, one place-of-destination. With three addresses there is one page and no pagination (plants/addresses REQ: 'where it holds eight or fewer it MUST offer none'), so the WHEN cannot happen and the scenario does not state the ticket's fourth AC ('Given a picker lists only one role's addresses, When the trader pages through them, Then every page holds addresses saved for that role or with no role, and none saved only for another role'). The linked fit test (fit/high-risk-plants-journey.js:1213 at plants-frontend ad743ba) does set up a list longer than a page, so the spec understates the case it is claimed for.",
+      "fix": "Must: the scenario's GIVEN sets up more than eight consignor-role and role-less addresses together, plus an address saved only for another role, and its THEN says every page holds only consignor-role or role-less addresses and no page holds the other-role address, matching AC 4. One way: GIVEN 'the organisation has more than eight addresses saved for the consignor role or with no role, and one saved only for the place of destination role'; THEN 'every page lists only consignor-role and role-less addresses, eight a page, and no page lists the place-of-destination address'."
+    },
+    {
+      "id": 2,
+      "line": 26,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-CONSIGNOR-001-B's THEN says the place-of-destination address is not listed across the picker's pages, and its coverage.json entry claims 'full' from the fit test \"opens on a page of the role's addresses, counted against every one it holds, and lists the role-less address across its pages\" (fit/high-risk-plants-journey.js:1213-1231, plants-frontend ad743ba). That test checks otherRoleAddress is absent only on the first page (line 1225); after openLastPageOfPicker (line 1228) it checks only that the role-less address is visible, and it never visits middle pages. A role filter that let another role's address onto page 2 or later would leave the test green, so nothing proves 'none saved only for another role' on every page (AC 4). The second link (address-book.test.js) is a partial unit test of the reader.",
+      "fix": "Must: a linked test fails if an address saved only for another role shows on any page of the consignor picker, and the scenario's coverage strength matches what its tests assert. One way: in describeAddressPicker's test, assert otherRoleAddress has count 0 on the last page as well (and on each page when there are more than two), or step through every page; otherwise mark the fit link 'partial' with a note naming the missing other-role check after page 1."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

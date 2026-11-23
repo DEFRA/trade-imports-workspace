@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination/index.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging logic is correct and tested against the ACs (8 a page, no pagination at one page, query and selection carried), but the first-page constant has three homes and a single-use literal and internal doc comments break house rules.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The first page number is declared three times in one picker folder: FIRST_PAGE = 1 in pagination/index.js:7, pagination/page-numbers.js:1 and view-model/results-href.js:4. Each one decides where paging starts (index.js:11,19,40; page-numbers.js:6,11; results-href.js:15 leaves page off the link on the first page), so a change to it in one file leaves the others disagreeing.",
+      "fix": "Must: one module in the party-picker owns the first page number, and pagination/index.js, page-numbers.js and results-href.js all read it from there. One way: export FIRST_PAGE from one small module (for example pagination/first-page.js, which avoids a cycle with results-href.js) and import it in the other three files, deleting their local copies; mirror the same in the plants twin's address-book-picker/pagination.js."
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "MINIMUM_PAGES_TO_PAGINATE (line 8) sits at module scope but only paginationLinks (line 33) reads it. The house rule puts a literal used by one function inside that function.",
+      "fix": "Must: the two-page threshold lives inside paginationLinks, and module scope holds only values the module shares or a test imports. One way: move the MINIMUM_PAGES_TO_PAGINATE declaration into the body of paginationLinks, and do the same in the plants twin's address-book-picker/pagination.js."
+    },
+    {
+      "id": 3,
+      "line": 13,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "Doc comments on feature-internal helpers: line 4 above ADDRESSES_A_PAGE restates the name, and lines 13-14 above servedPageOf explain what the name means (the last page when the request is past it). These are not a public API, and a comment that decodes a name means the name or a test should carry it.",
+      "fix": "Must: no doc comments on these feature-internal exports; the clamping is stated by the servedPageOf tests (or a name that says it), not a comment. One way: delete the comments at lines 4 and 13-14 (and the one at 26-27 if the reviewer agrees it is internal too), keeping index.test.js 'Should serve the last page when the list stops short of the page asked for' as the statement of the rule; mirror in the plants twin.",
+      "best_practice": "doc-comments/jsdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

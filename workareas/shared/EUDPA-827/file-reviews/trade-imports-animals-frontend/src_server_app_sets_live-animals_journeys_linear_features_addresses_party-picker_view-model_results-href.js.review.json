@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/results-href.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The page param is added correctly, but the first-page number has four owners in the picker folder and no test proves page 1's link omits the page param.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The picker's first page number is declared in four places: `const FIRST_PAGE = 1` here (results-href.js:4), again in pagination/index.js:7 and pagination/page-numbers.js:1, and as a bare literal 1 twice in request-params.js:3 (`requested >= 1 ? requested : 1`). One rule (pages count from 1, and page 1 carries no ?page param) has four owners in one feature folder.",
+      "fix": "Must: the picker's first page number has one owner in party-picker, and results-href.js, pagination/index.js, page-numbers.js and request-params.js all import it. One way: export FIRST_PAGE from pagination/index.js (beside ADDRESSES_A_PAGE) and import it here, in page-numbers.js and in request-params.js, deleting the local copies."
+    },
+    {
+      "id": 2,
+      "line": 15,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new branch `if (page > FIRST_PAGE)` (results-href.js:15-17) that leaves ?page off the first page's link has no test that fails without it. Every page-link assertion is a positive `toContain('page=2')` (pagination/index.test.js:103,110,140; party-picker.controller.test.js:144,635); none checks the page-1 link (the '1' item, or Previous from page 2) carries no page param, so replacing the guard with an unconditional `params.set('page', ...)` stays green.",
+      "fix": "Must: a test fails when the first page's link carries a page param. One way: in pagination/index.test.js, assert the exact href of Previous from page 2 and of the '1' item equals the picker path with only q/selected (for example via `new URL(href, base).searchParams.has('page')` being false, or an exact toEqual on the href)."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

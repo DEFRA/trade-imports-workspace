@@ -1,0 +1,47 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging is threaded correctly through GET, search and re-render paths, but the page-number parse, search reset and posted-page re-render are untested, FIRST_PAGE duplicates pagination.js, 'page' names two concepts, and the invalid-page fallback is silent.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Three new paging rules in this file have no test that fails without them: (1) pageNumber (lines 17-22) falling back to page 1 for a missing, non-numeric, zero or negative ?page= value (drop the '>= FIRST_PAGE' guard and page 0 gives addressesBeforePage(0) = -8, so slice(-8, 0) renders an empty table, yet no test goes red); (2) a search POST restarting at page 1 (line 155: replacing FIRST_PAGE with pageNumber(payload.page) turns no test red, because the fit 'clearing the search' test and describeSearching both search from page 1); (3) the not-in-book and save-failure re-renders keeping the posted page (line 29, postedPickerState). paging-test-support.js only drives GET with valid and past-the-last page numbers. The animals twin unit-tests the same pageNumber (request-params.test.js: 'nonsense', '0', '-2', '' and undefined).",
+      "fix": "Must: each of the three rules has a test that fails when the rule is removed: an invalid page value serves page 1, a search from page 2 serves page 1, and a refused or failed save posted from page 2 re-renders page 2. One way: add these cases to describePaging in paging-test-support.js (driving get and post with query/payload page values), mirroring the animals twin's pageNumber unit cases.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 12,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'picker pages start at 1' has two homes in one feature folder: picker-routes.js:12 declares 'const FIRST_PAGE = 1' and pagination.js:7 declares its own private 'const FIRST_PAGE = 1', which pageCountOf, addressesBeforePage, resultsHref and paginationLinks use. The page-number parse pageNumber (lines 17-22) also sits in the route file rather than beside the paging rules it feeds, while the animals twin gives it its own module (request-params.js, exported and unit-tested), so the twins do not mirror each other.",
+      "fix": "Must: one module owns the first page number and the parse of a requested page number for the plants picker, and picker-routes.js imports both rather than declaring them; the plants and animals twins place that rule the same way. One way: export FIRST_PAGE and pageNumber from pagination.js (or a request-params.js matching the animals twin) and import them here."
+    },
+    {
+      "id": 3,
+      "line": 115,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One name, two concepts in this file: 'page' is the journey page (id and slug) at picker.page (line 35, passed as binding.page and used for kit.nextTarget at lines 104 and 136, documented at line 166 as 'the page's id and slug'), and the diff adds 'page' to the picker state as the results page number (lines 29, 115, 155). renderPicker receives both in one call and has to rename one on destructuring ('page: requestedPage' in render.js) to tell them apart, so a reader of picker-routes.js cannot tell from the key which 'page' a line means.",
+      "fix": "Must: the results page number has a name that cannot be read as the journey page, used from the query/payload read through the picker state to renderPicker and the view model. One way: name the state key 'resultsPage' (or 'requestedPage', matching what render.js already calls it) in postedPickerState, getPicker and postPicker, keeping the 'page' query and form parameter as the URL contract."
+    },
+    {
+      "id": 4,
+      "line": 19,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "pageNumber (lines 17-22) silently replaces a ?page= or posted page value that is not a whole number of 1 or more (for example 'abc', '0', '-3') with page 1. That is a fallback that changes which results are served, and it logs nothing, while the matching fallback at the other end, a page past the last one, is logged in render.js ('Address picker page is past the last page, serving the last page' with journeyId, fieldName, requestedPage, servedPage). Support cannot tell from the logs why a user who followed a tampered or broken link saw page 1.",
+      "fix": "Must: when the requested page value is present but not a valid page number and page 1 is served instead, one log line records it with the journey id, the field name and the value received; a missing value (no ?page=) stays silent. One way: return the parse outcome from pageNumber and log at info in getPicker/postedPickerState, or move the check into renderPicker beside the past-the-last-page log.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

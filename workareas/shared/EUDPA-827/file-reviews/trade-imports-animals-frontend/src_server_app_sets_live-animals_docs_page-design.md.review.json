@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/docs/page-design.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The paging and inset lines describe the restored paging correctly in outline, but two statements misdescribe the code: the count and pagination threshold follow search matches, not every address the role holds, and the inset shows for any held choice on every page, not only for a reopened pick.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 481,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The results bullet says the count is 'counted against every one the role holds' and pagination shows 'where the role holds more than eight', but both run off the search matches: party-picker.controller.js:54 loads found = addressBook.addresses(orgId, { query, role }), and view-model/index.js passes copy.resultsCount(rows.length, found.length) and pageCountOf(found.length). After a search narrows a role of 20 addresses to 3, the page shows 'Showing 3 out of 3 results' and no pagination, which the doc says cannot happen.",
+      "fix": "Must: the bullet states that the count's total and the pagination threshold are the addresses matching the search within the role's list (every one the role holds when the box is empty). One way: 'eight of the matching addresses a page, counted against every match; GOV.UK pagination follows the table where more than eight match'."
+    },
+    {
+      "id": 2,
+      "line": 472,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The inset is documented inside the 'Reopening a party's picker pre-ticks the record ... picked from' bullet, as naming that record 'so the choice shows on a page that does not hold its row'. The template shows it for any held selection on every page: _address-picker.njk renders govukInsetText whenever picker.selected is set, and selected comes from chosenPartyFor(selectedId) where selectedId is request.query.selected ?? answers[party.id]?.pickedFromId (controller.js:126) or the posted party/selected field (controller.js:168). So a row ticked this visit and carried by a page link or a search also gets the inset, and the inset shows on the page that holds the row too. A reader of the doc would think the inset is a reopen-only cue.",
+      "fix": "Must: the doc says the inset names whichever address the picker holds as chosen (picked earlier, or ticked and carried across a search or page link), and that it shows on every page of results while a choice is held. One way: move the inset sentence into its own bullet after the paging bullet, worded as 'While an address is chosen, an inset above the results names it, Selected address: <name>, on every page.'"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

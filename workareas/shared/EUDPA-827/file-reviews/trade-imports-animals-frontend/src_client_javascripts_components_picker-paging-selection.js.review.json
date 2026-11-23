@@ -1,0 +1,45 @@
+{
+  "file": "src/client/javascripts/components/picker-paging-selection.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The component carries the ticked address correctly and is registered in application.js, but its radio guard is untested, it guards unreachable cases, its selectors sit at module scope, and the 'selected' query key has two homes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The radio guard at line 21 (if (!target?.matches?.(RADIO_SELECTOR)) return) has no test. The form also holds the search box (name=q), whose change event fires on blur and bubbles to the module; without the guard, typing 'den' and tabbing away would rewrite every paging link to selected=den. Deleting the guard leaves all three tests in picker-paging-selection.test.js green, because the fixture has no non-radio input.",
+      "fix": "Must: a test fails when the guard is removed, proving a change on a non-radio input in the picker leaves the paging links as the server rendered them. One way: add <input name=\"q\" value=\"den\"> to the fixture in picker-paging-selection.test.js and a test that dispatches a bubbling change on it and asserts the exact hrefs are unchanged."
+    },
+    {
+      "id": 2,
+      "line": 15,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Guards for cases that cannot happen: if (!) return at lines 15-17 (govuk-frontend createAll only constructs a module for an element it found by data-module; sibling TransporterFilter has no such guard) and the optional chaining in target?.matches?.( at line 21 (a change event's target is always an Element, which has matches). House rule: build only what this change makes reachable.",
+      "fix": "Must: the constructor guards only cases that can occur, so a reader is not left wondering when  is missing or target lacks matches. One way: delete lines 15-17 and write the check as if (!target.matches(RADIO_SELECTOR))."
+    },
+    {
+      "id": 3,
+      "line": 1,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "RADIO_SELECTOR (line 1) and PAGING_LINK_SELECTOR (line 2) sit at module scope, but each is used by one function only, the constructor's change listener (lines 21 and 25), and no test imports them. House rule: a literal value used by one function lives in that function.",
+      "fix": "Must: each selector lives inside the one function that uses it. One way: move both literals into the change listener, inline or as local consts."
+    },
+    {
+      "id": 4,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The query key that carries the chosen address is written in two places: target.searchParams.set('selected', selectedId) here (line 6) and params.set('selected', selectedId) in src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/results-href.js. The server reads it back through the same literal, so renaming it on one side silently breaks the carried choice with no failing test (the client test hard-codes 'selected' in its fixture too).",
+      "fix": "Must: one module owns the name of the paging query key for the chosen address, and both the server href builder and this component use it. One way: export a SELECTED_ADDRESS_PARAM constant from a module both bundles can import (as transporter-filter.js already imports from ../../common/helpers), or have the server render the key on the form as a data- attribute the component reads."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

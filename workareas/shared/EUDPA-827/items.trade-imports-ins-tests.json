@@ -1,0 +1,163 @@
+{
+  "ticket": "EUDPA-827",
+  "repo": "trade-imports-ins-tests",
+  "items": [
+    {
+      "id": 1,
+      "line": 87,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "paging (line 87) and pageLink(number) (line 91) re-add locators the class already inherits: BasePage (page-objects/shared/base-page.ts:97, :109) defines get pagination() for navigation 'Pagination' and paginationPageLink(pageNumber), scoped to that nav, and AnimalsPartyPickerPage extends NotificationPage extends BasePage. The picker now has two names for one pagination block (paging/pagination) and two page-link locators, the new one unscoped (any link named 'Page N' on the page).",
+      "fix": "Must: the picker page uses the inherited BasePage pagination and paginationPageLink, with no second getter for the same block. One way: delete paging and pageLink from this class, change addresses-picker.spec.ts:160 and :163 to picker.pagination and picker.paginationPageLink(2), and delete pickerPagination and pickerPageLink from shared/address-picker-results.ts, which have no other caller.",
+      "file": "page-objects/animals/party-picker-page.ts",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 2,
+      "line": 95,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "chosenAddressAboveResults (line 95) mispredicts: it returns pickerSelectedAddress(page), any .govuk-inset-text anywhere on the page, so 'AboveResults' promises a position the locator never checks (expectChosenAddressNamedAboveResults in shared/address-picker-results.ts:106 is what checks position). It also names one concept two ways: 'chosen' here, 'selected' in pickerSelectedAddress and the page copy 'Selected address: ...'.",
+      "fix": "Must: the getter's name says only what it locates, using the same word for the concept as the shared helper it calls and the page copy. One way: rename it to selectedAddress (or rename both it and pickerSelectedAddress to one shared word), drop 'AboveResults', and update addresses-picker.spec.ts:161 and :168.",
+      "file": "page-objects/animals/party-picker-page.ts",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #13"
+    },
+    {
+      "id": 3,
+      "line": 17,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "pickerPagination (line 17) and pickerPageLink (line 21) re-declare locators BasePage already owns: BasePage.pagination ('navigation' named 'Pagination', exact) and BasePage.paginationPageLink(pageNumber) (page-objects/shared/base-page.ts:97-111). AnimalsPartyPickerPage extends NotificationPage extends BasePage, so it already has both, yet adds paging/pageLink getters over these new copies. The copies also drift: no exact match on the nav name, and the page link is not scoped to the pagination nav, so any 'Page 2' link on the page matches.",
+      "fix": "Must: one home for the pagination locators; the picker page uses BasePage.pagination and paginationPageLink and no second copy exists. One way: delete pickerPagination and pickerPageLink here and the paging/pageLink getters in party-picker-page.ts, and have the spec call picker.pagination and picker.paginationPageLink(2).",
+      "file": "page-objects/shared/address-picker-results.ts",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #12"
+    },
+    {
+      "id": 4,
+      "line": 25,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two mechanisms check one rule, 'the chosen address is named above the results': pickerSelectedAddress (line 25, a .govuk-inset-text locator asserted toHaveText('Selected address: X') in animals addresses-picker.spec.ts:161,168) and expectChosenAddressNamedAboveResults (line 106, a text slice between Search and the results heading, asserted toBe('Selected address: X')). The copy 'Selected address: ' is written in both the helper and the spec. The concept also has three names: selected (pickerSelectedAddress), chosen (chosenAddressAboveResults, expectChosenAddressNamedAboveResults) and inset.",
+      "fix": "Must: one owner for the chosen-address check and its copy, used by every picker spec, under one name for the concept. One way: keep expectChosenAddressNamedAboveResults (it also proves position), call it from the animals paging test, and delete pickerSelectedAddress and the chosenAddressAboveResults getter.",
+      "file": "page-objects/shared/address-picker-results.ts",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #13"
+    },
+    {
+      "id": 5,
+      "line": 26,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "pickerSelectedAddress locates by the CSS class '.govuk-inset-text' (line 26), which the Playwright guide says to avoid because it breaks on styling, and which matches any inset text on the page, not only the chosen address.",
+      "fix": "Must: the chosen-address locator finds the element by role, label or text, not a CSS class. One way: resolve with the duplication finding on line 25 by dropping this locator in favour of expectChosenAddressNamedAboveResults; otherwise locate by getByText(/^Selected address: /).",
+      "best_practice": "playwright/BEST_PRACTICES.md",
+      "file": "page-objects/shared/address-picker-results.ts",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #13"
+    },
+    {
+      "id": 6,
+      "line": 15,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "After this PR nothing calls WHOLE_LIST_COUNT (line 15) or expectNothingBetweenSearchAndResults (line 98): the diff removes their last uses from animals addresses-picker.spec.ts and from plants addresses-picker.spec.ts and destination.spec.ts. The PR also refactors expectNothingBetweenSearchAndResults to share textBetweenSearchAndResults, so it keeps a dead export alive.",
+      "fix": "Must: the module exports only what a spec or page object calls. One way: delete WHOLE_LIST_COUNT and expectNothingBetweenSearchAndResults.",
+      "file": "page-objects/shared/address-picker-results.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 10,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe callers and rationale, not their own lines. Line 10-12 on PAGED_LIST_COUNT says the book 'grows as other tests add to it', describing other tests, and explains a name that does not say it: the regex matches any 'Showing N out of M results', paged or not, so 'PAGED' mispredicts and the comment decodes it. Line 104-105 on expectChosenAddressNamedAboveResults gives rationale ('so the choice shows on a page that does not hold its row'), which belongs in the behaviour spec.",
+      "fix": "Must: no comment describes other tests or rationale, and the count regex has a name that says it matches any result count, with its comment removed. One way: rename PAGED_LIST_COUNT to ANY_RESULTS_COUNT, delete both comments, and keep the 'shown on any page' rule in the picker spec.",
+      "file": "page-objects/shared/address-picker-results.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "line": 52,
+      "severity": "Critical",
+      "category": "test-readability",
+      "issue": "The title at :52 still claims 'lists every match on one page' and 'nothing between the search box and the results heading', but the diff changed :105 to PAGED_LIST_COUNT and :122 to expectChosenAddressNamedAboveResults, which asserts 'Selected address: <name>' sits between them. The workspace PR's openspec coverage.json links (live-animals/addresses scenarios, four links) name this test as 'the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown', a title that exists nowhere in this repo at 9c67c82, so those coverage links point at no test.",
+      "fix": "Must: the test title states what its assertions now prove (search within the role, the ticked row saves, named above the results and checked on reopening), with no claim of one page or of nothing between search and results, and it matches character for character the title every coverage.json link names. One way: rename the test to the title the coverage links already use.",
+      "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 72,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Line 72 checks 'Consignor Only <token>' is absent from the unsearched picker, but with paging only page 1 of 8 out of a growing shared address book is shown, so the row is absent whether or not role filtering works: removing the role filter does not turn this line red. Lines 71 and 85 assert PAGED_LIST_COUNT (/^Showing \\d+ out of \\d+ results$/), which matches any count and so only proves a summary line is shown. Role filtering is actually proven at line 76 ('Showing 2 out of 2 results' for a token the consignor-only address also carries).",
+      "fix": "Must: every assertion in this test can fail when the behaviour it stands for breaks; the role-filter check runs on a list the consignor-only address would appear in if it were not filtered. One way: move the absence check after searchFor(token) (line 74-78), where the list holds every token match on one page, and drop the line-72 check on the unsearched first page.",
+      "file": "tests/plants/e2e/features/destination.spec.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "file": "tests/plants/e2e/features/contact.spec.ts",
+      "line": "21",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Title 'searches the address book, lists every match on one page, and persists a row ticked, shown checked on reopening' still claims one page; the contact picker now pages at eight, and the test searches to fewer than eight, so 'on one page' is no longer a rule it proves. Three coverage rows in openspec/coverage/plants/journey-pages/consignment-contact-select/coverage.json cite this title.",
+      "fix": "Must: the title states only what the test proves, and the coverage rows citing it are updated in step. One way: drop 'lists every match on one page' (for example 'searches the address book, counts every match, and persists a row ticked, shown checked on reopening') and update coverage.json lines 18, 43 and 182.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "file": "tests/plants/e2e/features/address-book/addresses-picker.spec.ts",
+      "line": "1",
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No plants paging end-to-end test. The ticket's first two acceptance criteria say 'in either journey', and the workspace coverage marks SCN-PLANTS-ADDR-002-H partial because the plants journey has no browser test that pages a searched list. Only the animals spec gains a paging test.",
+      "fix": "Must: the plants pickers' paging, search-carry and chosen-address-carry are proven end to end, or the gap is recorded as a decision. One way: add a plants test beside the animals one (seed nine place-of-destination records behind one token, search, open page 2, assert the search box value, the count and the 'Selected address' line), then lift SCN-PLANTS-ADDR-002-H to full.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 12,
+      "file": "page-objects/shared/address-picker-results.ts",
+      "line": "17",
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "One rule, 2 findings: #1, #3 — the pagination block and page-link locators are declared again in address-picker-results.ts and party-picker-page.ts, beside BasePage.pagination and paginationPageLink that the picker page already inherits.",
+      "fix": "Must: BasePage owns the pagination locators; every other copy is deleted. One way: delete pickerPagination, pickerPageLink, paging and pageLink and call picker.pagination and picker.paginationPageLink(2) from the spec.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 13,
+      "file": "page-objects/shared/address-picker-results.ts",
+      "line": "106",
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "One rule, 3 findings: #2, #4, #5 — the 'chosen address named above the results' check has two mechanisms (a .govuk-inset-text locator and expectChosenAddressNamedAboveResults), the 'Selected address:' copy is typed in the spec and the helper, and the concept is called chosen, selected and inset.",
+      "fix": "Must: one helper owns the check and its copy, under one name. One way: keep expectChosenAddressNamedAboveResults, use it from the animals paging test, and delete pickerSelectedAddress and chosenAddressAboveResults.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

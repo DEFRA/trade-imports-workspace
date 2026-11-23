@@ -1,0 +1,21 @@
+{
+  "file": "openspec/coverage/plants/journey-pages/consignment-contact-select/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:34Z",
+  "verdict": "RISKY",
+  "verdict_reason": "SCN-PLANTS-CONTACT-SELECT-001-A now promises pagination only above eight addresses and stays coverage full, but no linked test asserts pagination or that nothing is preselected; the paging test this PR adds is not linked.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-CONTACT-SELECT-001-A now says GOV.UK pagination is offered only where the organisation holds more than eight addresses, and stays coverage full, but no linked test checks pagination. The relinked fit test 'opens on a page of the role's addresses...' (plants-frontend fit/high-risk-plants-journey.js:1213, at ad743ba) asserts the 'Showing 8 out of 14 results' count and 8 radios. It only clicks a pagination link if one exists (openLastPageOfPicker, :1041), so it never asserts the pagination nav. It also never asserts that no row is checked. The test this PR adds for that clause, 'offers paging only where the role holds more addresses than a page, and the last page holds what is left' (:1278, run for this picker with wholeCount 14), is not linked. The no-pagination half (8 or fewer, ticket AC 3) is not run for this picker at all.",
+      "fix": "Must: every Then and And clause of SCN-PLANTS-CONTACT-SELECT-001-A, including the pagination clause and the none-preselected clause, is witnessed by a linked test asserting it, or the scenario and the requirement's coverage values drop to partial with notes naming the unasserted clause. One way: add a tests[] entry for 'offers paging only where the role holds more addresses than a page, and the last page holds what is left', and note in it that only the more-than-eight half runs for this picker. Then either add a no-pagination case (for example a search narrowing to 8 or fewer) with a not-checked assertion, or mark the first fit link partial."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

@@ -1,0 +1,46 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging assertions are broadly right, but one helper branches and checks role exclusion on the last page only, two titles over-claim, and the search-carried-across-pages AC has no browser test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 145,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "openLastPageOfResults (145-151) branches on 'if (lastPage >= 0)' and finds links by the CSS class '.govuk-pagination__item a'. The per-role test (517-561) then checks the other-role exclusion only on that last page, so its title 'lists only its own role's addresses' and the AC 'every page holds addresses saved for that role or with no role' are proven for one page out of several; page 1 is checked by count alone.",
+      "fix": "Must: the per-role test proves, with no branch in the spec and no CSS class locator, the exact set of addresses on every page of the picker (for consignor: page 1 and page 2), so an other-role address on any page turns it red. One way: assert each page's radio names with toHaveText against the expected slice of listedFor(role), reaching page 2 via pageLink(page, 2), and split the roles that fit on one page into their own loop with no paging step.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 735,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'clearing the search and searching with nothing entered lists every consignor address again, on one page' is now untrue: the assertions (745-749) expect 'Showing 8 out of 9' and 8 radios, i.e. the first page of a paged list, plus the search box directly above the heading.",
+      "fix": "Must: the title states what the assertions prove: an empty search returns the first page of the full consignor list, with the search box straight above the results heading. One way: 'searching with nothing entered after a search shows the first page of every consignor address again, with the search box directly above the results heading'."
+    },
+    {
+      "id": 3,
+      "line": 618,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title claims 'a link to the page holding the rest', but the assertions (625-629) only show that a 'Page 2' link and a Next link exist; nothing proves there is no page 3 or that page 2 holds the remaining addresses.",
+      "fix": "Must: either the assertions prove the pagination offers exactly pages 1 and 2, or the title claims only that page 1 is current with a link to page 2 and a Next link. One way: assert the pagination's page links with toHaveText(['1', '2']) inside the Pagination navigation, or retitle to '... with page 1 current and links to page 2 and Next'."
+    },
+    {
+      "id": 4,
+      "line": 876,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "AC 2 (search text stays in the box, results stay filtered and the chosen address stays chosen when moving page) has no browser-level proof: no test in this spec searches and then pages. The only paging-after-choice test (876-893) pages with no search, and pagination/index.test.js only checks the link hrefs carry the query, not that the served page puts it back in the box and filters by it.",
+      "fix": "Must: a test in this spec searches with a term matching more than 8 consignor addresses, chooses one, moves to page 2, and asserts the search box keeps the term, the summary counts only the matches and the chosen address is still named as chosen. One way: search a term common to most stub names (e.g. a letter that 9+ consignor records share), check a radio, click pageLink(page, 2), then assert toHaveValue on the search box, resultsSummary text and expectChosenAddressNamedAboveResults."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

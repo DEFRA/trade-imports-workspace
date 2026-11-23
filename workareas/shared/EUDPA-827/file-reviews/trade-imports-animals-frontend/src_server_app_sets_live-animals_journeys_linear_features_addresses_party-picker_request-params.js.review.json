@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/request-params.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "pageNumber is correct and tested, but it adds a second owner for the page-number rule the dashboard's normalizePageNumber already holds.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'a requested page that is not a whole number of 1 or more reads as page 1' now has two owners in this repo: the new pageNumber (request-params.js:1-4) and normalizePageNumber in features/dashboard/notification-helper.js:61-69, which already does the same check and also clamps to the last page, the job servedPageOf does in party-picker/view-model/pagination/index.js:15. pageNumber also writes the first page as a bare 1 while pagination/index.js names it FIRST_PAGE, and the plants twin (address-book-picker/picker-routes.js:17) uses FIRST_PAGE.",
+      "fix": "Must: one function in each frontend owns how a requested page number is read and clamped, and the party picker and the dashboard both call it, with the first page named once. One way: move normalizePageNumber to a shared paging helper (or import the dashboard one), have the picker call it with the raw parsed page and its page count in place of pageNumber plus servedPageOf, and mirror the same owner in trade-imports-plants-frontend.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

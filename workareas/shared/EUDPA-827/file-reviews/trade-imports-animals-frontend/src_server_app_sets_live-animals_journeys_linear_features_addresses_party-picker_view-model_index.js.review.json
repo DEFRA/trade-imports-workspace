@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/index.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:31Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging is wired in correctly with role-wide counts and links that carry the search text and chosen address, but the new page-offset in each row's idPrefix is untested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "resultRows now numbers each row's idPrefix by its place across all pages (party-${from + index + 1}, so page 2 renders 'party', 'party-10', 'party-11'...), but no test asserts an idPrefix beyond the first row's 'party' (test-support.js:9, party-picker.controller.test.js:667). Removing 'from +' leaves every test green, so the new page-offset rule is unproven, and ids only need to be unique within the one rendered page.",
+      "fix": "Must: the rule for a row's idPrefix on a later page is either page-independent (and the from parameter goes) or pinned by a test that fails when the offset is removed. One way: drop the from argument so ids run 'party', 'party-2'... on every page, or add a controller test on page 2 asserting picker.rows[1].idPrefix is 'party-10'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/paging-test-support.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "ad743ba7281b9f8b6b560bccb4b405be3a178a52",
+  "pr": 164,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The shared paging tests are sound on page size, the results count and the past-the-last-page fallback, but the listing test only counts ids and so does not prove the role filter across pages, one test branches between two assertions, and wholeCount is described two ways.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The test 'Should list every address for the role, and the role-less address, across its pages' (lines 46-54) asserts only that the ids gathered across pages number wholeCount and are distinct. A picker that served an address of another role in place of the role-less one, or in place of one of its own role's, still passes. So the title claims more than the assertions prove, and nothing in the plants unit tests shows the ticket's fourth AC: every page holds only addresses for the role or with no role. The animals twin's test compares the ids it gathers with recordsHoldingRole.",
+      "fix": "Must: the test fails when any page lists an address outside the picker's role and the role-less set, or leaves one of that set out, and its title says what it asserts. One way: pass the picker's expected ids (the stub records carrying its role plus the role-less one, as the animals twin does with recordsHoldingRole) into describePaging and assert expect(ids.toSorted()).toEqual(expectedIds.toSorted()) in place of the length and Set-size checks."
+    },
+    {
+      "id": 2,
+      "line": 56,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The test 'Should offer paging only where the role holds more addresses than a page' (lines 56-64) branches on wholeCount > ADDRESSES_A_PAGE, so each picker runs one of two different assertions under one title: consignment contact (wholeCount 14) checks the next link, consignor (8) and place of destination (6) check pagination is null. The report cannot show which case a picker proved, and the testing guide says a spec that needs a branch is two tests.",
+      "fix": "Must: each case is its own test with a title that states what it asserts (pagination with a next link to page 2 when the role holds more than a page; no pagination when it holds a page or fewer), and no test body branches. One way: choose the test at declaration time, e.g. it.runIf(wholeCount > ADDRESSES_A_PAGE)('Should link to page 2 when the role holds more addresses than a page', ...) and it.runIf(wholeCount <= ADDRESSES_A_PAGE)('Should show no pagination when one page holds every address for the role', ...).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 28,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One parameter, two meanings: this JSDoc says picker.wholeCount is 'how many stub records this picker offers' (line 28), while describeAddressBookPickerController's JSDoc, which passes the same object straight in, says it is 'how many stub records carry this picker's role, or none' (controller-test-support.js:558). Separately, PAST_THE_LAST_PAGE (line 8) is a module-scope literal used by one test only (lines 69, 79).",
+      "fix": "Must: wholeCount has one description, the same in both JSDoc blocks, saying it counts the role's records plus the role-less ones; and the past-the-last-page request number lives inside the test that uses it. One way: reword controller-test-support.js:558 to match line 28 (or both to 'how many stub records carry this picker's role or no role'), and move const pastTheLastPage = 40 into the 'Should serve the last page' test body."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:24Z"
+}

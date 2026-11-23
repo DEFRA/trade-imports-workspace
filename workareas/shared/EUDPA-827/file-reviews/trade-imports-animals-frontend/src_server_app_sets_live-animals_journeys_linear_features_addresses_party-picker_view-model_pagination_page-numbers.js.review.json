@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination/page-numbers.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:14:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The page-number builder is correct for the acceptance criteria, but FIRST_PAGE has two homes in the pagination folder, a single-use literal sits at module scope, and a one-page gap gets an ellipsis that the sibling test title says it should not.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "FIRST_PAGE = 1 is declared at page-numbers.js:1 and again at the sibling pagination/index.js:7, so the pagination folder has two homes for which page number paging starts from.",
+      "fix": "Must: one module in the pagination folder owns the first page number and the other imports it. One way: export FIRST_PAGE from page-numbers.js (or a shared constant in index.js's folder) and import it in index.js, deleting its local copy."
+    },
+    {
+      "id": 2,
+      "line": 2,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "PAGES_EITHER_SIDE_OF_CURRENT is a module-scope literal used only by numbersToShow (lines 7 and 9); the house rule puts a literal used by one function inside that function.",
+      "fix": "Must: the either-side-of-current page count lives inside numbersToShow, with module scope keeping only values the module shares. One way: declare const pagesEitherSideOfCurrent = 1 inside numbersToShow, as trade-imports-ins-frontend shared/list-page.js does, and mirror the change in the plants twin address-book-picker/pagination.js."
+    },
+    {
+      "id": 3,
+      "line": 22,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "itemsWithEllipses puts an ellipsis across any gap (number - previous > 1), so a gap of exactly one page is hidden behind an ellipsis: page 4 of 5 renders '1 … 3 4 5', and page 2 of 5 renders '1 2 3 … 5', where the ellipsis takes the place of the one page number it hides. The sibling test titled 'Should skip the ellipsis where the gap is a single page' claims the opposite but its case (page 3 of 5) has no gap at all, so nothing proves either behaviour.",
+      "fix": "Must: the rule for a one-page gap is decided once and proven: either the hidden page's number is shown in place of an ellipsis, or the ellipsis is kept and the test title says so with a case that has a one-page gap (page 4 of 5). The same rule holds in the plants twin address-book-picker/pagination.js. One way: treat a gap of exactly 2 between shown numbers as the missing page and add it to the shown numbers, and add a test for page 4 of 5 expecting [1, 2, 3, 4, 5]."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

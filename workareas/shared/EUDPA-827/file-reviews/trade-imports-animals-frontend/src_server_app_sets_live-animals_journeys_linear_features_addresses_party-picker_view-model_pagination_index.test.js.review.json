@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination/index.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paging maths is well covered, but one title overclaims (previous link unasserted) and the trail and bare page-1 link on paging hrefs have no test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 124,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should carry the search term and the ticked address on every page link' claims every link, but linksFor defaults to page 1 of 3, so there is no previous link and the assertions only cover items and next. Removing the query or selectedId from the previous link's href would leave this test green.",
+      "fix": "Must: the test's assertions cover every link its title names, previous included. One way: render a middle page (page: 2 of 3) so previous, items and next all exist, and assert q= and selected= on each of them."
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "paginationLinks passes trail to resultsHref for every link, and resultsHref (changed in this PR) now drops the page param for page 1, but no test proves either: linksFor always sends trail: [] and no assertion checks the link back to page 1. Dropping trail from hrefFor, or writing page=1 into the first page's link, would leave this file and party-picker.controller.test.js green, so a trader who opened the picker from the review page could lose the from= return path on paging without a red test.",
+      "fix": "Must: a test fails if a paging link loses the trail, and a test fails if the link to page 1 stops being the bare picker URL. One way: add a case with a non-empty trail asserting from=<slug> on previous, items and next, and a page: 2 case asserting previous.href and the number-1 item's href equal pagePath(JOURNEY_ID, PARTY.slug) plus only the carried params, with no page=."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

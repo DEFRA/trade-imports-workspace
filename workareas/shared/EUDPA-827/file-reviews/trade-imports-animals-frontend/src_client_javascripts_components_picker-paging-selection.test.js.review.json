@@ -1,0 +1,29 @@
+{
+  "file": "src/client/javascripts/components/picker-paging-selection.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c5ec124c8625981f4f0563a1cc13d434aa92570e",
+  "pr": 510,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:13:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests prove the selected id is carried and replaced through paging links, but a hand-written fixture leaves the radio-only guard unproven and one title over-claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 11,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The hand-written fixture in render() (lines 11-22) holds only two radios and a pagination nav, but the real form in party-picker/_address-picker.njk:63-80 also holds the q search input (appSubmittedSearch) and hidden inputs. The radio guard in picker-paging-selection.js:20 (if (!target?.matches?.(RADIO_SELECTOR)) return) is never exercised: deleting it leaves all three tests green, yet without it a change in the search box would write the typed text into every paging link's selected param. Sibling component tests (multi-select-search.test.js:27, transporter-filter.test.js:69) render the real template through nunjucksConfig instead.",
+      "fix": "Must: the tests run against the picker's real markup (or a fixture holding its search input), and one test fails if a change event from a non-radio input rewrites the paging links. One way: render the addressPicker macro with nunjucksConfig's environment as the sibling tests do, then add 'Should leave the paging links alone when the search text changes', which types in #q, dispatches change and asserts the original hrefs."
+    },
+    {
+      "id": 2,
+      "line": 47,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should replace the address the server rendered each time another is ticked' does not state what its assertion proves. The second tick replaces danish-meat-export-aps, the address the first tick wrote, not the server-rendered alpine-dairy; the assertion proves only that the latest tick wins. Replacing the server-rendered address is already what the first test proves.",
+      "fix": "Must: the title states what the assertions prove: that after several ticks the paging links carry only the address ticked last. One way: rename to 'Should carry only the address ticked last when the trader changes their choice'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:22Z"
+}

@@ -1,0 +1,37 @@
+{
+  "file": "openspec/coverage/plants/addresses/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "d74e5b6fbe240242c8aca1b53189474d647fa18e",
+  "pr": 332,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-23T15:15:43Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Two paging coverage links overclaim: the 002-A fit link names a run with only eight records, and the 002-H note claims a search-term proof its test does not make; one note on 012-A is stale.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 129,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-ADDR-002-A (GIVEN the list holds more than eight) links the fit test \"opens on a page of the role's addresses...\" in consignor-select.fit.spec.js at strength full, but that spec passes wholeCount: 8 (consignor-select.fit.spec.js, describeAddressPicker call), so this run asserts 'Showing 8 out of 8' and openLastPageOfPicker clicks nothing (fit/high-risk-plants-journey.js:1041-1047). It stays green with paging removed and never meets the scenario's GIVEN. Only the consignment-contact-select run (wholeCount: 14) witnesses eight-a-page (plants-frontend ad743ba).",
+      "fix": "Must: every fit link on SCN-PLANTS-ADDR-002-A names a run whose list holds more than eight addresses. One way: point the fit link at consignment-contact-select.fit.spec.js (wholeCount 14) and adjust its notes, or drop the consignor link."
+    },
+    {
+      "id": 2,
+      "line": 145,
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "SCN-PLANTS-ADDR-002-H's only link, test-support.js 'Should carry the ticked address through every paging link', has notes claiming it 'proves the link carries the search term and the ticked address', but the test calls viewModelFor(pageOfAddresses(OVER_A_PAGE), 'record-3') with no search term and asserts only href toContain('selected=record-3') (plants-frontend ad743ba, test-support.js:196-203). Nothing linked proves the search term or the filtered results survive a page move, which is ticket AC 2, and the ticket's bullet asks each paging scenario to be linked to a test that proves it.",
+      "fix": "Must: SCN-PLANTS-ADDR-002-H's notes say only what its linked tests assert, and a linked plants test proves the paging links carry the search term (and ideally that the next page holds only matches). One way: add a search term to that view-model case and assert every pagination href carries it, then correct the note; leave coverage partial until a browser walk pages a searched list."
+    },
+    {
+      "id": 3,
+      "line": 414,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "SCN-PLANTS-ADDR-012-A's e2e link was retitled to 'reopening the picker shows it checked and named above the results', and the scenario now names the record above the results, but the link's notes still say 'with the results heading directly after the search control'. The test now asserts the chosen record's name sits before the results heading (destination.spec.ts:113, expectChosenAddressNamedAboveResults), so the note is untrue.",
+      "fix": "Must: the 012-A e2e link's notes describe what destination.spec.ts asserts now. One way: 'reopen shows the chosen row checked, and its name in the line straight before the results heading'."
+    }
+  ],
+  "reconciled_at": "2026-11-23T15:20:25Z"
+}

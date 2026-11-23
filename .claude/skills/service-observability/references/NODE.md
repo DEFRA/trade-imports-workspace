@@ -95,11 +95,12 @@ Rules that held:
   `recordExternalCallInBackground`, so the backend is counted where it
   is timed.
 - **Interface ids** (`SYN-11`, `SYN-12`, `SYN-13` on the Defra ID calls)
-  are in the log line's message,
+  come from the call descriptor's log-only `interfaceId` and are in the
+  log line's message,
   `External call defra-id/jwks (SYN-12) success in 3 ms`, not a
   dimension or a field: a field outside CDP's
   ECS list is dropped. This replaces the `interface.id` field in the
-  agreed list of 2026-11-11, to be recorded on EUDPA-674.
+  agreed list of 2026-11-11, and is recorded on EUDPA-674.
 - **A streamed response is timed to its headers.** The body is read
   after the call is recorded.
 
@@ -193,10 +194,8 @@ logger.info(
 ```
 
 A failure logs at warn, with `error: { type, message, code }` when it
-has a cause, and no stack trace. An interface id comes from the
-descriptor's log-only `interfaceId`, into the message only; it is not a
-metric dimension. Do not
-pass `err`: ECS pino
+has a cause, and no stack trace. Interface ids: see "Dependency layer"
+above. Do not pass `err`: ECS pino
 writes its stack trace, and the caller logs that once where it handles
 the error. `trace.id` comes from the logger's `mixin`
 (`@defra/hapi-tracing`), not from this code. ECS pino also writes the
@@ -223,7 +222,7 @@ them under `/live-animals/notifications/{journeyId}/`. Tagged by route
 template that is up to 84 method and route pairs times the status
 classes each returns, about 170 metrics in each environment. The team
 chose to tag by area (2026-11-17): 37 areas, 56 method and area
-pairs, about 115 metrics. To be recorded on EUDPA-674.
+pairs, about 115 metrics. Recorded on EUDPA-674.
 
 `journey.validation.failure`, a count tagged `page` (the route's literal
 segments after its first path parameter, such as

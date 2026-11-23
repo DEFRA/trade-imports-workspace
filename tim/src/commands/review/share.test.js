@@ -31,9 +31,9 @@ const gitGolden = goldenOf('review-share-git.json')
 const runDryRunCase = async (shareCase) => {
   const staged = stageShareWorkspace()
   try {
-    const run = await recordTimRun(staged, timArgsFor(shareCase), {
-      env: shareEnv(staged, shareCase)
-    })
+    const env = shareEnv(staged, shareCase)
+    await makeWorkspaceRepo(staged, env)
+    const run = await recordTimRun(staged, timArgsFor(shareCase), { env })
     const files =
       shareCase.watch === undefined
         ? {}

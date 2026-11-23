@@ -12,7 +12,7 @@ import {
   shareBody,
   verdictLine
 } from './body.js'
-import { pushHandoffBranch } from './handoff.js'
+import { pushHandoffBranch, refuseChangesOutsideShared } from './handoff.js'
 import { copyReviewWithoutClones } from './shared-copy.js'
 
 const GITHUB_COMMENT_LIMIT = 65536
@@ -192,7 +192,9 @@ const renderBodyFiles = ({
  * file each in the system temp folder, for `gh pr comment --body-file` to
  * post. A handoff (no `commentOnly`) first copies the review to
  * workareas/shared/<ticket> without its clones and diffs and, unless
- * `dryRun`, commits that copy to the handoff branch and pushes it.
+ * `dryRun`, commits that copy to the handoff branch and pushes it. A
+ * handoff refuses a workspace with changes outside workareas/shared/,
+ * dry run or not.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -255,7 +257,9 @@ export const shareReview = async ({
     body_files: bodyFiles,
     prs
   }
-  if (dryRun || commentOnly) return shared
+  if (commentOnly) return shared
+  await refuseChangesOutsideShared(workspaceRoot)
+  if (dryRun) return shared
   const { committed } = await pushHandoffBranch({
     workspaceRoot,
     ticket,

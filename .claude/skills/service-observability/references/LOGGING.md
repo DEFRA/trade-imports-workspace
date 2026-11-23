@@ -17,8 +17,8 @@ measured call has one. It does not depend on `aws.emf.enabled`.
 External call mdm/get-countries success in 2 ms
 ```
 
-The message is `External call <dependency>/<operation> <outcome> in
-<ms> ms`. A Node line may name the call's interface id in brackets
+The message is
+`External call <dependency>/<operation> <outcome> in <ms> ms`. A Node line may name the call's interface id in brackets
 after the operation,
 `External call defra-id/jwks (SYN-12) success in 3 ms` (`NODE.md` →
 "Dependency layer").
@@ -109,9 +109,9 @@ reaches OpenSearch flat.
   `message`, `service.name` and `trace.id`, but none of the four
   `event.*` fields. The nested key-value-pair version above replaced it.
 - **The nested version reaches OpenSearch.** Seen in dev on 2026-10-21
-  (reference-data 0.27.0): `event.category:"external-call" AND
-service.name:"<service>"` finds the lines, and Grafana's "Slowest
-  dependency calls" panel shows them sorted by `event.duration` as a
+  (reference-data 0.27.0): the query
+  `event.category:"external-call" AND service.name:"<service>"` finds
+  the lines, and Grafana's "Slowest dependency calls" panel shows them sorted by `event.duration` as a
   number. `[UNPROVEN]` that CDP's "Log Ingestion Errors" alert stays
   quiet for the service.
 - **One flat `event.*` key is left on every line.** The ECS encoder

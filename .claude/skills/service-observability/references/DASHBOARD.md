@@ -8,11 +8,13 @@ marked `[UNPROVEN]`.
 
 Claude generates the dashboard JSON from
 `assets/dashboard.template.json`; the developer imports it in Grafana.
-Nothing can push to Grafana for us: anyone on the network can read the
-dev Grafana API without signing in, but writing needs Editor rights, and
-CDP does not issue service-account tokens. So the import is always done
-by a signed-in person. (Checked 2026-10-15: an anonymous search returned
-200, an anonymous create returned 403 `dashboards:create`.)
+Claude never uses a browser to reach Grafana (`SKILL.md` → "Who does
+what"). Nothing else can push to Grafana for us: anyone on the network
+can read the dev Grafana API without signing in, but writing needs
+Editor rights, and CDP does not issue service-account tokens. So the
+import is always done by the developer, signed in. (Checked 2026-10-15:
+an anonymous search returned 200, an anonymous create returned 403
+`dashboards:create`.)
 
 ## Before starting
 
@@ -120,8 +122,9 @@ One panel reads logs, not metrics:
 |---|---|---|
 | Slowest dependency calls | OpenSearch | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
 
-Grafana queries OpenSearch with Lucene, not DQL: build the query in
-OpenSearch Dashboards with DQL switched off, then copy it across. The
+Grafana queries OpenSearch with Lucene, not DQL: to change the query,
+the developer builds it in OpenSearch Dashboards with DQL switched off,
+then copies it across. The
 template's query works as written (reference-data, 2026-10-21). This
 panel finds nothing unless the service writes the `event.*` fields as a
 nested object with a numeric `event.duration` (`LOGGING.md` → "How to
@@ -184,7 +187,8 @@ Claude writes the service's dashboard to
 
 ## Import
 
-Signed in to the dev Grafana with Editor rights on the folder:
+The developer does this, signed in to the dev Grafana with Editor
+rights on the folder. Claude does not:
 
 - **A new dashboard:** Dashboards → New → Import → paste the file →
   folder `Playground/<service>-monitoring` → choose the CloudWatch and
@@ -195,12 +199,13 @@ Signed in to the dev Grafana with Editor rights on the folder:
   dashboard → Settings → JSON Model, replace `panels` and `templating`
   with the file's, and save.
 
-Then check each panel shows data. Drive some requests first: where a
-cache sits in front of a dependency, calls only happen on a miss.
+Then the developer checks each panel shows data and tells Claude which
+are empty. Drive some requests first: where a cache sits in front of a
+dependency, calls only happen on a miss.
 
 ## Promote
 
 `[UNPROVEN]` The CDP monitoring how-to says dashboards are promoted from
 the Portal: service → Diagnostics → Dev → `Promote`. The FAQ says to
-ask #cdp-support. Try the Portal button first and record here which one
-worked.
+ask #cdp-support. The developer tries the Portal button first, and
+Claude records here which one worked.

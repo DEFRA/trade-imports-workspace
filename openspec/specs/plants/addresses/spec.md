@@ -75,16 +75,28 @@ The system MUST copy the chosen address-book record onto the notification when t
 - **WHEN** the user picks a record from the address book for it
 - **THEN** the notification holds that record's name, address lines, town or city, county, postcode, country, telephone and email
 
-### Requirement: The picker offers a search of its own list, reporting how many matched, and shows every match on one page
+### Requirement: The picker offers a search of its own list, reporting how many matched, and shows eight matches a page
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total, offer them as one group with that name, and show every one on one page. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list.
+The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total, offer them as one group with that name, and show eight a page. Where the list holds more than eight it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page and the address already chosen; where it holds eight or fewer it MUST offer none. A submitted search MUST start again at the first page, and a page past the last page MUST serve the last page. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list.
 
-#### Scenario: The picker shows its whole list on one page, with its count
+#### Scenario: The picker shows eight of its list a page, counted against the whole list
 **ID**: SCN-PLANTS-ADDR-002-A
-- **GIVEN** the user opens the picker
+- **GIVEN** the picker's list holds more than eight addresses
 - **WHEN** the page loads
-- **THEN** every address the picker's list holds is shown
-- **AND** under the heading "Select an address" the page reads "Showing <total> out of <total> results"
+- **THEN** the first eight are shown, with GOV.UK pagination under the table
+- **AND** under the heading "Select an address" the page reads "Showing 8 out of <total> results"
+
+#### Scenario: A picker whose list fits on one page offers no pagination
+**ID**: SCN-PLANTS-ADDR-002-G
+- **GIVEN** the picker's list holds eight addresses or fewer
+- **WHEN** the page loads
+- **THEN** every one of them is shown, and no pagination is offered
+
+#### Scenario: Moving to another page keeps the search term, its results and the chosen address
+**ID**: SCN-PLANTS-ADDR-002-H
+- **GIVEN** the user has searched the picker's list, which matched more than eight addresses, and an address is chosen
+- **WHEN** they move to another page
+- **THEN** the search term is still in the box, the page holds only addresses matching it, and the chosen address is still chosen
 
 #### Scenario: Searching narrows the list to the matching term
 **ID**: SCN-PLANTS-ADDR-002-B
@@ -252,13 +264,13 @@ Once a notification is submitted, the system MUST show the address details copie
 
 ### Requirement: Reopening the picker shows the address already chosen checked, and keeps it on a blank save
 **ID**: REQ-PLANTS-ADDR-012
-The system MUST show the record a role's address was chosen from as the checked row when the user reopens the picker, with nothing restating the choice above the list, and MUST keep the address already on the notification when they save with nothing ticked. It MUST show no row checked once the address's details have been edited on the notification, or once that record has been deleted from the address book.
+The system MUST name the record a role's address was chosen from above the results as "Selected address: <name>" whenever the user reopens the picker, whichever page they are on, show it as the ticked row on the page that holds it, and keep the address already on the notification when they save with nothing ticked. It MUST show no row ticked, and name no address above the results, once the address's details have been edited on the notification, or once that record has been deleted from the address book.
 
-#### Scenario: Reopening the picker shows the record the address was chosen from ticked
+#### Scenario: Reopening the picker names the record the address was chosen from above the results, and ticks it on its page
 **ID**: SCN-PLANTS-ADDR-012-A
 - **GIVEN** the user has chosen an address and saved it
 - **WHEN** they reopen the picker
-- **THEN** that record is ticked, with nothing restating it above the list
+- **THEN** that record is named above the results, and ticked on the page that holds it
 
 #### Scenario: Saving with nothing ticked keeps the address already held
 **ID**: SCN-PLANTS-ADDR-012-B

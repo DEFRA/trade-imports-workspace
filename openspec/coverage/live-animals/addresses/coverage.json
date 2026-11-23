@@ -54,16 +54,53 @@
     },
     {
       "id": "REQ-ADDR-017",
-      "name": "The list shows every address for the role on one page",
+      "name": "The list shows eight of the role's addresses a page",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDR-017-A",
-          "name": "The whole list is shown on one page",
+          "name": "A role holding more than eight addresses shows the first eight with pagination",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers every consignor address as one group named by the results heading, with no page links", "strength": "full", "notes": "red-probed: fails when a page link is rendered or the group holds fewer radios than the stub book's consignor-role count" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should render the results heading directly after the search field, with nothing between them", "strength": "full", "notes": "red-probed: fails when the inset restating the choice is rendered between the search box and the heading" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, with a link to the page holding the rest", "strength": "full", "notes": "red-probed: fails with the page size widened past the stub book's consignor-role count, which leaves the group holding nine radios and renders no page links" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should open on the first eight consignor-role addresses, counted against every one the role holds", "strength": "full", "notes": "red-probed: fails with the page size widened, which lists all nine and counts nine out of nine" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should offer the paging links under the results, naming each page it holds", "strength": "full", "notes": "red-probed: fails when the govukPagination call is taken out of the results macro" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker shows eight matches a page and keeps the search term and the chosen address as the trader moves to the next page", "strength": "full", "notes": "seeds nine consignor records behind one search token, so the count is exact whatever else the organisation's book holds" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-B",
+          "name": "A role holding eight addresses or fewer shows no pagination",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers no paging for a role whose addresses fit on one page", "strength": "full", "notes": "the consignee role's list holds two records in the stub book" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should offer no paging links on a role whose addresses fit on one page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-C",
+          "name": "Moving to another page keeps the search term, its results and the chosen address",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker shows eight matches a page and keeps the search term and the chosen address as the trader moves to the next page", "strength": "full", "notes": "red-probed through the view model: the page link carries q and selected, and the chosen address is named above the results on both pages" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should carry the search term and the ticked address through the paging links", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "reopening the picker checks the previously chosen address and names it above the results, and paging keeps it chosen", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-D",
+          "name": "Every page holds only the role's addresses",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should give each spoke the stub records carrying its own role, with the role-less record, and nothing else", "strength": "full", "notes": "walks every page of each of the five pickers and compares the ids it gathers with recordsHoldingRole" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-017-E",
+          "name": "A page past the last page serves the last page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should serve the last page, logged once, when the page asked for is past it", "strength": "full", "notes": "asserts the rows of the last page and the one info line, with the page asked for and the page served" }
           ]
         }
       ]
@@ -374,7 +411,7 @@
           "name": "Searching narrows the list and reports the count",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "full", "notes": "asserts Showing 2 out of 2 results for a scoped search token" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown", "strength": "full", "notes": "asserts Showing 2 out of 2 results for a scoped search token" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should put the count in the paragraph straight after the results heading, outside the table", "strength": "full", "notes": "" }
           ]
@@ -385,7 +422,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "clearing the search and searching with nothing entered lists every consignor address again, on one page", "strength": "full", "notes": "red with an empty search still filtering the stub book" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "partial", "notes": "clears the search by searching for the chosen name, not an empty term" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown", "strength": "partial", "notes": "clears the search by searching for the chosen name, not an empty term" }
           ]
         },
         {
@@ -401,7 +438,7 @@
           "name": "The listed addresses are one group named \"Select an address\"",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers every consignor address as one group named by the results heading, with no page links", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker offers a page of consignor addresses as one group named by the results heading, with a link to the page holding the rest", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should hold the table in one fieldset named by a visually hidden legend, after the count", "strength": "full", "notes": "" }
           ]
         }
@@ -509,11 +546,11 @@
       "scenarios": [
         {
           "id": "SCN-ADDR-011-A",
-          "name": "Reopening the list shows the saved choice checked, and keeps it on save",
+          "name": "Reopening the list names the saved choice above the results, checks its row, and keeps it on save",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, lists every match on one page, and the row ticked is the one that saves, shown checked on reopening with nothing between the search box and the results heading", "strength": "full", "notes": "asserts the chosen record's row is checked on reopen, then save keeps the section showing it" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "reopening the picker checks the previously chosen address, with nothing between the search box and the results heading", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown", "strength": "full", "notes": "asserts the chosen record's row is checked on reopen, then save keeps the section showing it" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "reopening the picker checks the previously chosen address and names it above the results, and paging keeps it chosen", "strength": "full", "notes": "" }
           ]
         },
         {

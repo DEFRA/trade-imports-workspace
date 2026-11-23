@@ -10,7 +10,7 @@ Asks which address-book record is the consignor. The page is titled "Consignor".
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, listing the organisation's addresses saved for the consignor role and any saved with no role, on one page. It MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, on a draft and while amending alike.
+The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, listing the organisation's addresses saved for the consignor role and any saved with no role, eight a page. It MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, on a draft and while amending alike.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
@@ -19,11 +19,11 @@ The system MUST ask which address is the consignor, showing the parties section 
 - **THEN** it shows the parties section caption, the heading "Consignor", the sender description, and a search box
 - **AND** the three save controls are offered
 
-#### Scenario: The page lists the organisation's consignor-role addresses, and any saved with no role, on one page
+#### Scenario: The page lists the organisation's consignor-role addresses, and any saved with no role, across its pages
 **ID**: SCN-PLANTS-CONSIGNOR-001-B
 - **GIVEN** the organisation has an address saved for the consignor role, an address saved with no role, and an address saved for the place of destination role
-- **WHEN** the user opens the consignor page
-- **THEN** the consignor-role and role-less addresses are listed, on one page, and the place-of-destination address is not
+- **WHEN** the user opens the consignor page and moves through its pages
+- **THEN** the consignor-role and role-less addresses are listed, eight a page, and the place-of-destination address is not
 
 ### Requirement: The page is reachable from Overview's consignor task row
 **ID**: REQ-PLANTS-CONSIGNOR-002

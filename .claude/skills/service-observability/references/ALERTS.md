@@ -251,7 +251,7 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
 - **Dev, area slow (rule 4).** Open a few pages of the service, then
   lower the threshold to `IS ABOVE 0`: any page request's time is
   above 0. Check the summary shows the method, area and status
-  class of each firing series, such as `GET dashboard 2xx`.
+  class of each firing series, such as `GET origin 2xx`.
 - **Dev, concurrency conflicts (rule 5): a real conflict.**
   `journey.concurrency.conflict` is published only when a save is
   refused for a stale concurrency token, so with no conflict there is

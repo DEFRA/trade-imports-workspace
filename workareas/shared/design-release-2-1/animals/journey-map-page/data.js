@@ -1,5 +1,5 @@
 window.DATA = {
-  "builtAt": "2026-11-16",
+  "builtAt": "2026-11-20",
   "scope": {
     "id": "animals",
     "title": "Animals Journey Page Map",
@@ -14,11 +14,11 @@ window.DATA = {
   },
   "summary": {
     "themes": 23,
-    "rows": 222,
+    "rows": 223,
     "pages": 25,
     "arriving": 4,
-    "landed": 102,
-    "ahead": 82,
+    "landed": 114,
+    "ahead": 71,
     "held": 7,
     "aside": 31
   },
@@ -58,24 +58,6 @@ window.DATA = {
       },
       "state": "part",
       "stands": "20 ahead, 1 held"
-    },
-    "consignment-parties": {
-      "id": "consignment-parties",
-      "name": "Consignment parties",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "5",
-      "rows": 11,
-      "counts": {
-        "landed": 0,
-        "ahead": 11,
-        "held": 0,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "ahead",
-      "stands": "11 of 11 ahead"
     },
     "manage-notifications": {
       "id": "manage-notifications",
@@ -202,6 +184,24 @@ window.DATA = {
       },
       "state": "landed",
       "stands": "15 landed, 4 dropped"
+    },
+    "consignment-parties": {
+      "id": "consignment-parties",
+      "name": "Consignment parties",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "5",
+      "rows": 12,
+      "counts": {
+        "landed": 12,
+        "ahead": 0,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "landed",
+      "stands": "12 of 12 landed"
     },
     "design-snagging": {
       "id": "design-snagging",
@@ -1263,17 +1263,17 @@ window.DATA = {
       "ticket": null,
       "ticketUrl": null,
       "wave": "5",
-      "rows": 11,
+      "rows": 12,
       "counts": {
-        "landed": 0,
-        "ahead": 11,
+        "landed": 12,
+        "ahead": 0,
         "held": 0,
         "deferred": 0,
         "dropped": 0,
         "folded in": 0
       },
-      "state": "ahead",
-      "stands": "11 of 11 ahead",
+      "state": "landed",
+      "stands": "12 of 12 landed",
       "pages": [
         "Add the CPH number",
         "Consignment addresses",

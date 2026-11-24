@@ -35,15 +35,58 @@ The system MUST list, for each consignment role, only the organisation's address
 - **THEN** the address is offered on the consignment contact page
 - **AND** the address is listed on none of the five consignment role lists
 
-### Requirement: The list shows every address for the role on one page
+### Requirement: The list shows eight of the addresses it found a page
 **ID**: REQ-ADDR-017
-The system MUST show every address a role's list holds on one page, however many there are, with the results heading, the count and one table between the search box and the save controls.
+The system MUST show eight a page of the addresses a role's list found — the role's whole list, or the matches when a search narrows it — with the results heading, the count of the rows shown out of every address found, and one table, between the search box and the save controls. Where more than eight were found it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page and the address held as chosen; where eight or fewer were found it MUST offer none. A submitted search MUST start again at the first page. A page past the last page MUST serve the last page, and a page that is not a page number MUST serve the first; each MUST be logged once with the page asked for and the page served.
 
-#### Scenario: The whole list is shown on one page
+#### Scenario: A role holding more than eight addresses shows the first eight with pagination
 **ID**: SCN-ADDR-017-A
-- **GIVEN** a role's list holds more addresses than a page once held
+- **GIVEN** a role's list holds more than eight addresses
 - **WHEN** the user opens that role's list
-- **THEN** every one of them is shown, between the search box and the save controls, with the results heading and the count above the table
+- **THEN** the first eight are shown, between the search box and the save controls, with the results heading and the count of eight out of the total above the table
+- **AND** GOV.UK pagination is offered under the table
+
+#### Scenario: A role holding eight addresses or fewer shows no pagination
+**ID**: SCN-ADDR-017-B
+- **GIVEN** a role's list holds eight addresses or fewer
+- **WHEN** the user opens that role's list
+- **THEN** every one of them is shown, and no pagination is offered
+
+#### Scenario: A search narrowing a long list to eight or fewer shows them all, with no pagination
+**ID**: SCN-ADDR-017-F
+- **GIVEN** a role's list holds more than eight addresses
+- **WHEN** the user searches it for a term eight or fewer of them match
+- **THEN** every match is shown, counted out of the matches, and no pagination is offered
+
+#### Scenario: A submitted search starts again at the first page
+**ID**: SCN-ADDR-017-G
+- **GIVEN** the user is on a page after the first of a role's list
+- **WHEN** they submit a search
+- **THEN** the first page of the matches is shown
+
+#### Scenario: Moving to another page keeps the search term, its results and the chosen address
+**ID**: SCN-ADDR-017-C
+- **GIVEN** the user has searched a role's list, which matched more than eight addresses, and an address is chosen
+- **WHEN** they move to another page
+- **THEN** the search term is still in the box, the page holds only addresses matching it, and the chosen address is still chosen
+
+#### Scenario: Every page holds only the role's addresses
+**ID**: SCN-ADDR-017-D
+- **GIVEN** a role's list runs to more than one page
+- **WHEN** the user moves through its pages
+- **THEN** every page holds addresses saved for that role or with no role, and none saved only for another role
+
+#### Scenario: A page past the last page serves the last page
+**ID**: SCN-ADDR-017-E
+- **GIVEN** a role's list runs to two pages
+- **WHEN** the user asks for a page after the last
+- **THEN** the last page is shown, and the page asked for and the page served are logged once
+
+#### Scenario: A page that is not a page number serves the first page
+**ID**: SCN-ADDR-017-H
+- **GIVEN** the user opens a role's list
+- **WHEN** the page they ask for is not a whole number of one or more
+- **THEN** the first page is shown, and the page asked for and the page served are logged once
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
@@ -254,11 +297,11 @@ The system MUST let the user search the role's list when choosing an address for
 - **THEN** only the matching records are listed
 - **AND** under the heading "Select an address" the page reads "Showing 2 out of 2 results"
 
-#### Scenario: Clearing the search restores the role's whole list
+#### Scenario: Clearing the search restores the role's whole list, from its first page
 **ID**: SCN-ADDR-006-B
 - **GIVEN** the user has searched the role's list
 - **WHEN** they clear the search and search again with nothing entered
-- **THEN** the role's whole list is shown again
+- **THEN** the first page of the role's whole list is shown again
 
 #### Scenario: Without JavaScript, Enter in the search box narrows the list
 **ID**: SCN-ADDR-006-C
@@ -341,13 +384,15 @@ When the address book service is available, the system MUST end each listed addr
 
 ### Requirement: Reopening the list shows the address already chosen checked, and keeps it on save
 **ID**: REQ-ADDR-011
-The system MUST show the record a role's address was chosen from as the checked row when the user reopens the list, with nothing restating the choice above the list, and MUST keep the address already on the notification when they save again. It MUST show no row checked once the address's details have been edited on the notification, or once that record has been deleted from the address book. This MUST hold without relying on client-side JavaScript.
+The system MUST name the record a role's address was chosen from above the results as "Selected address: <name>" whenever the picker holds one as chosen — saved, carried in the query string or just posted — on every page and after a search, show it as the checked row on the page that holds it, and keep the address already on the notification when they save again. It MUST show no row checked, and name no address above the results, once the address's details have been edited on the notification, or once that record has been deleted from the address book. This MUST hold without relying on client-side JavaScript.
 
-#### Scenario: Reopening the list shows the saved choice checked, and keeps it on save
+#### Scenario: Reopening the list names the saved choice above the results, checks its row, and keeps it on save
 **ID**: SCN-ADDR-011-A
 - **GIVEN** the user has chosen an address and saved it
 - **WHEN** they reopen the list to change it
-- **THEN** the list shows that address's row checked
+- **THEN** the list names that address above the results
+- **WHEN** they reach the page holding it
+- **THEN** its row is checked
 - **WHEN** they save without choosing another
 - **THEN** the role's row still shows the address they originally chose
 

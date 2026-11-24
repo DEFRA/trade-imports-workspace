@@ -42,14 +42,15 @@ The system MUST ask the destination question under the heading and description t
 
 ### Requirement: The page offers search of its role's addresses with a count of results
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-002
-The system MUST offer a search of the place-of-destination role's addresses by name, address or country, MUST show them all on one page with how many are shown out of the total under the heading "Select an address", and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole list.
+The system MUST offer a search of the place-of-destination role's addresses by name, address or country, MUST show eight a page with how many are shown out of every address found under the heading "Select an address", MUST offer GOV.UK pagination under the table where more than eight were found and none where eight or fewer were found, and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole list, from its first page.
 
-#### Scenario: The picker shows the role's whole list on one page, with its count
+#### Scenario: The picker shows eight of the role's list a page, with its count
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-A
 - **GIVEN** the user opens the place of destination page
 - **WHEN** the page loads
-- **THEN** every address the role's list holds is shown
-- **AND** under the heading "Select an address" the page reads "Showing <total> out of <total> results"
+- **THEN** up to eight of the role's addresses are shown
+- **AND** under the heading "Select an address" the page reads "Showing <shown> out of <total> results"
+- **AND** GOV.UK pagination is offered only where the role holds more than eight
 
 #### Scenario: Searching narrows the list to matching addresses
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-B
@@ -64,7 +65,7 @@ The system MUST offer a search of the place-of-destination role's addresses by n
 - **WHEN** the results are shown
 - **THEN** a message says nothing matched, not an empty table
 - **WHEN** they clear the search
-- **THEN** the whole list is shown again
+- **THEN** the first page of the whole list is shown again
 
 ### Requirement: A checked row survives a further search
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-003

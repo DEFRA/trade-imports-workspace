@@ -1360,3 +1360,32 @@ The system MUST show, under a list running past one page, a link to page 1, the 
 - **GIVEN** a search matches five pages of addresses
 - **WHEN** the user views page 4 of the matches
 - **THEN** the pagination shows page 1, an ellipsis and pages 3, 4 and 5, with page 4 marked as the current page, and the list reads 'Showing 25-32' against the number of matches
+
+### Requirement: The add page serves every notification journey the service registers, and returns through that journey's own registered pages
+**ID**: REQ-INS-ADDR-048
+The system MUST serve the add page for every notification journey the service registers, not only live animals, asking the same questions and offering the same controls for a given party whichever journey it came from. It MUST build the return address from that journey's own registered pages, never from anything the request carries, so a request cannot redirect the trader elsewhere.
+
+#### Scenario: A germinal products add reaches the same add page as a live animals add
+**ID**: SCN-INS-ADDR-048-A
+- **GIVEN** a handshake naming the germinal products journey and one of its parties
+- **WHEN** the add page opens with it
+- **THEN** it asks the same questions and offers the same controls as one reached from a live animals notification's party picker
+
+#### Scenario: Saving or cancelling a germinal products add returns to that notification's own return page
+**ID**: SCN-INS-ADDR-048-B
+- **GIVEN** a trader on the add page opened with a germinal products journey handshake
+- **WHEN** they save or cancel
+- **THEN** they return to that germinal products notification's own return page, carrying the party, the token, the saved address and the landing each control names
+- **AND** never to a live animals notification
+
+#### Scenario: A germinal products add whose request also names a return of its own still returns to the registered germinal products pages
+**ID**: SCN-INS-ADDR-048-C
+- **GIVEN** a trader is on the add page opened with a germinal products journey handshake, and the request also names a return of its own
+- **WHEN** they save or cancel
+- **THEN** they still return to the registered germinal products pages, not the request's own return
+
+#### Scenario: An address saved from a germinal products notification is the same record as one saved from live animals
+**ID**: SCN-INS-ADDR-048-D
+- **GIVEN** a trader fills in the add page opened with a germinal products journey handshake
+- **WHEN** they save it
+- **THEN** it is stored with the same fields and the same role as one saved from a live animals notification

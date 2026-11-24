@@ -249,9 +249,11 @@ Each frontend's external calls:
 | `trade-imports-ins-frontend`     | `src/server/common/helpers/external-call-metrics.js`         | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
 
 The page-request counts have one name set, `page.request.backend.calls`
-and `page.request.session.resolutions` with dimension `request.kind`.
-animals-frontend and plants-frontend both publish it from
-`src/server/common/helpers/metrics/page-request-metrics.js`.
+and `page.request.session.resolutions` with dimension `request.kind`
+set to `page`. animals-frontend and plants-frontend both publish it from
+`src/server/common/helpers/metrics/page-request-metrics.js`. A
+dashboard, alert or performance-test report reads the counts under
+these names.
 ins-frontend publishes no page-request counts, and
 `trade-imports-animals-admin` publishes none of these metrics.
 

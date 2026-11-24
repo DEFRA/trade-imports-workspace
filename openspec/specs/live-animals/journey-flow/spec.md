@@ -375,7 +375,6 @@ While a notification is being amended, the system MUST make each of a page's sav
 - **WHEN** the user selects "Save and continue" or "Save and return to overview"
 - **THEN** they stay on the page, which shows an error for each missing answer
 - **AND** nothing is saved
-- **AND** nothing is saved
 
 ### Requirement: A notification started from the Import Notification Service's type question opens at the entry page
 **ID**: REQ-FLOW-017

@@ -9,6 +9,7 @@ The rules holding for every address a notification uses: how a consignment role'
 ### Requirement: Each consignment role's list offers only that role's addresses, and any address saved with no role is on all of them
 **ID**: REQ-ADDR-018
 The system MUST list, for each consignment role, only the organisation's addresses saved for that role, together with any address saved with no role at all; the consignor's list is the addresses saved as consignor.
+
 #### Scenario: An address saved for one role is listed only on that role's list
 **ID**: SCN-ADDR-018-A
 - **GIVEN** an address is saved for the consignee role alone

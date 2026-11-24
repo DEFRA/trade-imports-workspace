@@ -897,7 +897,7 @@ The system MUST, on the add page reached from a notification's role picker, offe
 
 ### Requirement: The address book service records an address's roles in any country and refuses missing roles, unknown roles and roles from more than one group
 **ID**: REQ-INS-ADDR-037
-The address book service MUST record an address's roles, in the order given with repeats dropped, and an update MUST replace them with those given. A create or update MUST give at least one of the six roles, and an address holding any of them MAY be in any country. It MUST refuse, naming the roles, saving nothing: missing or unknown roles; or roles spanning more than one group. It MUST record no address type, and its contract MUST mark roles required.
+The address book service MUST record an address's roles, in the order given with repeats dropped, and an update MUST replace them with those given. A create or update MUST give at least one of the five roles, and an address holding any of them MAY be in any country. It MUST refuse, naming the roles, saving nothing: missing or unknown roles; or roles spanning more than one group. It MUST record no address type, and its contract MUST mark roles required.
 
 #### Scenario: An address created with roles reads back with the same roles
 **ID**: SCN-INS-ADDR-037-A
@@ -911,11 +911,11 @@ The address book service MUST record an address's roles, in the order given with
 - **WHEN** it is updated with the roles importer and consignee
 - **THEN** the update response and a later read both show exactly the roles importer and consignee
 
-#### Scenario: A create or update carrying a role outside the six is refused naming the roles
+#### Scenario: A create or update carrying a role outside the five is refused naming the roles
 **ID**: SCN-INS-ADDR-037-C
-- **WHEN** an address is created with a role that is not one of the six
+- **WHEN** an address is created with a role that is not one of the five
 - **THEN** the service responds with a 400 validation error that names the roles, and no address is saved
-- **WHEN** a saved address is updated with a role that is not one of the six
+- **WHEN** a saved address is updated with a role that is not one of the five
 - **THEN** the service responds with a 400 validation error that names the roles, and the address keeps its original roles
 
 #### Scenario: An update that omits the roles is refused and the address keeps them
@@ -981,6 +981,12 @@ The system MUST split the address book list into three tabs, 'Origin and Consign
 - **THEN** the 'Origin and Consignor' tab is selected
 - **WHEN** they open it with a tab that is not one of the three
 - **THEN** the 'Origin and Consignor' tab is selected
+
+#### Scenario: Following a tab with JavaScript off loads that tab
+**ID**: SCN-INS-ADDR-038-D
+- **GIVEN** JavaScript is switched off
+- **WHEN** the user follows the 'Destination, Consignee and Importer' tab
+- **THEN** the 'Destination, Consignee and Importer' tab is loaded and marked as selected, with its addresses listed
 
 #### Scenario: A search on a tab lists only that tab's matches and its pages keep the tab and the search
 **ID**: SCN-INS-ADDR-038-E
@@ -1052,7 +1058,7 @@ The address book service MUST, asked for one or more roles, return only the call
 
 #### Scenario: An unknown role is refused
 **ID**: SCN-INS-ADDR-040-C
-- **WHEN** the list is asked for a role that is not one of the six
+- **WHEN** the list is asked for a role that is not one of the five
 - **THEN** the service responds with a 400 error
 
 #### Scenario: Every live address is listed when no role is asked for
@@ -1119,7 +1125,7 @@ The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offeri
 
 ### Requirement: The address book service matches a search against search roles
 **ID**: REQ-INS-ADDR-042
-The address book service MUST, given search roles, return the caller's organisation's live addresses holding any of them as well as the addresses the search text and country codes match, kept within any roles asked for (REQ-INS-ADDR-040). It MUST refuse a search role outside the six with a 400 bad request.
+The address book service MUST, given search roles, return the caller's organisation's live addresses holding any of them as well as the addresses the search text and country codes match, kept within any roles asked for (REQ-INS-ADDR-040). It MUST refuse a search role outside the five with a 400 bad request.
 
 #### Scenario: A search role widens the search
 **ID**: SCN-INS-ADDR-042-A
@@ -1130,7 +1136,7 @@ The address book service MUST, given search roles, return the caller's organisat
 
 #### Scenario: An unknown search role is refused
 **ID**: SCN-INS-ADDR-042-B
-- **WHEN** the list is asked for a search role that is not one of the six
+- **WHEN** the list is asked for a search role that is not one of the five
 - **THEN** the service responds with a 400 error
 
 ### Requirement: Adding an address from the address book starts by choosing its address type

@@ -118,6 +118,14 @@ Seeded state must be indistinguishable from state a user creates through the UI.
 - Seeded answers stay in step with the answers the journey flow clicks. `api-seed-parity.spec.ts` compares the two.
 - No Faker for a value the frontend serves or a picker chooses. Faker may only pick which canned entry to use, or fill a field a user types freely, such as an internal reference.
 
+```typescript
+// Bad: an address that no picker on the page can produce
+const consignor = { name: faker.company.name(), postcode: faker.location.zipCode() };
+
+// Good: the record the address book serves, by its real name
+consignor: 'Astra Rosales',
+```
+
 ## Animals domain: answers as data, journeys as translators
 
 The animals domain treats **`NotificationAnswers`** (`domain/animals/constants/journey-options.ts`) as the single source of what a notification says. The UI journey (`flows/animals/journey.ts`) and the seeded journey (`flows/animals/seeded-journey.ts`, `domain/animals/fixtures/seed-form-steps.ts`, `bin/seed-notification.ts`) only translate that data into clicks or form posts. Do not add parallel journey methods for a new scenario when a data change on the answers is enough.
@@ -157,14 +165,6 @@ Confirm line indices follow **selection order** on the commodity page; seeded po
 ### Legacy document fields
 
 - When keeping a legacy Mongo or API field for one release (for example `commodity` beside `commodities[]`), add a **TODO with a ticket key** for removal so it does not become permanent.
-
-```typescript
-// Bad: an address that no picker on the page can produce
-const consignor = { name: faker.company.name(), postcode: faker.location.zipCode() };
-
-// Good: the record the address book serves, by its real name
-consignor: 'Astra Rosales',
-```
 
 ## Locators
 

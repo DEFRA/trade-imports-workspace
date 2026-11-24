@@ -42,7 +42,7 @@ The system MUST ask the destination question under the heading and description t
 
 ### Requirement: The page offers search of its role's addresses with a count of results
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-002
-The system MUST offer a search of the place-of-destination role's addresses by name, address or country, MUST show eight a page with how many are shown out of the total under the heading "Select an address", MUST offer GOV.UK pagination under the table where the role holds more than eight and none where it holds eight or fewer, and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole list, from its first page.
+The system MUST offer a search of the place-of-destination role's addresses by name, address or country, MUST show eight a page with how many are shown out of every address found under the heading "Select an address", MUST offer GOV.UK pagination under the table where more than eight were found and none where eight or fewer were found, and MUST say so rather than showing an empty table when nothing matches. Clearing the search MUST restore the whole list, from its first page.
 
 #### Scenario: The picker shows eight of the role's list a page, with its count
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-002-A

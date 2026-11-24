@@ -102,7 +102,7 @@ The system MUST search the picker's list on the server, from the button named "S
 **ID**: SCN-PLANTS-ADDR-002-I
 - **GIVEN** the user has opened a picker from the overview or the review, and its list runs to more than one page
 - **WHEN** they move to another page
-- **THEN** Back still answers the page they came from, and saving still returns them to it
+- **THEN** Back still answers the page they came from, and that page still travels with them, so the save controls behave as they did before they moved page
 
 #### Scenario: A page past the last page serves the last page, and one that is not a page number serves the first
 **ID**: SCN-PLANTS-ADDR-002-J

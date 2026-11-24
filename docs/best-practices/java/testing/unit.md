@@ -534,9 +534,13 @@ private MethodArgumentNotValidException createValidationException(FieldError... 
 | `NotificationServiceTest` | 10 | Save new (two-phase: ID then reference), save existing (upsert), findAll, delete all-found, delete with missing (NotFoundException + FAILURE audit), delete empty list (no-op) |
 | `GlobalExceptionHandlerTest` | 9 | Validation → 400, NotFoundException → 404, ConflictException → 409, generic Exception → 500, traceId from MDC, null traceId handling |
 | `TraceIdPropagationInterceptorTest` | 6 | Header set when MDC populated, not set when null/blank/empty, overwrites existing header, body passed through unchanged |
-| `EmfMetricsPublisherTest` | ~4 | Metrics publish scheduling, meter registry interactions |
-| `MetricsConfigTest` | ~3 | MeterRegistry bean creation, publisher registration |
-| `MetricsConfigurationPropertiesTest` | ~3 | Annotation contracts: `@ConditionalOnProperty`, `@Service`, `@Scheduled(fixedRate=60000)` |
+| `MetricsConfigTest` | ~10 | TimedAspect and CountedAspect beans, `EmfMeterRegistry` created or left out by `aws.emf.enabled`, the not-publishing log |
+| `EmfMeterRegistryTest` | - | EMF publishing from the meter registry |
+| `ExternalCallRecorderTest` | - | `external.call.duration` and `external.call.failure` recording |
+| `AwsCallRecorderTest` | - | AWS SDK call timing through the execution interceptor, which the SNS client uses |
+| `MongoCommandMetricsTest` | - | MongoDB command timing through the driver's `CommandListener` |
+| `MongoAvailabilityTest`, `DependencyAvailabilityMetricsTest` | - | `external.dependency.available` for MongoDB, S3 and SNS |
+| `EcsEventEncoderTest` | - | `event.*` key-value pairs written as the nested event object |
 | `CertificateLoaderTest` | ~5 | null/empty/valid/invalid certificate paths |
 | `CacheConfigTest` | ~3 | Caffeine spec construction, CacheManager bean |
 | `ApplicationTest` | 0 | Placeholder only — no assertions |

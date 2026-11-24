@@ -277,13 +277,12 @@ the same name as the service's (CLAUDE.md rule 2). A reader left on an
 old name finds no data and says nothing:
 
 - the service's dashboard and alerts, above;
-- `trade-imports-performance-tests`, whose reports read the external
-  call metrics and their dependency and operation dimensions
-  (`src/config/external-calls.js`, `src/lib/external-calls.js`) by
-  each service's own names: set the service's entry in
-  `SCHEME_BY_SERVICE` to `dotted`. It reads the page-request counts
-  (`src/config/call-ratios.js`) by their one name set, so they need no
-  change.
+- `trade-imports-performance-tests`, whose reports read each service's
+  external call metrics and, for a frontend, its page-request counts by
+  the names that service publishes (`src/config/external-calls.js`,
+  `src/lib/external-calls.js`): set the service's `externalCalls` and,
+  for a frontend, `pageRequests` scheme in `SCHEME_BY_SERVICE` to
+  `dotted`.
 
 | Old                                                         | New                                               |
 | ----------------------------------------------------------- | ------------------------------------------------- |

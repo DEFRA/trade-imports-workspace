@@ -852,9 +852,10 @@ log.info("Address lookup answered: status={}", response.getStatusCode().value())
 ```xml
 <configuration>
   <springProfile name="!local">
-    <!-- ECS format for deployed environments -->
+    <!-- ECS format for deployed environments. EcsEventEncoder, not EcsEncoder: it writes an
+         external-call line's event.* key-value pairs as the nested event object CDP's OpenSearch keeps. -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-      <encoder class="co.elastic.logging.logback.EcsEncoder">
+      <encoder class="uk.gov.defra.trade.imports.animals.logging.EcsEventEncoder">
         <serviceName>trade-imports-animals-backend</serviceName>
       </encoder>
     </appender>

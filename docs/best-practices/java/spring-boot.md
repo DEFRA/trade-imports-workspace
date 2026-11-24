@@ -35,8 +35,11 @@ src/main/java/uk/gov/defra/tradeimportsanimals/
 │   └── filter/
 │       ├── RequestTracingFilter.java
 │       └── AdminSecretFilter.java
+├── logging/
+│   └── EcsEventEncoder.java
 └── metrics/
     ├── EmfMeterRegistry.java
+    ├── ExternalCallRecorder.java
     └── NotificationMetrics.java
 ```
 
@@ -1028,6 +1031,8 @@ public void countChange(Change change) {
         .increment();
 }
 ```
+
+Calls to MongoDB, S3 and SNS are recorded through `ExternalCallRecorder` at the transport, not in the calling class. Do not time them by hand. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
 
 Each metric name goes on the allowlist (`management.metrics.enable` in `application.yml`), or its meter publishes nothing.
 

@@ -235,11 +235,10 @@ false` with the names allowed. A name not on it gets a no-op meter:
 
 This section is the one record of which services still publish the
 older PascalCase names, where, and how each moves to the dot-case names
-above (checked 2026-11-23). `trade-imports-reference-data` and
-`trade-imports-dynamics-gateway` were among them and have moved; the
-tables below record how, as the worked example.
-`trade-imports-animals-frontend` has moved too (EUDPA-674, PR #488):
-`NODE.md` is the recipe it proved.
+above. `trade-imports-reference-data` and `trade-imports-dynamics-gateway`
+publish the dot-case names, and the tables below map their old names to
+the new as the worked example. `trade-imports-animals-frontend`
+publishes them too, and `NODE.md` is its recipe.
 
 Each frontend's external calls:
 
@@ -252,8 +251,7 @@ Each frontend's external calls:
 The page-request counts have one name set, `page.request.backend.calls`
 and `page.request.session.resolutions` with dimension `request.kind`.
 animals-frontend and plants-frontend both publish it from
-`src/server/common/helpers/metrics/page-request-metrics.js`, and have
-moved off `BackendCalls`, `SessionResolutions` and `RequestKind`.
+`src/server/common/helpers/metrics/page-request-metrics.js`.
 ins-frontend publishes no page-request counts, and
 `trade-imports-animals-admin` publishes none of these metrics.
 

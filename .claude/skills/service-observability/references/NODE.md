@@ -99,8 +99,7 @@ Rules that held:
   log line's message,
   `External call defra-id/jwks (SYN-12) success in 3 ms`, not a
   dimension or a field: a field outside CDP's
-  ECS list is dropped. This replaces the `interface.id` field in the
-  agreed list of 2026-11-11, and is recorded on EUDPA-674.
+  ECS list is dropped.
 - **A streamed response is timed to its headers.** The body is read
   after the call is recorded.
 
@@ -161,7 +160,7 @@ through `@hapi/yar` and `@hapi/catbox-redis` on an ioredis client.
   error with `err` (`Redis connection error`), a node error with the
   node's address as `server.address` (nested, on CDP's allowed list), and counts
   `external.dependency.error`, both `{dependency=redis}`.
-- **Commands are not timed**, as agreed on 2026-11-11: a `get`, `set`
+- **Commands are not timed**: a `get`, `set`
   or `drop` publishes no `external.call.duration` or
   `external.call.failure` and writes no external-call line, and is not
   in the call counts.
@@ -221,8 +220,7 @@ file. animals-frontend has 84 routes (47 GET, 36 POST, 1 DELETE), 72 of
 them under `/live-animals/notifications/{journeyId}/`. Tagged by route
 template that is up to 84 method and route pairs times the status
 classes each returns, about 170 metrics in each environment. The team
-chose to tag by area (2026-11-17): 37 areas, 56 method and area
-pairs, about 115 metrics. Recorded on EUDPA-674.
+tags by area: 37 areas, 56 method and area pairs, about 115 metrics.
 
 `journey.validation.failure`, a count tagged `page` (the route's literal
 segments after its first path parameter, such as

@@ -538,7 +538,7 @@ private MethodArgumentNotValidException createValidationException(FieldError... 
 | `EmfMeterRegistryTest` | 11 | EMF publishing from the meter registry |
 | `ExternalCallRecorderTest` | 5 | `external.call.duration` and `external.call.failure` recording |
 | `AwsCallRecorderTest` | 5 | AWS SDK call timing through the execution interceptor, which the SNS client uses |
-| `MongoCommandMetricsTest` | 5 | MongoDB command timing through the driver's `CommandListener` |
+| `MongoCallRecorderTest` | 6 | MongoDB command timing through the driver's `CommandListener`, and which replies count as failures |
 | `MongoAvailabilityTest`, `DependencyAvailabilityMetricsTest` | 16, 6 | `external.dependency.available` for MongoDB, S3 and SNS |
 | `EcsEventEncoderTest` | 9 | `event.*` key-value pairs written as the nested event object |
 | `CertificateLoaderTest` | ~5 | null/empty/valid/invalid certificate paths |

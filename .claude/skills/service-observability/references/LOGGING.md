@@ -81,9 +81,11 @@ Two pieces, both in address-book:
    key-value pairs as one nested `event` object, with a `Number` written
    as a JSON number and a non-finite one as a string. It writes the
    line's `error.*` key-value pairs as flat top-level fields, with no
-   stack trace. When the line carries a throwable, the throwable's own
-   ECS `error.*` fields are written instead of those key-value pairs.
-   The ECS encoder ignores key-value pairs, so none is written twice. A
+   stack trace. It has no case for a line carrying both `error.*`
+   key-value pairs and a throwable: the external-call line never
+   attaches its cause (step 1), so no line reaches one. Do not add a
+   guard for it. The ECS encoder ignores key-value pairs, so none is
+   written twice. A
    line with no `event.*` or `error.*` key-value pairs comes out exactly
    as the ECS encoder writes it.
 
@@ -127,7 +129,7 @@ reaches OpenSearch flat.
 
 | Test | Proves |
 |---|---|
-| Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; with a throwable, its `error.*` fields written instead of the `error.*` key-value pairs; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
+| Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
 | Unit test with a capturing log appender, a successful call (address-book's `ExternalCallRecorderTest`) | One INFO line per call, with the four `event.*` key-value pairs, the duration a `Long`, and no throwable |
 | Unit test with a capturing log appender, a failed call (address-book's `ExternalCallRecorderTest`) | One WARN line per call, with `event.outcome` `failure`, `error.type` and `error.message` from the cause, and no throwable |
 | Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then parsing the console line with the given `event.action` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace` |

@@ -35,8 +35,8 @@ src/main/java/uk/gov/defra/trade/imports/animals/
 │   └── EcsEventEncoder.java
 └── metrics/
     ├── EmfMeterRegistry.java
-    ├── ExternalCallRecorder.java      ← times a call the transport cannot see (S3 download)
-    ├── MongoCommandMetrics.java       ← MongoDB driver CommandListener
+    ├── ExternalCallRecorder.java      ← records each dependency call (meters, log line, outcome)
+    ├── MongoCallRecorder.java         ← MongoDB driver CommandListener
     ├── AwsCallRecorder.java           ← AWS SDK ExecutionInterceptor (SNS)
     └── DependencyAvailabilityMetrics.java
 ```
@@ -472,19 +472,33 @@ EmfMeterRegistry emfMeterRegistry(
         @Value("${aws.emf.namespace}") String namespace,
         @Value("${aws.emf.step}") Duration step,
         @Value("${aws.emf.environment:}") String environment) {
-    if (!environment.isBlank()) {
-        EnvironmentConfigurationProvider.getConfig()
-            .setEnvironmentOverride(Environments.valueOf(environment));
-        log.info("Writing metrics to the {} EMF environment", environment);
-    }
+    overrideEmfEnvironment(environment);
     EmfMeterRegistry registry = new EmfMeterRegistry(namespace, step, Clock.SYSTEM, MetricsLogger::new);
     registry.start(new NamedThreadFactory("emf-meter-registry"));
     log.info("Publishing metrics to CloudWatch namespace {} every {}", namespace, step);
     return registry;
 }
+
+@Bean
+ApplicationRunner emfPublishingOffLog(ObjectProvider<EmfMeterRegistry> emfMeterRegistry) {
+    return args -> {
+        if (emfMeterRegistry.getIfAvailable() == null) {
+            log.info("Not publishing metrics to CloudWatch: aws.emf.enabled is not true");
+        }
+    };
+}
+
+private static void overrideEmfEnvironment(String environment) {
+    if (environment.isBlank()) {
+        return;
+    }
+    EnvironmentConfigurationProvider.getConfig()
+        .setEnvironmentOverride(Environments.valueOf(environment));
+    log.info("Writing metrics to the {} EMF environment", environment);
+}
 ```
 
-`@ConditionalOnProperty` leaves the bean out entirely — no stub, no `if` check needed. Integration tests leave `aws.emf.enabled` false, so Spring Boot's in-memory registry is used and nothing is published.
+`@ConditionalOnProperty` leaves the bean out entirely — no stub, no `if` check needed. The condition is written once: the off-state log asks whether the bean exists rather than restating the property test. The EMF environment override changes JVM-wide state, so it sits in a method whose name says so, and the bean method only builds and starts the registry. Integration tests leave `aws.emf.enabled` false, so Spring Boot's in-memory registry is used and nothing is published.
 
 ---
 
@@ -1033,7 +1047,7 @@ public void countChange(Change change) {
 }
 ```
 
-Calls to MongoDB and SNS are recorded at the transport, not in the calling class: MongoDB by `MongoCommandMetrics`, the driver's `CommandListener`, and SNS by `AwsCallRecorder`, an AWS SDK `ExecutionInterceptor`. Do not time them by hand. An S3 download is the exception: `S3DocumentService.streamToOutput` wraps the fetch and the whole body read in `ExternalCallRecorder.measure`, because a streamed body is still being read after the SDK call has returned. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
+Calls to MongoDB and SNS are recorded at the transport, not in the calling class: MongoDB by `MongoCallRecorder`, the driver's `CommandListener`, and SNS by `AwsCallRecorder`, an AWS SDK `ExecutionInterceptor`. Do not time them by hand. An S3 download is the exception: `S3DocumentService.streamToOutput` times its `get-object` call itself, summing the time spent in `getObject` and in each read of the body and leaving out the writes to the client, because a streamed body is still being read after the SDK call has returned. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
 
 Each metric name goes on the allowlist (`management.metrics.enable` in `application.yml`), or its meter publishes nothing.
 

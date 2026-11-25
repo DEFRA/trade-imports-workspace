@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import { renderDependabotConfig } from './dependabot.js'
 import {
   AXE_HOLD,

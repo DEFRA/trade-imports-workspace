@@ -74,15 +74,21 @@ const freshRow = (packageJson, [name, target]) => {
   }
 }
 
+const movesVersion = (row) => row.current !== row.target
+
 /**
  * One row per package ncu would upgrade, in ncu's order, with no work done.
+ * A package whose package.json version already is the target, or that
+ * neither dependencies nor devDependencies lists, gets no row.
  *
  * @param {Record<string, string>} upgrades - What `ncu --jsonUpgraded` gives
  * @param {object} packageJson - The repo's parsed package.json
  * @returns {object[]}
  */
 export const freshRowsOf = (upgrades, packageJson) =>
-  Object.entries(upgrades).map((entry) => freshRow(packageJson, entry))
+  Object.entries(upgrades)
+    .map((entry) => freshRow(packageJson, entry))
+    .filter(movesVersion)
 
 const keepEarlierWork = (row, earlier) =>
   earlier === undefined

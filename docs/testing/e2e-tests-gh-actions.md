@@ -77,6 +77,14 @@ It reads which services call the service directly from the stack's compose wirin
 
 A pull request runs the `@cross-browser` tests in Chromium, with the rest of the e2e specs. The Firefox, WebKit and iPhone runs are not part of a pull request: they run on [CDP](e2e-tests-cdp.md#cross-browser-runs-tbc) (`TBC`).
 
+## Merging a tests-repo change with its service change
+
+When a change needs a pull request in `trade-imports-ins-tests` and one in a service on the same branch name, merge the service's first. Wait for the service's `Publish` run on `main` to finish, because that run pushes the service's `:latest` image. Then merge the tests-repo pull request.
+
+The tests repo's `main` E2E run pulls each service's `:latest` image when it starts. If both merge together, that run can start before the service's `Publish` has pushed, run the new tests against the old service, and go red. A rerun once `Publish` is green passes.
+
+The nightly digest reports a red tests-repo `main` that started before a paired service's `Publish` finished as "rerun", not "broken".
+
 ## Scheduled runs
 
 ### Security tests

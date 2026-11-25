@@ -102,6 +102,12 @@ describe('devServices', () => {
     expect(referenceData.refreshWith).toEqual(['trade-imports-stub'])
   })
 
+  test('reads an empty dev overlay as one with no services', () => {
+    writeFile(join(root, DEV_OVERLAY_PATH), '\n')
+
+    expect(devServices(root)).toEqual([])
+  })
+
   test('leaves out a service the overlay does not build, and a mount outside the repo', () => {
     writeFile(
       join(root, DEV_OVERLAY_PATH),

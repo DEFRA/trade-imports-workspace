@@ -54,8 +54,8 @@ requirements-pipeline/
     PREFLIGHT_WALKER.md    batch triage of what BUILD's pre-flight found on a split theme: moved repos, requirements never placed, requirements whose text changed
   workflow/
     README.md              both workflows' config and stages; the loop's executors and what stops for a human
-    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → area plan → reconcile per area → cross-area → challenge → draft rows per area → combine → report
-    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, area-plan, reconcile, question-challenge, consolidate
+    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → area plan → reconcile per area → cross-area → challenge → draft rows per area → combine → combine review → report
+    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, area-plan, reconcile, question-challenge, consolidate, combine-review
     increment-build-loop.js
     codex/                 the implement, review and fix briefs for executor: 'codex'
       schemas/             the output schemas those briefs answer in

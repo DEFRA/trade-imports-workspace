@@ -154,7 +154,7 @@ describe('the workspace gates.json', () => {
         run: 'tim build duplication',
         cwd: 'tim'
       },
-      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' },
+      { name: 'unit', phase: 'unit', run: 'coverage', cwd: 'tim' },
       {
         name: 'coverage',
         phase: 'unit',

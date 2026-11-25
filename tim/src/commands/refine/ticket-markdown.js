@@ -1,16 +1,14 @@
 import { renderPage } from '../confluence/index.js'
+import { escapeForRegExp } from '../../utils/escape-for-reg-exp.js'
 
 const withoutTrailingNewlines = (text) => text.replace(/\n+$/, '')
 
 const shown = (value) => String(value ?? null)
 
-const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
 /**
- * The fields a refinement reads from a ticket, with the stand-ins used when
- * Jira gives none.
+ * The fields read from a ticket, with the stand-ins used when Jira gives none.
  *
- * @param {object} ticket - From the Jira client's `getTicket(id, {withRendered: true})`
+ * @param {object} ticket - The ticket's `id`, `summary`, `type`, `status`, `priority`, `assignee`, `parent`, `labels` and `renderedDescription`
  * @returns {{key: string, summary: string, type: string, status: string, priority: string, assignee: string, parent: string, labels: string[], description: string}}
  */
 export const refinementFieldsOf = (ticket) => ({
@@ -37,7 +35,7 @@ export const refinementFieldsOf = (ticket) => ({
  */
 export const confluenceLinksIn = (description, atlassianBase) => {
   const linkPattern = new RegExp(
-    `${escapeRegExp(atlassianBase)}/wiki/spaces/[^"<>\\s]+`,
+    `${escapeForRegExp(atlassianBase)}/wiki/spaces/[^"<>\\s]+`,
     'g'
   )
   return [...new Set(description.match(linkPattern) ?? [])].sort()
@@ -59,27 +57,71 @@ const confluenceSection = (page) =>
   `### ${shown(page.title)}\n\n${withoutTrailingNewlines(renderPage(page))}\n\n`
 
 /**
- * @param {object[]} pages - From the Confluence client's `getPage`
+ * @param {object[]} pages - Each page's `title` and body, as the Confluence reader renders it
  * @returns {string}
  */
 export const confluenceMarkdown = (pages) =>
   pages.map(confluenceSection).join('')
 
+const parentSection = (parent) =>
+  parent
+    ? [
+        '## Parent',
+        '',
+        `### ${parent.key}: ${parent.summary} (${parent.status})`,
+        '',
+        withoutTrailingNewlines(parent.description),
+        ''
+      ]
+    : []
+
+const linkLine = ({ relation, otherKey, otherStatus, otherSummary }) =>
+  `- ${shown(relation)} ${shown(otherKey)} (${shown(otherStatus)}): ${otherSummary}`
+
+const linksSection = (links) =>
+  links?.length ? ['## Linked tickets', '', ...links.map(linkLine), ''] : []
+
+const subtaskLine = ({ key, status, summary }) =>
+  `- ${key} (${shown(status)}): ${summary}`
+
+const subtasksSection = (subtasks) =>
+  subtasks?.length ? ['## Subtasks', '', ...subtasks.map(subtaskLine), ''] : []
+
+const attachmentLine = ({ filename, mimeType, savedAs, notSavedBecause }) =>
+  savedAs
+    ? `- ${filename} (${shown(mimeType)}): saved as ${savedAs}`
+    : `- ${filename} (${shown(mimeType)}): not saved, ${notSavedBecause}`
+
+const attachmentsSection = (attachments) =>
+  attachments?.length
+    ? ['## Attachments', '', ...attachments.map(attachmentLine), '']
+    : []
+
 /**
- * The `ticket.md` a refinement assesses.
+ * The ticket as Markdown: its metadata, description, comments and Confluence
+ * pages. Each of `parent`, `links`, `subtasks` and `attachments` adds its own
+ * section when given and not empty, and nothing otherwise.
  *
  * @param {object} args
  * @param {ReturnType<typeof refinementFieldsOf>} args.fields
  * @param {number} args.commentCount
  * @param {string} args.comments - From {@link commentsMarkdown}
  * @param {string} args.confluence - From {@link confluenceMarkdown}
+ * @param {{key: string, summary: string, status: string, description: string}} [args.parent] - The parent's rendered description
+ * @param {Array<{relation: string|null, otherKey: string|null, otherStatus: string|null, otherSummary: string}>} [args.links]
+ * @param {Array<{key: string, status: string|null, summary: string}>} [args.subtasks]
+ * @param {Array<{filename: string, mimeType: string|null, savedAs?: string, notSavedBecause?: string}>} [args.attachments] - `savedAs` is the file's path when it was saved, else `notSavedBecause` says why not
  * @returns {string}
  */
 export const ticketMarkdown = ({
   fields,
   commentCount,
   comments,
-  confluence
+  confluence,
+  parent,
+  links,
+  subtasks,
+  attachments
 }) =>
   [
     `# ${fields.key}: ${fields.summary}`,
@@ -96,6 +138,9 @@ export const ticketMarkdown = ({
     '',
     fields.description,
     '',
+    ...parentSection(parent),
+    ...linksSection(links),
+    ...subtasksSection(subtasks),
     '## Acceptance Criteria',
     '',
     '<!-- Extract from description above - look for "AC:", "Acceptance Criteria:", numbered lists, Given/When/Then -->',
@@ -106,7 +151,8 @@ export const ticketMarkdown = ({
     '',
     '## Confluence References',
     '',
-    `${confluence}\n`
+    `${confluence}\n`,
+    ...attachmentsSection(attachments)
   ].join('\n')
 
 /**
@@ -134,7 +180,7 @@ export const reviewStub = (
     '[Priority]': priority
   }
   const placeholder = new RegExp(
-    Object.keys(valueOf).map(escapeRegExp).join('|'),
+    Object.keys(valueOf).map(escapeForRegExp).join('|'),
     'g'
   )
   const stub = template.replace(placeholder, (found) => valueOf[found])

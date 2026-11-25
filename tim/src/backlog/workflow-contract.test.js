@@ -1915,14 +1915,35 @@ describe('increment-build-loop', () => {
       )
     })
 
-    test('stops with derive-failed when the start agent copies no JSON', async () => {
+    test('starts again when the start agent copies tim JSON that does not parse', async () => {
+      const unparsedCopy = { exitCode: 0, stdout: `${START_ANSWER.stdout}}` }
+
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
-          { exitCode: 127, stdout: 'zsh: command not found: tim' }
+          unparsedCopy,
+          START_ANSWER,
+          null
         ]
+      })
+
+      expect(stageLabels(run).slice(0, 4)).toEqual([
+        'workspace',
+        'preflight',
+        'inc-900 start',
+        'inc-900 start'
+      ])
+      expect(run.result.stopped?.reason).not.toBe('derive-failed')
+    })
+
+    test('stops with derive-failed when the start agent copies no JSON twice', async () => {
+      const notFound = { exitCode: 127, stdout: 'zsh: command not found: tim' }
+
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, notFound, notFound]
       })
 
       expect(run.result.stopped).toEqual({
@@ -11777,6 +11798,15 @@ describe('distil', () => {
     backlogByStatus: { todo: 2 }
   }
   const REPORT_TEXT = '# demo: backlog report\n\n## Summary\n'
+  const NO_CANDIDATES = {
+    ok: true,
+    problems: [],
+    rowsToBuild: 2,
+    candidateCount: 0,
+    candidates: [],
+    withoutTouches: [],
+    summary: 'nothing to combine'
+  }
 
   const HAPPY_ANSWERS = {
     status: statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
@@ -11802,6 +11832,7 @@ describe('distil', () => {
     'draft rows tiers': DRAFTED,
     'combine rows': CONSOLIDATED,
     'check backlog': BACKLOG_OK,
+    'combine candidates': NO_CANDIDATES,
     report: { report: REPORT_TEXT, issues: [] }
   }
 
@@ -11969,6 +12000,7 @@ describe('distil', () => {
         'draft rows tiers',
         'combine rows',
         'check backlog',
+        'combine candidates',
         'report'
       ])
     })
@@ -12173,6 +12205,76 @@ describe('distil', () => {
           )
         }).toEqual({ part: true, verify: true })
       })
+    })
+
+    describe('a ticket source', () => {
+      const ticketSource = {
+        ...PENDING_SOURCE,
+        id: 'ticket:EUDPA-210',
+        kind: 'ticket',
+        slug: 'ticket-eudpa-210'
+      }
+      const forTicket = (answer) =>
+        JSON.parse(
+          JSON.stringify(answer).replaceAll('repo-tests', 'ticket-eudpa-210')
+        )
+      const runTicket = () =>
+        runDistil(
+          {},
+          {
+            status: statusWith([ticketSource, VERIFIED_SOURCE]),
+            'ticket:EUDPA-210 characterise': CHARACTERISED,
+            'ticket:EUDPA-210 check partition':
+              partitionedAs('ticket-eudpa-210'),
+            'ticket:EUDPA-210 extract part 1/2': extractedPart(1),
+            'ticket:EUDPA-210 extract part 2/2': extractedPart(2),
+            'ticket:EUDPA-210 merge extract': forTicket(MERGED_EXTRACT),
+            'ticket:EUDPA-210 verify 1/2': verifiedPart(1),
+            'ticket:EUDPA-210 verify 2/2': verifiedPart(2),
+            'ticket:EUDPA-210 merge': MERGED
+          }
+        )
+      const ticketBrief =
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/extract-ticket.md'
+
+      test('has the characterise, extract part and verify agents follow the ticket brief', async () => {
+        const run = await runTicket()
+
+        expect({
+          characterise: promptOf(run, 'ticket:EUDPA-210 characterise').includes(
+            ticketBrief
+          ),
+          part: promptOf(run, 'ticket:EUDPA-210 extract part 1/2').includes(
+            ticketBrief
+          ),
+          verify: promptOf(run, 'ticket:EUDPA-210 verify 1/2').includes(
+            ticketBrief
+          )
+        }).toEqual({ characterise: true, part: true, verify: true })
+      })
+    })
+
+    test('names a brief file for every kind sources.schema.json allows, and no other', () => {
+      const workflowKinds = wordsInJsArray(
+        readFileSync(scriptPath, 'utf8'),
+        'EXTRACT_KINDS'
+      )
+      const schemaKinds = JSON.parse(
+        readFileSync(
+          join(buildLoopDir, '..', 'references', 'sources.schema.json'),
+          'utf8'
+        )
+      ).$defs.source.properties.kind.enum
+
+      expect(workflowKinds).toEqual(schemaKinds)
+      expect(
+        workflowKinds.filter(
+          (kind) =>
+            !existsSync(
+              join(buildLoopDir, 'distil', 'briefs', `extract-${kind}.md`)
+            )
+        )
+      ).toEqual([])
     })
 
     test('merges the parts, then checks the verify stage', async () => {
@@ -12392,6 +12494,228 @@ describe('distil', () => {
       expect(run.result.stopped).toEqual({
         reason: 'status-failed',
         detail: 'tim distil status failed: sources.json has no "goal".'
+      })
+    })
+  })
+
+  describe('the combine review', () => {
+    const CANDIDATE = {
+      rows: ['inc-001', 'inc-002'],
+      sharedTouches: ['frontend:src/server/origin'],
+      waitingRow: 'inc-002',
+      reason: 'share frontend:src/server/origin; inc-002 waits only on inc-001'
+    }
+    const WITH_CANDIDATES = {
+      ...NO_CANDIDATES,
+      candidateCount: 1,
+      candidates: [CANDIDATE],
+      withoutTouches: ['inc-003']
+    }
+    const REVIEWED = {
+      ok: true,
+      merged: ['inc-002 into inc-001: one page, one plan'],
+      keptApart: ['inc-003 and inc-004: a different code area'],
+      decisions: ['Kept the origin page with its hint.'],
+      summary: 'merged one'
+    }
+    const SNAPSHOT_COMPARED = {
+      snapshotOk: true,
+      removed: [],
+      changed: [],
+      splitOffChanged: [],
+      added: [],
+      mergedAway: [{ id: 'inc-002', into: 'inc-001' }]
+    }
+    const AFTER_REVIEW = {
+      ...BACKLOG_OK,
+      ...SNAPSHOT_COMPARED,
+      backlogByStatus: { todo: 1, 'merged-into': 1 }
+    }
+    const runReview = ({
+      candidates = WITH_CANDIDATES,
+      check = AFTER_REVIEW
+    } = {}) =>
+      runDistil(
+        {},
+        {
+          'combine candidates': candidates,
+          'combine candidates again': candidates,
+          'combine review': REVIEWED,
+          'combine review send-back 1': REVIEWED,
+          'combine review send-back 2': REVIEWED,
+          'check combine review': check,
+          'check combine review 2': check,
+          'check combine review 3': check
+        }
+      )
+
+    test('runs no review agent and leaves the backlog alone when nothing is a candidate', async () => {
+      const run = await runDistil()
+
+      expect({
+        labels: labelsOf(run).filter((label) =>
+          /combine (candidates|review)/.test(label)
+        ),
+        combineReview: run.result.combineReview,
+        logged: run.logs.includes(
+          'combine review: shared/demo: no candidates, so backlog.json is left as it is'
+        )
+      }).toEqual({
+        labels: ['combine candidates'],
+        combineReview: {
+          ran: false,
+          candidates: 0,
+          rowsBefore: 2,
+          rowsAfter: 2,
+          merged: [],
+          keptApart: [],
+          decisions: []
+        },
+        logged: true
+      })
+      expect(promptOf(run, 'report')).toContain(
+        'THE COMBINE REVIEW found nothing to combine: 2 rows still to build stay 2.'
+      )
+    })
+
+    test('saves a snapshot, lists the candidates and counts the rows still to build, on the light tier', async () => {
+      const run = await runDistil()
+
+      const prompt = promptOf(run, 'combine candidates')
+      expect(prompt).toContain(
+        '`tim distil backlog-snapshot shared/demo --save combined --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim backlog combine-candidates shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim backlog check shared/demo --workspace ~/ws --json`'
+      )
+      expect(optionsOf(run, 'combine candidates').model).toBe('haiku')
+    })
+
+    test('has one think-tier agent follow the review brief, with every candidate and the checks', async () => {
+      const run = await runReview()
+
+      const prompt = promptOf(run, 'combine review')
+      expect(optionsOf(run, 'combine review').model).toBe('opus')
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/combine-review.md'
+      )
+      expect(prompt).toContain(
+        '- inc-001 and inc-002: share frontend:src/server/origin; inc-002 waits only on inc-001'
+      )
+      expect(prompt).toContain(
+        'These rows have no touches, so they pair only by what they wait on: inc-003.'
+      )
+      expect(prompt).toContain(
+        '`tim backlog check shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim distil coverage shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim distil backlog-snapshot shared/demo --compare-to combined --workspace ~/ws --json`'
+      )
+    })
+
+    test('runs after the combiner and before the report, and returns how many rows became how many', async () => {
+      const run = await runReview()
+
+      expect(labelsOf(run).slice(-4)).toEqual([
+        'combine candidates',
+        'combine review',
+        'check combine review',
+        'report'
+      ])
+      expect(run.result.combineReview).toMatchObject({
+        ran: true,
+        candidates: 1,
+        rowsBefore: 2,
+        rowsAfter: 1,
+        merged: REVIEWED.merged,
+        keptApart: REVIEWED.keptApart
+      })
+      expect(run.result.decisions.combine).toEqual(REVIEWED.decisions)
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('gives the report the counts, what merged and why the rest stand alone', async () => {
+      const run = await runReview()
+
+      const prompt = promptOf(run, 'report')
+      expect(prompt).toContain('2 rows still to build became 1')
+      expect(prompt).toContain('Say "2 rows became 1" in the summary.')
+      expect(prompt).toContain('- inc-002 into inc-001: one page, one plan')
+      expect(prompt).toContain('- inc-003 and inc-004: a different code area')
+    })
+
+    test.each([
+      [
+        'adds a row',
+        { ...AFTER_REVIEW, added: ['inc-009'] },
+        'inc-009: rows the review added. It adds no row: merge into a row that exists.'
+      ],
+      [
+        'removes a row',
+        { ...AFTER_REVIEW, removed: ['inc-002'] },
+        'backlog.json no longer has inc-002. Keep every existing row.'
+      ],
+      [
+        'merges a row whose notes name none',
+        {
+          ...AFTER_REVIEW,
+          mergedAway: [{ id: 'inc-002', into: null }]
+        },
+        'inc-002 is merged-into, but its notes do not name exactly one other row still to build. Add a note naming the row it went into, and no other row.'
+      ],
+      [
+        'merges a pair that is not a candidate',
+        {
+          ...AFTER_REVIEW,
+          mergedAway: [{ id: 'inc-004', into: 'inc-001' }]
+        },
+        'inc-004 into inc-001 is not one of the listed candidates. Merge only listed candidates.'
+      ]
+    ])('sends the review back when it %s', async (_, check, problem) => {
+      const run = await runReview({ check })
+
+      expect(labelsOf(run)).toContain('combine review send-back 1')
+      expect(promptOf(run, 'combine review send-back 1')).toContain(
+        `- ${problem}`
+      )
+    })
+
+    test('stops with the review stop reason when it is still wrong after the send-backs', async () => {
+      const run = await runReview({
+        check: { ...AFTER_REVIEW, added: ['inc-009'] }
+      })
+
+      expect(
+        labelsOf(run).filter((label) => label.startsWith('combine review'))
+      ).toEqual([
+        'combine review',
+        'combine review send-back 1',
+        'combine review send-back 2'
+      ])
+      expect(run.result.stopped).toEqual({
+        reason: 'combine-review-failed',
+        detail:
+          'backlog.json still has 1 problem(s) after 2 send-backs of the combine review: inc-009: rows the review added. It adds no row: merge into a row that exists.'
+      })
+      expect(run.result.report).toBeNull()
+    })
+
+    test('stops when the candidates step relays a different count than tim counted', async () => {
+      const run = await runReview({
+        candidates: { ...WITH_CANDIDATES, candidateCount: 2 }
+      })
+
+      expect(labelsOf(run)).toContain('combine candidates again')
+      expect(run.result.stopped).toEqual({
+        reason: 'combine-review-failed',
+        detail:
+          'the combine candidates step failed: the check relayed 1 candidates, but counted 2'
       })
     })
   })
@@ -12683,13 +13007,14 @@ describe('distil', () => {
       test('runs reconcile and consolidate again, then reports', async () => {
         const run = await runSentBack()
 
-        expect(labelsOf(run).slice(-7)).toEqual([
+        expect(labelsOf(run).slice(-8)).toEqual([
           'combine rows',
           'check backlog',
           'reconcile across areas, round 2',
           'coverage after reconcile across areas, round 2',
           'combine rows, round 2',
           'check backlog, round 2',
+          'combine candidates',
           'report'
         ])
       })
@@ -12877,7 +13202,7 @@ describe('distil', () => {
               'every entry of result.splitOff into splitOffBefore, exactly'
             ),
             expect.stringContaining(
-              'result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
+              'splitOffChanged, added and mergedAway, exactly'
             )
           ])
         })

@@ -21,6 +21,12 @@ export const EDITABLE_ROW_STATUSES = new Set(['todo', 'blocked'])
 
 export const rowStatusOf = (row) => row.status ?? 'todo'
 
+export const isToBuild = (row) => rowStatusOf(row) === 'todo'
+
+export const isBuilt = (row) => rowStatusOf(row) === 'done'
+
+export const isMergedAway = (row) => rowStatusOf(row) === 'merged-into'
+
 export const isEditableRow = (row) =>
   EDITABLE_ROW_STATUSES.has(rowStatusOf(row))
 

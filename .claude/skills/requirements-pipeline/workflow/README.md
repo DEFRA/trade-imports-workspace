@@ -26,9 +26,10 @@ source or a ruling: edit `sources.json` and launch again.
 The method each agent follows lives in brief files beside the script, in
 [`distil/briefs/`](distil/briefs/): `characterise.md` for cutting a source into parts,
 `extract.md` for every part of every source, one `extract-<kind>.md` per source kind (repo,
-confluence, web, document, trace, ruling, image), `verify.md`, `area-plan.md` for cutting reconcile
+confluence, web, document, trace, ruling, image, ticket), `verify.md`, `area-plan.md` for cutting reconcile
 into areas, `reconcile.md` for each area's reconciler and the cross-area pass, `question-challenge.md` for
-challenging and applying the questions, and `consolidate.md` for each area's row drafter and the combiner. The report
+challenging and applying the questions, `consolidate.md` for each area's row drafter and the combiner, and
+`combine-review.md` for the review that merges the finished rows that suit combining. The report
 agent follows
 [`../references/REPORT.md`](../references/REPORT.md). Every count, check, merge, file
 clean-up and backlog comparison is a `tim distil` command, so no agent ever writes `jq` to
@@ -99,6 +100,7 @@ The worked example for the INS performance testing programme:
 | Reconcile | 1 think per area, six at a time, then 1 light merge; then 1 think and 1 light, up to 3 times | Each area's reconciler weighs every claim in its working set and writes `distil/areas/<id>/reconciled.json`, checking it with `tim distil merge-reconcile --area <id>`. `tim distil merge-reconcile` joins them, numbering new ids and writing `distil/areas/id-map.json`; the areas a failed merge names run again, once. Then the cross-area pass merges duplicates and settles cross-area conflicts, and `tim distil coverage` checks the files, refusing a source that backs nothing. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the combiner. Up to 2 send-backs |
 | Challenge | 1 think per question, six at a time; then 1 think and 1 light, up to 3 times | Each challenger follows `question-challenge.md`, tries to settle its question from precedence and every ruling, and writes `distil/challenge/<conflict id>.json`, checking it with `tim distil challenge --conflict`. A challenger that does not finish runs again once. When any verdict settles its question, or a challenger did not finish, the apply step rewrites the conflicts and requirements, and `tim distil coverage` checks every verdict was applied. Up to 2 send-backs, then `challenge-failed` |
 | Consolidate | 1 think per area, six at a time; then 1 think and 1 light, up to 3 times | Each area's drafter writes `distil/areas/<id>/rows.json`: its rows and the code each touches. The combiner joins them into `backlog.json`, with `themes` drawn at feature-folder granularity when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
+| Combine review | 1 light, then 1 think and 1 light, up to 3 times | The `combine candidates` relay saves a snapshot under the tag `combined`, runs `tim backlog combine-candidates`, which lists the rows still to build that share code or wait only on each other, and counts the rows still to build with `tim backlog check`. With no candidates no agent runs, `backlog.json` is left as it is, and the log says so. Otherwise one think-tier agent follows `combine-review.md`, merges each listed candidate unless the rows' notes give a reason to stand alone (an open question the other does not carry, a different code area, or too much for one plan), and keeps the earlier row of each pair. The check runs `tim backlog check`, `tim distil coverage` and `tim distil backlog-snapshot --compare-to combined`, and sends back a row removed or changed, a row added, a merged-away row whose notes do not name exactly one row still to build, and a merge of a pair not listed. Up to 2 send-backs, then `combine-review-failed` |
 | Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
 
 **The fan-outs stay narrow and resumable.** The area reconcilers, challengers and row drafters each run
@@ -161,7 +163,8 @@ A re-distil respects the pointers, all through tim:
   sourceUsage,           // per source: { id, claims, cited }
   backlog,               // { path, total, byStatus, covered, coveredBySplitOff, themes }
   splitOff,              // per theme split off early: { theme, branch, workarea, backlog, requirements, pickUp, changed, noLongerToBuild, nowInPlace, fingerprintsNow }
-  decisions,             // the area plan's, every reconciler's and the challenge's, and every drafter's and the combiner's
+  combineReview,         // { ran, candidates, rowsBefore, rowsAfter, merged, keptApart, decisions }: rows still to build before and after the review
+  decisions,             // the area plan's, every reconciler's and the challenge's, every drafter's and the combiner's, and the combine review's (decisions.combine)
   goalConflicts,         // rulings that contradict sources.json's goal: the main session corrects the goal
   report, reportPath,    // the report text, and where the main session saves it
   reportIssues           // what the report step found wrong with its inputs, kept out of the report
@@ -170,7 +173,7 @@ A re-distil respects the pointers, all through tim:
 
 `stopped.reason` is one of `status-failed`, `unknown-source`, `sources-unverified`,
 `working-set-failed`, `areas-failed`, `reconcile-failed`, `challenge-failed`, `snapshot-failed`,
-`consolidate-failed` or `report-failed`. Each carries whatever the run had worked out by then. What the main session
+`consolidate-failed`, `combine-review-failed` or `report-failed`. Each carries whatever the run had worked out by then. What the main session
 does for each is in [`../references/DISTIL.md`](../references/DISTIL.md#4-when-the-run-stops-early).
 
 The script keeps the args contract every workflow keeps, and

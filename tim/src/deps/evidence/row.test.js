@@ -57,12 +57,52 @@ describe('#evidenceRowVerdict', () => {
     })
   })
 
-  test('Should make an applied row with no pattern not clean', () => {
+  test('Should make an applied row with no pattern and no acceptance not clean', () => {
     const row = { item: 'Rename a macro', outcome: 'applied', reason: 'Done' }
 
     expect(evidenceRowVerdict(row)).toEqual({
       clean: false,
-      problem: 'An applied row needs a pattern to search for.'
+      problem:
+        'An applied row needs a pattern to search for, or who accepted it with no code change and when.'
+    })
+  })
+
+  test('Should make an applied row with no pattern clean when it names who accepted it, when and what', () => {
+    const row = {
+      item: 'Give every date input item an error state',
+      outcome: 'applied',
+      reason: 'The red border on the dashboard dates is taken as it comes',
+      acceptedBy: 'Sam Farrington',
+      acceptedOn: '2026-11-25'
+    }
+
+    expect(evidenceRowVerdict(row)).toEqual({ clean: true, problem: null })
+  })
+
+  test('Should make an applied row with no pattern not clean when it names who accepted it but not when', () => {
+    const row = {
+      item: 'Give every date input item an error state',
+      outcome: 'applied',
+      reason: 'Taken as it comes',
+      acceptedBy: 'Sam Farrington'
+    }
+
+    expect(evidenceRowVerdict(row).clean).toBe(false)
+  })
+
+  test('Should make an accepted applied row with no reason not clean', () => {
+    const row = {
+      item: 'Give every date input item an error state',
+      outcome: 'applied',
+      reason: ' ',
+      acceptedBy: 'Sam Farrington',
+      acceptedOn: '2026-11-25'
+    }
+
+    expect(evidenceRowVerdict(row)).toEqual({
+      clean: false,
+      problem:
+        'An applied row a person accepted needs a reason: what they accepted.'
     })
   })
 

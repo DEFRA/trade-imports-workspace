@@ -601,6 +601,64 @@ export const setReviewItemStatus = ({
   return { repo, ...updated, noteAdded: note !== undefined && note !== '' }
 }
 
+const textChanges = (namedTexts) =>
+  Object.fromEntries(namedTexts.filter(([, text]) => text !== undefined))
+
+/**
+ * Replaces an item's issue, its fix or both, and leaves every other field,
+ * so a finding a later reading shows to be wrong is corrected in place.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} [args.reviewId]
+ * @param {string} [args.repo]
+ * @param {string} [args.item] - The item's id, as JSON text
+ * @param {string} [args.issue] - Not empty when given
+ * @param {string} [args.fix] - Not empty when given
+ * @returns {{repo: string, path: string, item: object, edited: string[]}} `edited` names the fields replaced
+ * @throws {TimError} USAGE for a missing option, an empty text or neither text given; NOT_FOUND when the items file or the item is missing
+ */
+export const editReviewItem = ({
+  workspaceRoot,
+  reviewId,
+  repo,
+  item,
+  issue,
+  fix
+}) => {
+  refuseMissingReviewId(
+    reviewId,
+    'tim review items edit <review-id> --repo REPO --item N [--issue "..."] [--fix "..."]'
+  )
+  refuseFirstMissingOption([
+    ['repo', repo],
+    ['item', item]
+  ])
+  const changes = textChanges([
+    ['issue', issue],
+    ['fix', fix]
+  ])
+  if (Object.keys(changes).length === 0) {
+    throw usage('Give --issue, --fix or both.')
+  }
+  refuseFirstMissingOption(Object.entries(changes))
+  const updated = updateLedgerItem({
+    itemsPath: reviewItemsPath({ workspaceRoot, reviewId, repo }),
+    item,
+    changes
+  })
+  return { repo, ...updated, edited: Object.keys(changes) }
+}
+
+/**
+ * @param {ReturnType<typeof editReviewItem>} edited
+ * @returns {string}
+ */
+export const renderEditedText = ({ repo, item, edited }) => {
+  const labels = { issue: 'Issue', fix: 'Fix' }
+  return `Edited #${item.id} in ${repo}: ${edited.map((field) => labels[field]).join(' and ')} replaced`
+}
+
 /**
  * A field as the confirmation line shows it: `<null>` when absent.
  *

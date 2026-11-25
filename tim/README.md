@@ -719,6 +719,7 @@ tim review items list EUDPA-1234 --filter pending --json
 tim review items add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "..." --fix "..."
 tim review items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
 tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim review items edit EUDPA-1234 --repo trade-imports-stub --item 3 --fix "Must: return 404. One way: map NotFound in the handler."
 tim review items counts EUDPA-1234
 ```
 
@@ -726,7 +727,7 @@ tim review items counts EUDPA-1234
   `workareas/reviews/<review-id>/file-reviews/<repo>/`, in the workspace
   tim runs in. `init` prints the file's path, `add` the new todo's id and
   `verdict` nothing. A todo's line is stored as a number.
-- `items list|counts|add|mark|status` read and change
+- `items list|counts|add|mark|status|edit` read and change
   `workareas/reviews/<review-id>/items.<repo>.json`. `list` prints one
   tab-separated line per item (repo, id, file, line, severity, category,
   issue, fix, disposition, status, notes); `add` prints the new id, with
@@ -737,6 +738,10 @@ tim review items counts EUDPA-1234
   the notes there, separated by `; `, so a walk's decision stays beside
   the fix's commit. It skips a note the notes already hold, and an empty
   note changes nothing.
+- `edit` replaces an item's issue, its fix or both, and leaves its
+  disposition, status and notes, for a finding a later reading shows to
+  be wrong. It prints `Edited #N in <repo>: Issue and Fix replaced`,
+  naming the fields it replaced, and refuses an empty text or neither.
 - `--json` gives the envelope: the items for `list`, the review id, repo,
   breakdown and total for `counts`, and the item written for the others.
 - Every refusal exits 1, as the scripts they replace did.

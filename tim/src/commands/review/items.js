@@ -3,9 +3,11 @@ import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import {
   addReviewItem,
   countReviewItems,
+  editReviewItem,
   listReviewItems,
   markReviewItem,
   renderCountsText,
+  renderEditedText,
   renderItemsTsv,
   renderMarkedText,
   renderStatusText,
@@ -166,6 +168,27 @@ const registerStatus = (items, { timVersion }) =>
       })
     )
 
+const registerEdit = (items, { timVersion }) =>
+  withReviewId(items.command('edit'))
+    .description(
+      "Replace an item's issue, its fix or both, and leave its disposition, status and notes. Use it to correct a finding a later reading shows to be wrong."
+    )
+    .option('--repo <repo>', 'The repo whose items file holds the item')
+    .option('--item <id>', "The item's id")
+    .option('--issue <text>', 'The new issue')
+    .option('--fix <text>', 'The new fix, as "Must: ... One way: ..."')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim review items edit EUDPA-1234 --repo trade-imports-stub --item 3 --fix "Must: return 404. One way: map NotFound in the handler."\n  tim review items edit EUDPA-1234 --repo trade-imports-stub --item 3 --issue "Returns 200 for a missing id" --json'
+    )
+    .action(
+      itemsAction({
+        run: editReviewItem,
+        renderText: renderEditedText,
+        timVersion
+      })
+    )
+
 /**
  * `tim review items`: a review's consolidated items, one items.<repo>.json
  * per repo.
@@ -182,5 +205,6 @@ export const registerItems = (review, { timVersion }) => {
   registerAdd(items, { timVersion })
   registerMark(items, { timVersion })
   registerStatus(items, { timVersion })
+  registerEdit(items, { timVersion })
   registerRender(items, { timVersion })
 }

@@ -81,7 +81,7 @@ The system MUST ask for name, address line 1, town or city, postcode, country, p
 
 #### Scenario: The country field lists every country alphabetically, United Kingdom in its place
 **ID**: SCN-INS-ADDR-005-B
-- **GIVEN** the user opens the address book's add form after choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', the address book's edit form, or the add form reached from any of a notification's role pickers
+- **GIVEN** the user opens the address book's add form after choosing 'Origin or Consignor' or 'Destination, Consignee or Importer', the address book's edit form, or the add form reached from any of a notification's role pickers
 - **WHEN** the country list is read in full
 - **THEN** after any placeholder it offers United Kingdom and every country the reference data service serves, by their served names, in alphabetical order
 
@@ -585,7 +585,7 @@ The system MUST label the add form's name 'Name or organisation', keep 'County (
 
 #### Scenario: The add form opened from the address book selects United Kingdom
 **ID**: SCN-INS-ADDR-027-B
-- **GIVEN** the user opens the add form from the address book after choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch'
+- **GIVEN** the user opens the add form from the address book after choosing 'Origin or Consignor' or 'Destination, Consignee or Importer'
 - **WHEN** the page is shown
 - **THEN** United Kingdom is selected
 - **AND** the Country select's blank first option reads 'Select a country'
@@ -939,17 +939,15 @@ The address book service MUST record an address's roles, in the order given with
 **ID**: SCN-INS-ADDR-037-H
 - **WHEN** an address is created with the roles place of origin and consignee
 - **THEN** the service responds with a 400 validation error that names the roles, and no address is saved
-- **WHEN** an address holding the role importer is updated with the roles importer and branch address
+- **WHEN** an address holding the role importer is updated with the roles importer and consignor
 - **THEN** the service responds with a 400 validation error that names the roles, and the address keeps the role importer
 
-#### Scenario: An address holding sending, receiving or branch roles is saved outside the United Kingdom
+#### Scenario: An address holding sending or receiving roles is saved outside the United Kingdom
 **ID**: SCN-INS-ADDR-037-I
 - **WHEN** an address in France is created with the roles place of origin and consignor
 - **THEN** it is saved, and reads back in France with those roles
 - **WHEN** an address in France is created with the roles consignee, importer and place of destination
 - **THEN** it is saved, and reads back in France with those roles
-- **WHEN** an address in France is created with the role branch address
-- **THEN** it is saved, and reads back in France with that role
 - **WHEN** an address holding the role importer is updated to Ireland
 - **THEN** the update is saved, and the address reads back in Ireland
 
@@ -1077,7 +1075,6 @@ The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offeri
 - **WHEN** they look at the Type select on each tab in turn
 - **THEN** 'Origin and Consignor' offers 'Select one', 'Place of Origin' and 'Consignor'
 - **AND** 'Destination, Consignee and Importer' offers 'Select one', 'Consignee', 'Importer' and 'Place of Destination'
-- **AND** 'Branch' offers 'Select one' and 'Branch Address'
 - **AND** the 'Transporter' tab offers 'Select one', 'Commercial' and 'Private', in that order
 
 #### Scenario: A submitted Type lists only the tab's addresses holding it
@@ -1148,7 +1145,7 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'
 - **THEN** 'Choose an address type' opens under the caption 'Add a new address', with a 'Continue' button and a 'Back' link to the address book
-- **AND** the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer', 'Transporter' with the hint 'Private, Commercial' and 'Branch' with the hint 'Branch address', in that order and with none chosen
+- **AND** the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer' and 'Transporter' with the hint 'Private, Commercial', in that order and with none chosen
 - **AND** the options sit in a group whose legend repeats the heading for screen readers
 
 #### Scenario: Continuing with no type chosen shows the problem on the options
@@ -1161,7 +1158,7 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 #### Scenario: Choosing a type opens the add form
 **ID**: SCN-INS-ADDR-043-C
 - **GIVEN** the user is on 'Choose an address type'
-- **WHEN** they choose 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and select 'Continue'
+- **WHEN** they choose 'Origin or Consignor' or 'Destination, Consignee or Importer' and select 'Continue'
 - **THEN** the add form opens under the caption 'Add new address', headed 'Add address and contact details', with no status tag
 - **AND** its 'Back' link goes to 'Choose an address type'
 
@@ -1210,7 +1207,7 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 
 #### Scenario: Going back after a refused save and choosing the type again shows what was entered
 **ID**: SCN-INS-ADDR-043-H
-- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', filled in the address and contact details with a malformed email address, ticked a role and saved the add form, which refuses the save
+- **GIVEN** the user has chosen 'Origin or Consignor' or 'Destination, Consignee or Importer', filled in the address and contact details with a malformed email address, ticked a role and saved the add form, which refuses the save
 - **WHEN** they select 'Back', then choose the same type and select 'Continue'
 - **THEN** the add form shows the address and contact details entered
 - **AND** the role ticked is still ticked
@@ -1249,9 +1246,9 @@ The system MUST, on the add form opened from the address book, follow the contac
 
 #### Scenario: Saving an address lands on its type's tab with the address first
 **ID**: SCN-INS-ADDR-044-E
-- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and filled in a valid address with a role ticked
+- **GIVEN** the user has chosen 'Origin or Consignor' or 'Destination, Consignee or Importer' and filled in a valid address with a role ticked
 - **WHEN** they save the form
-- **THEN** the address book list opens on the tab for that type, 'Origin and Consignor', 'Destination, Consignee and Importer' or 'Branch'
+- **THEN** the address book list opens on the tab for that type, 'Origin and Consignor' or 'Destination, Consignee and Importer'
 - **AND** the new address is listed first, with the labels of its roles as its Type
 
 #### Scenario: Destination, Consignee or Importer offers its three roles and every country, opening on United Kingdom
@@ -1262,23 +1259,15 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **AND** the question offers the checkboxes 'Place of destination', 'Consignee' and 'Importer', in that order, none ticked and none with a hint
 - **AND** the Country select lists 'Select a country', then 'United Kingdom' and every country the reference data service serves, in alphabetical order, with 'United Kingdom' selected
 
-#### Scenario: Branch offers the one role and every country, opening on United Kingdom
-**ID**: SCN-INS-ADDR-044-G
-- **GIVEN** the user has chosen 'Branch' and opened the add form
-- **THEN** the address and contact fields show straight away, with no address search
-- **AND** after the contact fields come a section break and the question 'Address type' with the hint 'Select where this address can be used'
-- **AND** the question offers the checkbox 'Branch address' alone, not ticked and without a hint
-- **AND** the Country select lists 'Select a country', then 'United Kingdom' and every country the reference data service serves, in alphabetical order, with 'United Kingdom' selected
-
-#### Scenario: A Destination or Branch address is saved with the country chosen
+#### Scenario: A Destination address is saved with the country chosen
 **ID**: SCN-INS-ADDR-044-H
-- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch', filled in a valid address and ticked a role
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer', filled in a valid address and ticked a role
 - **WHEN** they choose France and save the form
 - **THEN** the address is stored with the country France
 
-#### Scenario: A Destination or Branch address names only the missing name, postcode and phone number and keeps the country chosen
+#### Scenario: A Destination address names only the missing name, postcode and phone number and keeps the country chosen
 **ID**: SCN-INS-ADDR-044-I
-- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch', opened the add form and chosen France
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer', opened the add form and chosen France
 - **WHEN** they leave the name, postcode and phone number blank and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code' and 'Enter a phone number'
 - **AND** the Country select still has 'France' selected

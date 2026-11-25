@@ -237,15 +237,15 @@ This section is the one record of which services still publish the
 older PascalCase names, where, and how each moves to the dot-case names
 above. `trade-imports-reference-data` and `trade-imports-dynamics-gateway`
 publish the dot-case names, and the tables below map their old names to
-the new as the worked example. `trade-imports-animals-frontend`
-publishes them too, and `NODE.md` is its recipe.
+the new as the worked example. `trade-imports-animals-frontend` and
+`trade-imports-plants-frontend` publish them too, and `NODE.md` is their recipe.
 
 Each frontend's external calls:
 
 | Service                          | Where                                                        | Publishes                                                                                    |
 | -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
 | `trade-imports-animals-frontend` | `src/server/common/helpers/metrics/external-call-metrics.js` | New: `external.call.duration`, `external.call.failure`, dimensions `dependency`, `operation` |
-| `trade-imports-plants-frontend`  | `src/server/common/helpers/metrics/external-call-metrics.js` | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
+| `trade-imports-plants-frontend`  | `src/server/common/helpers/metrics/external-call-metrics.js` | New: `external.call.duration`, `external.call.failure`, dimensions `dependency`, `operation` |
 | `trade-imports-ins-frontend`     | `src/server/common/helpers/external-call-metrics.js`         | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
 
 The page-request counts have one name set, `page.request.backend.calls`
@@ -265,7 +265,7 @@ A Node service:
   helpers `NODE.md` names, which publish the new names and measure the
   calls it missed;
 - makes each call that throws on a refusal name its operation in the
-  error, `Failed to <operation>: <status> <status text>` (`NODE.md`,
+  error, `<dependency> refused to <action>: <status> <status text>` (`NODE.md`,
   below its dependency table).
 
 The CloudWatch metrics then change name, so regenerate its dashboard

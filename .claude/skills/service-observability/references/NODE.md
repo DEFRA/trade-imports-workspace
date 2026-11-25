@@ -235,8 +235,8 @@ CloudWatch metric:
 
 | Metric                                                                                         | Where                                                                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | `src/server/app/engine/persistence/records.js`: after `create`, `finalise`, `amend`, `copy` and `softDelete` succeed. Every write goes through this facade, stub or real                                        |
-| `journey.concurrency.conflict`                                                                 | The same facade: when `create`, `replaceFulfilment`, `finalise`, `amend`, `copy` or `softDelete` is refused with `STALE_CONCURRENCY_TOKEN`. The refusal is rethrown, and the write's own counter is not counted |
+| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | `src/server/app/engine/persistence/records.js`: after `create`, `submit`, `amend`, `copy` and `softDelete` succeed. Every write goes through this facade, stub or real                                        |
+| `journey.concurrency.conflict`                                                                 | The same facade: when `create`, `replaceFulfilment`, `submit`, `amend`, `copy` or `softDelete` is refused with `STALE_CONCURRENCY_TOKEN`. The refusal is rethrown, and the write's own counter is not counted |
 | `journey.entry.redirect`                                                                       | `entryGuardTarget` in `src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js`, where it decides to redirect and logs it                                                                          |
 
 ## Tests
@@ -287,7 +287,24 @@ Test paths are from the repo root.
 Each was checked to go red without the change it covers. Run the repo's
 `npm run format:check`, `npm run lint` and `npm test` before pushing.
 
-## Not done on animals-frontend
+## Ported to plants-frontend
 
-- The other Node services still publish the old names: `METRICS.md` →
-  "A service built the old way".
+`trade-imports-plants-frontend` has the same files at the same paths,
+with `plants-backend` as its backend dependency. What differed:
+
+- It has no cdp-uploader and no document uploads, so its backend
+  operations are the nine notification ones and its reference-data
+  operations `get-countries` and `get-ports-of-entry`.
+- Its records stub does not check concurrency tokens, so
+  `records.test.js` proves the conflict count by configuring an adapter
+  that refuses with a stale-token `BackendRequestError`
+  (`staleConcurrencyRefusal` in `src/server/app/engine/test-support.js`).
+- Its submit takes no concurrency token: `records.submit(journeyId, actor)`.
+- Its route table, booted in stub mode: 49 routes (29 GET, 19 POST, 1
+  DELETE), 37 under `/high-risk-plants/notifications/{journeyId}/`, 26
+  areas, of which 22 are page areas, and 41 method and area pairs.
+
+## Not done yet
+
+- `trade-imports-ins-frontend` still publishes the old names:
+  `METRICS.md` → "A service built the old way".

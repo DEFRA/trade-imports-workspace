@@ -2096,11 +2096,18 @@ The generated file has:
   arrives as one PR for the whole set
 - an npm `ignore` entry for every member of each set with
   `"scope": "cross-repo"`, because the nightly job moves those in every repo
-  at once on one branch name
+  at once on one branch name. Each entry lists every version update type
+  (`version-update:semver-major`, `-minor` and `-patch`) under
+  `update-types`. That blocks every version update but leaves security
+  updates on: an ignore entry with no `update-types` blocks security updates
+  too. A security pull request for a set member lands in one repo only, so
+  the nightly digest lists the open alert for a person rather than merging
+  it alone
 - an npm `ignore` entry, with `versions`, for each hold that lists the repo,
   beside any other ignore for the same package, so Dependabot stops
   proposing the versions the hold covers. A repo the hold does not list is
-  unchanged
+  unchanged. A hold's entry has no `update-types`, so it blocks security
+  updates inside its range as well
 - `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
   Actions
 - the schedule, pull request limit and versioning strategy from
@@ -2157,7 +2164,10 @@ that package at its current version and records a hold, so the rest of the
 group can merge and Dependabot stops proposing the held versions.
 
 - `hold` adds the hold for a package to `config/dependency-sets.json`, or
-  replaces the one it has, with today's date as `since`. `--versions`,
+  replaces the one it has, with today's date as `since`. A hold blocks
+  security updates inside its range too, so Dependabot raises no security
+  fix for a held version: the nightly digest lists open alerts on held
+  packages. `--versions`,
   `--repo` (once for each repo), `--reason` and `--failing-test` are
   required. A repo out of scope, a wildcard package name, a version range
   npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`

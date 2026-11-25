@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-23T10:03:31Z",
-  "verdict": "SAFE",
-  "verdict_reason": "The PR only deletes the two contact-address tests and the contactAddress import, matching the obligation's removal; the remaining titles match their assertions and no contact branch is left untested in the controller.",
-  "todos": [],
-  "reconciled_at": "2026-11-23T10:06:16Z"
+  "reviewed_at": "2026-11-25T16:54:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the contact handshake tests is correct for the AC and the select landing test now matches the controller's fixed redirect to the addresses page, but the helpers keep a fulfilmentId parameter that no remaining test uses.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 32,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "With the contact tests gone, the fulfilmentId parameters on partyPagePath (line 32), handshakeQuery (line 39), returnedQuery (line 44) and handshakeState (line 50) are never given anything but consignor.id: every caller uses the default (handshakeQuery() at 172/232/430/446, returnedQuery(landing) throughout, handshakeState() throughout). The helpers still read as if the file drives several parties' handshakes, which only the removed contactAddress cases did.",
+      "fix": "Must: the test helpers take only the inputs the remaining tests vary, so no helper offers a party choice that no test uses. One way: drop the fulfilmentId parameter from handshakeQuery, returnedQuery and handshakeState (use consignor.id inside), and fold partyPagePath into consignorPicker."
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

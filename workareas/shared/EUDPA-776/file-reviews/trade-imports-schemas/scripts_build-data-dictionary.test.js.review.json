@@ -4,18 +4,26 @@
   "commit": "d4d2b80e4b78b49c5c4f84b1ce2bff900e787263",
   "pr": 73,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:46:08Z",
+  "reviewed_at": "2026-11-25T16:57:45Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The new test's title claims the false-schema property is left out of the dictionary, but its dictionary assertions cannot fail on an issuer row.",
+  "verdict_reason": "The exact deepEqual on the exchangedDocument rows resolves #9, but the dictionary half depends on an earlier test having run the generator, and the file's comments restate assertions or carry rationale.",
   "todos": [
     {
       "id": 1,
-      "line": 166,
+      "line": 192,
       "severity": "Major",
       "category": "test-readability",
-      "issue": "The title says a false-schema property 'is left out of the tree and the dictionary', but the dictionary half (lines 192-195) only asserts that each kept exchangedDocument property has a row. Nothing checks that issuer has no row, so an issuer row in the dictionary would pass. With the walker's false handling reverted, the generator writes issuer back and every kept-property assert still passes; only the tree assertion fails.",
-      "fix": "Must: the test's assertions prove the dictionary's exchangedDocument table has exactly the kept properties (so an issuer row turns it red), or the title claims only what the assertions prove. One way: parse the 'Document (exchangedDocument)' table's property column and deepEqual it, sorted, to exchangedDocumentProperties."
+      "issue": "The false-schema test's dictionary half reads the committed OUTPUT (line 192) without running the generator, so it only proves the generator leaves issuer out when an earlier test in the file has regenerated the dictionary first. Run on its own (node --test --test-name-pattern), with the walker's false handling reverted, it reads the committed dictionary, which has no issuer row, and passes.",
+      "fix": "Must: the test fails on its own, whatever ran before it, when the generator writes an issuer row. One way: call runGenerator() before reading OUTPUT in this test."
+    },
+    {
+      "id": 2,
+      "line": 38,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments in the file restate their assertions or carry rationale: lines 38-40 ('Positive proof the deepest descend ... reached bottom ... which the guard above would not catch'), 45-46, 74, 77, 93-94 and 102-104 (which also describe the walker, another module).",
+      "fix": "Must: no comment in the test file restates its assertions, describes another module or carries rationale; the test titles and assertion messages say what each check proves. One way: delete the comments and move any message worth keeping into the assert's message argument."
     }
   ],
-  "reconciled_at": "2026-11-24T14:48:36Z"
+  "reconciled_at": "2026-11-25T17:01:47Z"
 }

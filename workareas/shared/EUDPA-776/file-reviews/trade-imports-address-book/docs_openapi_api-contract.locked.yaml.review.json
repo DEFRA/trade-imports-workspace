@@ -1,0 +1,22 @@
+{
+  "file": "docs/openapi/api-contract.locked.yaml",
+  "repo": "trade-imports-address-book",
+  "commit": "b0a8ef95d50237da5743c4d735d0bd75d729a16e",
+  "pr": 29,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:54:50Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The locked contract matches addresses.yml and AddressRole exactly, but it drops BRANCH_ADDRESS with no migration, so stored addresses holding that role would fail to read and 500 the list.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 633,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The locked contract now promises every returned address's roles come from PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION, CONSIGNEE or IMPORTER (lines 28-35, AddressRole enum 626-633), but the PR body says 'No data migration. Addresses already stored with BRANCH_ADDRESS are not converted.' Address.roles is List<AddressRole> (Address.java:52) with no custom reading converter (none in src/main), so Spring Data's enum read of a stored 'BRANCH_ADDRESS' throws IllegalArgumentException. Any org holding such an address (BRANCH_ADDRESS has been accepted on main since #20, EUDPA-711) gets a 500 on list, search and get instead of the contract's response, and the whole list fails, not just that row. The lock check itself (ApiContractComplianceIT:309-313) is an exact equality on enum values with no compatibility rule, so it passes once both specs drop the value and says nothing about stored data.",
+      "fix": "Must: no stored address can hold a role outside the locked enum after deploy, and an address that held only BRANCH_ADDRESS has a defined outcome (deleted, tombstoned or given a role) so reads still meet the 'at least one role' contract. One way: a one-off migration (or startup task) that pulls BRANCH_ADDRESS from roles and tombstones addresses left with none, run in every environment the service is deployed to, with an IT that seeds a raw document holding BRANCH_ADDRESS and asserts the list endpoint returns 200; or confirm with a query that no environment holds the value and record that in the PR.",
+      "best_practice": "java/spring-data-mongodb.md"
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:16Z"
+}

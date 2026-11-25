@@ -1,0 +1,37 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b0a8ef95d50237da5743c4d735d0bd75d729a16e",
+  "pr": 29,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:54:58Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Stored addresses still holding BRANCH_ADDRESS (written by the e2e seed on main) would make listing return 500 and no IT covers it, and three edited assertions no longer prove what their titles claim.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 70,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "No IT covers a stored address whose roles still hold BRANCH_ADDRESS, and the PR adds no migration or tolerant read for one. Address.roles is List<AddressRole> (Address.java:52), so Spring Data's enum conversion throws on 'BRANCH_ADDRESS' and GET /addresses returns 500 for any organisation holding one. Such documents exist: main's ins-tests seed (flows/shared/address-book-seed.ts, branchAddressFixture and secondBranchAddressFixture, ...heldAsBranchAddress) writes two live BRANCH_ADDRESS records through ensureE2eAddressBook into every environment the e2e suite runs against, and that seed itself lists addresses first, so the next e2e run after deploy fails at seeding. The ticket's no-migration exemption covers only drafts with a consignment party, not address-book records. The seed edit at line 70 (Deleted Branch -> Deleted Importer) removed the only stored BRANCH_ADDRESS document this IT had.",
+      "fix": "Must: an organisation whose store holds an address with role BRANCH_ADDRESS gets a defined, agreed outcome from the list, get and update endpoints (the role dropped on read, or the documents migrated before the release), and an IT proves it by writing that raw document. One way: insert a raw org.bson.Document with roles ['BRANCH_ADDRESS', 'IMPORTER'] through mongoTemplate in this IT, call listAddresses(), and assert 200 with that address listed and roles exactly ['IMPORTER']; make it pass with a reading converter or a one-off migration that pulls BRANCH_ADDRESS from every roles array."
+    },
+    {
+      "id": 2,
+      "line": 254,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "list_shouldReturnOnlyTheLiveAddressesHoldingTheRole_whenOneRoleIsGiven no longer proves 'Live'. Before, the seed's deleted address held BRANCH_ADDRESS and the BRANCH_ADDRESS query proved it was left out. Now the deleted address holds IMPORTER (line 73) and the test's two one-role queries are CONSIGNEE (line 250) and PLACE_OF_ORIGIN (line 254); neither matches the deleted address, so dropping the status filter from the one-role path keeps this test green.",
+      "fix": "Must: the test fails if a deleted address holding the queried role is returned. One way: replace the PLACE_OF_ORIGIN query with listAddresses(\"role\", \"IMPORTER\") asserting totalItems 2 and names containsInAnyOrder(CONSIGNEE_AND_IMPORTER, IMPORTER), which excludes the seeded 'Deleted Importer'."
+    },
+    {
+      "id": 3,
+      "line": 278,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The BRANCH_ADDRESS substitutions lost the discrimination the old assertions had. Line 278: role PLACE_OF_DESTINATION with q 'Consign' expects 0, but no seeded address holds PLACE_OF_DESTINATION, so the role alone gives 0 and the assertion cannot fail if q stopped narrowing the roles (before, 'Branch' matched the role and q excluded it). Line 287: role PLACE_OF_ORIGIN with countryCode FR expects only ORIGIN_AND_CONSIGNOR, but that address is now the only FR address and the only PLACE_OF_ORIGIN holder, so the assertion passes with either filter ignored (before, a second FR address, 'Branch', separated them). The second assertion at line 291 still carries list_shouldNarrowTheCountryCodeByTheRoles, so line 287 adds nothing.",
+      "fix": "Must: each assertion in these two tests fails when either the role filter or the other filter is dropped. One way: at line 278 use listAddresses(\"role\", \"CONSIGNOR\", \"q\", \"Importer\") expecting 0 (role alone gives 1, q alone gives 2); at line 287 either seed a second FR address that holds a different role and keep the PLACE_OF_ORIGIN query, or delete the line 287 assertion."
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:16Z"
+}

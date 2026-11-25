@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "be0254784594a8ee7cf096fe12824743dc8d5c73",
+  "pr": 487,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:55:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The redirect change keeps behaviour (every remaining party had returnSlug 'addresses') and is tested, but the SELECT handler's name still says 'ReturnPage', which now misleads.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 128,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "saveAddressAndLandOnReturnPageWithBanner (lines 128, 204) no longer lands on a 'return page': this PR removes party.returnSlug and line 143 now always redirects to pagePath(journeyId, addressesPage.slug). Worse, 'Return' now reads as ADDRESS_LANDING.RETURN, yet that landing goes to landOnPartyPageWithBanner (line 205) and this function handles only SELECT. A reader predicts the wrong destination and the wrong landing. (No dead branches: SELECT, RETURN, CANCEL and back all remain reachable for the five PARTIES.)",
+      "fix": "Must: the function's name says it saves the chosen address and lands on the Consignment addresses page, with no 'return page' wording left now that returnSlug is gone. One way: rename it to saveAddressAndLandOnAddressesPageWithBanner at its definition (line 128) and its call (line 204)."
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:46Z"
+}

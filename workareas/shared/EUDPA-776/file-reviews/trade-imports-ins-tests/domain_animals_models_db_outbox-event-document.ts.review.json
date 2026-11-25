@@ -4,18 +4,18 @@
   "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:44:30Z",
+  "reviewed_at": "2026-11-25T16:58:22Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "issuer removed as asked, but the new exchanged-document key list can drift from its type without a compile error.",
+  "verdict_reason": "Prior items #24 and #27 are resolved (issuer gone, key list now compile-checked), but the new outbox-reading helper and test actor data sit in the model file and notification-data.spec.ts keeps its own copy of the read.",
   "todos": [
     {
       "id": 1,
-      "line": 58,
+      "line": 184,
       "severity": "Major",
       "category": "structure",
-      "issue": "GBN_AG_EXCHANGED_DOCUMENT_KEYS (58-66) restates the field list of GbnAgExchangedDocument (48-56) by hand. 'satisfies readonly (keyof GbnAgExchangedDocument)[]' only stops a key the type lacks; a field added to the type and left off the list still compiles, so the type and the list can drift apart and the outbox specs that assert against the list then fail on a correct event.",
-      "fix": "Must: the exchanged-document field set has one owner, and the compiler refuses a list that misses a field of GbnAgExchangedDocument. One way: declare the keys as an object 'satisfies Record<keyof GbnAgExchangedDocument, true>' and export Object.keys of it, so a missing or extra key is a compile error."
+      "issue": "withOutbox (184-204), EXPECTED_ACTOR (162-169) and actorWithNullableFields (171-178) put a Mongo connection, a Playwright expect.poll and test-user data into domain/animals/models/db, which holds only types and constants: it is now the only file under domain/ that imports MongoDbClient, expect or @config/users. The outbox read also keeps a second copy beside it: tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:160-170 (a file this PR edits) still opens its own MongoDbClient on the outbox collection, polls by aggregateIdFor and closes it, instead of calling withOutbox.",
+      "fix": "Must: the outbox model file holds only the event types, key list and aggregateIdFor; reading the outbox (connect, poll for one event, close) has one owner in the test-support layer, and every outbox spec this PR touches, notification-data.spec.ts included, calls it. One way: move withOutbox, OutboxReader, EXPECTED_ACTOR and actorWithNullableFields to a flows/animals-admin (or flows/animals) outbox helper, and rewrite notification-data.spec.ts's read as withOutbox((outbox) => outbox.eventsOf(referenceNumber)) with the poll."
     }
   ],
-  "reconciled_at": "2026-11-24T14:48:35Z"
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

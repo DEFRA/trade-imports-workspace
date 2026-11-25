@@ -1,0 +1,106 @@
+{
+  "ticket": "EUDPA-776",
+  "repo": "trade-imports-address-book",
+  "items": [
+    {
+      "id": 1,
+      "line": 633,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The locked contract now promises every returned address's roles come from PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION, CONSIGNEE or IMPORTER (lines 28-35, AddressRole enum 626-633), but the PR body says 'No data migration. Addresses already stored with BRANCH_ADDRESS are not converted.' Address.roles is List<AddressRole> (Address.java:52) with no custom reading converter (none in src/main), so Spring Data's enum read of a stored 'BRANCH_ADDRESS' throws IllegalArgumentException. Any org holding such an address (BRANCH_ADDRESS has been accepted on main since #20, EUDPA-711) gets a 500 on list, search and get instead of the contract's response, and the whole list fails, not just that row. The lock check itself (ApiContractComplianceIT:309-313) is an exact equality on enum values with no compatibility rule, so it passes once both specs drop the value and says nothing about stored data.",
+      "fix": "Must: no stored address can hold a role outside the locked enum after deploy, and an address that held only BRANCH_ADDRESS has a defined outcome (deleted, tombstoned or given a role) so reads still meet the 'at least one role' contract. One way: a one-off migration (or startup task) that pulls BRANCH_ADDRESS from roles and tombstones addresses left with none, run in every environment the service is deployed to, with an IT that seeds a raw document holding BRANCH_ADDRESS and asserts the list endpoint returns 200; or confirm with a query that no environment holds the value and record that in the PR.",
+      "best_practice": "java/spring-data-mongodb.md",
+      "file": "docs/openapi/api-contract.locked.yaml",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 2,
+      "line": 104,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Requests are consistent (AddressRoleNamesValidator builds ROLE_NAMES from AddressRole.values(), so roles:[\"BRANCH_ADDRESS\"] is a 400 'Select valid roles' keyed by roles; role=BRANCH_ADDRESS on the list is a 400 via MethodArgumentTypeMismatchException), but stored documents are not: Address.java:52 maps roles as List<AddressRole>, and ins-frontend main still writes BRANCH_ADDRESS (origin/main address-types.js:20,33 and typed-seed.js:22,26 - the Branch address type in the UI), so CDP dev/test hold such records. Spring Data's MappingMongoConverter calls Enum.valueOf on read, which throws IllegalArgumentException; GlobalExceptionHandler.java:137 turns it into a 500. Every GET, list and search page that includes one of those addresses fails for that organisation, and PUT cannot repair it because the service reads the record first. The PR ships no migration (no Mongock or change unit in the repo).",
+      "fix": "Must: after deploy, no stored address with roles containing BRANCH_ADDRESS can make a read, list, search or update fail; such records are removed, migrated, or read tolerantly, by a decision recorded with workspace item #32. One way: a one-off Mongo update (or startup migration) that soft-deletes or strips BRANCH_ADDRESS from stored roles in every environment before this image is promoted, plus an AddressRepositoryIT case that inserts a raw document with roles [\"BRANCH_ADDRESS\"] and proves the list still answers.",
+      "best_practice": "java/spring-data-mongodb.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 3,
+      "line": 96,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR deletes the two BRANCH_ADDRESS cases from AddressRequestValidationTest and adds none in their place, so no test shows the AC (the address book has no branch address) at the request boundary: nothing asserts that roles [\"BRANCH_ADDRESS\"] is now refused. The only unknown-role cases use invented values (AddressCrudIT.java:127 'TRANSPORTER'), so re-adding BRANCH_ADDRESS to AddressRole would leave every test green.",
+      "fix": "Must: a test fails if BRANCH_ADDRESS is ever accepted again on create or update. One way: add an invalidFields() case in AddressRequestValidationTest with roles List.of(\"BRANCH_ADDRESS\") expecting 'Select valid roles' on roles, and a role=BRANCH_ADDRESS list case expecting 400 in AddressListIT.",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
+      "disposition": null,
+      "status": null,
+      "notes": "Disputed by two other reviewers: ApiContractComplianceIT pins the AddressRole values exactly to the locked contract, and the generic unknown-role tests prove the 400, so a BRANCH_ADDRESS-named test would name a removed value (house rule: prove a removal with a positive assertion). Same question as ins-tests #45 and workspace #32. Decide once with #32."
+    },
+    {
+      "id": 4,
+      "line": 19,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Removing BRANCH_ADDRESS leaves every stored address with roles:[BRANCH_ADDRESS] unreadable. The role has been on main since 4d5d9cc (EUDPA-711, 2026-11-06), and ins-frontend main (address-types.js, typed-seed.js) and ins-tests main (flows/shared/address-book-seed.ts) write it, so dev/test Mongo holds such documents. Spring Data maps List<AddressRole> with Enum.valueOf, which throws IllegalArgumentException on read; GlobalExceptionHandler:137 turns any RuntimeException into 500. So GET list and search (AddressListQueryImpl.listLiveAddresses), GET by id, PUT and DELETE (AddressService:141/160/184 all read first) return 500 for any organisation holding one, and the API gives no way to remove the bad document. The PR body says only that stored addresses are not converted. There is no migration tooling (no Mongock), compose/mongo/10-init.js is the empty template, and non-prod TTL purging depends on ADDRESS_TTL_DAYS, so it is not guaranteed.",
+      "fix": "Must: after this deploys, no organisation's list, search, get, update or delete returns 500 because of an address stored with BRANCH_ADDRESS, in every environment that ran the earlier image, and a test proves it. One way: a startup or one-off step that removes BRANCH_ADDRESS from stored roles ($pull on addresses.roles), with an IT that inserts a raw document holding BRANCH_ADDRESS and asserts that list and get return 200 without it. Or a reading converter that drops unknown role names with a WARN log naming the address id and organisation. Or, if the team agrees the non-prod data is disposable as the ticket says of drafts, a recorded step to clear those documents in dev, test and perf-test before deploy, stated in the PR.",
+      "best_practice": "java/spring-data-mongodb.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 5,
+      "line": 70,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "No IT covers a stored address whose roles still hold BRANCH_ADDRESS, and the PR adds no migration or tolerant read for one. Address.roles is List<AddressRole> (Address.java:52), so Spring Data's enum conversion throws on 'BRANCH_ADDRESS' and GET /addresses returns 500 for any organisation holding one. Such documents exist: main's ins-tests seed (flows/shared/address-book-seed.ts, branchAddressFixture and secondBranchAddressFixture, ...heldAsBranchAddress) writes two live BRANCH_ADDRESS records through ensureE2eAddressBook into every environment the e2e suite runs against, and that seed itself lists addresses first, so the next e2e run after deploy fails at seeding. The ticket's no-migration exemption covers only drafts with a consignment party, not address-book records. The seed edit at line 70 (Deleted Branch -> Deleted Importer) removed the only stored BRANCH_ADDRESS document this IT had.",
+      "fix": "Must: an organisation whose store holds an address with role BRANCH_ADDRESS gets a defined, agreed outcome from the list, get and update endpoints (the role dropped on read, or the documents migrated before the release), and an IT proves it by writing that raw document. One way: insert a raw org.bson.Document with roles ['BRANCH_ADDRESS', 'IMPORTER'] through mongoTemplate in this IT, call listAddresses(), and assert 200 with that address listed and roles exactly ['IMPORTER']; make it pass with a reading converter or a one-off migration that pulls BRANCH_ADDRESS from every roles array.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 6,
+      "line": 254,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "list_shouldReturnOnlyTheLiveAddressesHoldingTheRole_whenOneRoleIsGiven no longer proves 'Live'. Before, the seed's deleted address held BRANCH_ADDRESS and the BRANCH_ADDRESS query proved it was left out. Now the deleted address holds IMPORTER (line 73) and the test's two one-role queries are CONSIGNEE (line 250) and PLACE_OF_ORIGIN (line 254); neither matches the deleted address, so dropping the status filter from the one-role path keeps this test green.",
+      "fix": "Must: the test fails if a deleted address holding the queried role is returned. One way: replace the PLACE_OF_ORIGIN query with listAddresses(\"role\", \"IMPORTER\") asserting totalItems 2 and names containsInAnyOrder(CONSIGNEE_AND_IMPORTER, IMPORTER), which excludes the seeded 'Deleted Importer'.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 278,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The BRANCH_ADDRESS substitutions lost the discrimination the old assertions had. Line 278: role PLACE_OF_DESTINATION with q 'Consign' expects 0, but no seeded address holds PLACE_OF_DESTINATION, so the role alone gives 0 and the assertion cannot fail if q stopped narrowing the roles (before, 'Branch' matched the role and q excluded it). Line 287: role PLACE_OF_ORIGIN with countryCode FR expects only ORIGIN_AND_CONSIGNOR, but that address is now the only FR address and the only PLACE_OF_ORIGIN holder, so the assertion passes with either filter ignored (before, a second FR address, 'Branch', separated them). The second assertion at line 291 still carries list_shouldNarrowTheCountryCodeByTheRoles, so line 287 adds nothing.",
+      "fix": "Must: each assertion in these two tests fails when either the role filter or the other filter is dropped. One way: at line 278 use listAddresses(\"role\", \"CONSIGNOR\", \"q\", \"Importer\") expecting 0 (role alone gives 1, q alone gives 2); at line 287 either seed a second FR address that holds a different role and keep the PLACE_OF_ORIGIN query, or delete the line 287 assertion.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
+      "line": "19",
+      "severity": "Critical",
+      "category": "structure",
+      "issue": "One rule, 4 findings: #1, #2, #4, #5 — an address stored with role BRANCH_ADDRESS (written by ins-tests main's address-book seed, perf-tests main's readiness seed and the INS frontend main's Branch tab, in CDP dev, test and perf-test and local stacks) can no longer be read after this PR. Address.roles is List<AddressRole> (Address.java:52) with no reading converter, so Spring Data's Enum.valueOf throws and GlobalExceptionHandler.java:137 returns 500 on every unfiltered list or search (the animals and plants frontends list with no role filter, so their party pickers break), and on get, update and delete of that record, so it cannot be deleted through the API either. The PR body says only 'No data migration. Addresses already stored with BRANCH_ADDRESS are not converted.' The ticket's no-migration reasoning covers drafts, not addresses. See .verify/branch-removal.md.",
+      "fix": "Must: one decision, recorded with workspace item #32 and in this PR's description, owns what happens to stored BRANCH_ADDRESS addresses, and after deploy no list, search, get, update or delete returns 500 because of one. One way: either a stated deploy step that deletes every addresses document with roles 'BRANCH_ADDRESS' in each CDP environment (and tim docker down locally) before this image is promoted, or a reading converter that drops unknown role names with a WARN naming the address id and organisation, plus an IT that inserts the raw document and asserts the chosen outcome.",
+      "disposition": "Fix",
+      "status": "Not Done",
+      "notes": "Decision (PaulHodgson): stored addresses are transient and test-only. Deleting before deploy does not work, because the old code keeps writing BRANCH_ADDRESS until the new code is out. So: deploy #29 to dev and test, accept unfiltered lists and those records returning 500 for a short while, then delete every address in each environment. Delete in the database (the API returns 500 for those records after #29). Deploy ins-frontend #88 and the ins-tests and perf-tests seed changes no later than #29, so nothing writes BRANCH_ADDRESS after the delete. Say this as the deploy step in #29's description, in place of 'No data migration'. No reading converter."
+    }
+  ]
+}

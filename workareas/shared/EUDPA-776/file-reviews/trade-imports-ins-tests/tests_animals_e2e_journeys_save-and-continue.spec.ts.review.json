@@ -4,26 +4,9 @@
   "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:43:37Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Prior duplication item is resolved, but the test title still says Save and continue where it now presses Continue, and the CPH hidden check runs before the review has loaded.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 84,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "The title 'ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete' was true when the test pressed contactAddress.saveAndContinue; it now presses animalsPages.addresses.continueButton (line 93), a button named 'Continue' (addresses-page.ts:134-135). No Save and continue is pressed. The same wording is quoted in five coverage links (journey-flow/coverage.json:62, :79, :284; check-your-answers/coverage.json:349, :362, :373; cph-number/coverage.json:314), whose notes also say 'Save and continue from consignment addresses'.",
-      "fix": "Must: the title names the button the test presses (Continue on the addresses page), and every coverage link and note quoting it carries the new wording. One way: retitle to 'Continue from the addresses page on an incomplete notification ends on the review, naming what is outstanding' and update the coverage links and notes in the workspace PR."
-    },
-    {
-      "id": 2,
-      "line": 94,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "After the contact-address heading wait was deleted, expect(animalsPages.cphNumber.heading).toBeHidden() (94) runs straight after addresses.continueButton.click() (93) and before expectDraftReview (95). It is satisfied while the addresses page is still showing, so it would pass even if Continue opened the CPH number page and then failed later on a different line, or not at all if the CPH page carried a review-like heading. journey-flow/coverage.json:79 cites this test as the evidence that Continue from consignment addresses does not open the CPH number page. cph-scope.spec.ts:25-26 orders the same pair correctly (destination heading first).",
-      "fix": "Must: the test first proves it has landed on the review, then checks the CPH number page is not showing, so the CPH check can fail. One way: move line 94 below line 96 (after expectDraftReview and the toHaveURL), or drop it since the exact URL assertion already proves the destination."
-    }
-  ],
-  "reconciled_at": "2026-11-24T14:48:35Z"
+  "reviewed_at": "2026-11-25T16:57:13Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Prior #20, #42 and #43 resolved: one test, no repeated URL assertion, the title names the Continue button, and the CPH-hidden check runs after the review is proved; the coverage links quote the new title.",
+  "todos": [],
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

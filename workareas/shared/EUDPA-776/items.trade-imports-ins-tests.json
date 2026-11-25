@@ -10,9 +10,9 @@
       "issue": "Doc comments describe their callers and other modules, not the lines below: MandatoryAnswers (50-53) says 'the UI journey and the seeded journey both build from these', ALL_ANSWERS (135) says 'The UI journey uses this set', ALL_ANSWERS_WITHOUT_DOCUMENT (151) says 'The seeded journey uses this set, as its form client cannot upload a file'.",
       "fix": "Must: each comment in the file states only the contract of the value below it, with no mention of which flows use it or why another module cannot. One way: cut the caller clauses (keep e.g. 'Every answer, including an accompanying document.') and move the seeded-journey file-upload rationale to the tests repo docs.",
       "file": "domain/animals/constants/journey-options.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 2,
@@ -23,9 +23,9 @@
       "fix": "Must: one owner for the 'open the review from Overview, scan it, continue to the declaration' step, called by both a11y specs, and no dead copy in the flow. One way: restore the animalsJourney.toDeclarationThroughReview(runA11yScan) calls in both specs and delete their inline steps (or, if the helper is unwanted, delete it from journey.ts).",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "flows/animals/journey.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 3,
@@ -35,9 +35,9 @@
       "issue": "After the split, addCphAndLeaveAddresses (397-401) is public but has one caller, walkFromTransporterToReview (865), which then waits on notificationView.heading again at 870; and both branches of its if/else (864-868) now end in addresses.continueButton.click(). The public wrapper adds a second route to the same steps without a second user.",
       "fix": "Must: walkFromTransporterToReview reads as one path (optionally add the CPH, then Continue, then wait for check your answers once), and the flow exposes no public method without an external caller. One way: in walkFromTransporterToReview call 'if (addCph) await this.addCphOnAddressesHub();' then 'await pages.addresses.continueButton.click();', and delete addCphAndLeaveAddresses.",
       "file": "flows/animals/journey.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 4,
@@ -47,9 +47,9 @@
       "issue": "openingRunTailSteps (164-167) names an 'opening run' and a 'tail' that appear nowhere else in this repo or the animals frontend (the ticket calls it the opening sequence), so the name does not tell the reader what the steps do: post an empty Continue on accompanying-documents and then on addresses, the second of which addressSteps already posts at 138. Why addresses is posted twice is left for the reader to guess.",
       "fix": "Must: the function's name says in the repo's own words what the steps do and where the draft ends up (the Continue posts that finish the Save and continue walk on check your answers), with no invented metaphor. One way: rename to e.g. continueToCheckYourAnswersSteps, and if the second addresses post is not needed, drop it.",
       "file": "flows/animals/seed-form-steps.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 5,
@@ -59,9 +59,9 @@
       "issue": "With contact gone, partyNamesFrom (12-14) only copies answers.parties, and PartyNames/PartyRole (6-8) now restate the five keys PartyAnswers already defines in domain/animals/constants/journey-options.ts:42. One concept, the five-party record, now has two types and a pass-through function; PartyRole also clashes with the display-label PartyRole in page-objects/animals/addresses-page.ts, forcing the AddressesPartyRole alias in seeded-journey.ts:3.",
       "fix": "Must: one type owns the five party roles by key, and seedSteps passes the answers' parties to resolveParties without a pass-through wrapper. One way: delete partyNamesFrom and PartyNames, type resolveParties as (names: PartyAnswers) => Promise<PartyIds>, derive PartyIds as Record<keyof PartyAnswers, string>, and call resolveParties(answers.parties).",
       "file": "flows/animals/seed-form-steps.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 6,
@@ -71,9 +71,9 @@
       "issue": "The page object and its spec (tests/animals/e2e/pages/contact-address.spec.ts) are deleted outright, and nothing replaces them for the AC 'The old contact address URL no longer serves the page'. No file in trade-imports-ins-tests at 47d39689 mentions consignment/contact, and the trade-imports-animals-frontend PR 487 diff only removes lines naming it, so no test in the PR set proves the old URL is gone.",
       "fix": "Must: one test fails if GET .../notifications/<ref>/consignment/contact/select serves a page again, asserting what the URL returns now (for example the frontend's Page not found heading or 404 status), not only an absence. One way: add a short e2e test in tests/animals/e2e/pages/ that opens the old path on a seeded draft and asserts the not-found heading, or a frontend route test in PR 487.",
       "file": "page-objects/animals/contact-address-page.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 7,
@@ -96,9 +96,9 @@
       "issue": "The comment above the describe (18-19), 'Auth state is minted per Playwright project, so this proof only holds from the admin project: an e2e-project session is already a frontend session.', describes the Playwright project config and auth fixtures, not the lines below, and is rationale in code.",
       "fix": "Must: no comment describing other modules or rationale sits above the describe; the reason this spec lives under animals-admin is recorded in the tests repo docs if it is needed. One way: delete the comment and add the sentence to the tests repo's docs on Playwright projects.",
       "file": "tests/animals-admin/e2e/features/frontend-seed-context.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 9,
@@ -122,9 +122,9 @@
       "fix": "Must: the title names every page the test scans. One way: 'the consignment addresses page and the copied-address edit page, with and without errors, have no accessibility violations'.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/a11y/notification-address-edit.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 11,
@@ -135,9 +135,9 @@
       "fix": "Must: the steps that leave the addresses hub through check your answers back to Overview, and the steps from Overview through the review to the declaration, each live once on AnimalsJourney and all three a11y journey specs call them. One way: add a public AnimalsJourney method (e.g. continueFromAddressesToOverview) and make fromOverviewToDeclaration public, then call them here and in the filled and initial specs.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/a11y/notification-journey-error-state.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 12,
@@ -148,9 +148,9 @@
       "fix": "Must: the review-scan-then-continue step and the leave-the-addresses-hub step each live once on AnimalsJourney, and this spec calls them rather than inlining their steps. One way: call animalsJourney.toDeclarationThroughReview(runA11yScan) again and delete the inline step; move the CPH-to-Overview steps into a journey method shared with the other two a11y specs.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/a11y/notification-journey-filled-state.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 13,
@@ -161,9 +161,9 @@
       "fix": "Must: the review-scan-then-continue step and the leave-the-addresses-hub step each live once on AnimalsJourney, and this spec calls them, so all three a11y journey specs return to Overview the same way. One way: call animalsJourney.toDeclarationThroughReview(runA11yScan) and a shared AnimalsJourney method for the CPH-to-Overview steps, deleting the inline copies.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/a11y/notification-journey-initial-state.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 14,
@@ -213,9 +213,9 @@
       "fix": "Must: the section count and the button list are found by role or through an overview page-object accessor, not by CSS class. One way: add an overview accessor for the task lists, such as getByRole('list') inside the tasklist region, and a buttons accessor, then assert on those.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Moot at 5cdbcb0: the PR no longer edits these lines; main already uses the overview.buttons/sectionRegions accessors"
     },
     {
       "id": 18,
@@ -226,9 +226,9 @@
       "fix": "Must: the title says Back on a review reached by Continue from the addresses page opens the addresses page, and uses one name for that page. One way: 'reached by Continue from the addresses page it opens the addresses page'.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/e2e/journeys/back.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 19,
@@ -239,9 +239,9 @@
       "fix": "Must: the spec holds no version-history or likely-cause comments, and the field-to-column mapping and suspected causes live in a doc the fixme can name. One way: move the mapping and causes into docs/analysis/gbn-ag-field-lineage.md or the PIMS mapping doc, point the fixme message there, and delete the comments.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 20,
@@ -265,9 +265,9 @@
       "fix": "Must: one test opens the old contact address URL for a draft and asserts the exact response the service now gives (for example the 404 page heading). One way: add an e2e test to tests/animals/e2e/journeys that opens /consignment/contact/select for a seeded draft and asserts the not-found heading, or a frontend route test that does the same, and link it from the journey-flow or contact-address spec.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/e2e/pages/contact-address.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 22,
@@ -278,9 +278,9 @@
       "fix": "Must: no coverage.json link names the deleted test, and the scenario's coverage value matches the links that remain. One way: remove the link at check-your-answers/coverage.json:746, or point it at save-and-continue.spec.ts's exact-error-list test.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "tests/animals/e2e/pages/notification-view-states.spec.ts",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 23,
@@ -290,9 +290,9 @@
       "category": "comments",
       "issue": "NotificationDocument still declares consignment?: StoredParty; the backend no longer stores a consignment party",
       "fix": "Must: the stored-notification model has no consignment field. One way: delete line 93.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 24,
@@ -302,9 +302,9 @@
       "category": "comments",
       "issue": "GbnAgExchangedDocument still declares issuer?: GbnAgTradeParty; the GBN-AG event has no issuer",
       "fix": "Must: the outbox event model has no issuer field. One way: delete line 54 and prove the removal with an exact-keys assertion in outbox-event-notification.spec.ts.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-a.md)"
     },
     {
       "id": 25,
@@ -314,9 +314,9 @@
       "category": "structure",
       "issue": "One rule, 6 findings: ins-tests #16; fe #28, #30; workspace #14, #15, #21 — test titles (and the coverage links quoting them) still say six hub groups where five are asserted",
       "fix": "Must: one owner holds the group count: no test title states a count its assertions do not check, and every coverage link quotes the renamed titles. One way: retitle the ins-tests, hub controller and hub fit tests to say five (or drop the count), then update SCN-OVERVIEW-011-A, SCN-CAPTIONS-003-A and SCN-FLOW-001-A.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 26,
@@ -326,9 +326,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #14, #15 — the rebase over main's a9978e79 (#114) deleted amend-ending, Cancel amend and CPH tests unrelated to the contact page (cross-repo owner: trade-imports-workspace #23)",
       "fix": "Must: amend-endings.spec.ts and cph-scope.spec.ts carry main's tests and change only what the contact page removal needs. One way: take both files from origin/main and redo only the contact-address edits.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 27,
@@ -338,9 +338,9 @@
       "category": "structure",
       "issue": "GBN_AG_EXCHANGED_DOCUMENT_KEYS (58-66) restates the field list of GbnAgExchangedDocument (48-56) by hand. 'satisfies readonly (keyof GbnAgExchangedDocument)[]' only stops a key the type lacks; a field added to the type and left off the list still compiles, so the type and the list can drift apart and the outbox specs that assert against the list then fail on a correct event.",
       "fix": "Must: the exchanged-document field set has one owner, and the compiler refuses a list that misses a field of GbnAgExchangedDocument. One way: declare the keys as an object 'satisfies Record<keyof GbnAgExchangedDocument, true>' and export Object.keys of it, so a missing or extra key is a compile error.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 28,
@@ -350,9 +350,9 @@
       "category": "comments",
       "issue": "The comment this PR edits now counts roles ('a test proving a role outside the five is refused', 106-107), and it and its neighbours describe their callers rather than the value below: 'for a loop that only makes sense against one' (89) and 'for a test proving an unknown tab falls back to the default' (102-103). A count goes stale the next time a role changes, as 'six' just did.",
       "fix": "Must: no comment in the file carries a count or describes the tests or loops that use the value; each states only what the value below is. One way: cut the comments to e.g. 'A value that is not one of the role values.' and 'The tabs that list by role.', or delete them where the names already say it.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 29,
@@ -362,9 +362,9 @@
       "category": "comments",
       "issue": "The doc comment on addressTypesAskingRoles (9-10), beside the line this PR rewrites, describes the INS frontend's pages ('Transporter, which opens the add-a-transporter pages instead and carries no roles') rather than the constant below, and restates as 'every type but Transporter' what the array already lists.",
       "fix": "Must: the comment states only what the constant is, or is gone. One way: delete it; the name addressTypesAskingRoles and its two members already say it.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 30,
@@ -374,9 +374,9 @@
       "category": "duplication",
       "issue": "toDeclarationThroughReview (768-775) now ends with notificationView.continueButton.click() then declaration.heading.waitFor (772-773), a line-for-line copy of the private continueFromReviewToDeclaration (1047-1050), and its first step copies openReviewFromOverview; the added declaration wait at 773 is the copy's second line.",
       "fix": "Must: the continue-from-review-to-declaration step has one home in AnimalsJourney, and toDeclarationThroughReview calls it rather than re-typing it. One way: replace lines 772-773 with 'await this.continueFromReviewToDeclaration();'.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 31,
@@ -398,9 +398,9 @@
       "category": "duplication",
       "issue": "Beside the aggregateIdFor promotion, EXPECTED_ACTOR (13-20) and actorWithNullableFields (22-29) are left as line-for-line copies of outbox-event-amendment.spec.ts:10-26 (and the same pair in outbox-event-notification.spec.ts). Test set-up used by several specs is copied rather than living in the shared helper.",
       "fix": "Must: the expected actor for users.andrew and the actor-normalising function each live once in shared test support, and every outbox spec imports them. One way: move both next to aggregateIdFor in domain/animals/models/db/outbox-event-document.ts (or a flows helper) and delete the local copies in created, amendment and notification specs.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 33,
@@ -410,9 +410,9 @@
       "category": "test-readability",
       "issue": "The title 'writes a NotificationCreated event immediately on draft creation' claims 'immediately', but the test polls for up to timeouts.long (47-49) before asserting, so it passes however late the event is written. The assertions prove the event exists with the given fields, not when it was written.",
       "fix": "Must: the title states only what the assertions prove. One way: 'writes a NotificationCreated event on draft creation'.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 34,
@@ -422,9 +422,9 @@
       "category": "test-readability",
       "issue": "expect(doc.eventType).toBe(NOTIFICATION_DELETED) (36) and expect(doc.eventType).toBe(NOTIFICATION_SUBMISSION_DELETED) (70) assert the value the query filter itself selected on (34, 68), so they cannot fail. Same pattern in outbox-event-amendment-cancelled.spec.ts:33, outbox-event-amendment.spec.ts:57 and outbox-event-created.spec.ts:55.",
       "fix": "Must: no outbox spec asserts a field its own query filter fixed. One way: delete those eventType assertions.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 35,
@@ -434,9 +434,9 @@
       "category": "comments",
       "issue": "The comment '// Not notificationApi.softDeleteNotification: it sends no actor, and a submitted notification's address-book parties need an organisation id.' describes another module and the backend, and is rationale in code; the line below (animalsSeededJourney.softDelete) says what it does.",
       "fix": "Must: no comment above the softDelete call describes other modules or rationale; if the reason matters it lives in the tests repo docs. One way: delete the comment.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 36,
@@ -446,9 +446,9 @@
       "category": "test-readability",
       "issue": "The only assertion, expect.poll(countDocuments({ aggregateId, eventType: NOTIFICATION_WITHDRAWN })).toBe(0) (29-33), passes on its first poll, before the backend has had any time to write an event, so the test cannot fail even if deleting a draft did write NotificationWithdrawn. It is also an absence check where a positive one is possible.",
       "fix": "Must: the test goes red if deleting a draft writes a NotificationWithdrawn event. One way: first poll until the draft's NotificationDeleted event exists, then assert the exact list of event types for the aggregate (e.g. ['NotificationCreated', 'NotificationDeleted']).",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 37,
@@ -458,9 +458,9 @@
       "category": "correctness",
       "issue": "The CPH step now calls animalsJourney.continueFromAddressesToOverview() (120), which ends in openCurrentOverview() -> currentReferenceNumber() (journey.ts:292-296), and that throws 'No notification has been started' when the journey context holds no reference. This spec never records one: its beforeEach is toNotificationDashboard() (journey.ts:140, records nothing) and it creates the notification itself via dashboard.btnCreateNewNotification.click() (23), keeping the reference in a local (29). Only createNotificationAtOrigin/recordReferenceNumberFromUrl record it. The replaced lines opened Overview from the page URL and did not depend on the context, so the test now fails at this step; the PR's E2E Tests check does not run @a11y, so it stays green.",
       "fix": "Must: the initial-state a11y test reaches Overview after the addresses page without relying on an unrecorded reference, and passes when run. One way: have the spec record its notification through the journey (e.g. a public AnimalsJourney method that clicks Create new notification from the dashboard and records the reference, called in the Origin of import step), then keep continueFromAddressesToOverview(); run this spec with test:docker-compose before pushing.",
-      "disposition": null,
-      "status": null,
-      "notes": null,
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)",
       "best_practice": "playwright/BEST_PRACTICES.md"
     },
     {
@@ -471,9 +471,9 @@
       "category": "history",
       "issue": "The parametrised title 'the ${pageName} page is no longer served' (80), now carrying the new 'consignment contact select' case, narrates a change ('no longer') rather than stating what the test proves now: the URL answers 404. House rule: no history; code states how things are now.",
       "fix": "Must: each generated title states the current behaviour the assertion proves, with no before/after wording, and the coverage link in openspec/coverage/live-animals/addresses/coverage.json:79 quotes the new title. One way: 'the ${pageName} URL answers 404', and update the coverage link.",
-      "disposition": null,
-      "status": null,
-      "notes": null,
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)",
       "best_practice": "playwright/BEST_PRACTICES.md"
     },
     {
@@ -510,9 +510,9 @@
       "category": "duplication",
       "issue": "The merge left the stored status spelled two ways in the same files: persistence-notification.spec.ts uses notificationStatuses.submitted (61) but the literal 'DRAFT' (29); aggregated-notification.spec.ts uses notificationStatuses.submitted (70, 80) but 'DRAFT' (42, 57); frontend-seed-context.spec.ts asserts 'DRAFT' (86). notificationStatuses.draft in domain/animals/models/api/notification-status.ts already names the value.",
       "fix": "Must: every status these three specs compare against comes from notificationStatuses, with no status string literals left. One way: replace each 'DRAFT' with notificationStatuses.draft and import it in frontend-seed-context.spec.ts.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 42,
@@ -534,9 +534,9 @@
       "category": "test-readability",
       "issue": "After the contact-address heading wait was deleted, expect(animalsPages.cphNumber.heading).toBeHidden() (94) runs straight after addresses.continueButton.click() (93) and before expectDraftReview (95). It is satisfied while the addresses page is still showing, so it would pass even if Continue opened the CPH number page and then failed later on a different line, or not at all if the CPH page carried a review-like heading. journey-flow/coverage.json:79 cites this test as the evidence that Continue from consignment addresses does not open the CPH number page. cph-scope.spec.ts:25-26 orders the same pair correctly (destination heading first).",
       "fix": "Must: the test first proves it has landed on the review, then checks the CPH number page is not showing, so the CPH check can fail. One way: move line 94 below line 96 (after expectDraftReview and the toHaveURL), or drop it since the exact URL assertion already proves the destination.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 44,
@@ -546,9 +546,9 @@
       "category": "test-readability",
       "issue": "The renamed titles 'a create carrying a role outside the five ...' (88) and 'an update carrying a role outside the five ...' (102) claim the address book API knows five roles, but the service these tests call still has six: trade-imports-address-book origin/main AddressRole.java:21 'BRANCH_ADDRESS(RoleGroup.BRANCH)', and no PR in the EUDPA-776 set touches that repo. The tests send UNSUPPORTED_ROLE, so they pass either way and prove nothing about the count the title states.",
       "fix": "Must: each title states only what its assertions prove about the service as deployed, and the service has five roles, as the ticket's acceptance criterion needs. One way: remove BRANCH_ADDRESS and RoleGroup.BRANCH from trade-imports-address-book on feat/EUDPA-776-remove-contact-address (workspace #32), then the 'outside the five' titles are true.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Fixed at 5cdbcb0 (refresh 2026-11-25, see .verify/trade-imports-ins-tests-b.md)"
     },
     {
       "id": 45,
@@ -570,6 +570,30 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #31, #40 — reading the backend outbox from Mongo (client, collection, poll, close) is copied in every outbox spec, and the new notification-data.spec.ts test adds another copy",
       "fix": "Must: one helper owns opening the animals backend outbox collection and reading an aggregate's events (filtered by event type); every outbox spec calls it. One way: an outbox reader in flows/ or utils/ beside aggregateIdFor in outbox-event-document.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 47,
+      "file": "domain/animals/models/db/outbox-event-document.ts",
+      "line": "184",
+      "severity": "Major",
+      "category": "structure",
+      "issue": "withOutbox (184-204), EXPECTED_ACTOR (162-169) and actorWithNullableFields (171-178) put a Mongo connection, a Playwright expect.poll and test-user data into domain/animals/models/db, which holds only types and constants: it is now the only file under domain/ that imports MongoDbClient, expect or @config/users. The outbox read also keeps a second copy beside it: tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:160-170 (a file this PR edits) still opens its own MongoDbClient on the outbox collection, polls by aggregateIdFor and closes it, instead of calling withOutbox.",
+      "fix": "Must: the outbox model file holds only the event types, key list and aggregateIdFor; reading the outbox (connect, poll for one event, close) has one owner in the test-support layer, and every outbox spec this PR touches, notification-data.spec.ts included, calls it. One way: move withOutbox, OutboxReader, EXPECTED_ACTOR and actorWithNullableFields to a flows/animals-admin (or flows/animals) outbox helper, and rewrite notification-data.spec.ts's read as withOutbox((outbox) => outbox.eventsOf(referenceNumber)) with the poll.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 48,
+      "file": "README.md",
+      "line": "170",
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The PR's README edit says the CDP outage came from 'every address picker page load', but the pickers page at 8 addresses (ADDRESSES_A_PAGE = 8). The page that listed the whole address book was the removed contact address page, so the sentence names the wrong cause.",
+      "fix": "Must: the README names the page that listed the whole address book, or drops the cause. One way: say the contact address page listed the whole book on every load.",
       "disposition": null,
       "status": null,
       "notes": null

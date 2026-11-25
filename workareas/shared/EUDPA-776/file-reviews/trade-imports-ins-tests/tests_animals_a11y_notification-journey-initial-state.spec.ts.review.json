@@ -4,19 +4,9 @@
   "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:43:46Z",
-  "verdict": "RISKY",
-  "verdict_reason": "The new continueFromAddressesToOverview() call needs a recorded reference number this spec never records, so the test throws at the CPH step.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 120,
-      "severity": "Critical",
-      "category": "correctness",
-      "issue": "The CPH step now calls animalsJourney.continueFromAddressesToOverview() (120), which ends in openCurrentOverview() -> currentReferenceNumber() (journey.ts:292-296), and that throws 'No notification has been started' when the journey context holds no reference. This spec never records one: its beforeEach is toNotificationDashboard() (journey.ts:140, records nothing) and it creates the notification itself via dashboard.btnCreateNewNotification.click() (23), keeping the reference in a local (29). Only createNotificationAtOrigin/recordReferenceNumberFromUrl record it. The replaced lines opened Overview from the page URL and did not depend on the context, so the test now fails at this step; the PR's E2E Tests check does not run @a11y, so it stays green.",
-      "fix": "Must: the initial-state a11y test reaches Overview after the addresses page without relying on an unrecorded reference, and passes when run. One way: have the spec record its notification through the journey (e.g. a public AnimalsJourney method that clicks Create new notification from the dashboard and records the reference, called in the Origin of import step), then keep continueFromAddressesToOverview(); run this spec with test:docker-compose before pushing.",
-      "best_practice": "playwright/BEST_PRACTICES.md"
-    }
-  ],
-  "reconciled_at": "2026-11-24T14:48:35Z"
+  "reviewed_at": "2026-11-25T16:57:06Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Prior #13 and #37 resolved: createNotificationFromDashboard records the reference before continueFromAddressesToOverview reads it, and the inline review step is back to toDeclarationThroughReview.",
+  "todos": [],
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

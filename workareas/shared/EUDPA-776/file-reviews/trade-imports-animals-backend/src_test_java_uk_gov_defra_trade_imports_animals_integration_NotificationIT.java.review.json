@@ -4,18 +4,26 @@
   "commit": "b73a5d07214320b9379342b28e8a8ec86498b08c",
   "pr": 133,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:43:43Z",
+  "reviewed_at": "2026-11-25T16:53:59Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The new stale-consignment save IT closes the coverage gap but copies its set-up from the sibling stale-typeOfCommodity test instead of sharing a helper.",
+  "verdict_reason": "Prior items #4 (consignment save IT) and #13 (duplicated raw-save set-up) are resolved; the new IT's origin assertion cannot fail and the new putRawSave helper's name hides its read-back and override behaviour.",
   "todos": [
     {
       "id": 1,
-      "line": 1023,
+      "line": 1016,
       "severity": "Major",
-      "category": "duplication",
-      "issue": "The new put_shouldAcceptTheSaveAndStoreNoConsignmentParty_whenAnOlderClientStillSendsOne (lines 1023-1043) copies the set-up of putAndSubmit_shouldRecordSubmittedAndShedTypeOfCommodity_whenStoredCommodityHoldsIt (lines 988-1018). Both create the draft with createDraftReference(createNotificationDto(\"CH\", \"Live cattle\")), read the stored aggregate for its concurrencyToken, hand-build the raw Map.of(\"notification\", Map.of(referenceNumber, concurrencyToken, origin CH/no, commodities ...)) body, PUT it through webClient(\"NoAuth\") expecting 200, then read NotificationTestSupport.storedDocument(...).get(\"notification\", Document.class). Only the extra stale field differs.",
-      "fix": "Must: one shared helper owns saving a raw stale-client body over a fresh draft and reading back the stored notification document; both tests call it and state only the extra field they send and what they assert. One way: add a helper in NotificationIT or NotificationTestSupport such as putRawSave(referenceNumber, Map<String, Object> extraNotificationFields) returning the stored notification Document, and have both tests use it."
+      "category": "test-readability",
+      "issue": "put_shouldAcceptTheSaveAndStoreNoConsignmentParty_whenAnOlderClientStillSendsOne asserts origin.countryCode == CH (line 1016), a value the set-up wrote twice (createNotificationDto(\"CH\", ...) and the CH origin putRawSave hard-codes), so it passes whether or not the save was stored and proves nothing the title claims. The only real check left is the absence check doesNotContainKey(\"consignment\"), where an exact positive assertion on the stored notification is possible (the prior item #4 Must asked for exactly the expected keys).",
+      "fix": "Must: the test fails if the save is not stored, and it pins the stored notification's keys exactly rather than only checking one is absent. One way: send a field in the save body the draft did not hold (for example an internalReference on origin) and assert it is stored, and assert rawNotification.keySet() containsExactlyInAnyOrder the keys the save writes."
+    },
+    {
+      "id": 2,
+      "line": 1305,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Helper putRawSave(String referenceNumber, Map<String, Object> extraNotificationFields) (line 1305) hides two things its name does not predict: it returns the stored notification Document read back from Mongo after the PUT, and 'extraNotificationFields' are applied with putAll over the defaults, so they replace fields as well as add them. The shed-typeOfCommodity test (line 996) uses it to replace 'commodities', not to add an extra field.",
+      "fix": "Must: the helper's name says it saves and returns the stored notification document, and the parameter's name says its entries override the default save body. One way: rename to saveRawAndReadStoredNotification(referenceNumber, Map<String, Object> notificationFieldOverrides)."
     }
   ],
-  "reconciled_at": "2026-11-24T14:48:32Z"
+  "reconciled_at": "2026-11-25T17:01:45Z"
 }

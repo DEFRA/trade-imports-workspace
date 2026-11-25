@@ -1,0 +1,21 @@
+{
+  "file": "openspec/coverage/live-animals/notification-events/coverage.json",
+  "repo": "trade-imports-workspace",
+  "commit": "9950666ce7c2ddb5c6248b579077b9d31c5ada07",
+  "pr": 274,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:59:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one renamed link resolves and witnesses its scenario, but the AC that the submitted GBN-AG event has no issuer has no scenario here and its proving tests are linked nowhere.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 59,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The AC 'The GBN-AG event for a submitted notification has no issuer' is stated by no scenario: notification-events spec.md has only REQ-EVENTS-001..003 and no scenario names exchangedDocument's fields, and nothing under openspec mentions issuer outside ins/authentication. The tests that prove it exist but are linked nowhere: ins-tests notification-data.spec.ts:152 'the submitted notification outbox GBN-AG payload carries only the exchanged document fields the event schema declares' (keys a subset of GBN_AG_EXCHANGED_DOCUMENT_KEYS, which omits issuer, outbox-event-document.ts:63-71), and gateway NotificationSqsListenerIT:247-248 / PimsPayloadMapperTest mapToV4_shouldSendNoIssuer... The one link this PR touched (outbox-event-created.spec.ts:16 'writes a NotificationCreated event on draft creation') exists and witnesses SCN-EVENTS creation scenario.",
+      "fix": "Must: the notification-events spec carries a scenario that the submission event's exchanged document holds no issuer (only the fields the GBN-AG event schema declares), and this coverage file links the ins-tests outbox test to it (partial: it runs only off the compose stack), with the backend or gateway witness that proves it on every run. One way: add SCN-EVENTS-001-x 'The submission event names no issuer' under REQ-EVENTS-001 and link notification-data.spec.ts:152 and NotificationSqsListenerIT."
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:47Z"
+}

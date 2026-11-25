@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b0a8ef95d50237da5743c4d735d0bd75d729a16e",
+  "pr": 29,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:54:42Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Request validation follows the trimmed enum and RoleGroup correctly, but stored BRANCH_ADDRESS records in deployed environments will fail to deserialise and turn reads into 500s, with no migration in the PR.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 104,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Requests are consistent (AddressRoleNamesValidator builds ROLE_NAMES from AddressRole.values(), so roles:[\"BRANCH_ADDRESS\"] is a 400 'Select valid roles' keyed by roles; role=BRANCH_ADDRESS on the list is a 400 via MethodArgumentTypeMismatchException), but stored documents are not: Address.java:52 maps roles as List<AddressRole>, and ins-frontend main still writes BRANCH_ADDRESS (origin/main address-types.js:20,33 and typed-seed.js:22,26 - the Branch address type in the UI), so CDP dev/test hold such records. Spring Data's MappingMongoConverter calls Enum.valueOf on read, which throws IllegalArgumentException; GlobalExceptionHandler.java:137 turns it into a 500. Every GET, list and search page that includes one of those addresses fails for that organisation, and PUT cannot repair it because the service reads the record first. The PR ships no migration (no Mongock or change unit in the repo).",
+      "fix": "Must: after deploy, no stored address with roles containing BRANCH_ADDRESS can make a read, list, search or update fail; such records are removed, migrated, or read tolerantly, by a decision recorded with workspace item #32. One way: a one-off Mongo update (or startup migration) that soft-deletes or strips BRANCH_ADDRESS from stored roles in every environment before this image is promoted, plus an AddressRepositoryIT case that inserts a raw document with roles [\"BRANCH_ADDRESS\"] and proves the list still answers.",
+      "best_practice": "java/spring-data-mongodb.md"
+    },
+    {
+      "id": 2,
+      "line": 96,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR deletes the two BRANCH_ADDRESS cases from AddressRequestValidationTest and adds none in their place, so no test shows the AC (the address book has no branch address) at the request boundary: nothing asserts that roles [\"BRANCH_ADDRESS\"] is now refused. The only unknown-role cases use invented values (AddressCrudIT.java:127 'TRANSPORTER'), so re-adding BRANCH_ADDRESS to AddressRole would leave every test green.",
+      "fix": "Must: a test fails if BRANCH_ADDRESS is ever accepted again on create or update. One way: add an invalidFields() case in AddressRequestValidationTest with roles List.of(\"BRANCH_ADDRESS\") expecting 'Select valid roles' on roles, and a role=BRANCH_ADDRESS list case expecting 400 in AddressListIT.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:16Z"
+}

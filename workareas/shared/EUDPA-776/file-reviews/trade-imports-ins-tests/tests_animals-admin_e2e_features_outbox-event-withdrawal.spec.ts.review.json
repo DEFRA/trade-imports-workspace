@@ -4,18 +4,9 @@
   "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:44:13Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The import swap is correct, but the test's only assertion is a zero-count poll that passes on its first try and cannot fail.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 29,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "The only assertion, expect.poll(countDocuments({ aggregateId, eventType: NOTIFICATION_WITHDRAWN })).toBe(0) (29-33), passes on its first poll, before the backend has had any time to write an event, so the test cannot fail even if deleting a draft did write NotificationWithdrawn. It is also an absence check where a positive one is possible.",
-      "fix": "Must: the test goes red if deleting a draft writes a NotificationWithdrawn event. One way: first poll until the draft's NotificationDeleted event exists, then assert the exact list of event types for the aggregate (e.g. ['NotificationCreated', 'NotificationDeleted'])."
-    }
-  ],
-  "reconciled_at": "2026-11-24T14:48:35Z"
+  "reviewed_at": "2026-11-25T16:57:30Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The always-passing count-zero poll is replaced by waiting for NotificationDeleted and asserting the exact Created, Edited, Deleted event list, which goes red on a withdrawn event; no new findings.",
+  "todos": [],
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

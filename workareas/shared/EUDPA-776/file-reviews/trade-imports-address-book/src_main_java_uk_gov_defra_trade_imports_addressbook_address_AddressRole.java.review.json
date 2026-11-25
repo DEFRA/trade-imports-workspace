@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b0a8ef95d50237da5743c4d735d0bd75d729a16e",
+  "pr": 29,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-25T16:54:38Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The enum change is clean and no code reference to BRANCH_ADDRESS is left in the PR set, but addresses already stored with that role fail to map on read, so list, search, get, update and delete return 500, and nothing migrates or tolerates them.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 19,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Removing BRANCH_ADDRESS leaves every stored address with roles:[BRANCH_ADDRESS] unreadable. The role has been on main since 4d5d9cc (EUDPA-711, 2026-11-06), and ins-frontend main (address-types.js, typed-seed.js) and ins-tests main (flows/shared/address-book-seed.ts) write it, so dev/test Mongo holds such documents. Spring Data maps List<AddressRole> with Enum.valueOf, which throws IllegalArgumentException on read; GlobalExceptionHandler:137 turns any RuntimeException into 500. So GET list and search (AddressListQueryImpl.listLiveAddresses), GET by id, PUT and DELETE (AddressService:141/160/184 all read first) return 500 for any organisation holding one, and the API gives no way to remove the bad document. The PR body says only that stored addresses are not converted. There is no migration tooling (no Mongock), compose/mongo/10-init.js is the empty template, and non-prod TTL purging depends on ADDRESS_TTL_DAYS, so it is not guaranteed.",
+      "fix": "Must: after this deploys, no organisation's list, search, get, update or delete returns 500 because of an address stored with BRANCH_ADDRESS, in every environment that ran the earlier image, and a test proves it. One way: a startup or one-off step that removes BRANCH_ADDRESS from stored roles ($pull on addresses.roles), with an IT that inserts a raw document holding BRANCH_ADDRESS and asserts that list and get return 200 without it. Or a reading converter that drops unknown role names with a WARN log naming the address id and organisation. Or, if the team agrees the non-prod data is disposable as the ticket says of drafts, a recorded step to clear those documents in dev, test and perf-test before deploy, stated in the PR.",
+      "best_practice": "java/spring-data-mongodb.md"
+    }
+  ],
+  "reconciled_at": "2026-11-25T17:01:16Z"
+}

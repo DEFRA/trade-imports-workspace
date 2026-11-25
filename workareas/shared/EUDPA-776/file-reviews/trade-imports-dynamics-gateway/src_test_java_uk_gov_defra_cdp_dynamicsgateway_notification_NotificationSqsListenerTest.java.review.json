@@ -4,18 +4,18 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:43:53Z",
+  "reviewed_at": "2026-11-25T16:56:46Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Prior findings are addressed, but the two new mapping-failure tests copy their spy set-up and check different counters.",
+  "verdict_reason": "The parameterised mapping-failure test resolves #38 and #12 (all three best-effort versions, all four counters checked), but the version list is still hand-written in every test.",
   "todos": [
     {
       "id": 1,
-      "line": 261,
+      "line": 269,
       "severity": "Major",
       "category": "duplication",
-      "issue": "The two new mapping-failure tests copy the same set-up: receive_shouldNotThrow_andCountV2AsFailed_whenV2MappingFails (lines 262-266) and receive_shouldNotThrow_andCountV4AsFailed_whenV4MappingFails (lines 282-286) each spy pimsPayloadMapper, stub one mapToVn to throw and build a second NotificationSqsListener. Their assertions also drift apart: the v2 test checks the failed counter only for 0.2.0 and 0.4.0, while the v4 test checks all four.",
-      "fix": "Must: one home for the 'one stream fails to map' set-up, and every such test checks the forwarded and failed counters for all four schema versions. One way: a @ParameterizedTest over the best-effort versions (0.2.0, 0.3.0, 0.4.0) with a private helper that returns a listener whose mapper throws for the given version."
+      "issue": "The four schema versions are written out by hand in nearly every test: the new parameterised test adds List.of(\"0.1.0\", \"0.2.0\", \"0.3.0\", \"0.4.0\") at line 269, beside the per-version counter assertions at lines 74-77, 91-94, 105-108, 122-125, 136-139, 210-213, 228-235, 250-257, 299-306, 320-327, 341-344 and 360-363 and the -v2/-v3/-v4 publish checks. A fifth PIMS version needs a dozen tests edited, the same problem #10 and #39 removed from the IT and PimsPayloadMapperTest.",
+      "fix": "Must: one place in this test class lists the schema versions (and their message-id suffixes); every test that checks forwarded/failed counters or per-version publishes reads it. One way: a private static List<String> SCHEMA_VERSIONS used by the new loop, plus helpers such as assertForwarded(Set<String> versions) / assertFailedOnly(String version) that iterate it."
     }
   ],
-  "reconciled_at": "2026-11-24T14:48:34Z"
+  "reconciled_at": "2026-11-25T17:01:46Z"
 }

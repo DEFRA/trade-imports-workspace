@@ -4,26 +4,26 @@
   "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
   "pr": 274,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-24T14:48:00Z",
+  "reviewed_at": "2026-11-25T16:57:58Z",
   "verdict": "RISKY",
-  "verdict_reason": "Prior items #6, #7 and #8's listed lines are fixed, but Branch coverage claims survive the Branch type's removal, including a link to a deleted test, and SCN-INS-ADDR-037-C now says five roles where the address-book service has six.",
+  "verdict_reason": "Branch scenarios and links are gone consistently with the spec and the renamed links resolve, but SCN-INS-ADDR-037-H's rewritten update half is claimed full with no update test, and two link notes still count the removed Branch/contact runs.",
   "todos": [
     {
       "id": 1,
-      "line": 5249,
+      "line": 3982,
       "severity": "Critical",
       "category": "coverage-gap",
-      "issue": "The ins-frontend (dd902ca) and ins-tests (3e1d02a) PRs now remove the Branch address type and its tests, but this file still claims coverage of Branch: SCN-INS-ADDR-043-H links 'after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered' (address-type.fit.spec.js), a test the ins-frontend diff deletes (ins-frontend diff line 913); SCN-INS-ADDR-044-G 'Branch offers the one role...' (line 5579) stays full on links whose Branch rows are gone (add.fit.spec.js 'Branch row', address-book-add-roles.spec.ts and address-book-country-list.spec.ts 'for Branch' - no Branch row remains in tests/ins or ins-frontend src); SCN-INS-ADDR-044-H/044-I (5626, 5649) cite 'the Branch runs'; SCN-INS-ADDR-038-B (4129) and 039-A (4283) rest their red-probe claims on 'the Branch run', which no longer exists; and SCN-INS-ADDR-043-A (4925) is still named 'offers the four types' while this PR repointed its three links to tests that assert three types. Related to spec item #17, but this is the coverage claim itself.",
-      "fix": "Must: no link in this file names a deleted test, no scenario claims coverage of the Branch type or rests a strength on a Branch run, and every scenario's name agrees with the tests linked to it, with coverage values re-derived. One way: once spec.md drops the Branch scenarios (#17), delete SCN-INS-ADDR-044-G and the 043-H Branch link, drop 'Branch' from the 044-H/044-I and 038-B/039-A notes (re-rating 039-A if its only probe was the Branch run), rename 043-A to three types, then run tim spec lint."
+      "issue": "SCN-INS-ADDR-037-H, whose update half this PR rewrote (importer updated with importer and consignor is refused and keeps importer), stays 'full' but every link proves a create only: AddressCrudIT post_..._whenTheRolesComeFromTwoGroups (POST), the AddressRequestValidationTest request-only case, and the ins-tests 'a create holding a sending role and a receiving role...' e2e. AddressUpdateIT at address-book PR head has no two-group refusal test (only put_..._whenBodyOmitsRoles and _whenARoleIsUnknown), so nothing witnesses the update half.",
+      "fix": "Must: a test proves a PUT with roles from two groups returns 400 keyed by roles and the stored roles are unchanged, and it is linked on SCN-INS-ADDR-037-H; until then the scenario and REQ-INS-ADDR-037 are rated from what the links prove. One way: add AddressUpdateIT put_shouldReturn400KeyedByRolesAndKeepStoredValues_whenTheRolesComeFromTwoGroups (IMPORTER + CONSIGNOR on an IMPORTER address), red-probe it, and link it."
     },
     {
       "id": 2,
-      "line": 3849,
-      "severity": "Critical",
-      "category": "correctness",
-      "issue": "SCN-INS-ADDR-037-C was renamed 'A create or update carrying a role outside the five is refused naming the roles', but the address-book service has six roles: AddressRole.java:21 BRANCH_ADDRESS(RoleGroup.BRANCH) on origin/main of trade-imports-address-book (no PR in the EUDPA-776 set; read from the live clone, on main). A create holding BRANCH_ADDRESS is accepted, and SCN-INS-ADDR-037-H/037-I in the same spec still rely on the branch role. The links prove only that the literal 'UNSUPPORTED_ROLE' (ins-tests domain/ins/constants/address-book-types.ts:108) and an unknown role in the ITs are refused, so nothing witnesses 'outside the five'.",
-      "fix": "Must: the scenario states the role set the address-book service actually accepts, and agrees with 037-H and 037-I. One way: revert the name to 'outside the six' here and in spec.md (and the two ins-tests titles), or, if the branch role is to go from the service, add trade-imports-address-book to the PR set and drop BRANCH_ADDRESS there."
+      "line": 1366,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Link notes made false by the Branch/contact removal: line 1366 (add.fit.spec.js blank-fields test) says 'each of the three address types and consignor picker; red-probed: all five fail', but the test at ins-frontend head (add.fit.spec.js:622-639) runs three times - Origin or Consignor, Destination/Consignee/Importer, consignor picker; line 4022 (SCN-INS-ADDR-037-I, renamed this window) says 'the three creates in France, one run per set of roles', but AddressTestSupport.rolesOneAddressCanHoldTogether now yields two sets (the BRANCH_ADDRESS set was removed by address-book PR #29).",
+      "fix": "Must: every note on these links states the runs the linked test makes at the PR-set heads. One way: line 1366 'address book after the two role-grouped address types and the consignor picker; red-probed: all three fail ...'; line 4022 'the two creates in France ...'."
     }
   ],
-  "reconciled_at": "2026-11-24T14:48:37Z"
+  "reconciled_at": "2026-11-25T17:01:47Z"
 }

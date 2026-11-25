@@ -11,10 +11,12 @@ Centralised gateway that forwards notification events to Azure Service Bus (ASB)
 **Owns:**
 - The SQS-to-ASB hop: consuming the notification SQS FIFO queue and publishing to ASB (queue taken from the `EntityPath` in the connection string).
 - Filtering: only `uk.gov.defra.imports.notification.NotificationSubmitted` and `NotificationSubmissionAmended` are forwarded; all other event types are logged and dropped.
-- Mapping the backend's outbox event (GBN-AG data) to `PimsEventV1` (`PimsPayloadMapper`, `PimsEventMapper` and related mappers).
-- ASB message identity: `sessionId` is the SQS `MessageGroupId` (the aggregate id); `messageId` is the body `eventId`, else the SQS deduplication id, else a new UUID.
+- Mapping the backend's outbox event (GBN-AG data) to PIMS. Every forwarded event is published three times, in this order, to the same session: as PIMS v0.1.0 (`PimsEventV1`, `PimsEventMapper`), v0.2.0 (`PimsEventV2`, `PimsEventMapperV2`) and v0.3.0 (`PimsEventV3`, `PimsEventMapperV3`), so PIMS can move to a newer version when it is ready. A v0.2.0 or v0.3.0 failure is logged and counted but never fails the SQS message, because a redelivery would send v0.1.0 again. The repo's `docs/notification-pipeline.md` ("PIMS versions") has the detail.
+- ASB message identity: `sessionId` is the SQS `MessageGroupId` (the aggregate id); `messageId` is the body `eventId`, else the SQS deduplication id, else a new UUID. The v0.2.0 and v0.3.0 copies add `-v2` or `-v3` to it.
 - Error classification: transient ASB failures are left in SQS for native redelivery and DLQ routing; non-transient failures, invalid JSON, and a missing `MessageGroupId` are deleted from SQS. No in-process retry.
 - The DLQ API over the notification dead-letter queue (list, replay-all, delete-all).
+- The Queue API: `GET /queue/notifications` gives the source queue's approximate visible and in-flight depth (read-only, no auth; `NotificationQueueController`).
+- Its own metrics and dependency call logging. `EmfMeterRegistry` publishes the `external.call.*` meters, `notification.message` and the rest to CloudWatch, as the repo's `docs/observability.md` describes.
 
 **Does NOT own:**
 - Notification data, persistence or the outbox itself (the animals backend writes and publishes the events; this service holds no database).
@@ -31,9 +33,10 @@ Centralised gateway that forwards notification events to Azure Service Bus (ASB)
 | Outbound | Azure Service Bus (session queue) | Azure SDK `azure-messaging-servicebus`, SAS send-only connection string | Deliver PIMS-mapped events downstream |
 | Inbound | Any caller (diagnostic) | REST `POST /events` (needs `aggregateId`) | Secondary path: forward a JSON body to ASB |
 | Inbound | trade-imports-animals-admin (`TRADE_IMPORTS_DYNAMICS_GATEWAY_URL`) | REST `/dlq/notifications` | List, replay-all and delete-all DLQ messages |
+| Inbound | Any caller (diagnostic) | REST `GET /queue/notifications` | Source queue depth |
 | Outbound | AWS SQS dead-letter queue | SQS `ReceiveMessage`, `StartMessageMoveTask`, `PurgeQueue` | Implement the DLQ API |
 | Outbound | AWS CloudWatch | Embedded metrics (EMF) | Metrics |
-| Outbound | trade-imports-schemas | Documentation links only (Javadoc URLs); no build-time or runtime dependency | Reference for `OutboxEvent` and `PimsEventV1` shapes |
+| Outbound | trade-imports-schemas | Schema URLs only (Javadoc links, and the `schemaUri` each PIMS version stamps); no build-time or runtime dependency | Reference for the `OutboxEvent` shape and the PIMS v0.1.0, v0.2.0 and v0.3.0 schemas (`gbn-ag-pims-v0.1.0.schema.json` to `v0.3.0`) |
 
 The backend also carries a `TRADE_IMPORTS_DYNAMICS_GATEWAY_BASE_URL` setting in the workspace stack, but `trade-imports-animals-backend/src` contains no reference to the gateway and no client for it. Events reach the gateway only through SNS and SQS.
 
@@ -45,7 +48,7 @@ The backend also carries a `TRADE_IMPORTS_DYNAMICS_GATEWAY_BASE_URL` setting in 
 - **Messaging:** Spring Cloud AWS SQS starter (in); Azure Service Bus SDK (out)
 - **API style:** REST, OpenAPI via springdoc (`/v3/api-docs`; Swagger UI in the `local` profile only)
 - **Auth:** `Trade-Imports-Animals-Admin-Secret` header on DLQ replay-all/delete-all (`AdminSecretFilter`)
-- **Logging/metrics:** Logback with Elastic ECS format; AWS embedded metrics; Micrometer
+- **Logging/metrics:** Logback with Elastic ECS format; Micrometer meters published as CloudWatch EMF by `EmfMeterRegistry` (see the repo's `docs/observability.md`)
 - **Tests:** JUnit 5 with Testcontainers (ASB emulator on SQL Server, Floci for SQS); `mvn verify` runs them
 
 ## Infrastructure dependencies

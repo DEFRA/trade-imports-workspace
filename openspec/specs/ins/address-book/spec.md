@@ -1140,7 +1140,7 @@ The address book service MUST, given search roles, return the caller's organisat
 **ID**: REQ-INS-ADDR-043
 The system MUST open 'Choose an address type' when the user chooses 'Add a new address', and MUST send a continued choice to the add form for a type that groups roles, to the add-a-transporter pages for 'Transporter', or back with 'Select an address type' for none. The chosen type MUST persist while the add is in progress, clearing on a new add or a save. The add form MUST reopen 'Choose an address type' and save nothing when reached or saved with no stored type it serves.
 
-#### Scenario: The address type page offers the four types with their hints
+#### Scenario: The address type page offers the three types with their hints
 **ID**: SCN-INS-ADDR-043-A
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'

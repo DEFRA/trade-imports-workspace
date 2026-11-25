@@ -69,6 +69,13 @@ Never give these lines `event.category`, `event.action` or
 Never a field of its own such as `operation`, `status`, `journeyId` or
 `url`: CDP drops it.
 
+The HTTP status is never `error.code`, on this line or the
+external-call line. The external-call line carries it as
+`http.response.status_code`, and any other line in `error.message`.
+`error.code` holds only a code the failure names itself: the refusal's
+own code from the answer's body, such as `STALE_CONCURRENCY_TOKEN`, or
+the cause's code, such as `ECONNREFUSED`.
+
 `[UNPROVEN]` that `event.reference` reaches dev OpenSearch. Check a
 refusal line there by its journey id before relying on it.
 

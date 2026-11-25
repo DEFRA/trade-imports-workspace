@@ -50,6 +50,20 @@ const absentNotApplicable = {
   reason: 'We do not use the slot'
 }
 
+const acceptedHeaderColour = {
+  item: 'Change the header link colour',
+  outcome: 'applied',
+  reason: 'The new header link colour is taken as it comes',
+  acceptedBy: 'Sam Farrington',
+  today: '2026-11-25'
+}
+
+const headerColourForAPerson = {
+  item: acceptedHeaderColour.item,
+  outcome: 'needs-a-person',
+  reason: 'Check the header against the design'
+}
+
 const stateText = () => readFileSync(evidenceStatePath(staged), 'utf8')
 
 const refusalOf = (version) =>
@@ -139,6 +153,18 @@ describe('#addVersionEvidence', () => {
       'a needs-a-person row with no reason',
       { item: 'x', outcome: 'needs-a-person' }
     ],
+    [
+      'an accepted applied row that also gives a pattern',
+      { ...acceptedHeaderColour, pattern: OLD_CLASS }
+    ],
+    [
+      'an accepted row that is not applied',
+      { ...acceptedHeaderColour, outcome: 'not-applicable' }
+    ],
+    [
+      'an accepted applied row with no reason',
+      { ...acceptedHeaderColour, reason: '' }
+    ],
     ['an unknown outcome', { item: 'x', outcome: 'maybe' }],
     ['a row with no item', { outcome: 'needs-a-person', reason: 'Look' }]
   ])(
@@ -154,6 +180,28 @@ describe('#addVersionEvidence', () => {
       expect(stateText()).toBe(before)
     }
   )
+
+  test('Should record who accepted an applied row with no pattern, dated today', async () => {
+    staged = stageEvidenceWorkspace()
+
+    const added = await addEvidence('5.6.0', acceptedHeaderColour)
+
+    expect(added).toEqual(
+      expect.objectContaining({
+        message: `Added evidence for ${EVIDENCE_REPO}@5.6.0: applied, accepted by Sam Farrington on 2026-11-25`,
+        row: {
+          item: acceptedHeaderColour.item,
+          pattern: null,
+          hitsBefore: null,
+          hitsAfter: null,
+          outcome: 'applied',
+          reason: acceptedHeaderColour.reason,
+          acceptedBy: 'Sam Farrington',
+          acceptedOn: '2026-11-25'
+        }
+      })
+    )
+  })
 
   test('Should refuse a version the state file does not hold', async () => {
     staged = stageEvidenceWorkspace()
@@ -174,7 +222,98 @@ describe('#addVersionEvidence', () => {
   })
 })
 
+describe('#addVersionEvidence with replace', () => {
+  test('Should put the row in place of the row for the same item, keeping the others in order', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.5.0', headerColourForAPerson)
+    await addEvidence('5.5.0', absentNotApplicable)
+
+    const replaced = await addEvidence('5.5.0', {
+      ...acceptedHeaderColour,
+      replace: true
+    })
+
+    expect({
+      message: replaced.message,
+      replaced: replaced.replaced.outcome,
+      rows: evidenceVersion(staged, '5.5.0').evidence.map(
+        ({ item, outcome }) => `${item}: ${outcome}`
+      )
+    }).toEqual({
+      message: `Replaced evidence for ${EVIDENCE_REPO}@5.5.0: applied, accepted by Sam Farrington on 2026-11-25`,
+      replaced: 'needs-a-person',
+      rows: [
+        `${acceptedHeaderColour.item}: applied`,
+        `${absentNotApplicable.item}: not-applicable`
+      ]
+    })
+  })
+
+  test('Should keep the hits counted before the change when the pattern is the same, so an applied row can follow the change', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.5.0', {
+      ...applyOldClass,
+      outcome: 'needs-a-person',
+      reason: 'Check the new link class'
+    })
+    writeLayout(staged, NEW_CLASS)
+
+    const replaced = await addEvidence('5.5.0', {
+      ...applyOldClass,
+      replace: true
+    })
+    const checked = await checkVersionEvidence(ids('5.5.0'))
+
+    expect({
+      hitsBefore: replaced.row.hitsBefore,
+      allClean: checked.allClean
+    }).toEqual({ hitsBefore: 2, allClean: true })
+  })
+
+  test('Should count the hits now when the pattern differs from the row it replaces', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.5.0', applyOldClass)
+    writeLayout(staged, NEW_CLASS)
+
+    await expect(
+      addEvidence('5.5.0', {
+        ...applyOldClass,
+        pattern: `${OLD_CLASS}--wide`,
+        replace: true
+      })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: `The pattern "${OLD_CLASS}--wide" has no hits, so there is nothing to apply. Record the item as not-applicable.`
+    })
+  })
+
+  test('Should refuse an item the version has no row for and leave the state file alone', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.5.0', absentNotApplicable)
+    const before = stateText()
+
+    await expect(
+      addEvidence('5.5.0', { ...acceptedHeaderColour, replace: true })
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: `Can't find an evidence row for "${acceptedHeaderColour.item}" in ${EVIDENCE_REPO}@5.5.0. Give the item exactly as its row has it, or leave out --replace to add a row.`
+    })
+    expect(stateText()).toBe(before)
+  })
+})
+
 describe('#checkVersionEvidence', () => {
+  test('Should find an applied row a person accepted clean', async () => {
+    staged = stageEvidenceWorkspace()
+    await addEvidence('5.6.0', acceptedHeaderColour)
+
+    const checked = await checkVersionEvidence(ids('5.6.0'))
+
+    expect(checked.message).toBe(
+      `Every evidence row for ${EVIDENCE_REPO}@5.6.0 is clean (1 rows).`
+    )
+  })
+
   test('Should find an applied row with hits left not clean, recording the hits after', async () => {
     staged = stageEvidenceWorkspace()
     await addEvidence('5.5.0', applyOldClass)

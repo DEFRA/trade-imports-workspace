@@ -213,6 +213,17 @@ scheduling if the 7-day restart becomes a chore.
   `repos.json` repo; the deps-fix skill must do the same when it is
   written.
 - **Workspace root Dependabot: done, 20 Nov.** See 1.6 (#313).
-- Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also
-  stops their security updates. If it does, the nightly job must watch
-  advisories for them.
+- **Security updates for the cross-repo sets: settled, 25 Nov.** It did:
+  GitHub's docs say an `ignore` entry applies to "version updates and
+  security updates", and `update-types` only narrows version updates. So
+  `tim deps dependabot` now writes each govuk-frontend and Playwright ignore
+  entry with all three `version-update:semver-*` update types, which blocks
+  every version update and lets security updates through. A hold keeps its
+  `versions` range, which still blocks security fixes inside it; `tim deps
+  hold --help` and tim's README say so. A security pull request for a set
+  member lands in one repo only and must not be merged alone, because the
+  set moves in every repo on one branch name. So the digest reads every
+  repo's open Dependabot alerts and lists any on a set member or a held
+  package under "Needs you", with the version that fixes it (nightly-digest
+  step 6). Each repo's committed `.github/dependabot.yml` needs
+  regenerating to pick up the new entries.

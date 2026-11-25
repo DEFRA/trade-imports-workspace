@@ -431,6 +431,7 @@ tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend -
 tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
 tim govuk start --unattended --ticket NO_JIRA --target 6.6.0
 tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name
+tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-plants-prototype --govuk-version 6.4.0 --item "Give date input items an error state" --outcome applied --accepted-by "Sam Farrington" --reason "The red border is taken as it comes" --replace
 tim govuk check-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0
 tim govuk apply --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --unattended --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"
 tim govuk render-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --json
@@ -496,10 +497,19 @@ Unattended mode, for the nightly jobs (the govuk-upgrade skill's
   `applied` row needs a pattern with hits; a `not-applicable` row needs a
   reason, and its pattern, if any, must have none; a `needs-a-person` row
   needs a reason. Hits are counted as `tim deps evidence count` counts
-  them.
+  them. An `applied` row a person accepted with no code change takes
+  `--accepted-by <name>` and a reason saying what they accepted, and no
+  pattern; the row records `acceptedBy` and today's date as `acceptedOn`.
+  `--replace` puts the row in place of the version's row for the same
+  `--item` (an exact match, else exit 1) rather than adding one. When its
+  pattern is the same as the replaced row's, it keeps that row's
+  `hitsBefore`, which was counted before the change, so a row first
+  recorded as `needs-a-person` can become `applied` after the change is
+  made.
 - `check-evidence` counts every row of a version again and records
   `hitsAfter`. It exits 0 when every row is clean, and 1 when any row is
-  not or the version has no rows.
+  not or the version has no rows. An accepted `applied` row with no
+  pattern is clean only when it names who accepted it, when, and what.
 - `apply --unattended` counts the version's evidence again, without
   writing it, when moving govuk-frontend to it is `changelog-driven` in
   `config/dependency-sets.json`. It exits 1, changing nothing, when any
@@ -2187,11 +2197,18 @@ The generated file has:
   arrives as one PR for the whole set
 - an npm `ignore` entry for every member of each set with
   `"scope": "cross-repo"`, because the nightly job moves those in every repo
-  at once on one branch name
+  at once on one branch name. Each entry lists every version update type
+  (`version-update:semver-major`, `-minor` and `-patch`) under
+  `update-types`. That blocks every version update but leaves security
+  updates on: an ignore entry with no `update-types` blocks security updates
+  too. A security pull request for a set member lands in one repo only, so
+  the nightly digest lists the open alert for a person rather than merging
+  it alone
 - an npm `ignore` entry, with `versions`, for each hold that lists the repo,
   beside any other ignore for the same package, so Dependabot stops
   proposing the versions the hold covers. A repo the hold does not list is
-  unchanged
+  unchanged. A hold's entry has no `update-types`, so it blocks security
+  updates inside its range as well
 - `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
   Actions
 - the schedule, pull request limit and versioning strategy from
@@ -2248,7 +2265,10 @@ that package at its current version and records a hold, so the rest of the
 group can merge and Dependabot stops proposing the held versions.
 
 - `hold` adds the hold for a package to `config/dependency-sets.json`, or
-  replaces the one it has, with today's date as `since`. `--versions`,
+  replaces the one it has, with today's date as `since`. A hold blocks
+  security updates inside its range too, so Dependabot raises no security
+  fix for a held version: the nightly digest lists open alerts on held
+  packages. `--versions`,
   `--repo` (once for each repo), `--reason` and `--failing-test` are
   required. A repo out of scope, a wildcard package name, a version range
   npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`

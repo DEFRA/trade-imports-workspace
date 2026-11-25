@@ -54,10 +54,19 @@ const npmGroups = (repoSets) => [
   ...patchAndMinorGroup
 ]
 
+export const VERSION_UPDATE_TYPES = [
+  'version-update:semver-major',
+  'version-update:semver-minor',
+  'version-update:semver-patch'
+]
+
 const ignoredSetLines = ({ name, reason, members }) => [
   `      # ${name}`,
   ...wrapComment(reason, '      '),
-  ...members.map((member) => `      - dependency-name: ${quoted(member)}`)
+  ...members.flatMap((member) => [
+    `      - dependency-name: ${quoted(member)}`,
+    ...listOf('update-types', VERSION_UPDATE_TYPES, '        ')
+  ])
 ]
 
 const liftWhen = ({ package: packageName, clashesWith }) =>
@@ -80,12 +89,12 @@ const heldPackageLines = (hold) => [
 const ignoreComment = (ignoredSets, repoHolds) => [
   ...(ignoredSets.length > 0
     ? [
-        'The nightly job moves these sets in every repo at once, on one branch name, so Dependabot leaves them alone.'
+        'The nightly job moves these sets in every repo at once, on one branch name, so Dependabot proposes no version update for them. It still raises security updates, because each entry names every version update type.'
       ]
     : []),
   ...(repoHolds.length > 0
     ? [
-        'A held package stays at its current version: Dependabot does not propose the versions it breaks.'
+        'A held package stays at its current version: Dependabot does not propose the versions it breaks, security fixes among them.'
       ]
     : [])
 ]

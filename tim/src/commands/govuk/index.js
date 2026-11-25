@@ -309,7 +309,7 @@ const registerStart = (govuk, { timVersion }) =>
   govuk
     .command('start')
     .description(
-      "Start a govuk-frontend upgrade run. Finds every repo under repos/ whose package.json depends on govuk-frontend, puts each on the run's branch, seeds each repo's versions file with every stable version up to the target, caches each version's changelog section and the best-practices bundle, prints the run's plans and reports each repo's critical and high npm advisories."
+      "Start a govuk-frontend upgrade run. Finds every repo under repos/ whose package.json depends on govuk-frontend, puts each on the run's branch, seeds each repo's versions file with every stable version after the one its package-lock.json installs up to the target, caches each version's changelog section and the best-practices bundle, prints the run's plans and reports each repo's critical and high npm advisories."
     )
     .option(
       '--ticket <key>',

@@ -79,6 +79,13 @@ const writeThroughTemp = (path, text) => {
   renameSync(`${path}.tmp`, path)
 }
 
+const lockedVersion = (repoDir) => {
+  const lockPath = join(repoDir, 'package-lock.json')
+  if (!existsSync(lockPath)) return undefined
+  const lock = JSON.parse(readFileSync(lockPath, 'utf8'))
+  return lock.packages?.[`node_modules/${PACKAGE}`]?.version
+}
+
 const readConstraint = (repoDir) => {
   const packagePath = join(repoDir, 'package.json')
   if (!existsSync(packagePath)) {
@@ -93,7 +100,11 @@ const readConstraint = (repoDir) => {
       `govuk-frontend not found in dependencies or devDependencies in ${packagePath}`
     )
   }
-  return { raw, prefix: raw.match(/^\D*/)[0], current: withoutPrefix(raw) }
+  return {
+    raw,
+    prefix: raw.match(/^\D*/)[0],
+    current: lockedVersion(repoDir) ?? withoutPrefix(raw)
+  }
 }
 
 const fetchingFromNpm = async (fetch, failure) => {
@@ -269,6 +280,8 @@ const summaryLines = ({
 /**
  * Seeds one repo's state for a govuk-frontend upgrade run: one entry for
  * every stable version after the repo's current one up to the target,
+ * where the current one is the version its package-lock.json installs, or
+ * the package.json constraint without its prefix when no lockfile has it,
  * keeping the state of entries already there unless `force`. Caches the
  * upstream CHANGELOG.md (again when it lacks the target's section), writes
  * each version's section beside it, removes sections for versions no

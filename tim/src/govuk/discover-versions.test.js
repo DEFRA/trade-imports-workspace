@@ -1,4 +1,4 @@
-import { readFileSync, rmSync } from 'node:fs'
+import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createGovukChangelogClient } from '../clients/govuk-changelog-client.js'
@@ -61,6 +61,32 @@ describe('#discoverVersions', () => {
       current: '5.9.0',
       target: '5.10.0',
       versions: ['5.9.1', '5.10.0']
+    })
+  })
+
+  test('Should seed only the versions after the one package-lock.json installs, not the package.json range', async () => {
+    staged = stageStartWorkspace()
+    writeFileSync(
+      join(staged.root, 'repos', ADMIN, 'package-lock.json'),
+      JSON.stringify({
+        lockfileVersion: 3,
+        packages: {
+          '': { dependencies: { 'govuk-frontend': '^5.4.0' } },
+          'node_modules/govuk-frontend': { version: '5.9.1' }
+        }
+      })
+    )
+    mockPool(REGISTRY).get('/govuk-frontend').reply(200, registryDocument())
+    mockPool(RAW).get(CHANGELOG_PATH).reply(200, changelogText())
+
+    const discovered = await discover(ADMIN, { target: '5.10.0' })
+
+    expect(discovered).toEqual({
+      repo: ADMIN,
+      status: 'discovered',
+      current: '5.9.1',
+      target: '5.10.0',
+      versions: ['5.10.0']
     })
   })
 

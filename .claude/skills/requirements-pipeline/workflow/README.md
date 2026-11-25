@@ -1,10 +1,11 @@
 # The requirements-pipeline workflows
 
-Two workflows, one per phase of the `requirements-pipeline` skill:
+Three workflows, one per phase of the `requirements-pipeline` skill:
 
 | Script | Phase | What it does |
 |---|---|---|
 | [`distil.js`](#distiljs) | DISTIL | Sources in, `backlog.json` and a report out |
+| [`ticket-intake.js`](#ticket-intakejs) | TICKET intake | A fetched ticket in, an investigation, an intake record, a checked and combined `backlog.json`, a readiness verdict and its questions out |
 | [`increment-build-loop.js`](#increment-build-loopjs) | BUILD | Builds the backlog, one increment at a time |
 
 Point the `Workflow` tool at a file by `scriptPath` with an `args` object. Launching by
@@ -12,6 +13,7 @@ Point the `Workflow` tool at a file by `scriptPath` with an `args` object. Launc
 
 ```
 Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/distil.js", args })
+Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/ticket-intake.js", args })
 Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args })
 ```
 
@@ -179,6 +181,76 @@ does for each is in [`../references/DISTIL.md`](../references/DISTIL.md#4-when-t
 The script keeps the args contract every workflow keeps, and
 `tim/src/backlog/workflow-contract.test.js` checks its config, its stages and its stops.
 
+## `ticket-intake.js`
+
+The intake of one fetched ticket. Launch it on a workarea that `tim backlog from-ticket` wrote.
+One reader reads the ticket file and the code it touches, then writes `investigation.md`,
+`intake.json` and `backlog.json` beside `sources.json`, and gives the ticket a readiness verdict by
+the refinement check's own rules. It combines its rows before handing on: one row is the default,
+and every further row says in its notes why it cannot join another. A different agent then tries to
+refute every row, every split and every statement, finds what was missed and challenges every
+question. The reader's method fixes once. `tim backlog check` holds the backlog to its record
+before and after.
+
+The method each agent follows lives in [`intake/briefs/`](intake/briefs/): `read.md` for the reader
+and the fixer, `refute.md` for the refuting agent. The record's shape is
+[`../references/intake.schema.json`](../references/intake.schema.json).
+
+The agents have the same guard rails and model tiers as the distil workflow, held byte-identical in
+both scripts by the contract test.
+
+**The config.** Every key is required. A missing key stops the run before any agent starts, and the
+first log line is the resolved configuration.
+
+| Field | What it is |
+|---|---|
+| `workspace` | The workspace root as a tilde path, such as `~/git/defra/trade-imports-workspace`. A clone passes its own |
+| `workarea` | The ticket's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ticket-slug`. Never starts with `workareas/` |
+| `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
+| `models` | `{}` for the default on every tier. `think` (default opus): the reader, the refuting agent and the fixer. `light` (default haiku): status and the checks; every list a light agent relays is checked against its own count, and a relay that disagrees is asked again once. `"inherit"` uses the session model |
+
+```js
+{
+  workspace: '~/git/defra/trade-imports-workspace',
+  workarea: 'shared/ticket-slug',
+  tim: 'tim',
+  models: {}
+}
+```
+
+### The ticket intake stages
+
+| Stage | Agents | What it does |
+|---|---|---|
+| Status | 1 light | Resolves the workspace root's absolute form, reads the sources with `tim distil status` and saves the backlog as it stands with `tim distil backlog-snapshot --save before`. No backlog yet is a first run; any other failure stops the run |
+| Sources | none | The sources must hold exactly one `ticket` source, else the run stops. A source of any kind other than `ticket`, `repo` or `ruling` returns an escalation (another requirement source) with no rows and no further agent |
+| Read | 1 think | Follows `read.md`: reads the ticket in full, any refinement verdict, the rulings and the code; writes the three files; runs `tim backlog combine-candidates` and `tim backlog check` until they pass. On a rerun it rewrites only rows still to build and keeps every id |
+| Check | 1 light | Relays `tim backlog check` with the record's summary, `tim backlog combine-candidates`, on a rerun `tim distil backlog-snapshot --compare-to before`, and whether `investigation.md` exists. A relay whose list is shorter than its count is asked again once (`check again`), then the run stops. Problems here carry into Refute and Fix; they do not stop the run. A check that passes with an escalation in the record returns the escalation, with no rows, and runs no refute |
+| Refute | 1 think | A different agent, following `refute.md`, gives a verdict on every row still to build, on every split (one per row, when more than one row is still to build), on every statement, and a challenge on every question; it lists anything missed. It writes nothing. A verdict missing for a listed id asks it again once (`refute again`), then the run stops |
+| Fix | 1 think | Follows `read.md`'s fixing section: applies or answers every verdict that is not `holds` or `stands`, every missed item and every check problem, once. A verdict left unanswered stops the run. When every verdict is `holds` or `stands` and the check had no problem, no fix runs and the log says so |
+| Check again | 1 light | The same relay (`check after fix`). A backlog still out of shape stops the run, naming every problem line. An escalation the fix recorded is returned as above |
+
+### What the ticket intake returns
+
+```js
+{
+  workarea, stopped,     // stopped: null, or { reason, detail }
+  ticket,                // the Jira key
+  readiness,             // READY, NEEDS WORK or SPIKE REQUIRED
+  rowsToBuild,           // the ids of the rows to build; [] when it escalates
+  questions,             // { id, question, default, holdsLaunch, cause }: cause is null unless holdsLaunch
+  escalation,            // null, or { signals, reason }
+  refute,                // { verdicts, satisfied, answers, fixRan }: verdict counts and the fixer's answers
+  decisions,             // { read, fix }: the reader's and the fixer's
+  files                  // { investigation, intake, backlog }: their absolute paths
+}
+```
+
+`stopped.reason` is one of `status-failed`, `snapshot-failed`, `ticket-source`, `read-failed`,
+`check-relay-mismatch`, `refute-incomplete`, `fix-failed`, `fix-incomplete` or `out-of-shape`. For each, the main session
+reads the detail, fixes what it names and launches again: a rerun keeps every row id. An
+escalation hands the ticket to DISTIL or to a person, with the reason.
+
 ## The increment build loop
 
 The workflow the `requirements-pipeline` skill's BUILD phase drives. Point the `Workflow`
@@ -191,7 +263,7 @@ keeps going. This runs from the main session because **a subagent cannot invoke
 `Workflow`**. That is why the former two-tier `batch-orchestrator/` prompts were removed:
 their middle tier could never start the thing it existed to drive.
 
-Both scripts keep the args contract every workflow script in the workspace keeps — see
+Every script here keeps the args contract every workflow script in the workspace keeps — see
 [`.claude/workflows/README.md`](../../../workflows/README.md#the-args-contract) — and
 `tim/src/backlog/workflow-contract.test.js` checks it here as well as there.
 

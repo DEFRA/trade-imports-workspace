@@ -1,43 +1,49 @@
-import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
-import {
-  cpSync,
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  realpathSync
-} from 'node:fs'
+import { readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
-import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import {
+  BACKLOG_SCHEMA_PATH,
+  INTAKE_SCHEMA_PATH
+} from '../../backlog/backlog-schema.js'
 import {
   backlogPathIn,
   readBacklogRows,
   writeBacklogRows
 } from '../../backlog/__fixtures__/backlog-file.js'
 import { row } from '../../backlog/__fixtures__/backlog-rows.js'
+import {
+  intakeRecord,
+  statement
+} from '../../backlog/__fixtures__/intake-record.js'
+import {
+  makeTicketWorkspace,
+  ticketBacklogRepos
+} from '../../backlog/__fixtures__/ticket-workareas.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 
 const WORKAREA = 'shared/demo'
 
-let workspace
+let held
 
-const backlogPath = () => backlogPathIn(workspace, WORKAREA)
+const openWorkspace = (contents = {}) => {
+  held?.remove()
+  held = makeTicketWorkspace({ backlogSchemas: true, ...contents })
+}
 
-const writeBacklog = (rows) => writeBacklogRows(workspace, WORKAREA, rows)
+const backlogPath = () => backlogPathIn(held.root, WORKAREA)
 
-const readRows = () => readBacklogRows(workspace, WORKAREA)
+const writeBacklog = (rows) => writeBacklogRows(held.root, WORKAREA, rows)
+
+const readRows = () => readBacklogRows(held.root, WORKAREA)
 
 const runTim = (args) =>
   execa(
     'node',
-    [cliPath, 'backlog', ...args, '--workspace', workspace, '--json'],
+    [cliPath, 'backlog', ...args, '--workspace', held.root, '--json'],
     {
       reject: false
     }
@@ -46,16 +52,11 @@ const runTim = (args) =>
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
 beforeEach(() => {
-  workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-rows-')))
-  markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
-  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
-  mkdirSync(dirname(schemaCopy), { recursive: true })
-  cpSync(realSchemaPath, schemaCopy)
+  openWorkspace()
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  held.remove()
 })
 
 describe('tim backlog check', () => {
@@ -109,13 +110,120 @@ describe('tim backlog check', () => {
 
   test('names a missing backlog schema', async () => {
     writeBacklog([row()])
-    rmSync(join(workspace, BACKLOG_SCHEMA_PATH))
+    rmSync(join(held.root, BACKLOG_SCHEMA_PATH))
 
     const run = await runTim(['check', WORKAREA])
 
     expect(envelopeOf(run).errors[0].message).toBe(
-      `Can't find the backlog schema at ${join(workspace, BACKLOG_SCHEMA_PATH)}. tim checks every backlog against it.`
+      `Can't find the backlog schema at ${join(held.root, BACKLOG_SCHEMA_PATH)}. tim checks every backlog against it.`
     )
+  })
+
+  describe('a backlog that names a ticket', () => {
+    const ticketBacklog = (...rows) => ({
+      programme: 'demo',
+      ticket: 'EUDPA-100',
+      repos: ticketBacklogRepos,
+      increments: rows
+    })
+
+    const citedRow = () =>
+      row({
+        acceptanceCriteria: [
+          'The list shows only notifications the signed-in user created. (ticket:EUDPA-100 AC1)'
+        ]
+      })
+
+    test('passes with the summary of its intake record when every criterion is covered', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: { [WORKAREA]: intakeRecord() }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(0)
+      expect(envelopeOf(run).result.intake).toEqual({
+        ticket: 'EUDPA-100',
+        readiness: 'READY',
+        statementIds: ['AC1'],
+        statementCount: 1,
+        questionCount: 0,
+        notBuiltStatementIds: [],
+        questions: [],
+        escalation: null,
+        rowsToBuild: ['inc-001'],
+        rowsToBuildCount: 1
+      })
+    })
+
+    test('exits 1 naming the criterion no row covers', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: {
+          [WORKAREA]: intakeRecord({
+            statements: [
+              statement(),
+              statement({
+                id: 'AC2',
+                text: 'The list is sorted by date.',
+                coveredBy: []
+              })
+            ]
+          })
+        }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(1)
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `1 problems in ${backlogPath()}:\nAcceptance criterion AC2 is not covered by a row and has no reason it is not built: "The list is sorted by date."`
+      )
+    })
+
+    test('exits 1 saying the intake writes the record when there is none', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(1)
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `1 problems in ${backlogPath()}:\nEUDPA-100 has no intake.json beside its backlog. The ticket intake writes it.`
+      )
+    })
+
+    test('exits 1 naming the missing intake schema', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: { [WORKAREA]: intakeRecord() }
+      })
+      rmSync(join(held.root, INTAKE_SCHEMA_PATH))
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `Can't find the intake schema at ${join(held.root, INTAKE_SCHEMA_PATH)}. tim checks every ticket backlog against it.`
+      )
+    })
+  })
+
+  test('leaves a stray intake.json beside a backlog with no ticket unread', async () => {
+    openWorkspace({
+      backlogs: { [WORKAREA]: { programme: 'demo', increments: [row()] } },
+      intakeRecords: { [WORKAREA]: { not: 'a record' } }
+    })
+
+    const run = await runTim(['check', WORKAREA])
+
+    expect(envelopeOf(run).result).toEqual({
+      path: backlogPath(),
+      problems: [],
+      counts: { todo: 1 },
+      total: 1
+    })
   })
 })
 
@@ -141,7 +249,7 @@ describe('tim backlog next', () => {
     writeBacklog([row({ status: 'done' })])
     const run = await execa(
       'node',
-      [cliPath, 'backlog', 'next', WORKAREA, '--workspace', workspace],
+      [cliPath, 'backlog', 'next', WORKAREA, '--workspace', held.root],
       { reject: false }
     )
     expect(run.stdout.trim()).toBe('NONE')
@@ -548,7 +656,7 @@ describe('tim backlog combine-candidates', () => {
         'combine-candidates',
         WORKAREA,
         '--workspace',
-        workspace,
+        held.root,
         '--no-ui'
       ],
       { reject: false }

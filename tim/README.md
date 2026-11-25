@@ -1024,7 +1024,7 @@ workarea's backlog). The requirements-pipeline skill's DISTIL and BUILD phases
 and the build loop use them:
 
 ```bash
-tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; exits 1 when out of shape
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; a ticket backlog is also held to its intake.json; exits 1 when out of shape
 tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog combine-candidates shared/my-programme --json   # the rows still to build that share a code area or wait only on each other; changes no file
 tim backlog from-ticket EUDPA-123 --json         # fetch a Jira ticket into a workarea and name it as a distil source
@@ -1049,8 +1049,8 @@ tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --
 `from-ticket` reads a Jira ticket and writes, under
 `workareas/shared/<key in lower case>-<slug>/`, `sources/ticket-<key>.md` (the
 description, comments, linked Confluence pages, parent, linked tickets, subtasks
-and a list of the attachments), `sources/ticket-<key>.json` (the ticket's last
-update time, which `--check` reads), `sources/attachments/` (the image and PDF
+and a list of the attachments), `sources/ticket-<key>.json` (the ticket's branch,
+and its last update time, which `--check` reads), `sources/attachments/` (the image and PDF
 attachments) and a `sources.json` with the tests repo and one `ticket` source.
 The slug is the first five words of the summary. The result gives the branch,
 `fix/`, `feat/` or `chore/` by the ticket's type, and lists each blocker it sees:

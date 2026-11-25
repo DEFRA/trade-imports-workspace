@@ -4230,6 +4230,7 @@ const startReport = (answer) => {
   if (!envelope) {
     return {
       failedStep: 'derive',
+      unparsed: true,
       reason: `tim build start printed no JSON (exit ${answer.exitCode}): ${String(answer.stdout ?? '').slice(0, 500)}`
     }
   }
@@ -6084,6 +6085,10 @@ while (stopped === null) {
   if (!PLAN_ONLY && !IS_BRANCH) {
     phase('Start')
     started = startReport(await startIncrement(id, lastId))
+    if (started.unparsed) {
+      log(`${WORKAREA_REL}: the start agent's copy of tim's output did not parse — starting again`)
+      started = startReport(await startIncrement(id, lastId))
+    }
     if (started.failedStep === 'derive') {
       stopped = { reason: 'derive-failed', detail: started.reason }
       log(`${WORKAREA_REL}: COULD NOT DERIVE THE NEXT INCREMENT — ${started.reason}`)

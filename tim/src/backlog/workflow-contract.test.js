@@ -1915,14 +1915,35 @@ describe('increment-build-loop', () => {
       )
     })
 
-    test('stops with derive-failed when the start agent copies no JSON', async () => {
+    test('starts again when the start agent copies tim JSON that does not parse', async () => {
+      const unparsedCopy = { exitCode: 0, stdout: `${START_ANSWER.stdout}}` }
+
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
-          { exitCode: 127, stdout: 'zsh: command not found: tim' }
+          unparsedCopy,
+          START_ANSWER,
+          null
         ]
+      })
+
+      expect(stageLabels(run).slice(0, 4)).toEqual([
+        'workspace',
+        'preflight',
+        'inc-900 start',
+        'inc-900 start'
+      ])
+      expect(run.result.stopped?.reason).not.toBe('derive-failed')
+    })
+
+    test('stops with derive-failed when the start agent copies no JSON twice', async () => {
+      const notFound = { exitCode: 127, stdout: 'zsh: command not found: tim' }
+
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, notFound, notFound]
       })
 
       expect(run.result.stopped).toEqual({

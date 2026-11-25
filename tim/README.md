@@ -2173,6 +2173,30 @@ so the diff shows only the hold. `tim deps dependabot` refuses, in every
 mode, a config whose hold covers a repo out of scope, so a misspelt repo
 cannot leave a hold that affects nothing.
 
+### `tim deps drift` — packages behind their latest release
+
+```bash
+tim deps drift
+tim deps drift --json
+tim deps drift --repo trade-imports-animals-frontend --repo tim
+```
+
+Reads each repo's `package.json` at `origin/main` (`--ref` to change it)
+and asks npm-check-updates which packages have a newer release. It changes
+nothing: no checkout moves and no file is written. The nightly digest uses
+it for npm drift and for the cross-repo sets that are waiting.
+
+- Without `--repo`, it reads every repo in scope for the dependency sets.
+  A repo out of scope exits 2.
+- Each package carries its declared range, the proposed range, the jump
+  (`major`, `minor` or `patch`, or none for a range such as a git URL), its
+  set and whether a hold covers it in that repo.
+- `setsBehind` lists each cross-repo set with members that some repo has
+  not moved to the latest release, with the repos behind.
+- A repo with no checkout, or no `package.json` at the ref, is listed with
+  `read: false`.
+- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`.
+
 ### `tim deps policy` — can an upgrade merge on green CI
 
 ```bash

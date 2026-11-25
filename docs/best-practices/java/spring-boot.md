@@ -9,39 +9,39 @@ Project baseline: Spring Boot 3.5, Java 25, Maven, Lombok. This doc covers the p
 Use **feature-based packages**, not layer-based. Each feature owns its controller, service, repository, model, and DTO.
 
 ```
-src/main/java/uk/gov/defra/tradeimportsanimals/
-├── TradeImportsAnimalsApplication.java
+src/main/java/uk/gov/defra/trade/imports/animals/
+├── Application.java
 ├── notification/
 │   ├── NotificationController.java
 │   ├── NotificationService.java
 │   ├── NotificationRepository.java
 │   ├── Notification.java           ← MongoDB document
-│   └── dto/
-│       ├── NotificationDto.java
-│       └── NotificationRequest.java
+│   └── NotificationDto.java
 ├── audit/
 │   ├── AuditRepository.java
 │   └── Audit.java
-├── config/
-│   ├── SecurityConfig.java
+├── configuration/
 │   ├── CacheConfig.java
 │   ├── MongoConfig.java
 │   └── MetricsConfig.java
-├── common/
-│   ├── exception/
-│   │   ├── GlobalExceptionHandler.java
-│   │   ├── NotFoundException.java
-│   │   └── ConflictException.java
-│   └── filter/
-│       ├── RequestTracingFilter.java
-│       └── AdminSecretFilter.java
+├── exceptions/
+│   ├── GlobalExceptionHandler.java
+│   ├── NotFoundException.java
+│   └── ConflictException.java
+├── filter/
+│   ├── RequestTracingFilter.java
+│   └── AdminSecretFilter.java
 ├── logging/
 │   └── EcsEventEncoder.java
 └── metrics/
     ├── EmfMeterRegistry.java
-    ├── ExternalCallRecorder.java
-    └── NotificationMetrics.java
+    ├── ExternalCallRecorder.java      ← times a call the transport cannot see (S3 download)
+    ├── MongoCommandMetrics.java       ← MongoDB driver CommandListener
+    ├── AwsCallRecorder.java           ← AWS SDK ExecutionInterceptor (SNS)
+    └── DependencyAvailabilityMetrics.java
 ```
+
+This is an excerpt: each package holds more classes than are shown.
 
 ---
 
@@ -51,9 +51,9 @@ src/main/java/uk/gov/defra/tradeimportsanimals/
 @SpringBootApplication
 @EnableScheduling
 @EnableConfigurationProperties(AppConfig.class)
-public class TradeImportsAnimalsApplication {
+public class Application {
     public static void main(String[] args) {
-        SpringApplication.run(TradeImportsAnimalsApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 }
 ```
@@ -1033,7 +1033,7 @@ public void countChange(Change change) {
 }
 ```
 
-Calls to MongoDB, S3 and SNS are recorded through `ExternalCallRecorder` at the transport, not in the calling class. Do not time them by hand. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
+Calls to MongoDB and SNS are recorded at the transport, not in the calling class: MongoDB by `MongoCommandMetrics`, the driver's `CommandListener`, and SNS by `AwsCallRecorder`, an AWS SDK `ExecutionInterceptor`. Do not time them by hand. An S3 download is the exception: `S3DocumentService.streamToOutput` wraps the fetch and the whole body read in `ExternalCallRecorder.measure`, because a streamed body is still being read after the SDK call has returned. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
 
 Each metric name goes on the allowlist (`management.metrics.enable` in `application.yml`), or its meter publishes nothing.
 
@@ -1066,7 +1066,7 @@ class NotificationServiceIT {
 
 | Convention | Value |
 |-----------|-------|
-| Base package | `uk.gov.defra.tradeimportsanimals` |
+| Base package | `uk.gov.defra.trade.imports.animals` |
 | Java version | Java 25 (Amazon Corretto) |
 | Spring Boot | 3.5.x |
 | Build tool | Maven |

@@ -79,7 +79,7 @@ springdoc:
     enabled: true
     operations-sorter: method
     tags-sorter: alpha
-  packages-to-scan: uk.gov.defra.tradeimportsanimals
+  packages-to-scan: uk.gov.defra.trade.imports.animals
   paths-to-match: /notifications/**, /admin/**
 ```
 

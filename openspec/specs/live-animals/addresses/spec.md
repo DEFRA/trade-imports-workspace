@@ -97,6 +97,12 @@ The system MUST NOT let a user create, edit or remove an address book record fro
 - **WHEN** the user navigates directly to that journey's create-address URL
 - **THEN** the page responds with a 404, not a create-address form
 
+#### Scenario: The consignment contact select page is not served from the notification journey
+**ID**: SCN-ADDR-001-N
+- **GIVEN** a notification journey is in progress
+- **WHEN** the user navigates directly to that journey's consignment contact select URL
+- **THEN** the page responds with a 404
+
 #### Scenario: Choosing an address links out to the address book's own service when it is available
 **ID**: SCN-ADDR-001-D
 - **GIVEN** the user is choosing an address for a consignment role, and the address book service is available

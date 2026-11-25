@@ -125,6 +125,22 @@ describe('#matchRule', () => {
 
     expect(result).toEqual({ matches: true, matchedBy: null })
   })
+
+  test('a rule with empty front matter matches every file, matchedBy null', () => {
+    const ruleAbsPath = writeRule(
+      '.claude/rules/empty-front-matter.md',
+      '---\n\n---\n\nBody.\n'
+    )
+    const rule = loadRule({
+      workspaceRoot: workspace,
+      ruleAbsPath,
+      scopeRootRelative: ''
+    })
+
+    const result = matchRule(rule, 'anything/at/all.txt')
+
+    expect(result).toEqual({ matches: true, matchedBy: null })
+  })
 })
 
 describe('#loadRule', () => {

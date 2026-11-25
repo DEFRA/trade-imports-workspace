@@ -40,6 +40,16 @@ describe('#pushVerdict', () => {
     expect(verdict.starts).toBe(true)
   })
 
+  test('skips an empty workflow file as one with no name and no push trigger', () => {
+    const verdict = pushVerdict('  \n', PUSH_TO_MAIN)
+
+    expect(verdict).toEqual({
+      name: null,
+      starts: false,
+      reason: 'it has no push trigger'
+    })
+  })
+
   test('skips a workflow with no push trigger', () => {
     const verdict = pushVerdict(E2E_ON_PRS, PUSH_TO_MAIN)
 

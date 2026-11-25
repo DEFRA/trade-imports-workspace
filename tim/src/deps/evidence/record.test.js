@@ -80,7 +80,92 @@ describe('#recordEvidenceRow', () => {
     ).rejects.toMatchObject({
       code: 'USAGE',
       message:
-        'An applied row needs a pattern: the old form the change removes.'
+        'An applied row needs a pattern: the old form the change removes. For a change a person accepted with no code change, give who accepted it instead.'
+    })
+  })
+
+  test('Should keep hits counted before the change instead of counting the pattern now', async () => {
+    const repoPath = await headerRepo()
+
+    const row = await recordEvidenceRow({
+      repoPath,
+      item: 'x',
+      outcome: 'applied',
+      pattern: 'govukServiceNavigation',
+      countedBefore: 3
+    })
+
+    expect(row.hitsBefore).toBe(3)
+  })
+
+  test('Should record who accepted an applied row with no pattern, and when', async () => {
+    const repoPath = await headerRepo()
+
+    const row = await recordEvidenceRow({
+      repoPath,
+      item: 'x',
+      outcome: 'applied',
+      reason: 'Taken as it comes.',
+      acceptedBy: 'Sam Farrington',
+      acceptedOn: '2026-11-25'
+    })
+
+    expect(row).toEqual({
+      item: 'x',
+      pattern: null,
+      hitsBefore: null,
+      hitsAfter: null,
+      outcome: 'applied',
+      reason: 'Taken as it comes.',
+      acceptedBy: 'Sam Farrington',
+      acceptedOn: '2026-11-25'
+    })
+  })
+
+  test.each([
+    [
+      'with a pattern',
+      { outcome: 'applied', pattern: 'govukHeader', reason: 'Taken.' },
+      'An applied row a person accepted has no pattern: give --accepted-by or --pattern, not both.'
+    ],
+    [
+      'on a not-applicable row',
+      { outcome: 'not-applicable', reason: 'Taken.' },
+      'Only an applied row can name who accepted it. Leave out --accepted-by.'
+    ],
+    [
+      'with no reason',
+      { outcome: 'applied' },
+      'An applied row Sam Farrington accepted needs a reason: what they accepted.'
+    ]
+  ])('Should refuse an acceptance %s', async (_name, fields, message) => {
+    const repoPath = await headerRepo()
+
+    await expect(
+      recordEvidenceRow({
+        repoPath,
+        item: 'x',
+        acceptedBy: 'Sam Farrington',
+        acceptedOn: '2026-11-25',
+        ...fields
+      })
+    ).rejects.toMatchObject({ code: 'USAGE', message })
+  })
+
+  test('Should refuse an acceptance with no date', async () => {
+    const repoPath = await headerRepo()
+
+    await expect(
+      recordEvidenceRow({
+        repoPath,
+        item: 'x',
+        outcome: 'applied',
+        reason: 'Taken.',
+        acceptedBy: 'Sam Farrington'
+      })
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'Say when the person accepted it.'
     })
   })
 

@@ -20,9 +20,13 @@ const hitsAfterText = (count) => (count == null ? 'not counted' : String(count))
 const patternEvidence = ({ pattern, hitsBefore, hitsAfter }) =>
   `${codeSpan(pattern)}: ${hitsBeforeText(hitsBefore)} before, ${hitsAfterText(hitsAfter)} after.`
 
+const acceptanceEvidence = ({ acceptedBy, acceptedOn }) =>
+  `Accepted by ${acceptedBy} on ${acceptedOn}, with no code change.`
+
 const evidenceCell = (row, { problem }) =>
   [
     row.pattern ? patternEvidence(row) : null,
+    row.acceptedBy ? acceptanceEvidence(row) : null,
     row.reason.trim() || null,
     problem && row.outcome !== 'needs-a-person'
       ? `**Not clean:** ${problem}`

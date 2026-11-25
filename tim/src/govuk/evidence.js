@@ -24,9 +24,37 @@ const patternNote = ({ pattern, hitsBefore }) =>
     ? `the pattern "${pattern}" has ${hitsPhrase(hitsBefore)}`
     : 'no pattern'
 
+const acceptanceNote = ({ acceptedBy, acceptedOn }) =>
+  acceptedBy ? `accepted by ${acceptedBy} on ${acceptedOn}` : null
+
+const rowNote = (row) => acceptanceNote(row) ?? patternNote(row)
+
+const replacedIndexOf = (rows, { item, repo, version }) => {
+  const index = rows.findIndex((row) => row.item === item)
+  if (index === -1) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Can't find an evidence row for "${item}" in ${repo}@${version}. Give the item exactly as its row has it, or leave out --replace to add a row.`
+    )
+  }
+  return index
+}
+
+const keptHitsBefore = (replaced, pattern) =>
+  replaced && pattern && replaced.pattern === pattern
+    ? replaced.hitsBefore
+    : undefined
+
+const rowsWith = (rows, row, replacedIndex) =>
+  replacedIndex === null ? [...rows, row] : rows.with(replacedIndex, row)
+
 /**
  * Adds an evidence row for one changelog item to the end of a version's
- * evidence, with the pattern's hits in the repo now as `hitsBefore`.
+ * evidence, with the pattern's hits in the repo now as `hitsBefore`. With
+ * `replace`, puts the row in place of the version's row for the same item
+ * instead, keeping that row's `hitsBefore` when the pattern is the same,
+ * since it was counted before the change. With `acceptedBy`, records an
+ * applied row with no pattern that the person accepted on `today`.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -35,10 +63,13 @@ const patternNote = ({ pattern, hitsBefore }) =>
  * @param {string} [args.version]
  * @param {string} [args.item]
  * @param {string} [args.outcome] - applied, not-applicable or needs-a-person
- * @param {string} [args.pattern] - A fixed string; required when applied
+ * @param {string} [args.pattern] - A fixed string; required when applied, unless `acceptedBy` is given
  * @param {string} [args.reason]
- * @returns {Promise<{message: string, row: object, entry: object}>}
- * @throws {TimError} USAGE for a missing option, or an outcome that does not fit the pattern's hits or lacks a reason; NOT_FOUND when the state file or the version is missing; PARSE when the version's evidence is not valid
+ * @param {string} [args.acceptedBy] - Who accepted an applied row with no code change
+ * @param {string} [args.today] - YYYY-MM-DD, recorded as `acceptedOn`; required with `acceptedBy`
+ * @param {boolean} [args.replace=false]
+ * @returns {Promise<{message: string, row: object, replaced: object|null, entry: object}>}
+ * @throws {TimError} USAGE for a missing option, or an outcome that does not fit the pattern's hits, the acceptance or the reason; NOT_FOUND when the state file, the version or, with `replace`, the item's row is missing; PARSE when the version's evidence is not valid
  */
 export const addVersionEvidence = async ({
   workspaceRoot,
@@ -48,25 +79,36 @@ export const addVersionEvidence = async ({
   item,
   outcome,
   pattern,
-  reason = ''
+  reason = '',
+  acceptedBy,
+  today,
+  replace = false
 }) => {
   requireOptions({ ...versionIds({ runId, repo, version }), item, outcome })
   const found = findVersion({ workspaceRoot, runId, repo, version })
   const rows = versionEvidence(found)
+  const replacedIndex = replace
+    ? replacedIndexOf(rows, { item, repo, version })
+    : null
+  const replaced = replacedIndex === null ? null : rows[replacedIndex]
   const row = await recordEvidenceRow({
     repoPath: repoPath(workspaceRoot, repo),
     item,
     outcome,
     pattern,
-    reason
+    reason,
+    acceptedBy,
+    acceptedOn: acceptedBy ? today : undefined,
+    countedBefore: keptHitsBefore(replaced, pattern)
   })
   const entry = writeVersion(found, version, (current) => ({
     ...current,
-    evidence: [...rows, row]
+    evidence: rowsWith(rows, row, replacedIndex)
   }))
   return {
-    message: `Added evidence for ${repo}@${version}: ${outcome}, ${patternNote(row)}`,
+    message: `${replaced ? 'Replaced' : 'Added'} evidence for ${repo}@${version}: ${outcome}, ${rowNote(row)}`,
     row,
+    replaced,
     entry
   }
 }

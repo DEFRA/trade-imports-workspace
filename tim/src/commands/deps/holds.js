@@ -106,6 +106,7 @@ const registerHold = (program, { timVersion }) => {
     .addHelpText(
       'after',
       '\nEach repo must be in scope for the sets. Then run tim deps dependabot <repo> --write for each repo the command lists.\n' +
+        '\nA hold also blocks security updates inside its range: Dependabot will not raise a security fix for a held version. Check open Dependabot alerts on the package while the hold stands.\n' +
         '\nExamples:\n' +
         '  tim deps hold @axe-core/playwright --versions 4.14.x --repo trade-imports-animals-frontend \\\n' +
         '    --reason "axe 4.14 flags the enhanced file upload button" \\\n' +

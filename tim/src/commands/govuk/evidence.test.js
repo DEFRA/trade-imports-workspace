@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { recordTimRun } from '../../test-support/bash-golden-harness.js'
+import { localDateOf } from '../../deps/holds.js'
 import { applyEnv } from '../../govuk/__fixtures__/govuk-apply.js'
 import {
   ABSENT_PATTERN,
@@ -110,6 +111,42 @@ describe('tim govuk add-evidence', () => {
       stderr: `The pattern "${ABSENT_PATTERN}" has no hits, so there is nothing to apply. Record the item as not-applicable.\n`
     })
     expect(stateText()).toBe(before)
+  })
+
+  test('Should replace the row for the item with one a person accepted today when given --replace and --accepted-by', async () => {
+    staged = stageEvidenceWorkspace()
+    await addNotApplicable('5.5.0', 'Change the header link colour')
+    const today = localDateOf(new Date())
+
+    const run = await timGovuk('add-evidence', '5.5.0', [
+      '--item',
+      'Change the header link colour',
+      '--outcome',
+      'applied',
+      '--accepted-by',
+      'Sam Farrington',
+      '--reason',
+      'The new colour is taken as it comes',
+      '--replace'
+    ])
+
+    expect(run).toEqual({
+      exitCode: OK,
+      stdout: `Replaced evidence for ${EVIDENCE_REPO}@5.5.0: applied, accepted by Sam Farrington on ${today}\n`,
+      stderr: ''
+    })
+    expect(evidenceVersion(staged, '5.5.0').evidence).toEqual([
+      {
+        item: 'Change the header link colour',
+        pattern: null,
+        hitsBefore: null,
+        hitsAfter: null,
+        outcome: 'applied',
+        reason: 'The new colour is taken as it comes',
+        acceptedBy: 'Sam Farrington',
+        acceptedOn: today
+      }
+    ])
   })
 
   test('Should refuse a missing --outcome with exit 2', async () => {

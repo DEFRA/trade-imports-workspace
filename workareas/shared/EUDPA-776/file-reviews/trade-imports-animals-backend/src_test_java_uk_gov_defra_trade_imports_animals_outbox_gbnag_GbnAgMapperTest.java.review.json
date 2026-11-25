@@ -4,18 +4,9 @@
   "commit": "b73a5d07214320b9379342b28e8a8ec86498b08c",
   "pr": 133,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:09:01Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The issuer removals are correct and definedContact is still covered elsewhere, but the remaining issuer-absence test has a stale title and checks only an empty draft, not a submitted notification.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 329,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "shouldOmitIssuerKey_whenNoConsignmentContact (lines 329-332) is left over from the issuer mapping this PR removes. Its title names a condition, 'no consignment contact', that no longer exists: issuer is now never sent, whatever the notification holds. It also runs only in MinimalAndDefaults, a DRAFT notification with nothing answered. The AC 'The GBN-AG event for a submitted notification has no issuer' is therefore proven only on an empty draft, and only as an absence check. An exact positive assertion is possible there. Now that the HappyPath fixture's consignment party is deleted (old lines 1171-1176), no test sends a fully populated, submitted notification through to JSON and checks for issuer.",
-      "fix": "Must: a test on the fully populated, SUBMITTED HappyPath notification proves the serialised exchangedDocument carries no issuer, ideally by asserting its exact set of keys. Its title states that unconditionally, and no test title in the file mentions a consignment contact. One way: replace the MinimalAndDefaults test with a HappyPath test, e.g. shouldSendExactlyTheExchangedDocumentKeysPimsReads, that asserts the field names of new ObjectMapper().valueToTree(result.exchangedDocument()) equal identifier, traderAssignedId, notificationStatusCode, versionId, issueDateTime, firstSignatoryAuthentication and referenceDocument."
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-24T14:43:51Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The conditional issuer absence test is replaced by an exact exchangedDocument key-set assertion on the submitted HappyPath notification; no new issues.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:32Z"
 }

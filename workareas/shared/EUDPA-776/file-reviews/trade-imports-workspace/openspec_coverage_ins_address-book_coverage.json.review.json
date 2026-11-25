@@ -4,34 +4,26 @@
   "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
   "pr": 274,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:12:38Z",
+  "reviewed_at": "2026-11-24T14:48:00Z",
   "verdict": "RISKY",
-  "verdict_reason": "SCN-INS-ADDR-045-A links a test the PR deletes, and the germinal products requirement REQ-INS-ADDR-048 is removed although that journey is still served.",
+  "verdict_reason": "Prior items #6, #7 and #8's listed lines are fixed, but Branch coverage claims survive the Branch type's removal, including a link to a deleted test, and SCN-INS-ADDR-037-C now says five roles where the address-book service has six.",
   "todos": [
     {
       "id": 1,
-      "line": 5734,
+      "line": 5249,
       "severity": "Critical",
       "category": "coverage-gap",
-      "issue": "SCN-INS-ADDR-045-A, a scenario this PR renamed, still links the unit test 'POST from the consignment contact handshake saves the address as a Branch address' in add.controller.test.js, but the ins-frontend PR deletes that test (ins-frontend diff line 68; absent from the review clone at f2c6e6a). The coverage claim names a test that no longer exists.",
-      "fix": "Must: every tests[] link on SCN-INS-ADDR-045-A names a test that exists at the PR-set commits and asserts an address added from a role's picker is saved with that role, and the scenario's coverage value is derived from the links that remain. One way: drop the deleted test's entry and re-run tim spec lint / coverage derivation."
+      "issue": "The ins-frontend (dd902ca) and ins-tests (3e1d02a) PRs now remove the Branch address type and its tests, but this file still claims coverage of Branch: SCN-INS-ADDR-043-H links 'after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered' (address-type.fit.spec.js), a test the ins-frontend diff deletes (ins-frontend diff line 913); SCN-INS-ADDR-044-G 'Branch offers the one role...' (line 5579) stays full on links whose Branch rows are gone (add.fit.spec.js 'Branch row', address-book-add-roles.spec.ts and address-book-country-list.spec.ts 'for Branch' - no Branch row remains in tests/ins or ins-frontend src); SCN-INS-ADDR-044-H/044-I (5626, 5649) cite 'the Branch runs'; SCN-INS-ADDR-038-B (4129) and 039-A (4283) rest their red-probe claims on 'the Branch run', which no longer exists; and SCN-INS-ADDR-043-A (4925) is still named 'offers the four types' while this PR repointed its three links to tests that assert three types. Related to spec item #17, but this is the coverage claim itself.",
+      "fix": "Must: no link in this file names a deleted test, no scenario claims coverage of the Branch type or rests a strength on a Branch run, and every scenario's name agrees with the tests linked to it, with coverage values re-derived. One way: once spec.md drops the Branch scenarios (#17), delete SCN-INS-ADDR-044-G and the 043-H Branch link, drop 'Branch' from the 044-H/044-I and 038-B/039-A notes (re-rating 039-A if its only probe was the Branch run), rename 043-A to three types, then run tim spec lint."
     },
     {
       "id": 2,
-      "line": 6033,
+      "line": 3849,
       "severity": "Critical",
       "category": "correctness",
-      "issue": "The PR deletes REQ-INS-ADDR-048 ('The add page serves every notification journey the service registers...') and all four germinal products scenarios (048-A to 048-D) from this coverage file and from openspec/specs/ins/address-book/spec.md, and the ins-frontend PR deletes their germinal unit and fit tests. But the behaviour still ships: journey-registry.js:43-45 at ins-frontend f2c6e6a still registers JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS with its set base, and tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts still exists at ins-tests 47d3968. EUDPA-776's scope is the live animals contact page and branch address only (germinal products is not mentioned), so the spec now says nothing about a served journey, including the 048-C rule that a request cannot redirect the trader elsewhere.",
-      "fix": "Must: REQ-INS-ADDR-048 and its scenarios stay in the spec and this coverage file as long as the add page serves the germinal products journey, each linked to tests that exist; only the consignment-contact part (048-D's 'germinal products consignment contact handshake' link) is removed. One way: restore the REQ-INS-ADDR-048 block here and in spec.md, restore the germinal consignor tests in ins-frontend (rebuilding GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY without the contact fulfilment id), and drop only the Branch-address contact link."
-    },
-    {
-      "id": 3,
-      "line": 2669,
-      "severity": "Minor",
-      "category": "comments",
-      "issue": "Link notes still describe the removed consignment contact handshake: line 2669 (on SCN-INS-ADDR-027-D, which this PR renamed to drop the contact page) 'place of origin, consignor and consignment contact handshakes', and likewise lines 298 and 1444. The tests they annotate no longer run a contact handshake.",
-      "fix": "Must: no note in this file names the consignment contact handshake. One way: drop 'and consignment contact' from the notes at lines 298, 1444 and 2669."
+      "issue": "SCN-INS-ADDR-037-C was renamed 'A create or update carrying a role outside the five is refused naming the roles', but the address-book service has six roles: AddressRole.java:21 BRANCH_ADDRESS(RoleGroup.BRANCH) on origin/main of trade-imports-address-book (no PR in the EUDPA-776 set; read from the live clone, on main). A create holding BRANCH_ADDRESS is accepted, and SCN-INS-ADDR-037-H/037-I in the same spec still rely on the branch role. The links prove only that the literal 'UNSUPPORTED_ROLE' (ins-tests domain/ins/constants/address-book-types.ts:108) and an unknown role in the ITs are refused, so nothing witnesses 'outside the five'.",
+      "fix": "Must: the scenario states the role set the address-book service actually accepts, and agrees with 037-H and 037-I. One way: revert the name to 'outside the six' here and in spec.md (and the two ins-tests titles), or, if the branch role is to go from the service, add trade-imports-address-book to the PR set and drop BRANCH_ADDRESS there."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:53Z"
+  "reconciled_at": "2026-11-24T14:48:37Z"
 }

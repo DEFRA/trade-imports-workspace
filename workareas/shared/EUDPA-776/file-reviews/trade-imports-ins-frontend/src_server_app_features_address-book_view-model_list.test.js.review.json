@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/features/address-book/view-model/list.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "dd902ca29d21a401e262d2b52409b305d7f3be74",
+  "pr": 88,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:45:19Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The query-string swaps are sound, but two rows check the removed Branch role is absent, and option-label matching is no longer proven by any test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 194,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The rows ['branch', []] and ['branch address', []] (view-model/list.test.js:194-195) prove that a removed role no longer matches: an absence check on history, and the same proof as the ['farm', []] row below them.",
+      "fix": "Must: the rolesWhoseLabelContains table names no removed role, and its no-match case is proven once. One way: delete the two branch rows and keep ['farm', []]."
+    },
+    {
+      "id": 2,
+      "line": 198,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should give the roles whose Type column label or Type option label contains %j, ignoring case' (view-model/list.test.js:198) claims option-label matching, but with BRANCH_ADDRESS gone every role's optionLabel equals its columnLabel ignoring case (copy.en.js:58-67, copy.cy.js:61-70). Deleting optionLabel from rolesWhoseLabelContains (view-model/list.js:57-61) turns no test red. The tests that used to prove it were rewritten onto Importer, whose labels are the same: list.type-filter.controller.test.js:395 and fit/list.fit.spec.js:794.",
+      "fix": "Must: either a test fails when option-label matching is removed, or rolesWhoseLabelContains matches only the label the copy can tell apart and its title says so. One way: since no role's option label differs any more, match columnLabel alone and drop 'or Type option label' from the title."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:34Z"
+}

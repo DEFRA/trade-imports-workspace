@@ -7,23 +7,6 @@
   "reviewed_at": "2026-11-23T10:05:32Z",
   "verdict": "RISKY",
   "verdict_reason": "The rebase fix re-adds the pre-EUDPA-696 Import details card, reverting Design Release 2.1's Origin of import card on main, and leaves the orphaned origin-of-import.js beside it.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 12,
-      "severity": "Critical",
-      "category": "correctness",
-      "issue": "Absorbed behaviour change from the rebase fix (714a8f5 'align CYA stack'): this file is the pre-EUDPA-696 card that #484 (32236d4c, inc-102) renamed to origin-of-import.js. Re-adding it reverts Design Release 2.1 on main, outside EUDPA-776's scope: the card goes back to id 'importDetails' and title 'Import details' (main: 'originOfImport', 'Origin of import'), the 'Region of origin code required' row comes back (lines 37-40; inc-102 dropped it), and the Region of origin code row is hidden when it does not apply (lines 41-43) where main shows it as 'Not applicable'. about-consignment.js now imports this card in place of originOfImportCard, and the same commit rolls back the rest of the #484 review stack (reason-for-import, additional-animal-details, species-cards, transit-countries, roles-and-addresses, copy). The ticket only asks for the contact address row to go from check your answers.",
-      "fix": "Must: the PR's check-answers view model equals origin/main's apart from removing the contact address card, section and row, so the Origin of import card keeps main's id, title and rows. One way: drop import-details.js and the other files 714a8f5 restored, take origin/main's check-answers view model, copy, controller and template, then reapply only the contact-address removals and rerun the check-answers unit and FIT tests."
-    },
-    {
-      "id": 2,
-      "line": 1,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "Two homes for the origin card: import-details.js (importDetailsCard) is added beside cards/consignment/origin-of-import.js (originOfImportCard), which the PR leaves in place. Both build the country of origin, region code and internal reference rows with the Change link to originPage.slug. origin-of-import.js is now imported by nothing, and its import of changeAction from rows/change-link.js no longer resolves because the same commit renamed it to cardAction.",
-      "fix": "Must: one module builds the origin card and every module in cards/consignment is imported by the view model. One way: keep origin-of-import.js as main has it (with main's changeAction) and delete import-details.js, which the revert fix in the Critical item on this file does."
-    }
-  ],
+  "todos": [],
   "reconciled_at": "2026-11-23T10:06:16Z"
 }

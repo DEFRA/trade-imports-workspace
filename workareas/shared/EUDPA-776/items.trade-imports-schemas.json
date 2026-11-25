@@ -85,6 +85,54 @@
       "disposition": null,
       "status": null,
       "notes": null
+    },
+    {
+      "id": 8,
+      "file": "schemas/core/defra-unvtd-canonical-core-v1.schema.json",
+      "line": "195",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The definedContact.emailURIUniversalCommunication description now contradicts itself: it opens 'TRACES SOAP does not carry contact email/phone' and this PR's new clause ends 'a TRACES CHED also carries them on its issuer party'. A TRACES CHED comes over TRACES SOAP, and no TRACES CHED sample in samples/ carries emailURIUniversalCommunication (only the GBN-AG ones do). The rewrite replaced the dropped GBN-AG issuer with an unsupported TRACES claim instead of removing issuer from the list.",
+      "fix": "Must: the description makes no claim that a TRACES CHED carries contact email or phone on its issuer, and names only parties that do carry them. One way: end the sentence at 'consignor / consignee / delivery / carrier parties.'",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "file": "scripts/build-data-dictionary.test.js",
+      "line": "166",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title says a false-schema property 'is left out of the tree and the dictionary', but the dictionary half (lines 192-195) only asserts that each kept exchangedDocument property has a row. Nothing checks that issuer has no row, so an issuer row in the dictionary would pass. With the walker's false handling reverted, the generator writes issuer back and every kept-property assert still passes; only the tree assertion fails.",
+      "fix": "Must: the test's assertions prove the dictionary's exchangedDocument table has exactly the kept properties (so an issuer row turns it red), or the title claims only what the assertions prove. One way: parse the 'Document (exchangedDocument)' table's property column and deepEqual it, sorted, to exchangedDocumentProperties.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "file": "scripts/data-dictionary/schema-walker.js",
+      "line": "273",
+      "severity": "Major",
+      "category": "structure",
+      "issue": "buildNode's new 'if (propSchema === false) continue;' is not reached. The only false property schema in schemas/profiles is gbn-ag-v1 exchangedDocument.properties.issuer, and exchangedDocument is merged with the core ExchangedDocument through the allOf branch in flatten(), whose new 'v === false' branch (line 144) already deletes it. No test fails if line 273 is removed. House rule: build only what this change makes reachable.",
+      "fix": "Must: every false-schema guard the walker carries is reached by a profile in this repo and fails a test when removed. One way: delete line 273.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "file": "scripts/data-dictionary/schema-walker.js",
+      "line": "133",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The allOf comment (lines 133-137) says 'When two branches contribute a property with the same key, wrap them together'; after this change a branch contributing false removes the property instead, so the comment no longer describes the lines below it. The function's header comment (lines 66-71) likewise says 'the later one wins on scalar conflicts' and describes 'downstream callers'. Other comments in the file restate code ('// Recurse into properties' 270, '// Recurse into items' 285) or carry rationale ('Last-wins would silently drop...' 137, 162-164, 176-178), which house rules put in docs/.",
+      "fix": "Must: no comment in schema-walker.js is untrue of its lines, restates the code or carries rationale; the allOf merge reads from names. One way: extract the per-property merge into a named helper such as mergeBranchProperty(out, key, schema, excludedProperties), delete the stale and restating comments, and move the allOf-merge rationale to the repo's docs.",
+      "disposition": null,
+      "status": null,
+      "notes": null
     }
   ]
 }

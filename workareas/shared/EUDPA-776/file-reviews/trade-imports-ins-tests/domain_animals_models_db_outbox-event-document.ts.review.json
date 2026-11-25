@@ -1,0 +1,21 @@
+{
+  "file": "domain/animals/models/db/outbox-event-document.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:44:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "issuer removed as asked, but the new exchanged-document key list can drift from its type without a compile error.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 58,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "GBN_AG_EXCHANGED_DOCUMENT_KEYS (58-66) restates the field list of GbnAgExchangedDocument (48-56) by hand. 'satisfies readonly (keyof GbnAgExchangedDocument)[]' only stops a key the type lacks; a field added to the type and left off the list still compiles, so the type and the list can drift apart and the outbox specs that assert against the list then fail on a correct event.",
+      "fix": "Must: the exchanged-document field set has one owner, and the compiler refuses a list that misses a field of GbnAgExchangedDocument. One way: declare the keys as an object 'satisfies Record<keyof GbnAgExchangedDocument, true>' and export Object.keys of it, so a missing or extra key is a compile error."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:35Z"
+}

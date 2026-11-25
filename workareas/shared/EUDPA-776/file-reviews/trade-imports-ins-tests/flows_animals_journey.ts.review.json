@@ -4,27 +4,18 @@
   "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:13:46Z",
+  "reviewed_at": "2026-11-24T14:44:33Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Contact address steps are removed correctly and flows now land on check your answers, but the change leaves toDeclarationThroughReview dead with its body copied into two specs, and a single-caller public wrapper with a doubled wait.",
+  "verdict_reason": "Merge resolution is correct and resolves prior #3, but toDeclarationThroughReview now re-types continueFromReviewToDeclaration's two steps.",
   "todos": [
     {
       "id": 1,
-      "line": 782,
+      "line": 772,
       "severity": "Major",
       "category": "duplication",
-      "issue": "toDeclarationThroughReview (782-788) now has no caller: the PR removed its calls from tests/animals/a11y/notification-journey-filled-state.spec.ts and notification-journey-initial-state.spec.ts and pasted the same steps inline in both as a 'Review your notification' step (reviewAndSubmitButton click, notificationView heading wait, runA11yScan, continueButton click). The helper is dead and its body now lives in two specs.",
-      "fix": "Must: one owner for the 'open the review from Overview, scan it, continue to the declaration' step, called by both a11y specs, and no dead copy in the flow. One way: restore the animalsJourney.toDeclarationThroughReview(runA11yScan) calls in both specs and delete their inline steps (or, if the helper is unwanted, delete it from journey.ts).",
-      "best_practice": "playwright/BEST_PRACTICES.md"
-    },
-    {
-      "id": 2,
-      "line": 397,
-      "severity": "Major",
-      "category": "structure",
-      "issue": "After the split, addCphAndLeaveAddresses (397-401) is public but has one caller, walkFromTransporterToReview (865), which then waits on notificationView.heading again at 870; and both branches of its if/else (864-868) now end in addresses.continueButton.click(). The public wrapper adds a second route to the same steps without a second user.",
-      "fix": "Must: walkFromTransporterToReview reads as one path (optionally add the CPH, then Continue, then wait for check your answers once), and the flow exposes no public method without an external caller. One way: in walkFromTransporterToReview call 'if (addCph) await this.addCphOnAddressesHub();' then 'await pages.addresses.continueButton.click();', and delete addCphAndLeaveAddresses."
+      "issue": "toDeclarationThroughReview (768-775) now ends with notificationView.continueButton.click() then declaration.heading.waitFor (772-773), a line-for-line copy of the private continueFromReviewToDeclaration (1047-1050), and its first step copies openReviewFromOverview; the added declaration wait at 773 is the copy's second line.",
+      "fix": "Must: the continue-from-review-to-declaration step has one home in AnimalsJourney, and toDeclarationThroughReview calls it rather than re-typing it. One way: replace lines 772-773 with 'await this.continueFromReviewToDeclaration();'."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reconciled_at": "2026-11-24T14:48:35Z"
 }

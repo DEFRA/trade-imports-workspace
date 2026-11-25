@@ -4,19 +4,9 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:13:16Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Correctly maps the exchanged document without issuer, but the whole v0.4.0 mapper tree is a copy of v0.3.0 with a one-field difference.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 34,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "The v0.4.0 mapping is a verbatim copy of v0.3.0 apart from one field. diff against the V3 files shows PimsCommonMapperV4, PimsConsignmentMapperV4, PimsLineItemMapperV4 and PimsTransportMapperV4 differ only in class names and gbnagv4 imports; PimsEventMapperV4 only in the version constants; and of the 24 pims/gbnagv4 records only PimsExchangedDocument differs from gbnagv3 (no 'PimsTradeParty issuer'). Every mapping rule (subdivision-of-origin filter, trade party, address, line items, transport) now has two homes, and v0.1.0/v0.2.0 already add more. A fix to one rule must now be made in up to four places.",
-      "fix": "Must: each mapping rule that v0.3.0 and v0.4.0 share has one owner; only the exchanged-document difference (no issuer) lives per version. One way: have v0.4.0 reuse the gbnagv3 records and PimsConsignmentMapperV3/PimsCommonMapperV3 for everything except PimsExchangedDocument and PimsGbnAgData, so PimsGbnAgDataMapperV4 delegates to PimsConsignmentMapperV3, and delete PimsCommonMapperV4, PimsConsignmentMapperV4, PimsLineItemMapperV4, PimsTransportMapperV4, the 22 identical gbnagv4 records and their copied tests.",
-      "best_practice": "java/modern-java.md"
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reviewed_at": "2026-11-24T14:43:41Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Now reuses the v0.3.0 consignment and common mappers, so only the issuer-free exchanged document is per version; no new issues.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

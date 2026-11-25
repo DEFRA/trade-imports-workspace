@@ -7,23 +7,6 @@
   "reviewed_at": "2026-11-23T10:04:20Z",
   "verdict": "RISKY",
   "verdict_reason": "The rebase resolution reverted main's check-answers view header and re-baselined this test's pageTitle from the reference to copy.title, and deleted the tests for copy leaves that are still in use.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 37,
-      "severity": "Critical",
-      "category": "correctness",
-      "issue": "Absorbed behaviour change: on the same set-up (store.create(), a fresh draft), the expected pageTitle was re-baselined from journey.journeyId to copy.title. On main (32236d4) the review page of a draft or submitted notification is titled by its reference via viewHeader(journey) (view-model/view-header.js:84-96, used by controller.js renderCya). The rebase resolution in 714a8f5/7b5a259 put back the pre-main controller (pageTitle: copy.title, journeyStrip always, no viewHeader, no resubmittingTitle, no species-block errors), and this test was changed to match. EUDPA-776 only removes the contact address page; it does not ask for the view header or reference title to go. view-header.js now has no production importer, and cancel-amend.fit.spec.js:59 still expects the resubmittingTitle heading the controller no longer renders.",
-      "fix": "Must: the check-answers controller on this branch keeps every behaviour main has (reference as the title of a draft or submitted notification via viewHeader, resubmittingTitle for a changed amendment, species-block errors, page-anchor error links) with only the contact address removed, and this test expects context.pageTitle to be journey.journeyId again. One way: redo the conflict resolution of controller.js, copy.en.js, copy.cy.js and this test from origin/main's versions, deleting only the contact-address parts, then restore line 37 to expect(context.pageTitle).toBe(journey.journeyId)."
-    },
-    {
-      "id": 2,
-      "line": 20,
-      "severity": "Major",
-      "category": "coverage-gap",
-      "issue": "The diff deletes the tests for copy leaves that still exist and are still read: 'Should name the row action Edit details in English and Welsh' (copy.editDetails, read by view-model/rows/party-row.js:63), 'Should write the date created line…' and '…date submitted line…' (copy.viewHeader.dateCreated/dateSubmitted, read by view-header.js:28,32), and the resubmittingTitle interpolation check (read by cancel-amend.fit.spec.js:59). It also drops the checks on errors.species.noCount and hidden.document along with those leaves, which main added and this ticket does not ask to remove. Nothing on this branch now pins the English or Welsh text of these leaves beyond itHoldsCopyAtEveryLeaf's non-empty check.",
-      "fix": "Must: every copy leaf the check-answers feature still holds and reads has its exact English (and, where main checked it, Welsh) text asserted, as on main, and only contact-address leaves lose their checks. One way: restore the four deleted it blocks and the resubmittingTitle, species.noCount and hidden.document expectations from origin/main's copy.test.js once the copy is resolved back to main's version, keeping the new identifierTable.animalN and hidden.commodity(3) checks only if those leaves survive the re-resolution."
-    }
-  ],
+  "todos": [],
   "reconciled_at": "2026-11-23T10:06:16Z"
 }

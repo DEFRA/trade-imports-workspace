@@ -4,34 +4,18 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:23:24Z",
+  "reviewed_at": "2026-11-24T14:43:55Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "mapToV4 is wired in but never exercised, an 'every payload' test skips v0.4.0, and a comment now miscounts the streams.",
+  "verdict_reason": "mapToV4 now has committed-payload coverage and comments are gone, but the per-version mapping list is written out in two tests.",
   "todos": [
     {
       "id": 1,
-      "line": 230,
+      "line": 194,
       "severity": "Major",
-      "category": "coverage-gap",
-      "issue": "The PR wires pimsEventMapperV4 into setUp, but no test in the class calls mapToV4. The new public method's JSON output is untested against the backend fixture: no committed-payload check like mapToV2_shouldProduceTheCommittedV020PayloadForTheBackendFixture (line 230), no check that exchangedDocument has no issuer, and no schemaUri/schemaVersion wire check like mapToV1AndV2_shouldEmitMetadataSchemaUri_notSchemaUrl (line 330). NotificationSqsListenerTest compares mapToV4 output only with itself, so it cannot catch a wrong payload.",
-      "fix": "Must: a test proves mapToV4's serialised payload for the backend fixture: its data, no exchangedDocument.issuer, and metadata with schemaUri and no schemaUrl. One way: commit pims-v0.4.0-from-backend.json beside the v0.2.0 one and add mapToV4_shouldProduceTheCommittedV040PayloadForTheBackendFixture, and extend the schemaUri test to every version."
-    },
-    {
-      "id": 2,
-      "line": 111,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "map_shouldIgnoreOwningOrganisationOnEveryPayload (line 111) compares only v1, v2 and v3 (lines 118-127). With v0.4.0 added, 'EveryPayload' over-claims: v4 is not checked. mapToV3_shouldOmitIssuerAndStillSend... (line 239) narrates a change with 'Still'.",
-      "fix": "Must: the 'every payload' test covers every version the listener sends, v0.4.0 included, and no title narrates history. One way: add the v4 pair to that test (or loop over the mapper functions), and rename line 239 to mapToV3_shouldSendNoIssuerAndSendDocumentTypeListUrlAndRegionOfOriginCode."
-    },
-    {
-      "id": 3,
-      "line": 331,
-      "severity": "Major",
-      "category": "comments",
-      "issue": "Line 332 says 'PimsEventMetadata is shared by both streams'; with v0.4.0 there are four. The file also uses Given/When/Then comments (lines 76, 90, 93, 199, 202, 255, 258, 261, 312, 318, 322, 331, 347, 351, 364, 382, 385). Lines 150-152, 193-196 and 296 are rationale, and lines 214, 218 and 283 restate their assertions in trailing comments.",
-      "fix": "Must: no comment in the file is untrue, there are no Given/When/Then comments, and rationale lives in docs/. One way: delete them, and use .as(...) where an assertion needs words."
+      "category": "duplication",
+      "issue": "The list of every schema version's mapping is written out twice: 'everyVersion = List.of(mapper::mapToV1, mapper::mapToV2, mapper::mapToV3, mapper::mapToV4)' at line 68 (map_shouldIgnoreOwningOrganisationOnEveryPayload) and again at line 194 (map_shouldAcceptAnEventStillCarryingIssuerAndSendItInNoVersion). A fifth schema version would need both edited, the same problem the IT's SCHEMA_STREAMS fix removed.",
+      "fix": "Must: one place in the test class lists the per-version mappings; every 'every version' test reads it. One way: a private everyVersion() helper (or a field set in setUp) returning the four method references."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

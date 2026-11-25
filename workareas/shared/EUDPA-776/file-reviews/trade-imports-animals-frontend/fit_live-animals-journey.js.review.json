@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:09:18Z",
-  "verdict": "SAFE",
-  "verdict_reason": "The contact address helpers, landing and hub task are removed cleanly with no remaining callers, and the roles-and-addresses run now lands on the notification view (check-answers slug and title), which the passing FIT run confirms.",
-  "todos": [],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-24T14:43:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Delta against main is the contact removal plus a title-less review landing that expectLanding now checks by URL only.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1038,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "LANDINGS.notificationView (line 1038) has no title, and expectLanding (lines 1041-1050) gains an 'if (title)' branch so this one landing is checked by URL alone. answerConsignmentAddresses ends with saveAndExpectLanding(page, LANDINGS.notificationView) (line 1288), so it claims to land on the review while proving only the URL; every caller that needs proof must add expectDraftReview itself (journey-smoke.fit.spec.js:150). Every other LANDINGS entry is proven by URL and heading.",
+      "fix": "Must: every landing check proves its page by URL and by what the page shows, with no landing that skips the heading, and the review landing is proven by the draft review header. One way: delete the notificationView entry and the 'if (title)' branch, end answerConsignmentAddresses with save(page) then expectDraftReview(page), and drop the now-repeated expectDraftReview call at journey-smoke.fit.spec.js:150."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:33Z"
 }

@@ -4,42 +4,18 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:22:14Z",
+  "reviewed_at": "2026-11-24T14:43:53Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "v0.4.0 forwarding is covered, but the PR deletes failed-counter and mapping-failure coverage for behaviour it keeps, and its titles, comments and duplicated set-up need work.",
+  "verdict_reason": "Prior findings are addressed, but the two new mapping-failure tests copy their spy set-up and check different counters.",
   "todos": [
     {
       "id": 1,
-      "line": 268,
-      "severity": "Major",
-      "category": "coverage-gap",
-      "issue": "The PR deletes coverage for behaviour it leaves unchanged. NotificationSqsListener.publish still increments the v0.1.0 failed counter before rethrowing, but receive_shouldThrowRetryable_onFirstAttempt_whenAsbFailsTransiently (line 268, renamed from ..._andCountV1AsFailed_...) and receive_shouldNotRetryAndThrowNonRetryable_whenAsbFailsPermanently (line 289) lost their failedCount(\"0.1.0\") == 1 assertions. receive_shouldNotThrow_andCountV2AsFailed_whenV2MappingFails, the only test where a best-effort mapper throws rather than the sender, was deleted with no replacement. The new v0.4.0 mapper is the likeliest stream to fail mapping, and the notification.message{outcome=failed} counter is what alerting reads.",
-      "fix": "Must: the tests prove that a v0.1.0 send failure counts failed for 0.1.0, and that a best-effort mapping failure counts failed for that version only and still forwards the others, including v0.4.0. One way: restore the failed-counter assertions and the mapping-failure test (as counterValue(\"failed\", ...)), and give the transient-failure test a title that names the count again."
-    },
-    {
-      "id": 2,
-      "line": 309,
-      "severity": "Major",
-      "category": "test-readability",
-      "issue": "The titles receive_shouldNotThrow_andStillForwardV1AndV3_whenV2PublishFails (line 309) and receive_shouldNotThrow_andStillForwardV1AndV2_whenV3PublishFails (line 330) no longer state what their assertions prove. Both now also verify the v0.4.0 publish and assert per-version failed counters (lines 319-326 and 340-347). 'Still' narrates a change rather than stating behaviour.",
-      "fix": "Must: each title states what its assertions prove: the failing version is counted failed and every other version is forwarded. One way: receive_shouldForwardEveryOtherVersionAndCountOnlyV2Failed_whenV2PublishFails, and the same for v3."
-    },
-    {
-      "id": 3,
-      "line": 269,
-      "severity": "Major",
-      "category": "comments",
-      "issue": "The file keeps Given/When/Then comments at lines 269, 274, 290 and 295. The comments at 269 and 290 ('v0.2.0 must never even be attempted') now cover only one of three skipped streams. Lines 249-250 describe another module ('PimsPayloadMapper raises SqsNonRetryableException; the listener propagates it unchanged'). Lines 145-146 (DLQ replay), 192, 310 and 332 are rationale or restate the code.",
-      "fix": "Must: no Given/When/Then comments, no comment that describes another module or restates its assertions, and rationale in docs/. One way: delete them and let titles and blank lines carry the structure."
-    },
-    {
-      "id": 4,
-      "line": 94,
+      "line": 261,
       "severity": "Major",
       "category": "duplication",
-      "issue": "setUp builds the whole PimsPayloadMapper graph by hand (lines 60-107): v1, then v2, v3 and v4, each with its common, transport, line-item, consignment, data and event mapper. PimsPayloadMapperTest.setUp (lines 23-70) repeats the same 50 lines, and this PR added the same 12-line v0.4.0 block to both. Every new schema version has to be copied into both test classes.",
-      "fix": "Must: one shared test helper builds the real PimsPayloadMapper with every version wired, and both test classes call it. One way: a PimsPayloadMappers.real(objectMapper) factory in test support, with the local blocks deleted."
+      "issue": "The two new mapping-failure tests copy the same set-up: receive_shouldNotThrow_andCountV2AsFailed_whenV2MappingFails (lines 262-266) and receive_shouldNotThrow_andCountV4AsFailed_whenV4MappingFails (lines 282-286) each spy pimsPayloadMapper, stub one mapToVn to throw and build a second NotificationSqsListener. Their assertions also drift apart: the v2 test checks the failed counter only for 0.2.0 and 0.4.0, while the v4 test checks all four.",
+      "fix": "Must: one home for the 'one stream fails to map' set-up, and every such test checks the forwarded and failed counters for all four schema versions. One way: a @ParameterizedTest over the best-effort versions (0.2.0, 0.3.0, 0.4.0) with a private helper that returns a listener whose mapper throws for the given version."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

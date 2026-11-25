@@ -800,6 +800,42 @@
       "disposition": null,
       "status": null,
       "notes": null
+    },
+    {
+      "id": 67,
+      "file": "fit/live-animals-journey.js",
+      "line": "1038",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "LANDINGS.notificationView (line 1038) has no title, and expectLanding (lines 1041-1050) gains an 'if (title)' branch so this one landing is checked by URL alone. answerConsignmentAddresses ends with saveAndExpectLanding(page, LANDINGS.notificationView) (line 1288), so it claims to land on the review while proving only the URL; every caller that needs proof must add expectDraftReview itself (journey-smoke.fit.spec.js:150). Every other LANDINGS entry is proven by URL and heading.",
+      "fix": "Must: every landing check proves its page by URL and by what the page shows, with no landing that skips the heading, and the review landing is proven by the draft review header. One way: delete the notificationView entry and the 'if (title)' branch, end answerConsignmentAddresses with save(page) then expectDraftReview(page), and drop the now-repeated expectDraftReview call at journey-smoke.fit.spec.js:150.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 68,
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+      "line": "972",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "With the contact address row gone, 'Should keep the generic address label on the transporter row' (lines 972-978) has lost its contrast and its title narrates history ('keep', relative to the removed contact row). Its only assertion, keysOf(Transport details rows) toContain('Address'), is a weaker copy of the exact check at lines 1503-1519 ('Should keep the name, address, country, approval number and type rows...', toEqual(['Name','Address','Country',APPROVAL_NUMBER_KEY,'Type'])), so no production line turns this test red that the other would not.",
+      "fix": "Must: no test in the file exists only to contrast with the removed contact address row, and no title narrates a before/after. One way: delete the test at lines 972-978, since lines 1503-1519 already assert the transporter card's exact row keys.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 69,
+      "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js",
+      "line": "256",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The new test title 'Should go from Consignment addresses to nothing, the review page being the fallback, even when every other task is complete' claims the review page is the fallback, but the body only asserts nextStepLanding gives no slug (nextSlug('addresses', completeAnswers) toBeUndefined). Where Save and continue lands when nextStepLanding returns undefined is decided by the caller, not by anything this test runs, so deleting that fallback would leave the test green.",
+      "fix": "Must: the title states only what the assertion proves (no next step after Consignment addresses), and the review-page landing is either asserted here or left to the test that does exercise the caller's fallback. One way: retitle to 'Should offer no next step after Consignment addresses, even when every other task is complete' and assert landing('addresses', completeAnswers) toBeUndefined directly.",
+      "disposition": null,
+      "status": null,
+      "notes": null
     }
   ]
 }

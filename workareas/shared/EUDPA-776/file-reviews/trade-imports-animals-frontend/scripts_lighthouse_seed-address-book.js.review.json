@@ -4,26 +4,9 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:08:49Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Dropping CONTACT_PARTY from the seeded roles is correct and the test pins the five remaining roles, but a now-dead .filter(Boolean) and a single-use module-scope literal remain.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 8,
-      "severity": "Major",
-      "category": "structure",
-      "issue": "SELECTABLE_ADDRESS_ROLES keeps .filter(Boolean) (lines 8-10) after CONTACT_PARTY was dropped from the source list, but every PARTIES entry in parties.js now sets addressBookRole, so the filter guards a case nothing reaches and tells the reader some parties have no role",
-      "fix": "Must: SELECTABLE_ADDRESS_ROLES is built only from what PARTIES holds, with no guard for a party that has no addressBookRole. One way: PARTIES.map(({ addressBookRole }) => addressBookRole)"
-    },
-    {
-      "id": 2,
-      "line": 5,
-      "severity": "Major",
-      "category": "structure",
-      "issue": "HTTP_CREATED (line 5) sits at module scope but only createAddressHoldingRole (line 54) uses it; the house rule puts a literal used by one function inside that function",
-      "fix": "Must: HTTP_CREATED lives in createAddressHoldingRole, the one function that reads it. One way: move the constant into that function body (HTTP_OK, used by two functions, stays at module scope)"
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-24T14:43:39Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Both prior items are fixed: the filter(Boolean) guard is gone and HTTP_CREATED lives in its one function.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:33Z"
 }

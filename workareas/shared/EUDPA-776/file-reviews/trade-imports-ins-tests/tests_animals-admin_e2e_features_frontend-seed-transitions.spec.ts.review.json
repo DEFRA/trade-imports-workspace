@@ -1,0 +1,21 @@
+{
+  "file": "tests/animals-admin/e2e/features/frontend-seed-transitions.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:44:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The aggregateIdFor promotion is correct, but the outbox Mongo read set-up is still copied across every outbox spec beside it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The PR promotes aggregateIdFor into the shared outbox-event-document module but leaves the rest of the outbox read set-up copied in every outbox spec beside it: new MongoDbClient(), connect(), collection<OutboxEventDocument>('trade-imports-animals-backend', 'outbox'), then close() in finally. Copies: frontend-seed-transitions.spec.ts:27-31,64-68 (with its own BACKEND_DATABASE/OUTBOX_COLLECTION constants at 8-9), outbox-event-amendment-cancelled.spec.ts:22-26, outbox-event-amendment.spec.ts:43-47, outbox-event-created.spec.ts:41-45,91-95, outbox-event-deleted.spec.ts:22-26,56-60, outbox-event-withdrawal.spec.ts:24-28, plus outbox-event-notification.spec.ts and animals/e2e/journeys/dynamics/notification-data.spec.ts.",
+      "fix": "Must: one shared helper owns opening, reading and closing the animals backend outbox collection, and every outbox spec calls it with no local copy of the database or collection name. One way: add an outbox reader beside MongoDbClient (e.g. withOutbox(async (outbox) => ...) or a fixture) that names the database and collection once, and replace each try/finally block with it."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:35Z"
+}

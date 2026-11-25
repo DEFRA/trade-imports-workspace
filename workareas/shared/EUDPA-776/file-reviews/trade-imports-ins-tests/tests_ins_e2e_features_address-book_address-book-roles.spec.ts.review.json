@@ -1,0 +1,29 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:45:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Branch-role tests and the 'six' count are removed while the address book service, outside the PR set, still has BRANCH_ADDRESS.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 88,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The renamed titles 'a create carrying a role outside the five ...' (88) and 'an update carrying a role outside the five ...' (102) claim the address book API knows five roles, but the service these tests call still has six: trade-imports-address-book origin/main AddressRole.java:21 'BRANCH_ADDRESS(RoleGroup.BRANCH)', and no PR in the EUDPA-776 set touches that repo. The tests send UNSUPPORTED_ROLE, so they pass either way and prove nothing about the count the title states.",
+      "fix": "Must: each title states only what its assertions prove about the service as deployed: either the address book API has five roles and the titles say five, or it keeps six and the titles say six (or name no count). One way: remove BRANCH_ADDRESS and RoleGroup.BRANCH from trade-imports-address-book on a branch named for EUDPA-776 and add it to the PR set; failing that, title the tests 'a role the address book does not know'."
+    },
+    {
+      "id": 2,
+      "line": 122,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR deletes 'an update adding a branch address role to a receiving address is refused ...' and the 'branch' case of 'an address holding <group> roles outside the United Kingdom is saved' (main lines 125-138, 143), but the address book service still enforces and accepts both: trade-imports-address-book origin/main keeps BRANCH_ADDRESS in RoleGroup.BRANCH (AddressRole.java:21) and its AddressRequest roles schema still says 'Every role must come from one group: sending ..., receiving ... or branch (BRANCH_ADDRESS)'. The ticket removes the branch address from the address book UI, but the API behaviour these tests proved is live and now unproved end to end.",
+      "fix": "Must: the e2e suite and the address book service agree: either the service no longer has the branch role (removed in trade-imports-address-book under the same EUDPA-776 branch name, with an exact test that BRANCH_ADDRESS is now refused), or the branch-role tests stay while the service keeps the role. One way: remove BRANCH_ADDRESS/RoleGroup.BRANCH from trade-imports-address-book in this ticket and change the deleted update test to assert BRANCH_ADDRESS is refused as an unknown role."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:35Z"
+}

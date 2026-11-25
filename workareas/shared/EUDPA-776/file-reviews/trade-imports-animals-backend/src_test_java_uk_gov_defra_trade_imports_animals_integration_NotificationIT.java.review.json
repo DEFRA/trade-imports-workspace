@@ -4,27 +4,18 @@
   "commit": "b73a5d07214320b9379342b28e8a8ec86498b08c",
   "pr": 133,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:09:25Z",
+  "reviewed_at": "2026-11-24T14:43:43Z",
   "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The three removed consignment lines correctly follow the field's removal from NotificationBase, but they orphan NotificationTestData.consignments() and leave the 'saves no consignment party' AC without a test.",
+  "verdict_reason": "The new stale-consignment save IT closes the coverage gap but copies its set-up from the sibling stale-typeOfCommodity test instead of sharing a helper.",
   "todos": [
     {
       "id": 1,
-      "line": 2817,
+      "line": 1023,
       "severity": "Major",
-      "category": "structure",
-      "issue": "Removing '.consignment(NotificationTestData.consignments().getFirst())' here (and the matching lines in NotificationControllerTest, NotificationServiceTest and NotificationCopyMapperTest) leaves NotificationTestData.consignments() (utils/NotificationTestData.java:37) with no caller anywhere in src/. It is a fixture for a party the notification no longer has, so the consignment-contact concept survives in test support after the PR removes it from the model.",
-      "fix": "Must: no test helper builds a consignment-contact party; NotificationTestData exposes only parties the notification still holds. One way: delete NotificationTestData.consignments() in this PR."
-    },
-    {
-      "id": 2,
-      "line": 2817,
-      "severity": "Major",
-      "category": "coverage-gap",
-      "issue": "AC 'A new live animals notification saves no consignment party' has no test. The PR deletes every consignment assertion (here at old 2054, 2080, 2822 and in the unit tests) and adds none in their place. Frontend and backend deploy independently, so during rollout an older frontend still sends a 'consignment' key on save; nothing proves the backend accepts that body (no 400 from strict deserialisation) and stores no 'consignment' on the Mongo document. A later switch to FAIL_ON_UNKNOWN_PROPERTIES, or a re-added field, would go unnoticed.",
-      "fix": "Must: an integration test fails if a save request carrying a 'consignment' party is rejected or if the stored notification document holds a 'consignment' key. One way: in NotificationIT, POST a raw JSON save body that includes a 'consignment' object, assert 2xx, then read the raw document from mongoTemplate and assert its notification map has exactly the expected keys (no 'consignment').",
-      "best_practice": "java/testing/integration.md"
+      "category": "duplication",
+      "issue": "The new put_shouldAcceptTheSaveAndStoreNoConsignmentParty_whenAnOlderClientStillSendsOne (lines 1023-1043) copies the set-up of putAndSubmit_shouldRecordSubmittedAndShedTypeOfCommodity_whenStoredCommodityHoldsIt (lines 988-1018). Both create the draft with createDraftReference(createNotificationDto(\"CH\", \"Live cattle\")), read the stored aggregate for its concurrencyToken, hand-build the raw Map.of(\"notification\", Map.of(referenceNumber, concurrencyToken, origin CH/no, commodities ...)) body, PUT it through webClient(\"NoAuth\") expecting 200, then read NotificationTestSupport.storedDocument(...).get(\"notification\", Document.class). Only the extra stale field differs.",
+      "fix": "Must: one shared helper owns saving a raw stale-client body over a fresh draft and reading back the stored notification document; both tests call it and state only the extra field they send and what they assert. One way: add a helper in NotificationIT or NotificationTestSupport such as putRawSave(referenceNumber, Map<String, Object> extraNotificationFields) returning the stored notification Document, and have both tests use it."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reconciled_at": "2026-11-24T14:48:32Z"
 }

@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "3e1d02afd381807351a0e22a0b447c30ec210cb8",
+  "pr": 115,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:45:18Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The new outbox test can read the draft NotificationCreated event instead of the submitted one, so it does not prove the submitted GBN-AG event has no issuer, and it copies outbox set-up and an assertion already held elsewhere.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 163,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The new outbox test polls countDocuments({ aggregateId }) > 0 and reads findOne({ aggregateId }) (163-165) with no eventType filter. The backend writes a NotificationCreated outbox event for the same aggregateId when the draft is created (outbox-event-created.spec.ts:47-62, notificationStatusCode 'DRAFT'), so the poll passes on that event and findOne returns the first inserted document: the DRAFT created event, which never had an issuer. A submitted event that carried issuer would leave this test green, so it does not prove the AC 'the GBN-AG event for a submitted notification has no issuer' that the ticket asks dynamics/notification-data.spec.ts to assert, and the title's 'submitted notification outbox GBN-AG payload' over-claims.",
+      "fix": "Must: the test reads the NotificationSubmitted outbox event for the notification, and turns red if that event's exchangedDocument carries issuer. One way: poll and find with { aggregateId, eventType: NOTIFICATION_SUBMITTED } as outbox-event-notification.spec.ts does, and assert the exact sorted key list of exchangedDocument rather than a subset of GBN_AG_EXCHANGED_DOCUMENT_KEYS, so an absent exchangedDocument (the '?? {}' fallback) also fails.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 147,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new 'Submitted notification outbox payload' describe (147-172) copies the outbox Mongo set-up (skipUnlessComposeEnvironment reason, new MongoDbClient, connect, collection('trade-imports-animals-backend','outbox'), expect.poll on countDocuments, find, close in finally) that six animals-admin/e2e/features/outbox-event-*.spec.ts files already repeat, and re-asserts the GBN_AG_EXCHANGED_DOCUMENT_KEYS rule that outbox-event-notification.spec.ts:98 already asserts on the submitted event. It also sits in a Dynamics spec without the @mongodb tag its siblings carry, and takes setTestTimeout(dynamicsBaseTestTimeoutMs) (156) though it never calls Dynamics.",
+      "fix": "Must: one shared helper reads a notification's outbox event of a given type, every outbox spec (this one included) calls it, and the submitted-event key rule is asserted once, or each copy says something the other does not; an outbox test carries the @mongodb tag and no Dynamics timeout. One way: add a readOutboxEvent(referenceNumber, eventType) helper beside MongoDbClient or in flows/animals, call it from the outbox specs, and either drop line 98's copy or make this test cover the mandatory-answers case explicitly in its title.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:35Z"
+}

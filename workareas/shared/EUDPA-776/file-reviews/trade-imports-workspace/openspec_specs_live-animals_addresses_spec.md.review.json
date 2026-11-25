@@ -4,18 +4,18 @@
   "commit": "ef8ad11298549c5cc5200370802dfedc77f94d8a",
   "pr": 274,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:46Z",
+  "reviewed_at": "2026-11-24T14:46:06Z",
   "verdict": "RISKY",
-  "verdict_reason": "Contact-address scenarios are removed, but the role-scoped one-page picker rules are replaced with a paged whole-book design the code does not implement.",
+  "verdict_reason": "REQ-ADDR-017/018 are restored correctly, but the rewritten SCN-ADDR-014-E claims check your answers offers per-role Edit details, which the code and REQ-CYA-026 deny.",
   "todos": [
     {
       "id": 1,
-      "line": 275,
+      "line": 163,
       "severity": "Critical",
       "category": "correctness",
-      "issue": "Beyond removing the contact address, the PR rewrites the role picker back to an older paged, whole-book design that the code does not have: it deletes REQ-ADDR-018 (each role's list holds only that role's addresses plus role-less ones) and REQ-ADDR-017 (every address on one page), adds REQ-ADDR-010 (paging, line 275), and rewords REQ-ADDR-006 (line 179, 'search the whole address book'), SCN-ADDR-006-B (190, 'paginated as before'), SCN-ADDR-007-C (228), SCN-ADDR-009-B (263, 'moved to a later page') and REQ-ADDR-011/SCN-ADDR-011-A/B (285-297, 'opens on its first page... naming the address'). The animals frontend at 08f4558 lists by role with no page parameter (party-picker.controller.js:53-55: addressBook.addresses(orgId, { query, role: party.addressBookRole })), and the frontend PR does not touch the picker. None of this is in the EUDPA-776 AC.",
-      "fix": "Must: the addresses spec describes the role-scoped, one-page, checked-row picker the code has, as on main, with only the consignment contact removed (from REQ-ADDR-018's title and text, SCN-ADDR-018-C/D, SCN-ADDR-001-B/D/K/L/M, REQ-ADDR-002 and REQ-ADDR-014). One way: restore the file from origin/main and redo only the contact-address deletions; do the same for openspec/coverage/live-animals/addresses/coverage.json (+901/-220)."
+      "issue": "SCN-ADDR-014-E's WHEN was rewritten from 'views the contact address on the review' to 'views that role on the consignment addresses page or the check-your-answers view', and its THEN says the user can choose a different address and edit this address's details as two separate actions. That is not true on check your answers. At animals-frontend ed23c57, consignment-addresses.js:60-64 calls partyRow with only errorText and no edit, so a party row has no action, and party-row.js:38-50 adds 'Edit details' only when an edit is passed. The card offers one heading Change link. REQ-CYA-026 in this same PR says 'no party row carries a link'. The two specs now contradict each other, and the scenario claims behaviour the review does not have.",
+      "fix": "Must: SCN-ADDR-014-E names only the places where a role's copied address offers both choosing another address and editing its details, which is the consignment addresses page. One way: change the WHEN to 'the user views that role on the consignment addresses page'."
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:53Z"
+  "reconciled_at": "2026-11-24T14:48:37Z"
 }

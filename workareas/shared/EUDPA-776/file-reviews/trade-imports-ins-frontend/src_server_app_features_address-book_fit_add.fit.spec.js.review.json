@@ -4,26 +4,9 @@
   "commit": "f2c6e6a9bd1c2c0e9300b6fa46eb43db3348e97f",
   "pr": 88,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:12:33Z",
-  "verdict": "RISKY",
-  "verdict_reason": "A bad rebase deletes the germinal products fit tests that openspec still links and reverts main's shared Save-and-select helper, beyond the intended contact test removals.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 549,
-      "severity": "Critical",
-      "category": "coverage-gap",
-      "issue": "The PR deletes the 'add address reached from a germinal products notification journey' describe block (both tests), which has nothing to do with the consignment contact. The germinal products journey is still registered (journey-registry.js:43) and openspec/coverage/ins/address-book/coverage.json:6117-6118 and :6164-6165 still link 'shows the add page and offers Back and Cancel to that notification germinal products return' and 'Save and select sends the browser to that notification germinal products return…', so the spec claims fit coverage by tests that no longer exist. The rebase of 70533d89 over main's 75aac721 took the pre-germinal file.",
-      "fix": "Must: the two germinal products fit tests that main has are back, and every coverage.json link to add.fit.spec.js names a test that exists. One way: restore the describe block from origin/main."
-    },
-    {
-      "id": 2,
-      "line": 521,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "The PR silently reverts main's b9109426 refactor: the 'Save and select with Importer ticked…' test (add.fit.spec.js:521-538) inlines the route-abort, open, fill and waitForRequest('/address-return') set-up again, so addressReturnAfterSaveAndSelect (fit/address-form.js:294), which owns exactly that set-up, now has no caller. It also swaps copy.add.title and copy.add.cancelAndReturnToHub for literals at :80, :325 and :452, while sibling assertions in the same tests use copy keys (:449). None of this relates to the contact address.",
-      "fix": "Must: the add fit spec matches main except for removing the consignment contact tests; Save-and-select set-up has one owner, addressReturnAfterSaveAndSelect, and its callers use it. One way: take add.fit.spec.js from origin/main and delete only the consignment contact entries (the handshake loop entry, the contact Back/buttons test, and the contact row in the four-blanks validation table)."
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reviewed_at": "2026-11-24T14:44:32Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The diff now removes only the consignment contact and Branch cases; the germinal products tests and the shared Save-and-select helper are back, and nothing new needs fixing.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

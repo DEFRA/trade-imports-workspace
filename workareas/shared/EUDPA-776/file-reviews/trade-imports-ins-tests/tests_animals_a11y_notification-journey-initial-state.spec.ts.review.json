@@ -4,19 +4,19 @@
   "commit": "47d39689913eebd582a8fd201a4ff8edaa4e9d7a",
   "pr": 115,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:14:47Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The contact address scan is removed correctly, but the review step inlines a copy of an existing journey helper and the addresses-exit steps differ from the sibling specs.",
+  "reviewed_at": "2026-11-24T14:43:46Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The new continueFromAddressesToOverview() call needs a recorded reference number this spec never records, so the test throws at the CPH step.",
   "todos": [
     {
       "id": 1,
-      "line": 163,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "The new 'Review your notification' step (163-168) is a copy of animalsJourney.toDeclarationThroughReview's body (journey.ts:782-788), which this spec used to call and which now has no caller; the same copy sits in notification-journey-filled-state.spec.ts:157-162. The 'CPH number' step (117-122) repeats the leave-the-addresses-hub sequence from the other two a11y journey specs, here returning to Overview by overview.open(notificationView.referenceNumberFromUrl()) where they call animalsJourney.openCurrentOverview().",
-      "fix": "Must: the review-scan-then-continue step and the leave-the-addresses-hub step each live once on AnimalsJourney, and this spec calls them, so all three a11y journey specs return to Overview the same way. One way: call animalsJourney.toDeclarationThroughReview(runA11yScan) and a shared AnimalsJourney method for the CPH-to-Overview steps, deleting the inline copies.",
+      "line": 120,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "The CPH step now calls animalsJourney.continueFromAddressesToOverview() (120), which ends in openCurrentOverview() -> currentReferenceNumber() (journey.ts:292-296), and that throws 'No notification has been started' when the journey context holds no reference. This spec never records one: its beforeEach is toNotificationDashboard() (journey.ts:140, records nothing) and it creates the notification itself via dashboard.btnCreateNewNotification.click() (23), keeping the reference in a local (29). Only createNotificationAtOrigin/recordReferenceNumberFromUrl record it. The replaced lines opened Overview from the page URL and did not depend on the context, so the test now fails at this step; the PR's E2E Tests check does not run @a11y, so it stays green.",
+      "fix": "Must: the initial-state a11y test reaches Overview after the addresses page without relying on an unrecorded reference, and passes when run. One way: have the spec record its notification through the journey (e.g. a public AnimalsJourney method that clicks Create new notification from the dashboard and records the reference, called in the Origin of import step), then keep continueFromAddressesToOverview(); run this spec with test:docker-compose before pushing.",
       "best_practice": "playwright/BEST_PRACTICES.md"
     }
   ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reconciled_at": "2026-11-24T14:48:35Z"
 }

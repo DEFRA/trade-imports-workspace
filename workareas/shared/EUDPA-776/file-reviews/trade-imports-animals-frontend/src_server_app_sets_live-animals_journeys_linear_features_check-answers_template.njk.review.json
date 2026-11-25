@@ -7,23 +7,6 @@
   "reviewed_at": "2026-11-23T10:04:39Z",
   "verdict": "RISKY",
   "verdict_reason": "The rebase-fix commit reverts the check-answers template main shipped in EUDPA-696 (view header, import references, species blocks, labelled cards, cancel-amend and delete buttons), which the ticket does not ask for.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 29,
-      "severity": "Critical",
-      "category": "correctness",
-      "issue": "The rebase-fix commit 714a8f5 (restore the pre-rebase check-answers view model) puts back the template that main replaced in EUDPA-696 (#484, base 32236d4), so this PR silently reverts that work, which EUDPA-776 does not ask for. Against main the PR removes: the viewHeader block (reference h1 and status govukTag, Amend/Copy/Delete buttons, date line, Import reference numbers section with warning text); the speciesBlocks/identificationDetails and card.groups rendering; section.cards as aria-labelledby summary cards; the visually hidden card title in action links (the actionLink macro, now lines 14-23), which gives each Change link in a custom card unique link text; and cancelAmendButton/deleteButton beside Continue (now lines 113-120). It reintroduces heading/copyAction/deleteHref/section.groups/identifierTable/documents/emptyText, matched by a reverted controller.js and view model in the same commit. The ticket only removes the contact address page.",
-      "fix": "Must: against main, the only change this PR makes to the check-answers template, controller and view model is what removing the contact address page needs, and every element main renders there (view header, import reference numbers, species blocks, labelled cards with card-title link text, cancel-amend and delete beside Continue) still renders. One way: reset features/check-answers/ to origin/main, reapply only the contact-address removals (the contact-address card and section), and run the check-answers unit and fit specs from main."
-    },
-    {
-      "id": 2,
-      "line": 107,
-      "severity": "Major",
-      "category": "comments",
-      "issue": "The diff adds two comments that break the house comment rules: lines 107-111 give rationale and describe other pages (the read-only review dropping Change links, the declaration redirecting a submitted journey to a confirmation), and line 113 explains why the concurrency token is carried. Main has neither comment.",
-      "fix": "Must: the template holds no rationale comments; the readOnly guard and the concurrencyToken hidden input stand without explanation, and any reasoning worth keeping lives in the set docs or the check-your-answers spec. One way: delete both comments (resetting the template to main per the revert finding also removes them)."
-    }
-  ],
+  "todos": [],
   "reconciled_at": "2026-11-23T10:06:16Z"
 }

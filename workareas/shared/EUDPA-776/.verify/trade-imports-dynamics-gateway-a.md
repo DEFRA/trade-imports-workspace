@@ -1,0 +1,26 @@
+# EUDPA-776 — trade-imports-dynamics-gateway PR #35 — verification (batch a)
+
+Checked at head `37e1f1a9` against the review at `9e3e3acb`. Three PR commits since the review (`55a9848`, `4067815`, `37e1f1a`). No merge from main. No author replies on the PR, inline or top-level, so no item is closed by a reply.
+
+| # | Severity | Status | Evidence |
+|---|---|---|---|
+| 1 | Major | FIXED | `4067815`. README.md:68 names v0.1.0–v0.4.0. docs/notification-pipeline.md:14-15 says "published four times" and names `-v2`, `-v3`, `-v4` and v0.4.0 best-effort failures. docs/observability.md:32 lists `0.4.0` as a `schema.version` value, and :48 names `-v4`. No doc in the repo still says "three times". |
+| 2 | Major | PARTLY FIXED | `37e1f1a`. The V4 copy is gone (one owner, `PimsConsignmentMapperV3`). The literal is now a local in `subdivisionOfOrigin`. The rationale has been added to docs/notification-pipeline.md (Fields, last-but-one bullet). But the comment is still there, inside the method: PimsConsignmentMapperV3.java:53-54 ("UNCL3227 location function 106 … Not the region of origin code, which is a disease zone"). The Must says no comment explains the code. |
+| 3 | Major | FIXED | `4067815`. docs/notification-pipeline.md (Fields, third bullet) now says "No message the gateway sends carries an `issuer`: v0.3.0 messages leave it out and the v0.4.0 schema drops it", and names `gbn-ag-pims-v0.4.0-changes.md` with the v0.2.0 and v0.3.0 change notes. |
+| 5 | Major | FIXED | `4067815`. PimsPayloadMapper.java: each `mapToVn` is `return serialise(pimsEventMapperVn.map(event))`. The private `serialise(Object)` is the one place that turns `JsonProcessingException` into `SqsNonRetryableException` and names `getClass().getSimpleName()`. |
+| 6 | Minor | FIXED | `4067815`. `@Slf4j` and its import have been removed from PimsPayloadMapper.java. |
+| 8 | Major | FIXED | `4067815`. EmfMeterRegistryIT.java:121 `@ValueSource` includes `"notification.sqs.messages"` again. |
+| 9 | Major | FIXED | `4067815`. NotificationSqsListenerIT.java:238-248 asserts the v4 body's `regionOfOriginCode` is `ES-12345`, asserts v4 `specifiedConsignment` equals v3's, and asserts `exchangedDocument.has("issuer")` is false for v3 and v4. Minor note: the v4 `exchangedDocument` fields other than `issuer` are not compared with v3. |
+| 10 | Major | FIXED | `4067815`. One `SCHEMA_STREAMS` list of `SchemaStream(schemaVersion, messageIdSuffix)` (NotificationSqsListenerIT.java:~75-81). `expectedMessageIds`, `awaitOneOrderedAsbMessagePerSchemaVersion`, the counter test (loop over `SCHEMA_STREAMS`) and the send-count test (`baseSends + SCHEMA_STREAMS.size()`) all read it. No name carries a count. |
+| 11 | Major | FIXED | `4067815`. No `//` comments are left in NotificationSqsListenerIT.java. The Floci region rationale moved to README.md:163. |
+| 12 | Major | FIXED | `55a9848` + `4067815`. NotificationSqsListenerTest.java:217 and :239 assert `failedCount("0.1.0") == 1` (and 0 for the others). The mapping-failure path is restored as `receive_shouldNotThrow_andCountV2AsFailed_whenV2MappingFails` (:261), and `..._andCountV4AsFailed_whenV4MappingFails` (:281) was added. Both forward every other version. Minor note: the v2 mapping test checks failed=0 only for 0.4.0, not for 0.1.0 and 0.3.0. The v4 test checks all of them. The transient test's title names the count again. |
+| 13 | Major | FIXED | `4067815`. Renamed to `receive_shouldForwardEveryOtherVersionAndCountOnlyV2Failed_whenV2PublishFails` (:303) and `...V3Failed_whenV3PublishFails` (:324). |
+| 14 | Major | FIXED | `4067815`. No `//` comments are left in NotificationSqsListenerTest.java. The Given/When/Then, the "v0.2.0 must never even be attempted", the PimsPayloadMapper description and the DLQ-replay rationale have all gone. |
+| 15 | Major | FIXED | `4067815`/`37e1f1a`. New test-support factory `PimsPayloadMappers.real(objectMapper)` (src/test/.../notification/PimsPayloadMappers.java). NotificationSqsListenerTest.java:61 and PimsPayloadMapperTest.java:26 call it, and the local graphs are deleted. PimsEventMapperV4Test.java:22 uses `PimsPayloadMappers.eventMapperV4()`. |
+| 18 | Major | OBSOLETE | `4067815` deleted PimsConsignmentMapperV4Test.java. Note: the comment it copied still sits in its V3 twin, which this PR does not touch: PimsConsignmentMapperV3Test.java:156 (bare `// Given`) and :193-195 ("the only other fields that delegate to … Previously exercised on the null path only …"). The V4 coverage now relies on that file, so it is worth fixing under the same rule. |
+
+## Still open
+
+- **#2 (Major, partly fixed):** the UNCL3227/disease-zone comment is still inside `subdivisionOfOrigin` (PimsConsignmentMapperV3.java:53-54). The rationale is already in docs/notification-pipeline.md, so the comment can be deleted. A local name such as `regionOfOriginFunctionCode` would carry the meaning.
+- **Follow-on from #18 (not open on #18 itself):** PimsConsignmentMapperV3Test.java:156 and :193-195 carry the same history comment and Given comment that #18 objected to. They now serve v0.4.0 as well.
+- Minor gaps, not blocking the Musts: #9 does not compare v4 `exchangedDocument` with v3 apart from `issuer`. #12's v2 mapping-failure test does not assert failed=0 for 0.1.0 and 0.3.0.

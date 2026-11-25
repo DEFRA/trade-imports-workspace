@@ -1,0 +1,21 @@
+{
+  "file": "scripts/build-data-dictionary.test.js",
+  "repo": "trade-imports-schemas",
+  "commit": "d4d2b80e4b78b49c5c4f84b1ce2bff900e787263",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:46:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new test's title claims the false-schema property is left out of the dictionary, but its dictionary assertions cannot fail on an issuer row.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 166,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title says a false-schema property 'is left out of the tree and the dictionary', but the dictionary half (lines 192-195) only asserts that each kept exchangedDocument property has a row. Nothing checks that issuer has no row, so an issuer row in the dictionary would pass. With the walker's false handling reverted, the generator writes issuer back and every kept-property assert still passes; only the tree assertion fails.",
+      "fix": "Must: the test's assertions prove the dictionary's exchangedDocument table has exactly the kept properties (so an issuer row turns it red), or the title claims only what the assertions prove. One way: parse the 'Document (exchangedDocument)' table's property column and deepEqual it, sorted, to exchangedDocumentProperties."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:36Z"
+}

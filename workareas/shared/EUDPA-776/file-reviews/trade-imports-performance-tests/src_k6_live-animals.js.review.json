@@ -4,34 +4,9 @@
   "commit": "5c909366df0f781816a980e3e7801f2cc909f77e",
   "pr": 47,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:59Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "Removing the contact step is right, but the replacement step copies the documents and addresses steps, carries an untrue JSDoc on an internal helper, and has a name that mispredicts its body.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 171,
-      "severity": "Major",
-      "category": "comments",
-      "issue": "The JSDoc on openingRunFromTransporter (line 171) breaks two house rules and is untrue: it sits on a non-exported internal step, and it describes the frontend's flow, not the lines below. The frontend's nextStepLanding (animals-frontend flow/navigation.js:51-71, flow/flow.js:57-66) lands a documents save on cph-number, not the addresses hub, so 'visits accompanying documents then the addresses hub before check your answers' is not what the frontend does; the step opens the addresses hub itself with walker.reach.",
-      "fix": "Must: no comment on this internal step; what the step does is carried by its name and body, and any rationale for ending the draft this way lives in the repo's docs. One way: delete line 171."
-    },
-    {
-      "id": 2,
-      "line": 169,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "The new step re-implements pages two existing steps already own. OPENING_RUN_DOCUMENTS_SLUG (line 169) is a second name for documents.js's DOCUMENTS_SLUG ('accompanying-documents', documents.js:21); lines 177-183 repeat documentsStep's reach-then-continue (documents.js:134-146) with no uploads; lines 185-193 repeat the addresses step's closing reach-and-save (live-animals.js:104-108), and the two now post different bodies to the same ENDPOINTS.addresses.save ({} at line 106, { action: 'continue' } at line 193; the addresses controller reads action only for same-as actions, controller.js:277-279). Both pages were already saved earlier in the same draft (documentsStep and addresses in LIVE_ANIMALS_STEPS.draft), and nothing downstream needs a second pass: submitFromReview opens notification-view directly (journeys.js:252) and the frontend's readiness gate is answer-based (section-status.js:16-19).",
-      "fix": "Must: each page's reach-and-continue has one owner in the k6 steps, the documents slug has one name, and the draft adds a step only when the run needs it to reach check your answers. One way: drop openingRunFromTransporter so the draft ends at transporters, as it would have without the contact step; or, if a smoke run shows the extra pass is needed, build it from documentsStep and the addresses step (or a shared helper they both call) and import DOCUMENTS_SLUG from documents.js."
-    },
-    {
-      "id": 3,
-      "line": 172,
-      "severity": "Major",
-      "category": "naming",
-      "issue": "openingRunFromTransporter (lines 172-174, and the check name 'opening-run-from-transporter saved' at line 192) predicts a step that walks the frontend's opening run onward from the transporters page. The body does something else: it opens accompanying documents and continues, skips cph-number, then opens the addresses hub and saves it, and its check proves only that the addresses save returned 200, not that it reached check your answers. 'Opening run' also appears nowhere in the frontend flow code, so the name needs its comment to be understood.",
-      "fix": "Must: if the step stays, its name and check name say what it does (re-continue the documents page and the addresses hub), with no comment needed to decode it. One way: name it continueDocumentsAndAddresses with check name 'documents and addresses continued'; moot if the step is removed under the duplication finding."
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:53Z"
+  "reviewed_at": "2026-11-24T14:44:47Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The contact step and the openingRunFromTransporter step are gone, the draft ends at transporters, and no animals contact endpoint or unused import is left behind; prior items #1-#4 are resolved.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:36Z"
 }

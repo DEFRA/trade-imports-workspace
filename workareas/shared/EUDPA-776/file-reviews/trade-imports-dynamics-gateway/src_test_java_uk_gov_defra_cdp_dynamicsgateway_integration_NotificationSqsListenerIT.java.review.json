@@ -4,34 +4,9 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:21:56Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "The fourth stream is wired in end to end, but its payload, including the absence of issuer, is unasserted, and the stream list is repeated across three tests.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 237,
-      "severity": "Major",
-      "category": "coverage-gap",
-      "issue": "The end-to-end test checks only the v0.4.0 message's metadata (lines 237-239: schemaVersion and schemaUri). Nothing on the wire proves the v0.4.0 data payload, and no assertion on the v0.3.0 or v0.4.0 body checks that exchangedDocument has no issuer. The AC says 'no PIMS message it sends carries issuer', and the v0.3.0 body already gets data assertions (regionOfOriginCode at lines 205-206) that v0.4.0, a copy of it, does not.",
-      "fix": "Must: the IT proves, from the received ASB bodies, that the v0.4.0 message carries the data the v0.3.0 one does and that neither v0.3.0 nor v0.4.0 has exchangedDocument.issuer. One way: assert readBody(v4).data.specifiedConsignment.originCountry.regionOfOriginCode is 'ES-12345' and exchangedDocument.has(\"issuer\") is false for v3 and v4."
-    },
-    {
-      "id": 2,
-      "line": 162,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "The list of schema streams is written out separately in three tests, so this PR had to edit each one to add v0.4.0: awaitFourOrderedAsbMessages builds the ids '', -v2, -v3, -v4 (lines 163-166, and 'Four' is in its name); sqsToAsb_shouldCountForwardedMessages_whenValidEvent repeats the four versions and the four ids (lines 245-262); sqsToAsb_recordsTheListenerTime_fourServiceBusSends... hard-codes baseSends + 4 (line 279) and 'four' in its title.",
-      "fix": "Must: one helper in this IT owns the schema versions and their message-id suffixes, and every test derives its ids, counts and expected send total from it. One way: a private static List of (schemaVersion, suffix) pairs that the await helper, the counter test and the send-count test all read, with names that do not carry the count."
-    },
-    {
-      "id": 3,
-      "line": 153,
-      "severity": "Major",
-      "category": "comments",
-      "issue": "The file keeps Given/When/Then comments, including in the test this PR restructures: lines 129, 134, 153, 244, 252, 312, 331, 334, 343, 351. Comments that narrate the assertions are at lines 138, 145, 316, 320, 322, 373, 377 and 387. The comment at lines 72-73 is rationale about Floci region scoping, which belongs in docs/.",
-      "fix": "Must: no Given/When/Then comments and no comment that restates its assertion; rationale lives in the repo's docs/. One way: delete them, separate set-up, action and assertions with blank lines, and use .as(...) descriptions where an assertion needs words."
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reviewed_at": "2026-11-24T14:43:43Z",
+  "verdict": "SAFE",
+  "verdict_reason": "SCHEMA_STREAMS now owns the stream list, comments are gone and the v0.4.0 data and no-issuer assertions were added; no new issues.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

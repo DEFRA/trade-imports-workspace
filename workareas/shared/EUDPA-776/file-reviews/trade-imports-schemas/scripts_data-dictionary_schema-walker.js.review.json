@@ -1,0 +1,29 @@
+{
+  "file": "scripts/data-dictionary/schema-walker.js",
+  "repo": "trade-imports-schemas",
+  "commit": "d4d2b80e4b78b49c5c4f84b1ce2bff900e787263",
+  "pr": 73,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-24T14:46:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The allOf false-schema handling works, but buildNode's extra false guard is unreachable and the allOf comments no longer describe the merge.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 273,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "buildNode's new 'if (propSchema === false) continue;' is not reached. The only false property schema in schemas/profiles is gbn-ag-v1 exchangedDocument.properties.issuer, and exchangedDocument is merged with the core ExchangedDocument through the allOf branch in flatten(), whose new 'v === false' branch (line 144) already deletes it. No test fails if line 273 is removed. House rule: build only what this change makes reachable.",
+      "fix": "Must: every false-schema guard the walker carries is reached by a profile in this repo and fails a test when removed. One way: delete line 273."
+    },
+    {
+      "id": 2,
+      "line": 133,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The allOf comment (lines 133-137) says 'When two branches contribute a property with the same key, wrap them together'; after this change a branch contributing false removes the property instead, so the comment no longer describes the lines below it. The function's header comment (lines 66-71) likewise says 'the later one wins on scalar conflicts' and describes 'downstream callers'. Other comments in the file restate code ('// Recurse into properties' 270, '// Recurse into items' 285) or carry rationale ('Last-wins would silently drop...' 137, 162-164, 176-178), which house rules put in docs/.",
+      "fix": "Must: no comment in schema-walker.js is untrue of its lines, restates the code or carries rationale; the allOf merge reads from names. One way: extract the per-property merge into a named helper such as mergeBranchProperty(out, key, schema, excludedProperties), delete the stale and restating comments, and move the allOf-merge rationale to the repo's docs."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:36Z"
+}

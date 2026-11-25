@@ -122,6 +122,115 @@
       "disposition": null,
       "status": null,
       "notes": null
+    },
+    {
+      "id": 11,
+      "file": "src/server/app/features/address-book/address-book-tabs.test.js",
+      "line": "35",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "With BRANCH gone from ADDRESS_TYPES (address-types.js) and BRANCH_ADDRESS gone from ROLES, three rows no longer prove what their titles say. ':35 an address type in the wrong case' passes 'branch', the lower case of a type that no longer exists, so a case-insensitive resolveTab would still return undefined and the row stays green: it cannot fail for the reason its title names. ':34 an address type no tab has' passes 'BRANCH', which is not an address type at all, so it is the same case as ':33 an unknown address type' under an untrue title. ':80 a role no tab offers' passes 'BRANCH_ADDRESS', which is no role, so it repeats ':79 an unknown value'.",
+      "fix": "Must: each row's value is a real instance of what its title names, so the wrong-case row turns red if resolveTab stops matching case exactly, and no row duplicates another. One way: use 'transporter' (or 'origin_or_consignor') for the wrong-case row, and delete the 'BRANCH' and 'BRANCH_ADDRESS' rows, or retitle them as unknown values if a removed-value regression guard is wanted.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 12,
+      "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+      "line": "226",
+      "severity": "Critical",
+      "category": "coverage-gap",
+      "issue": "The PR renames the no-JavaScript test from 'after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered' to '...of Destination, Consignee or Importer...' (address-type.fit.spec.js:226), but openspec/coverage/ins/address-book/coverage.json:5253 (workspace review clone) still links the old title, so the spec claims coverage by a test that no longer exists.",
+      "fix": "Must: every coverage.json link to address-type.fit.spec.js names a test title that exists in the file. One way: point coverage.json:5253 at the new title and drop 'Branch' from its note.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 13,
+      "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+      "line": "398",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "With the Branch entry removed, 'lists the default seed address on the Origin and Consignor tab only' (list.fit.spec.js:398-409) still loops 'for (const addressType of [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER])' over a one-element array, a shape that reads as if more tabs were still checked.",
+      "fix": "Must: the test opens the Destination tab once with no loop. One way: replace the for loop with a single openAddressBookList call for ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER followed by the NO_RESULTS_LINE assertion.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 14,
+      "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+      "line": "794",
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rewritten test 'finds an address holding the Importer role by searching the Destination tab for importer' (list.fit.spec.js:794-811) keeps the organisation prefix 'stub-org-list-importer-option-label' (:798). The Branch version proved a search matched the Type option label ('Branch Address') where the column label ('Branch') did not; Importer's option and column labels are both 'Importer' (copy.en.js:63), so the prefix names option-label matching the test no longer exercises, and the test now proves what 'finds an address by the label of one of its roles' (:772) already proves.",
+      "fix": "Must: no fit test or seed name claims option-label matching it does not exercise, and the Importer search test proves something :772 does not, or is gone. One way: delete the test, or keep it with a prefix such as 'stub-org-list-importer-role-search' if the Destination-tab Type cell assertion is worth its own test.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 15,
+      "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+      "line": "53",
+      "severity": "Major",
+      "category": "history",
+      "issue": "The new row ['an address type no tab offers', '?addressType=BRANCH', DEFAULT_ADDRESS_BOOK_TAB.addressType] (list.tabs.controller.test.js:52-56) keeps the removed type's name as test data, and proves the same thing as the 'an unknown address type' row above it (:42-46, UNSUPPORTED_ADDRESS_TYPE): ADDRESS_TYPES no longer holds BRANCH (address-types.js:1-5), so both are values no tab offers and take the same path.",
+      "fix": "Must: the tab-choice table has one row for an address type no tab offers, and names no removed type. One way: delete the BRANCH row.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 16,
+      "file": "src/server/app/features/address-book/view-model/list.test.js",
+      "line": "194",
+      "severity": "Major",
+      "category": "history",
+      "issue": "The rows ['branch', []] and ['branch address', []] (view-model/list.test.js:194-195) prove that a removed role no longer matches: an absence check on history, and the same proof as the ['farm', []] row below them.",
+      "fix": "Must: the rolesWhoseLabelContains table names no removed role, and its no-match case is proven once. One way: delete the two branch rows and keep ['farm', []].",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 17,
+      "file": "src/server/app/features/address-book/view-model/list.test.js",
+      "line": "198",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title 'Should give the roles whose Type column label or Type option label contains %j, ignoring case' (view-model/list.test.js:198) claims option-label matching, but with BRANCH_ADDRESS gone every role's optionLabel equals its columnLabel ignoring case (copy.en.js:58-67, copy.cy.js:61-70). Deleting optionLabel from rolesWhoseLabelContains (view-model/list.js:57-61) turns no test red. The tests that used to prove it were rewritten onto Importer, whose labels are the same: list.type-filter.controller.test.js:395 and fit/list.fit.spec.js:794.",
+      "fix": "Must: either a test fails when option-label matching is removed, or rolesWhoseLabelContains matches only the label the copy can tell apart and its title says so. One way: since no role's option label differs any more, match columnLabel alone and drop 'or Type option label' from the title.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 18,
+      "file": "src/server/app/services/address-book/address-book.roles.test.js",
+      "line": "76",
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Removing the branch seed left two titles claiming more than their assertions prove. 'Should apply the search term within the roles' (:76-83) now only asserts origin roles plus 'depot' gives [], but no typed seed address is named Depot any more, so it passes with the role filter deleted. 'Should match a search role as it matches a search term, within the roles' (:135-143) lost its BRANCH_ADDRESS case and now only asserts the Origin Farm is found, which also passes with the role filter deleted. Neither test fails if passesRoleFilter (stub.js:86) stops being applied.",
+      "fix": "Must: each test fails if the stub stops applying roles before the search, and shows a match inside the roles is kept. One way: in the search-term test assert origin roles plus 'importer' gives [] (Stub Importer Farm sits outside them) and plus 'pasture' gives [placeOfOrigin.name]; in the search-role test add destination roles plus searchTerm 'consignor' and searchRoles ['CONSIGNOR'] gives [].",
+      "disposition": null,
+      "status": null,
+      "notes": null,
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 19,
+      "file": "src/server/app/services/address-book/address-types.test.js",
+      "line": "44",
+      "severity": "Major",
+      "category": "history",
+      "issue": "The replacement assertion keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['BRANCH_ADDRESS']) names the role this PR deletes from ROLES (address-types.js:12-18). A reader sees a role code that exists nowhere else in src and has to learn from git that it once did; the test's purpose (an unknown role is dropped) is not said by the value.",
+      "fix": "Must: the test names no retired role; if dropping a role no type lists is worth proving, its input says it is unknown. One way: use a value such as 'NOT_A_ROLE', or delete the assertion since the line above already proves a role outside the type is dropped.",
+      "disposition": null,
+      "status": null,
+      "notes": null
     }
   ]
 }

@@ -148,6 +148,18 @@
       "disposition": null,
       "status": null,
       "notes": null
+    },
+    {
+      "id": 13,
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "line": "1023",
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new put_shouldAcceptTheSaveAndStoreNoConsignmentParty_whenAnOlderClientStillSendsOne (lines 1023-1043) copies the set-up of putAndSubmit_shouldRecordSubmittedAndShedTypeOfCommodity_whenStoredCommodityHoldsIt (lines 988-1018). Both create the draft with createDraftReference(createNotificationDto(\"CH\", \"Live cattle\")), read the stored aggregate for its concurrencyToken, hand-build the raw Map.of(\"notification\", Map.of(referenceNumber, concurrencyToken, origin CH/no, commodities ...)) body, PUT it through webClient(\"NoAuth\") expecting 200, then read NotificationTestSupport.storedDocument(...).get(\"notification\", Document.class). Only the extra stale field differs.",
+      "fix": "Must: one shared helper owns saving a raw stale-client body over a fresh draft and reading back the stored notification document; both tests call it and state only the extra field they send and what they assert. One way: add a helper in NotificationIT or NotificationTestSupport such as putRawSave(referenceNumber, Map<String, Object> extraNotificationFields) returning the stored notification Document, and have both tests use it.",
+      "disposition": null,
+      "status": null,
+      "notes": null
     }
   ]
 }

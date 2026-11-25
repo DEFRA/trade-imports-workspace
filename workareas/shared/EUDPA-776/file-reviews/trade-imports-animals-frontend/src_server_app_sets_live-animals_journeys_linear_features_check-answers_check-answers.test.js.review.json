@@ -4,9 +4,18 @@
   "commit": "08f4558755137bb8ff41a2c7f57e155fdfe87002",
   "pr": 487,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:11:20Z",
-  "verdict": "SAFE",
-  "verdict_reason": "Contact card, row, error and link tests are removed. Exact positive lists of sections, cards and Complete lines prove the contact address is gone, the back-link test now uses addressesPage (the last flow page), and the transporter Address key is still asserted at line 634.",
-  "todos": [],
-  "reconciled_at": "2026-11-20T14:34:51Z"
+  "reviewed_at": "2026-11-24T14:43:44Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Now differs from main only by contact-address removals; one leftover transporter-label test lost its subject and duplicates an exact check.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 972,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "With the contact address row gone, 'Should keep the generic address label on the transporter row' (lines 972-978) has lost its contrast and its title narrates history ('keep', relative to the removed contact row). Its only assertion, keysOf(Transport details rows) toContain('Address'), is a weaker copy of the exact check at lines 1503-1519 ('Should keep the name, address, country, approval number and type rows...', toEqual(['Name','Address','Country',APPROVAL_NUMBER_KEY,'Type'])), so no production line turns this test red that the other would not.",
+      "fix": "Must: no test in the file exists only to contrast with the removed contact address row, and no title narrates a before/after. One way: delete the test at lines 972-978, since lines 1503-1519 already assert the transporter card's exact row keys."
+    }
+  ],
+  "reconciled_at": "2026-11-24T14:48:33Z"
 }

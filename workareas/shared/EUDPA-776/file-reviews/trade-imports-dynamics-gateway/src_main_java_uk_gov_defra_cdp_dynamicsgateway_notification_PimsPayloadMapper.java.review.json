@@ -4,26 +4,9 @@
   "commit": "9e3e3acb77daaa7dec3d9cfbf7eadb804830c4d5",
   "pr": 35,
   "mode": "FRESH",
-  "reviewed_at": "2026-11-20T14:13:34Z",
-  "verdict": "NEEDS_ATTENTION",
-  "verdict_reason": "mapToV4 works, but it adds a fourth copy of the serialise-and-wrap body instead of extracting it.",
-  "todos": [
-    {
-      "id": 1,
-      "line": 62,
-      "severity": "Major",
-      "category": "duplication",
-      "issue": "mapToV4 (lines 62-69) is the fourth copy of the same map-then-serialise-then-wrap-JsonProcessingException body as mapToV1 (35-42), mapToV2 (44-51) and mapToV3 (53-60); only the mapper and the type name in the message differ. The rule 'a serialisation failure is non-retryable, with this message' now has four homes.",
-      "fix": "Must: one private method owns serialising a PIMS event and turning JsonProcessingException into SqsNonRetryableException; each mapToVn only picks its event mapper. One way: private String serialise(Object pimsEvent) that names pimsEvent.getClass().getSimpleName() in the message, and mapToV4(event) returns serialise(pimsEventMapperV4.map(event))."
-    },
-    {
-      "id": 2,
-      "line": 18,
-      "severity": "Minor",
-      "category": "structure",
-      "issue": "@Slf4j on line 18 declares a log field that nothing in PimsPayloadMapper uses.",
-      "fix": "Must: the class declares no unused logger. One way: delete @Slf4j and its import."
-    }
-  ],
-  "reconciled_at": "2026-11-20T14:34:52Z"
+  "reviewed_at": "2026-11-24T14:43:42Z",
+  "verdict": "SAFE",
+  "verdict_reason": "One serialise method now owns the JSON-and-non-retryable rule and the unused logger is gone; no new issues.",
+  "todos": [],
+  "reconciled_at": "2026-11-24T14:48:34Z"
 }

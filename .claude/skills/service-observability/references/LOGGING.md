@@ -49,6 +49,29 @@ proven on reference-data, below). For a Node service it is
 `external-call-metrics.js` in `trade-imports-animals-frontend`
 (`NODE.md` → "The log line").
 
+### Other lines about a call
+
+A line written beside the external-call line, such as a refusal
+(`Backend refused request`) or a retry warning, follows the same list
+([CDP's logging JSON schema](https://github.com/DEFRA/cdp-documentation/blob/main/how-to/logging-json-schema.md)
+allows no other top-level field):
+
+| Value                                     | Where it goes                                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| The error                                 | `err` (Node) or the throwable (Java), written as `error.type`, `error.message` and `error.code`                                     |
+| The dependency, the operation, the status | `error.message`: a refusal's message is `<dependency> refused to <action>: <status> <status text>` (`NODE.md` → "Dependency layer") |
+| The journey id                            | `event.reference`, a string of at most 256 characters                                                                               |
+| Anything else                             | The message, as the interface id is on the external-call line                                                                       |
+
+Never give these lines `event.category`, `event.action` or
+`event.outcome`. Those make a line an external-call line, and the
+"Slowest dependency calls" panel and alert rule 3 count one per call.
+Never a field of its own such as `operation`, `status`, `journeyId` or
+`url`: CDP drops it.
+
+`[UNPROVEN]` that `event.reference` reaches dev OpenSearch. Check a
+refusal line there by its journey id before relying on it.
+
 ### How to write the fields (Java)
 
 CDP keeps `event.*` fields only when they are **nested** in the JSON,

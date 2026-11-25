@@ -72,6 +72,9 @@ The action is the operation id read as words unless the call gives one
 (the cdp-uploader calls do); the metric operation id is unchanged. The
 records client's `BackendRequestError`
 (`src/server/app/services/persistence/records/errors.js`) extends it.
+The line that logs a refusal carries `err` and the journey id as
+`event.reference`, and no other field (`LOGGING.md` → "Other lines
+about a call").
 
 Rules that held:
 

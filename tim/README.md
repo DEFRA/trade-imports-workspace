@@ -1544,6 +1544,59 @@ names. It always exits 0. The build loop's merge stage uses it to tell a merge
 that starts no workflow, which has nothing to watch, from a run that has not
 started yet.
 
+### `tim build gate-wait` — wait for a gate run in the background
+
+```bash
+tim build gate-wait /tmp/gate-logs/gate-result.json --json
+tim build gate-wait /tmp/gate-logs/gate-result.json --seconds 300
+```
+
+Waits for a gate started with `tim build gate --result <file>` to finish, then
+prints its result and exits as the gate did: 0 when every rung passed, 1
+otherwise. Each wait ends inside the Bash tool's 600-second limit, so you can
+wait on a longer gate in slices. `--seconds` sets how long to wait before giving
+up for now, at most 590 (default 540).
+
+A gate still running when the wait ends prints `GATE_STILL_RUNNING` and exits 1:
+run the same wait again. A gate whose process has stopped without writing a
+result prints `GATE_DIED` and exits 1 at once: it did not finish, so run it
+again.
+
+### `tim build measure` — sample the machine while a command runs
+
+```bash
+tim build measure --label plants-fit-w4 --out /tmp/m --cwd repos/trade-imports-plants-frontend -- npm run test:fit:ci -- --workers=4
+tim build measure --label backend-verify --out /tmp/m --cwd repos/trade-imports-ins-backend --json -- mvn -B verify
+```
+
+Runs one command, given after `--`, with its output in a log, and samples the
+machine while it runs: load, free memory, memory in use and swap (macOS
+`sysctl`, `memory_pressure` and `vm_stat`), the Docker containers' memory and
+CPU, and how long a shell takes to start, which is how the terminal feels. A
+reading this machine cannot take is left empty.
+
+It writes `<label>.log`, every sample as `<label>.csv`, and a summary as
+`<label>.json` with the peaks, the lowest free memory, the pages swapped out
+and the test result lines, all to `--out`. `--cwd` is the folder to run the
+command in (default `.`), and `--interval` how often to sample, in seconds
+(default 5). It exits 1 when the command fails. Use it to tune the gate's
+worker counts to a machine: see
+`.claude/skills/requirements-pipeline/references/machine-tuning.md`.
+
+### `tim build rigour` — propose a rigour preset for each increment
+
+```bash
+tim build rigour shared/my-programme
+tim build rigour shared/my-programme --json
+```
+
+Proposes a rigour preset — `full`, `standard` or `fast` — for every increment
+still to build, from the row alone: its repos and its kind. A row that sets its
+own rigour keeps it. The reason beside each row says what the proposal keyed
+on. It cannot read the code a row changes, which is what the row is really
+worth, so the launch shows these proposals and the operator decides. Change
+one with `tim backlog set <workarea> <id> --rigour <preset>`.
+
 ### `tim spec diff` — what commits changed in the Behaviour Spec
 
 ```bash
@@ -1639,6 +1692,44 @@ a person to approve or refuse. It is `null` when nothing is found.
 
 A missing `git` also exits 3. Read `ok` in the `--json` envelope to tell the
 two apart.
+
+### `tim spec lint` — check the Behaviour Spec's conventions and coverage links
+
+```bash
+tim spec lint --json
+tim spec lint --specs --coverage
+tim spec lint --capability live-animals/addresses
+tim spec lint --root ../another-workspace-checkout
+```
+
+Checks `openspec/` in three groups, named for what each one reads:
+
+| Group        | What it checks                                                                                                                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--specs`    | `spec.md` conventions: stable ids, MUST not SHALL, a THEN in every scenario, cross-references that resolve                                      |
+| `--coverage` | `coverage.json` on its own: its shape, both rollups, a note on every `none`, `areaCode`, `specFile`, no id used twice                           |
+| `--binding`  | The joins: a `coverage.json` for every `spec.md`, the same ids in both, names copied exactly, each link's test title in its file under `repos/` |
+
+Naming any group narrows the check to those groups. Naming none runs all three.
+Whatever does not run is listed as not selected, so a narrow pass never reads
+like a full one. `--capability <path>` checks one capability and everything
+under it, and `--root <checkout>` checks another checkout instead of this one.
+It exits non-zero on any finding.
+
+### `tim spec gaps` — scenarios no test fully proves
+
+```bash
+tim spec gaps --json
+tim spec gaps --none
+tim spec gaps --capability live-animals/addresses
+```
+
+Lists every scenario the coverage matrix records as not `full` — `none` and
+`partial` — riskiest first. `--none` and `--partial` narrow the list to that
+coverage; name both, or neither, for every row that is not `full`. They work
+like `tim spec lint`'s group flags. `--capability <path>` narrows it to one
+capability and everything under it. The `spec-cover` skill works through this
+list.
 
 ### `tim build run-jobs` — whether every job of a run has passed
 

@@ -4,7 +4,15 @@
 
 ## Purpose
 
-Stub service that mocks responses from third-party integrations for the Trade Imports project. Today it imitates two upstream surfaces: the Defra Trade platform OAuth2 token endpoint and the MDM (Master Data Management) API for countries, ports of entry, product search, commodities and commodity species. It is available locally and on the shared CDP environments.
+Stub service that mocks responses from third-party integrations for the Trade Imports project. It imitates:
+
+- the Defra Trade platform OAuth2 token endpoint
+- the MDM (Master Data Management) API for countries, ports of entry, product search, commodities and commodity species
+- AWS STS `GetWebIdentityToken`, on a port of its own (`sts-simulator.port`, `STS_SIMULATOR_PORT`, default 8098)
+- Microsoft Entra ID's token endpoint and JWKS
+- the DEFRA address lookup gateway, for trade-imports-ins-backend
+
+It also lets a test slow it down or make it fail: latency profiles (the `STUB_LATENCY_*` settings) and fault injection, each with its own control endpoints. It is available locally and on the shared CDP environments.
 
 ## Responsibilities
 
@@ -27,17 +35,28 @@ Stub service that mocks responses from third-party integrations for the Trade Im
 | `GET /mdm/trade/product/search` | MDM product search | Responses saved from MDM in TST, keyed by search term. A term not saved finds nothing, a later page is empty with the saved total, and a `q` shorter than two characters answers 400. Keys mix `resultType` `species` and `commodity` (see [MDM commodity search behaviour](trade-imports-reference-data.md#mdm-commodity-search-behaviour)). |
 | `GET /mdm/trade/product/commodities` | MDM commodities by code | The saved commodity for each known code in `codes`, in the order asked, as TST returns it (TST flags `05111000` and `05119985` `isGerminal: true`). |
 | `GET /mdm/trade/product/commodities/{code}/species` | MDM species of one commodity | Responses saved from MDM in TST, one body per page. An unknown code answers an empty page. |
+| `POST /` and `GET /.well-known/jwks.json` on port 8098 | AWS STS `GetWebIdentityToken` | Simulator (`StsSimulatorController`). On its own port because an STS endpoint override discards any path. |
+| `POST /simulator/entra/{tenant}/oauth2/v2.0/token`, `GET /simulator/entra/.well-known/jwks.json` | Microsoft Entra ID client-credentials token endpoint and JWKS | Simulator (`EntraSimulatorController`) |
+| `GET /simulator/address-lookup/v2.1/addresses` | DEFRA address lookup gateway | Simulator (`AddressLookupSimulatorController`) |
+
+**Test controls**
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /latency-profiles` | Each integration's latency profile (`STUB_LATENCY_*` settings) and the latencies it has answered with |
+| `DELETE /latency-profiles/answered` | Forgets the answered latencies, so the next read covers only what follows |
+| `GET /faults`, `PUT /faults/{integration}`, `DELETE /faults/{integration}`, `DELETE /faults` | Read, set and clear injected faults for each integration |
 
 ## Integrations
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
 | Inbound | trade-imports-reference-data | REST (Feign client) | Fetches an access token, then countries, ports of entry, product search results, commodities and commodity species. Confirmed by its `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` settings, which point at port 8087 by default and in the workspace stack. |
+| Inbound | trade-imports-ins-backend | REST | Address lookup, Entra token and STS token, through the simulators. Its `application-local.yml` and `application-dev.yml` point at them (8087, and 8098 for STS). |
+| Inbound | trade-imports-performance-tests | REST | The suites (for example `background-volume.k6.js` and `peak-day.k6.js`) read and reset latency through `/latency-profiles` and inject faults through `/faults`. |
 | Outbound | None found | - | The controllers serve fixtures and make no outbound calls. |
 | Outbound (config only) | MongoDB | Spring Data Mongo | Configured in `application.yml` (database `trade-imports-stub`) and the stack waits for it to be healthy; no code path that uses it was found. |
 | Outbound (config only) | CloudWatch EMF agent | Embedded metrics | Metrics publishing via `AWS_EMF_AGENT_ENDPOINT`. |
-
-No other repo in the workspace was found calling this service.
 
 ## Stack
 
@@ -47,7 +66,7 @@ No other repo in the workspace was found calling this service.
 - **API docs:** SpringDoc OpenAPI
 - **Logging:** Logback with Elastic ECS format; AWS embedded metrics
 - **Tests:** JUnit 5 with Testcontainers
-- **Other dependencies in `pom.xml`:** Caffeine, jjwt, AWS SDK (STS, Cognito Identity); no use of them was found in the stub controllers
+- **Other dependencies in `pom.xml`:** Caffeine, jjwt, AWS SDK (STS, Cognito Identity). The stub does not call STS: it simulates it, on port 8098, for services that do.
 - **Health:** `GET /health` (actuator base path is `/`)
 
 ## Infrastructure dependencies
@@ -65,4 +84,4 @@ mvn spring-boot:run          # port 8087; needs MongoDB reachable at MONGO_URI
 
 Workspace stack (published image, `stubs` profile): `tim docker up` from the workspace root. Use `-d` to build from local source with hot reload (DevTools). The compose service is `trade-imports-stub` in `docker/stack/stubs.compose.yml`, with `SPRING_PROFILES_ACTIVE=local` (Mongo SSL off).
 
-Port: **8087**
+Port: **8087**, and **8098** for the STS simulator

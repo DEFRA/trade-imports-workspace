@@ -30,8 +30,9 @@ It will forward to `trade-imports-ins-frontend` and the journey frontends.
 
 ## Stack
 
-- **Runtime:** Node.js
+- **Runtime:** Node.js 24.22.3 (`.nvmrc`; `engines` `>=24`). The other Node repos are on 26.13.1.
 - **Web framework:** Hapi
+- **Frontend build:** Vite (`build:frontend`)
 - **Templating:** Nunjucks
 - **UI:** GOV.UK Frontend design system
 - **Session:** Catbox, in Redis or in memory as `SESSION_CACHE_ENGINE` chooses (Redis by default in production, memory otherwise)
@@ -49,7 +50,7 @@ It will forward to `trade-imports-ins-frontend` and the journey frontends.
 
 In the workspace stack it listens on port 3004 (`routing-proxy` label for `-e`) and signs in against the Defra ID stub. Open `http://localhost:3004`, choose **Sign in**, and use Government Gateway user ID `2100010101` with password `Password123`.
 
-To run it natively and sign in, follow [Signing in locally](https://github.com/DEFRA/trade-imports-routing-proxy#signing-in-locally) in its README.
+Outside the stack the port defaults to 3000 (`PORT`). The repo's `compose.yml` is still the template's (a `your-frontend` service with Floci, Redis and MongoDB), not the workspace stack. To run it natively and sign in, follow [Signing in locally](https://github.com/DEFRA/trade-imports-routing-proxy#signing-in-locally) in its README.
 
 Docker:
 ```bash

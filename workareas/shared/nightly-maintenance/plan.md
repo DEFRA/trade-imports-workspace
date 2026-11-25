@@ -6,7 +6,8 @@ catch-up, then small nightly runs.
 
 Written 13 Nov 2026. Updated 18 Nov 2026, after the tooling under `tools/`
 moved into tim, 19 Nov 2026, after Dependabot PRs got E2E and the
-hold-back rule was agreed, and 20 Nov 2026, after Node and Playwright moved.
+hold-back rule was agreed, 20 Nov 2026, after Node and Playwright moved,
+and 25 Nov 2026, after the digest job was written.
 
 ## Shape
 
@@ -101,7 +102,7 @@ step starts, and turned on there.
 
 | # | Job | Merges? |
 |---|---|---|
-| 2.1 | Digest only: open bot PRs, red `main` builds, sets waiting on readiness, `npm outdated` drift. Run it for a few nights to prove the session and cron mechanics. | No |
+| 2.1 | Digest only: open bot PRs, red `main` builds, sets waiting on readiness, `npm outdated` drift. Run it for a few nights to prove the session and cron mechanics. **Written 25 Nov:** the `nightly-digest` skill, with `tim deps drift` for the drift and the cross-repo sets behind, turned on in `config/nightly-jobs.json` at 05:53. Waiting on `/nightly-start` on the always-on Mac. | No |
 | 2.2 | `ci-is-enough` Dependabot PRs: fix if red, hold back the one package that breaks a group (see below), merge if green. | Yes |
 | 2.3 | `changelog-driven`: govuk-frontend and every major, one version per night in semver order, with deprecations applied as minors arrive. Merges only when every evidence row is clean. | Sometimes |
 | 2.4 | Sets across repos: readiness check on peer ranges, one branch name, merge only when every repo is green. | Sometimes |
@@ -188,24 +189,29 @@ scheduling if the 7-day restart becomes a chore.
   Dependabot's `cooldownDays` moved from 3 to 7 to match, so it no longer
   proposes a release npm then refuses; tim's README says to keep the two
   equal. defra-id-stub waits on the Sonar decision above.
-- **The workspace has no `main` ruleset.** `gh api
-  repos/DEFRA/trade-imports-workspace/rulesets` returns `[]`, and it is not in
-  `config/main-branch-rules.json`, so nothing stops a red or out-of-date
-  pull request being merged there. If one is added, require only checks
-  that run on every pull request (the `e2e` jobs and `smoke / Smoke run`),
-  not tim CI's `build`, which its path filter skips outside `tim/`.
-- **A tests-repo PR and its service PR merged together turn the tests
-  repo's `main` red for one run.** On 20 Nov ins-tests #112 and
-  animals-frontend #484 (EUDPA-696) merged at 16:19; ins-tests' `main` E2E
-  started at 16:24 and pulled `animals-frontend:latest` before #484's
-  Publish had pushed it, so 12 specs ran the new tests against the old page.
-  Rerunning after the Publish was green. Merge the service first and wait
-  for its Publish, or have the nightly digest treat a red tests-repo `main`
-  that follows a paired merge as "rerun", not "broken".
-- **Nightly jobs must search the workspace's own pull requests.** Its
-  Dependabot PRs (tim and GitHub Actions) are not in `repos.json`, so when
-  the deps-fix and digest skills are written their PR search must include
-  `DEFRA/trade-imports-workspace`.
+- **The workspace's `main` ruleset: decided, 25 Nov.** `gh api
+  repos/DEFRA/trade-imports-workspace/rulesets` returned `[]`, and it is not
+  in `config/main-branch-rules.json`, so nothing stopped a red or
+  out-of-date pull request being merged there. Your call: add one that
+  requires only checks that run on every pull request (the `e2e` jobs and
+  `smoke / Smoke run`), not tim CI's `build`, which its path filter skips
+  outside `tim/`.
+- **Paired tests-repo and service merges: decided, 25 Nov.** On 20 Nov
+  ins-tests #112 and animals-frontend #484 (EUDPA-696) merged at 16:19;
+  ins-tests' `main` E2E started at 16:24 and pulled
+  `animals-frontend:latest` before #484's Publish had pushed it, so 12
+  specs ran the new tests against the old page. Rerunning after the Publish
+  was green. Your call: both. Merge the service first and wait for its
+  Publish, then the tests-repo PR; the rule is in
+  `docs/testing/e2e-tests-gh-actions.md` ("Merging a tests-repo change with
+  its service change"). And the digest reports a red tests-repo `main` that
+  started before a paired service's Publish finished as "rerun", not
+  "broken".
+- **Nightly jobs search the workspace's own pull requests: done, 25 Nov.**
+  Its Dependabot PRs (tim and GitHub Actions) are not in `repos.json`. The
+  digest skill reads `DEFRA/trade-imports-workspace` beside every
+  `repos.json` repo; the deps-fix skill must do the same when it is
+  written.
 - **Workspace root Dependabot: done, 20 Nov.** See 1.6 (#313).
 - Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also
   stops their security updates. If it does, the nightly job must watch

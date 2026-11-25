@@ -5,7 +5,7 @@ The two `test.fixme` tests in `trade-imports-ins-tests`
 fields that PIMS Dynamics leaves empty today. This page holds the GBN-AG path
 each field is read from and the likely cause, so the spec carries no comments.
 
-The schema version is the GBN-AG release that added the path. "Not mapped?" and
+Added in is the GBN-AG PIMS schema version (gbn-ag-pims-v0.x.0) that first carried the path. "Not mapped?" and
 "option not matched?" are suspected causes, not confirmed ones.
 
 ## Mandatory answers

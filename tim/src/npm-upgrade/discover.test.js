@@ -202,12 +202,12 @@ describe('#upgradeTypeOf', () => {
 })
 
 describe('#freshRowsOf', () => {
-  test('Should take the current version from dependencies before devDependencies, and the target when neither lists it', () => {
+  test('Should take the current version from dependencies before devDependencies', () => {
     const rows = freshRowsOf(
-      { both: '^2.0.0', unlisted: '^1.0.0' },
+      { both: '^2.0.0', dev: '^3.0.0' },
       {
         dependencies: { both: '^1.0.0' },
-        devDependencies: { both: '^0.5.0' }
+        devDependencies: { both: '^0.5.0', dev: '^2.0.0' }
       }
     )
 
@@ -219,14 +219,30 @@ describe('#freshRowsOf', () => {
       }))
     ).toEqual([
       { name: 'both', current: '1.0.0', type: 'dependencies' },
-      { name: 'unlisted', current: '1.0.0', type: 'dependencies' }
+      { name: 'dev', current: '2.0.0', type: 'devDependencies' }
     ])
+  })
+
+  test('Should give no row to a package already at its target, or listed in neither dependencies nor devDependencies', () => {
+    const rows = freshRowsOf(
+      { npm: '12.2.3', same: '~4.1.0', moved: '^5.0.0' },
+      {
+        dependencies: { same: '^4.1.0', moved: '^4.0.0' }
+      }
+    )
+
+    expect(
+      rows.map((row) => `${row.package} ${row.current} ${row.target}`)
+    ).toEqual(['moved 4.0.0 5.0.0'])
   })
 })
 
 describe('#mergeWithEarlierRows', () => {
   test('Should keep an earlier row’s work, give null for a field it lacked and drop packages no longer outdated', () => {
-    const fresh = freshRowsOf({ lodash: '4.17.21' }, { dependencies: {} })
+    const fresh = freshRowsOf(
+      { lodash: '4.17.21' },
+      { dependencies: { lodash: '4.17.20' } }
+    )
 
     const merged = mergeWithEarlierRows(fresh, [
       { package: 'lodash', classification: 'auto', demoted_from_auto: false },

@@ -46,6 +46,13 @@ The system MUST record a distinctly named outbox event for each of the following
 - **WHEN** a user copies it as new
 - **THEN** a creation event exists for the new notification's own reference number, carrying the consignor's name and address copied from the source
 
+#### Scenario: The submission event names no issuer
+**ID**: SCN-EVENTS-001-G
+- **GIVEN** a user submits a notification through the full journey
+- **WHEN** the submission event's exchanged document is read
+- **THEN** it holds only the fields the GBN-AG event schema declares
+- **AND** it names no issuer
+
 ### Requirement: Deleting a never-submitted draft records no withdrawal event
 **ID**: REQ-EVENTS-002
 The system MUST NOT record a withdrawal event when a draft that was never submitted is deleted, since there is nothing downstream to withdraw.

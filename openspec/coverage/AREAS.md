@@ -34,7 +34,6 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/journey-pages/commodity-selection | COMMODITY-SELECT |
 | live-animals/journey-pages/confirmation | CONFIRM |
 | live-animals/journey-pages/consignment-addresses | CONSIGN-ADDR |
-| live-animals/journey-pages/contact-address | CONTACT |
 | live-animals/journey-pages/cph-number | CPH |
 | live-animals/journey-pages/declaration | DECLARATION |
 | live-animals/journey-pages/identification-details | IDENT |

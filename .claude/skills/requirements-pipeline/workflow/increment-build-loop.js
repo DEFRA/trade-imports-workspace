@@ -4983,7 +4983,7 @@ const SIGNED_OFF_CHECK_PROPERTIES = {
 
 const SIGNED_OFF_GATE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'held', 'summary'],
+  required: ['ok', 'held', 'changes', 'summary'],
   properties: {
     ok: {
       type: 'boolean',
@@ -5090,7 +5090,8 @@ STEP 1 — IS THE ROW HELD? One Bash call:
 \`jq -c '[.increments[] | select(.id=="${id}") | .prs[]? | select(.signedOffHold == true) | .url]' ${BACKLOG_TILDE}\`
 - It prints a list with any url in it → held:true. For EACH pull request above, one Bash call:
   \`gh pr view <url> --json url,state,isDraft\`, and put its {url, state, isDraft} in prs[]. Run nothing else: a
-  person rules on a held row, not tim. ok:true when every read worked, with a summary naming each draft. Stop here.
+  person rules on a held row, not tim. ok:true when every read worked, changes 0, with a summary naming each draft.
+  Stop here.
 - \`[]\` → held:false. Go on.
 STEP 2 — EVERY REPO ON THE ROW'S BRANCH, so tim compares the row's work. One Bash call each:
 ${branchCheckLines(checkedPaths, { base: BASE_BRANCH, branch: workBranch })}

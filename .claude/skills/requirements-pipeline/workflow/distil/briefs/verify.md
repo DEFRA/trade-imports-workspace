@@ -12,8 +12,8 @@ The shape of your part file is defined, field by field, in
 Read the source's entry in `sources.json`, then the source itself, the same way its kind's extract brief says:
 [`extract-repo.md`](extract-repo.md), [`extract-confluence.md`](extract-confluence.md),
 [`extract-web.md`](extract-web.md), [`extract-document.md`](extract-document.md),
-[`extract-trace.md`](extract-trace.md), [`extract-ruling.md`](extract-ruling.md) or
-[`extract-image.md`](extract-image.md). Read the extract's `structure` too: it says how the extractor saw the
+[`extract-trace.md`](extract-trace.md), [`extract-ruling.md`](extract-ruling.md),
+[`extract-image.md`](extract-image.md) or [`extract-ticket.md`](extract-ticket.md). Read the extract's `structure` too: it says how the extractor saw the
 source.
 
 The source was extracted in parts, and the extract's claims run in part order. Where your prompt names the parts

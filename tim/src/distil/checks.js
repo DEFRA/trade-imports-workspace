@@ -2,6 +2,7 @@ import { unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
+import { countOf } from '../utils/count-of.js'
 import { repoHeadOf } from './repo-head.js'
 import {
   DISTIL_SCHEMA_FILES,
@@ -53,8 +54,6 @@ const duplicatesIn = (values) => {
   }
   return [...duplicates]
 }
-
-const countOf = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 const listIds = (ids) =>
   ids.length > MAX_LISTED_IDS

@@ -5,7 +5,6 @@ import {
   cpSync,
   mkdtempSync,
   mkdirSync,
-  writeFileSync,
   readFileSync,
   rmSync,
   realpathSync
@@ -14,6 +13,12 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import {
+  backlogPathIn,
+  readBacklogRows,
+  writeBacklogRows
+} from '../../backlog/__fixtures__/backlog-file.js'
+import { row } from '../../backlog/__fixtures__/backlog-rows.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -21,33 +26,13 @@ const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 
 const WORKAREA = 'shared/demo'
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
-
 let workspace
 
-const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
+const backlogPath = () => backlogPathIn(workspace, WORKAREA)
 
-const writeBacklog = (rows) => {
-  mkdirSync(dirname(backlogPath()), { recursive: true })
-  writeFileSync(
-    backlogPath(),
-    JSON.stringify({ programme: 'demo', increments: rows })
-  )
-}
+const writeBacklog = (rows) => writeBacklogRows(workspace, WORKAREA, rows)
 
-const readRows = () =>
-  JSON.parse(readFileSync(backlogPath(), 'utf8')).increments
+const readRows = () => readBacklogRows(workspace, WORKAREA)
 
 const runTim = (args) =>
   execa(
@@ -521,6 +506,60 @@ describe('tim backlog set', () => {
     expect(run.exitCode).toBe(2)
     expect(envelopeOf(run).errors[0].message).toBe(
       "Can't find inc-009 in the backlog."
+    )
+  })
+})
+
+describe('tim backlog combine-candidates', () => {
+  test('lists a pair that shares code and changes no file', async () => {
+    writeBacklog([
+      row({ id: 'inc-001', touches: ['frontend:src/server/origin'] }),
+      row({ id: 'inc-002', touches: ['frontend:src/server/origin/page'] })
+    ])
+    const before = readFileSync(backlogPath(), 'utf8')
+
+    const run = await runTim(['combine-candidates', WORKAREA])
+
+    expect(run.exitCode).toBe(0)
+    expect(envelopeOf(run).result).toMatchObject({
+      rowsToBuild: 2,
+      candidates: [
+        {
+          rows: ['inc-001', 'inc-002'],
+          sharedTouches: ['frontend:src/server/origin/page'],
+          waitingRow: null
+        }
+      ]
+    })
+    expect(readFileSync(backlogPath(), 'utf8')).toBe(before)
+  })
+
+  test('says in plain words which rows pair and why', async () => {
+    writeBacklog([
+      row({ id: 'inc-001' }),
+      row({ id: 'inc-002', dependsOn: ['inc-001'] })
+    ])
+
+    const run = await execa(
+      'node',
+      [
+        cliPath,
+        'backlog',
+        'combine-candidates',
+        WORKAREA,
+        '--workspace',
+        workspace,
+        '--no-ui'
+      ],
+      { reject: false }
+    )
+
+    expect(run.stdout).toBe(
+      [
+        '2 rows still to build, 1 pair to look at for combining.',
+        'inc-001 and inc-002: inc-002 waits only on inc-001',
+        'No touches, so paired only by what they wait on: inc-001, inc-002.'
+      ].join('\n')
     )
   })
 })

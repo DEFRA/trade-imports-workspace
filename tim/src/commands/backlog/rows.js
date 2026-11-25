@@ -10,6 +10,7 @@ import {
   rigoursOf,
   statusesOf
 } from '../../backlog/backlog-schema.js'
+import { combineCandidatesIn } from '../../backlog/combine-candidates.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import {
   checkBacklog,
@@ -17,6 +18,7 @@ import {
   setRowFields
 } from '../../backlog/shape.js'
 import { TimError } from '../../errors.js'
+import { countOf } from '../../utils/count-of.js'
 import { makeBacklogAction, parseOptions } from './shared.js'
 
 /**
@@ -202,6 +204,20 @@ const renderCheck = (result) =>
 
 const renderNext = (result) => result.next ?? 'NONE'
 
+const renderCombineCandidates = (result) =>
+  [
+    `${result.rowsToBuild} rows still to build, ${countOf(result.candidates.length, 'pair')} to look at for combining.`,
+    ...result.candidates.map(
+      ({ rows: [earlier, later], reason }) =>
+        `${earlier} and ${later}: ${reason}`
+    ),
+    ...(result.withoutTouches.length
+      ? [
+          `No touches, so paired only by what they wait on: ${result.withoutTouches.join(', ')}.`
+        ]
+      : [])
+  ].join('\n')
+
 const renderSet = (result) =>
   [
     ...Object.entries(result.changed).map(
@@ -269,6 +285,26 @@ export const register = (backlog, { timVersion }) => {
           }
         },
         renderText: renderNext,
+        timVersion
+      })
+    )
+
+  backlog
+    .command('combine-candidates <workarea>')
+    .description(
+      'List the rows still to build that suit combining: pairs that share a code area, or where one waits only on the other. Counts the rows still to build and names those with no touches. Changes no file'
+    )
+    .addHelpText(
+      'after',
+      '\nExample: tim backlog combine-candidates shared/my-programme --json'
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }) => {
+          const path = backlogPathFor(workspaceRoot, args[0])
+          return { path, ...combineCandidatesIn(readJsonFile(path)) }
+        },
+        renderText: renderCombineCandidates,
         timVersion
       })
     )

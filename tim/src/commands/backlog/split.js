@@ -34,6 +34,7 @@ import {
   requirementFingerprintOf
 } from '../../distil/files.js'
 import { TimError } from '../../errors.js'
+import { countOf } from '../../utils/count-of.js'
 import { makeBacklogAction, parseOptions } from './shared.js'
 import { backlogPathFor } from './rows.js'
 
@@ -770,8 +771,6 @@ export const runSplit = ({
     }))
   }
 }
-
-const countOf = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`
 
 const describeTheme = (result, id) => {
   const theme = result.themes.find((candidate) => candidate.id === id)

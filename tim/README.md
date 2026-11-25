@@ -1014,7 +1014,7 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
-Four commands work on any workarea's `backlog.json` in the one backlog shape,
+These commands work on any workarea's `backlog.json` in the one backlog shape,
 with no registration. The shape is defined by
 `.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
 `check` reads from the workspace at runtime and validates against; it then checks
@@ -1026,6 +1026,10 @@ and the build loop use them:
 ```bash
 tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; exits 1 when out of shape
 tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
+tim backlog combine-candidates shared/my-programme --json   # the rows still to build that share a code area or wait only on each other; changes no file
+tim backlog from-ticket EUDPA-123 --json         # fetch a Jira ticket into a workarea and name it as a distil source
+tim backlog from-ticket EUDPA-123 --check --json # has the ticket changed in Jira since; changes no file
+tim backlog from-ticket EUDPA-123 --workarea shared/eudpa-123-my-ticket --json   # when the key alone finds more than one workarea
 tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
 tim backlog set shared/my-programme inc-004 --attempt '{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}' --json
@@ -1041,6 +1045,26 @@ tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --
 ```
 
 `move`, `add` and a `notes` edit are dry runs unless given `--write`.
+
+`from-ticket` reads a Jira ticket and writes, under
+`workareas/shared/<key in lower case>-<slug>/`, `sources/ticket-<key>.md` (the
+description, comments, linked Confluence pages, parent, linked tickets, subtasks
+and a list of the attachments), `sources/ticket-<key>.json` (the ticket's last
+update time, which `--check` reads), `sources/attachments/` (the image and PDF
+attachments) and a `sources.json` with the tests repo and one `ticket` source.
+The slug is the first five words of the summary. The result gives the branch,
+`fix/`, `feat/` or `chore/` by the ticket's type, and lists each blocker it sees:
+a Done or Closed status, no acceptance criteria heading, or an open "is blocked
+by" link. It finds the ticket's workarea from the key alone: the one folder under
+`workareas/shared/` named for the key. A second run writes into that folder
+whatever the summary now says, and keeps a `sources.json` already there. It
+refuses a workarea whose backlog has a built row, and refuses more than one
+matching folder until `--workarea` names one. `--check` changes no file.
+
+`combine-candidates` lists, each pair once, the rows still to build whose
+`touches` share a code area (the same path, or one inside the other, in one repo)
+or where one waits only on the other, with the count of rows still to build and
+the rows that have no `touches`. The distil workflow runs it after the combiner.
 
 `set --attempt` records how far a failed attempt at an increment got, so the
 build loop's next launch restores its work and re-enters the pipeline at that
@@ -1179,8 +1203,8 @@ tim distil challenge shared/my-programme --json             # the question confl
 tim distil challenge shared/my-programme --conflict c-002 --json   # check one verdict
 tim distil challenge shared/my-programme --clear --json     # remove every verdict
 tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, sources, verdicts, and the backlog
-tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids and the rows built or set aside
-tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, and rows built or set aside that changed, since
+tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids, the rows still to build, and the rows built or set aside
+tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, rows built or set aside that changed, rows added, and rows still to build that are now merged-into (with the row their notes name), since
 tim distil trace shared/my-programme --source trace:ched-p --folder part2 --out actions.txt --json -- actions   # playwright trace, in a sub-folder of the source's .work folder
 ```
 

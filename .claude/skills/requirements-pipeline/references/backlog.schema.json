@@ -47,8 +47,13 @@
       "$ref": "#/$defs/text"
     },
     "branch": {
-      "description": "Split backlogs only: the branch the theme builds on, such as \"feat/NO_JIRA-hrp-origin-and-commodity-origin-pages\". `tim backlog split` writes it: `feat/NO_JIRA-<programme>-<theme id>` unless given another prefix. Every repo the theme touches uses the same name.",
+      "description": "Split or ticket backlogs only: the branch the backlog builds on, such as \"feat/NO_JIRA-hrp-origin-and-commodity-origin-pages\". `tim backlog split` writes a split backlog's: `feat/NO_JIRA-<programme>-<theme id>` unless given another prefix. The ticket intake writes a ticket backlog's, copied from the fetch record. Every repo the backlog touches uses the same name.",
       "$ref": "#/$defs/text"
+    },
+    "ticket": {
+      "description": "Ticket backlogs only: the Jira key of the ticket the whole backlog builds, such as \"EUDPA-838\". `tim backlog check` then holds the backlog to the intake.json beside it. A ticket backlog has no `themes`: it builds on one branch. A row's own `ticket` is the key the build loop raised for that increment.",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]+-[0-9]+$"
     },
     "parent": {
       "description": "Split backlogs only: where the theme came from and when it lands, written by `tim backlog split`, such as { \"workarea\": \"shared/hrp\", \"wave\": 2, \"landsAfter\": [\"origin-pages\"] }.",
@@ -424,7 +429,7 @@
           ]
         },
         "ticket": {
-          "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key raised for the increment.",
+          "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key the build loop raised for this increment, not the envelope's `ticket`, which names the ticket the whole backlog builds.",
           "$ref": "#/$defs/text"
         },
         "branch": {

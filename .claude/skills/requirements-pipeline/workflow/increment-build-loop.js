@@ -1046,8 +1046,8 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
   leave it as it is.
 - Run each gate command in the FOREGROUND, then wait for it as below. The wait prints the gate's one JSON line:
   \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
-  It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
-  it is neither green nor red, so say so and go on. A gate command or wait that errors before running any rung
+  It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for these repos:
+  tim reports it green, so say so and go on. A gate command or wait that errors before running any rung
   (\`ok\` false with an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
 - ${GATE_WAIT_RULE}
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop

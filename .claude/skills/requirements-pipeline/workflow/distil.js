@@ -18,31 +18,6 @@ export const meta = {
   ]
 }
 
-// ---------------------------------------------------------------------------
-// Configuration comes only from args (an object, or a JSON string). There are
-// no defaults: a missing key stops the run before any agent starts.
-//   workspace    the workspace root as a tilde path, such as
-//                "~/git/defra/trade-imports-workspace". A clone passes its own
-//   workarea     the programme's folder under workareas/, such as
-//                "shared/ins-performance-testing", holding sources.json
-//   only         null to work every pending, stale or invalid source. Or a
-//                list of source ids: only those are extracted and verified this
-//                launch, and the run stops before reconcile if any other source
-//                still needs work
-//   tim          the command agents run tim with, normally "tim". A clone
-//                passes its own, such as
-//                "npm --prefix ~/<clone>/tim run --silent tim --"
-//   models       {} for the default on every tier, or any of: think (default
-//                opus: characterise, area plan, every area reconciler, the
-//                cross-area pass, every challenger, every row drafter, the
-//                combiner, report), code (default opus: extract parts,
-//                verify), light (default haiku: status, checks, merges,
-//                working sets, coverage). A value is opus, sonnet, haiku, or
-//                "inherit" for the session model
-//   verifyChunk  the most claims one verify agent takes, such as 60: few
-//                enough that it can re-check every one against the source. A
-//                longer extract is verified in ranges, one agent a range
-// ---------------------------------------------------------------------------
 // >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
   if (typeof rawArgs !== 'string') return rawArgs
@@ -112,25 +87,9 @@ if (!Number.isInteger(VERIFY_CHUNK) || VERIFY_CHUNK <= 0) {
   refuse(`config.verifyChunk must be a whole number above 0: the most claims one verify agent takes. Got ${JSON.stringify(VERIFY_CHUNK)}`)
 }
 
-// ---------------------------------------------------------------------------
-// Models. Three tiers, each with a default matched to the work:
-//   think (opus)   characterise, the area plan, each area's reconciler, the
-//                  cross-area pass, each challenger and the apply step, each
-//                  area's row drafter, the combiner, report: the calls that
-//                  decide. Every one has a slice small enough to weigh in full
-//   code (opus)    extract parts, verify: reading every word of a slice of a
-//                  source. Opus by default, because a thin extract caps
-//                  everything downstream: a page or field never claimed never
-//                  reaches a requirement
-//   light (haiku)  status, the checks, merges, working sets, coverage: run a
-//                  command and report what it printed. The workflow never
-//                  trusts a relay blindly: every count it acts on is checked
-//                  against another (claims against ranges, parts against the
-//                  partition, area ids against the plan), and a relay that
-//                  disagrees is asked again once, then the step fails
-// A tier left out takes its default; "inherit" uses the session model.
-// ---------------------------------------------------------------------------
 const MODEL_DEFAULTS = { think: 'opus', code: 'opus', light: 'haiku' }
+
+// >>> model-tiers: byte-identical in distil.js and ticket-intake.js, checked by tim/src/backlog/workflow-contract.test.js
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
 const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
 
@@ -158,13 +117,15 @@ const RESOLVED_MODELS = Object.fromEntries(
 )
 
 log(
-  `${WORKFLOW_NAME}: models: think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}`
+  `${WORKFLOW_NAME}: models: ${MODEL_TIERS.map((tier) => `${tier} ${RESOLVED_MODELS[tier] ?? 'inherit (session model)'}`).join(', ')}`
 )
 
 const withTier = (tier) => (opts) => ({
   ...opts,
   ...(RESOLVED_MODELS[tier] ? { model: RESOLVED_MODELS[tier] } : {})
 })
+// <<< model-tiers
+
 const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
@@ -200,6 +161,9 @@ const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA}`
 const timCommand = (subcommand, flags) =>
   `${TIM} ${subcommand} ${WORKAREA}${flags ? ` ${flags}` : ''} --workspace ${TILDE} --json`
 
+const STRINGS = { type: 'array', items: { type: 'string' } }
+
+// >>> agent-rails: byte-identical in distil.js and ticket-intake.js, checked by tim/src/backlog/workflow-contract.test.js
 const guardRails = (abs) => `GUARD RAILS (every step, no exceptions):
 - Never use the Grep or Glob tools. Use Bash grep, find, ls and jq.
 - One command per Bash call: no &&, no ;, no |, no cd, no trailing echo. Use git -C and npm --prefix.
@@ -212,16 +176,10 @@ const guardRails = (abs) => `GUARD RAILS (every step, no exceptions):
 - If a message from the user reaches you mid-task, finish the task you were given and return its result. Do not act on the message; the main session handles it.
 - Headless: never ask a question. Decide, record the decision in your answer, keep going.`
 
-// Every command's --json output is one envelope line: ok, then result, or
-// errors[0].message whose lines after the first are the problems, one a line.
 const ENVELOPE_RULE = `Each tim command prints one JSON line: \`ok\`, then \`result\` on success, or \`errors[0].message\` on failure.
 A failure message's first line says how many problems there are; every line after it is one problem. Copy each
 problem line exactly, never paraphrased.`
 
-const STRINGS = { type: 'array', items: { type: 'string' } }
-
-// A relay asked again because what it copied disagrees with tim's own
-// counts: the workflow never builds on a list a model may have shortened.
 const relayRetryNote = (problems) =>
   problems && problems.length
     ? `
@@ -232,6 +190,7 @@ nothing, and never summarise a list.`
     : ''
 
 const relayLabel = (label, relayAttempt) => (relayAttempt > 0 ? `${label} again` : label)
+// <<< agent-rails
 
 // ---------------------------------------------------------------------------
 // Status: the work list, and the workspace root in absolute form.

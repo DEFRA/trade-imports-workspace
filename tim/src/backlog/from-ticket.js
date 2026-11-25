@@ -337,11 +337,12 @@ const writeTicketFile = ({
   return ticketFile
 }
 
-const writeRecord = ({ workspaceRoot, workarea, key, ticket, now }) => {
+const writeRecord = ({ workspaceRoot, workarea, key, ticket, branch, now }) => {
   const recordFile = recordPathOf(workspaceRoot, workarea, key)
   writeJsonAtomic(recordFile, {
     ticket: key,
     updated: ticket.updated,
+    branch,
     fetchedAt: utcSeconds(now())
   })
   return recordFile
@@ -371,8 +372,8 @@ const writeSourcesFileIfAbsent = ({
 }
 
 /**
- * Fetches a ticket into a workarea: the ticket file, a record of when Jira
- * last updated it, its image and PDF attachments, and a sources file naming
+ * Fetches a ticket into a workarea: the ticket file, a record of its branch
+ * and of when Jira last updated it, its image and PDF attachments, and a sources file naming
  * the ticket as a source. A sources file already there is kept. Comments,
  * Confluence pages, a parent or an attachment that cannot be read are left
  * out, and listed in `skipped` with the reason.
@@ -413,7 +414,14 @@ export const fetchTicketIntoWorkarea = async ({
     fetched,
     attachments
   })
-  const recordFile = writeRecord({ workspaceRoot, workarea, key, ticket, now })
+  const recordFile = writeRecord({
+    workspaceRoot,
+    workarea,
+    key,
+    ticket,
+    branch,
+    now
+  })
   const sourcesFile = writeSourcesFileIfAbsent({
     workspaceRoot,
     workarea,

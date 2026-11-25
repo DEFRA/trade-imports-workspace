@@ -4,13 +4,24 @@ import { TimError } from '../errors.js'
 import { readJsonFile } from './io.js'
 import { followRef } from './schema-ref.js'
 
-/**
- * Where the one definition of the backlog shape lives, relative to the
- * workspace root. DISTIL writes to it, the build loop reads by it, and
- * `tim backlog check` validates against it.
- */
+/** Where the backlog schema lives, relative to the workspace root. */
 export const BACKLOG_SCHEMA_PATH =
   '.claude/skills/requirements-pipeline/references/backlog.schema.json'
+
+/** Where the intake record's schema lives, relative to the workspace root. */
+export const INTAKE_SCHEMA_PATH =
+  '.claude/skills/requirements-pipeline/references/intake.schema.json'
+
+const readReferenceSchema = ({ workspaceRoot, schemaPath, name, usedFor }) => {
+  const path = join(workspaceRoot, schemaPath)
+  if (!existsSync(path)) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Can't find the ${name} schema at ${path}. tim checks ${usedFor} against it.`
+    )
+  }
+  return readJsonFile(path)
+}
 
 /**
  * Read the backlog schema from the workspace.
@@ -19,16 +30,28 @@ export const BACKLOG_SCHEMA_PATH =
  * @returns {object}
  * @throws {TimError} NOT_FOUND when the workspace has no schema, PARSE when it is not JSON
  */
-export const loadBacklogSchema = (workspaceRoot) => {
-  const path = join(workspaceRoot, BACKLOG_SCHEMA_PATH)
-  if (!existsSync(path)) {
-    throw new TimError(
-      'NOT_FOUND',
-      `Can't find the backlog schema at ${path}. tim checks every backlog against it.`
-    )
-  }
-  return readJsonFile(path)
-}
+export const loadBacklogSchema = (workspaceRoot) =>
+  readReferenceSchema({
+    workspaceRoot,
+    schemaPath: BACKLOG_SCHEMA_PATH,
+    name: 'backlog',
+    usedFor: 'every backlog'
+  })
+
+/**
+ * Read the intake record's schema from the workspace.
+ *
+ * @param {string} workspaceRoot
+ * @returns {object}
+ * @throws {TimError} NOT_FOUND when the workspace has no schema, PARSE when it is not JSON
+ */
+export const loadIntakeSchema = (workspaceRoot) =>
+  readReferenceSchema({
+    workspaceRoot,
+    schemaPath: INTAKE_SCHEMA_PATH,
+    name: 'intake',
+    usedFor: 'every ticket backlog'
+  })
 
 /**
  * The schema one increment row must meet.

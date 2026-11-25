@@ -290,7 +290,7 @@ describe('#fetchTicketIntoWorkarea', () => {
     })
   })
 
-  test('Should record when Jira last updated the ticket', async () => {
+  test('Should record the branch and when Jira last updated the ticket', async () => {
     workspace = makeTicketWorkspace()
 
     const { recordFile } = await fetchTicket({
@@ -300,6 +300,7 @@ describe('#fetchTicketIntoWorkarea', () => {
     expect(JSON.parse(readFileSync(recordFile, 'utf8'))).toEqual({
       ticket: 'EUDPA-210',
       updated: '2026-11-20T09:00:00.000+0000',
+      branch: 'feat/EUDPA-210-search-addresses-by-country-with',
       fetchedAt: '2026-11-24T10:00:00Z'
     })
   })

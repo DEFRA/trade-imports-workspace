@@ -12,8 +12,8 @@ Ask of each candidate metric: what would someone do differently on
 seeing it change? Drop it if the answer is nothing.
 
 The list agreed for `trade-imports-reference-data` is the worked
-example. It published older PascalCase names until it moved to the one
-way below; "A service built the old way" maps them:
+example. "A service built the old way" maps the older PascalCase names
+to these:
 
 | Metric                          | Unit   | Dimension                 | Answers                        |
 | ------------------------------- | ------ | ------------------------- | ------------------------------ |

@@ -114,7 +114,7 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 **ID**: REQ-CYA-003
 The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview, and to the dashboard when they opened it from a dashboard card. With none of these, a draft's review MUST go back to the dashboard and an amendment's to Overview. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
-#### Scenario: The review's back link opens roles and addresses after Save and continue there
+#### Scenario: The review's back link opens consignment addresses after Save and continue there
 **ID**: SCN-CYA-003-A
 - **GIVEN** the user selected "Save and continue" on the consignment addresses page and reached the review
 - **WHEN** they follow the back link

@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
   closeHttpMocks,
   installHttpMocks,
-  replyAfter
+  replyAfter,
+  replyWithBodyHeldBack
 } from '../test-support/http-mock.js'
 import { createChangelogSourceClient } from './changelog-source-client.js'
 
@@ -56,6 +57,14 @@ describe('#packageRecord', () => {
       message: 'Cannot read lodash from the npm registry: it is not JSON.'
     })
   })
+
+  test('Should give up as NETWORK, not PARSE, when the record body is slower than the timeout', async () => {
+    mockPool(REGISTRY).get('/lodash').reply(replyWithBodyHeldBack(200, '{'))
+
+    await expect(
+      createChangelogSourceClient({ timeoutMs: 20 }).packageRecord('lodash')
+    ).rejects.toMatchObject({ code: 'NETWORK' })
+  })
 })
 
 describe('#downloadText', () => {
@@ -90,5 +99,20 @@ describe('#downloadText', () => {
     await expect(
       createChangelogSourceClient({ timeoutMs: 20 }).downloadText(url)
     ).rejects.toMatchObject({ code: 'NETWORK' })
+  })
+
+  test('Should give up as NETWORK when the headers arrive in time but the body is slower than the timeout', async () => {
+    mockPool(RAW)
+      .get('/lodash/lodash/main/CHANGELOG.md')
+      .reply(replyWithBodyHeldBack(200, '{'))
+
+    await expect(
+      createChangelogSourceClient({ timeoutMs: 20 }).downloadText(url)
+    ).rejects.toMatchObject({
+      code: 'NETWORK',
+      message: expect.stringMatching(
+        new RegExp(`^Cannot download ${RegExp.escape(url)}: `)
+      )
+    })
   })
 })

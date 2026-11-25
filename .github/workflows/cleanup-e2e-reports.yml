@@ -89,8 +89,12 @@ jobs:
             echo "No subdirs to prune"
           fi
 
+      # The E2E report publish is not in this job's concurrency group, so a
+      # report can land after the checkout above. The lease refuses the reset
+      # then, rather than wiping that report; the next run prunes instead.
       - name: Orphan-reset gh-pages
         run: |
+          read_tip="$(git rev-parse HEAD)"
           git checkout --orphan _orphan
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -98,4 +102,4 @@ jobs:
           git commit -m "chore: prune + orphan-reset gh-pages" --allow-empty
           git branch -D gh-pages
           git branch -m gh-pages
-          git push -f origin gh-pages
+          git push --force-with-lease="gh-pages:${read_tip}" origin gh-pages

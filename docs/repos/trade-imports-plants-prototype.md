@@ -11,7 +11,7 @@ Designers work on it from a Claude Code session opened at this workspace root, n
 ## Responsibilities
 
 Owns:
-- Several **sets** under `src/server/app/sets/<id>/`: `high-risk-plants` is the real journey (synced weekly from upstream), `sample-journey` a placeholder journey the prototype keeps to prove it can show more than one journey, and every other set is a designer's own **design release** — a snapshot copy of `high-risk-plants` (or another release) that the designer changes freely. See `docs/designers/design-releases.md`.
+- Several **sets** under `src/server/app/sets/<id>/`: `high-risk-plants` is the real journey (synced weekly from upstream), `sample-journey` a placeholder journey the prototype keeps to prove it can show more than one journey, and every other set is a designer's own **design release** — a snapshot copy of `high-risk-plants` (or another release) that the designer changes freely. Today those are `plants-working` and `routing`, each with its own gateway (`routes-plants-working.js`, `routes-routing.js`) listed in `overrides.json`'s `ours`. See `docs/designers/design-releases.md`.
 - **Release patterns**, optionally, in each design release: its own `assets/` (Sass and script files only), a `layout.njk` that extends `shared/layout.njk` and loads that release's bundle on the pages that use it, `patterns.md` (one entry per pattern, with its evidence) and `mandates.md` (the designer's own words, written only by `designer:mandate`). They are a design release's way past GOV.UK and MoJ when the designer asks for it, and reach the real service only as pattern requests in the hand-off, never as code. See `docs/designers/gov-uk/release-patterns.md`.
 - A **chooser** at `http://localhost:3103/`, listing every set with a tag (real journey, working release, research, frozen, placeholder), sitting behind sign-in like every other page.
 - **Prototype-owned services** in `src/server/app/services/<name>/` (today `transporters`, `templates`, `ins-address-book`, `notification-search`), in the same `index.js`/`client.js`/`stub.js` shape as the real services, for something the real service cannot do yet. `npm run designer:service` makes, lists and retires them. See `docs/designers/services-and-dashboards.md`.
@@ -54,7 +54,7 @@ npm --prefix repos/trade-imports-plants-prototype run dev
 npm --prefix repos/trade-imports-plants-prototype run designer:fresh
 ```
 
-It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or reference data. Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset) and the chooser and every set sit behind it, exactly as the real service's pages do, but stub sign-in signs you in straight away with no password. `/auth/stub-sign-in?organisationId=<id>` signs in as another organisation.
+It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or reference data. Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset) and the chooser and every set sit behind it, exactly as the real service's pages do, but stub sign-in signs you in straight away with no password. That holds while `PROTOTYPE_PASSWORD` is unset; with it set (`PROTOTYPE_PASSWORD=<anything> npm run dev`), the `/prototype-password` page asks for it first. `/auth/stub-sign-in?organisationId=<id>` signs in as another organisation.
 
 A design release, once saved (on `main` or its own `design/<set>-<slug>` branch — a branch is never required), is data that lives locally at `.cache/designer/data/` (gitignored) — it survives a restart on the same machine and resets per-release via "Reset this prototype's data" on the chooser.
 
@@ -82,18 +82,16 @@ canary), two jobs publish a Playwright report:
   job (a new name, because `cleanup-e2e-reports.yml` is in
   `overrides.json`'s `deleted`) removes closed pull requests' reports and
   keeps `gh-pages` to what is live; it never touches the root report.
-- **Prerequisite**: GitHub Pages must be turned on for this repository
-  (Settings, Pages, "Deploy from a branch", `gh-pages`, `/ (root)`) before
-  the report links resolve. Until then, the checks still pass and each
-  report is uploaded as the `prototype-playwright-report` Actions artifact
-  instead.
+- GitHub Pages is on for this repository, deploying from the `gh-pages`
+  branch at `/ (root)`, so the reports are at
+  https://defra.github.io/trade-imports-plants-prototype/.
 
 ## Deploying (CDP dev)
 
 The prototype has its own multi-stage `Dockerfile` (development / production_build / production targets, `defradigital/node[-development]` parent images, `curl` added for the platform healthcheck), separate from the real frontend's. A CDP dev deploy needs:
 
 - The image built and run with `NODE_ENV=production`. `STUB_MODE` stays on (the `prototype-defaults.js` default), so the deployed prototype uses stub sign-in exactly like `npm run dev`: no `DEFRA_ID_*` settings, no Defra ID and no `trade-imports-defra-id-stub`. The same `/auth/stub-sign-in` and `/auth/sign-out` paths work on its address.
-- `SESSION_CACHE_ENGINE=memory` and a single running instance — the prototype was built for one instance with no Redis behind it, unlike the real frontend's production default. `SESSION_COOKIE_PASSWORD` is the only secret.
+- `SESSION_CACHE_ENGINE=memory` and a single running instance — the prototype was built for one instance with no Redis behind it, unlike the real frontend's production default. It reads two CDP secrets: `SESSION_COOKIE_PASSWORD`, and `PROTOTYPE_PASSWORD`, a shared password in front of every page except `/health` (`src/server/prototype-password/`; the repo README's "For maintainers" section). With `PROTOTYPE_PASSWORD` unset, the prototype is open to anyone who reaches it.
 - Nothing for the header's "Address book" link: it stays dead on CDP as everywhere else, and `TRADE_IMPORTS_INS_FRONTEND_URL` is ignored.
 
 ## Designer work vs. hand-off
@@ -104,4 +102,4 @@ When a change is ready to become real, "hand this to the real team" raises a Jir
 
 ## Designer docs
 
-Start at `docs/designers/README.md` inside the repo (`PROTOTYPE.md` is the top-level pointer to it) — `your-first-hour.md`, `where-changes-go.md`, `design-releases.md`, `services-and-dashboards.md`, `example-data.md`, `research-sessions.md`, `sharing-and-handing-off.md`, `checks-and-errors.md`, `wording-and-welsh.md`, `porting-old-pages.md`, `working-through-notes.md`, `glossary.md`, plus `docs/designers/gov-uk/` and `docs/designers/recipes/`. The workspace's own `docs/best-practices/` (`gds/`, `node/`) is the source of truth where the two overlap; the prototype's copies keep only what's specific to it.
+Start at `docs/designers/README.md` inside the repo (`PROTOTYPE.md` is the top-level pointer to it) — `your-first-hour.md`, `where-changes-go.md`, `seeing-your-change.md`, `design-releases.md`, `services-and-dashboards.md`, `example-data.md`, `research-sessions.md`, `sharing-and-handing-off.md`, `checks-and-errors.md`, `wording-and-welsh.md`, `porting-old-pages.md`, `working-through-notes.md`, `glossary.md`, plus `docs/designers/gov-uk/` and `docs/designers/recipes/`. The workspace's own `docs/best-practices/` (`gds/`, `node/`) is the source of truth where the two overlap; the prototype's copies keep only what's specific to it.

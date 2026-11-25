@@ -228,12 +228,16 @@ jobs:
             fi
           done
           if [ "$changed" = true ]; then
+            # An E2E report publish is not in this job's concurrency group, so
+            # one can land after this checkout. The lease refuses the reset
+            # then, rather than wiping that report.
+            read_tip="$(git rev-parse HEAD)"
             git checkout --orphan _orphan
             git add -A
             git commit -m "chore: prune security-active reports older than 7 days" --allow-empty
             git branch -D gh-pages
             git branch -m gh-pages
-            git push -f origin gh-pages
+            git push --force-with-lease="gh-pages:${read_tip}" origin gh-pages
           else
             echo "No security-active reports to prune"
           fi

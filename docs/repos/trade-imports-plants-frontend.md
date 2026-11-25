@@ -6,7 +6,7 @@
 
 User-facing web application for the high-risk plants import notification journey. It runs on the same obligation and journey platform as the live-animals frontend: a journey-agnostic engine under `src/server/app/`, with all journey content in one `high-risk-plants` set beneath it.
 
-State: the workspace `CLAUDE.md` describes this repo as "set empty, awaiting requirements". The repo's own README contradicts that. It says the journey is implemented (dashboard, task-list hub, collecting pages, review and submission). Treat the README as the more recent source; the `sets/high-risk-plants/spec/` files show requirements are still being reconciled (`conflicts.json`, `decisions.json`).
+State: the journey is implemented (dashboard, task-list hub, collecting pages, review and submission). Its requirements are still being reconciled: see `conflicts.json` and `decisions.json` in `sets/high-risk-plants/spec/`.
 
 ## Responsibilities
 
@@ -36,7 +36,7 @@ Does NOT own:
 
 ## Stack
 
-- **Runtime:** Node.js 24+, npm 11.6.2
+- **Runtime:** Node.js 26.13.1 (`engines` `>=26.13.1`, `.nvmrc`, Docker parent image `3.2.8-node26.13.1`); npm `>=11.6.2`, `packageManager` `npm@11.19.0`
 - **Web framework:** Hapi (Nunjucks via Vision, Yar sessions, Crumb CSRF)
 - **UI:** GOV.UK Frontend, MOJ frontend, accessible-autocomplete; Webpack build
 - **Auth:** Defra ID OIDC (`@hapi/bell`, `@hapi/cookie`, `@hapi/jwt`)
@@ -56,7 +56,7 @@ Does NOT own:
 | Address book | Organisation-scoped addresses |
 | Defra ID (or its stub) | Authentication |
 
-`STUB_MODE=true` swaps backend, reference data and address book for stub data and skips the OIDC exchange (refused in production).
+`STUB_MODE=true` swaps backend, reference data and address book for stub data and skips the OIDC exchange. It is ignored in production (`isStubMode()` in `mode.js` checks `isProduction`).
 
 ## How to run
 

@@ -4,11 +4,13 @@
 
 ## Purpose
 
-User-facing web application that guides users through a multi-step form wizard for declaring animal/commodity imports into the UK. Steps cover origin, commodity selection, reason for import, and associated details. Requires authentication via Defra ID (OIDC).
+User-facing web application where traders create and submit live animal import notifications. Users sign in through Defra ID (OIDC).
+
+The journey runs on a shared obligation and journey platform in `src/server/app/`. The platform evaluates an obligation set, holds the notification's state and runs the journey flow. The live animals set (`src/server/app/sets/live-animals/`) supplies the pages and rules, and is mounted under `/live-animals`. `src/server/app/docs/README.md` explains the platform's layers and how to add a set.
 
 ## Stack
 
-- **Runtime:** Node.js
+- **Runtime:** Node.js 26.13.1 (`engines` and `.nvmrc`; Docker parent image `3.2.8-node26.13.1`)
 - **Web framework:** Hapi
 - **Templating:** Nunjucks
 - **Frontend build:** Webpack (bundles JS and SCSS)
@@ -26,10 +28,11 @@ User-facing web application that guides users through a multi-step form wizard f
 | Dependency | Purpose |
 |-----------|---------|
 | Redis | Distributed session cache |
-| MongoDB | Data store (accessed via backend API) |
-| Backend API | All business logic; frontend is a thin UI layer |
-| AWS (S3, SQS) | File/message handling via backend; floci in dev |
+| Backend API | Stores notifications; the frontend has no database of its own |
+| cdp-uploader | Accompanying document uploads and virus scanning |
 | Defra ID (OIDC) | Authentication |
+
+The frontend does not use MongoDB, S3 or SQS directly. The backend and cdp-uploader do.
 
 ## Integrations
 
@@ -37,6 +40,9 @@ User-facing web application that guides users through a multi-step form wizard f
 |-----------|--------|-----------|---------|
 | Inbound | Browser users | HTTP, port 3000 | Serves the journey pages |
 | Outbound | trade-imports-animals-backend | REST (`/notifications`), `TRADE_IMPORTS_ANIMALS_BACKEND_URL`, default `localhost:8085`; org id sent as `Trade-Imports-Organisation-Id` | Persist and read notifications and fulfilments |
+| Outbound | trade-imports-reference-data | REST, `TRADE_IMPORTS_REFERENCE_DATA_URL`, default `localhost:8086` | Countries, commodities and other reference lists |
+| Outbound | trade-imports-address-book | REST, `TRADE_IMPORTS_ADDRESS_BOOK_URL`, default `localhost:8089` | Addresses for the party pickers, and transporters (`src/server/app/services/transporters`) |
+| Outbound | cdp-uploader | REST, `CDP_UPLOADER_BASE_URL`, default `localhost:7337` | Opens an upload session for an accompanying document. cdp-uploader posts the scan result to the backend's `/document-uploads/pending/scan-results` (`CDP_UPLOADER_CALLBACK_URL`) |
 | Outbound | Defra ID (OIDC; trade-imports-defra-id-stub locally) | OIDC via Hapi Bell / cookie / JWT | Sign-in and sign-out |
 | Outbound | Redis | Catbox | Session cache (memory fallback) |
 
@@ -65,7 +71,4 @@ npm install
 npm run dev        # starts webpack watcher + nodemon, port 3000
 ```
 
-Docker:
-```bash
-docker compose up --build -d
-```
+The repo has no compose file. From the workspace root, `tim docker up` starts the whole stack, and `tim docker dev` builds it from local source. To run this frontend with `npm run dev` against the rest of the stack, leave it out with `tim docker dev -e frontend`.

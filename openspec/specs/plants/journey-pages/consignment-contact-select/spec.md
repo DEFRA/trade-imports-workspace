@@ -10,13 +10,13 @@ Asks which address-book record is the consignment's point of contact, from a sea
 
 ### Requirement: The page offers the address book as a table, none chosen in advance
 **ID**: REQ-PLANTS-CONTACT-SELECT-001
-The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and the sentence saying whose address this is. It MUST show every address on one page, reporting under the heading "Select an address" how many are shown out of the total, and MUST leave every address unchosen when first opened.
+The system MUST ask which contact address to use, offering the address book as a table under Name, Address and Country headings, each row with a control to select it and a route to view its details, and the sentence saying whose address this is. It MUST page that table as `plants/addresses` governs, and MUST leave every address unchosen when first opened.
 
-#### Scenario: The page shows every address on one page, none preselected
+#### Scenario: The page shows a page of the address book, none preselected
 **ID**: SCN-PLANTS-CONTACT-SELECT-001-A
 - **GIVEN** the user has reached the contact page without answering it before
 - **WHEN** the page loads
-- **THEN** it shows every address the organisation holds, reading "Showing <total> out of <total> results" under the heading "Select an address"
+- **THEN** it shows a page of the addresses the organisation holds, counted under the heading "Select an address" as `plants/addresses` governs
 - **AND** no address is shown as chosen, and the sentence saying whose address this is shows
 
 #### Scenario: The page ends with Save and continue beside Save and return to hub, and Cancel and return to hub below them

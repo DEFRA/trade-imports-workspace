@@ -356,8 +356,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    # One group per branch, not the repo-wide pages group. GitHub keeps at
+    # most one job waiting in a group and cancels the older waiting one, so
+    # in a repo-wide group a PR whose report arrived while two others queued
+    # showed a cancelled, red deploy-report. A newer report for the same
+    # branch still replaces a waiting older one, which is what we want.
     concurrency:
-      group: pages-${{ github.repository }}
+      group: pages-${{ github.repository }}-e2e-${{ inputs.branch || github.head_ref || github.ref_name }}
       cancel-in-progress: false
     outputs:
       report-url: ${{ steps.url.outputs.report-url }}
@@ -390,7 +395,42 @@ jobs:
           tag="${tag:0:128}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+      # Pushes to gh-pages race here rather than queue: the job's concurrency
+      # group is per branch (see above), so two branches' reports can push at
+      # once and the later push is refused as not a fast-forward. Each attempt
+      # clones gh-pages afresh, so a retry lays this report on whatever landed
+      # first. Every report has its own e2e/<tag>/ folder, so nothing clashes.
       - name: Deploy to GitHub Pages
+        id: deploy
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./report/playwright-report
+          destination_dir: e2e/${{ steps.branch-tag.outputs.tag }}
+          keep_files: true
+
+      - name: Wait before the second attempt
+        if: steps.deploy.outcome == 'failure'
+        run: sleep $((10 + RANDOM % 20))
+
+      - name: Deploy to GitHub Pages (second attempt)
+        id: deploy-again
+        if: steps.deploy.outcome == 'failure'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./report/playwright-report
+          destination_dir: e2e/${{ steps.branch-tag.outputs.tag }}
+          keep_files: true
+
+      - name: Wait before the last attempt
+        if: steps.deploy-again.outcome == 'failure'
+        run: sleep $((20 + RANDOM % 40))
+
+      - name: Deploy to GitHub Pages (last attempt)
+        if: steps.deploy-again.outcome == 'failure'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

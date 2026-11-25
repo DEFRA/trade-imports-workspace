@@ -5,7 +5,7 @@
   "requirements": [
     {
       "id": "REQ-ADDR-018",
-      "name": "Each consignment role's list offers only that role's addresses, the consignment contact's only branch addresses, and any address saved with no role is on all of them",
+      "name": "Each consignment role's list offers only that role's addresses, and any address saved with no role is on all of them",
       "coverage": "full",
       "scenarios": [
         {
@@ -30,24 +30,11 @@
         },
         {
           "id": "SCN-ADDR-018-C",
-          "name": "An address saved with no role is listed on every role's list and on the consignment contact page",
+          "name": "An address saved with no role is listed on every role's list",
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should return a record the book answers with an empty roles list, whatever role is asked for", "strength": "full", "notes": "red-probed: fails when the role-less arm of the rule is removed" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Place of origin picker lists only its own role's addresses and the role-less address, with its role-specific copy", "strength": "full", "notes": "red-probed: fails when the role-less record is dropped from a role's list" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the branch-listed address-book contacts, each hinted with its address ending at the postcode, and offers no other party from the book", "strength": "partial", "notes": "the stub book's role-less record is offered among the branch-listed records; not red-probed — the production line it depends on is this row's own uncommitted edit, which tim build probe refuses to invert before landing" }
-          ]
-        },
-        {
-          "id": "SCN-ADDR-018-D",
-          "name": "An address saved as a branch address is offered to the consignment contact and to none of the five consignment roles",
-          "coverage": "full",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should hold a single record whose roles include the role asked for", "strength": "partial", "notes": "not red-probed — the predicate it exercises (holdsRole) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should not hold a single record whose roles belong to another role", "strength": "partial", "notes": "not red-probed — the predicate it exercises (holdsRole) is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the branch-listed address-book contacts, each hinted with its address ending at the postcode, and offers no other party from the book", "strength": "partial", "notes": "not red-probed — the production line it depends on is this row's own uncommitted edit, which tim build probe refuses to invert before landing" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "offers the organisation's branch addresses newest added first, and does not offer one held for a consignment role", "strength": "partial", "notes": "seeds a branch record and a consignor record, asserts the consignor record is absent from the contact page and present on the consignor picker; not red-probed — this run held no workspace stack" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Place of origin picker lists only its own role's addresses and the role-less address, with its role-specific copy", "strength": "full", "notes": "runs for all five parties and asserts an exact radio count derived from recordsHoldingRole, so a branch-held stub record appearing on any role's picker fails it" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Place of origin picker lists only its own role's addresses and the role-less address, with its role-specific copy", "strength": "full", "notes": "red-probed: fails when the role-less record is dropped from a role's list" }
           ]
         }
       ]
@@ -148,19 +135,19 @@
           ]
         },
         {
-          "id": "SCN-ADDR-001-B",
-          "name": "Choosing the consignment contact address offers no way to add one in stub mode",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "offers no way to add an address in stub mode", "strength": "full", "notes": "skipped when the run is not stub mode" }
-          ]
-        },
-        {
           "id": "SCN-ADDR-001-C",
           "name": "The create-address page is not served from the notification journey",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts", "test": "the create-address page is no longer served", "strength": "full", "notes": "asserts HTTP 404 on the journey create-address URL" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts", "test": "the create-address URL answers 404", "strength": "full", "notes": "asserts HTTP 404 on the journey create-address URL" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-N",
+          "name": "The consignment contact select page is not served from the notification journey",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts", "test": "the consignment contact select URL answers 404", "strength": "partial", "notes": "asserts HTTP 404 on the journey consignment contact select URL; not probed red" }
           ]
         },
         {
@@ -171,8 +158,7 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts", "test": "offers one Add a new address button to INS beside the heading when the full stack is running", "strength": "partial", "notes": "parametrised per role; asserts the button, its href and its place beside the heading" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.template.test.js", "test": "Should hold the heading and one secondary Add a new address button in the heading row", "strength": "full", "notes": "renders party-picker.njk with an add-address href and asserts the heading row holds the h1 and one secondary Add a new address control" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.template.test.js", "test": "Should render no Add a new address link or button after the heading row", "strength": "full", "notes": "the only Add a new address control on the page is the one in the heading row, and the description paragraph follows the heading row" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should offer an INS add-address link when not in stub mode (Consignor)", "strength": "partial", "notes": "asserts the address the page is given, not how the page renders it" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "links to INS to add a branch address when the full stack is running, under a sentence naming it as the only way to add one", "strength": "partial", "notes": "asserts the sentence's exact text, the link's href, and that the page offers exactly one add-address control; not red-probed this session" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should offer an INS add-address link when not in stub mode (Consignor)", "strength": "partial", "notes": "asserts the address the page is given, not how the page renders it" }
           ]
         },
         {
@@ -225,8 +211,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should render a success notification banner with the given title and text", "strength": "partial", "notes": "witnesses only that the banner renders, not that it is still shown after ten seconds or gone after a reload; red-probed: fails when the layout slot renders nothing" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "witnesses the reload half only (shown once, then its cookie cleared), not that the banner is still shown after ten seconds; red-probed: fails when the banner cookie is not cleared" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "witnesses the reload half only (shown once, then its cookie cleared), not that the banner is still shown after ten seconds; red-probed: fails when the banner cookie is not cleared" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Consignor picker shows the added banner, which is still shown ten seconds later and is gone after a reload", "strength": "partial", "notes": "advances the page clock ten seconds then reloads; run on the leased stack by the gate; not red-probed" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and continue on the INS add page reached from the contact address page shows the added banner, which is still shown ten seconds later and is gone after a reload", "strength": "partial", "notes": "the consignment contact's own round trip, proved end to end for the first time; advances the page clock ten seconds then reloads; not red-probed — this run held no workspace stack" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the Consignor picker shows the added banner, which is still shown ten seconds later and is gone after a reload", "strength": "partial", "notes": "advances the page clock ten seconds then reloads; run on the leased stack by the gate; not red-probed" }
           ]
         },
         {
@@ -246,35 +231,6 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse a stale handshake token", "strength": "full", "notes": "red-probed: fails when the token check is skipped, and when the address is committed before the token check (AND nothing is saved to the notification: the stored answers are unchanged); runs on the select, return and cancel landings" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse a missing handshake token", "strength": "full", "notes": "red-probed: fails when the token check is skipped, and when the address is committed before the token check (AND nothing is saved to the notification: the stored answers are unchanged); runs on the select, return and cancel landings" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should refuse an unknown fulfilment id", "strength": "partial", "notes": "runs on the select, return and cancel landings; not red-probed" }
-          ]
-        },
-        {
-          "id": "SCN-ADDR-001-K",
-          "name": "The address book's own add-address page reached from the consignment contact page offers Back, Save and continue, and Cancel and return to address page",
-          "coverage": "partial",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing", "strength": "partial", "notes": "red-probed; starts from the handshake, not from following the contact page's link" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/add.fit.spec.js", "test": "from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page", "strength": "partial", "notes": "run by the gate; not red-probed; no e2e drives the contact round trip" }
-          ]
-        },
-        {
-          "id": "SCN-ADDR-001-L",
-          "name": "Saving an address added from the consignment contact page returns to the contact page with it chosen",
-          "coverage": "partial",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing", "strength": "partial", "notes": "not red-probed; no e2e drives the contact round trip" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should commit the contact answer and land on the contact page", "strength": "partial", "notes": "not red-probed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should show the added address banner with the address name, then clear its cookie so it shows only once", "strength": "partial", "notes": "red-probed: fails when the banner cookie is not cleared; the scenario's other Thens are not probed" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "the INS add page reached from the contact address page asks no roles question, and Save and continue saves the address as a branch address, selects it and lists it above both branch addresses already in the book, with the added banner", "strength": "partial", "notes": "witnesses the chosen address and that the new address is listed above both seeded branch addresses; not red-probed — this run held no workspace stack" }
-          ]
-        },
-        {
-          "id": "SCN-ADDR-001-M",
-          "name": "Back or Cancel on the add-address page reached from the consignment contact page returns to the contact page with nothing saved",
-          "coverage": "partial",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once", "strength": "partial", "notes": "not red-probed; no e2e drives the contact round trip" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should redirect the contact to the contact page and commit nothing", "strength": "partial", "notes": "not red-probed" }
           ]
         }
       ]
@@ -324,8 +280,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "editing a copied address changes only this notification, not the address book record or another notification", "strength": "full", "notes": "reads the book record back through the API and opens a second notification using the same record" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "editing the contact address from the review changes only this notification", "strength": "partial", "notes": "not probed red" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should change only this notification, never the address book", "strength": "partial", "notes": "parametrised over the five roles and the contact; address-book client never called" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should change only this notification, never the address book", "strength": "partial", "notes": "parametrised over the five roles; address-book client never called" }
           ]
         },
         {
@@ -353,7 +308,6 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "cancelling a consignor edit returns to the consignment addresses page with the address as it was", "strength": "partial", "notes": "covers a cancel started from the consignment addresses page; not probed red" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "cancelling a contact address edit started from the review returns to the review with the address as it was", "strength": "partial", "notes": "covers a cancel started from the review; not probed red" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js", "test": "cancel leaves the copy as it was", "strength": "full" }
           ]
         },
@@ -362,7 +316,7 @@
           "name": "A copied address offers both choosing another address and editing its details",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "a copied party offers Change and Edit details on the hub; on the review its Consignment addresses card offers only Change and its Contact address card offers Change and Edit details; the contact page keeps its headings; an unanswered role offers only its add link", "strength": "partial", "notes": "not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "a copied party offers Change and Edit details on the hub; on the review its Consignment addresses card offers only Change; an unanswered role offers only its add link", "strength": "partial", "notes": "not red-probed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show a chosen consignor as its name and address lines, ending with the locality, postcode and country, offering Change and Edit details", "strength": "partial", "notes": "sections only" }
           ]
         },

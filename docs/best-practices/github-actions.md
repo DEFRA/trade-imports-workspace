@@ -71,7 +71,7 @@ If a repo needs different retention than the shared workflow, raise a follow-up 
 
 ## 4. `concurrency: pages-${{ github.repository }}` for every job that touches `gh-pages`
 
-Every job that pushes to `gh-pages` — E2E publish, Lighthouse publish, the cleanup workflow's `truncate-history` — must share the **same** concurrency group:
+Every job that pushes to `gh-pages` — Lighthouse publish, the cleanup workflow's orphan-reset, the security scan — shares the **same** concurrency group:
 
 ```yaml
 concurrency:
@@ -79,7 +79,12 @@ concurrency:
   cancel-in-progress: false   # never cancel an in-flight publish
 ```
 
-Splitting the group (e.g. `pages-...-lighthouse`) allows E2E and Lighthouse to race onto the same branch, and either can race the orphan-reset, producing a corrupt force-push. `cancel-in-progress: false` is non-negotiable — cancelling a publish mid-flight would drop a freshly-pushed PR preview before peaceiris finishes the commit.
+Splitting the group (e.g. `pages-...-lighthouse`) allows Lighthouse to race the orphan-reset, producing a corrupt force-push. `cancel-in-progress: false` is non-negotiable — cancelling a publish mid-flight would drop a freshly-pushed PR preview before peaceiris finishes the commit.
+
+The one exception is the E2E report publish (`e2e-tests.yml`'s `deploy-report`), which runs on every PR. GitHub keeps at most one job waiting in a group and cancels the older one waiting, so in the shared group a PR whose report arrived while two others queued showed a cancelled, red `deploy-report`. It uses a group per branch instead, `pages-${{ github.repository }}-e2e-<branch>`, and makes it safe two ways:
+
+- It retries the publish up to three times. Two branches' pushes can race, and the later one is refused as not a fast-forward; peaceiris clones `gh-pages` afresh on each attempt, so the retry lands on top. Each branch writes only its own `e2e/<tag>/`, so nothing clashes.
+- Every orphan-reset pushes with `--force-with-lease` against the commit it read, never `-f`. A report that landed after the reset's checkout makes the reset fail instead of wiping the report, and the next run prunes.
 
 Caller-side concurrency (e.g. `lighthouse-${{ head_branch }}` to debounce a workflow_run trigger) is fine **at the workflow level**; the `pages-${{ github.repository }}` group must still scope the publishing job.
 

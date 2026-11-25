@@ -30,15 +30,22 @@ export const createChangelogSourceClient = ({
   registry = PUBLIC_REGISTRY,
   timeoutMs = EIGHT_SECONDS_MS
 } = {}) => {
+  const networkFailure = (action, error) =>
+    new TimError('NETWORK', `${action}: ${error.message}`, error)
+
   const download = async (url, action) => {
     let response
     try {
       response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
     } catch (error) {
-      throw new TimError('NETWORK', `${action}: ${error.message}`, error)
+      throw networkFailure(action, error)
     }
     if (!response.ok) throw refusalFor(response.status, action)
-    return response.text()
+    try {
+      return await response.text()
+    } catch (error) {
+      throw networkFailure(action, error)
+    }
   }
 
   return {

@@ -33,11 +33,11 @@ see data, redeploy the service and call its endpoints directly
 
 ## Where and what to call it
 
-| Thing | Value |
-|---|---|
-| Grafana | `https://metrics.dev.cdp-int.defra.cloud/` |
-| Folder | `Playground/<service>-monitoring`. Seen on reference-data: `trade-imports-reference-data-monitoring` (uid `afkd0b2ef9m9se`) in `Playground` (uid `afgzyqk5orl6oc`) |
-| Name | `<service> (custom)` |
+| Thing   | Value                                                                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Grafana | `https://metrics.dev.cdp-int.defra.cloud/`                                                                                                                         |
+| Folder  | `Playground/<service>-monitoring`. Seen on reference-data: `trade-imports-reference-data-monitoring` (uid `afkd0b2ef9m9se`) in `Playground` (uid `afgzyqk5orl6oc`) |
+| Name    | `<service> (custom)`                                                                                                                                               |
 
 `[UNPROVEN]` The name may only use letters, numbers, spaces, hyphens and
 brackets. CDP will not promote a dashboard whose name has other characters, such
@@ -62,30 +62,51 @@ its queries; saving the dashboard keeps rows as they were left. Only
 "Dependency status" sits above the first row, so it stays in view with
 every section collapsed.
 
-| Row | Panels |
-|---|---|
-| (none, always shown) | Dependency status, every dependency |
+| Row                                    | Panels                                       |
+| -------------------------------------- | -------------------------------------------- |
+| (none, always shown)                   | Dependency status, every dependency          |
 | `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
-| Caches | Cache hits and misses |
-| Business events | One panel per business metric |
-| Dependency call logs | Slowest dependency calls |
-| Timers | One panel per `@Timed` name |
+| Caches                                 | Cache hits and misses                        |
+| Business events                        | One panel per business metric                |
+| Requests                               | Requests by area, Request time by area       |
+| Journey events                         | Journey events, Validation failures by page  |
+| Dependency connections                 | Connection errors and losses                 |
+| Dependency call logs                   | Slowest dependency calls                     |
+| Timers                                 | One panel per `@Timed` name                  |
+
+`[UNPROVEN]` The Requests, Journey events and Dependency connections
+rows have not been imported or seen with data anywhere. They are built
+for the names `trade-imports-animals-frontend` publishes (`NODE.md`).
+`[UNPROVEN]` The Requests row's legend labels read
+`${PROP('Dim.status.class')}`, the first label to read a dimension whose
+name holds a dot. When the row is first imported, check each series is
+labelled with its status class (`2xx`), not left blank, and record the
+result here.
 
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
-listing the values. The one exception is `dependency` in a dependency's
-row, which is set to that dependency, so the row shows its operations
-alone.
+listing the values. Two exceptions:
 
-| Panel | Metric | Statistic | Split by |
-|---|---|---|---|
-| Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
-| Calls | `external.call.duration` | `SampleCount` | `operation`, with `dependency` set to the row's |
-| Failed calls | `external.call.failure` | `Sum` | `operation`, with `dependency` set to the row's |
-| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's |
-| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
-| Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
-| Business events | the service's own metric | `Sum` | its dimension |
+- `dependency` in a dependency's row is set to that dependency, so the
+  row shows its operations alone.
+- The Journey events panel's metrics are published with no dimensions,
+  so each of its queries sets none, with "match exact" on (its row in
+  the table below).
+
+| Panel                                        | Metric                                                                                                                       | Statistic                              | Split by                                                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Dependency status, one value per dependency  | `external.dependency.available`                                                                                              | `Minimum`                              | `dependency`                                                                                      |
+| Calls                                        | `external.call.duration`                                                                                                     | `SampleCount`                          | `operation`, with `dependency` set to the row's                                                   |
+| Failed calls                                 | `external.call.failure`                                                                                                      | `Sum`                                  | `operation`, with `dependency` set to the row's                                                   |
+| Failure rate                                 | `external.call.failure`                                                                                                      | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's                                                   |
+| Call time: average, 95th percentile, slowest | `external.call.duration`                                                                                                     | `Average`, `p95`, `Maximum`            | `operation`, with `dependency` set to the row's                                                   |
+| Cache hits and misses                        | `cache.hit`, `cache.miss`                                                                                                    | `Sum`                                  | `cache`                                                                                           |
+| Business events                              | the service's own metric                                                                                                     | `Sum`                                  | its dimension                                                                                     |
+| Requests by area                             | `http.server.requests`                                                                                                       | `SampleCount`                          | `method`, `area`, `status.class`                                                                  |
+| Request time by area                         | `http.server.requests`                                                                                                       | `p95`, `Maximum`                       | `method`, `area`, `status.class`                                                                  |
+| Journey events                               | `journey.started`, `.submitted`, `.amended`, `.copied`, `.deleted`, `journey.concurrency.conflict`, `journey.entry.redirect` | `Sum`                                  | none: each is published with no dimensions, so its query sets no dimension, with "match exact" on |
+| Validation failures by page                  | `journey.validation.failure`                                                                                                 | `Sum`                                  | `page`                                                                                            |
+| Connection errors and losses                 | `external.dependency.error`, `external.dependency.connection.lost`                                                           | `Sum`                                  | `dependency`                                                                                      |
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
@@ -103,10 +124,10 @@ endpoint and public service method). `EmfMeterRegistry` publishes each
 timer as the metric `<name>`, one value per call in milliseconds, with
 the `@Timed` tags `class`, `method` and `exception` as dimensions.
 
-| Panel title | Series | Query |
-|---|---|---|
+| Panel title    | Series                | Query                                            |
+| -------------- | --------------------- | ------------------------------------------------ |
 | `<timed-name>` | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
-| | Calls | `<timed-name>`, `SampleCount`, on the right axis |
+|                | Calls                 | `<timed-name>`, `SampleCount`, on the right axis |
 
 Every query sets all three dimensions, `class`, `method` and
 `exception`, each to `*`, as the template does: a query missing one finds
@@ -118,9 +139,9 @@ and set the dimensions to that timer's tags, each to `*`.
 
 One panel reads logs, not metrics:
 
-| Panel | Data source | Query |
-|---|---|---|
-| Slowest dependency calls | OpenSearch | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
+| Panel                    | Data source | Query                                                                                                                                                                                        |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slowest dependency calls | OpenSearch  | `event.category:"external-call" AND service.name:"<service>"`, columns `@timestamp`, `event.action`, `event.outcome`, `event.duration`, `trace.id`, sorted by `event.duration` (nanoseconds) |
 
 Grafana queries OpenSearch with Lucene, not DQL: to change the query,
 the developer builds it in OpenSearch Dashboards with DQL switched off,
@@ -134,7 +155,17 @@ The dimension values for the service come from its code. For
 reference-data (dot-case names): `dependency` is `mdm`
 or `trade-token`; `cache` is `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`;
 `lookup.type` is `countries`, `ports-of-entry`, `commodity-search` or
-`species-check`. A service with a database has `dependency` `mongodb`,
+`species-check`. For animals-frontend: `dependency` is `animals-backend`,
+`address-book`, `reference-data`, `cdp-uploader` or `defra-id`, each
+with a dependency row, or `redis`, which has no row: its commands are
+not timed, so it publishes no `external.call.*`, only its availability
+and its connection counts; `cache` is `session` (`NODE.md`). Every one
+of the six publishes `external.dependency.available`, so Dependency
+status shows all six: `redis` from the client's connection events, the
+HTTP dependencies from their most recent call, each once it has been
+called since the task started (`NODE.md` → "Availability of an HTTP
+dependency"). A service with a
+database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
 measured, an `operation` from a fixed set of command names, with every
 other command as `other` (`METRICS.md` → "A database").
@@ -149,8 +180,8 @@ Claude writes the service's dashboard to
    `aws.emf.namespace` is not its name, use the namespace in the
    `namespace` fields and the name everywhere else.
 3. Make one copy of the `<dependency>` row, with the four panels after
-   it, per `dependency` value the service publishes ("The dimension
-   values" above), replacing `<dependency>` everywhere in the copy (the row
+   it, per `dependency` value the service publishes `external.call.*`
+   for ("The dimension values" above), replacing `<dependency>` everywhere in the copy (the row
    title, each panel description and each `dependency` dimension). Put
    the copies one after another in `panels`. A dependency's section is
    17 high (the row's 1, then two panel rows of 8), so add 17 to every
@@ -158,13 +189,31 @@ Claude writes the service's dashboard to
    row and panel after the last copy down by 17 for each dependency
    past the first.
 4. Make one copy of the `<business-metric> by <business-dimension>`
-   panel per business metric on the agreed list (Step 2), filling in the
+   panel per business metric on the agreed list (Step 2) that has no
+   panel of its own in the template. A metric with a fixed panel goes
+   only in that panel, never also in Business events: the `journey.*`
+   counters and `journey.validation.failure` in Journey events,
+   `http.server.requests` in Requests, the connection counts in
+   Dependency connections, `cache.hit` and `cache.miss` in Caches (step
+   5 keeps or deletes those). For each copy, fill in the
    metric and its dimension everywhere they appear in the panel (the
    title, description, `metricName`, `dimensions` and the legend
-   `label`), and laying the copies out two to a row under "Business
+   `label`), and lay the copies out two to a row under "Business
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
-   has no cache.
+   has no cache. Delete the Requests row and its panels if the service
+   publishes no `http.server.requests` tagged `method`, `area` and
+   `status.class` (`METRICS.md` → "Options any service can use"), and
+   the Dependency connections
+   row if it publishes neither connection metric. In the Journey events
+   row, treat each panel on its own: delete "Validation failures by
+   page" if the service publishes no `journey.validation.failure`, and
+   the "Journey events" panel if it publishes none of the journey
+   counters (drop the targets for any it does not publish). Delete the
+   row when both panels are gone; a panel left alone stays where it is.
+   Move every row and panel below a deleted row up by its height: 9 for
+   each of Caches, Business events, Requests, Journey events and
+   Dependency connections, whether step 4 or this step deleted it.
 6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No

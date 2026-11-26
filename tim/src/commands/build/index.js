@@ -42,16 +42,23 @@ const workareaSchema = z
 const BRANCH_NAME =
   /^(?!-)(?!.*\.\.)(?!.*\/\/)(?!.*@\{)(?!.*\.lock(\/|$))[A-Za-z0-9._/-]+(?<![./])$/
 
-const branchOptionsSchema = z.object({
-  workarea: workareaSchema,
-  branch: z
-    .string()
-    .trim()
-    .regex(
-      BRANCH_NAME,
-      'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
-    )
-})
+const branchOptionsSchema = z
+  .object({
+    workarea: workareaSchema,
+    branch: z
+      .string()
+      .trim()
+      .regex(
+        BRANCH_NAME,
+        'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
+      )
+      .optional(),
+    open: z.boolean()
+  })
+  .refine(({ branch, open }) => branch !== undefined || open, {
+    message: 'Name a branch, or use --open to take it from the backlog.',
+    path: ['branch']
+  })
 
 const gateOptionsSchema = z.object({
   workarea: workareaSchema,
@@ -91,7 +98,9 @@ const gateWaitOptionsSchema = z.object({
     .max(MAX_WAIT_SECONDS, `--seconds must be ${MAX_WAIT_SECONDS} or fewer.`)
 })
 
-const describeBranchRepo = ({
+const shortSha = (sha) => sha?.slice(0, 12) ?? 'no commits'
+
+const describeBranchMove = ({
   repo,
   branch,
   head,
@@ -102,13 +111,35 @@ const describeBranchRepo = ({
   error
 }) => {
   if (!ok) return `  ${repo}  FAILED — ${error}`
-  const shortHead = head?.slice(0, 12) ?? 'no commits'
   if (created) {
-    return `  ${repo}  cut ${branch} from ${createdFrom} at ${shortHead}`
+    return `  ${repo}  cut ${branch} from ${createdFrom} at ${shortSha(head)}`
   }
-  if (switched) return `  ${repo}  switched to ${branch} at ${shortHead}`
-  return `  ${repo}  already on ${branch} at ${shortHead}`
+  if (switched) {
+    return `  ${repo}  switched to ${branch} at ${shortSha(head)}`
+  }
+  return `  ${repo}  already on ${branch} at ${shortSha(head)}`
 }
+
+const describeOrigin = ({ onOrigin, pushNeeded, originError }) => {
+  if (onOrigin === null) return `    origin could not be read: ${originError}`
+  if (!onOrigin) return '    not on origin yet, needs a push'
+  return pushNeeded
+    ? '    on origin at a different head, needs a push'
+    : '    on origin at the same head, no push needed'
+}
+
+const describeOpened = (repo) =>
+  repo.openingCommit === undefined
+    ? []
+    : [
+        repo.openingCommit
+          ? `    opening commit ${shortSha(repo.openingCommit)}`
+          : '    no opening commit needed',
+        describeOrigin(repo)
+      ]
+
+const describeBranchRepo = (repo) =>
+  [describeBranchMove(repo), ...describeOpened(repo)].join('\n')
 
 /**
  * The plain-text report of `tim build branch`.
@@ -284,8 +315,8 @@ const branchEnvelope = (outcome, ok, timVersion) => ({
   ok,
   errors: outcome.repos
     .filter((repo) => !repo.ok)
-    .map(({ repo, error }) => ({
-      code: 'CHECKOUT_FAILED',
+    .map(({ repo, error, errorCode = 'CHECKOUT_FAILED' }) => ({
+      code: errorCode,
       message: `${repo}: ${error}`
     }))
 })
@@ -310,20 +341,28 @@ const registerBranch = (build, timVersion) =>
       '<workarea>',
       'The workarea under workareas/, such as shared/my-programme'
     )
-    .argument('<branch>', 'The branch every repo in the backlog should be on')
+    .argument(
+      '[branch]',
+      'The branch every repo in the backlog should be on. Required unless --open takes it from the backlog'
+    )
+    .option(
+      '--open',
+      'Open the branch for a ticket: take the branch from the backlog when none is given, include the workspace repo, and give each repo with no commits of its own on the branch one empty opening commit. Reports for each repo whether origin has the branch, and never pushes or calls GitHub'
+    )
     .description(
-      'Put every repo the backlog builds on one branch. Checks it out where it exists, otherwise cuts it with --no-track from the repo\'s default branch. Refuses before changing anything if a repo has uncommitted work, except the workspace repo itself (path "." in the backlog\'s repos), whose uncommitted files travel with it.'
+      'Put every repo the backlog builds on one branch. Checks it out where it exists, otherwise cuts it with --no-track from the repo\'s default branch. Refuses before changing anything if a repo has uncommitted work, except the workspace repo itself (path "." in the backlog\'s repos), whose uncommitted files travel with it. With --open it also adds the workspace repo and an opening commit where a repo has none of its own.'
     )
     .addHelpText(
       'after',
-      '\nExample:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --json'
+      '\nExamples:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --json\n  tim build branch shared/my-programme --open --json'
     )
-    .action(async function branchAction(workarea, branch) {
+    .action(async function branchAction(workarea, branch, options) {
       const globalOpts = this.optsWithGlobals()
       try {
         const parsed = parseOptions(branchOptionsSchema, {
           workarea,
-          branch
+          branch,
+          open: options.open ?? false
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace

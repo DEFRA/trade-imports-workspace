@@ -419,6 +419,75 @@ describe('addComment', () => {
   })
 })
 
+describe('editComment', () => {
+  const COMMENT_PATH = '/rest/api/2/issue/EUDPA-200/comment/10500'
+
+  test('puts the body to the comment and returns the edited comment', async () => {
+    const sent = { body: null }
+    mockPool(BASE)
+      .put(COMMENT_PATH, (body) => {
+        sent.body = body
+        return true
+      })
+      .reply(200, {
+        id: '10500',
+        author: { displayName: 'Sam' },
+        created: '2026-10-20T10:00:00.000+0100',
+        body: 'Shipped: now on main.'
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const comment = await client.editComment(
+      'EUDPA-200',
+      '10500',
+      'Shipped: now on main.'
+    )
+
+    expect({ comment, sent: sent.body }).toEqual({
+      comment: {
+        id: '10500',
+        author: 'Sam',
+        createdAt: '2026-10-20T10:00:00.000+0100',
+        body: 'Shipped: now on main.'
+      },
+      sent: { body: 'Shipped: now on main.' }
+    })
+  })
+
+  test('carries Jira’s reason when it refuses the text', async () => {
+    mockPool(BASE)
+      .put(COMMENT_PATH)
+      .reply(400, { errors: { comment: 'Comment body can not be empty!' } })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', ' ')
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message:
+        'editComment(EUDPA-200, 10500): comment: Comment body can not be empty!'
+    })
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE).put(COMMENT_PATH).reply(401, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', 'x')
+    ).rejects.toMatchObject({ code: 'AUTH' })
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).put(COMMENT_PATH).reply(404, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', 'x')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
 describe('createIssue', () => {
   test('creates an issue and returns its key, id and browse url', async () => {
     mockPool(BASE)

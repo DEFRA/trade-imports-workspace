@@ -18,13 +18,13 @@ What you get:
 
 ## How you trigger it
 
-You launch it in natural language: "plan EUDPA-1234" · "implement EUDPA-1234" · "refactor" / "tidy up"
+You launch it in natural language: "plan EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"
 
 ## Watch it run
 
 1. **Plan** — "plan EUDPA-1234" — it reads the ticket, comments and Confluence refs, works out the affected repos and their stacks, and bakes in the matching best-practice guides.
 2. **Read & challenge** — plan.md lays out a summary, a repos/stack table, numbered steps, the testing strategy and risks — with [ASSUMPTION] and [NEEDS VERIFICATION] flags for you to settle.
-3. **Implement** — "implement EUDPA-1234" — it confirms the baseline tests pass, cuts a feature branch per repo, then works the plan step by step: smallest change, re-run tests, add tests.
+3. **Implement** — "implement EUDPA-1234 by hand" or "follow the plan" — it confirms the baseline tests pass, cuts a feature branch per repo, then works the plan step by step: smallest change, re-run tests, add tests.
 4. **Stay in control** — it follows the plan you approved rather than a free hand, so the change matches what you agreed and nothing wanders off-scope.
 5. **Verify & hand off** — it triggers CI, waits for green, and reports the repos, files and tests it touched — ready for you to open the PR.
 

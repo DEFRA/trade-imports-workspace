@@ -292,7 +292,9 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
 - **Every source is extracted in depth.** Characterise, cut into parts, one agent per part reading its slice in
   full, merge: that is the only extract path, for every source on every run, and its agents run on Opus by default.
   A small source is simply one part. There is no lighter path because a thin extract caps everything downstream: a
-  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back.
+  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back. The one
+  deliberate exception is [ticket mode](TICKET.md) for one ready ticket. An escalated ticket arrives here with its
+  `sources.json` already written.
 - **Exhaustive within a part.** A page or field seen in a part's slice and not claimed is a defect.
 - **Characterise first, extract second.** The partition writes the source's `structure` before any part is
   extracted, and every part writes its own before its first claim.
@@ -353,8 +355,9 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
 - **Every adopted `new` or `change` requirement sits in exactly one increment** that is built or still to build:
   `todo`, `blocked`, `done` or `deferred`. A `dropped`, `rejected` or `merged-into` row covers nothing.
   `tim distil coverage` checks this once `backlog.json` exists.
-- **Rows are thin full-stack slices, combined** where building them apart would repeat the same set-up (see
-  [`SHAPE.md`](SHAPE.md)).
+- **Rows are thin full-stack slices, combined by default at every stage that creates rows.** Each row carries a
+  fixed cost (a ticket, a branch, a plan, its reviews, the ladder, pull requests and CI), so a row stands alone
+  only with a reason in its notes. See [`SHAPE.md`](SHAPE.md#rows-are-combined-by-default).
 - **Themes build in parallel.** Boundaries are drawn at feature-folder granularity from what each row touches.
   Shared files (a journey's flow, the layout, shared copy) go in a foundation theme in an early wave. A theme holding
   most of the rows is a smell.

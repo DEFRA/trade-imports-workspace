@@ -2,7 +2,12 @@ import { describe, test, expect } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { readEnvelopeRepos, reposNamedBy } from './envelope-repos.js'
+import {
+  branchAndTicketOf,
+  readEnvelopeRepos,
+  repoEntryOf,
+  reposNamedBy
+} from './envelope-repos.js'
 
 const withBacklog = (backlog, assertions) => {
   const root = mkdtempSync(join(tmpdir(), 'tim-envelope-'))
@@ -122,6 +127,39 @@ describe('readEnvelopeRepos', () => {
       expect(
         errorFrom(() => readEnvelopeRepos(root, 'shared/programme')).code
       ).toBe('NOT_FOUND')
+    })
+  })
+})
+
+describe('branchAndTicketOf', () => {
+  test('returns the branch and ticket the envelope names', () => {
+    expect(
+      branchAndTicketOf({
+        branch: 'feat/EUDPA-9-origin',
+        ticket: 'EUDPA-9',
+        repos: {}
+      })
+    ).toEqual({ branch: 'feat/EUDPA-9-origin', ticket: 'EUDPA-9' })
+  })
+
+  test('returns null for each the envelope leaves out', () => {
+    expect(branchAndTicketOf({ repos: {} })).toEqual({
+      branch: null,
+      ticket: null
+    })
+  })
+})
+
+describe('repoEntryOf', () => {
+  test('maps "." to the workspace repo by its canonical folder name', () => {
+    const root = join(tmpdir(), 'anywhere-cloned')
+
+    expect(repoEntryOf(root, 'workspace', { path: '.' })).toEqual({
+      key: 'workspace',
+      folder: 'trade-imports-workspace',
+      path: root,
+      workspace: true,
+      requireApproval: false
     })
   })
 })

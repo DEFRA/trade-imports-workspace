@@ -2,7 +2,12 @@ import { describe, test, expect } from 'vitest'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
+import {
+  acceptsComment,
+  acceptsCommentEdit,
+  commentReads,
+  mockJiraForEachTest
+} from '../../test-support/jira-mock.js'
 import { runTim } from '../../test-support/tim-cli.js'
 import {
   parseCommentOptions,
@@ -10,7 +15,7 @@ import {
   renderCommentResult
 } from './comment.js'
 
-const COMMENTS_PATH = '/rest/api/2/issue/EUDPA-200/comment'
+const KEY = 'EUDPA-200'
 const TEXT = 'Closing: no longer reproduces on main.'
 const POSTED = {
   id: '10500',
@@ -26,22 +31,6 @@ const EARLIER = {
 }
 
 const jira = mockJiraForEachTest()
-
-const commentReads = (...lists) =>
-  lists.forEach((comments) =>
-    jira().get(COMMENTS_PATH).reply(200, { comments })
-  )
-
-const acceptsComment = () => {
-  const sent = { body: null }
-  jira()
-    .post(COMMENTS_PATH, (body) => {
-      sent.body = body
-      return true
-    })
-    .reply(201, POSTED)
-  return sent
-}
 
 const commentFile = (text) => {
   const path = join(mkdtempSync(join(tmpdir(), 'tim-comment-')), 'c.txt')
@@ -65,7 +54,7 @@ describe('parseCommentOptions', () => {
 
 describe('runComment', () => {
   test('a dry run reads the comments and sends no write', async () => {
-    commentReads([EARLIER])
+    commentReads(jira, KEY, { before: [EARLIER] })
 
     const result = await runComment({
       key: 'EUDPA-200',
@@ -77,8 +66,8 @@ describe('runComment', () => {
   })
 
   test('--confirm posts the comment and reads it back', async () => {
-    commentReads([EARLIER], [EARLIER, POSTED])
-    const sent = acceptsComment()
+    commentReads(jira, KEY, { before: [EARLIER], after: [EARLIER, POSTED] })
+    const sent = acceptsComment(jira, KEY, POSTED)
 
     const result = await runComment({
       key: 'EUDPA-200',
@@ -103,7 +92,7 @@ describe('runComment', () => {
   })
 
   test('reads the comment text from --file', async () => {
-    commentReads([])
+    commentReads(jira, KEY, { before: [] })
 
     const result = await runComment({
       key: 'EUDPA-200',
@@ -115,7 +104,7 @@ describe('runComment', () => {
   })
 
   test('leaves a ticket that already has the same comment alone, even with --confirm', async () => {
-    commentReads([EARLIER, POSTED])
+    commentReads(jira, KEY, { before: [EARLIER, POSTED] })
 
     const result = await runComment({
       key: 'EUDPA-200',
@@ -137,8 +126,8 @@ describe('runComment', () => {
   })
 
   test('fails when Jira accepts the comment but the read-back does not show it', async () => {
-    commentReads([], [])
-    acceptsComment()
+    commentReads(jira, KEY, { before: [], after: [] })
+    acceptsComment(jira, KEY, POSTED)
 
     await expect(
       runComment({ key: 'EUDPA-200', body: TEXT, confirm: true })
@@ -146,6 +135,84 @@ describe('runComment', () => {
       code: 'UNKNOWN',
       message:
         'Jira accepted the comment, but EUDPA-200 does not show comment 10500. Check the ticket in Jira.'
+    })
+  })
+
+  test('with a comment to replace, --confirm edits that comment, reads it back and posts nothing new', async () => {
+    const edited = { ...EARLIER, body: TEXT }
+    commentReads(jira, KEY, { before: [EARLIER], after: [edited] })
+    const sent = acceptsCommentEdit(jira, KEY, EARLIER.id, edited)
+
+    const result = await runComment({
+      key: KEY,
+      body: TEXT,
+      confirm: true,
+      replaceCommentId: EARLIER.id
+    })
+
+    expect({ result, sent: sent.body }).toEqual({
+      result: {
+        mode: 'edited',
+        key: KEY,
+        body: TEXT,
+        replaceCommentId: EARLIER.id,
+        comment: {
+          id: EARLIER.id,
+          author: 'Pat Example',
+          createdAt: EARLIER.created,
+          body: TEXT
+        }
+      },
+      sent: { body: TEXT }
+    })
+  })
+
+  test('with a comment to replace, a dry run names the comment and sends no write', async () => {
+    commentReads(jira, KEY, { before: [EARLIER] })
+
+    const result = await runComment({
+      key: KEY,
+      body: TEXT,
+      confirm: false,
+      replaceCommentId: EARLIER.id
+    })
+
+    expect(result).toEqual({
+      mode: 'dry-run',
+      key: KEY,
+      body: TEXT,
+      replaceCommentId: EARLIER.id
+    })
+  })
+
+  test('with a comment to replace, leaves a ticket that already has the same text alone, even with --confirm', async () => {
+    commentReads(jira, KEY, { before: [{ ...EARLIER, body: TEXT }] })
+
+    const result = await runComment({
+      key: KEY,
+      body: TEXT,
+      confirm: true,
+      replaceCommentId: EARLIER.id
+    })
+
+    expect(result.mode).toBe('unchanged')
+  })
+
+  test('with a comment to replace, fails when the read-back still shows the old text', async () => {
+    commentReads(jira, KEY, { before: [EARLIER], after: [EARLIER] })
+    acceptsCommentEdit(jira, KEY, EARLIER.id, { ...EARLIER, body: TEXT })
+
+    await expect(
+      runComment({
+        key: KEY,
+        body: TEXT,
+        confirm: true,
+        replaceCommentId: EARLIER.id
+      })
+    ).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message:
+        'Jira accepted the edit, but comment 10400 on EUDPA-200 does not hold the new text. Check the ticket in Jira.'
     })
   })
 
@@ -205,6 +272,36 @@ describe('renderCommentResult', () => {
         comment: { id: '10500' }
       })
     ).toBe('Added comment 10500 to EUDPA-200. Checked on Jira.')
+  })
+
+  test('renders a replacing dry run with the comment id', () => {
+    expect(
+      renderCommentResult({
+        mode: 'dry-run',
+        key: 'EUDPA-200',
+        body: TEXT,
+        replaceCommentId: '10400'
+      })
+    ).toBe(
+      [
+        'Would replace comment 10400 on EUDPA-200 with this text:',
+        '',
+        TEXT,
+        '',
+        'This is a dry run. No request has been sent. Add --confirm to post it for real.'
+      ].join('\n')
+    )
+  })
+
+  test('renders an edited comment with its id and key', () => {
+    expect(
+      renderCommentResult({
+        mode: 'edited',
+        key: 'EUDPA-200',
+        body: TEXT,
+        comment: { id: '10400' }
+      })
+    ).toBe('Edited comment 10400 on EUDPA-200. Checked on Jira.')
   })
 
   test('says nothing changed for a comment the ticket already has', () => {

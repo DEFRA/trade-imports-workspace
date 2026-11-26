@@ -1297,8 +1297,9 @@ conflict.
 - **Which branch.** Under the full lifecycle each increment still cuts its own branch off `main` and merges there,
   and the split's `branch` is not used. To build a theme onto one branch instead, create the split's `branch` in
   every repo of its `repos`, open each pull request, and run `lifecycle: 'branch'` with `branch` set to it (see
-  [Branch lifecycle](#branch-lifecycle)). The branch name is the same in every repo, as the workspace's branch rule
-  needs.
+  [Branch lifecycle](#branch-lifecycle)). `tim build branch <workarea> --open --json` cuts it in every repo and the
+  workspace, with one empty opening commit where a repo has none of its own, and never pushes. The branch name is the
+  same in every repo, as the workspace's branch rule needs.
 - **Keep the plan inside the theme.** The split envelope's `touches` names the code the theme owns. A plan that
   must change code outside it would conflict with another theme: stop and re-distil instead.
 - **Re-distil the parent, then split again.** Never edit a split backlog's rows by hand. A re-split keeps every row
@@ -1357,7 +1358,8 @@ repo, each with its pull request already open, and leaves the merging to a human
 When the user names an existing branch and says the work goes onto it: a programme that syncs a feature branch
 with `main`, or that finishes a branch somebody else will merge. The first user is
 `workareas/shared/frontend-alignment/sync`, which brings `feat/NO_JIRA-frontend-alignment` up to date with `main`
-across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
+across ins, animals, plants and tests. The second user is a ticket backlog, built on the branch its envelope names and
+opened with `tim build branch --open`: see [`TICKET.md`](TICKET.md). Everything else uses `lifecycle: 'full'`.
 
 ### What it never does
 
@@ -1373,7 +1375,8 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
   Everything else about the theme's tickets happens outside the loop: the orchestrating session runs the
   `theme-ticket` skill before it ("the build loop is starting on `<theme>`" — statuses to In Dev) and after it
   ("write the business tickets for `<theme>`" — one Story per service domain, acceptance criteria copied from
-  `openspec/`).
+  `openspec/`). A ticket backlog's own ticket gets one what-shipped comment instead, never a rewrite: see
+  [`TICKET.md`](TICKET.md).
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
   a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can
@@ -1420,6 +1423,8 @@ keys are, exactly as for the full lifecycle: the preflight and the branch stage 
 and the args name different repos. The worked example in
 [`../workflow/README.md`](../workflow/README.md#the-branch-lifecycle) is the one for the frontend alignment sync.
 
+For a ticket backlog, `branch` is the envelope's `branch` and `scope` is its `ticket`.
+
 ### Checking what landed
 
 A landed row is `done` in the backlog with its `commit` and `prs`, and is pushed to the branch. Nothing is merged,
@@ -1427,6 +1432,24 @@ so there is no `main-red` to watch for. Each landed entry in the result carries 
 row set `awaitCi: false`) or `none` (the row changes no backlog repo). Report a row whose CI was not awaited as
 exactly that, never as green. An entry that carries `resumedFrom` landed from an earlier attempt's work, picked up
 at that stage: say so when you report it, because it was not planned or implemented in this run.
+
+### How the session ends a ticket run
+
+A ticket backlog's run ends at green pull requests, never at a merge. The loop never creates, edits, takes out of draft or merges a pull request, so the
+session does these steps in this order, with the commands in [`TICKET.md`](TICKET.md):
+
+1. Commit the run's `leftUncommitted` workspace files by explicit path. Never use `add -A`, `commit -a` or a commit
+   without a pathspec.
+2. Push the workspace branch with the fully qualified refspec
+   (`git -C . push origin refs/heads/<branch>:refs/heads/<branch>`). Without this the workspace pull request holds
+   only its opening commit, and the ticket comment's spec links point at files GitHub does not have.
+3. Write each pull request's description with `gh pr edit`, as `docs/best-practices/pull-requests.md` says.
+4. Take each pull request out of draft with `gh pr ready`. If the signed-off check made them drafts, report the hold
+   and stop.
+5. Post the ticket's what-shipped comment, only after the workspace push.
+6. Watch each pull request's checks with a background `gh pr checks --watch`.
+7. When every check is green, post the links and the evidence, then stop for the user's go to merge.
+8. After the merge, run the comment step again so its links point at `main`, then move the ticket to Deskcheck.
 
 ### The stop reasons it adds
 

@@ -144,6 +144,22 @@ A row covers every repo the behaviour needs, and its acceptance can be observed 
 backend half of X" or "the tests for X". A row whose acceptance can only be observed once another row in a different
 repo lands is a layer split, and is wrong. `dependsOn` is a real ordering need, not a layer order.
 
+## Rows are combined by default
+
+Every stage that creates rows combines them: DISTIL's combine review and the ticket intake. Each row carries a fixed
+cost: a ticket, a branch, a plan, its reviews, the ladder, pull requests and CI. Two rows that share set-up cost
+that twice for nothing.
+
+A row stands alone only with a reason in its notes:
+
+- an open question the other row does not carry
+- a different code area with no shared set-up
+- too much for one plan: more than 3 service repos, or about 15 acceptance criteria
+
+These are not reasons: smaller is safer, a layer split, or different headings in the source.
+
+A row merged away keeps its id, with status `merged-into` naming the row that took it.
+
 ## A prototype sets look and feel, never structure
 
 A row may change page content, wording, layout, components and question order to match a design prototype. No row

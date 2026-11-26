@@ -31,7 +31,7 @@ module.exports = [
     usage: [
       ["Reach for it when", "you're picking up a refined EUDPA ticket and about to start the work"],
       ["Where you decide", "you resolve the plan's open questions, and review the diff and PR — it never merges for you"],
-      ["How it fits", "it hands off to review and code-style. \"build EUDPA-1234\" goes to requirements-pipeline ticket mode instead"],
+      ["How it fits", "it hands off to review and code-style once the PR is up. \"implement EUDPA-1234\" or \"build EUDPA-1234\" goes to requirements-pipeline ticket mode instead"],
     ],
     liveView: [
       ["plan / implement by hand / refactor EUDPA-X", "how you launch each phase"],

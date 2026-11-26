@@ -386,11 +386,22 @@ name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
   of command names, with anything else as `other`. A command counts as
   a failure when the driver reports it failed (`CommandFailedEvent`: a
   network error or an `ok: 0` reply), or when an `ok: 1` reply carries
-  `writeErrors` (a duplicate key, say) or a `writeConcernError` (a
-  majority write-concern timeout, say). For those two it records a
-  `MongoReplyWriteException` whose message holds only the error codes
-  and code names, never the server's `errmsg`: a duplicate key's
-  `errmsg` holds the key's value. A command that never
+  `writeErrors` (a document failing validation, say) or a
+  `writeConcernError` (a majority write-concern timeout, say). For those
+  two it records a `MongoReplyWriteException` whose message holds only
+  the error codes and code names, never the server's `errmsg`, which
+  can hold a document's values.
+- **A duplicate key is a success, on both paths.** Whether it arrives as
+  a `CommandFailedEvent` (a `MongoServerException`) or in an `ok: 1`
+  reply's `writeErrors`, the server did its job: the caller asked for a
+  unique key and was told it is taken. Test it with
+  `ErrorCategory.fromErrorCode(code) == ErrorCategory.DUPLICATE_KEY`, in
+  one helper both paths call. A service that uses ShedLock needs this
+  most: ShedLock takes a lock by upserting its document, and when
+  another task holds the lock the upsert gets E11000. On
+  animals-backend (EUDPA-816) that was 27 `findAndModify` "failures" in
+  20 minutes from the outbox poller alone, which would have kept the
+  "calls failing" alert firing. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
 - **Alerts.** Which rules a service with a database gets:

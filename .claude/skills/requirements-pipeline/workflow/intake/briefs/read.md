@@ -38,7 +38,9 @@ delta, evidence, proposed change, acceptance criteria, tests to add, related but
 ## The repos
 
 Work out the repos as DISTIL intake does (the CLAUDE.md repo map and `docs/repos/`). The tests repo is always in.
-Put them in the backlog's `repos`, with the reason each is in under `repos` in `intake.json`. Copy `ticket` and
+Put them in the backlog's `repos`, with the reason each is in under `repos` in `intake.json`. Never put the workspace
+repo (path `.`) in either, nor in a row's `repos`: ticket mode builds under the branch lifecycle, which refuses it.
+The branch opener opens the workspace's branch anyway, and the loop commits the row's `openspec/` changes there. Copy `ticket` and
 `branch` into the backlog envelope from the fetch record.
 
 ## The rows

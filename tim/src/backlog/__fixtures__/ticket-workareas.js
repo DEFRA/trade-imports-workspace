@@ -10,7 +10,10 @@ const workspaceRepoRoot = fileURLToPath(
 )
 
 export const ticketBacklogRepos = {
-  workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
+  frontend: {
+    path: 'repos/trade-imports-animals-frontend',
+    github: 'DEFRA/trade-imports-animals-frontend'
+  }
 }
 
 const copyFromWorkspaceRepo = (root, path) => {

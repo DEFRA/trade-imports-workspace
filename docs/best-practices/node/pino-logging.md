@@ -123,7 +123,7 @@ logger.info(`User ${userId} completed action`) // also wrong
 
 The message should be a **static string** — identifiers go in the object. This allows log aggregators to group by message type.
 
-A line about a call is the exception: the external-call line, and a line written beside it, such as a refusal or a retry warning. CDP drops any top-level field outside its ECS list, so on those lines the journey id goes in `event.reference` and every other id, and the operation, goes in the message. Section 4a, "Where each id goes", has the list.
+A line about a call is the exception: the external-call line, and a line written beside it, such as a refusal or a retry warning. Its fields are set by [`service-observability/references/LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "The line" and "Other lines about a call".
 
 Full request lifecycle example:
 
@@ -160,7 +160,7 @@ server.route({
 
 Logging fails here more often by silence than by noise. Support must be able to answer "what happened to this notification, and why?" from the logs alone.
 
-**Every branch that changes an outcome logs once.** An outcome-changing branch is a refusal, a redirect away from the page asked for, a retry, a fallback, or a state switch. Log it at the branch that decides, once. Do not log the same decision again further up. A caller that decides something of its own about an error already logged, such as the error page or a save fallback after a refused backend call, logs its decision without `err`, so the error is written once. In both frontends the refusal line in `send.js` carries `{ err }` and the journey as `event.reference`; `catchAll` and the save fallback leave `err` off for a refusal that line has logged.
+**Every branch that changes an outcome logs once.** An outcome-changing branch is a refusal, a redirect away from the page asked for, a retry, a fallback, or a state switch. Log it at the branch that decides, once. Do not log the same decision again further up. A caller that decides something of its own about an error already logged, such as the error page or a save fallback after a refused backend call, logs its decision without `err`, so the error is written once. Which line writes `err` for a failed call is in [`LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "Other lines about a call".
 
 **Carry the ids support searches by.** At least one of these, whichever the code has:
 
@@ -174,18 +174,9 @@ Logging fails here more often by silence than by noise. Support must be able to 
 
 If the branch does not have the id in scope, pass it in. Do not log without it.
 
-**Where each id goes.** On a line about a call (the external-call line, and a line written beside it, such as a refusal or a retry warning) CDP drops every top-level field outside its ECS list, so these keys do not reach a deployed line. There:
+**Where each id goes on a line about a call.** CDP drops every top-level field outside its ECS list, so the keys above do not reach the external-call line or a line written beside it, such as a refusal or a retry warning. Where each value goes on those lines is in [`service-observability/references/LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "Other lines about a call". A service's other lines are not yet held to CDP's schema and still carry the keys above. EUDPA-847 brings every deployed line onto it.
 
-| Value                                     | Where it goes                                                               |
-| ----------------------------------------- | --------------------------------------------------------------------------- |
-| The error                                 | `{ err }`                                                                   |
-| The dependency, the operation, the status | On a refusal, the error's message; on a retry, the line's message           |
-| The journey id                            | `event.reference`                                                           |
-| Any other id, such as `organisationId` or `uploadId` | The message, as `<name> <id>`, for example `Backend refused request for uploadId 9f2c` |
-
-The full list is in [`service-observability/references/LOGGING.md`](../../../.claude/skills/service-observability/references/LOGGING.md) → "Other lines about a call". It covers only the lines about a call. A service's other lines are not yet held to CDP's schema and still carry the keys above. EUDPA-847 brings every deployed line onto it.
-
-**Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain. The house external-call line is the one exception: it writes `error: { type, message, code }` and no `err`, because the caller that handles the error logs `{ err }` once, so the stack is written once.
+**Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain.
 
 **No bodies at INFO.** Never log a request or response body at `info`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs. If a body is the only way to tell two failures apart, log a bounded excerpt at `warn` on the failure path only.
 

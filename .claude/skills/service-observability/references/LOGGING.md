@@ -34,7 +34,7 @@ This table is the one list of the line's fields, for both languages:
 | `http.response.status_code` | The HTTP status the dependency answered with, when it answered                                                                                | Node, on every answered HTTP call | `503`                               |
 | `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node)                                                               | Every service                     | `com.mongodb.MongoCommandException` |
 | `error.message`             | A failure with a cause only: the cause's message                                                                                              | Every service                     | —                                   |
-| `error.code`                | A failure only: a code the failure names itself, the refusal's code from the answer's body or the cause's `cause.code`; never the HTTP status | Node                              | `ECONNREFUSED`                      |
+| `error.code`                | A failure only: the error's own code, else its cause's `cause.code`; never the HTTP status                                            | Node                              | `ECONNREFUSED`                      |
 | `trace.id`                  | Set by the request filter or the logger's mixin, not by this code                                                                             | Every service                     | —                                   |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
@@ -58,8 +58,9 @@ allows no other top-level field):
 
 | Value                                     | Where it goes                                                                                                                       |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| The error                                 | `err` (Node) or the throwable (Java), written as `error.type`, `error.message` and `error.code`                                     |
+| The error                                 | `err` (Node) or the throwable (Java), written as `error.type`, `error.message` and `error.code`. On a refusal line `error.code` holds the refusal's code from the answer's body, such as `STALE_CONCURRENCY_TOKEN`; never the status |
 | The dependency, the operation, the status | `error.message`: a refusal's message is `<dependency> refused to <action>: <status> <status text>` (`NODE.md` → "Dependency layer") |
+| The status, on a line whose error is not the refusal | `http.response.status_code`, as on the external-call line: the `Backend refusal code could not be read` line, whose error is the body's parse error |
 | The journey id                            | `event.reference`, a string of at most 256 characters                                                                               |
 | Anything else                             | The message, as the interface id is on the external-call line                                                                       |
 
@@ -69,6 +70,13 @@ Never give these lines `event.category`, `event.action` or
 `ALERTS.md` ("Check the calls happened") count one per call.
 Never a field of its own such as `operation`, `status`, `journeyId` or
 `url`: CDP drops it.
+
+Each failure's stack is written once, by one line:
+
+| Failure                                  | The line that writes `err`                                                                                                                                                                                                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A refusal: the dependency answered not ok | The refusal line where it is raised (`send.js` in both frontends), which marks the error as logged. The error page's `Request failed` line and the save fallback line leave `err` off a marked error, through `errFieldUnlessLogged` (`src/server/common/helpers/logging/logged-error.js`) |
+| A call that threw                        | The caller that handles the error, once, as `{ err }`. The external-call line writes only `error.type`, `error.message` and `error.code`, and no `err`                                                                                                                           |
 
 This list covers only the lines about a call. A service's other lines
 are not yet held to CDP's schema, and many of them write fields of

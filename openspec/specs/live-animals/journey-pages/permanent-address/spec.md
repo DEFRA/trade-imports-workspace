@@ -232,21 +232,21 @@ When a save is refused, the system MUST keep every card's chosen option selected
 - **THEN** it answers with HTTP status 400
 - **AND** the browser title opens with "Error: "
 
-### Requirement: A line that needs a permanent address with no animal identified yet shows a message in place of the cards
+### Requirement: A message shows in place of the cards when no line that needs a permanent address has an animal identified
 **ID**: REQ-PERM-ADDR-016
-When a commodity line needs a permanent address but no animal on it has been identified yet, the system MUST show no cards and instead show a message, still offering the save control. When a line that needs a permanent address carries a number of animals, the message MUST be "Identify an animal on identification details before you can continue.", with "identification details" linking to the identification details page. When no such line carries a number of animals, it MUST be "Add the number of animals on consignment details before you can continue.", with "consignment details" linking to the consignment details page. Saving from either message MUST leave the notification as it was and return to the consignment addresses page.
+When at least one commodity line needs a permanent address and no line that needs a permanent address has an animal identified yet, the system MUST show no cards and instead show a message, still offering the save control. When any line that needs a permanent address carries a number of animals, the message MUST be "Identify an animal on identification details before you can continue.", with "identification details" linking to the identification details page. When no line that needs a permanent address carries a number of animals, it MUST be "Add the number of animals on consignment details before you can continue.", with "consignment details" linking to the consignment details page. Saving from either message MUST leave the notification as it was and return to the consignment addresses page.
 
-#### Scenario: The page shows the add-the-number message and link in place of the cards when no animal is counted
+#### Scenario: The page shows the add-the-number message and link in place of the cards when no line that needs a permanent address has a number of animals
 **ID**: SCN-PERM-ADDR-016-A
-- **GIVEN** a commodity line that needs a permanent address with no number of animals and no animal identified on it yet
+- **GIVEN** a notification whose lines that need a permanent address have no number of animals and no animal identified yet
 - **WHEN** the user opens the permanent address page
 - **THEN** no card is shown
 - **AND** "Add the number of animals on consignment details before you can continue." is shown, with "consignment details" linking to the consignment details page
 - **AND** the save control still renders
 
-#### Scenario: The page shows the identify-an-animal message and link in place of the cards when animals are counted but none identified
+#### Scenario: The page shows the identify-an-animal message and link in place of the cards when a line that needs a permanent address has a number of animals and none has an animal identified
 **ID**: SCN-PERM-ADDR-016-C
-- **GIVEN** a commodity line that needs a permanent address with a number of animals but no animal identified on it yet
+- **GIVEN** a notification where a line that needs a permanent address has a number of animals and no line that needs a permanent address has an animal identified yet
 - **WHEN** the user opens the permanent address page
 - **THEN** no card is shown
 - **AND** "Identify an animal on identification details before you can continue." is shown, with "identification details" linking to the identification details page

@@ -3045,6 +3045,23 @@ means unknown, never red:
 \`SUMMARY: red\` with some lines marked stale is a real red: at least one failing check did run on this head. Put only
 the checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
 
+const CI_FIXER_MAIN_RED_RULE = `FIND OUT WHETHER THIS BRANCH BROKE IT, BEFORE YOU CHANGE A LINE. A check can be red because this increment
+   broke it, or because it is red on \`main\` for everyone. The two need opposite work, and guessing wrong spends an
+   attempt editing code that was never at fault.
+   For each failing spec, read the same workflow's last run on main:
+   \`gh run list --repo <ghRepo> --branch main --workflow <the failing workflow file> --limit 1 --json databaseId,conclusion\`
+   and, when that run did not succeed,
+   \`gh run view <databaseId> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/main-red-<repo>.log 2>&1\`, read once.
+   - The spec passes on main → this increment broke it. Fix it here, as the steps below say.
+   - The same spec fails on main too → this increment did not break it, and a commit on this branch is the wrong
+     place for the fix: it would hide a failure everyone else still has, and it would be reviewed as this row's work.
+     Change NO code. Report ok:false, with the spec, the main run's URL and both conclusions in your summary.
+   Say which of the two it is either way, even when every spec is this branch's doing.
+   THIS IS NOT A WAY TO CLOSE A FAILURE. "Pre-existing", "flaky", "unrelated" and "environmental" close nothing: the
+   run stops so a person lands the fix on main, where it fixes it for everybody, and this increment is built again
+   afterwards. Design Release 2.1's manage-notifications theme lost two runs to exactly this — five macOS visual
+   baselines and a timeout under load — neither of which the theme had touched, and both of which were fixed on main.`
+
 const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE. The watcher should have caught a stale rollup, but
    confirm it yourself, because changing correct code to match an old image is the most expensive thing you can do
    here. For the failing check: \`gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'\`, and the
@@ -4831,6 +4848,10 @@ Then, for EACH pr, in the order listed:
 3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
+   NAME THE FAILING SPEC FILES, one per failing spec, as the repo-relative paths Playwright printed in its own
+   failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
+   and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
+   Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
 
 \`blocked\` is ONLY for something a code fix in this row cannot address: a conflict with the base, no checks, \`gh\`
 refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a
@@ -4858,19 +4879,20 @@ TASK:
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
 2. ${CI_FIXER_STALE_RULE}
-3. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
+3. ${CI_FIXER_MAIN_RED_RULE}
+4. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
    push that republishes it does. A \`workflow_run\` job runs the copy of its workflow on the default branch (main),
    never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
-4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+5. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-5. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+6. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
    script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
    everything else; re-running it here proves nothing it has not and costs tens of minutes.
-6. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
+7. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
    ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
-7. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
+8. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
    the repo. Never open a pull request.
-8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+9. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`
 
@@ -7538,6 +7560,10 @@ Then, for EACH pr, in the order listed:
 4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
+   NAME THE FAILING SPEC FILES, one per failing spec, as the repo-relative paths Playwright printed in its own
+   failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
+   and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
+   Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
 
 \`blocked\` is ONLY for something a code fix cannot address — a conflict with the base, no checks configured, \`gh\`
 refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
@@ -7574,12 +7600,13 @@ TASK:
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
 2. ${CI_FIXER_STALE_RULE}
-3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+3. ${CI_FIXER_MAIN_RED_RULE}
+4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-4. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+5. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
    script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
    everything else; re-running it here proves nothing it has not and costs tens of minutes.
-5. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
+6. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
    The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
    declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.
    Committing there and pushing is how this loop once put an unreviewed commit on the tests repo's main.
@@ -7592,10 +7619,10 @@ ${SONAR_GATE_RULE}
      - It does not → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
        \`--no-track\` is mandatory — see HOW TO PUSH above for what it prevents.
      Then re-run \`rev-parse --abbrev-ref HEAD\` and confirm it now prints \`${workBranch}\` before going on.
-6. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+7. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
    \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
    \`--force\`, and never the short \`push origin ${workBranch}\` form.
-7. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+8. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
    REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
    An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
    calls itself done, and silently leaves the other open — which has happened. Worse has happened: the same repo,
@@ -7618,7 +7645,7 @@ ${SONAR_GATE_RULE}
       Do this per repo, not once at the end.
    e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
-8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+9. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
         code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })

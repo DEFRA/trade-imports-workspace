@@ -8154,6 +8154,47 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('has the branch CI fixer find out whether this branch broke it, before changing a line', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1')
+
+        expect(prompt).toContain(
+          'FIND OUT WHETHER THIS BRANCH BROKE IT, BEFORE YOU CHANGE A LINE'
+        )
+        expect(prompt).toContain('--branch main --workflow')
+      })
+
+      test('refuses to let the branch CI fixer close a failure as pre-existing', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1').replace(/\s+/g, ' ')
+
+        expect(prompt).toContain('THIS IS NOT A WAY TO CLOSE A FAILURE')
+        expect(prompt).toContain(
+          'the run stops so a person lands the fix on main'
+        )
+      })
+
+      test('has the branch CI fixer prove its fix by the failing spec files alone', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1').replace(/\s+/g, ' ')
+
+        expect(prompt).toContain(
+          'running THE FAILING SPEC FILES THEMSELVES, named after `--`, never a folder, a bare script or a `--grep` over a tag'
+        )
+      })
+
       test('tells the branch CI fixer how to read a quality gate that has no job log', async () => {
         const run = await runMergeRow(
           FOUND,

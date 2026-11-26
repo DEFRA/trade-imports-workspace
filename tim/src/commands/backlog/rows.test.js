@@ -38,12 +38,21 @@ let workspace
 
 const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
 
-const writeBacklog = (rows) => {
+const writeBacklog = (rows, envelope = {}) => {
   mkdirSync(dirname(backlogPath()), { recursive: true })
   writeFileSync(
     backlogPath(),
-    JSON.stringify({ programme: 'demo', increments: rows })
+    JSON.stringify({ programme: 'demo', ...envelope, increments: rows })
   )
+}
+
+// The envelope `repos` --repos checks a row's keys against.
+const DECLARED_REPOS = {
+  repos: {
+    frontend: 'repos/trade-imports-animals-frontend',
+    plantsfrontend: 'repos/trade-imports-plants-frontend',
+    tests: 'repos/trade-imports-ins-tests'
+  }
 }
 
 const readRows = () =>
@@ -294,6 +303,101 @@ describe('tim backlog set', () => {
     )
   })
 
+  test('replaces the repos the increment builds', async () => {
+    writeBacklog([row({ repos: ['frontend', 'tests'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsfrontend,tests'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'plantsfrontend', 'tests'])
+  })
+
+  test('keeps one of a repo named twice', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,tests,frontend'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'tests'])
+  })
+
+  test('refuses a repo the backlog does not declare', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsbackend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "The backlog declares no plantsbackend, so inc-001 can't build it. Its repos are: frontend, plantsfrontend, tests."
+    )
+  })
+
+  test('refuses taking away a repo the increment merges a ref into', async () => {
+    writeBacklog(
+      [row({ repos: ['frontend', 'tests'], merge: { tests: 'origin/main' } })],
+      DECLARED_REPOS
+    )
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "inc-001 merges a ref into tests, so that repo can't be taken off its repos. Clear the merge ref first."
+    )
+  })
+
+  test('refuses --repos with no repo in it', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--repos', ' , '])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must name at least one repo key, such as frontend,tests. A row with no repos builds nothing.'
+    )
+  })
+
+  test('refuses a repo key that is not one', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'Plants Frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must be repo keys separated by commas, such as frontend,plantsfrontend,tests. "Plants Frontend" is not a repo key.'
+    )
+  })
+
   test('writes nothing when the values are already there', async () => {
     writeBacklog([row()])
     const before = readFileSync(backlogPath(), 'utf8')
@@ -338,7 +442,7 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
     )
   })
 

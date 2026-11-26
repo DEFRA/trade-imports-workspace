@@ -1828,10 +1828,25 @@ const reconcileRound = async ({ round, sentBack }) => {
   if (crossed.problems.length) return { failed: 'reconcile-failed', problems: crossed.problems, check: crossed.check }
   phase('Challenge')
   const stillStanding = new Set(CHALLENGE_LOG.filter((verdict) => verdict.verdict === 'question').map((verdict) => verdict.conflict))
-  const challenged = await challengeQuestions({
-    round,
-    questions: (crossed.check.questions ?? []).filter((question) => !stillStanding.has(question.id))
-  })
+  const toChallenge = (crossed.check.questions ?? []).filter((question) => !stillStanding.has(question.id))
+  // An empty relayed list while the same check counted question conflicts means
+  // the relay dropped them, not that there is nothing to challenge:
+  // coverageRelayProblems compares the list against the count in that same
+  // relay, so an undercount consistent with itself passes it. Stop and say so.
+  // Skipping in silence sends every question to the report untested against
+  // precedence and the rulings, which is the opposite of questions being
+  // minimal by default.
+  const countedQuestions = crossed.check.conflicts?.question ?? 0
+  if (!toChallenge.length && countedQuestions > stillStanding.size) {
+    return {
+      failed: 'challenge-failed',
+      problems: [
+        `the cross-area coverage check counted ${countedQuestions} question conflict(s) but relayed no question list, so no challenger would run. Launch again: a silent skip sends every question to the report untested against precedence.`
+      ],
+      check: crossed.check
+    }
+  }
+  const challenged = await challengeQuestions({ round, questions: toChallenge })
   CHALLENGE_LOG.push(...challenged.verdicts)
   RECONCILE_DECISIONS = [...RECONCILE_DECISIONS, ...challenged.decisions]
   if (challenged.problems.length) return { failed: 'challenge-failed', problems: challenged.problems, check: challenged.check }

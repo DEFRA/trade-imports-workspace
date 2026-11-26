@@ -24,6 +24,7 @@ import {
   TIM_DUPLICATION,
   TIM_RUNGS
 } from './gates.js'
+import { TimError } from '../errors.js'
 import { isSpecFile } from './changed-scope.js'
 import { assertBaseExists, changedFilesSince } from './duplication.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
@@ -48,8 +49,11 @@ const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 const DEFAULT_CHANGE_BASE = 'origin/main'
 
+// Keyed by the envelope's repo key, which is what a --covered-spec entry names
+// and what the planner looks up. A repo's key and its folder differ: the key is
+// `tests`, the folder `trade-imports-ins-tests`.
 const byRepo = (repos, of) =>
-  Object.fromEntries(repos.map(({ folder }) => [folder, of(folder)]))
+  Object.fromEntries(repos.map(({ key }) => [key, of(key)]))
 
 /**
  * What a narrowed e2e run gives planRungs: each repo's own changed paths, the
@@ -65,32 +69,72 @@ const byRepo = (repos, of) =>
 const narrowedScope = async (repos, base, coveredSpecs) => {
   const changedByRepo = Object.fromEntries(
     await Promise.all(
-      repos.map(async ({ folder, path }) => {
+      repos.map(async ({ key, path }) => {
         await assertBaseExists(path, base)
-        return [folder, await changedFilesSince(path, base)]
+        return [key, await changedFilesSince(path, base)]
       })
     )
   )
-  const covered = coveredSpecs.map((entry) => entry.split(/:(.+)/))
+  const covered = coveredSpecs.map((entry) => splitCoveredSpec(entry, repos))
   return {
     changedByRepo,
-    specsByRepo: byRepo(repos, (folder) =>
-      changedByRepo[folder].filter((path) => isSpecFile(path))
+    specsByRepo: byRepo(repos, (key) =>
+      changedByRepo[key].filter((path) => isSpecFile(path))
     ),
-    coveredSpecsByRepo: byRepo(repos, (folder) =>
-      covered.filter(([key]) => key === folder).map(([, path]) => path)
+    coveredSpecsByRepo: byRepo(repos, (key) =>
+      covered.filter(([repoKey]) => repoKey === key).map(([, path]) => path)
     )
   }
 }
 
-const targetedE2e = (specCount) => ({
-  where: 'targeted',
-  leftToCi: [],
-  evidence:
-    specCount === 0
-      ? 'No E2E rung ran here: this change touched no spec file. The whole suite runs on the pull request.'
-      : `Only the ${specCount} spec ${specCount === 1 ? 'file' : 'files'} this change touched ran here. The whole suite runs on the pull request.`
-})
+/**
+ * One `--covered-spec` entry, as `<repoKey>:<path>`.
+ *
+ * @param {string} entry
+ * @param {{key: string}[]} repos
+ * @returns {[string, string]}
+ * @throws {TimError} USAGE when it names no repo of this run
+ */
+const splitCoveredSpec = (entry, repos) => {
+  const [key, path] = entry.split(/:(.+)/)
+  const keys = repos.map((repo) => repo.key)
+  if (!path || !keys.includes(key)) {
+    throw new TimError(
+      'USAGE',
+      `--covered-spec "${entry}" names no repo of this backlog. Write it as <repoKey>:<path>, with one of: ${keys.join(', ')}.`
+    )
+  }
+  return [key, path]
+}
+
+const SPEC_ARG = /\.spec\.[cm]?[jt]sx?$/
+
+// What the planned rungs will actually run, not what the change touched: a
+// frontend's *.fit.spec.js is a changed spec no e2e rung can run, so counting
+// changed specs would credit a row with end-to-end proof it never had.
+const plannedSpecCount = (e2eRungs) =>
+  new Set(
+    e2eRungs.flatMap(({ scope }) => scope.filter((arg) => SPEC_ARG.test(arg)))
+  ).size
+
+const targetedE2e = (e2eRungs) => {
+  const specs = plannedSpecCount(e2eRungs)
+  if (e2eRungs.length === 0) {
+    return {
+      where: 'targeted',
+      ran: 0,
+      leftToCi: [],
+      evidence:
+        'NO end-to-end test ran here: this change touched no spec file any e2e rung runs. Nothing below is end-to-end proof — the pull request’s whole-suite run is.'
+    }
+  }
+  return {
+    where: 'targeted',
+    ran: specs,
+    leftToCi: [],
+    evidence: `Only the ${specs} spec ${specs === 1 ? 'file' : 'files'} this change touched ran here. The whole suite runs on the pull request.`
+  }
+}
 
 /**
  * Who the gate takes the stack lease as when no holder is given: this gate
@@ -768,7 +812,7 @@ export const runGate = async ({
   const e2eReport = e2eInCi
     ? e2eLeftToCi(byPhase(wholePlan, 'e2e'))
     : e2eWhere === 'targeted'
-      ? targetedE2e(Object.values(e2eScope?.specsByRepo ?? {}).flat().length)
+      ? targetedE2e(byPhase(wholePlan, 'e2e'))
       : LOCAL_E2E
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {

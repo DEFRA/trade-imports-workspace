@@ -944,17 +944,23 @@ describe('increment-build-loop', () => {
     }
   )
 
-  test('accepts e2e targeted and starts the run with it', async () => {
-    const args = { ...BASE_ARGS, e2e: 'targeted' }
-
+  test('accepts e2e targeted and runs on past validation to its first agent', async () => {
     const run = await runLoop(scriptPath, {
-      args,
+      args: { ...BASE_ARGS, e2e: 'targeted' },
       answers: [WORKSPACE_ANSWER, null]
     })
 
-    expect(run.logs[0]).toBe(
-      `increment-build-loop: resolved configuration ${JSON.stringify(args)}`
-    )
+    // The resolved-configuration line is logged BEFORE e2e is validated, so it
+    // proves nothing on its own. A rejected value spawns no agent and errors on
+    // config.e2e; an accepted one gets as far as the preflight reading a
+    // backlog this fixture does not have.
+    expect({
+      agents: run.agents.length > 0,
+      error: run.error.message
+    }).toEqual({
+      agents: true,
+      error: expect.stringContaining('no readable backlog')
+    })
   })
 
   test('stops before any agent when resumeFrom is missing', async () => {
@@ -2092,6 +2098,20 @@ describe('increment-build-loop', () => {
       expect(prompt).not.toContain(
         'THE BASELINE IS EACH REPO’S OPEN PULL REQUEST'
       )
+    })
+
+    // The base decides what a narrowed rung counts as the row's change, and it
+    // differs by lifecycle. The full lifecycle cuts a fresh branch per
+    // increment and preserves a failed attempt as a pushed commit, so HEAD
+    // would see none of a resumed row's work: the base branch is the row.
+    test('diffs a narrowed gate against the base branch under the full lifecycle', async () => {
+      expect(await baselinePromptWithE2e('targeted')).toContain(
+        '--e2e targeted --base origin/main'
+      )
+    })
+
+    test('passes no base when the run is not narrowed', async () => {
+      expect(await baselinePromptWithE2e('local')).not.toContain('--base')
     })
 
     test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
@@ -7900,6 +7920,32 @@ describe('increment-build-loop', () => {
         expect(run.result.stopped.detail).toContain(
           `no open pull request for ${WORKING_BRANCH} in tests`
         )
+      })
+
+      // Twice now a prompt has asked an agent for a field its own schema
+      // refused under additionalProperties:false — `phase: "ci"`, then
+      // notOurs/onlyNotOurs — and each slipped past a read of the diff. This
+      // closes the class: no agent may be told to report a field its schema
+      // does not declare.
+      test('asks no agent for a whose-failure field its schema would refuse', async () => {
+        const run = await runMergeRow(FOUND, null)
+
+        const asked = run.agents
+          .filter(({ prompt }) => prompt.includes('report it in notOurs[]'))
+          .map(({ options }) => ({
+            label: options.label,
+            notOurs: Boolean(options.schema?.properties?.notOurs),
+            onlyNotOurs: Boolean(options.schema?.properties?.onlyNotOurs)
+          }))
+
+        expect(asked.length).toBeGreaterThan(0)
+        for (const agent of asked) {
+          expect(agent).toEqual({
+            label: agent.label,
+            notOurs: true,
+            onlyNotOurs: true
+          })
+        }
       })
 
       test('reads mergeability before it waits on the checks', async () => {

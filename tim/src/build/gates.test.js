@@ -27,7 +27,16 @@ const problemsOf = (value) => {
   }
 }
 
-const repo = (folder) => ({ folder, path: `/workspace/repos/${folder}` })
+// A repo's key and its folder are different strings in a real envelope — `tests`
+// against `trade-imports-ins-tests` — so the fixture keeps them different too,
+// or a lookup by the wrong one passes here and fails in a run.
+const keyOf = (folder) => folder.replace(/^trade-imports-/, '')
+
+const repo = (folder) => ({
+  key: keyOf(folder),
+  folder,
+  path: `/workspace/repos/${folder}`
+})
 
 const sampleGates = () =>
   parseGates(
@@ -808,5 +817,65 @@ describe('planRungs under a narrowed e2e run', () => {
     })
 
     expect(plan.map(({ repo: folder }) => folder)).toEqual(['tests'])
+  })
+})
+
+describe('planRungs looks a narrowed repo up by its key, not its folder', () => {
+  const realisticGates = () =>
+    parseGates(
+      gatesWith({
+        'trade-imports-plants-frontend': {
+          rungs: [unitRung('unit', 'test')]
+        },
+        'trade-imports-ins-tests': {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'gate',
+              forRepos: ['trade-imports-plants-frontend']
+            }
+          ]
+        }
+      })
+    )
+
+  const plan = (e2eScope) =>
+    planRungs({
+      gates: realisticGates(),
+      repos: [
+        repo('trade-imports-plants-frontend'),
+        repo('trade-imports-ins-tests')
+      ],
+      phase: 'e2e',
+      e2eScope
+    }).filter(({ phase }) => phase === 'e2e')
+
+  test('finds the changed specs filed under the repo key', () => {
+    expect(
+      plan({
+        changedByRepo: { 'ins-tests': ['tests/plants/a.spec.ts'] },
+        specsByRepo: { 'ins-tests': ['tests/plants/a.spec.ts'] }
+      })
+    ).toEqual([
+      expect.objectContaining({
+        scope: ['tests/plants/a.spec.ts', '--pass-with-no-tests']
+      })
+    ])
+  })
+
+  test('runs a covered spec for a repo whose own files the change never touched', () => {
+    expect(
+      plan({
+        changedByRepo: { 'ins-tests': [] },
+        specsByRepo: { 'ins-tests': [] },
+        coveredSpecsByRepo: { 'ins-tests': ['tests/plants/covered.spec.ts'] }
+      })
+    ).toEqual([
+      expect.objectContaining({
+        scope: ['tests/plants/covered.spec.ts', '--pass-with-no-tests']
+      })
+    ])
   })
 })

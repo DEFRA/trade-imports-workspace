@@ -1026,11 +1026,18 @@ const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).join('')
-// A row's own change is what it has not committed yet: the ladder runs before
-// the land stage, so `--base HEAD` is the row, while origin/main would be every
-// row the theme has landed so far. A theme-end gate passes the base branch
-// instead, because the whole branch is what it is reviewing.
-const ROW_CHANGE_BASE = 'HEAD'
+// What a row has changed, wherever that work sits, which differs by lifecycle
+// because a failed attempt is preserved differently in each.
+//
+// Branch lifecycle: every row shares one branch, and a preserved attempt is
+// patches re-applied to the working tree, so the row's change is what is not
+// committed — HEAD. origin/<branch> would also hold the rows that landed before
+// this one.
+//
+// Full lifecycle: the increment's branch is cut fresh off the base and holds
+// nothing but this row, and a preserved attempt is a pushed wip commit, so HEAD
+// would see none of a resumed row's work. The base branch is the row.
+const ROW_CHANGE_BASE = IS_BRANCH ? 'HEAD' : `origin/${BASE_BRANCH}`
 
 const gateCommand = (phase, logs, repoKeys, base = ROW_CHANGE_BASE) =>
   `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
@@ -1124,6 +1131,31 @@ const codexGateBinding = (id, stage, phases, repoKeys) =>
 // A rung is a gate phase, or `ci` for a pull request's own check, which is what
 // the pull-request baseline reports in place of a gate it did not run.
 const RUNG_PHASES = [...GATE_PHASES, 'ci']
+
+// Whose failure a red check is. Every prompt told to decide it answers in a
+// schema carrying these two, which is why they live here rather than inside one
+// of them: the baseline and all three CI watches share the question.
+const NOT_OURS_PROPERTY = {
+  type: 'array',
+  description:
+    'Every failing spec that fails the same way on the base branch itself, so this branch did not cause it. Leave empty when there are none',
+  items: {
+    type: 'object',
+    required: ['repo', 'spec', 'evidence'],
+    properties: {
+      repo: { type: 'string' },
+      spec: { type: 'string', description: 'The spec path, or the job name where the failure is not a spec' },
+      evidence: { type: 'string', description: 'The base branch run that fails the same way, as a URL, and its conclusion' }
+    },
+    additionalProperties: false
+  }
+}
+
+const ONLY_NOT_OURS_PROPERTY = {
+  type: 'boolean',
+  description:
+    "True when the checks are red and EVERY red thing left is in notOurs — nothing still failing is this branch's doing. False whenever any failure is this branch's, and when everything is green"
+}
 
 const GATE_RUNG_SCHEMA = {
   type: 'object',
@@ -2722,6 +2754,8 @@ const BASELINE_SCHEMA = {
       items: GATE_RUNG_SCHEMA,
       description: 'Every rung from every gate phase, copied from the JSON tim printed'
     },
+    notOurs: NOT_OURS_PROPERTY,
+    onlyNotOurs: ONLY_NOT_OURS_PROPERTY,
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -3005,26 +3039,8 @@ const CI_SCHEMA = {
       }
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
-    notOurs: {
-      type: 'array',
-      description:
-        'Every failing spec that fails the same way on the base branch itself, so this branch did not cause it. Leave empty when there are none',
-      items: {
-        type: 'object',
-        required: ['repo', 'spec', 'evidence'],
-        properties: {
-          repo: { type: 'string' },
-          spec: { type: 'string', description: 'The spec path, or the job name where the failure is not a spec' },
-          evidence: { type: 'string', description: 'The base branch run that fails the same way, as a URL, and its conclusion' }
-        },
-        additionalProperties: false
-      }
-    },
-    onlyNotOurs: {
-      type: 'boolean',
-      description:
-        'True when the pull requests are red and EVERY red thing left is in notOurs — nothing still failing is this branch\'s doing. False whenever any failure is this branch\'s, and when everything is green'
-    },
+    notOurs: NOT_OURS_PROPERTY,
+    onlyNotOurs: ONLY_NOT_OURS_PROPERTY,
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
@@ -6663,6 +6679,15 @@ Return the structured output only.`,
     results.push({ id, outcome: 'baseline-red', detail: baseline?.summary ?? 'agent failed' })
     stopped = { reason: 'baseline-red', detail: `${id}: ${baseline?.summary ?? 'agent failed'}` }
     break
+  }
+
+  // A pull-request baseline is green with the base branch's own failures still
+  // red. They are nobody's to fix here, but the run says which they were rather
+  // than letting the row read as proved against a wholly green base.
+  const baselineNotOurs = baseline.notOurs ?? []
+  if (baselineNotOurs.length > 0) {
+    log(`${id}: baseline green apart from ${baselineNotOurs.length} the base branch fails the same way: ${notOursLines(baseline).join(' | ')}`)
+    notOursAcrossRun.push({ id, prs: [], notOurs: baselineNotOurs, at: 'baseline' })
   }
 
   baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now

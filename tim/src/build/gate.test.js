@@ -1799,7 +1799,7 @@ describe('runGate — a narrowed e2e run', () => {
       green: true,
       rungs: 0,
       evidence:
-        'No E2E rung ran here: this change touched no spec file. The whole suite runs on the pull request.'
+        'NO end-to-end test ran here: this change touched no spec file any e2e rung runs. Nothing below is end-to-end proof — the pull request’s whole-suite run is.'
     })
   })
 

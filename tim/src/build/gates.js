@@ -195,12 +195,16 @@ const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 // as the k6 performance suite, keeps that scope when its repo did change — it
 // has no finer granularity to narrow to.
 const narrowedRunsOf = (rung, repo, e2eScope) => {
-  const changed = e2eScope.changedByRepo[repo.folder] ?? []
-  if (changed.length === 0) return []
-  if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
+  const covered = e2eScope.coveredSpecsByRepo?.[repo.key] ?? []
+  if (!rung.scopeFrom) {
+    // A rung with its own scope has no finer granularity to narrow to, so it
+    // runs whole or not at all, by whether its repo changed.
+    const changed = e2eScope.changedByRepo[repo.key] ?? []
+    return changed.length === 0 ? [] : [{ suffix: '', args: rung.scope ?? [] }]
+  }
   return changedScopeRuns({
-    specs: e2eScope.specsByRepo[repo.folder] ?? [],
-    coveredSpecs: e2eScope.coveredSpecsByRepo?.[repo.folder] ?? []
+    specs: e2eScope.specsByRepo[repo.key] ?? [],
+    coveredSpecs: covered
   })
 }
 

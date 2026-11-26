@@ -1,0 +1,1033 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 13, \"ins address book: add, edit, view and delete a record\": the specs under tests/ins/e2e/features/address-book that change or show one record, read in full with their page objects, flows, domain constants, fixtures and utils.\n\nRead in full: the ten specs address-book-add-type.spec.ts (8 tests), address-book-add-roles.spec.ts (4 tests, run three times by a loop over the three role-backed address types, so 12 at run time), address-book-add-form.spec.ts (4 tests), address-book-edit.spec.ts (18 tests across its top level and the nested describes \"opened without a return\", \"opened from the dashboard\", \"dead links\" and \"an address whose stored country is not offered\"), address-book-view.spec.ts (7 tests across its top level and the nested \"return\" and \"dead links\" describes), address-book-delete.spec.ts (9 tests across its top level and the nested \"return\" and \"dead links\" describes), address-book-validation-messages.spec.ts (3 tests), address-book-add-handshake-guard.spec.ts (1 test), address-book-add-germinal-products-handshake.spec.ts (1 test) and address-book.spec.ts (1 test); the local helpers unknown-address-id.ts, expected-api-refusal.ts, expect-address-book-list.ts and expect-other-organisation-address-returns-to-list.ts; the page objects add-page.ts, form-page.ts, shared-form-fields.ts, address-type-page.ts, edit-page.ts, view-page.ts, delete-page.ts, record-page.ts, url-with-return.ts, list-page.ts, shared/base-page.ts, shared/opens-at-expected-url.ts, shared/summary-list.ts and shared/govuk-banners.ts; the domain constants address-form.ts, address-book-types.ts, address-book-journey.ts, trader-address.ts, address-details.ts, shared/address-types.ts, shared/test-record-names.ts and the DB model address-document.ts; flows/ins/journey.ts and flows/shared/address-book-seed.ts; fixtures/ui.ts; utils/roles-options-assertions.ts and utils/address-book-cleanup.ts.\n\nCovered: the add journey as an ordered sequence (the address book list's Add a new address button, the Choose an address type step, then the add-details form with the roles question), each step's route, caption, heading, fields, options, hints, buttons and links; the four address types with their labels and hints and the at-least-one refusal; the roles question's three per-type legends, its hint, its per-type options and its refusal; the nine details fields in order with County present and marked optional; every validation message the specs assert, on the add form, the edit form and the address book API; the view page's summary rows with and without the two optional fields and its Edit and Delete actions; the edit page's fields, read-only absence of the roles question, whole-record replacement and role retention; the delete page's heading, summary, copy, buttons, tombstoning and refusals; every dead-link and stale-record case for edit, view and delete, the return allow-list, organisation scoping; the add hand-off guard for an unregistered journey type and the germinal-products hand-off's own route, controls and return; and one gap where three validation messages the INS form's own constants hold are asserted nowhere in this slice.\n\nStops at the list, tabs, filter and roles-listing specs (part 12) and the animals-side hand-off specs (part 7); the roles question a journey-reached add form asks (journeyRolesQuestion in address-book-types.ts) is asserted only by the animals-side specs and is left to part 7.\n\nThe partition's counts for four of the ten specs no longer match the repo: it expects 23 tests in address-book-edit.spec.ts (18 today), 12 in address-book-view.spec.ts (7), 11 in address-book-delete.spec.ts (9), 5 in address-book-add-roles.spec.ts (4 literal declarations, 12 at run time), 4 in address-book-validation-messages.spec.ts (3) and 3 in each of the two hand-off specs (1 each). Every test present today is claimed.",
+  "claims": [
+    {
+      "id": "repo-tests-p13-001",
+      "statement": "Add a new address on the address book list opens a Choose an address type step at /address-book/add/address-type?start=true, captioned \"Add a new address\" above the heading \"Choose an address type\".",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:25-35, page-objects/ins/address-book/address-type-page.ts:8-16",
+      "quote": "await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(typePage.expectedUrl)}\\\\?start=true$`));\n    await expect(typePage.caption).toBeVisible();\n    await expect(typePage.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-002",
+      "statement": "The Choose an address type step offers exactly four radio options, in the order Origin or Consignor, Destination, Consignee or Importer, Transporter, Branch.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:36-40, domain/ins/constants/address-book-types.ts:136-145",
+      "quote": "await expect(typePage.radios).toHaveCount(addressTypeOptions.length);\n    for (const [index, { label, hint }] of addressTypeOptions.entries()) {\n      await expect(typePage.radios.nth(index)).toHaveAccessibleName(label);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-003",
+      "statement": "The Origin or Consignor option's hint reads \"Place of origin, Consignor\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:133-137, tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:39",
+      "quote": "{ addressType: addressTypes.originOrConsignor, label: 'Origin or Consignor', hint: hintOf(addressTypes.originOrConsignor) }",
+      "confidence": "verbatim",
+      "note": "mechanism: the hint string is composed by hintOf, which joins the type's role form labels ('Place of origin', 'Consignor') with ', '; the test asserts the composed string as the option's accessible description."
+    },
+    {
+      "id": "repo-tests-p13-004",
+      "statement": "The Destination, Consignee or Importer option's hint reads \"Place of destination, Consignee, Importer\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:129-142",
+      "quote": "[addressTypes.destinationConsigneeOrImporter]: [addressRoles.placeOfDestination, addressRoles.consignee, addressRoles.importer],",
+      "confidence": "verbatim",
+      "note": "mechanism: composed by hintOf from the three role form labels in that order."
+    },
+    {
+      "id": "repo-tests-p13-005",
+      "statement": "The Transporter option's hint reads \"Private, Commercial\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:143",
+      "quote": "{ addressType: addressTypes.transporter, label: 'Transporter', hint: 'Private, Commercial' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-006",
+      "statement": "The Branch option's hint reads \"Branch address\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:130-144",
+      "quote": "{ addressType: addressTypes.branch, label: 'Branch', hint: hintOf(addressTypes.branch) },",
+      "confidence": "verbatim",
+      "note": "mechanism: composed by hintOf from the single role form label 'Branch address'."
+    },
+    {
+      "id": "repo-tests-p13-007",
+      "statement": "The Choose an address type step's only button is Continue.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/address-type-page.ts:26-28, tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:41",
+      "quote": "return this.page.getByRole('button', { name: 'Continue', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-008",
+      "statement": "The Choose an address type step's Back link returns to the address book list at /address-book, headed \"Address book\".",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:43-45, tests/ins/e2e/features/address-book/expect-address-book-list.ts:13-14",
+      "quote": "await typePage.linkBack.click();\n\n    await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-009",
+      "statement": "Continuing from Choose an address type with no type chosen is refused with the message \"Select an address type\", shown in the error summary and against the radio group as \"Error: Select an address type\".",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:55-58, domain/ins/constants/address-book-types.ts:154-156",
+      "quote": "await expect(typePage.radioGroup).toHaveAccessibleDescription(`Error: ${addressTypeQuestion.error}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-010",
+      "statement": "The \"Select an address type\" error summary link moves focus to the first option, Origin or Consignor.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:59-60",
+      "quote": "await typePage.errorSummaryLink(addressTypeQuestion.error).click();\n    await expect(typePage.radio(addressTypes.originOrConsignor)).toBeFocused();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-011",
+      "statement": "Choosing Origin or Consignor, Destination, Consignee or Importer, or Branch opens the add-details form at /address-book/add, captioned \"Add new address\" above the heading \"Add address and contact details\", with no status tag.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:69-77, page-objects/ins/address-book/add-page.ts:8-16",
+      "quote": "await expect(insPages.addressBookAdd.caption).toBeVisible();\n      await expect(insPages.addressBookAdd.heading).toBeVisible();\n      await expect(insPages.addressBookAdd.statusTag).toHaveCount(0);",
+      "confidence": "verbatim",
+      "note": "The caption on the add form is 'Add new address' while the caption on the type step is 'Add a new address'; the two page objects assert different strings."
+    },
+    {
+      "id": "repo-tests-p13-012",
+      "statement": "Back from the add-details form returns to Choose an address type with the type the user chose still selected.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:79-81",
+      "quote": "await insPages.addressBookAdd.linkBack.click();\n\n      await expect(insPages.addressBookAddressType.radio(addressType)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-013",
+      "statement": "Transporter is the one address type that does not open the add-details form: it opens the transporter type question instead and carries no roles.",
+      "kind": "behaviour",
+      "ref": "domain/shared/constants/address-types.ts:10-16, flows/ins/journey.ts:51-59",
+      "quote": "/** The address types whose add form asks the roles question: every type but Transporter, which\n * opens the add-a-transporter pages instead and carries no roles. */",
+      "confidence": "inferred",
+      "note": "Inferred because the three add-form tests loop only over addressTypesAskingRoles, and the journey's chooseAddressType waits for the transporter type heading for Transporter and the add heading for the rest. No spec in this slice opens the transporter pages."
+    },
+    {
+      "id": "repo-tests-p13-014",
+      "statement": "After a refused save of the add form, going Back and choosing the same address type again shows the name, address line 1, address line 2, town or city, county, postcode, country, email address, phone number and the ticked role the user had entered.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:92-121",
+      "quote": "await expect(addPage.inputName).toHaveValue(entered.name);\n      await expect(addPage.inputAddressLine1).toHaveValue(entered.addressLine1);",
+      "confidence": "verbatim",
+      "note": "Proven for all three role-backed types, each with a role of its own type (Place of origin, Consignee, Branch address); the refusal is forced with email 'not-an-email'."
+    },
+    {
+      "id": "repo-tests-p13-015",
+      "statement": "Pressing Add a new address again after abandoning a part-filled add form starts a fresh entry: no address type chosen, every text field empty and no role ticked.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:124-140",
+      "quote": "await expectNoTypeChosen(insPages.addressBookAddressType);\n    await insJourney.chooseAddressType(addressTypes.branch);\n    await expectTextboxesEmpty(addPage);\n    await expect(addPage.rolesOption(addressRoles.branchAddress)).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-016",
+      "statement": "After an address is saved, the next Add a new address starts with no address type chosen, every text field empty and no role ticked.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:142-155",
+      "quote": "test('after a save the next add starts with no type chosen, empty text fields and no role ticked'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-017",
+      "statement": "Opening /address-book/add with no address type chosen lands the user on Choose an address type instead.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:157-162",
+      "quote": "await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(insPages.addressBookAddressType.expectedUrl)}$`));\n    await expect(insPages.addressBookAddressType.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-018",
+      "statement": "The add-details form shows exactly eight text boxes: Name or organisation, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Email address and Phone number.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:35, domain/ins/constants/address-form.ts:25-27",
+      "quote": "export const ADDRESS_FORM_TEXTBOX_LABELS_IN_ORDER = ADDRESS_FORM_FIELD_LABELS_IN_ORDER.filter(\n  (label) => label !== ADDRESS_FORM_FIELD_LABELS.country,\n);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-019",
+      "statement": "The nine add and edit fields read, in order: \"Name or organisation\", \"Address line 1\", \"Address line 2 (optional)\", \"Town or city\", \"County (optional)\", \"Postcode or Zip code\", \"Country\", \"Email address\", \"Phone number\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-form.ts:1-23",
+      "quote": "export const ADDRESS_FORM_FIELD_LABELS = {\n  name: 'Name or organisation',\n  addressLine1: 'Address line 1',\n  addressLine2: 'Address line 2 (optional)',\n  townOrCity: 'Town or city',\n  county: 'County (optional)',\n  postcode: 'Postcode or Zip code',\n  country: 'Country',\n  email: 'Email address',\n  phone: 'Phone number',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-020",
+      "statement": "The add-details form carries a County field, marked optional, between Town or city and Postcode or Zip code.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:19-28, domain/ins/constants/address-form.ts:6",
+      "quote": "'the add-details step groups its fields under Address and Contact details, with Name or organisation first and County between Town or city and Postcode, and the edit page labels the name the same'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-021",
+      "statement": "Country is the one field of the nine that is a select rather than a text box, and the eight text boxes carry their labels in page order.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:26-28, page-objects/ins/address-book/shared-form-fields.ts:39-49",
+      "quote": "for (const [index, name] of ADDRESS_FORM_TEXTBOX_LABELS_IN_ORDER.entries()) {\n        await expect(insPages.addressBookAdd.textboxes.nth(index)).toHaveAccessibleName(name);\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-022",
+      "statement": "The add-details form groups its fields under two level-2 headings, \"Address\" and \"Contact details\", with Name or organisation under Address, Country the last Address field, and Email address and Phone number under Contact details.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:9-16",
+      "quote": "await expect(form.sectionHeading('Address')).toBeVisible();\n  await expect(form.sectionHeading('Contact details')).toBeVisible();\n  await expectAbove(form.sectionHeading('Address'), form.inputName);\n  await expectAbove(form.selectCountry, form.sectionHeading('Contact details'));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-023",
+      "statement": "The add-details form shows one section break (a separator) below Phone number and above the roles question.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:36-39, page-objects/ins/address-book/add-page.ts:46-48",
+      "quote": "await expect(addPage.sectionBreak).toHaveCount(1);\n      await expectAbove(addPage.inputPhone, addPage.sectionBreak);\n      await expect(addPage.rolesGroup(legend)).toBeVisible();\n      await expectAbove(addPage.sectionBreak, addPage.rolesGroup(legend));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-024",
+      "statement": "The roles question on the Origin or Consignor add form is legended \"What can this address be used for?\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:163-167",
+      "quote": "ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-025",
+      "statement": "The roles question on the Destination, Consignee or Importer add form and on the Branch add form is legended \"Address type\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:163-167",
+      "quote": "DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',\n  BRANCH: 'Address type',",
+      "confidence": "verbatim",
+      "note": "The same question carries two different legends depending on the address type chosen; recorded as the suite states it, not reconciled."
+    },
+    {
+      "id": "repo-tests-p13-026",
+      "statement": "The roles question's hint reads \"Select where this address can be used\", and it is the accessible description of the question group.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:158-161, tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:40",
+      "quote": "hint: 'Select where this address can be used',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-027",
+      "statement": "No individual role checkbox carries a hint of its own.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:42-44",
+      "quote": "for (const role of offeredRoles) {\n        await expect(addPage.rolesOption(role)).toHaveAccessibleDescription('');\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-028",
+      "statement": "The Origin or Consignor add form offers two role checkboxes, \"Place of origin\" then \"Consignor\".",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:127-131, utils/roles-options-assertions.ts:6-12",
+      "quote": "[addressTypes.originOrConsignor]: [addressRoles.placeOfOrigin, addressRoles.consignor],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-029",
+      "statement": "The Destination, Consignee or Importer add form offers three role checkboxes, \"Place of destination\", then \"Consignee\", then \"Importer\".",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:127-131",
+      "quote": "[addressTypes.destinationConsigneeOrImporter]: [addressRoles.placeOfDestination, addressRoles.consignee, addressRoles.importer],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-030",
+      "statement": "The Branch add form offers one role checkbox, \"Branch address\".",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:127-131",
+      "quote": "[addressTypes.branch]: [addressRoles.branchAddress],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-031",
+      "statement": "Saving the add form with every field valid but no role ticked is refused with \"Select what this address can be used for\", shown in the error summary and appended to the question's accessible description after its hint.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:47-58, domain/ins/constants/address-book-types.ts:158-161",
+      "quote": "await expect(addPage.rolesGroup(legend)).toHaveAccessibleDescription(`${rolesQuestion.hint} Error: ${rolesQuestion.error}`);",
+      "confidence": "verbatim",
+      "note": "Proven on all three role-backed add forms, so at least one role is required on each."
+    },
+    {
+      "id": "repo-tests-p13-032",
+      "statement": "The roles error summary link moves focus to the first role option offered for that address type.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:59-60",
+      "quote": "await addPage.errorSummaryLink(rolesQuestion.error).click();\n      await expect(addPage.rolesOption(offeredRoles[0])).toBeFocused();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-033",
+      "statement": "When a field is invalid and no role is ticked, the error summary lists both messages in page order: the field error first, then the roles error.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:63-78",
+      "quote": "await expect(addPage.errorSummaryLinks).toHaveText([ADDRESS_FORM_VALIDATION_MESSAGES.nameRequired, rolesQuestion.error]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-034",
+      "statement": "Saving the add form with every offered role ticked lands on the address book list filtered to that address type's tab (/address-book?addressType=<type>), with that tab shown as the selected one.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:80-91, page-objects/ins/address-book/list-page.ts:23-25",
+      "quote": "await expect(pages.page).toHaveURL(insPages.addressBookList.tabUrlPattern(tab));\n      await expect(insPages.addressBookList.selectedTab).toHaveText(tab.label);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-035",
+      "statement": "A newly added address is found by searching the list for its name, where it is listed with a \"View <name>\" link and a roles cell naming every role it holds.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:92-95",
+      "quote": "await expect(insPages.addressBookList.viewLinks.first()).toHaveText(`View ${name}`);\n      const stored = await addressBookApi.findByName(name);\n      await expect(insPages.addressBookList.rolesCell(name)).toHaveText(rolesLabelOf(stored.roles));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-036",
+      "statement": "The roles a user ticks and the country they choose are both stored on the address record, the country as its code (choosing France stores FR).",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts:96-99",
+      "quote": "expect({ roles: [...stored.roles].sort(), countryCode: stored.countryCode }).toEqual({\n        roles: [...offeredRoles].sort(),\n        countryCode: FRANCE.value,\n      });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-037",
+      "statement": "A role is shown in the address book list's roles column as \"Place of origin\", \"Consignor\", \"Place of destination\", \"Consignee\", \"Importer\" or \"Branch\", several joined by a comma and a space.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:16-30",
+      "quote": "export const rolesLabelOf = (roles: readonly AddressRole[]): string => roles.map((role) => roleColumnLabels[role]).join(', ');",
+      "confidence": "verbatim",
+      "note": "mechanism: works on an address record's roles array, turning it into the list's Type cell text. The Branch role's column label is 'Branch' while its form label is 'Branch address' and its option label 'Branch Address'."
+    },
+    {
+      "id": "repo-tests-p13-038",
+      "statement": "The add-details form's primary button is \"Save and continue\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/add-page.ts:18-20",
+      "quote": "return this.page.getByRole('button', { name: 'Save and continue' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-039",
+      "statement": "\"Cancel and return to address book\" on the add-details form is a link, not a button, and it sits below Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:53-64",
+      "quote": "await expect(insPages.addressBookAdd.btnCancelAndReturnToAddressBook).toHaveCount(0);\n\n    await expectAbove(insPages.addressBookAdd.btnSaveAndContinue, insPages.addressBookAdd.linkCancelAndReturnToAddressBook);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-040",
+      "statement": "Cancel and return to address book returns to the address book list and saves nothing: the name entered is neither listed nor stored.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:66-70",
+      "quote": "await expectAddressBookList({ pages, insPages });\n    await expect(insPages.addressBookList.row(name)).toHaveCount(0);\n    expect(await addressBookApi.listAddresses(name)).toHaveLength(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-041",
+      "statement": "The edit page is at /address-book/<address id>/edit and is headed \"Edit address and contact details\".",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/edit-page.ts:7-13, tests/ins/e2e/features/address-book/address-book-edit.spec.ts:85-94",
+      "quote": "return `/address-book/${addressId}/edit`;\n  }\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Edit address and contact details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-042",
+      "statement": "The edit page asks only for the nine address and contact fields: it carries no roles question and no address type question.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:102-108",
+      "quote": "await expect(insPages.addressBookEdit.formLabels).toHaveText(ADDRESS_FORM_FIELD_LABELS_IN_ORDER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-043",
+      "statement": "The edit page groups its fields under the same \"Address\" and \"Contact details\" headings as the add form, and opens with the stored name in the name field.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:73-84",
+      "quote": "await expectFieldsGroupedUnderSections(insPages.addressBookEdit);\n    await expect(insPages.addressBookEdit.inputName).toHaveValue(name);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-044",
+      "statement": "The edit page labels the name field \"Name or organisation\", the same as the add form.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:30-33",
+      "quote": "await expect(insPages.addressBookEdit.inputName).toHaveAccessibleName(ADDRESS_FORM_FIELD_LABELS.name);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-045",
+      "statement": "The edit page opens with the record's stored country selected in the Country select, and lists Email address above Phone number.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:85-99",
+      "quote": "await expect(insPages.addressBookEdit.selectCountry).toHaveValue(address.countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-046",
+      "statement": "The edit page's buttons are \"Save changes\" and \"Cancel\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/edit-page.ts:15-21",
+      "quote": "get btnSaveChanges(): Locator {\n    return this.page.getByRole('button', { name: 'Save changes' });\n  }\n\n  get btnCancel(): Locator {\n    return this.page.getByRole('button', { name: 'Cancel' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-047",
+      "statement": "Saving an edit replaces the whole record: an optional field left blank is cleared on the stored address, while the fields still filled keep their values and the record stays undeleted.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:19-53",
+      "quote": "expect(stored.addressLine2 ?? '').toBe('');\n    expect(stored.county ?? '').toBe('');\n    expect(stored.townOrCity).toBe(original.townOrCity);\n    expect(stored.deleted).toBe(false);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-048",
+      "statement": "Saving an edit returns to the address book list with a success banner reading \"<name> address updated\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:45-46",
+      "quote": "await expect(insPages.addressBookList.successBanner).toContainText(`${renamed} address updated`);",
+      "confidence": "verbatim",
+      "note": "The banner is a GOV.UK notification banner titled 'Success' (page-objects/shared/govuk-banners.ts)."
+    },
+    {
+      "id": "repo-tests-p13-049",
+      "statement": "An edit made through the edit page keeps every role the record already held, even though the edit page never shows them.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:56-68",
+      "quote": "test('an edit through the edit page keeps every role', async ({ insPages, addressBookApi }) => {",
+      "confidence": "verbatim",
+      "note": "Proven for a record holding two roles, Place of origin and Consignor."
+    },
+    {
+      "id": "repo-tests-p13-050",
+      "statement": "After a rename, searching the address book for the new name shows one result, \"Showing 1-1 of 1\", whose View link points at the same address id as before.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:70-83",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-1 of 1');\n    await expect(insPages.addressBookList.viewLink(renamed)).toHaveAttribute('href', `/address-book/${created.id}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-051",
+      "statement": "After a refused save, cancelling and opening the edit page again shows no error summary and the stored name, so the refused entry is not carried back.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:110-126",
+      "quote": "await expect(insPages.addressBookEdit.errorSummary).toHaveCount(0);\n    await expect(insPages.addressBookEdit.inputName).toHaveValue(name);",
+      "confidence": "verbatim",
+      "note": "The add form behaves the other way round: claim repo-tests-p13-014 shows a refused add keeps what was entered."
+    },
+    {
+      "id": "repo-tests-p13-052",
+      "statement": "On an edit page opened with no return, Back opens the address's own details page, headed with the address name.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:129-137",
+      "quote": "await insPages.addressBookEdit.linkBack.click();\n\n      await expect(insPages.addressBookView.heading(name)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-053",
+      "statement": "On an edit page opened with no return, Cancel opens the address details and saves nothing: the stored name is unchanged.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:139-149",
+      "quote": "await expect(insPages.addressBookView.heading(name)).toBeVisible();\n      expect((await addressBookApi.getAddress(created.id)).name).toBe(name);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-054",
+      "statement": "An edit page opened with return=/ sends Back to the INS dashboard rather than to the address details.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:152-160",
+      "quote": "await insPages.addressBookEdit.openWithReturn(created.id, '/');\n\n      await insPages.addressBookEdit.linkBack.click();\n\n      await expect(insPages.dashboard.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-055",
+      "statement": "An edit page opened with return=/ sends Cancel to the INS dashboard and saves nothing.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:162-172",
+      "quote": "await expect(insPages.dashboard.heading).toBeVisible();\n      expect((await addressBookApi.getAddress(created.id)).name).toBe(name);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-056",
+      "statement": "A return is carried in the URL as a single `return` query parameter holding the URI-encoded destination.",
+      "kind": "integration",
+      "ref": "page-objects/ins/address-book/url-with-return.ts:1",
+      "quote": "export const urlWithReturn = (url: string, returnTo: string): string => `${url}?return=${encodeURIComponent(returnTo)}`;",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the address-book page URL a test opens, mirroring the parameter the INS frontend reads."
+    },
+    {
+      "id": "repo-tests-p13-057",
+      "statement": "Opening the edit page for an address id that does not exist returns the user to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:176-180, tests/ins/e2e/features/address-book/unknown-address-id.ts:1",
+      "quote": "export const UNKNOWN_ADDRESS_ID = 'ffffffffffffffffffffffff';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-058",
+      "statement": "Opening the edit page for an address id that does not exist, with an INS return, sends the user to that return rather than to the address book.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:182-186",
+      "quote": "await insPages.addressBookEdit.openWithReturn(UNKNOWN_ADDRESS_ID, '/');\n\n      await expect(insPages.dashboard.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-059",
+      "statement": "Opening the edit page for a malformed address id returns the user to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:188-192, tests/ins/e2e/features/address-book/unknown-address-id.ts:2",
+      "quote": "export const MALFORMED_ADDRESS_ID = 'not-a-valid-id';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-060",
+      "statement": "A return outside the allow-list, such as an address on another site, is ignored: the edit page's Back link points at the address's own details page and Cancel goes there.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:194-207",
+      "quote": "await insPages.addressBookEdit.openWithReturn(created.id, 'https://example.com');\n\n      await expect(insPages.addressBookEdit.linkBack).toHaveAttribute('href', viewUrl);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-061",
+      "statement": "Opening the edit page for an address belonging to another organisation returns the user to the address book list, and the address's name is not shown anywhere on the page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:209-213, tests/ins/e2e/features/address-book/expect-other-organisation-address-returns-to-list.ts:20-23",
+      "quote": "await expectAddressBookList({ pages, insPages });\n    await expect(pages.page.getByText(name)).toHaveCount(0);",
+      "confidence": "verbatim",
+      "note": "The record is created through an address book client scoped to its own generated organisation id, so the proof is of organisation scoping on the record pages."
+    },
+    {
+      "id": "repo-tests-p13-062",
+      "statement": "Opening the edit page for an address that has been deleted returns the user to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:215-222",
+      "quote": "await addressBookApi.deleteAddress(created.id);\n\n      await insPages.addressBookEdit.open(created.id);\n\n      await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-063",
+      "statement": "Saving an edit of an address that was deleted while the form was open returns the user to the address book list and leaves the record deleted with its original name: the stale edit is not applied.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:224-240",
+      "quote": "const { deleted, name: storedName } = await addressBookApi.getAddress(created.id);\n      expect({ deleted, name: storedName }).toEqual({ deleted: true, name });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-064",
+      "statement": "An address whose stored country code is not one the Country select offers opens the edit page with the select on its blank option rather than showing the stored code.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:243-251, domain/ins/constants/trader-address.ts:4",
+      "quote": "await expect(insPages.addressBookEdit.selectCountry).toHaveValue('');",
+      "confidence": "verbatim",
+      "note": "The unoffered country is the code XX in domain/ins/constants/trader-address.ts."
+    },
+    {
+      "id": "repo-tests-p13-065",
+      "statement": "Saving the edit page without choosing a country is refused with \"Select a country\", shown in the error summary and against the Country select, and the stored country code is left as it was.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts:252-259",
+      "quote": "await expect(insPages.addressBookEdit.errorSummaryLink(ADDRESS_FORM_VALIDATION_MESSAGES.countryRequired)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-066",
+      "statement": "The address details page is at /address-book/<address id> and its level-1 heading is the address's own name.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/view-page.ts:5-11",
+      "quote": "expectedUrl(addressId: string): string {\n    return `/address-book/${addressId}`;\n  }\n\n  heading(addressName: string): Locator {\n    return this.page.getByRole('heading', { level: 1, name: addressName });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-067",
+      "statement": "The address details page lists nine summary rows, in order: Name or organisation, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country, Email address, Phone number.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:9-29",
+      "quote": "await expect(insPages.addressBookView.summaryListKeys).toHaveText([\n        'Name or organisation',\n        'Address line 1',\n        'Address line 2 (optional)',\n        'Town or city',\n        'County (optional)',\n        'Postcode or Zip code',\n        'Country',\n        'Email address',\n        'Phone number',\n      ]);",
+      "confidence": "verbatim",
+      "note": "The two optional rows keep the \"(optional)\" suffix on the details page, where no field is being entered."
+    },
+    {
+      "id": "repo-tests-p13-068",
+      "statement": "When an address holds neither an address line 2 nor a county, the details page shows neither row: it lists only the seven rows for the fields the record holds.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:31-45",
+      "quote": "await expect(insPages.addressBookView.summaryListKeys).toHaveText([\n      'Name or organisation',\n      'Address line 1',\n      'Town or city',\n      'Postcode or Zip code',\n      'Country',\n      'Email address',\n      'Phone number',\n    ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-069",
+      "statement": "The address details page offers Edit and Delete, and when the page was reached with a return they carry it on: /address-book/<id>/edit?return=%2F and /address-book/<id>/delete?return=%2F.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:48-54",
+      "quote": "await expect(insPages.addressBookView.btnEdit).toHaveAttribute('href', `/address-book/${created.id}/edit?return=%2F`);\n      await expect(insPages.addressBookView.btnDelete).toHaveAttribute('href', `/address-book/${created.id}/delete?return=%2F`);",
+      "confidence": "verbatim",
+      "note": "Both are found by the button role yet carry an href, so they are links styled as buttons."
+    },
+    {
+      "id": "repo-tests-p13-070",
+      "statement": "On an address details page reached with an INS return, Back follows that return to the INS dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:56-58",
+      "quote": "await insPages.addressBookView.linkBack.click();\n\n      await expect(insPages.dashboard.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-071",
+      "statement": "A return naming a page on another frontend, such as the plants frontend's high-risk plants journey, is ignored on the address details page: Back goes to the address book list.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:61-69",
+      "quote": "await insPages.addressBookView.openWithReturn(created.id, `${plantsOrigin}/high-risk-plants`);\n      await insPages.addressBookView.linkBack.click();\n\n      await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-072",
+      "statement": "An address details page opened for an unknown address id with an INS return goes to that return; with no return it goes to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:73-83",
+      "quote": "test('an unknown address id carrying an INS return goes back to that return', async ({ insPages }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-073",
+      "statement": "An address details page opened for a malformed address id returns to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:85-89",
+      "quote": "await insPages.addressBookView.open(MALFORMED_ADDRESS_ID);\n\n      await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-074",
+      "statement": "An address details page opened for another organisation's address returns to the address book list without showing that address's name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:91-95",
+      "quote": "test(\"another organisation's address returns to the address book\", async ({ pages, insPages, isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-075",
+      "statement": "An address details page opened for a deleted address returns to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-view.spec.ts:97-104",
+      "quote": "await addressBookApi.deleteAddress(created.id);\n\n    await insPages.addressBookView.open(created.id);\n\n    await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-076",
+      "statement": "The delete confirmation page is at /address-book/<address id>/delete and is headed \"Delete this address?\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/delete-page.ts:5-11",
+      "quote": "expectedUrl(addressId: string): string {\n    return `/address-book/${addressId}/delete`;\n  }\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Delete this address?' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-077",
+      "statement": "The delete confirmation page summarises the address in a single summary row keyed \"Address\", whose value holds the name, address line 1, address line 2, town or city, county, postcode and country.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:40-52",
+      "quote": "await expect(insPages.addressBookDelete.summaryListKeys).toHaveText(['Address']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-078",
+      "statement": "The delete confirmation page reads \"Confirm that you want to delete this address.\"",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/delete-page.ts:13-15, tests/ins/e2e/features/address-book/address-book-delete.spec.ts:53",
+      "quote": "return this.page.getByText('Confirm that you want to delete this address.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-079",
+      "statement": "The delete confirmation page warns \"Deletions are permanent and you cannot undo this.\"",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/delete-page.ts:17-19, tests/ins/e2e/features/address-book/address-book-delete.spec.ts:54",
+      "quote": "return this.page.getByText('Deletions are permanent and you cannot undo this.');",
+      "confidence": "verbatim",
+      "note": "The copy says a deletion cannot be undone, while claim repo-tests-p13-081 proves the record is tombstoned rather than removed."
+    },
+    {
+      "id": "repo-tests-p13-080",
+      "statement": "The delete confirmation page's controls are a \"Yes, delete\" button and a \"No, cancel\" link.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/delete-page.ts:21-27",
+      "quote": "get btnConfirm(): Locator {\n    return this.page.getByRole('button', { name: 'Yes, delete', exact: true });\n  }\n\n  get linkCancel(): Locator {\n    return this.page.getByRole('link', { name: 'No, cancel' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-081",
+      "statement": "Deleting an address through the pages tombstones the record rather than removing it: the stored address is still readable by its id, marked deleted, and keeps its name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:12-27",
+      "quote": "const tombstone = await addressBookApi.getAddress(created.id);\n    expect(tombstone.deleted).toBe(true);\n    expect(tombstone.name).toBe(name);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-082",
+      "statement": "A completed deletion returns to the address book list with a success banner reading \"<name> address deleted\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:20-21",
+      "quote": "await expect(insPages.addressBookList.successBanner).toContainText(`${name} address deleted`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-083",
+      "statement": "A deleted address is no longer found by searching the address book for its name: the list shows \"Showing 0 of 0\" with no rows.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:22-23, tests/ins/e2e/features/address-book/expect-address-book-list.ts:24-29",
+      "quote": "await expect(addressBookList.resultsLine).toHaveText('Showing 0 of 0');\n  await expect(addressBookList.columnHeaders).toHaveText(['Name', 'Type', 'Address', 'Country', 'Action']);\n  await expect(addressBookList.bodyRows).toHaveCount(0);",
+      "confidence": "verbatim",
+      "note": "The list's own column headers (Name, Type, Address, Country, Action) come in through the helper this slice's delete tests use; the list specs themselves are part 12's."
+    },
+    {
+      "id": "repo-tests-p13-084",
+      "statement": "No, cancel on the delete page returns to the address's own details page, deletes nothing, and shows no success banner on the address book afterwards.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:56-63",
+      "quote": "expect((await addressBookApi.getAddress(created.id)).deleted).toBe(false);\n      await insPages.addressBookList.open();\n      await expect(insPages.addressBookList.successBanner).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-085",
+      "statement": "On a delete page reached with a return, both the No, cancel link and the Back link point at the address details page carrying that same return.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:67-81",
+      "quote": "await expect(insPages.addressBookDelete.linkCancel).toHaveAttribute('href', viewHref);\n      await expect(insPages.addressBookDelete.linkBack).toHaveAttribute('href', viewHref);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-086",
+      "statement": "Yes, delete on a delete page reached with a return lands the user on that return, with the record deleted.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:83-87",
+      "quote": "await insPages.addressBookDelete.confirm();\n\n      await expect(insPages.dashboard.heading).toBeVisible();\n      expect((await addressBookApi.getAddress(created.id)).deleted).toBe(true);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-087",
+      "statement": "When the return names the deleted address's own details page, a completed deletion lands on the address book list with the deleted banner instead of on a page that no longer exists.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:90-99",
+      "quote": "await insPages.addressBookDelete.openWithReturn(created.id, `/address-book/${created.id}`);\n      await insPages.addressBookDelete.confirm();\n\n      await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-088",
+      "statement": "A delete page opened for an unknown address id returns to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:103-107",
+      "quote": "await insPages.addressBookDelete.open(UNKNOWN_ADDRESS_ID);\n\n      await expectAddressBookList({ pages, insPages });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-089",
+      "statement": "A delete page opened for an address that is already deleted returns to the address book list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:109-116",
+      "quote": "test(\"a deleted address's delete page returns to the address book\", async ({ pages, insPages, addressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-090",
+      "statement": "Confirming a deletion for an address deleted meanwhile changes nothing, shows no success banner, and leaves the record deleted with its original name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:118-134",
+      "quote": "await expectAddressBookList({ pages, insPages });\n      await expect(insPages.addressBookList.successBanner).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-091",
+      "statement": "An address one user deletes is gone for another user who signs in separately and searches for it.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-delete.spec.ts:137-167",
+      "quote": "test('an address deleted by one user is gone for another in the same organisation', async ({",
+      "confidence": "verbatim",
+      "note": "The title says \"in the same organisation\" but the second user is opened with users.sarah.crn and the Gatwick Airport SBI, in a cold-start browser context, so the assertion holds whichever organisation she lands in. Recorded as the suite states it."
+    },
+    {
+      "id": "repo-tests-p13-092",
+      "statement": "The address form's required-field messages read \"Enter a name or organisation\", \"Enter a postcode or Zip code\", \"Select a country\" and \"Enter a phone number\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-form.ts:29-37, tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:9-18",
+      "quote": "nameRequired: 'Enter a name or organisation',\n  addressLine1Required: 'Enter address line 1',\n  townOrCityRequired: 'Enter a town or city',\n  postcodeRequired: 'Enter a postcode or Zip code',\n  countryRequired: 'Select a country',\n  emailRequired: 'Enter an email address',\n  phoneRequired: 'Enter a phone number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-093",
+      "statement": "Saving the add form with a role ticked and the name, postcode, country and phone number left blank keeps the user on the add form and shows exactly those four messages, in field order, both in the error summary and as each field's own accessible description.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:22-42",
+      "quote": "await expect(form.errorSummaryLinks).toHaveText([\n    ADDRESS_FORM_VALIDATION_MESSAGES.nameRequired,\n    ADDRESS_FORM_VALIDATION_MESSAGES.postcodeRequired,\n    ADDRESS_FORM_VALIDATION_MESSAGES.countryRequired,\n    ADDRESS_FORM_VALIDATION_MESSAGES.phoneRequired,\n  ]);",
+      "confidence": "verbatim",
+      "note": "Address line 1, town or city and email address were filled in this case, so the four messages are the only ones the page could show."
+    },
+    {
+      "id": "repo-tests-p13-094",
+      "statement": "Saving the edit form with the name, postcode and phone number cleared and no country chosen shows the same four messages and saves nothing: the stored record still matches what it held.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:45-67",
+      "quote": "await expectOnlyFourMessagesAtTopAndAgainstFields(insPages.addressBookEdit);\n    expect(await addressBookApi.getAddress(created.id)).toMatchObject(address);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-095",
+      "statement": "The address book API refuses a create with a blank name, postcode, country code and phone with HTTP 400 and a problem body whose type is https://api.cdp.defra.cloud/problems/validation-error.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:69-77, tests/ins/e2e/features/address-book/expected-api-refusal.ts:9-13",
+      "quote": "const error = await expectRefusalWith(pending, 400);\n  const body = JSON.parse(error.responseBody) as ValidationProblem;\n  expect(body.type).toBe('https://api.cdp.defra.cloud/problems/validation-error');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-096",
+      "statement": "The API's refusal body keys its messages by field name — name, postcode, countryCode and phone — and each carries the same wording the form shows.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:78-81",
+      "quote": "expect(body.errors.name).toContain(ADDRESS_FORM_VALIDATION_MESSAGES.nameRequired);\n    expect(body.errors.postcode).toContain(ADDRESS_FORM_VALIDATION_MESSAGES.postcodeRequired);\n    expect(body.errors.countryCode).toContain(ADDRESS_FORM_VALIDATION_MESSAGES.countryRequired);\n    expect(body.errors.phone).toContain(ADDRESS_FORM_VALIDATION_MESSAGES.phoneRequired);",
+      "confidence": "verbatim",
+      "note": "The API names the country field countryCode while the form labels it Country."
+    },
+    {
+      "id": "repo-tests-p13-097",
+      "statement": "A create the API refuses stores nothing: searching for the refused record's town finds no addresses.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts:82",
+      "quote": "expect(await addressBookApi.listAddresses(searchMarkerTown)).toHaveLength(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-098",
+      "statement": "Address line 2 and County carry no validation message, so both are optional on the add and edit forms as their labels say.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-form.ts:29-37",
+      "quote": "export const ADDRESS_FORM_VALIDATION_MESSAGES = {\n  nameRequired: 'Enter a name or organisation',",
+      "confidence": "inferred",
+      "note": "Inferred from the message list holding an entry for every field but those two, and from claim repo-tests-p13-047, where an edit saves with both blank."
+    },
+    {
+      "id": "repo-tests-p13-099",
+      "statement": "No test of the INS add or edit form proves the messages \"Enter address line 1\", \"Enter a town or city\" or \"Enter an email address\" are shown, even though the suite holds them beside the four it does prove.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-form.ts:31-35; searched tests/ins, page-objects, domain, utils and flows for addressLine1Required, townOrCityRequired and emailRequired",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The three are asserted only by tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:367-370, which is part 7's slice, so the INS-side form's behaviour on these three fields is unproven end to end."
+    },
+    {
+      "id": "repo-tests-p13-100",
+      "statement": "Opening the add page with a hand-off naming a journey type the service does not recognise shows \"Page not found\".",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-handshake-guard.spec.ts:10-14",
+      "quote": "await insPages.addressBookAdd.open({ query: unregisteredJourneyHandshake });\n\n    await expect(pages.page.getByText('Page not found')).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The refused hand-off names a fulfilment id the registry does list, under the journey type 'not-a-journey'."
+    },
+    {
+      "id": "repo-tests-p13-101",
+      "statement": "The address book's journey hand-off routes are only proven against the local compose stack: both hand-off specs skip themselves in any other environment.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-handshake-guard.spec.ts:6-8, tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:14-16",
+      "quote": "skipUnlessComposeEnvironment('INS handshake routes are only exercised against the compose stack');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-102",
+      "statement": "A hand-off into the add page carries four query values: a journey type, a notification id, a fulfilment id and a hand-off token.",
+      "kind": "integration",
+      "ref": "domain/ins/constants/address-book-journey.ts:19-24, 41-46",
+      "quote": "export interface JourneyHandshake extends Record<string, string> {\n  'journey-type': string;\n  'notification-id': string;\n  'fulfilment-id': string;\n  'handshake-token': string;\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-103",
+      "statement": "The germinal products notification journey hands off to the address book under the journey type \"gbn-ag-germinal-products\".",
+      "kind": "integration",
+      "ref": "domain/ins/constants/address-book-journey.ts:5-7, 48-49",
+      "quote": "const journeyTypes = {\n  gbnAgGerminalProducts: 'gbn-ag-germinal-products',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-104",
+      "statement": "An add page reached from a germinal products hand-off shows the add page heading and its Back link points at that journey's return on the animals frontend.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:27-29",
+      "quote": "await expect(insPages.addressBookAdd.linkBack).toHaveAttribute('href', journeyReturnUrlFor(handshake));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-105",
+      "statement": "An add page reached from a germinal products hand-off offers \"Cancel and return to hub\" as a link, pointing at the journey's return with landing=cancel.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:30-34, page-objects/ins/address-book/add-page.ts:38-40",
+      "quote": "await expect(insPages.addressBookAdd.linkCancelAndReturnToHub).toHaveAttribute(\n      'href',\n      journeyReturnUrlFor(handshake, { landing: 'cancel' }),\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-106",
+      "statement": "An add page reached from a journey hand-off is saved with a \"Save and select\" button rather than Save and continue.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/add-page.ts:30-32, tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:36",
+      "quote": "return this.page.getByRole('button', { name: 'Save and select', exact: true });",
+      "confidence": "verbatim",
+      "note": "The page object also holds a 'Save and return to address page' button, which no spec in this slice uses."
+    },
+    {
+      "id": "repo-tests-p13-107",
+      "statement": "Save and select on a germinal products hand-off stores the address the form was given and gives it the consignor role, without the user ticking any role.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:35-44, domain/ins/constants/address-book-journey.ts:30-32",
+      "quote": "expect(stored).toMatchObject({ ...addressWithLineTwoAndCounty(name), roles: [ownRoleByParty[journeyParties.consignor]] });",
+      "confidence": "verbatim",
+      "note": "The role comes from the party the hand-off names, so a journey-reached add form does not ask the roles question the address-book-reached one does."
+    },
+    {
+      "id": "repo-tests-p13-108",
+      "statement": "Save and select returns the user to the journey's own return path with landing=select and the new address's id as query values, so the journey can select the address it was given.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-germinal-products-handshake.spec.ts:38-41",
+      "quote": "const returnUrl = new URL(pages.page.url());\n    expect(returnUrl.searchParams.get('landing')).toBe('select');\n    expect(returnUrl.searchParams.get('addressId')).toBeTruthy();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-109",
+      "statement": "A journey's return from the address book is a page on the animals frontend at <set base>/notifications/<notification id>/address-return, carrying the fulfilment id and the hand-off token, plus an addressId and a landing where one applies.",
+      "kind": "integration",
+      "ref": "domain/ins/constants/address-book-journey.ts:58-77",
+      "quote": "const url = new URL(\n    `${getAnimalsFrontendBaseUrl()}${setBase}/notifications/${encodeURIComponent(handshake['notification-id'])}/address-return`,\n  );\n  url.searchParams.set('fulfilment-id', handshake['fulfilment-id']);\n  url.searchParams.set('handshake-token', handshake['handshake-token']);",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the URL a test asserts against, mapping a hand-off's journey type to its set base (germinal products) on the animals frontend."
+    },
+    {
+      "id": "repo-tests-p13-110",
+      "statement": "Signing in and opening /address-book renders the Address book page with no error summary, and this is the address book's smoke check.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:5-10",
+      "quote": "test('renders the address book after signing in', { tag: ['@smoke', '@cross-browser'] }, async ({ pages, insPages }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-111",
+      "statement": "Five single-record checks are tagged to run across browsers: the address book opening, the add form's field grouping and order, the edit page's layout and stored country, the details page's full summary rows, and the delete page's summary.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book.spec.ts:5, address-book-add-form.spec.ts:21, address-book-edit.spec.ts:86-87, address-book-view.spec.ts:10-11, address-book-delete.spec.ts:31-32",
+      "quote": "{ tag: '@cross-browser' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-112",
+      "statement": "A stored address record holds a name, address line 1, an optional address line 2, a town or city, an optional county, a postcode, a country code, a phone number, an email address, an organisation id, a status, a created and a modified timestamp, a version and the roles it can play.",
+      "kind": "data",
+      "ref": "domain/ins/models/db/address-document.ts:4-21",
+      "quote": "export type AddressDocument = Partial<HeldRoles> & {\n  _id: ObjectId;\n  name: string;\n  addressLine1: string;\n  addressLine2?: string;\n  townOrCity: string;\n  county?: string;\n  postcode: string;\n  countryCode: string;\n  phone: string;\n  email: string;\n  organisationId: string;\n  status: string;\n  createdAt: Date;\n  modifiedAt: Date;\n  version: number;",
+      "confidence": "verbatim",
+      "note": "Roles are optional on the stored document, so a record can be held with none."
+    },
+    {
+      "id": "repo-tests-p13-113",
+      "statement": "An address can hold any of six roles: place of origin, consignor, place of destination, consignee, importer and branch address.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:20-27",
+      "quote": "export const addressRoles = {\n  placeOfOrigin: 'PLACE_OF_ORIGIN',\n  consignor: 'CONSIGNOR',\n  placeOfDestination: 'PLACE_OF_DESTINATION',\n  consignee: 'CONSIGNEE',\n  importer: 'IMPORTER',\n  branchAddress: 'BRANCH_ADDRESS',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-114",
+      "statement": "An address book record created by a test is soft-deleted after that test, one record at a time, and a delete that fails is logged rather than failing the test.",
+      "kind": "non-functional",
+      "ref": "utils/address-book-cleanup.ts:33-46, fixtures/ui.ts:179-183",
+      "quote": "/** Soft-deletes every tracked record one at a time, logging each delete that fails. Never throws. */",
+      "confidence": "verbatim",
+      "note": "mechanism: tracks the ids a test created so the shared end-to-end organisation does not fill up; it says nothing about what a user can do."
+    },
+    {
+      "id": "repo-tests-p13-115",
+      "statement": "A test that needs an address another organisation owns gets one through an address book client scoped to a freshly generated organisation id, so organisation scoping is proven against a record no other test can see.",
+      "kind": "non-functional",
+      "ref": "fixtures/ui.ts:184-188",
+      "quote": "const api = new RecordTrackingAddressBookApiClient(request, { organisationId: `e2e-isolated-organisation-${randomUUID()}` });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-116",
+      "statement": "The address book list is at /address-book and headed \"Address book\", and it is where the add, edit and delete journeys start and end.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/list-page.ts:11-15, tests/ins/e2e/features/address-book/expect-address-book-list.ts:6-15",
+      "quote": "readonly expectedUrl = '/address-book';\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Address book' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-117",
+      "statement": "Every name a test gives an address book record in the shared end-to-end organisation is registered in one list, so a record left behind can be told from a trader's own.",
+      "kind": "non-functional",
+      "ref": "domain/shared/constants/test-record-names.ts:10-16, 206-209",
+      "quote": "The names tests give the address book records they create in the shared e2e organisation.",
+      "confidence": "verbatim",
+      "note": "mechanism: matches a stored record name against the templates the suite generates; the single-record specs in this part contribute the Edit *, View *, Delete *, Form *, Kept Entry, Abandoned Entry, Type Step, Cancelled, Message, Germinal Products, Other Org, All Roles, No Role and Invalid Field entries."
+    },
+    {
+      "id": "repo-tests-p13-118",
+      "statement": "A test reaches the add journey through the address book list or through a direct open of the type page, never by its own clicks: the suite holds one method per entry point (to the type page, to the type page from the list, to the add form, to the add form from the list, to the add form from a journey hand-off, and the whole add).",
+      "kind": "non-functional",
+      "ref": "flows/ins/journey.ts:19-87",
+      "quote": "/** Adds an address from the address book list: chooses the type, fills the form, ticks the roles and saves, landing on the list. */",
+      "confidence": "verbatim",
+      "note": "mechanism: the suite's own navigation helpers. Their default address type is Origin or Consignor and their default roles are the first role that type offers."
+    },
+    {
+      "id": "repo-tests-p13-119",
+      "statement": "The address book's add journey is three steps for an address: press Add a new address on the list, choose an address type, then fill the add-details form with its roles question and save.",
+      "kind": "behaviour",
+      "ref": "flows/ins/journey.ts:32-87, tests/ins/e2e/features/address-book/address-book-add-type.spec.ts:25-46",
+      "quote": "await this.toAddressFormFromList({ addressType, ...openOptions });\n    await this.insPages.addressBookAdd.fill(details);\n    await this.insPages.addressBookAdd.tickRoles(roles);\n    await this.insPages.addressBookAdd.saveAndContinue();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-120",
+      "statement": "No spec in this slice proves an address search or lookup step on the add journey: the only way to enter an address is by hand on the add-details form.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts:18",
+      "quote": "test.describe('The add-details form for an address entered by hand', () => {",
+      "confidence": "verbatim",
+      "note": "The describe name states the form is for an address entered by hand; no search or lookup step appears between the type step and the details form in any spec or flow method in this slice."
+    },
+    {
+      "id": "repo-tests-p13-121",
+      "statement": "A saved, updated or deleted address is confirmed by a notification banner titled \"Success\", a refused form shows an error summary headed \"There is a problem\", and the link back from any of these pages is named exactly \"Back\".",
+      "kind": "copy",
+      "ref": "page-objects/shared/govuk-banners.ts:3-9, page-objects/shared/base-page.ts:77-87, 138-140",
+      "quote": "return page.locator('.govuk-error-summary').filter({ has: page.getByRole('heading', { name: 'There is a problem' }) });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-122",
+      "statement": "The address details page and the delete confirmation page both show their record as a description list, each row a key and a value, and both are opened by the same two routes: plain, or carrying a return.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/record-page.ts:5-24, page-objects/shared/summary-list.ts:3-8",
+      "quote": "get summaryListKeys(): Locator {\n    return this.page.getByRole('term');\n  }\n\n  get summaryListValues(): Locator {\n    return this.page.getByRole('definition');\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p13-123",
+      "statement": "The suite's standard refused-form case for an address is the same four fields left blank — name, country, postcode and phone number — and the accessibility specs drive the add and edit forms into their error state with it.",
+      "kind": "non-functional",
+      "ref": "domain/ins/constants/address-details.ts:4-8",
+      "quote": "export const addressDetailsMissingRequiredFields: AddressDetails = {\n  ...addFormAddressWithLineTwoAndCounty('', ''),\n  postcode: '',\n  phone: '',\n};",
+      "confidence": "verbatim",
+      "note": "No spec in this slice uses this constant: it is read by tests/ins/a11y/address-book-error-state.spec.ts and address-book-viewports.spec.ts, which another part owns. It matches the four messages claim repo-tests-p13-093 proves."
+    },
+    {
+      "id": "repo-tests-p13-124",
+      "statement": "The shared end-to-end address book is kept at exactly one live record per journey fixture name: a missing one is created, one whose details or roles differ is rewritten, and any extra with the same name is soft-deleted.",
+      "kind": "non-functional",
+      "ref": "flows/shared/address-book-seed.ts:180-199",
+      "quote": "/**\n * Ensures one live record per journey fixture name, holding the fixture's details and roles.\n * Creates a missing record, rewrites one that differs and soft-deletes any extra with the name.\n */",
+      "confidence": "verbatim",
+      "note": "mechanism: reconciles the seeded records against the fifteen fixtures in E2E_ADDRESS_BOOK_FIXTURES before journeys run. No spec in this slice seeds, so it is context for the journey specs other parts own."
+    }
+  ]
+}

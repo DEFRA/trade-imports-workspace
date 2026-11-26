@@ -1,0 +1,2211 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 16 of 16: the tests repo's own shared configuration, scripts and prose, which say what is run where and what the suite claims to prove. Read in full: README.md (666 lines, with the run-command, per-domain script, domain/front-end, PROFILE and CDP-domain-profile tables and the prose sections on test configuration, address-book records made by a test, resetting the shared e2e address book, commodity lines, DLQ specs, authenticated session reuse, asserting which journey page is open, domains/suites/projects, local testing, visual regression, security testing, GitHub Actions and the CDP Portal), AGENTS.md (the layout table and the writing-specs, journey-answers and code-quality rules; CLAUDE.md is a one-line include of AGENTS.md), docs/animals-journey.md, docs/a11y.md, docs/security.md, docs/cross-browser.md, tests/animals/cross-browser/README.md, tests/ins/cross-browser/README.md, playwright.config.ts, playwright.docker-compose.config.ts, package.json, config/ (service-base-urls.ts, service-tags.ts, timeouts.ts, file-upload-timeouts.ts, users.ts, cdp-proxy.ts, dynamics.ts, dataverse.ts, zap.ts), .env.example (read with git show HEAD:.env.example, the Read tool and cat being refused by this session's permissions), Dockerfile, entrypoint.sh, browserstack.yml, bin/lint-suite-tags.ts, bin/assert-stack.sh, bin/cdp-session-probe.ts, bin/publish-tests.sh, bin/run-browserstack.ts, eslint.config.mjs, eslint-rules/code-quality.js and all six files under .github/workflows (check-pull-request.yml, workspace-e2e-tests.yml, scheduled-security-scan.yml, cleanup-e2e-reports.yml, publish.yml, publish-branch.yml). Read as supporting context, because the two configs only make sense with it: utils/playwright/shared-config.ts, utils/playwright/domain-base-urls.ts and utils/playwright/cdp-service-url.ts, plus .nvmrc. Covered: every domain and test type the suite can run with its npm script, config and target; every CDP PROFILE and its domain-scoped form; every type tag and service tag and the rule each selects by, including what bin/lint-suite-tags.ts enforces; the single default chromium project, the retries, workers, timeouts, reporters and per-service base URLs of each target; the identities the suite signs in as, with no credential values; the rules and decisions the four docs and the two cross-browser READMEs state; what the repo's own lint rules hold a test to; and the absence of any rulings or decisions ledger. No tests/animals or tests/ins spec is claimed here.",
+  "claims": [
+    {
+      "id": "repo-tests-p16-001",
+      "statement": "The suite holds end-to-end, accessibility and security tests for the animals frontend, its admin portal, the high-risk plants frontend and the Import Notification Service front door including the address book, split by domain so each service's deploy runs only its own suite.",
+      "kind": "non-functional",
+      "ref": "README.md:3",
+      "quote": "End-to-end, accessibility and security tests for the trade imports services — the animals frontend and its admin portal, the high-risk plants frontend, and the Import Notification Service front door (including the address book). Tests are split by domain so each service's deploy can run only its own suite.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-002",
+      "statement": "`npm test` runs the end-to-end suite against the deployed CDP services and produces a report.",
+      "kind": "behaviour",
+      "ref": "README.md:83 (Running Tests table)",
+      "quote": "| `npm test`                                    | E2E suite, excluding `@compose` and `@a11y`            | CDP                  | `playwright.config.ts`                | ✓                |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-003",
+      "statement": "The CDP end-to-end run leaves out four tags, not the two the README's table names: @compose, @a11y, @active and @dynamics.",
+      "kind": "behaviour",
+      "ref": "package.json:32",
+      "quote": "\"test\": \"npm run _clean_and_test -- --grep-invert '@compose|@a11y|@active|@dynamics'\",",
+      "confidence": "verbatim",
+      "note": "Ambiguity recorded, not resolved: README.md:83 says `npm test` excludes `@compose` and `@a11y` only, while the script also excludes @active and @dynamics."
+    },
+    {
+      "id": "repo-tests-p16-004",
+      "statement": "`npm run test:a11y` runs the accessibility suite, selected by the @a11y tag, against CDP.",
+      "kind": "behaviour",
+      "ref": "README.md:84; package.json:33",
+      "quote": "\"test:a11y\": \"npm run _clean_and_test -- --grep '@a11y'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-005",
+      "statement": "`npm run test:dynamics` runs the Dynamics integration suite, selected by the @dynamics tag, against CDP.",
+      "kind": "behaviour",
+      "ref": "README.md:85; package.json:34",
+      "quote": "\"test:dynamics\": \"npm run _clean_and_test -- --grep '@dynamics'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-006",
+      "statement": "`npm run test:cross-browser` runs the @cross-browser tests against CDP in branded Chrome, Firefox, WebKit, an emulated iPhone 17 and an emulated Pixel 10, leaving out @compose tests.",
+      "kind": "behaviour",
+      "ref": "package.json:35",
+      "quote": "\"test:cross-browser\": \"npm run _clean_and_test -- --grep '@cross-browser' --grep-invert '@compose' --project=chrome --project=firefox --project=webkit --project=mobile-webkit --project=mobile-chromium\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-007",
+      "statement": "`npm run test:browserstack` runs the @cross-browser suite on BrowserStack against CDP.",
+      "kind": "behaviour",
+      "ref": "README.md:87; package.json:41",
+      "quote": "\"test:browserstack\": \"npm run _browserstack_clean_and_test -- --grep '@cross-browser'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-008",
+      "statement": "`npm run test:docker-compose` runs the end-to-end and @compose suites against the local docker-compose stack, leaving out @a11y, @active and @dynamics.",
+      "kind": "behaviour",
+      "ref": "README.md:88; package.json:42",
+      "quote": "\"test:docker-compose\": \"npm run _clean_and_test_docker_compose -- --grep-invert '@a11y|@active|@dynamics'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-009",
+      "statement": "A @compose-tagged test runs only against the docker-compose stack, because the CDP end-to-end run excludes that tag and the docker-compose run does not.",
+      "kind": "rule",
+      "ref": "package.json:32 and package.json:42",
+      "quote": "\"test\": \"npm run _clean_and_test -- --grep-invert '@compose|@a11y|@active|@dynamics'\",",
+      "confidence": "inferred",
+      "note": "mechanism: tag selection in the npm scripts. Follows because only the CDP scripts invert @compose; README.md:88 labels the docker-compose run \"E2E + E2E integration (`@compose`) test suites\"."
+    },
+    {
+      "id": "repo-tests-p16-010",
+      "statement": "`npm run test:docker-compose:a11y` runs the @a11y suite against the docker-compose stack.",
+      "kind": "behaviour",
+      "ref": "README.md:89; package.json:43",
+      "quote": "\"test:docker-compose:a11y\": \"npm run _clean_and_test_docker_compose -- --grep '@a11y'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-011",
+      "statement": "`npm run test:docker-compose:visual` runs the visual regression suite, selected by the @visual tag, against the docker-compose stack.",
+      "kind": "behaviour",
+      "ref": "README.md:90; package.json:44",
+      "quote": "\"test:docker-compose:visual\": \"npm run _clean_and_test_docker_compose -- --grep '@visual'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-012",
+      "statement": "`npm run test:docker-compose:security` runs a ZAP passive scan across the end-to-end suite against the docker-compose stack and then the gate.",
+      "kind": "behaviour",
+      "ref": "README.md:93; package.json:47",
+      "quote": "\"test:docker-compose:security\": \"export PROFILE=security && npm run _test_docker_compose_security && npm run _zap_run_and_gate\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-013",
+      "statement": "The docker-compose passive security run leaves out @a11y, @visual, @active and @dynamics and raises each test's timeout to 60 seconds.",
+      "kind": "behaviour",
+      "ref": "package.json:28",
+      "quote": "\"_test_docker_compose_security\": \"npm run _zap_clean_and_test_docker_compose -- --grep-invert '@a11y|@visual|@active|@dynamics' --timeout=60000\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-014",
+      "statement": "`npm run test:docker-compose:security:active` runs the @active suite alone, at a 60-second test timeout, against the docker-compose stack and then the gate.",
+      "kind": "behaviour",
+      "ref": "README.md:94; package.json:29 and package.json:48",
+      "quote": "\"test:docker-compose:security:active\": \"export PROFILE=security:active && npm run _test_docker_compose_security_active && npm run _zap_run_and_gate\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-015",
+      "statement": "`npm run test:docker-compose:ci` runs the end-to-end suite against the docker-compose stack for the workspace CI stack job, reporting through blob, list and allure-playwright.",
+      "kind": "behaviour",
+      "ref": "README.md:95; package.json:49",
+      "quote": "\"test:docker-compose:ci\": \"npm run _test_docker_compose -- --grep-invert '@a11y|@active|@dynamics' --reporter=blob,list,allure-playwright\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-016",
+      "statement": "The animals domain can be run against the docker-compose stack as end-to-end, accessibility, visual, cross-browser, BrowserStack, passive security and scoped active security suites.",
+      "kind": "behaviour",
+      "ref": "README.md:106 (Domain table row `animals`); package.json:50-56",
+      "quote": "| `animals`       | `test:docker-compose:animals`       | `test:docker-compose:animals:a11y`       | `test:docker-compose:animals:visual` | `test:docker-compose:animals:security`       | `test:docker-compose:animals:security:active`       |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-017",
+      "statement": "The ins domain has docker-compose scripts for end-to-end, cross-browser, BrowserStack, passive security and scoped active security, and no accessibility or visual script.",
+      "kind": "behaviour",
+      "ref": "README.md:108 (Domain table row `ins`); package.json:63-67",
+      "quote": "| `ins`           | `test:docker-compose:ins`           | —                                        | —                                    | `test:docker-compose:ins:security`           | `test:docker-compose:ins:security:active`           |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-018",
+      "statement": "The plants domain has docker-compose scripts for end-to-end and visual only, and none for accessibility or security.",
+      "kind": "behaviour",
+      "ref": "README.md:109 (Domain table row `plants`); package.json:68-69",
+      "quote": "| `plants`        | `test:docker-compose:plants`        | —                                        | `test:docker-compose:plants:visual`  | —                                            | —                                                   |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-019",
+      "statement": "A dash in the per-domain script table means that domain has no specs of that test type yet.",
+      "kind": "rule",
+      "ref": "README.md:111",
+      "quote": "A dash means the domain has no specs of that test type yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-020",
+      "statement": "A per-domain script runs the same suite as the all-domain script, limited to that domain's tests/<domain>/ directory, and is named to match the CDP domain profiles.",
+      "kind": "rule",
+      "ref": "README.md:99-102",
+      "quote": "Against the docker-compose stack, each\ndomain also has its own scripts, named `test:docker-compose:<domain>[:<suite>]`\nto match the [CDP domain profiles](#running-tests-via-cdp-portal). They run\nthe same suite as the all-domain script, limited to that domain's `tests/<domain>/` directory.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-021",
+      "statement": "A per-domain active security run sets ZAP_SCOPE so the no-traffic gate covers only that domain's ZAP contexts, and its report is labelled scoped; the full corpus active run is the unscoped script.",
+      "kind": "rule",
+      "ref": "README.md:113-115",
+      "quote": "Per-domain `security:active` sets `ZAP_SCOPE` so the no-traffic gate only covers\nthat domain's ZAP contexts; the report is labelled scoped. Full-corpus active\nremains `npm run test:docker-compose:security:active`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-022",
+      "statement": "ZAP_SCOPE=animals gates the frontend and animals-backend contexts, animals-admin the admin context, ins the ins and address-book contexts, and plants the plants-backend context; any other value is refused by name.",
+      "kind": "rule",
+      "ref": "config/zap.ts:38-55",
+      "quote": "const ZAP_SCOPE_CONTEXTS: Record<string, readonly string[]> = {\n  animals: ['frontend', 'animals-backend'],\n  'animals-admin': ['admin'],\n  ins: ['ins', 'address-book'],\n  plants: ['plants-backend'],\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-023",
+      "statement": "A run can be narrowed with Playwright's own parameters appended to the npm script: headed mode, a single spec file, a tag through --grep, debug mode, UI mode, or one domain or test-type directory.",
+      "kind": "behaviour",
+      "ref": "README.md:119-126 (Playwright Parameters table)",
+      "quote": "| `-- --headed`              | Run tests in headed mode (see the browser) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-024",
+      "statement": "Playwright's HTML report opens with `npx playwright show-report`, and `npm run report` generates the Allure report from the Allure results each run writes automatically.",
+      "kind": "behaviour",
+      "ref": "README.md:130-135; package.json:72",
+      "quote": "After tests run, Playwright results and report are generated automatically, and Allure results are also generated automatically. Run `npm run report` to generate the Allure report.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-025",
+      "statement": "Settings shared by both targets — the projects, the reporters, one retry and a trace on the first retry — live in one shared config that each target-specific config extends.",
+      "kind": "non-functional",
+      "ref": "README.md:139-141",
+      "quote": "Shared settings (projects, reporters, `retries: 1`, `trace: on-first-retry`)\nlive in `utils/playwright/shared-config.ts`. The target-specific configs extend\nthose settings:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-026",
+      "statement": "The suite has exactly two targets: the deployed CDP services and the docker-compose stack, one config file each.",
+      "kind": "non-functional",
+      "ref": "README.md:143-146 (Test Configuration table)",
+      "quote": "| `playwright.config.ts`                | CDP services         |\n| `playwright.docker-compose.config.ts` | docker-compose stack |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-027",
+      "statement": "From a workspace clone the docker-compose run stops before the first test unless that clone owns the stack, naming the owning clone and offering GitHub Actions instead; ALLOW_FOREIGN_STACK=1 runs anyway, and a checkout outside a workspace, such as the tests image, is never stopped.",
+      "kind": "behaviour",
+      "ref": "README.md:148-153",
+      "quote": "From a workspace clone, the docker-compose config runs only when that clone\nowns the stack (`tim docker owner` in the workspace prints the owner). From\nanother clone it stops before the first test with \"The stack belongs to\n`<clone>`. Run E2E there, or push and let GitHub Actions run it.\" Set\n`ALLOW_FOREIGN_STACK=1` to run anyway. A checkout outside a workspace, such as\nthe tests image, is never stopped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-028",
+      "statement": "Accessibility tests use the same two configs as every other test type, with a longer per-test timeout of their own.",
+      "kind": "non-functional",
+      "ref": "README.md:155-156",
+      "quote": "`@a11y` tests use the same configs; per-test timeout is longer in\n`fixtures/a11y.ts`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-029",
+      "statement": "The animals journey accessibility scans leave out govuk-frontend's two conditional-reveal radio groups, because govuk-frontend sets aria-expanded on each radio that opens a reveal and axe's aria-allowed-attr rule rejects it — a disagreement between govuk-frontend and axe rather than a service defect.",
+      "kind": "rule",
+      "ref": "README.md:158-163",
+      "quote": "The animals journey scans leave out govuk-frontend's conditional-reveal radios\n(`govukConditionalRevealRadioOnOrigin` and\n`govukConditionalRevealRadiosOnReason` in `fixtures/a11y.ts`). govuk-frontend sets `aria-expanded` on\neach radio that opens a conditional reveal (`radios.mjs`), and axe's\n`aria-allowed-attr` rule rejects it. That is a disagreement between\ngovuk-frontend and axe, not a service defect.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-030",
+      "statement": "A CDP run gives each test 60 seconds and each expectation 15 seconds, while a docker-compose run keeps Playwright's 30-second and 5-second defaults, because each CDP page load is a real network hop.",
+      "kind": "non-functional",
+      "ref": "README.md:166-168; playwright.config.ts:32-33",
+      "quote": "The CDP config sets a 60s test timeout and a 15s expect timeout, against\nPlaywright's 30s and 5s defaults that the docker-compose config keeps. Each CDP\npage load is a real network hop, so CDP needs a longer budget than the local\nstack.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-031",
+      "statement": "A leaked address book on the dev environment, grown to 4,882 records, made every contact-address page load fan out dozens of concurrent reads through the CDP SSL sidecar, which returned 502 and 504 responses for minutes at a time; session reuse, a per-test address-book teardown and a one-off purge removed the leak, and three clean runs then kept every test under three-quarters of its budget, so the CDP test timeout came down from 90 to 60 seconds.",
+      "kind": "non-functional",
+      "ref": "README.md:168-175",
+      "quote": "The suite once also timed out in bursts: a\nleaked address book on dev (grown to 4,882 records) made every\n`contact-address` page load fan out dozens of concurrent reads through the\nCDP SSL sidecar, which returned 502/504s for a few minutes at a time. Session\nreuse, a per-test address-book teardown and a one-off purge removed the leak\nand the outage; three clean CDP runs then kept every test under\nthree-quarters of its new budget (45s, or 135s for tests marked\n`test.slow()`), so the timeout came down from 90s to 60s.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-032",
+      "statement": "The fifteen-document limits test sets its own 120-second timeout, because its real uploads and virus scans take 57 to 60 seconds on the local stack and about 67 seconds on CDP.",
+      "kind": "non-functional",
+      "ref": "README.md:177-180",
+      "quote": "`documents-limits`' fifteen-document test sets its own 120s timeout: its real\nuploads and virus scans take 57–60s on the local stack and about 67s on CDP,\nwhich left too thin a margin under the 90s a slow test gets on compose.\nRe-check it if the base timeouts change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-033",
+      "statement": "Each flow step waits up to 30 seconds for its page's heading rather than for the test timeout, so a transient 502 fails the step that hit it and names the page it was waiting for.",
+      "kind": "non-functional",
+      "ref": "README.md:182-184; config/timeouts.ts:10-11",
+      "quote": "The flow helpers wait for each page's heading with `pageLoadWait`\n(`config/timeouts.ts`, 30s) rather than the test timeout, so a transient 502\nfails the step that hit it within 30s and names the page it was waiting for.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-034",
+      "statement": "Sign-in waits for either the landing page or the \"Sorry, we are unable to sign you in.\" page before deciding whether to try again.",
+      "kind": "behaviour",
+      "ref": "README.md:185-186",
+      "quote": "Sign-in waits for either the landing page or the \"Sorry, we are unable to sign\nyou in.\" page before deciding whether to try again.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-035",
+      "statement": "The address-book fixtures delete every address and transporter created through them when the test ends, pass or fail and on every retry, and a delete that fails is logged with the record's id and never fails the test.",
+      "kind": "behaviour",
+      "ref": "README.md:190-197",
+      "quote": "The `addressBookApi` and `isolatedOrganisationAddressBookApi` fixtures delete\nevery address and transporter created through them once the test ends, pass or\nfail, retries included.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-036",
+      "statement": "A transporter saved through the user interface is only deleted if the spec tracks it by name, and an address added on the add-address page or through the handshake is not deleted at all.",
+      "kind": "rule",
+      "ref": "README.md:193-197",
+      "quote": "A record a test saves through the UI is not created\nthrough them: call `addressBookApi.trackTransporterNamed(name)` after saving a\ntransporter so it is deleted too. A delete that fails is logged with the\nrecord's id and never fails the test. Records saved through the UI in any other\nway, such as an address added on the add-address page or through the\nhandshake, are not deleted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-037",
+      "statement": "In CDP dev, test, perf-test and ext-test the address book removes every address about seven days after it was created, which needs both ADDRESS_TTL_DAYS and ADDRESS_TTL_EXPIRY_ENABLED set; the local docker-compose stack sets neither.",
+      "kind": "constraint",
+      "ref": "README.md:199-202",
+      "quote": "In CDP dev, test, perf-test and ext-test the address book also removes every\naddress about 7 days after it was created. That needs both `ADDRESS_TTL_DAYS`\nand `ADDRESS_TTL_EXPIRY_ENABLED` set; the local docker-compose stack sets\nneither.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-038",
+      "statement": "Every address or transporter name a test creates carries a timestamp or UUID suffix so a search finds only that run's record.",
+      "kind": "rule",
+      "ref": "README.md:202-203",
+      "quote": "Make each name unique (a timestamp or UUID suffix) so a search finds\nonly this run's record.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-039",
+      "statement": "The shared journey addresses are seeded in global set-up through its own client, so no test's clean-up deletes them, and where expiry is on the next run's set-up creates them again.",
+      "kind": "behaviour",
+      "ref": "README.md:203-206",
+      "quote": "Where expiry is on, the shared journey addresses\nseeded in `globalSetup` expire too; the next run's `ensureE2eAddressBook`\ncreates them again. `globalSetup` seeds them through its own client, so no\ntest's clean-up deletes them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-040",
+      "statement": "A spec that edits or deletes an address makes its own record rather than using a shared journey address, because every spec running alongside it reads those.",
+      "kind": "rule",
+      "ref": "README.md:208-210",
+      "quote": "A spec that edits or deletes an address makes its own record rather than\nusing one of the shared journey addresses, because every spec running\nalongside it reads those.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-041",
+      "statement": "The address book checks only that a country is present, so a record whose country is a country name rather than a listed code is the one way through the services alone to copy an address the notification refuses.",
+      "kind": "rule",
+      "ref": "README.md:210-214",
+      "quote": "A spec that checks a copied address against the\nnotification's rules makes a record whose country is a country name rather\nthan a listed code: the address book checks only that a country is present,\nso that is the one way through the services alone to copy an address the\nnotification refuses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-042",
+      "statement": "The address book is shared and, locally, never wiped, so a spec that counts rows either searches for a token only its own run created or writes to an organisation of its own whose book starts empty.",
+      "kind": "rule",
+      "ref": "README.md:215-219",
+      "quote": "The address book is shared and, locally, never wiped, so a spec that counts\nrows either searches for a token only its own run created, or uses\n`isolatedOrganisationAddressBookApi`, which writes to an organisation of its\nown whose book starts empty.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-043",
+      "statement": "The address picker lists records newest first, so a spec that needs a record off page one creates it and then enough newer records to fill page one.",
+      "kind": "behaviour",
+      "ref": "README.md:219-221",
+      "quote": "The picker lists newest\nfirst, so a spec that needs a record off page one creates it, then enough\nnewer records to fill page one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-044",
+      "statement": "Other workers add records while a spec pages through the address list, so a spec follows Next until its record shows or Next runs out, rather than to a last page worked out before it started.",
+      "kind": "rule",
+      "ref": "README.md:221-223",
+      "quote": "Other workers add records while a spec pages\nthrough the list, so the spec follows Next until the record shows or Next\nruns out, rather than to a last page worked out before it started.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-045",
+      "statement": "`npm run reset:e2e-address-book` brings the shared e2e organisation's address book on a CDP environment back to a small known state, soft-deleting only records whose name matches a name a test creates and keeping the seeded journey addresses, the performance tests' records and every other record.",
+      "kind": "behaviour",
+      "ref": "README.md:227-232; package.json:40",
+      "quote": "`npm run reset:e2e-address-book` brings the shared e2e organisation's address\nbook on a CDP environment back to a small known state. It soft-deletes only\nrecords whose name matches a name a test creates, listed in\n`domain/shared/constants/test-record-names.ts`. It keeps the seeded journey\naddresses, the performance tests' records and every other record. A spec that\ncreates a record with a new name adds that name to the list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-046",
+      "statement": "The address-book reset is run from a developer's own machine with their developer API key and never from CI.",
+      "kind": "rule",
+      "ref": "README.md:234-236",
+      "quote": "Run it from your own machine with your developer API key, set up as in\n[Target CDP environments](#target-cdp-environments-from-local-machine). Never\nrun it from CI.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-047",
+      "statement": "The address-book reset reports and deletes nothing by default, deletes addresses only with --apply, and leaves transporters alone unless --transporters is passed, because deleting one changes the drafts that use it.",
+      "kind": "behaviour",
+      "ref": "README.md:239-249",
+      "quote": "npm run reset:e2e-address-book                          # dry run: reports, deletes nothing\nnpm run reset:e2e-address-book -- --apply               # deletes the addresses\nnpm run reset:e2e-address-book -- --apply --transporters  # deletes transporters too",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-048",
+      "statement": "The address-book reset prints the environment and organisation first and refuses prod, and its dry run reports how many records it would delete and keep, the deletes by name and the 30 commonest kept names, so a leak the list misses shows up.",
+      "kind": "behaviour",
+      "ref": "README.md:244-249",
+      "quote": "It prints the environment and organisation first and refuses prod. A dry run\nreports how many records it would delete and keep, the deletes by name, and\nthe 30 commonest kept names, so a leak the list misses shows up. `--apply`\ndeletes one record at a time, then seeds the journey addresses again.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-049",
+      "statement": "The commodity page labels each tick box with the species' scientific name followed by its common name in round brackets, under a heading of the commodity code, and with the scientific name alone where the reference data holds no common name for that species.",
+      "kind": "copy",
+      "ref": "README.md:256-260",
+      "quote": "The commodity page labels each tick box with the species' scientific name\nfollowed by its common name in round brackets, under a heading of the commodity\ncode, and with the scientific name alone where the reference data holds no\ncommon name for that species.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-050",
+      "statement": "One scientific name can sit under several commodity codes, Bos taurus being under four, so a commodity line is identified by its code as well as its name.",
+      "kind": "data",
+      "ref": "README.md:260-262",
+      "quote": "One scientific name can\nsit under several codes (`Bos taurus` is under four), so a line needs the code\nas well as the name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-051",
+      "statement": "The stack's MDM stub answers only the searches saved from MDM, the frontend's first page of results is 100 entries, and the frontend saves only a species its search showed, so a seeded journey posts the search before it posts the chosen species.",
+      "kind": "integration",
+      "ref": "README.md:263-269",
+      "quote": "The\nstack's MDM stub answers only the searches saved from MDM, so each line's\n`searchTerm` is a saved term whose first page of results lists that line; the\nfirst page is the frontend's 100 results. The\nfrontend saves only a species its search showed, so a seeded journey posts the\nsearch before it posts the chosen species.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-052",
+      "statement": "The INS aggregated notification's commodity label uses the first GBN-AG trade line description, for example \"Live bovine animals\".",
+      "kind": "copy",
+      "ref": "README.md:274-277",
+      "quote": "Stored commodity names for the codes the specs drive live in\n`domain/animals/constants/commodity-names.ts`. The INS aggregated notification\ncommodity label uses the first GBN-AG trade line description (for example\n`Live bovine animals`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-053",
+      "statement": "Each worker signs in once per domain and its tests restore that session instead of driving the identity provider every time; the saved state holds only the sid auth cookie and is never written unless a fresh context has proved it restores to a signed-in landing page.",
+      "kind": "behaviour",
+      "ref": "README.md:291-296",
+      "quote": "Each worker signs in once per domain and its tests restore that session\ninstead of driving the identity provider every time (`fixtures/auth-state.ts`).\nSaved state lives under `playwright/.auth/` (gitignored, removed by `_clean`),\nholds only the `sid` auth cookie, and is never written unless a fresh context\nhas proved it restores to a signed-in landing page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-054",
+      "statement": "A spec that must start unauthenticated opts out of session reuse with a cold-start storage state.",
+      "kind": "behaviour",
+      "ref": "README.md:296",
+      "quote": "A spec that must start unauthenticated opts out with `test.use({ storageState: COLD_START })`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-055",
+      "statement": "A spec that needs the same user in a new browser session opens a page in a new context carrying only the test page's auth cookie, so the service holds none of the first session's journey state.",
+      "kind": "behaviour",
+      "ref": "README.md:301-304",
+      "quote": "A spec that needs the same user in a new browser session uses the\n`openFreshSession` fixture. It opens a page in a new browser context that keeps\nonly the auth cookie of the test's own page, so the service holds none of the\nfirst session's journey state. The fixture closes every context it opened.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-056",
+      "statement": "Session reuse is on by default against both targets, E2E_SESSION_REUSE=off makes every test sign in for itself, and with reuse off the CDP config caps workers at four.",
+      "kind": "behaviour",
+      "ref": "README.md:306-309; playwright.config.ts:34 and :44",
+      "quote": "`E2E_SESSION_REUSE=off` is the kill switch: every test signs in for itself\nagain. The CDP config caps workers at 4 when reuse is off; against the\ndocker-compose stack re-cap them yourself (e.g. `-- --workers=4`).\nReuse is on by default against both the docker-compose stack and CDP.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-057",
+      "statement": "Session reuse was proved against the dev environment on 15 September 2026 for the animals frontend, the admin portal and the INS frontend, showing load-balanced replicas honour a session minted against another, and the probe is to be re-run before relying on reuse against a different CDP environment.",
+      "kind": "non-functional",
+      "ref": "README.md:310-314",
+      "quote": "`ENVIRONMENT=dev npm run probe:cdp-session-reuse` passed against dev on\n2026-09-15 for animals-frontend, admin and ins-frontend — it signs in once per\nservice and proves load-balanced replicas honour a session minted against\nanother. Re-run it before relying on reuse against a different CDP\nenvironment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-058",
+      "statement": "The session-reuse probe mints one session, then reuses it across twenty navigations in fresh browser contexts, failing with where it landed and which cookies were held if any navigation is bounced to the sign-in form, and it states that it exercises sequential navigations only, not concurrent access to one session or its lifetime over a full run.",
+      "kind": "behaviour",
+      "ref": "bin/cdp-session-probe.ts:6, :45-68, :83",
+      "quote": "console.log('Scope: sequential navigations only — this does not exercise concurrent access to one session or its TTL over a full run.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-059",
+      "statement": "The session-reuse probe refuses to run against prod and covers the animals frontend, the animals admin portal and the INS frontend on a named CDP environment.",
+      "kind": "constraint",
+      "ref": "bin/cdp-session-probe.ts:8-12, :72",
+      "quote": "const CDP_SERVICES: Record<string, string> = {\n  animals: 'trade-imports-animals-frontend',\n  'animals-admin': 'trade-imports-animals-admin',\n  ins: 'trade-imports-ins-frontend',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-060",
+      "statement": "The docker-compose target reaches the animals frontend on port 3000, the admin service on 3001, the INS frontend on 3002 and the high-risk plants frontend on 3003.",
+      "kind": "integration",
+      "ref": "playwright.docker-compose.config.ts:8-16; README.md:398-400",
+      "quote": "    animals: 'http://localhost:3000',\n    'animals-admin': 'http://localhost:3001',\n    ins: 'http://localhost:3002',\n    plants: 'http://localhost:3003',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-061",
+      "statement": "The CDP target reaches each frontend at a per-service subdomain of the chosen environment: trade-imports-animals-frontend, trade-imports-animals-admin, trade-imports-ins-frontend and trade-imports-plants-frontend under <environment>.cdp-int.defra.cloud.",
+      "kind": "integration",
+      "ref": "playwright.config.ts:12-20",
+      "quote": "    animals: `https://trade-imports-animals-frontend.${environment}.cdp-int.defra.cloud`,\n    'animals-admin': `https://trade-imports-animals-admin.${environment}.cdp-int.defra.cloud`,\n    ins: `https://trade-imports-ins-frontend.${environment}.cdp-int.defra.cloud`,\n    plants: `https://trade-imports-plants-frontend.${environment}.cdp-int.defra.cloud`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-062",
+      "statement": "The suite calls five back-end services directly: the animals backend, the plants backend, the address book, reference data and the INS backend.",
+      "kind": "integration",
+      "ref": "playwright.config.ts:22-28",
+      "quote": "applyServiceBaseUrls({\n  TRADE_IMPORTS_ANIMALS_BACKEND_URL: cdpServiceUrl('trade-imports-animals-backend', environment),\n  TRADE_IMPORTS_PLANTS_BACKEND_URL: cdpServiceUrl('trade-imports-plants-backend', environment),\n  TRADE_IMPORTS_ADDRESS_BOOK_URL: cdpServiceUrl('trade-imports-address-book', environment),\n  TRADE_IMPORTS_REFERENCE_DATA_URL: cdpServiceUrl('trade-imports-reference-data', environment),\n  TRADE_IMPORTS_INS_BACKEND_URL: cdpServiceUrl('trade-imports-ins-backend', environment),\n});",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-063",
+      "statement": "On the docker-compose stack the animals backend answers on port 8085, the plants backend on 8091, the address book on 8089, reference data on 8086 and the INS backend on 8090, with MongoDB on 27017 and the SQS endpoint on 4566.",
+      "kind": "integration",
+      "ref": "playwright.docker-compose.config.ts:18-29",
+      "quote": "  TRADE_IMPORTS_ANIMALS_BACKEND_URL: process.env.TRADE_IMPORTS_ANIMALS_BACKEND_URL ?? 'http://localhost:8085',\n  TRADE_IMPORTS_PLANTS_BACKEND_URL: process.env.TRADE_IMPORTS_PLANTS_BACKEND_URL ?? 'http://localhost:8091',\n  TRADE_IMPORTS_ADDRESS_BOOK_URL: process.env.TRADE_IMPORTS_ADDRESS_BOOK_URL ?? 'http://localhost:8089',\n  TRADE_IMPORTS_REFERENCE_DATA_URL: process.env.TRADE_IMPORTS_REFERENCE_DATA_URL ?? 'http://localhost:8086',\n  TRADE_IMPORTS_INS_BACKEND_URL: process.env.TRADE_IMPORTS_INS_BACKEND_URL ?? 'http://localhost:8090',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-064",
+      "statement": "The suite reads the animals notification dead-letter queue on the local stack at a FIFO queue named trade_imports_animals_eu_notifications_gateway-deadletter.",
+      "kind": "integration",
+      "ref": "playwright.docker-compose.config.ts:26-28",
+      "quote": "  NOTIFICATION_SQS_DLQ_URL:\n    process.env.NOTIFICATION_SQS_DLQ_URL ??\n    'http://localhost:4566/000000000000/trade_imports_animals_eu_notifications_gateway-deadletter.fifo',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-065",
+      "statement": "CDP blocks direct calls to its back-end services from outside its network, so a laptop run sets CDP_LOCAL=true, which sends those calls through the protected ephemeral gateway and needs a developer API key sent as x-api-key; the run stops at once if the key is missing, and a CDP Portal run needs neither setting.",
+      "kind": "constraint",
+      "ref": "README.md:438-443; utils/playwright/cdp-service-url.ts:9-13; config/service-base-urls.ts:29-35",
+      "quote": "CDP blocks direct calls to its backend services from outside its network, so\nglobal set-up cannot reach the backend or the address book without\n`CDP_LOCAL=true`. That setting sends those calls through the protected\nephemeral gateway, which needs `DEVELOPER_API_KEY` as `x-api-key`. The run\nstops at once if `CDP_LOCAL=true` and the key is missing. The CDP Portal run\nsits inside CDP and needs neither.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-066",
+      "statement": "The ephemeral gateway addresses a service by path rather than by subdomain, at ephemeral-protected.api.<environment>.cdp-int.defra.cloud/<service>.",
+      "kind": "integration",
+      "ref": "utils/playwright/cdp-service-url.ts:10-12",
+      "quote": "  return isCdpLocal()\n    ? `https://ephemeral-protected.api.${environment}.cdp-int.defra.cloud/${serviceName}`\n    : `https://${serviceName}.${environment}.cdp-int.defra.cloud`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-067",
+      "statement": "A laptop run against CDP picks its environment with PLAYWRIGHT_ENVIRONMENT, one of dev, test, perf-test or ext-test, and ENVIRONMENT is left to the portal to supply.",
+      "kind": "constraint",
+      "ref": "README.md:430 and :446; .env.example (PLAYWRIGHT_ENVIRONMENT)",
+      "quote": "When running via the CDP Portal, `ENVIRONMENT` is provided by the portal; use `PLAYWRIGHT_ENVIRONMENT` and avoid setting `ENVIRONMENT` locally.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-068",
+      "statement": "A missing service base URL stops the run with a message naming the variable and saying the Playwright config should have applied it.",
+      "kind": "behaviour",
+      "ref": "config/service-base-urls.ts:3-9",
+      "quote": "    throw new Error(`${envVar} is not set. Ensure Playwright config applies it before running tests.`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-069",
+      "statement": "Every run refuses to start against a production environment.",
+      "kind": "constraint",
+      "ref": "utils/playwright/shared-config.ts:5-6",
+      "quote": "dotenv.config({ quiet: true });\nthrowIfProdEnvironment();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-070",
+      "statement": "Every test is retried once, and a trace is kept on the first retry with a screenshot only on failure.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:42 and :45-48",
+      "quote": "  retries: 1,\n  workers: resolveWorkers(),\n  reporter: [['list'], ['html', { open: 'never' }], ['allure-playwright'], ['./utils/playwright/failed-suite-reporter.ts']],\n  use: {\n    trace: 'on-first-retry',\n    screenshot: 'only-on-failure',\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-071",
+      "statement": "Both targets report through four reporters: the list reporter, an HTML report that never opens itself, Allure, and a reporter that records a failed suite.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:44",
+      "quote": "  reporter: [['list'], ['html', { open: 'never' }], ['allure-playwright'], ['./utils/playwright/failed-suite-reporter.ts']],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-072",
+      "statement": "Tests run fully in parallel, and a run on CI refuses a test marked only.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:40-41",
+      "quote": "  fullyParallel: true,\n  forbidOnly: !!process.env.CI,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-073",
+      "statement": "PLAYWRIGHT_WORKERS caps how many browsers run at once, taking a positive whole number or a percentage; unset it is 50 per cent of cores on CI and Playwright's own default locally, and any other value stops the run with a message giving both accepted forms.",
+      "kind": "non-functional",
+      "ref": "README.md:448-451; utils/playwright/shared-config.ts:12-24",
+      "quote": "    throw new Error(`Invalid PLAYWRIGHT_WORKERS \"${raw}\": use a positive integer (e.g. 2) or a percentage (e.g. 50%).`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-074",
+      "statement": "A spec file is any *.spec.ts under tests/, and one global set-up runs before them.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:36-39",
+      "quote": "  testDir: './tests',\n  testMatch: '**/*.spec.ts',\n  // Path is relative to the env-specific config that spreads this object (repo root).\n  globalSetup: './utils/playwright/global-setup.ts',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-075",
+      "statement": "Both configs declare one default project, chromium, which runs every domain, and five opt-in projects — branded Chrome, Firefox, WebKit, an emulated iPhone 17 and an emulated Pixel 10 — that run only when named.",
+      "kind": "non-functional",
+      "ref": "README.md:354-356; utils/playwright/shared-config.ts:50-95",
+      "quote": "A Playwright project is browser config only. Both configs have `chromium`, which\nruns every domain, plus opt-in `chrome`, `firefox`, `webkit`, `mobile-webkit` and `mobile-chromium` projects for the\n[cross-browser tests](#cross-browser-tests).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-076",
+      "statement": "The four desktop projects render at a 1280 by 1000 viewport, while the two mobile projects take their viewport from the emulated device.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:26, :52-94",
+      "quote": "const viewport = { width: 1280, height: 1000 };",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-077",
+      "statement": "A containerised docker-compose run adds a Chromium host-resolver rule so the stack's localhost OIDC redirects resolve from inside the container.",
+      "kind": "behaviour",
+      "ref": "playwright.docker-compose.config.ts:39 and :44",
+      "quote": "In-container runs (PLAYWRIGHT_IN_CONTAINER=1) add a Chromium host-resolver rule for OIDC localhost redirects.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-078",
+      "statement": "Setting the security or active security profile routes every request through ZAP's proxy, in both targets.",
+      "kind": "behaviour",
+      "ref": "playwright.config.ts:38 and :42; playwright.docker-compose.config.ts:40 and :43-45",
+      "quote": "PROFILE=security or security:active routes traffic through ZAP's proxy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-079",
+      "statement": "The suite has four domains, each a functional area served by one or more services: animals covers the animals frontend and backend, and ins covers the INS frontend, the INS backend and the address book.",
+      "kind": "non-functional",
+      "ref": "README.md:331-334",
+      "quote": "Tests are split into four domains, each a functional area of the product. One\nor more services serve a domain: `animals` covers the animals frontend and\nbackend, and `ins` covers the ins frontend, ins backend and address book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-080",
+      "statement": "Each domain's specs live under its own tests/<domain>/ directory and take their base URL from that directory: animals to the animals frontend, animals-admin to the admin service, ins to the INS frontend and plants to the plants frontend.",
+      "kind": "non-functional",
+      "ref": "README.md:338-342 (Domain and Front end table); utils/playwright/domain-base-urls.ts:8-13, :33-39",
+      "quote": "| `animals`       | `trade-imports-animals-frontend` | `tests/animals/`       |\n| `animals-admin` | `trade-imports-animals-admin`    | `tests/animals-admin/` |\n| `ins`           | `trade-imports-ins-frontend`     | `tests/ins/`           |\n| `plants`        | `trade-imports-plants-frontend`  | `tests/plants/`        |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-081",
+      "statement": "A spec that is not under a known domain directory stops the run naming the four domains.",
+      "kind": "behaviour",
+      "ref": "utils/playwright/domain-base-urls.ts:33-38",
+      "quote": "    throw new Error(`Spec ${file} is not under tests/<domain>/ for a known domain (${DOMAINS.join(', ')}).`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-082",
+      "statement": "A test suite is a domain's directory or one test type within it, and several can be selected at once by path, each ending in a slash because Playwright reads the path as a regular expression and tests/animals would otherwise also run tests/animals-admin.",
+      "kind": "rule",
+      "ref": "README.md:344-352",
+      "quote": "Always end a directory with `/`. Playwright reads the path as a regex, so\n`tests/animals` would also run `tests/animals-admin/`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-083",
+      "statement": "Within a domain, specs are grouped as a11y/, e2e/ with features (including an address-book group in animals and ins), pages, journeys and visual sub-folders, and security/.",
+      "kind": "non-functional",
+      "ref": "README.md:360-370",
+      "quote": "tests/<domain>/\n  a11y/\n  e2e/\n    features/\n      address-book/   (animals and ins)\n    pages/\n    journeys/\n    visual/\n  security/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-084",
+      "statement": "Folders only organise specs: the five type tags @a11y, @active, @compose, @dynamics and @visual select the test type, and the directory selects the domain.",
+      "kind": "rule",
+      "ref": "README.md:372-374",
+      "quote": "Folders only organise specs: type tags (`@a11y`, `@active`, `@compose`, `@dynamics`, `@visual`)\nselect the test type, and the directory selects the domain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-085",
+      "statement": "A service tag is a different kind of tag: it names a service whose pull request should also run the spec, whatever test type or domain the spec sits in.",
+      "kind": "rule",
+      "ref": "README.md:374-376",
+      "quote": "A service tag, such as\n`@ins-backend`, is a different kind: it names a service whose pull request\nshould also run the spec, whatever test type or domain the spec is in (see\n[GitHub Actions workflow](#github-actions-workflow)).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-086",
+      "statement": "The suite recognises eight service tags, each belonging to the domains that already run it by path: @address-book, @ins-backend and @ins-frontend to ins; @animals-admin to animals-admin; @animals-backend to animals and animals-admin; @animals-frontend to animals; and @plants-backend and @plants-frontend to plants.",
+      "kind": "rule",
+      "ref": "config/service-tags.ts:7-16",
+      "quote": "export const SERVICE_TAG_DOMAINS: Record<string, string[]> = {\n  '@address-book': ['ins'],\n  '@ins-backend': ['ins'],\n  '@ins-frontend': ['ins'],\n  '@animals-admin': ['animals-admin'],\n  '@animals-backend': ['animals', 'animals-admin'],\n  '@animals-frontend': ['animals'],\n  '@plants-backend': ['plants'],\n  '@plants-frontend': ['plants'],\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-087",
+      "statement": "Linting fails a spec whose tags disagree with its test-type directory: a spec under a11y/ must carry @a11y, one under security/ must carry @active, and one under e2e/ must carry neither.",
+      "kind": "rule",
+      "ref": "README.md:378-379; bin/lint-suite-tags.ts:8-12, :47-55",
+      "quote": "`npm run lint` runs `lint:suite-tags` to keep the two in step: a test under `a11y/` must carry\n`@a11y`, one under `security/` must carry `@active`, and one under `e2e/` neither.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-088",
+      "statement": "Linting fails a spec that carries the service tag of a service whose pull request already runs the spec's own domain by path.",
+      "kind": "rule",
+      "ref": "README.md:520; bin/lint-suite-tags.ts:57-64",
+      "quote": "`npm run lint` fails if a spec carries the tag of a service whose pull request already runs the spec's domain by path, as `config/service-tags.ts` maps it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-089",
+      "statement": "The tag check asks Playwright to list the tests so it reads the tags a test really has, title, describe and test tags merged, and needs no stack, sign-in or browser.",
+      "kind": "behaviour",
+      "ref": "bin/lint-suite-tags.ts:16-20, :34-41",
+      "quote": "Asks Playwright to list the tests, so it sees the tags a test really has\n * (title, describe and test tags merged). Needs no stack, sign-in or browser.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-090",
+      "statement": "The tag check names each offending test by file, line and title with what is wrong, exits non-zero when there is any, and otherwise reports how many tests it checked.",
+      "kind": "behaviour",
+      "ref": "bin/lint-suite-tags.ts:69-77",
+      "quote": "  console.error(`${failures.length} test(s) have tags that do not fit where they live:\\n${failures.join('\\n')}`);\n  process.exit(1);\n}\nconsole.log(`Tags fit where their tests live (${specs.length} tests checked).`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-091",
+      "statement": "The reason the tag rules are enforced is that a spec under security/ without @active would run in every end-to-end and pull-request check, and one under a11y/ without @a11y would run in end-to-end and be missed by the accessibility run.",
+      "kind": "rule",
+      "ref": "bin/lint-suite-tags.ts:4-8",
+      "quote": "Test types are selected by tag, not by directory: `npm test` runs a domain's\n * whole directory minus `@a11y`, `@active`, `@compose` and `@dynamics`. So a\n * spec under security/ without `@active` would run in every e2e and PR check,\n * and one under a11y/ without `@a11y` would run in e2e and be missed by the\n * a11y run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-092",
+      "statement": "@duplicated-in-frontend marks an end-to-end spec whose behaviour the frontend's own FIT suite also proves, so a reader knows the check exists in both places.",
+      "kind": "rule",
+      "ref": "README.md:381",
+      "quote": "`@duplicated-in-frontend` marks an end-to-end spec whose behaviour the frontend's own FIT suite also proves, so a reader knows the check exists in both places.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-093",
+      "statement": "The suite does not wipe the database before it runs and does not need to, because every spec creates the state it asserts on through the back-end API, scoped to that run, so the specs pass against a database holding earlier runs' records.",
+      "kind": "rule",
+      "ref": "README.md:405-408",
+      "quote": "The suite does not wipe the database before it runs, and does not need to.\nEvery spec creates the state it asserts on through the front door (the\nbackend API), scoped to that run, so the specs pass against a database that\nalready holds the records of earlier runs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-094",
+      "statement": "A spec asserts which journey page is open through the page object's expected URL pattern, which matches the page whichever trail its address carries, and asserts an exact trail through the on-trail pattern or exact URL built from the page objects' own slugs; a spec never types a from query itself.",
+      "kind": "rule",
+      "ref": "README.md:323-325",
+      "quote": "- Which page is open: the page object's `expectedUrlPattern(reference)`. It matches the page whichever trail its address carries.\n- The exact trail: the page object's `expectedUrlPatternOnTrail(reference, places)` for a `toHaveURL` matcher, or `expectedUrlOnTrail(reference, places)` for an exact `href` value. Pass the page objects' own `slug`s and the `TRAIL_START` places. A spec never types a `?from=` query.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-095",
+      "statement": "An assertion two specs share lives in a shared checks module, and a flow or page object holds no assertion.",
+      "kind": "rule",
+      "ref": "README.md:326",
+      "quote": "- An assertion two specs share lives in a `*-checks.ts` module under `page-objects/shared/` (`journey-checks.ts`, `type-ahead-checks.ts`). A flow or page object holds no assertion.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-096",
+      "statement": "Visual regression tests guard rendered composition — layout, spacing, colour and typography as the user sees the page — by comparing screenshots against committed baseline images and failing if any pixels differ outside the masked regions.",
+      "kind": "rule",
+      "ref": "README.md:464",
+      "quote": "Visual regression tests (tagged `@visual`) guard rendered composition — layout, spacing, colour, and typography as the user sees the page. They compare screenshots against committed baseline images and fail if any pixels differ outside the masked regions.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-097",
+      "statement": "Baselines are committed beside their spec files, and each platform needs its own baseline, both of which are updated when a visual change is intentional.",
+      "kind": "rule",
+      "ref": "README.md:466",
+      "quote": "Baselines are stored alongside their spec files in `*-snapshots/` directories and must be committed. Each platform requires its own baseline — update both when visual changes are intentional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-098",
+      "statement": "Visual specs run headless whatever the project setting, because headed mode uses the operating system's font rendering, which produces pixel differences against a headless baseline.",
+      "kind": "rule",
+      "ref": "README.md:470",
+      "quote": "Visual specs run headless whatever the project setting, because headed mode uses OS font rendering, which produces pixel differences against a headless baseline.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-099",
+      "statement": "On macOS a visual run launches the browser itself with legacy scroll bars, because Chromium sizes a native select's arrow box from the macOS scroll bar style and overlay scroll bars draw every native select four pixels narrower, which failed a baseline made on a trackpad once a mouse was plugged in.",
+      "kind": "non-functional",
+      "ref": "README.md:468",
+      "quote": "Visual specs import `test` from `@fixtures/visual`. On macOS it launches Playwright's headless shell with legacy scroll bars (`-AppleShowScrollBars Always`) and connects to it over CDP. Chromium sizes a native `<select>` arrow box from the macOS scroll bar style, and with the default \"Show scroll bars: Automatically\" setting that style follows whether a mouse is connected: overlay scroll bars on a trackpad alone, legacy ones with a mouse. Overlay scroll bars draw every native select 4px narrower, so a `*-darwin.png` baseline made on a laptop's trackpad failed with a mouse plugged in (704 pixels on the no-JavaScript import reason page), and the other way round. Playwright's own launch refuses an argument that does not start with `-`, so the fixture starts the browser itself. On Linux the fixture is the shared one, unchanged.",
+      "confidence": "verbatim",
+      "note": "mechanism: the visual fixture's own browser launch, for the macOS baseline. Names the no-JavaScript import reason page as the page whose baseline differed."
+    },
+    {
+      "id": "repo-tests-p16-100",
+      "statement": "The declaration visual specs set the date of declaration to a fixed string before the screenshot rather than masking it, because the server writes today's date into the page text and a mask is as wide as that text; the date's strong emphasis is proved by the declaration end-to-end specs instead.",
+      "kind": "rule",
+      "ref": "README.md:472",
+      "quote": "The declaration specs set the date of declaration to a fixed string before the screenshot instead of masking it, because the server writes today's date into the page text and a mask is as wide as that text, which changes with the day and month. `freezeDatePickersAt` does not reach that text: it stops the browser clock and moves each date picker's served bounds, and changes nothing the server has already written. The date's strong emphasis is proved by the declaration e2e specs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-101",
+      "statement": "Only the animals and plants domains have visual specs.",
+      "kind": "non-functional",
+      "ref": "README.md:474-475",
+      "quote": "`animals` and `plants` have `@visual` specs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-102",
+      "statement": "Baselines are regenerated by two commands, one for the host-rendered darwin image and one for the container-rendered linux image CI uses, each running every visual spec and writing the updated snapshot into the working tree for commit.",
+      "kind": "behaviour",
+      "ref": "README.md:477-483; package.json:70-71",
+      "quote": "Regenerate the E2E baseline against the stack frontend with\n`npm run test:visual:update:macos` for the host-rendered `*-darwin.png` image and\n`npm run test:visual:update:linux` for the container-rendered `*-linux.png` image\nused by CI. Both commands run every `@visual` spec and write the\nupdated snapshot into the working tree for commit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-103",
+      "statement": "The Linux baseline script points the service URLs at host.docker.internal and maps localhost to the host, because inside the container localhost is the container.",
+      "kind": "non-functional",
+      "ref": "README.md:490",
+      "quote": "The Linux script points the service URLs at `host.docker.internal`, because inside the container `localhost` is the container. It also runs the container with `--add-host=localhost:host-gateway`, which maps `localhost` to the host, so any URL the script does not override and that still names `localhost` reaches the stack too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-104",
+      "statement": "Every full-page screenshot of a notification page masks the whole status strip, not the reference alone, so the masked box stays a fixed size while the notification reference is minted per run; the strip's own content is covered by an end-to-end spec.",
+      "kind": "rule",
+      "ref": "README.md:492-495",
+      "quote": "Every full-page screenshot of a notification page masks the whole status strip. It renders\nfrom the first request and holds the notification reference, which is minted per run. The\nwhole strip is masked, not the reference alone, so the masked box stays a fixed size. The\nstrip's own content is covered by `tests/animals/e2e/features/reference-strip.spec.ts`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-105",
+      "statement": "A calendar screenshot depends on today's date twice — the browser's today picks the month and highlighted day, and the server's today sets each picker's minimum and maximum date — so the suite stops the browser clock on a fixed day and moves the served bounds by the same number of days.",
+      "kind": "rule",
+      "ref": "README.md:497-501",
+      "quote": "A calendar screenshot depends on today's date twice: the browser's today picks the month and\nthe highlighted day, and the server's today sets each picker's `data-min-date` and\n`data-max-date`. `freezeDatePickersAt` (`utils/frozen-date-picker.ts`) stops the browser clock\non a fixed day and moves the served bounds by the same number of days, so the calendar looks\nas it would if that day were today.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-106",
+      "statement": "The security scan is a dynamic application security test using OWASP ZAP as a proxy, with Playwright driving real authenticated journeys through it rather than letting ZAP crawl, so it observes what a real session touches and then attacks that.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:3",
+      "quote": "A DAST (Dynamic Application Security Testing) scan using [OWASP ZAP](https://www.zaproxy.org/) as a proxy. Playwright drives real authenticated journeys through it rather than letting ZAP crawl, so it observes what a real session touches and then attacks that.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-107",
+      "statement": "Security coverage is traffic-driven, so a route no spec drives is invisible to the scan, which is why the active corpus is curated by hand rather than generated.",
+      "kind": "constraint",
+      "ref": "docs/security.md:5-6",
+      "quote": "Coverage is therefore **traffic-driven**: a route no spec drives is invisible to the scan. That is why the `@active` corpus is curated by hand rather than generated.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-108",
+      "statement": "There are two security profiles: a passive scan across the end-to-end suite excluding the active corpus, cheap enough to run broadly, and a passive plus scoped active scan against the active suite alone, which attacks and runs on docker-compose only.",
+      "kind": "rule",
+      "ref": "docs/security.md:9-12 (Profiles table); README.md:506-508",
+      "quote": "| `security`        | The e2e suite, excluding `@active` | No — passive only | Cheap, run broadly              |\n| `security:active` | The `@active` suite only           | Yes               | Deliberate; docker-compose only |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-109",
+      "statement": "The active suite is excluded from the passive profile because it walks the same journeys a second time and includes destructive steps.",
+      "kind": "rule",
+      "ref": "docs/security.md:14",
+      "quote": "`@active` is excluded from the passive profile because it walks the same journeys a second time and includes destructive steps.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-110",
+      "statement": "The scan runs in three lanes: locally against the localhost stack on both profiles and per domain except plants, as a GitHub Action against a stack on the runner for the full active corpus, and from the CDP Portal against the deployed environment for the passive profile only.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:20-24 (lane table)",
+      "quote": "| **Local**         | `npm run test:docker-compose[:<domain>]:security`, `npm run test:docker-compose[:<domain>]:security:active` | `playwright.docker-compose.config.ts` | localhost stack           | both; each also per domain (not plants) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-111",
+      "statement": "The active profile is refused on CDP because the active suite deletes notifications, documents and dead-letter messages and the scan re-fires each with fuzzed payloads, which is fine against a disposable stack and destructive against a shared one; the production guard is no help because it stops prod alone, so dev, test and perf-test would all have run.",
+      "kind": "rule",
+      "ref": "docs/security.md:26; entrypoint.sh:113-122",
+      "quote": "**`security:active` is refused on CDP.** The `@active` suite deletes notifications, documents and DLQ messages, and the active scan re-fires each with fuzzed payloads — fine against a disposable stack, destructive against a shared one. `entrypoint.sh` writes to `FAILED` rather than running it. The `throwIfProdEnvironment` guard is no help here: it stops `prod` alone, so `dev`, `test` and `perf-test` would all have run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-112",
+      "statement": "The security GitHub Action's report publishes to GitHub Pages under a dated security-active path, password-protected because that Pages site is otherwise public, and reports older than seven days are pruned.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:28",
+      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run. Its report publishes to GitHub Pages under `security-active/<date>/`, password-protected via the `ZAP_REPORT_PASSWORD` secret because that Pages site is otherwise public. Reports older than 7 days are pruned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-113",
+      "statement": "The scheduled security scan workflow runs at 01:00 UTC on weekdays as well as on manual dispatch, and calls the workspace's active-scan workflow.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/scheduled-security-scan.yml:3-12",
+      "quote": "on:\n  schedule:\n    # 01:00 UTC, weekdays only.\n    - cron: '0 1 * * 1-5'\n  workflow_dispatch:",
+      "confidence": "verbatim",
+      "note": "Ambiguity recorded, not resolved: docs/security.md:28 and README.md:524 both say the scan is manual dispatch only and the schedule stays disabled, while the workflow file carries an enabled weekday cron."
+    },
+    {
+      "id": "repo-tests-p16-114",
+      "statement": "A local security run needs the app stack up and ZAP brought up additively on the stack's security profile, which waits for health checks so it returns only once ZAP is accepting requests.",
+      "kind": "behaviour",
+      "ref": "docs/security.md:32-34",
+      "quote": "2. Bring up ZAP too — additive, and waits for healthchecks so it returns only once ZAP is accepting requests: `tim docker up --profile security`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-115",
+      "statement": "The full active scan is the authoritative clean bill of health, and a per-domain active run is marked as scoped in its report.",
+      "kind": "rule",
+      "ref": "docs/security.md:36",
+      "quote": "Full `security:active` is the authoritative clean bill of health. Per-domain active sets `ZAP_SCOPE` so the no-traffic gate only covers that domain's contexts; the report is labelled as scoped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-116",
+      "statement": "Each run clears the ZAP report directory first, so running two domains back to back keeps only the second domain's report.",
+      "kind": "behaviour",
+      "ref": "docs/security.md:39; package.json:24",
+      "quote": "Each run clears `zap-report/` first, so running two domains back to back keeps only the second domain's report.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-117",
+      "statement": "ZAP needs host networking on Docker Desktop for Mac to resolve the stack's localhost OIDC redirects, which OrbStack supports out of the box and Docker Desktop needs 4.34 or later with host networking enabled.",
+      "kind": "constraint",
+      "ref": "docs/security.md:45",
+      "quote": "> **Docker Desktop for Mac:** ZAP needs `network_mode: host` to resolve the stack's `localhost` OIDC redirects. OrbStack supports this out of the box; Docker Desktop needs 4.34+ with host networking enabled in Settings (off by default).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-118",
+      "statement": "ZAP runs as part of the shared workspace stack locally and as an in-process daemon on CDP, reusing the same plan files and gate.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:47",
+      "quote": "ZAP runs as part of the shared workspace stack (`docker/stack/security.compose.yml`). On CDP the same plan files and gate are reused, with ZAP as an in-process daemon rather than a container.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-119",
+      "statement": "Six services are scanned, each with its own ZAP context: the animals frontend on 3000 as frontend, the animals admin on 3001 as admin, the INS frontend on 3002 as ins, the animals backend on 8085, the plants backend on 8091 and the address book on 8089.",
+      "kind": "integration",
+      "ref": "docs/security.md:51-58 (What gets scanned table)",
+      "quote": "| `trade-imports-animals-frontend` | 3000       | `frontend`        |\n| `trade-imports-animals-admin`    | 3001       | `admin`           |\n| `trade-imports-ins-frontend`     | 3002       | `ins`             |\n| `trade-imports-animals-backend`  | 8085       | `animals-backend` |\n| `trade-imports-plants-backend`   | 8091       | `plants-backend`  |\n| `trade-imports-address-book`     | 8089       | `address-book`    |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-120",
+      "statement": "The active corpus is written against the three frontends, and the three APIs are scanned all the same because every API client is built from Playwright's own request fixture, which inherits the project's proxy, so seeding and assertion calls reach ZAP as real traffic.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:60",
+      "quote": "The `@active` corpus is written against the three frontends. The three APIs are scanned all the same: every API client here is built from Playwright's own `request` fixture, which inherits the project's proxy, so the specs' seeding and assertion calls reach ZAP as real traffic.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-121",
+      "statement": "Diagnostics are excluded from the scan rather than scanned: health and static assets on the Node contexts, and the full actuator set of health, info, metrics, cache and env on the three Java services.",
+      "kind": "rule",
+      "ref": "docs/security.md:62",
+      "quote": "Ports are the compose stack's; on CDP each service is a per-service subdomain. Diagnostics are excluded rather than scanned: `/health` and static assets on the Node contexts, and the full actuator set (`/health`, `/info`, `/metrics`, `/cache`, `/env`) on the three Java services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-122",
+      "statement": "The Defra ID stub is observed passively and never attacked because it is a temporary sign-in stub the team does not own, while the service's own sign-in and sign-in-oidc handlers are in scope since the OIDC callback and its redirect parameter outlive the stub.",
+      "kind": "rule",
+      "ref": "docs/security.md:68",
+      "quote": "| `trade-imports-defra-id-stub` (3007) | A temporary sign-in stub we do not own. Observed passively, never attacked. Our own `/auth/sign-in` and `/auth/sign-in-oidc` handlers **are** in scope — the OIDC callback and its `redirect` parameter outlive the stub. |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-123",
+      "statement": "The CDP uploader is not scanned because the browser posts uploads to the frontend, which forwards them server-side, so the uploader never enters the site tree.",
+      "kind": "rule",
+      "ref": "docs/security.md:69",
+      "quote": "| `cdp-uploader` (7337)                | A platform component. The browser posts uploads to the frontend, which forwards them server-side, so the uploader never enters the site tree.                                                                             |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-124",
+      "statement": "The INS backend is not scanned because it is a queue consumer with no HTTP controllers, so its risk boundary is the queue, which a dynamic scan cannot reach; the API that produces those events is scanned instead.",
+      "kind": "rule",
+      "ref": "docs/security.md:70",
+      "quote": "| `trade-imports-ins-backend` (8090)   | An SQS consumer with no HTTP controllers. Its risk boundary is the queue, which DAST cannot reach; the API that produces those events is scanned.                                                                         |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-125",
+      "statement": "One INS active spec drives the sign-in round trip and holds the only check that the INS front door renders a sign-out link, every other spec starting pre-authenticated.",
+      "kind": "behaviour",
+      "ref": "docs/security.md:74",
+      "quote": "- **Sign-in round trip.** `/auth/sign-in` and `/auth/sign-in-oidc` are in scope, and every other spec starts pre-authenticated, so `address-book-auth.spec.ts` is the only spec that drives them. It also holds the only check that INS renders a sign-out link: if the sign-out step fails, check that first before assuming the route moved.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-126",
+      "statement": "The INS active address-book spec adds one address through the add route and views, edits and deletes it through the per-address route, and opens a tab filtered by a role so the scan reaches the list's address-type and role parameters.",
+      "kind": "behaviour",
+      "ref": "docs/security.md:75",
+      "quote": "- **Record lifecycle.** `address-book.spec.ts` adds one address through `/address-book/add`, and views, edits and deletes it through `/address-book/{addressId}`; the `addressId` dataDrivenNode has nothing to fold without them. It also opens a tab and filters it by a role, so the scan reaches the list's `addressType` and `role` parameters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-127",
+      "statement": "The INS active address-book spec also opens the add page with the four handshake query parameters journey-type, notification-id, fulfilment-id and handshake-token, which no other spec sends, and only the rejected-guard path is provable there because no accepted token can be seeded.",
+      "kind": "behaviour",
+      "ref": "docs/security.md:76",
+      "quote": "- **Handshake query parameters.** `address-book.spec.ts` also opens the add page with `journey-type`, `notification-id`, `fulfilment-id` and `handshake-token`, which no other spec sends. Only the rejected-guard path is provable here; extend it to a real accepted token if seeding one becomes possible.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-128",
+      "statement": "A security run fails on a FAIL-rated alert, where a rules file maps ZAP plugin ids to ignore, warn or fail and anything unlisted defaults to fail if it is High risk and warn otherwise.",
+      "kind": "rule",
+      "ref": "docs/security.md:82",
+      "quote": "- **A FAIL-rated alert.** `zap/rules.tsv` maps ZAP plugin ids to `IGNORE`/`WARN`/`FAIL`; anything unlisted defaults to FAIL if High risk and WARN otherwise.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-129",
+      "statement": "A security run fails on a truncated scan: each context is capped at 60 minutes, the cap setting must match that number exactly, and a scan that finishes at the ceiling was cut short, an incomplete scan reporting no findings being a false clean.",
+      "kind": "rule",
+      "ref": "docs/security.md:83",
+      "quote": "- **A truncated scan.** Each context is capped at 60 minutes (`maxScanDurationInMins`), and `ACTIVE_SCAN_CAP_MINS` must match that number exactly. A scan that finishes at the ceiling was cut short, and an incomplete scan reporting no findings is a false clean.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-130",
+      "statement": "A security run fails on a declared context that saw no traffic, because its active-scan job scanned nothing and reported clean; this gate applies to the active profile only and a scoped run gates only that domain's contexts.",
+      "kind": "rule",
+      "ref": "docs/security.md:84",
+      "quote": "- **A context with no traffic.** Declared but undriven means its activeScan job scanned nothing and reported clean. Active profile only. Per-domain active (`ZAP_SCOPE`) gates only that domain's contexts; the report callout marks the run as scoped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-131",
+      "statement": "ZAP is enabled only when the profile is exactly security or security:active, and anything other than an exact active value is treated as passive rather than the reverse.",
+      "kind": "rule",
+      "ref": "config/zap.ts:11, :26-33",
+      "quote": "export const zapEnabled = process.env.PROFILE === 'security' || process.env.PROFILE === 'security:active';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-132",
+      "statement": "ZAP listens on port 9095 by default, deliberately outside the workspace's growing 3xxx Node and 808x Java port sequences.",
+      "kind": "non-functional",
+      "ref": "config/zap.ts:14-18",
+      "quote": "export const zapPort = process.env.ZAP_PORT || '9095';",
+      "confidence": "verbatim",
+      "note": "The file's comment gives the reason: a workspace-assigned range only grows, so the next free slot today is taken by the next new service eventually. The default local API key is a development placeholder and is not quoted here."
+    },
+    {
+      "id": "repo-tests-p16-133",
+      "statement": "A passive run uses one automation plan file and an active run another, and a separate context plan registers the contexts before any traffic exists so new site-tree nodes are classified correctly as the Playwright run creates them.",
+      "kind": "behaviour",
+      "ref": "config/zap.ts:57-67",
+      "quote": "function zapAutomationPlanFile(): string {\n  return isActiveProfile ? 'automation-active.yaml' : 'automation-passive.yaml';\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-134",
+      "statement": "The ZAP plan directory differs by lane: locally ZAP runs in its own container with the plan files bind-mounted, while on CDP the same-container sidecar reads them from the checked-out repo.",
+      "kind": "non-functional",
+      "ref": "config/zap.ts:20-24; entrypoint.sh:100",
+      "quote": "const zapPlanDir = process.env.ZAP_PLAN_DIR || '/zap/plan';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-135",
+      "statement": "A CDP Portal run chooses its suite with a PROFILE value, and an unset PROFILE runs the default profile.",
+      "kind": "behaviour",
+      "ref": "README.md:530-531; entrypoint.sh:25",
+      "quote": "In the CDP Portal, provide a `PROFILE` value to choose which test suite the container runs via `entrypoint.sh`.\nIf `PROFILE` is not set, the `default` profile is used.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-136",
+      "statement": "The CDP profiles are default (the same as e2e), e2e, a11y, dynamics, cross-browser, browserstack and security, each running every domain, with security:active refused.",
+      "kind": "behaviour",
+      "ref": "README.md:533-542 (PROFILE table); entrypoint.sh:228-253",
+      "quote": "| `default` (or unset) | the same as `e2e`                                                                              | `npm test`                   |\n| `e2e`                | e2e test suite                                                                                 | `npm test`                   |\n| `a11y`               | accessibility test suite                                                                       | `npm run test:a11y`          |\n| `dynamics`           | Dynamics checks (`@dynamics`), see [Dynamics checks](#dynamics-checks)                         | `npm run test:dynamics`      |\n| `cross-browser`      | `@cross-browser` tests in Chrome, Firefox, WebKit, iPhone 17 and Pixel 10                      | `npm run test:cross-browser` |\n| `browserstack`       | `@cross-browser` tests on BrowserStack                                                         | `npm run test:browserstack`  |\n| `security`           | security test suite (ZAP passive scan)                                                         | `npm run test:security`      |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-137",
+      "statement": "A CDP profile can be scoped to one domain by prefixing the suite with the domain name, for any of e2e, a11y, dynamics, cross-browser, browserstack, security and the refused active security, where the domain is animals, animals-admin, ins or plants.",
+      "kind": "behaviour",
+      "ref": "README.md:544-559; entrypoint.sh:16-19, :21, :29-45",
+      "quote": "The profiles above run every domain. To run one domain's suite only, prefix the\nsuite with its domain name as `<domain>:<suite>`:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-138",
+      "statement": "A domain-scoped profile for a test type the domain has no specs of, such as accessibility for plants today, fails with Playwright's no tests found.",
+      "kind": "behaviour",
+      "ref": "README.md:557-559",
+      "quote": "`<domain>` is one of `animals`, `animals-admin`, `ins` or `plants`, e.g.\n`animals:a11y` or `plants:e2e`. A domain with no specs of a test type (for example\n`plants:a11y` today) fails with Playwright's \"No tests found\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-139",
+      "statement": "A domain-scoped profile whose test directory does not exist stops the container with a message naming the directory and the requested profile.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:34-37",
+      "quote": "    if [ ! -d \"$SUITE_PATH\" ]; then\n      echo \"no test directory '$SUITE_PATH' for PROFILE '${requested_profile}'\"\n      exit 1\n    fi",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-140",
+      "statement": "An unknown profile stops the container with a message listing every allowed value and every domain.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:249-252",
+      "quote": "    echo \"unknown PROFILE: '${requested_profile}'. Allowed values: default, e2e, a11y, dynamics, cross-browser, browserstack, security, security:active (unset defaults to default), or <domain>:e2e|a11y|cross-browser|browserstack|security|security:active|dynamics for domain in: ${DOMAINS}.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-141",
+      "statement": "A domain prefix never reaches the Node side: the container exports only the bare suite, and a domain-scoped profile whose suite is not one of the seven allowed is exported as invalid.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:38-43",
+      "quote": "    case \"${PROFILE#*:}\" in\n      e2e | a11y | cross-browser | browserstack | security | security:active | dynamics) export PROFILE=\"${PROFILE#*:}\" ;;\n      *) export PROFILE=invalid ;;\n    esac",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-142",
+      "statement": "A run that exits non-zero before completing has the reason appended to a FAILED marker file, and the container exits 1 printing that file at the end, or prints that the test suite passed.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:230-233, :272-280",
+      "quote": "if [ -f FAILED ]; then\n  echo \"test suite failed\"\n  cat ./FAILED\n  exit 1\nfi\n\necho \"test suite passed\"\nexit 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-143",
+      "statement": "An active security profile requested on CDP records the refusal in the FAILED marker and publishes a report page saying the profile is destructive and only runs against the workspace docker-compose stack.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:117-122",
+      "quote": "    echo \"PROFILE=security:active is not supported on CDP; run it against the workspace docker-compose stack\" >> FAILED\n    write_fallback_report_html \"Security scan — refused\" \\\n      \"security:active is destructive and only runs against the workspace docker-compose stack.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-144",
+      "statement": "On CDP the suite starts ZAP itself as a background daemon on 127.0.0.1 with a freshly generated API key and silent mode, because CDP has no internet route for ZAP's update, news and telemetry calls.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:124-133",
+      "quote": "  zap.sh -daemon -silent -host 127.0.0.1 -port \"${ZAP_PORT:-9095}\" \\\n    -config api.key=\"$ZAP_API_KEY\" \\\n    -config api.addrs.addr.name=.* \\\n    -config api.addrs.addr.regex=true \\\n    -config anticsrf.tokens.token.name=crumb &",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-145",
+      "statement": "The CDP run waits for ZAP with ten checks five seconds apart, mirroring the workspace stack's health-check timing, and records a readiness failure in the FAILED marker with a report page saying no scan ran.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:135-146, :185-196",
+      "quote": "    write_fallback_report_html \"ZAP security scan — FAILED\" \\\n      \"ZAP did not become ready before timing out — no scan ran.\" \\\n      \"See <a href=\\\"zap-log.html\\\">zap.log</a> for diagnostics.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-146",
+      "statement": "The gate never runs against a spec run that failed or refused to start, and when the specs failed before the gate the published report says so and links the Playwright report and ZAP's own log, or says no Playwright report was generated when the run failed before any spec executed.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:148-184",
+      "quote": "      write_fallback_report_html \"Security scan — specs failed\" \\\n        \"The Playwright specs failed before the ZAP gate could run, so no ZAP scan took place.\" \\\n        \"$playwright_report_note\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-147",
+      "statement": "A CDP security run publishes ZAP's own internal log as HTML after ZAP has exited, and removes the raw scan JSON from the published report because the HTML wrapper already carries it.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:198-225",
+      "quote": "  rm -f \"$REPORT_DIR/security-scan.json\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-148",
+      "statement": "A security profile publishes the ZAP report directory, whose index is the ZAP summary rather than the Playwright report, and skips the Allure generate step; every other profile publishes the Playwright report through the report:publish sequence.",
+      "kind": "behaviour",
+      "ref": "entrypoint.sh:255-265",
+      "quote": "if [ \"${REPORT_DIR:-playwright-report}\" = \"zap-report\" ]; then\n  ./bin/publish-tests.sh \"$REPORT_DIR\"\n  publish_exit_code=$?\nelse\n  npm run report:publish\n  publish_exit_code=$?\nfi",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-149",
+      "statement": "A CDP Portal run depends on the image published from this repo's Dockerfile, needs its entrypoint to exit zero on success and non-zero on failure, and publishes its reports to S3.",
+      "kind": "constraint",
+      "ref": "README.md:592-594",
+      "quote": "- The CDP Portal run depends on the image being built/published by `/.github/workflows/publish.yml` (from this repo's `Dockerfile`).\n- The container entrypoint (`entrypoint.sh`) must exit `0` on success and a non-zero code on failure.\n- Reports are published to S3 by `npm run report:publish` (which runs `./bin/publish-tests.sh` and uses `RESULTS_OUTPUT_S3_PATH`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-150",
+      "statement": "Publishing copies the report directory to the configured S3 path and also uploads a zip of the report with the test-results and allure-results directories when they exist, warning rather than failing if the zip or its upload does not work.",
+      "kind": "behaviour",
+      "ref": "bin/publish-tests.sh:6-35",
+      "quote": "  if ! zip -qr \"$zip_file\" $paths; then\n    echo \"warning: could not create the test results zip from $paths\"\n  elif ! aws s3 cp --quiet \"$zip_file\" \"$zip_target\"; then\n    echo \"warning: could not upload the test results zip to $zip_target\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-151",
+      "statement": "Publishing fails when the S3 path is not set or the report directory is missing.",
+      "kind": "behaviour",
+      "ref": "bin/publish-tests.sh:31-43",
+      "quote": "   else\n      echo \"$DIRECTORY is not found\"\n      exit 1\n   fi\nelse\n   echo \"RESULTS_OUTPUT_S3_PATH is not set\"\n   exit 1\nfi",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-152",
+      "statement": "Calls that leave CDP for the internet go through the CDP proxy, which one fixture uses, while journey and service calls stay direct; from a laptop the proxy is not used at all.",
+      "kind": "integration",
+      "ref": "README.md:561-563; config/cdp-proxy.ts:3-6",
+      "quote": "Calls that leave CDP for the internet go through the CDP proxy\n(`HTTP_PROXY`), which the `externalRequest` fixture uses. Journey and\nservice calls stay direct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-153",
+      "statement": "The Dynamics checks prove a submitted notification reaches a domain's Dynamics instance, the animals domain's being PIMS Dynamics.",
+      "kind": "integration",
+      "ref": "README.md:567-568",
+      "quote": "`@dynamics` tests prove a submitted notification reaches a domain's Dynamics\ninstance (animals: PIMS Dynamics).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-154",
+      "statement": "The Dynamics checks run only through the dynamics profile or its domain-scoped form, and are excluded from the end-to-end, accessibility, security and docker-compose runs.",
+      "kind": "rule",
+      "ref": "README.md:568-570",
+      "quote": "They run only through `PROFILE=dynamics` or\n`<domain>:dynamics`, and are excluded from the e2e, a11y, security and\ndocker-compose runs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-155",
+      "statement": "The Dynamics checks query the Dataverse Web API and need the PIMS Dynamics environment URL, the app registration's tenant and client ids and its secret, from the test suite's CDP app-config and secrets or a local env file.",
+      "kind": "integration",
+      "ref": "README.md:572-578",
+      "quote": "- `ANIMALS_DYNAMICS_URL` — the PIMS Dynamics environment\n- `DATAVERSE_TENANT_ID`, `DATAVERSE_CLIENT_ID` — the app registration\n- `DATAVERSE_CLIENT_SECRET` — its secret",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-156",
+      "statement": "A missing Dynamics setting fails the test at once naming the variable, before any journey runs, and the Dynamics tests skip on the docker-compose stack, which has no PIMS Dynamics.",
+      "kind": "behaviour",
+      "ref": "README.md:579-580; config/dataverse.ts:17-25",
+      "quote": "A missing setting fails the test at once, naming the variable, before any journey\nruns. The tests skip on the docker-compose stack, which has no PIMS Dynamics.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-157",
+      "statement": "On CDP the Dataverse calls go through the CDP proxy, which must allow login.microsoftonline.com and the Dynamics host for this test suite.",
+      "kind": "constraint",
+      "ref": "README.md:580-582",
+      "quote": "On CDP their\nDataverse calls go through the CDP proxy (see [Running Tests via CDP Portal](#running-tests-via-cdp-portal)),\nwhich must allow `login.microsoftonline.com` and the Dynamics host for this test suite.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-158",
+      "statement": "The Dynamics suite is meant for CDP, and is run from a laptop only to debug it or write a new test.",
+      "kind": "rule",
+      "ref": "README.md:584-586",
+      "quote": "**The suite is for CDP.** Run `npm run test:dynamics` from a laptop only to debug it or\nwrite a new test: use the laptop-to-CDP `.env` (`CDP_LOCAL=true`, `PLAYWRIGHT_ENVIRONMENT`)\nplus the settings above.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-159",
+      "statement": "Dataverse is reached at the version 9.2 Web API path, authenticated through the Microsoft Entra ID version 1 client-credentials token endpoint, which is the same for every tenant.",
+      "kind": "integration",
+      "ref": "config/dataverse.ts:7-11",
+      "quote": "export const entraIdTokenUrl = (tenantId: string): string => `https://login.microsoftonline.com/${tenantId}/oauth2/token`;\n\n/** Dataverse Web API version. */\nexport const DATAVERSE_API_PATH = '/api/data/v9.2';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-160",
+      "statement": "A Dynamics test is given 100 seconds as its base timeout.",
+      "kind": "non-functional",
+      "ref": "config/dynamics.ts:1",
+      "quote": "export const dynamicsBaseTestTimeoutMs = 100_000;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-161",
+      "statement": "Dataverse settings are read by functions rather than when the file loads, because Playwright loads every spec in a run and a load-time check would fail one domain's tests over another domain's missing setting.",
+      "kind": "non-functional",
+      "ref": "config/dataverse.ts:1-6",
+      "quote": "Shared by every Dataverse environment we query. Settings are read by functions, never when\n * the file loads: Playwright loads every spec in a run, so a load-time check would\n * fail one domain's tests over another domain's missing setting.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-162",
+      "statement": "A missing secret is reported by name only and never by value, with a message pointing at the example env file and the CDP app-config and secrets.",
+      "kind": "non-functional",
+      "ref": "config/dataverse.ts:13-24",
+      "quote": "      `${missing.join(', ')} ${missing.length > 1 ? 'are' : 'is'} not set. See .env.example; on CDP these come from the test suite's app-config and secrets.`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-163",
+      "statement": "The suite signs in as two Defra ID stub identities whose customer reference numbers and organisations mirror the Defra ID stub's mock data.",
+      "kind": "data",
+      "ref": "config/users.ts:1-5",
+      "quote": "Defra ID stub identities used by the suite.\n * CRNs and organisations mirror trade-imports-defra-id-stub mock data.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-164",
+      "statement": "The default signed-in identity, used when a test names no user, is Andrew Farmer, customer reference number 2100010101, in organisation 5900001.",
+      "kind": "data",
+      "ref": "config/users.ts:6-11, :24-25",
+      "quote": "  andrew: {\n    crn: '2100010101',\n    displayName: 'Andrew Farmer',\n    email: 'test.user11@defra.gov.uk',\n    organisationId: '5900001',\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-165",
+      "statement": "The second identity, Sarah Plumber, customer reference number 2100010102, belongs to two organisations — Gatwick Airport and Farms Ltd — and is used where a test needs a user who must pick among several organisations.",
+      "kind": "data",
+      "ref": "config/users.ts:12-21",
+      "quote": "  sarah: {\n    crn: '2100010102',\n    displayName: 'Sarah Plumber',\n    organisations: {\n      /** SBI for Gatwick Airport — needed when Sarah picks among multiple orgs. */\n      gatwickAirport: '110100101',\n      /** SBI for Farms Ltd, a different organisation from Andrew's Gatwick Airport. */\n      farmsLtd: '110100102',\n    },\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-166",
+      "statement": "Sign-in takes its password from an environment variable with a local stub default, so a CDP run supplies its own.",
+      "kind": "constraint",
+      "ref": "config/users.ts:27",
+      "quote": "export const defaultPassword = process.env.AUTH_PASSWORD || '[REDACTED]';",
+      "confidence": "verbatim",
+      "note": "The default value in the file is a local stub password and has been redacted rather than copied; .env.example describes it as \"Optional override; defaults to Password123 for local/compose stub sign-in\"."
+    },
+    {
+      "id": "repo-tests-p16-167",
+      "statement": "The fixtures that sign in have their own timeout, longer than a test's, because signing in takes longer than a test's own budget.",
+      "kind": "non-functional",
+      "ref": "README.md:298-299",
+      "quote": "The fixtures that sign in have their own timeout, longer than a test's, because\nsigning in takes longer than a test's own budget.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-168",
+      "statement": "Cross-browser tests are existing end-to-end specs selected by the @cross-browser tag and run in branded Chrome, Playwright's Firefox and WebKit builds, an emulated iPhone 17, an emulated Pixel 10 and on BrowserStack.",
+      "kind": "non-functional",
+      "ref": "README.md:455; docs/cross-browser.md:3-6",
+      "quote": "Tests tagged `@cross-browser` run in branded Chrome, Playwright's browsers (Firefox, WebKit, an emulated iPhone 17 and an emulated Pixel 10) and on BrowserStack.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-169",
+      "statement": "The animals cross-browser folder holds no specs of its own.",
+      "kind": "non-functional",
+      "ref": "tests/animals/cross-browser/README.md:1-4",
+      "quote": "This folder holds no specs. The animals cross-browser tests are existing e2e specs, selected by the\n`@cross-browser` tag and run in Playwright's browsers, branded Chrome, and on BrowserStack.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-170",
+      "statement": "The INS cross-browser folder holds no specs of its own.",
+      "kind": "non-functional",
+      "ref": "tests/ins/cross-browser/README.md:1-4",
+      "quote": "This folder holds no specs. The INS cross-browser tests are existing e2e specs, selected by the\n`@cross-browser` tag and run in Playwright's browsers, branded Chrome, and on BrowserStack.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-171",
+      "statement": "Each domain can be run in one browser at a time against the stack by naming that project with the cross-browser tag, for Chrome, Firefox, WebKit, the iPhone 17 or the Pixel 10.",
+      "kind": "behaviour",
+      "ref": "tests/animals/cross-browser/README.md:14-21; tests/ins/cross-browser/README.md:14-21",
+      "quote": "| `npm run _clean_and_test_docker_compose -- --grep '@cross-browser' --project=chrome tests/animals/`          | Chrome only                                                 |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-172",
+      "statement": "A cross-browser test is chosen so that, together, the set renders as many pages as possible in each engine: tests that also run on CDP, leaving out validation and back-end checks, visual, accessibility and security specs, preferring a journey walk then one test for each page the walks do not reach.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:12-18",
+      "quote": "Tag existing e2e tests so that, together, they render as many pages as possible in each engine.\n\n- Choose tests that also run on CDP.\n- Leave out validation and backend checks, which do not vary by browser.\n- Leave out `@visual`, `@a11y` and security specs: snapshots are per engine, and axe and ZAP results barely change by browser.\n- Prefer a journey walk, then one test for each page the walks do not reach.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-173",
+      "statement": "A cross-browser tagged test still runs in the default Chromium end-to-end run, and is tagged only if it runs on CDP and renders a page the set does not already cover.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:27",
+      "quote": "It still runs in the Chromium e2e run. Tag it only if it runs on CDP and renders a page the set does not already cover.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-174",
+      "statement": "BrowserStack runs the cross-browser tests on three platforms: Playwright's WebKit on macOS 27 Golden Gate, Safari on an iPhone 18 Pro running iOS 27, and Safari on an iPhone 17 running iOS 26, each on the latest stable browser BrowserStack offers for it.",
+      "kind": "non-functional",
+      "ref": "docs/cross-browser.md:44-50; browserstack.yml:20-30",
+      "quote": "| macOS 27 Golden Gate | Desktop       | Playwright's WebKit build |\n| iOS 27               | iPhone 18 Pro | Safari                    |\n| iOS 26               | iPhone 17     | Safari                    |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-175",
+      "statement": "The browser set was last reviewed in November 2026 and is revisited when GDS updates its list, around February each year, or when Apple releases a new iOS or macOS.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:54",
+      "quote": "Last reviewed: November 2026. Revisit them when GDS updates its list (yearly, around February) or Apple releases a new iOS or macOS.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-176",
+      "statement": "Edge has no project of its own because it shares Chrome's engine and differs only in a thin branded layer, so Chromium and branded Chrome cover it.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:59",
+      "quote": "- **Chrome.** `chrome` runs the released branded Chrome. Close enough to trust for desktop Chrome and Edge: what differs on Windows and macOS is font rendering and branded features. Edge has no project of its own: it shares Chrome's engine and differs only in a thin branded layer, so `chromium` and `chrome` cover it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-177",
+      "statement": "Real iOS Safari on a real iPhone is the biggest gap Playwright's builds leave, and in the UK every iPhone browser uses Safari's engine, so testing it covers Chrome and Edge on iOS too.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:66",
+      "quote": "- **iOS Safari on a real iPhone.** The biggest gap: Playwright's WebKit and emulated iPhone miss Safari's platform layer, cookie rules, touch, the on-screen keyboard and the real viewport. In the UK every iPhone browser uses Safari's engine, so this covers Chrome and Edge on iOS too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-178",
+      "statement": "Only the two current iOS versions are tested, because older versions get updates mainly for iPhones that cannot run the newer release and those devices are not supported.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:67",
+      "quote": "- **iOS 27 and 26 only.** Each iOS version ships its own Safari. iOS 27 is the current release and iOS 26 still gets security updates. Older versions (iOS 18 and earlier) get updates mainly for older iPhones that can't run iOS 26, and we don't support those devices. See [endoflife.date](https://endoflife.date/ios).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-179",
+      "statement": "Four things are deliberately not covered: real Android browsers, real Firefox, real macOS Safari, and Chrome or Edge on Windows.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:71-76",
+      "quote": "- **Real Android** (Chrome, Samsung Internet, Firefox). BrowserStack supports it only up to Playwright 1.62. `mobile-chromium` covers Chrome and Samsung Internet's engine at phone size; `firefox` covers Android Firefox's engine. Add real Android Chrome once BrowserStack supports our Playwright version.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-180",
+      "statement": "Real Android is the only GDS platform no automated run covers, and is checked by hand on BrowserStack Live before a release.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:78",
+      "quote": "Optional: before a release, check Samsung Internet, Android Chrome and Android Firefox by hand on BrowserStack Live. Real Android is the only GDS platform no automated run covers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-181",
+      "statement": "A cross-browser command names its project explicitly and adds the tag filter, because without the filter a named engine would run every test.",
+      "kind": "rule",
+      "ref": "docs/cross-browser.md:96-99",
+      "quote": "- The commands add `--grep '@cross-browser'`. Without it a named engine runs every test.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-182",
+      "statement": "Branded Chrome is installed in the amd64 test image only, because Google publishes no Linux Arm64 build, and is installed from Google locally rather than through Playwright, whose install would replace the browser already there.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:98; README.md:63-64; Dockerfile:43-46",
+      "quote": "- `chrome` launches the installed Google Chrome. The amd64 test image installs it (Google publishes no Linux Arm64 build); locally, install it from Google. Do not run `npx playwright install chrome` on your own machine: it replaces the browser you already have.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-183",
+      "statement": "On an iPhone user agent the accessible autocomplete adds a hidden position counter to each suggestion, so the type-ahead helper accepts an optional position suffix, and a spec must not assume a fixed viewport.",
+      "kind": "behaviour",
+      "ref": "docs/cross-browser.md:104-107",
+      "quote": "- On an iPhone user agent, `accessible-autocomplete` adds a hidden \"1 of 7\" to each suggestion, so `TypeAhead.option()` accepts an optional position suffix.\n- Specs must not assume a fixed viewport.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-184",
+      "statement": "The BrowserStack run uses the team's service account credentials from the environment, never from the config file.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:113; browserstack.yml:5-8; bin/run-browserstack.ts:10, :17-23",
+      "quote": "# Never write credentials here: the SDK reads them from BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY (.env locally, CDP secrets on CDP).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-185",
+      "statement": "BrowserStack Local is always on, carrying the docker-compose stack's localhost URLs and CDP's internal hostnames to the remote browser, but Safari, WebKit and Android browsers cannot open localhost through it, so the iOS and macOS platforms run only against CDP.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:116-117; bin/run-browserstack.ts:36-49",
+      "quote": "- BrowserStack Local is always on. It carries the docker-compose stack's `localhost` URLs, and CDP's hostnames, which resolve only inside the platform, to the remote browser.\n- Safari, WebKit and Android browsers cannot open `localhost` through BrowserStack Local, so the iOS and macOS platforms run only on CDP.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-186",
+      "statement": "Session reuse is off on BrowserStack so every test signs in for itself, because real iPhones allow only one browser context.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:119; bin/run-browserstack.ts:85",
+      "quote": "- Session reuse is off (`E2E_SESSION_REUSE=off`), so every test signs in for itself: real iPhones allow only one browser context.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-187",
+      "statement": "Each BrowserStack platform runs half the machine's processors in parallel, up to the team-wide limit of 13 sessions, and that number can be overridden by a setting that must be a positive whole number.",
+      "kind": "non-functional",
+      "ref": "docs/cross-browser.md:121; bin/run-browserstack.ts:14-15, :51-64",
+      "quote": "- Each platform runs half your CPUs in parallel, up to the team-wide limit of 13 sessions. Set `BROWSERSTACK_PARALLELS_PER_PLATFORM` to change it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-188",
+      "statement": "A BrowserStack build is named local, github or cdp with the environment, identified by the run id or a UTC time, under the project trade-imports-ins-tests, and each run prints its results link.",
+      "kind": "non-functional",
+      "ref": "docs/cross-browser.md:120-122; bin/run-browserstack.ts:36-49, :66-70, :94",
+      "quote": "- Builds are named `local`, `github` or `cdp-<ENVIRONMENT>`, with a UTC time or the run id as the identifier, under the project `trade-imports-ins-tests`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-189",
+      "statement": "A BrowserStack run from a laptop or GitHub targets the docker-compose stack, while a CDP run targets the CDP environment, each with its own Playwright config.",
+      "kind": "behaviour",
+      "ref": "bin/run-browserstack.ts:36-49",
+      "quote": "  return identifier\n    ? { name: 'github', identifier, usesLocalTunnel: true, playwrightConfig: DOCKER_COMPOSE_CONFIG }\n    : { name: 'local', identifier: utcTimestamp(), usesLocalTunnel: true, playwrightConfig: DOCKER_COMPOSE_CONFIG };",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-190",
+      "statement": "GitHub Actions does not run the BrowserStack suite.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:111",
+      "quote": "The BrowserStack run uses the platforms in [Browsers](#browsers). It runs on CDP, against a CDP environment, and from your machine against the docker-compose stack. GitHub Actions doesn't run it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-191",
+      "statement": "BrowserStack network logs are off because they keep every request's headers, sign-in cookies included, on BrowserStack for 30 days; video, interactive debugging, error-level console logs, Playwright logs and test observability are on.",
+      "kind": "non-functional",
+      "ref": "browserstack.yml:40-51",
+      "quote": "debug: false\n# Off: network logs keep every request's headers, sign-in cookies included, on BrowserStack for 30 days.\nnetworkLogs: false\nnetworkLogsOptions: false\nvideo: true\ninteractiveDebugging: true\nconsoleLogs: errors\nplaywrightLogs: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-192",
+      "statement": "When a proxy is set, as on CDP, the BrowserStack SDK writes a CommonJS require into its generated config, which fails in this ES module project, so the run preloads a file defining a global require into the SDK and its workers.",
+      "kind": "constraint",
+      "ref": "docs/cross-browser.md:118; bin/run-browserstack.ts:13, :76-87",
+      "quote": "- When a proxy is set (`HTTP_PROXY`, as on CDP), the SDK writes `require(\"global-agent\")` into its generated Playwright config, which fails in an ES module project. `bin/browserstack-global-require.mjs` defines a global `require` for it, and `bin/run-browserstack.ts` preloads that file into the SDK and its workers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-193",
+      "statement": "A BrowserStack run stops before starting if either credential is missing, naming both.",
+      "kind": "behaviour",
+      "ref": "bin/run-browserstack.ts:17-23",
+      "quote": "    console.error(`Set ${missing.join(' and ')} in .env to run on BrowserStack.`);\n    process.exit(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-194",
+      "statement": "The test image is built on the official Playwright 1.65.0 Jammy image with the London time zone, CI set, curl, zip, a Java runtime and the AWS CLI installed, dependencies installed from the lockfile with lifecycle scripts skipped, and runs as the non-root Playwright user.",
+      "kind": "non-functional",
+      "ref": "Dockerfile:13-55",
+      "quote": "FROM mcr.microsoft.com/playwright:v1.65.0-jammy\n\nENV TZ=\"Europe/London\"\nENV CI=true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-195",
+      "statement": "The test image carries a ZAP 2.17.0 install copied from the stable ZAP image for the security profile, reusing the same image already proven locally, with the client-side add-on's plugin file deleted because it tries to create a Firefox profile this image never ships.",
+      "kind": "non-functional",
+      "ref": "Dockerfile:1-11, :31-35",
+      "quote": "FROM zaproxy/zap-stable:2.17.0 AS zap",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-196",
+      "statement": "The image must be built for linux/amd64 on Apple Silicon because of the AWS CLI version 2 dependency.",
+      "kind": "constraint",
+      "ref": "README.md:636-642; Dockerfile:57-58",
+      "quote": "Build with `--platform=linux/amd64` due to the AWS CLI v2 dependency:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-197",
+      "statement": "A docker-compose preflight check fails fast with a pointer at the stack recipe when the animals frontend on 3000, the animals backend on 8085 or the admin service on 3001 does not answer its health endpoint within five seconds.",
+      "kind": "behaviour",
+      "ref": "bin/assert-stack.sh:1-19",
+      "quote": "check \"frontend\" \"${TRADE_IMPORTS_ANIMALS_FRONTEND_BASE_URL:-http://localhost:3000}\"\ncheck \"backend\" \"${TRADE_IMPORTS_ANIMALS_BACKEND_URL:-http://localhost:8085}\"\ncheck \"admin\" \"${ADMIN_FRONTEND_URL:-http://localhost:3001}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-198",
+      "statement": "End-to-end tests run in GitHub Actions through the workspace's reusable workflow, which starts the workspace stack probing for the branch's images and runs this repo's published test image against it, publishing reports to GitHub Pages.",
+      "kind": "behaviour",
+      "ref": "README.md:514",
+      "quote": "E2E tests run in GitHub Actions via the workspace's reusable workflow, which starts the workspace stack with `tim docker up --branch <branch>` and runs this repo's published test image against it, with reports published to GitHub Pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-199",
+      "statement": "The end-to-end workflow triggers after the branch image is published, passes the branch name to the workspace workflow, and reports a pending check and then the result back to the pull request.",
+      "kind": "behaviour",
+      "ref": "README.md:518; .github/workflows/workspace-e2e-tests.yml:4-6, :24-57",
+      "quote": "The `/.github/workflows/workspace-e2e-tests.yml` workflow triggers after `Publish Branch Image` completes and calls `DEFRA/trade-imports-workspace/.github/workflows/e2e-tests.yml@main` with the branch name, then reports the result back to the PR.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-200",
+      "statement": "Only one end-to-end run is kept per branch: a new run cancels the one in progress.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/workspace-e2e-tests.yml:14-16",
+      "quote": "concurrency:\n  group: e2e-${{ github.event.workflow_run.head_branch || github.ref_name }}\n  cancel-in-progress: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-201",
+      "statement": "The end-to-end workflow runs only for a pull request whose image publish succeeded, or on manual dispatch with a branch to probe for service images.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/workspace-e2e-tests.yml:7-12, :35-43",
+      "quote": "      github.event_name == 'workflow_dispatch' ||\n      (github.event.workflow_run.conclusion == 'success' &&\n       github.event.workflow_run.event == 'pull_request')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-202",
+      "statement": "A pull request to main runs the formatting check, the lint (which includes the suite-tag check) and the type check, and the same job runs weekly at 07:00 on a Monday.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/check-pull-request.yml:3-31",
+      "quote": "      - run: npm ci\n      - run: npm run format:check\n      - run: npm run lint\n      - run: npm run typecheck",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-203",
+      "statement": "The dependency audit is a separate job from the pull-request checks, so a newly published advisory does not become the check that gates the merge and does not block the pull request carrying the fix.",
+      "kind": "rule",
+      "ref": ".github/workflows/check-pull-request.yml:33-46",
+      "quote": "  # Deliberately a separate job from cdp-workflows. The audit (audit-ci over\n  # `npm audit`) scans the whole installed tree against a live advisory feed,\n  # so a newly published advisory turns every open PR red regardless of what\n  # that PR changed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-204",
+      "statement": "Every audit allowlist entry must be keyed by a GHSA id, be active, carry notes giving a reason and an owner, and have a real expiry date no more than three months away; an expired entry is named as expired and fails the check, and the weekly run catches expiries between pull requests.",
+      "kind": "rule",
+      "ref": ".github/workflows/check-pull-request.yml:42-91",
+      "quote": "  # Before the audit, \"Check audit allowlist\" enforces the allowlist rules:\n  # every entry is {\"GHSA-...\": {active: true, notes, expiry}}, the notes give\n  # a reason and \"Owner: <name>\", and the expiry is a real date no more than\n  # 3 months away. An expired entry is named as EXPIRED, which audit-ci alone\n  # does not say. The weekly cron catches expiries between PRs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-205",
+      "statement": "A push to main builds the test image and publishes it to both the CDP container registry and Docker Hub, tagged with the computed next version and latest, labelled with the repo, the test suite name, the build run id and the commit, and then commits the version tag.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/publish.yml:3-69",
+      "quote": "          tags: |\n            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.new_tag }}\n            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:latest\n            defradigital/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.new_tag }}\n            defradigital/${{ env.IMAGE_NAME }}:latest",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-206",
+      "statement": "The published image declares itself a CDP test suite run as a job rather than a service.",
+      "kind": "integration",
+      "ref": ".github/workflows/publish.yml:60-62; .github/workflows/publish-branch.yml:16-19",
+      "quote": "            defra.cdp.testsuite.name=${{ env.IMAGE_NAME }}\n            defra.cdp.build.run_id=${{ github.run_id }}\n            defra.cdp.run_mode=job",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-207",
+      "statement": "A pull request publishes a branch image through the workspace's branch-publish workflow, with a layer cache, and the main publish writes that layer cache.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/publish-branch.yml:3-20; .github/workflows/publish.yml:71-78",
+      "quote": "  publish:\n    uses: DEFRA/trade-imports-workspace/.github/workflows/publish-branch.yml@main\n    with:\n      image-name: trade-imports-ins-tests\n      run-mode: job\n      layer-cache: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-208",
+      "statement": "Published end-to-end reports are cleaned up when a pull request closes, daily at 03:00, or on manual dispatch.",
+      "kind": "behaviour",
+      "ref": ".github/workflows/cleanup-e2e-reports.yml:3-18",
+      "quote": "on:\n  pull_request:\n    types: [closed]\n  schedule:\n    - cron: '0 3 * * *'\n  workflow_dispatch:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-209",
+      "statement": "A spec must not carry a ticket key, a backlog or ruling id, a release name, a ruling reference or the words \"real service\" in a comment, a test title or a test tag, and the lint fails it naming what it found.",
+      "kind": "rule",
+      "ref": "eslint-rules/code-quality.js:1-8, :80-123; eslint.config.mjs:19",
+      "quote": "const TRACKING_REFERENCES = [\n  { pattern: /\\bEUDPA-\\d+/i, label: 'a ticket key' },\n  { pattern: /\\b(?:c|d|q|inc|req)-\\d{3}\\b/i, label: 'a backlog or ruling id' },\n  { pattern: /\\bdesign release\\b/i, label: 'a release name' },\n  { pattern: /\\bDR ?\\d+(?:\\.\\d+)?\\b/i, label: 'a release name' },\n  { pattern: /\\bRuled\\b/, label: 'a ruling reference' },\n  { pattern: /\\breal service\\b/i, label: 'session vocabulary' }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-210",
+      "statement": "The tracking-reference rule tells the author to say what the code does instead in a comment, and to state what the assertions prove instead in a test title or tag.",
+      "kind": "copy",
+      "ref": "eslint-rules/code-quality.js:88-93",
+      "quote": "      inComment:\n        'Comment contains {{label}} (\"{{match}}\"). Say what the code does instead.',\n      inTestTitle:\n        'Test title or tag contains {{label}} (\"{{match}}\"). State what the assertions prove instead.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-211",
+      "statement": "A catch that drops the error, written as returning undefined or an empty block, is refused, with the message to log it with the error and the ids support searches by or let it reject.",
+      "kind": "rule",
+      "ref": "eslint-rules/code-quality.js:141-163; eslint.config.mjs:20",
+      "quote": "      silent:\n        'This .catch drops the error. Log it with { err } and the ids support searches by, or let it reject.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-212",
+      "statement": "An error or warning log written with only a string while a caught error is in scope is refused, with the message to log the caught error with the ids support searches by.",
+      "kind": "rule",
+      "ref": "eslint-rules/code-quality.js:213-241; eslint.config.mjs:21",
+      "quote": "      stringOnly:\n        'Log the caught error as { err: {{name}} } with the ids support searches by, not only a message.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-213",
+      "statement": "The shared lint rule file also carries a rule against obligation-set names in a set-agnostic platform layer, which this repo's lint configuration does not switch on.",
+      "kind": "rule",
+      "ref": "eslint-rules/code-quality.js:252-307; eslint.config.mjs:17-22",
+      "quote": "      setName:\n        '\"{{match}}\" names an obligation set. The platform layer is set-agnostic: take set data from the configuration the set gateway supplies.'",
+      "confidence": "verbatim",
+      "note": "mechanism: the rule is exported but only no-tracking-references, no-silent-catch and no-message-only-error-log are enabled in eslint.config.mjs."
+    },
+    {
+      "id": "repo-tests-p16-214",
+      "statement": "The lint runs TypeScript's type-checked recommended rules and refuses a floating promise.",
+      "kind": "rule",
+      "ref": "eslint.config.mjs:5-18",
+      "quote": "      '@typescript-eslint/no-floating-promises': 'error',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-215",
+      "statement": "Shared test code must not depend on a domain: a file under a shared folder may not import the page-objects barrel, nor any domain's page objects, flows or domain constants.",
+      "kind": "rule",
+      "ref": "eslint.config.mjs:24-46",
+      "quote": "            {\n              regex: '^@(page-objects|flows|domain)/(?!shared/)',\n              message: 'Shared code must not depend on a domain; import from a shared folder only.',\n            },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-216",
+      "statement": "The shared lint rule file is the same file as in the Node frontends, so Prettier skips it here and a change is made there first and copied across.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Code quality)",
+      "quote": "No ticket keys, backlog or ruling ids, release names or session words in comments or test titles. `npm run lint` enforces this, and the silent-catch and error-log rules, through `eslint-rules/code-quality.js`. That file is the same file as in the Node frontends, so Prettier skips it here; change it there first and copy it across.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-217",
+      "statement": "The suite's canonical code-quality text is the workspace repo's own rules file.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Code quality)",
+      "quote": "Canonical text: `.claude/rules/code-quality.md` in the trade-imports-workspace repo.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-218",
+      "statement": "The suite keeps its support code in named folders: the specs under tests, multi-page sequences under flows, one class per page under page-objects, shared constants and models under domain, Playwright fixtures, HTTP, MongoDB and SQS clients under adapters, canned data under resources, and cross-domain helpers under utils.",
+      "kind": "non-functional",
+      "ref": "AGENTS.md (Layout table)",
+      "quote": "| `flows/<domain>` | Multi-page sequences: `journey.ts` `to*` methods and the actions built on them              |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-219",
+      "statement": "A spec reaches a page through a named step in its domain's journey file rather than through its own clicks, and a sequence used by two tests becomes such a step with the local copies deleted.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Writing specs)",
+      "quote": "- A spec reaches a page through a `to*` method in `flows/<domain>/journey.ts`, not through its own clicks.\n- A sequence used by two tests becomes a `to*` method in that file. Delete the local copies when you add it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-220",
+      "statement": "A journey spec is never seeded: seeding is only for the set-up of a one-page assertion, and everything else is walked through the pages.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Writing specs)",
+      "quote": "- Never seed a journey spec. Seed only the set-up for a one-page assertion; walk everything else through the pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-221",
+      "statement": "Test data is copied from real canned data — the service's fixtures, the reference data or the stub — and never invented.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Writing specs)",
+      "quote": "- Copy test data from real canned data (the service's fixtures, reference data, the stub). Never invent it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-222",
+      "statement": "A test run is never piped: it is redirected to a file and the file is read.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Writing specs)",
+      "quote": "- Never pipe a test run. Redirect it to a file and read the file.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-223",
+      "statement": "The animals journey's answers are plain data held apart from the steps that drive the pages, and come in named sets: a mandatory set where a missing answer is a compile error, and a full set.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Journey answers (animals))",
+      "quote": "- `journey.ts` drives pages. Notification answers, what a user says, are plain data in `domain/animals/constants/journey-options.ts`.\n- Answers come in named sets: the mandatory set (a missing answer is a compile error) and the full set.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-224",
+      "statement": "A spec starts from an answer set and overrides single values only where the test needs them, and never changes the journey steps to get a different value.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Journey answers (animals))",
+      "quote": "A spec starts from a set and overrides single values only where the test needs them, e.g. `{ ...MANDATORY_ANSWERS, unweanedAnimals: yesNoValues.yes }`. It never changes `journey.ts` to get a different value.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-225",
+      "statement": "An answer states a fact and never how it is entered, so the user interface and the seeded journeys build from the same answers by default, and a new field touches one answer type and the step that enters it.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Journey answers (animals))",
+      "quote": "- An answer states a fact, never how it is entered. By default the UI and seeded journeys build from the same answers.\n- A new field touches one answer type and the step that enters it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-226",
+      "statement": "The plants journey's answers live in the plants journey file rather than in a separate constants file as animals' do.",
+      "kind": "non-functional",
+      "ref": "AGENTS.md (Journey answers (plants))",
+      "quote": "- Plants answers live in `flows/plants/journey.ts`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-227",
+      "statement": "A test title states what its assertions prove, and a test must fail without the change it covers.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Code quality)",
+      "quote": "- A test title states what its assertions prove. A test must fail without the change it covers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-228",
+      "statement": "Lint, the formatting check and the type check are run before a commit.",
+      "kind": "rule",
+      "ref": "AGENTS.md (Before you commit); README.md:610-616",
+      "quote": "Run `npm run lint`, `npm run format:check` and `npm run typecheck`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-229",
+      "statement": "A pre-commit hook checks lint and formatting on staged files only and blocks the commit if the checks fail.",
+      "kind": "behaviour",
+      "ref": "README.md:618-620; package.json:101-109",
+      "quote": "This project uses **Husky** and **lint-staged** to automatically validate code quality before commits. The pre-commit hook checks linting (ESLint) and formatting (Prettier) on staged files only. If checks fail, the commit is blocked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-230",
+      "statement": "A single test's timeout is raised with a helper that, in debug mode, leaves a test with no timeout at all.",
+      "kind": "behaviour",
+      "ref": "README.md:632-634",
+      "quote": "Raise the run-wide timeout in `playwright.config.ts`. Raise a single test's timeout with `setTestTimeout` from `@utils/playwright/test-timeout`, which leaves a test with no timeout, as in debug mode, with none.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-231",
+      "statement": "The suite is licensed under the Open Government Licence version 3, and the attribution statement must be cited in products and applications that use the information.",
+      "kind": "constraint",
+      "ref": "README.md:650-658",
+      "quote": "THIS INFORMATION IS LICENSED UNDER THE CONDITIONS OF THE OPEN GOVERNMENT LICENCE found at:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-232",
+      "statement": "A brand-new animals notification first shows the origin of import page with nothing answered.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:8-10",
+      "quote": "- `toOriginOfImport` shows origin unanswered, as a brand-new notification first shows it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-233",
+      "statement": "The notification's entry guard admits a notification on an answer the user entered, so opening the overview before origin is saved shows origin again.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:8-9",
+      "quote": "- `createNotificationAtOrigin` ends on the origin page with nothing answered. The entry guard admits a notification on an answer the user entered, so opening its overview before origin is saved shows origin again.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-234",
+      "statement": "A task left at \"Not yet started\" on the overview is what a failed save of the origin page shows up as, several steps later.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:10",
+      "quote": "- `startNotification` waits for the origin page to leave before it opens the overview. Opening the overview regardless hides a failed save: the run then fails several steps later on a task stuck at \"Not yet started\", pointing at the wrong page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-235",
+      "statement": "The arrival date must fall inside a window from one week back to six months ahead, and the application renders a date in unpadded day/month/four-digit-year form.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:18",
+      "quote": "- `ARRIVAL_DATE` (in `domain/animals/constants/journey-options.ts`) falls inside the arrival-date window (one week back to six months ahead) wherever the wall clock is, written in the unpadded d/m/yyyy the application renders. A check-your-answers assertion then compares against the application's shape, not the typed string it echoes back.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-236",
+      "statement": "A temporary admission's exit date falls after the arrival date.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:19",
+      "quote": "- `TEMPORARY_ADMISSION_EXIT_DATE` falls after the arrival date, in the same format.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-237",
+      "statement": "An accompanying document is added by waiting for the virus scan to finish, so the submission carries the document.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:23; docs/animals-journey.md:66-68",
+      "quote": "- `uploadDocumentAndWaitForScan` waits for the virus scan to finish so the submission carries the document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-238",
+      "statement": "A document list is expected within ten seconds and a virus scan within 90 seconds, the scan ceiling being sized for CDP's real scanner at about 30 seconds on the test virus file while the local stub settles on its first refresh read.",
+      "kind": "non-functional",
+      "ref": "config/file-upload-timeouts.ts:3-11",
+      "quote": "export const fileUploadTimeouts = {\n  documentsListVisible: timeouts.medium,\n  virusScanComplete: 90_000,\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-239",
+      "statement": "The suite's shared waiting budgets are one second, five seconds, ten seconds, 30 seconds, 60 seconds and 120 seconds.",
+      "kind": "non-functional",
+      "ref": "config/timeouts.ts:1-8",
+      "quote": "export const timeouts = {\n  veryShort: 1_000,\n  short: 5_000,\n  medium: 10_000,\n  long: 30_000,\n  veryLong: 60_000,\n  extraLong: 120_000,\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-240",
+      "statement": "A submitted notification is given only the answers the frontend requires unless a fuller set is passed.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:27",
+      "quote": "- `submitNotification` gives only the answers the frontend requires (`MANDATORY_ANSWERS`), unless the caller passes a fuller set such as `ALL_ANSWERS`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-241",
+      "statement": "The import reason's purpose is a conditional reveal under the reason, so both answers are submitted together.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:28",
+      "quote": "- The import reason's purpose is a conditional reveal under the reason, so both answers go in on one submit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-242",
+      "statement": "The transporter page saves through unfilled, and the default means of transport, Road, keeps transited countries in scope, with transit countries answered next.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:32",
+      "quote": "- `reachTransporterFromHub` goes back to the transporter list from the hub within a journey that is already unlocked. The page saves through unfilled. Arrival details are filled on the way because the default means, Road, keeps transited countries in scope, and transit countries are answered next.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-243",
+      "statement": "A transporter is added from the transporter list by answering a transporter type question, and the commercial arm goes list, then type question, then a form for a commercial transporter that is not on the list.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:33-34",
+      "quote": "- `toCommercialTransporter` follows the add route's commercial arm: the list first, then the transporter type question, then the form for a commercial transporter that is not on the list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-244",
+      "statement": "Saving a private transporter's add form lands back on the transporter list with the new transporter first and chosen.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:35",
+      "quote": "- `fillAndSavePrivateTransporterAddForm` fills the open private transporter form with the details given and saves it, waiting for the transporter list the save lands back on with the new transporter first and chosen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-245",
+      "statement": "Saving a commercial transporter's form lands on the transporter list, and saving that list reaches the overview.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:36",
+      "quote": "- `fillAndSaveCommercialTransporterAddFormToOverview` fills and saves the open commercial transporter form, then saves the transporter list it lands on, reaching the overview — the one path specs that only need the overview, not the list's own state, take through the save.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-246",
+      "statement": "The transporter list shows only the newest address-book entry of each name, so when two tests add a transporter of the same name at once the later add replaces the entry the earlier test's list chose, and that list's save is refused with \"Select a transporter from the list\".",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:37",
+      "quote": "Every test signs in to the same organisation, and its transporter list shows only the newest address-book entry of each name. When two tests add a transporter of the same name at once, the later add replaces the entry the earlier test's list chose, and that list's save is refused with \"Select a transporter from the list\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-247",
+      "statement": "The overview lists one set of task rows for a consignment that identifies an animal and travels by air or sea and another for an overland consignment, each in a fixed order the assertion exists to prove.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:41-42",
+      "quote": "- `OVERLAND_OVERVIEW_TASKS` is the overview's task rows for an overland consignment, in the order the overview lists them. It is stated outright rather than derived from `AIR_OR_SEA_OVERVIEW_TASKS`, because the order is what the assertion that reads it exists to prove.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-248",
+      "statement": "A rail consignment in transit passes the identification page with both of the chosen commodity's free-text fallback answers blank, because that commodity declares no identifier of its own and the two answers are optional.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:47",
+      "quote": "- `walkPoultryByRail` walks a rail consignment in transit from creation to the review. It passes through the identification page straight after saving commodity details, leaving both of the chosen commodity's free-text fallback answers blank there, because the chosen commodity declares no identifier of its own and the two answers are optional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-249",
+      "statement": "The rail-poultry walk ends on the review rather than submitting, because the MDM stub serves no species page for that commodity and Continue from the review is refused.",
+      "kind": "constraint",
+      "ref": "docs/animals-journey.md:47",
+      "quote": "It ends on the review rather than submitting, because the MDM stub serves no species page for this commodity and Continue from the review is refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-250",
+      "statement": "A two-cat air consignment answers neither a county parish holding number nor the unweaned-animals question, because the commodity code cats share is not on the holding-number-required list and is not an unweaned code.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:48",
+      "quote": "It answers neither a CPH number nor the unweaned-animals question, because the commodity code cats share is not on the CPH-required list (`CPH_REQUIRED_CODES`) and is not an unweaned code (`UNWEANED_CODES`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-251",
+      "statement": "The permanent address page is reached from the consignment addresses page, inside the leg of the journey that runs from the transporter to the review.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:48",
+      "quote": "It answers the permanent address page from the consignment addresses page, which the walk reaches only inside `walkFromTransporterToReview`, so the caller's permanent-address step is supplied to that method rather than run before or after it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-252",
+      "statement": "The county parish holding number is answered on the consignment addresses page.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:52",
+      "quote": "- `addCphAndLeaveAddresses` runs from the addresses page: it answers the CPH number and then leaves the page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-253",
+      "statement": "The animals API seed unlocks only origin and commodity, so a spec that needs the review walks the whole journey rather than seeding it.",
+      "kind": "constraint",
+      "ref": "docs/animals-journey.md:53",
+      "quote": "- The API seed unlocks only origin and commodity, so a spec that needs the review walks the whole journey rather than seeding it. The walk's addresses leg picks the canned parties whose names and countries a review assertion reads.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-254",
+      "statement": "A party picker refuses an address-book record that does not carry the role the picker is for, so each role's answer must name a record holding that role.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:54",
+      "quote": "- `PartyNames` (`flows/animals/seed-form-steps.ts`) names the address-book record each role's answer picks. Every name must match a record `flows/shared/address-book-seed.ts` seeds holding that role, since a picker now refuses a record that does not carry its own role.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-255",
+      "statement": "A party picker only threads its checked party through a server round trip, so a link off the page before that round trip carries the previously-saved party rather than the just-ticked one.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:55",
+      "quote": "- `selectAndCommit` (`page-objects/animals/party-picker-page.ts`) ticks a party's radio, then re-searches to commit it: the picker only threads its checked party through a server round trip, so a link off the page before that round trip carries the previously-saved party, not the just-ticked one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-256",
+      "statement": "On the notification view a party's summary-list row is found by the card's title with the role as the row's term.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:61",
+      "quote": "- `partyRow` selects the summary-list row of the card, found by its title, whose term is the role.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-257",
+      "statement": "A summary card on the notification view offers a heading Change link and may offer a row link such as Edit details, and a card can hold a titled subsection such as \"Permanent address\" with its own summary list.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:62",
+      "quote": "- `cardLinks` lists every link in a summary card, the heading Change link and any row link such as Edit details, so a spec can assert exactly which links a card offers. `editPartyDetails` finds the Edit details link on a party row. `cardSubsection` selects the summary list under a card's titled subsection, such as \"Permanent address\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-258",
+      "statement": "A summary list has no error state of its own, so an outstanding role carries its message in the row's value cell.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:63",
+      "quote": "- `partyError` reads the first definition of the row. A summary list has no error state of its own, so an outstanding role carries its message in the row's value cell.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-259",
+      "statement": "A species has no tick box on the commodity page until its own search lists it, and it is ticked inside the group for that species' own commodity code.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:71",
+      "quote": "- `searchAndCheckSpecies` searches for each species before ticking it, because a species has no tick box until its own search lists it, and ticks it inside the group for the species' own commodity code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-260",
+      "statement": "The transit port of exit can be chosen by its code, so an assertion naming a particular port does not depend on the port list's order.",
+      "kind": "behaviour",
+      "ref": "docs/animals-journey.md:75",
+      "quote": "- `selectTransitPortOfExit` chooses the transit port of exit by its code, beside the by-position `selectTransitPortOfExitByIndex` that remains for a spec that only needs any port, so an assertion naming a particular port does not depend on the port list's order.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-261",
+      "statement": "The animals flows and page objects carry no comments, their reasons being kept in the repo's own documentation instead.",
+      "kind": "rule",
+      "ref": "docs/animals-journey.md:3",
+      "quote": "Why the animals flows and page objects are written the way they are. The code carries no comments, so the reasons live here. Sections without a file name are steps of `flows/animals/journey.ts`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-262",
+      "statement": "The admin portal shows a \"Replay-all started\" or \"Delete-all started\" banner only once its call to the dynamics gateway, made with the admin secret, has succeeded, and that banner is how the dead-letter specs prove the admin portal and the gateway are wired together; those specs run in serial because the stack has one queue.",
+      "kind": "behaviour",
+      "ref": "README.md:282-287",
+      "quote": "The admin portal shows the \"Replay-all started\" or \"Delete-all started\" banner\nonly once its call to the dynamics gateway, made with the admin secret, has\nsucceeded. The banner is how these specs prove the admin portal and the\ngateway are wired together.",
+      "confidence": "verbatim",
+      "note": "The animals-admin domain is outside this source's scope of tests/animals and tests/ins; recorded because the statement sits in this part's README."
+    },
+    {
+      "id": "repo-tests-p16-263",
+      "statement": "A local run against a CDP environment needs the CCoE AWS OpenVPN, and the CDP Portal test suite page needs it too.",
+      "kind": "constraint",
+      "ref": "README.md:426; README.md:528",
+      "quote": "Test Suite URL: https://portal.cdp-int.defra.cloud/test-suites/trade-imports-ins-tests (requires CCoE AWS OpenVPN).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-264",
+      "statement": "The settings a run takes from the environment are the CDP environment and local flag, the developer API key, the ZAP port and API key, the BrowserStack username and access key, the Dynamics URL and Dataverse tenant, client and secret, and the sign-in password, with the username, access key, client secret and password marked as CDP secrets.",
+      "kind": "constraint",
+      "ref": ".env.example (whole file)",
+      "quote": "# ======= CDP Secrets =======\n# Optional override; defaults to Password123 for local/compose stub sign-in.\nAUTH_PASSWORD=",
+      "confidence": "verbatim",
+      "note": "Read with git show HEAD:.env.example; the Read tool and cat were refused for this path. The file holds no real credential values, only empty keys and the local stub default quoted above."
+    },
+    {
+      "id": "repo-tests-p16-265",
+      "statement": "The suite runs on Node 26.13.1, as its version file and its engines range both state.",
+      "kind": "constraint",
+      "ref": "package.json:6-8; .nvmrc",
+      "quote": "  \"engines\": {\n    \"node\": \">=26.13.1\"\n  },",
+      "confidence": "verbatim",
+      "note": "Ambiguity recorded, not resolved: README.md:24 states \"Node.js v24\" as the prerequisite, which neither .nvmrc (v26.13.1) nor the engines range agrees with."
+    },
+    {
+      "id": "repo-tests-p16-266",
+      "statement": "The suite is driven by Playwright 1.65.0 with axe-core for accessibility, Allure for reporting, the BrowserStack Node SDK, the MongoDB and SQS clients, and audit-ci for the dependency audit.",
+      "kind": "non-functional",
+      "ref": "package.json:76-97",
+      "quote": "    \"@axe-core/playwright\": \"4.14.0\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-267",
+      "statement": "A run clears its previous results first, removing the test results, the Playwright and Allure reports, the failure marker and the saved authenticated sessions.",
+      "kind": "behaviour",
+      "ref": "package.json:19",
+      "quote": "\"_clean\": \"rm -rf test-results playwright-report allure-results allure-report FAILED playwright/.auth\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-268",
+      "statement": "The ZAP report directory's contents are cleared before a scan but the directory itself is never removed, because ZAP bind-mounts it at container start and removing it mid-life breaks the mount.",
+      "kind": "constraint",
+      "ref": "docs/security.md:43; package.json:24",
+      "quote": "Reports land in `zap-report/` (gitignored), created by ZAP on first `up`. `_zap_clean` clears its contents but never the directory — ZAP bind-mounts it at container start, so removing it mid-life breaks the mount.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-269",
+      "statement": "A notification can be seeded from the command line by a script of its own.",
+      "kind": "behaviour",
+      "ref": "package.json:39",
+      "quote": "\"seed:notification\": \"tsx bin/seed-notification.ts\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-270",
+      "statement": "The workspace stack is started from published images, built from local source, stopped with its volumes wiped, or have its backend rebuilt, by four workspace commands the suite documents.",
+      "kind": "integration",
+      "ref": "README.md:415-420",
+      "quote": "| `tim docker up`             | Start the full stack from published images             |\n| `tim docker dev`            | Start the stack built from local source under `repos/` |\n| `tim docker down`           | Stop the stack and wipe volumes                        |\n| `tim docker bounce-backend` | Rebuild and recreate the backend container             |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-271",
+      "statement": "CI runs the docker-compose CI script against the workspace stack through the workspace's reusable workflow.",
+      "kind": "behaviour",
+      "ref": "README.md:316-319",
+      "quote": "The `docker-compose` config targets `localhost:3000` / `localhost:3001` /\n`localhost:3002` / `localhost:3003`, so start the workspace stack first. CI\nruns `npm run test:docker-compose:ci` against that stack via the workspace\nreusable workflow.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p16-272",
+      "statement": "The repo keeps no rulings or decisions ledger, so the only rulings it carries are the ones its documentation states in prose.",
+      "kind": "rule",
+      "ref": "repo root, docs/ and .claude/ (no spec/decisions.json; find for '*decision*' and '*ruling*' outside node_modules returns nothing; docs/ holds only a11y.md, cross-browser.md, security.md and animals-journey.md)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a ledger at the repo root (ls -a), under docs/ and .claude/ (find -type f), and by name across the repo (find -iname '*decision*', -iname '*ruling*', excluding node_modules). None exists."
+    },
+    {
+      "id": "repo-tests-p16-273",
+      "statement": "The accessibility documentation names no conformance standard, so the suite's prose does not say which level of WCAG, or which axe rule set and version, its scans hold a page to.",
+      "kind": "non-functional",
+      "ref": "docs/a11y.md (whole file: only the excluded conditional-reveal radios are documented)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "docs/a11y.md documents only the two excluded selectors and why. README.md:155-163 adds the timeout and the same exclusion. Neither states a standard; @axe-core/playwright 4.14.0 in package.json is the only version evidence in this part."
+    },
+    {
+      "id": "repo-tests-p16-274",
+      "statement": "Neither the per-domain script table nor the CDP profile table says which domains or test types the plants and animals-admin domains will gain, so the documentation does not say whether plants' missing accessibility and security suites are planned or deliberately out of scope.",
+      "kind": "non-functional",
+      "ref": "README.md:104-111 (Domain table) and README.md:544-559 (CDP domain profiles)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "README.md:111 says only \"A dash means the domain has no specs of that test type yet\"; docs/security.md:35 says \"Plants has no security specs yet\". Neither says what is planned."
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 window.DATA = {
-  "builtAt": "2026-11-20",
+  "builtAt": "2026-11-25",
   "scope": {
     "id": "animals",
     "title": "Animals Journey Page Map",
@@ -14,13 +14,13 @@ window.DATA = {
   },
   "summary": {
     "themes": 23,
-    "rows": 223,
+    "rows": 228,
     "pages": 25,
     "arriving": 4,
-    "landed": 114,
-    "ahead": 71,
+    "landed": 135,
+    "ahead": 52,
     "held": 7,
-    "aside": 31
+    "aside": 34
   },
   "themes": {
     "waiting-on-design": {
@@ -335,17 +335,17 @@ window.DATA = {
       "ticket": "EUDPA-696",
       "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-696",
       "wave": "5",
-      "rows": 22,
+      "rows": 27,
       "counts": {
-        "landed": 0,
-        "ahead": 19,
+        "landed": 21,
+        "ahead": 0,
         "held": 1,
         "deferred": 0,
         "dropped": 2,
-        "folded in": 0
+        "folded in": 3
       },
       "state": "part",
-      "stands": "19 ahead, 1 held, 2 dropped"
+      "stands": "21 landed, 1 held, 2 dropped, 3 folded in"
     },
     "reference-lists": {
       "id": "reference-lists",
@@ -1288,17 +1288,17 @@ window.DATA = {
       "ticket": "EUDPA-696",
       "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-696",
       "wave": "5",
-      "rows": 22,
+      "rows": 27,
       "counts": {
-        "landed": 0,
-        "ahead": 19,
+        "landed": 21,
+        "ahead": 0,
         "held": 1,
         "deferred": 0,
         "dropped": 2,
-        "folded in": 0
+        "folded in": 3
       },
       "state": "part",
-      "stands": "19 ahead, 1 held, 2 dropped",
+      "stands": "21 landed, 1 held, 2 dropped, 3 folded in",
       "pages": [
         "Overview",
         "Review your notification",

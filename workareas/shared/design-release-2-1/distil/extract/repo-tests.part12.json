@@ -1,0 +1,1203 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 12, ins address book: the list, its tabs, filters and roles. Read in full: the 10 read-side specs under tests/ins/e2e/features/address-book (address-book-list.spec.ts 310 lines/16 test declarations expanding to 19 tests through three two-case loops; address-book-role-filter.spec.ts 275 lines/12 declarations in three describes, two of them API-only and one JavaScript-off; address-book-roles.spec.ts 158 lines/11 declarations, all API-only, the last a loop over the three role groups; address-book-tabs.spec.ts 138 lines/7 declarations in three describes; address-book-transporter-type-filter.spec.ts 49 lines/2; address-book-country-list.spec.ts 34 lines/2 declarations, one looping the three role-backed add forms; address-book-auth.spec.ts 22 lines/2; address-book-persistence.spec.ts 33 lines/1; address-book-cross-user-visibility.spec.ts 35 lines/1; address-book-seed.spec.ts 21 lines/1). The counts in the partition's covers are grep counts of every `test`-prefixed token (describes, test.use and beforeEach included), which is why they run ahead of the test counts; every literal declaration in all ten files is accounted for here. Also read in full the three local helpers (expect-address-book-list.ts, expect-other-organisation-address-returns-to-list.ts, run-addresses.ts) and the support files the specs rest on: page-objects/ins/address-book/{list-page,record-page,transporter-view-page,url-with-return}.ts, page-objects/ins/index.ts, page-objects/shared/{base-page,summary-list,opens-at-expected-url}.ts, domain/ins/constants/{address-book-types,address-book-journey,transporter-types,trader-address,trader-transporter,address-details}.ts, domain/shared/constants/{address-types,test-record-names}.ts, domain/ins/models/db/address-document.ts, flows/ins/journey.ts, flows/shared/address-book-seed.ts, fixtures/{ui,auth-state}.ts, utils/{address-book-cleanup,roles-options-assertions}.ts, config/users.ts and bin/reset-e2e-address-book.ts. Read as further context, outside the part's read list: adapters/http/address-book-api-client.ts and adapters/http/organisation.ts (for the list, role and searchRole query shape and the organisation header), tests/ins/e2e/features/address-book/expected-api-refusal.ts (the refusal the roles spec asserts), resources/reference-data/reference-data.ts (addressFormCountryNames) and domain/shared/constants/journey-party-names.ts (the seeded fixture names). Covered: the list page at /address-book with its heading, intro, Add button, hidden-until-opened filter, results line, column headings, row rendering and View action, its empty state and Clear search, its success banners, and its JavaScript-off behaviour; pagination as a rule (page size 8, truncation over five pages, the parameters the next page keeps, when no pagination shows); the four tabs, their order, labels, panel headings, URLs, default and unknown-tab fallback, and which roles each lists; the role filter and the transporter Type filter with every option, the empty-valued placeholder, server-side application on submit and what filtering narrows to; the six roles with the grouping rules the API enforces and its refusals; the country list the add and edit forms offer and where it comes from; the 14 seeded fixture records and the reconcile that keeps them; organisation scoping, cross-user visibility and the signed-out redirect; and the Mongo persistence round-trip. Following the partition's rule that a claim comes from a test, support-file facts no test in this slice asserts are left to the parts whose specs drive them (the add, edit, view and delete pages in part 13, the transporter pages in part 14), with one exception recorded as a ruling. Claims that come from support, handler or tooling code rather than a test assertion start their note with `mechanism:`.",
+  "claims": [
+    {
+      "id": "repo-tests-p12-001",
+      "statement": "The address book list is served at /address-book on the INS frontend.",
+      "kind": "data",
+      "ref": "page-objects/ins/address-book/list-page.ts:11",
+      "quote": "readonly expectedUrl = '/address-book';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-002",
+      "statement": "The address book list's level-1 heading is \"Address book\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:14",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Address book' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-003",
+      "statement": "The list shows the intro \"Manage your addresses for use across all your import notifications\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:28, asserted at tests/ins/e2e/features/address-book/address-book-list.spec.ts:43",
+      "quote": "return this.page.getByText('Manage your addresses for use across all your import notifications', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-004",
+      "statement": "The list offers an \"Add a new address\" button.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:32, asserted at tests/ins/e2e/features/address-book/address-book-list.spec.ts:44",
+      "quote": "return this.page.getByRole('button', { name: 'Add a new address' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-005",
+      "statement": "The list's Search field is hidden until the \"Filter addresses\" disclosure is opened.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:45-47",
+      "quote": "await expect(insPages.addressBookList.inputSearch).toBeHidden();\n      await insPages.addressBookList.filterSummary.click();\n      await expect(insPages.addressBookList.inputSearch).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-006",
+      "statement": "The disclosure that holds the list's search and Type filter is labelled \"Filter addresses\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:36",
+      "quote": "return this.page.getByText('Filter addresses', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-007",
+      "statement": "The list's search control is a searchbox labelled \"Search\", submitted by a button also named \"Search\".",
+      "kind": "data",
+      "ref": "page-objects/ins/address-book/list-page.ts:40,44",
+      "quote": "return this.page.getByRole('searchbox', { name: 'Search', exact: true });\n  }\n\n  get btnSearch(): Locator {\n    return this.page.getByRole('button', { name: 'Search', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-008",
+      "statement": "A search submitted with the Search button lists the one address it matches, with the results line \"Showing 1-1 of 1\" and a single row.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:30-32,51-55",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-1 of 1');\n  await expect(insPages.addressBookList.bodyRows).toHaveCount(1);\n  await expect(insPages.addressBookList.row(name)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-009",
+      "statement": "A search submitted by pressing Enter in the Search field lists the address it matches, the same as the Search button does.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:8-11,51-55",
+      "quote": "const SUBMIT_METHODS = [\n  { submitWith: 'button', how: 'the Search button' },\n  { submitWith: 'enter', how: 'Enter in the Search field' },\n] as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-010",
+      "statement": "The \"Filter addresses\" disclosure still opens to show the Search field when JavaScript is off.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:293-303",
+      "quote": "test.describe('Address book list without JavaScript', () => {\n  test.use({ javaScriptEnabled: false });\n\n  test('Filter addresses opens to show the Search field', async ({ insPages }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-011",
+      "statement": "Both ways of submitting a search, the Search button and Enter in the Search field, still list the matching address when JavaScript is off.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:305-309",
+      "quote": "test(`a search submitted with ${how} and JavaScript is off lists the address it matches`, async ({ insPages, addressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-012",
+      "statement": "The list carries a results line reading \"Showing <first>-<last> of <total>\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:123,126",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-8 of 9');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-013",
+      "statement": "The list's results line is found by the test id address-book-results-label rather than by its text or role.",
+      "kind": "constraint",
+      "ref": "page-objects/ins/address-book/list-page.ts:48",
+      "quote": "return this.page.getByTestId('address-book-results-label');",
+      "confidence": "verbatim",
+      "note": "mechanism: a data-testid the list markup must keep for the suite to read the results line."
+    },
+    {
+      "id": "repo-tests-p12-014",
+      "statement": "A search that matches nothing shows the results line \"Showing 0 of 0\", keeps the column headers and lists no rows.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/expect-address-book-list.ts:24-28",
+      "quote": "await expect(addressBookList.resultsLine).toHaveText('Showing 0 of 0');\n  await expect(addressBookList.columnHeaders).toHaveText(['Name', 'Type', 'Address', 'Country', 'Action']);\n  await expect(addressBookList.bodyRows).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-015",
+      "statement": "When a search matches nothing, \"Clear search\" is the only link below the tabs.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:57-65, expect-address-book-list.ts:21,28",
+      "quote": "await expect(addressBookList.mainLinks).toHaveText([...addressBookTabLabels, 'Clear search', ...linksAfterClearSearch]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-016",
+      "statement": "On a searched list the links in the main region read in one order: the four tab labels, then \"Clear search\", then each row's View link.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/expect-address-book-list.ts:17-22, address-book-list.spec.ts:33",
+      "quote": "await expectSearchedListLinks(insPages.addressBookList, `View ${name}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-017",
+      "statement": "\"Clear search\" returns to the tab that was searched, keeps that tab's Type filter choice and drops the search term, leaving the Search field empty.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:67-87",
+      "quote": "expect(Object.fromEntries(new URL(pages.page.url()).searchParams)).toEqual({ addressType, role: addressRoles.importer });\n    await expect(insPages.addressBookList.selectedTab).toHaveText(destinationConsigneeOrImporterTab.label);\n    await insPages.addressBookList.filterSummary.click();\n    await expect(insPages.addressBookList.inputSearch).toHaveValue('');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-018",
+      "statement": "A role-backed tab's table has the column headings Name, Type, Address, Country and Action, in that order.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:75",
+      "quote": "await expect(insPages.addressBookList.columnHeaders).toHaveText(['Name', 'Type', 'Address', 'Country', 'Action']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-019",
+      "statement": "The Transporter tab's table has its own column headings: Name, Address, Approval number, Type and Action.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:98",
+      "quote": "await expect(insPages.addressBookList.columnHeaders).toHaveText(['Name', 'Address', 'Approval number', 'Type', 'Action']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-020",
+      "statement": "The list shows eight addresses a page and the rest on the next page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:114-127",
+      "quote": "test('lists 8 addresses a page and the rest on the next page', async ({ insPages, addressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-021",
+      "statement": "Moving to the next page re-counts the rows shown, so nine results read \"Showing 1-8 of 9\" then \"Showing 9-9 of 9\".",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:123-127",
+      "quote": "await insPages.addressBookList.paginationPageLink(2).click();\n    await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 9-9 of 9');\n    await expect(insPages.addressBookList.bodyRows).toHaveCount(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-022",
+      "statement": "Over five pages the pagination links the first page, the current page, its neighbours and the last page, with an ellipsis for each gap: page 1 shows 1, 2, ellipsis, 5; page 5 shows 1, ellipsis, 4, 5; page 4 shows 1, ellipsis, 3, 4, 5.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:130-154",
+      "quote": "await expect(addressBookList.paginationItems).toHaveText(['1', '2', '⋯', '5']);\n    await expect(addressBookList.currentPaginationPageLink).toHaveText('1');\n    await addressBookList.paginationPageLink(5).click();\n    await expect(addressBookList.resultsLine).toHaveText('Showing 33-33 of 33');\n    await expect(addressBookList.paginationItems).toHaveText(['1', '⋯', '4', '5']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-023",
+      "statement": "The page the user is on is marked as the current page in the pagination.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:117-119, asserted at tests/ins/e2e/features/address-book/address-book-list.spec.ts:145,149,153",
+      "quote": "get currentPaginationPageLink(): Locator {\n    return this.pagination.locator('[aria-current=\"page\"]');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-024",
+      "statement": "The list's pagination is a navigation named \"Pagination\" whose links are named \"Page <n>\", \"Next page\" and \"Previous page\".",
+      "kind": "data",
+      "ref": "page-objects/shared/base-page.ts:97-111",
+      "quote": "return this.page.getByRole('navigation', { name: 'Pagination', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-025",
+      "statement": "No test in this slice proves the address book list's \"Previous page\" link, so paging backwards is unproven even though the suite knows the link.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:105-107; no reference in any of the ten specs read",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through all ten address-book specs in this part: paging is driven only by paginationPageLink(n) and nextPageLink."
+    },
+    {
+      "id": "repo-tests-p12-026",
+      "statement": "The list's next-page link keeps the tab, the search term and the role filter in its address, and adds page=2.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:121-126",
+      "quote": "expect(next.searchParams.get('addressType')).toBe(addressTypes.originOrConsignor);\n    expect(next.searchParams.get('q')).toBe(term);\n    expect(next.searchParams.get('role')).toBe(addressRoles.consignor);\n    expect(next.searchParams.get('page')).toBe('2');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-027",
+      "statement": "Following the next page keeps the tab selected and the role filter chosen.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:128-132",
+      "quote": "await expect(insPages.addressBookList.selectedTab).toHaveText(originOrConsignorTab.label);\n    await expect(insPages.addressBookList.selectedTypeFilterOption).toHaveText(roleOptionLabels.CONSIGNOR);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-028",
+      "statement": "No pagination is shown when the results fit on one page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:101",
+      "quote": "await expect(insPages.addressBookList.pagination).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-029",
+      "statement": "A search matches a word inside an address's second address line, whatever its case.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:13-16,156-168",
+      "quote": "test(`a search finds an address by a lower-case word inside its ${label}`, async ({ insPages, addressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-030",
+      "statement": "A search matches a word inside an address's county, whatever its case.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:13-16,156-168",
+      "quote": "const SEARCHED_ADDRESS_FIELDS = [\n  { field: 'addressLine2', label: 'address line 2' },\n  { field: 'county', label: 'county' },\n] as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-031",
+      "statement": "A search matches an address by its name, by part of its first address line and by part of its country name, so \"fran\" finds an address in France.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:256-270",
+      "quote": "for (const term of [name, `${stamp} drover`, 'fran']) {\n      await insPages.addressBookList.search(term, { submitWith: 'button' });\n\n      await expect(insPages.addressBookList.row(name)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-032",
+      "statement": "A row's Name cell shows the name's first word on its own line and the rest of the name on a second line; a one-word name stays on one line.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:171-191",
+      "quote": "await expect(insPages.addressBookList.nameCell(multiWordName)).toHaveText(new RegExp(`^Green\\\\nvalley farm ${stamp}$`), {\n      useInnerText: true,\n    });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-033",
+      "statement": "A row's Address cell shows each stored address line on its own line, every line but the last ending in a comma, and leaves out the lines the record does not hold.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:18,193-212",
+      "quote": "const LINE_TWO_AND_COUNTY_ADDRESS_CELL = /^1 Trader Lane,\\nUnit 9,\\nCarlisle,\\nCumbria,\\nCA1 3CC$/;",
+      "confidence": "verbatim",
+      "note": "The three-line record renders \"1 Trader Lane,\\nCarlisle,\\nCA1 3CC\" from the same page, so the blank address line 2 and county are dropped rather than shown empty."
+    },
+    {
+      "id": "repo-tests-p12-034",
+      "statement": "A row's Country cell shows the country's name, such as France.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:233",
+      "quote": "await expect(insPages.addressBookList.countryCell(name)).toHaveText('France');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-035",
+      "statement": "The list puts the newest address first: an address just added is listed ahead of an older one matching the same search.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:238-254",
+      "quote": "await expect(insPages.addressBookList.viewLinks).toHaveText([`View ${newerName}`, `View ${olderName}`]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-036",
+      "statement": "Each row's action is a link named \"View <the record's name>\" that opens that record's own page.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/list-page.ts:120-122, asserted at tests/ins/e2e/features/address-book/address-book-list.spec.ts:234-235",
+      "quote": "await insPages.addressBookList.viewLink(name).click();\n    await expect(insPages.addressBookView.heading(name)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-037",
+      "statement": "The View link is the only row action these specs prove on the list; editing and deleting are reached from the record's own page, not from the list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:100-107",
+      "quote": "await insPages.addressBookList.viewLink(name).click();\n    await expect(insPages.addressBookView.heading(name)).toBeVisible();\n    await insPages.addressBookView.btnDelete.click();",
+      "confidence": "inferred",
+      "note": "Follows from the walk-through test reaching Delete only after opening the record page, and from the list page object offering no edit or delete locator."
+    },
+    {
+      "id": "repo-tests-p12-038",
+      "statement": "No test in this slice proves what the Transporter tab's Action column holds, though the column heading is asserted.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:98-101; no assertion on a transporter row's action",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through address-book-tabs.spec.ts and address-book-transporter-type-filter.spec.ts: both assert transporter cells by index (approval number, type) and neither follows a link out of the row."
+    },
+    {
+      "id": "repo-tests-p12-039",
+      "statement": "The INS dashboard carries an \"Address book\" link that opens the list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:96-98",
+      "quote": "await insPages.dashboard.open();\n    await insPages.dashboard.linkAddressBook.click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-040",
+      "statement": "After an address is added through the form the list shows the success message \"<name> address added to your address book\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:224-226",
+      "quote": "insPages.addressBookList.successBanner.getByText(`${name} address added to your address book`, { exact: true }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-041",
+      "statement": "An address added through the form lands the user on the list's Origin and Consignor tab, at /address-book?addressType=ORIGIN_OR_CONSIGNOR.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:214-223, page-objects/ins/address-book/list-page.ts:23-25",
+      "quote": "await expect(pages.page).toHaveURL(insPages.addressBookList.tabUrlPattern(originOrConsignorTab));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-042",
+      "statement": "After an address is edited the list shows the success message \"<name> address updated\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:283",
+      "quote": "await expect(insPages.addressBookList.successBanner).toContainText(`${name} address updated`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-043",
+      "statement": "A success banner does not time out: it is still showing ten seconds later, and it is gone once the page is reloaded.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:272-290",
+      "quote": "await pages.page.clock.runFor(10_000);\n    await expect(insPages.addressBookList.successBanner).toContainText(`${name} address updated`);\n    await pages.page.reload();\n\n    await expect(insPages.addressBookList.heading).toBeVisible();\n    await expect(insPages.addressBookList.successBanner).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-044",
+      "statement": "After a delete is confirmed the list shows the success message \"<name> address deleted\".",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:109",
+      "quote": "await expect(insPages.addressBookList.successBanner).toContainText(`${name} address deleted`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-045",
+      "statement": "Cancelling the delete confirmation leaves the address in place and returns the user to its record page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:102-105",
+      "quote": "await insPages.addressBookDelete.cancel();\n    await expect(insPages.addressBookView.heading(name)).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The delete confirmation page's own wording and controls are part 13's; this claim is only what the list spec's walk-through proves."
+    },
+    {
+      "id": "repo-tests-p12-046",
+      "statement": "A deleted address is no longer found by a search for its name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:110-111",
+      "quote": "await insPages.addressBookList.search(name, { submitWith: 'button' });\n    await expectNoMatchesListed(insPages.addressBookList);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-047",
+      "statement": "The list's success messages are shown in a GOV.UK notification banner titled \"Success\".",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:77-79",
+      "quote": "get successBanner(): Locator {\n    return notificationBannerTitled(this.page, 'Success');",
+      "confidence": "inferred",
+      "note": "mechanism: the shared page object every address book banner assertion goes through; follows from the banner being matched by its GOV.UK notification-banner title."
+    },
+    {
+      "id": "repo-tests-p12-048",
+      "statement": "The list's intro, Add button and hidden search field are held to the cross-browser suite as well as the default run.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book-list.spec.ts:37-39",
+      "quote": "'shows the intro and Add a new address, with the Search field hidden until Filter addresses is opened',\n    { tag: '@cross-browser' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-049",
+      "statement": "The list offers four tabs, which read in this order: Origin and Consignor; Destination, Consignee and Importer; Transporter; Branch.",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:95-100, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:53",
+      "quote": "export const addressBookTabs: readonly AddressBookTab[] = [\n  originOrConsignorTab,\n  destinationConsigneeOrImporterTab,\n  transporterTab,\n  branchTab,\n];",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-050",
+      "statement": "The tabs are links inside a navigation named \"Address types\", and the tab being shown is marked as the current page.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/list-page.ts:100-106",
+      "quote": "return this.page.getByRole('navigation', { name: 'Address types' }).getByRole('link');\n  }\n\n  get selectedTab(): Locator {\n    return this.tabLinks.and(this.page.locator('[aria-current=\"page\"]'));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-051",
+      "statement": "Opening the list with no tab asked for shows Origin and Consignor as the current tab.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:51-54",
+      "quote": "await expect(insPages.addressBookList.tabLinks).toHaveText(addressBookTabLabels);\n    await expect(insPages.addressBookList.selectedTab).toHaveText(originOrConsignorTab.label);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-052",
+      "statement": "An address type the list does not know falls back to the Origin and Consignor tab, with all four tabs still shown.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:56-59, domain/ins/constants/address-book-types.ts:121",
+      "quote": "await insPages.addressBookList.open({ addressType: unsupportedAddressType as AddressType });\n\n    await expect(insPages.addressBookList.tabLinks).toHaveText(addressBookTabLabels);\n    await expect(insPages.addressBookList.selectedTab).toHaveText(originOrConsignorTab.label);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-053",
+      "statement": "A tab is addressed by the query parameter addressType, whose four values are ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER, TRANSPORTER and BRANCH.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:1-6, page-objects/ins/address-book/list-page.ts:24",
+      "quote": "export const addressTypes = {\n  originOrConsignor: 'ORIGIN_OR_CONSIGNOR',\n  destinationConsigneeOrImporter: 'DESTINATION_CONSIGNEE_OR_IMPORTER',\n  transporter: 'TRANSPORTER',\n  branch: 'BRANCH',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-054",
+      "statement": "Each tab shows its own level-2 panel heading: \"Origin and Consignor addresses\", \"Destination, Consignee and Importer addresses\", \"Transporter addresses\" and \"Branch addresses\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:63,70,84,91, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:74,97,134",
+      "quote": "panelHeading: 'Origin and Consignor addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-055",
+      "statement": "The Origin and Consignor tab lists the addresses holding the Place of origin or Consignor role.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-book-types.ts:60-65, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:20-32,62-81",
+      "quote": "roleFilterOptions: [addressRoles.placeOfOrigin, addressRoles.consignor],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-056",
+      "statement": "The Destination, Consignee and Importer tab lists the addresses holding the Consignee, Importer or Place of destination role.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-book-types.ts:67-72, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:20-32,62-81",
+      "quote": "roleFilterOptions: [addressRoles.consignee, addressRoles.importer, addressRoles.placeOfDestination],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-057",
+      "statement": "The Branch tab lists the addresses holding the Branch address role.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-book-types.ts:88-93, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:20-32,123-137",
+      "quote": "roleFilterOptions: [addressRoles.branchAddress],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-058",
+      "statement": "The Transporter tab lists transporters rather than addresses with roles, and narrows by transporter type instead of by role.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-book-types.ts:81-86, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:84-102",
+      "quote": "export const transporterTab: TypeBackedAddressBookTab = {\n  addressType: addressTypes.transporter,\n  label: 'Transporter',\n  panelHeading: 'Transporter addresses',\n  typeFilterOptions: [transporterTypes.commercial, transporterTypes.private],\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-059",
+      "statement": "A role-backed tab lists exactly the addresses holding any of its roles and no others, counted in its results line.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:62-81",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText(`Showing 1-${expected.length} of ${expected.length}`);\n      await expect(insPages.addressBookList.bodyRows).toHaveCount(expected.length);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-060",
+      "statement": "Asking the address book API for a tab's roles returns exactly the addresses holding any of them.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:20-32",
+      "quote": "test(\"listing by a tab's roles returns exactly the addresses holding any of them\", async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-061",
+      "statement": "Asking the address book API with no role returns every live address of the organisation, whatever roles it holds.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:34-44",
+      "quote": "test('listing with no role returns every live address', async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-062",
+      "statement": "A row's Type cell names the roles that address holds, joined by a comma and a space.",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:30, asserted at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:78-80",
+      "quote": "export const rolesLabelOf = (roles: readonly AddressRole[]): string => roles.map((role) => roleColumnLabels[role]).join(', ');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-063",
+      "statement": "In a row's Type cell the six roles are named Place of origin, Consignor, Place of destination, Consignee, Importer and Branch.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:16-23",
+      "quote": "PLACE_OF_ORIGIN: { columnLabel: 'Place of origin', optionLabel: 'Place of Origin', formLabel: 'Place of origin' },\n  CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor', formLabel: 'Consignor' },\n  PLACE_OF_DESTINATION: { columnLabel: 'Place of destination', optionLabel: 'Place of Destination', formLabel: 'Place of destination' },\n  CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee', formLabel: 'Consignee' },\n  IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer', formLabel: 'Importer' },\n  BRANCH_ADDRESS: { columnLabel: 'Branch', optionLabel: 'Branch Address', formLabel: 'Branch address' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-064",
+      "statement": "An address holding only the Branch address role is not listed on the Origin and Consignor tab.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:114-116",
+      "quote": "await insJourney.toAddressBookTab(originOrConsignorTab, { search: branchAddressFixture.name });\n\n    await expect(insPages.addressBookList.row(branchAddressFixture.name)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-065",
+      "statement": "Every seeded fixture address shows on the tab that holds its role, with its roles named in the Type cell.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:104-112",
+      "quote": "for (const { name, roles } of E2E_ADDRESS_BOOK_FIXTURES) {\n      await insJourney.toAddressBookTab(tabHolding(roles[0]), { search: name });\n\n      await expect(insPages.addressBookList.rolesCell(name)).toHaveText(rolesLabelOf(roles));\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-066",
+      "statement": "Following a tab link works with JavaScript off: the Branch tab loads, is marked current with its panel heading, and lists the branch address.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:120-137",
+      "quote": "test('following the Branch tab loads it, marks it current and lists the branch address the test added', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-067",
+      "statement": "A transporter row shows the transporter's approval number and names its type as Commercial or Private.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:100-101",
+      "quote": "await expect(insPages.addressBookList.transporterApprovalNumberCell(name)).toHaveText('NI/TA/2026/0099');\n    await expect(insPages.addressBookList.transporterTypeCell(name)).toHaveText(transporterTypeFilterLabels.COMMERCIAL);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-068",
+      "statement": "Following another tab keeps the search term and resets the Type filter to its placeholder, listing that tab's own addresses.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:188-209",
+      "quote": "await expect(insPages.addressBookList.inputSearch).toHaveValue(searchTerm);\n    await expect(insPages.addressBookList.selectedTypeFilterOption).toHaveText(typeFilterPlaceholder);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-069",
+      "statement": "The filter beside the Search field is a select labelled \"Type\", used on every tab.",
+      "kind": "data",
+      "ref": "page-objects/ins/address-book/list-page.ts:124-126",
+      "quote": "get selectTypeFilter(): Locator {\n    return this.page.getByLabel('Type', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-070",
+      "statement": "The Type filter's first option is \"Select one\" and carries an empty value, so it applies no filter.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:36, asserted at tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:67-71",
+      "quote": "export const typeFilterPlaceholder = 'Select one';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-071",
+      "statement": "In the Type filter the six roles are offered as Place of Origin, Consignor, Place of Destination, Consignee, Importer and Branch Address.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:16-23,32, asserted at tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:67-70",
+      "quote": "export const roleOptionLabels = textsOfEachRole(({ optionLabel }) => optionLabel);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-072",
+      "statement": "A role-backed tab's Type filter offers only that tab's own roles, after the Select one placeholder.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:59-72",
+      "quote": "await expect(insPages.addressBookList.typeFilterOptions).toHaveText([\n        typeFilterPlaceholder,\n        ...tab.roleFilterOptions.map((role) => roleOptionLabels[role]),\n      ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-073",
+      "statement": "The Type filter is applied on the server when the search is submitted, not as the option is chosen: choosing an option without submitting leaves the address, the results line and the listed rows exactly as they were, with role still empty in the address.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:152-174",
+      "quote": "await expect(page).toHaveURL(urlBeforeChoosing);\n    expect(new URL(page.url()).searchParams.get('role')).toBe('');\n    await expect(insPages.addressBookList.resultsLine).toHaveText(resultsLine);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-074",
+      "statement": "A submitted role filter narrows both the rows and the count, so eleven matching addresses become \"Showing 1-2 of 2\" when filtered to Consignor.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:93-100",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-8 of 11');\n\n    await insPages.addressBookList.filter({ term, submitWith: 'button', label: roleOptionLabels[addressRoles.consignor] });\n\n    await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-2 of 2');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-075",
+      "statement": "A role filter finds the addresses holding that role even when they fall beyond the tab's first page unfiltered.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:75-101",
+      "quote": "test('a role filter finds the addresses holding it beyond the first page of the tab, counted and without pagination', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-076",
+      "statement": "A filtered result set longer than one page is counted and paged, so nine matches read \"Showing 1-8 of 9\" then \"Showing 9-9 of 9\".",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:104-130",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-8 of 9');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-077",
+      "statement": "A role filter matching a single address counts one.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:135-149",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-1 of 1');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-078",
+      "statement": "The list reads its state from the address: addressType for the tab, q for the search, role for the role filter and page for the page.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:121-126",
+      "quote": "expect(next.searchParams.get('addressType')).toBe(addressTypes.originOrConsignor);\n    expect(next.searchParams.get('q')).toBe(term);\n    expect(next.searchParams.get('role')).toBe(addressRoles.consignor);\n    expect(next.searchParams.get('page')).toBe('2');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-079",
+      "statement": "The role filter works with JavaScript off, chosen and submitted with the Search button.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:262-274",
+      "quote": "test('a role filter chosen and submitted with the Search button lists only the addresses holding it', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-080",
+      "statement": "Submitting a role filter leaves the tab the user was on selected.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:177-186",
+      "quote": "await expect(insPages.addressBookList.selectedTab).toHaveText(originOrConsignorTab.label);\n    await expect(insPages.addressBookList.bodyRows).toHaveCount(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-081",
+      "statement": "A plain search for a role's name finds the addresses holding that role, and does not find an address that holds only a different role.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:212-234",
+      "quote": "test('an address saved with Consignor ticked is found by searching Consignor, and one saved with only Place of origin ticked is not', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-082",
+      "statement": "A search for a role's name combined with a different role chosen in the Type filter lists an address holding both roles, on whichever result page it falls.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:237-258",
+      "quote": "test('a search for a role label with a role filter chosen lists the address holding that role, found on whichever result page it falls', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-083",
+      "statement": "Asking the address book API for one role returns exactly the addresses holding it, and nothing for a role no address holds.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:21-35",
+      "quote": "test('listing by a role returns exactly the test addresses holding it, and none for a role nothing holds', async ({",
+      "confidence": "verbatim",
+      "note": "The test loops every one of the six roles, so all six are proven at the API."
+    },
+    {
+      "id": "repo-tests-p12-084",
+      "statement": "The address book API takes a searchRole as well as a role: a searchRole widens a text search so an address holding that role matches even when its text does not, while an address holding neither is left out.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:38-54",
+      "quote": "test('a search role makes an address holding it match the search though its text does not, and leaves out one holding neither', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-085",
+      "statement": "On the add and edit forms the six roles are worded Place of origin, Consignor, Place of destination, Consignee, Importer and Branch address.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:16-23,34, used as search terms at tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:227,232",
+      "quote": "export const rolesQuestionLabels = textsOfEachRole(({ formLabel }) => formLabel);",
+      "confidence": "verbatim",
+      "note": "The role filter spec searches for the form wording of Consignor, which is how this part touches it; the add form's own question is part 13's."
+    },
+    {
+      "id": "repo-tests-p12-086",
+      "statement": "Filtering the list by Consignee, Place of destination or Branch address is proven only through the API, never through the list's own Type filter.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts:95,118,147,252; tests/ins/e2e/features/address-book/address-book-list.spec.ts:75",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every filter() and chooseTypeFilter() call in the ten specs: the labels submitted are Consignor, Place of Origin and Importer only."
+    },
+    {
+      "id": "repo-tests-p12-087",
+      "statement": "The Transporter tab's Type filter offers Select one, then Commercial, then Private, in that order, with the placeholder carrying an empty value.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-transporter-type-filter.spec.ts:10-18",
+      "quote": "test('offers Select one, then Commercial and Private, in that order', async ({ insPages, insJourney }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-088",
+      "statement": "The two transporter types are worded Commercial and Private in the filter and in the Type column.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:38-41",
+      "quote": "export const transporterTypeFilterLabels: Record<TransporterType, string> = {\n  [transporterTypes.commercial]: 'Commercial',\n  [transporterTypes.private]: 'Private',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-089",
+      "statement": "A Commercial Type filter on the Transporter tab narrows eleven matches to \"Showing 1-2 of 2\", finds transporters that fell beyond the first page, and leaves no pagination.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-transporter-type-filter.spec.ts:20-48",
+      "quote": "await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-8 of 11');\n\n    await insPages.addressBookList.filter({ term, submitWith: 'button', label: transporterTypeFilterLabels.COMMERCIAL });\n\n    await expect(insPages.addressBookList.resultsLine).toHaveText('Showing 1-2 of 2');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-090",
+      "statement": "No test filters the Transporter tab by Private, so only the Commercial half of that filter is proven.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-transporter-type-filter.spec.ts:41; the only filter() call in the spec",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Private transporters are created as the other nine records of the same test, but only Commercial is ever chosen in the filter."
+    },
+    {
+      "id": "repo-tests-p12-091",
+      "statement": "An address may hold any of six roles: Place of origin, Consignor, Place of destination, Consignee, Importer and Branch address.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:20-27",
+      "quote": "export const addressRoles = {\n  placeOfOrigin: 'PLACE_OF_ORIGIN',\n  consignor: 'CONSIGNOR',\n  placeOfDestination: 'PLACE_OF_DESTINATION',\n  consignee: 'CONSIGNEE',\n  importer: 'IMPORTER',\n  branchAddress: 'BRANCH_ADDRESS',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-092",
+      "statement": "An address created with roles reads back by its id holding exactly those roles.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:20-28",
+      "quote": "test('an address created with roles reads back by id with the same roles', async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-093",
+      "statement": "An address keeps the order the roles were given in, so the three receiving roles sent last to first read back last to first.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:31-42",
+      "quote": "test('an address created with the three receiving roles, listed last to first, reads all three back in that order', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-094",
+      "statement": "Updating an address replaces its whole set of roles with the new set.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:45-55",
+      "quote": "test('an update with a different set of roles reads back with exactly the new set', async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-095",
+      "statement": "An address must hold at least one role: a create with no roles at all is refused and saves nothing.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:58-63",
+      "quote": "test('a create without roles is refused naming the roles and saves nothing', async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-096",
+      "statement": "A create carrying an empty list of roles is refused and saves nothing.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:65-72",
+      "quote": "test('a create with an empty list of roles is refused naming the roles and saves nothing', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-097",
+      "statement": "An update with no roles is refused and the address keeps the roles it already held.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:74-86",
+      "quote": "test('an update without roles is refused naming the roles and the address keeps its original roles', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-098",
+      "statement": "A create carrying a role outside the six is refused and saves nothing, even when a known role is sent alongside it.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:88-100, domain/ins/constants/address-book-types.ts:125",
+      "quote": "test('a create carrying a role outside the six is refused naming the roles and saves nothing', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-099",
+      "statement": "An update carrying a role outside the six is refused and the address keeps the roles it already held.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:102-112",
+      "quote": "test('an update carrying a role outside the six is refused naming the roles and the address keeps its original roles', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-100",
+      "statement": "One address cannot hold both a sending role and a receiving role: a create holding Place of origin and Consignee is refused and saves nothing.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:114-123",
+      "quote": "test('a create holding a sending role and a receiving role is refused naming the roles and saves nothing', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-101",
+      "statement": "The Branch address role cannot be added to an address that already holds a receiving role: the update is refused and the original roles stay.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:125-138",
+      "quote": "test('an update adding a branch address role to a receiving address is refused naming the roles and the address keeps its original roles', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-102",
+      "statement": "The roles split into three groups that may not be mixed: sending (Place of origin, Consignor), receiving (Consignee, Importer, Place of destination) and branch (Branch address).",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:140-144",
+      "quote": "['sending', [addressRoles.placeOfOrigin, addressRoles.consignor]],\n    ['receiving', [addressRoles.consignee, addressRoles.importer, addressRoles.placeOfDestination]],\n    ['branch', [addressRoles.branchAddress]],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-103",
+      "statement": "An address outside the United Kingdom may hold any one group's roles: sending, receiving and branch are each saved with the country kept.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:145-156",
+      "quote": "test(`an address holding ${group} roles outside the United Kingdom is saved`, async ({ isolatedOrganisationAddressBookApi }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-104",
+      "statement": "A refused address book write answers HTTP 400 with the problem type https://api.cdp.defra.cloud/problems/validation-error and a map of errors keyed by field.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/expected-api-refusal.ts:9-13, relied on throughout address-book-roles.spec.ts",
+      "quote": "const error = await expectRefusalWith(pending, 400);\n  const body = JSON.parse(error.responseBody) as ValidationProblem;\n  expect(body.type).toBe('https://api.cdp.defra.cloud/problems/validation-error');",
+      "confidence": "verbatim",
+      "note": "mechanism: the helper every roles refusal assertion goes through. The helper file itself sits outside this part's read list, but all eleven roles refusals rest on it."
+    },
+    {
+      "id": "repo-tests-p12-105",
+      "statement": "Every roles refusal names roles as the only field in error.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:8-11",
+      "quote": "const expectValidationRefusalNamingRoles = async (pending: Promise<unknown>): Promise<void> => {\n  const body = await expectedValidationRefusalOf(pending);\n  expect(Object.keys(body.errors)).toEqual(['roles']);\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-106",
+      "statement": "No test checks the wording of the message the address book returns when roles are refused, only that roles is the field named.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts:8-11",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The errors map's values are never read, so the eight distinct refusals in the spec cannot be told apart by their message."
+    },
+    {
+      "id": "repo-tests-p12-107",
+      "statement": "Each role-backed add form's Country select lists \"Select a country\" first, then every country reference data serves, in alphabetical order with United Kingdom in its alphabetical place.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts:12-21",
+      "quote": "await expect(insPages.addressBookAdd.countryOptions).toHaveText(['Select a country', ...addressFormCountryNames]);",
+      "confidence": "verbatim",
+      "note": "The test loops the three role-backed address types, so the Origin or Consignor, Destination/Consignee/Importer and Branch add forms are each proven."
+    },
+    {
+      "id": "repo-tests-p12-108",
+      "statement": "An add form's Country select opens already set to United Kingdom.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts:20",
+      "quote": "await expect(insPages.addressBookAdd.selectedCountryOption).toHaveText('United Kingdom');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-109",
+      "statement": "The edit form's Country select lists the same countries in the same order but offers no \"Select a country\" option.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts:24-33",
+      "quote": "await expect(insPages.addressBookEdit.countryOptions).toHaveText(addressFormCountryNames);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-110",
+      "statement": "The address book's country list is every country the reference data service serves plus United Kingdom, sorted by name.",
+      "kind": "integration",
+      "ref": "resources/reference-data/reference-data.ts:72-73",
+      "quote": "/** Every captured unfiltered country by name, plus United Kingdom, in alphabetical order. */\nexport const addressFormCountryNames: string[] = [...countries.map(({ name }) => name), 'United Kingdom'].toSorted(byName);",
+      "confidence": "verbatim",
+      "note": "mechanism: the expected option list the country-list spec compares against, built from the captured reference-data fixture."
+    },
+    {
+      "id": "repo-tests-p12-111",
+      "statement": "The country list is only proven on the local compose stack, because the list it is checked against is the stub's master-data fixture that only that stack is sure to serve.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts:8-10",
+      "quote": "skipUnlessComposeEnvironment(\"the list is the stub's MDM fixture, which only the compose stack is sure to serve\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-112",
+      "statement": "The shared end-to-end organisation's address book is seeded with fourteen records, created in a fixed order: Alpine Dairy GmbH, Irish Beef Traders Ltd, Iberian Swine SA, Animal and Plant Health Agency, Riverside Distribution Centre, Danish Meat Export ApS, Jutland Swine ApS, Laiterie du Nord SARL, Nordvik Seafood AS, Astra Rosales, Tech Imports Ltd, Origin Farm, British Livestock Ltd and Import Co UK.",
+      "kind": "data",
+      "ref": "flows/shared/address-book-seed.ts:75-172, domain/shared/constants/journey-party-names.ts:1-7",
+      "quote": "/** The shared address-book records, in creation order. */\nexport const E2E_ADDRESS_BOOK_FIXTURES: readonly AddressBookRequest[] = [",
+      "confidence": "verbatim",
+      "note": "These are the records the tab and role assertions in this part read against, so other parts can take the same list as given."
+    },
+    {
+      "id": "repo-tests-p12-113",
+      "statement": "Of the fourteen seeded records, eight hold Consignor, two hold Branch address, and one each holds Place of origin, Place of destination, Consignee and Importer.",
+      "kind": "data",
+      "ref": "flows/shared/address-book-seed.ts:85,95,105,107,108,117,127,137,147,149,150,151,160,170",
+      "quote": "...heldAsConsignor,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-114",
+      "statement": "The seeded records span the countries Austria, Ireland, Spain, the United Kingdom, Denmark, France, Norway and Switzerland, so the list and tabs are read against non-UK addresses as well as UK ones.",
+      "kind": "data",
+      "ref": "flows/shared/address-book-seed.ts:25,38,47,58,71,82,91,101,113,123,133,144,157,167",
+      "quote": "countryCode: 'AT',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-115",
+      "statement": "Seeding keeps exactly one live record for each fixture name: a missing one is created, one whose details or roles differ is rewritten, and any extra record with the same name is deleted.",
+      "kind": "rule",
+      "ref": "flows/shared/address-book-seed.ts:180-198",
+      "quote": "/**\n * Ensures one live record per journey fixture name, holding the fixture's details and roles.\n * Creates a missing record, rewrites one that differs and soft-deletes any extra with the name.\n */",
+      "confidence": "verbatim",
+      "note": "mechanism: the seeding routine that reconciles the shared fixtures before a run."
+    },
+    {
+      "id": "repo-tests-p12-116",
+      "statement": "Seeding is proven idempotent: a fixture record holding the wrong role is rewritten once with the fixture's roles, and a second seeding run leaves the record untouched.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-seed.spec.ts:6-20",
+      "quote": "test(\"a fixture record holding a different role is rewritten with the fixture's roles once, and a second run leaves it untouched\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-117",
+      "statement": "A record carries a last-modified time that a rewrite moves and a no-op run does not.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-seed.spec.ts:19",
+      "quote": "expect(afterSecondRun.modifiedAt).toBe(afterFirstRun.modifiedAt);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-118",
+      "statement": "The address book left behind by test runs can be tidied by a tool that reports by default and only deletes when asked, covering addresses alone unless transporters are asked for too.",
+      "kind": "behaviour",
+      "ref": "bin/reset-e2e-address-book.ts:12-21",
+      "quote": "  --apply         delete the records (default: a dry run that only reports)\n  --transporters  cover transporters too (default: addresses only)",
+      "confidence": "verbatim",
+      "note": "mechanism: an operator tool over the shared organisation's records, not a user-facing behaviour."
+    },
+    {
+      "id": "repo-tests-p12-119",
+      "statement": "The tidy-up deletes only records whose name matches one of the suite's own record-name templates, and keeps every seeded fixture and every performance-test record.",
+      "kind": "rule",
+      "ref": "bin/reset-e2e-address-book.ts:61-69",
+      "quote": "const isSeededOrPerformanceTestRecord = (name: string): boolean => {\n  const seededNames = new Set(E2E_ADDRESS_BOOK_FIXTURES.map((fixture) => fixture.name));\n  return seededNames.has(name) || name === 'Perf Test Holding' || name.startsWith('Address Book Load ');\n};",
+      "confidence": "verbatim",
+      "note": "mechanism: sorts live records into deletes and keeps before anything is removed."
+    },
+    {
+      "id": "repo-tests-p12-120",
+      "statement": "The tidy-up refuses to run against a production environment.",
+      "kind": "constraint",
+      "ref": "bin/reset-e2e-address-book.ts:173",
+      "quote": "throwIfProdEnvironment(environment);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-121",
+      "statement": "After deleting, the tidy-up puts the seeded records back.",
+      "kind": "behaviour",
+      "ref": "bin/reset-e2e-address-book.ts:183-186",
+      "quote": "if (options.apply) {\n      await ensureE2eAddressBook(api);\n      console.log('\\nSeeded e2e address book records are in place.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-122",
+      "statement": "Every record a spec creates is registered in one shared list of name templates, so a name a spec invents is a change to that list.",
+      "kind": "constraint",
+      "ref": "domain/shared/constants/test-record-names.ts:10-16",
+      "quote": "`<hex32>` its 32 hex digits without the hyphens, `<index>` a loop index and `<words>` a label from a list. A new spec that creates a record adds its name here.",
+      "confidence": "verbatim",
+      "note": "mechanism: the register the tidy-up tool matches live records against."
+    },
+    {
+      "id": "repo-tests-p12-123",
+      "statement": "An address book is held per organisation: records are read and written under /organisation/<organisation id>/addresses with a Trade-Imports-Organisation-Id header naming the same organisation.",
+      "kind": "integration",
+      "ref": "adapters/http/address-book-api-client.ts:54-57,84, adapters/http/organisation.ts:5,13-15",
+      "quote": "const base = `/organisation/${this.organisationId}/addresses`;",
+      "confidence": "verbatim",
+      "note": "mechanism: the client every address book spec in this part reads and writes through."
+    },
+    {
+      "id": "repo-tests-p12-124",
+      "statement": "An address added by one user is visible to another user of the same organisation, who finds it by searching for its name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-cross-user-visibility.spec.ts:9-33",
+      "quote": "test('an address added by one user is visible to another user in the same organisation', async ({",
+      "confidence": "verbatim",
+      "note": "The second user signs in cold and picks the same organisation by its SBI, so the address book is shared by organisation and not by user."
+    },
+    {
+      "id": "repo-tests-p12-125",
+      "statement": "A user who asks for an address belonging to another organisation is returned to the address book list and is not shown that record's name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/expect-other-organisation-address-returns-to-list.ts:19-23",
+      "quote": "await expectAddressBookList({ pages, insPages });\n    await expect(pages.page.getByText(name)).toHaveCount(0);",
+      "confidence": "verbatim",
+      "note": "This part reads the helper that holds the rule; the view, edit and delete specs that drive it are part 13's."
+    },
+    {
+      "id": "repo-tests-p12-126",
+      "statement": "No test in this slice asserts a status code or a refusal message for an address book request outside the user's organisation: the only proof is the silent return to the list.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/address-book/expect-other-organisation-address-returns-to-list.ts:19-23",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Statement kept general: the helper proves only where the user lands, not what the service answered."
+    },
+    {
+      "id": "repo-tests-p12-127",
+      "statement": "A user who is not signed in and asks for a page past the address book's landing page lands on the sign-in page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-auth.spec.ts:12-15",
+      "quote": "test('lands on the sign in page when opening a page past the address book landing page', async ({ pages }) => {",
+      "confidence": "verbatim",
+      "note": "The page asked for is /address-book/add/address-type (page-objects/ins/address-book/address-type-page.ts:8)."
+    },
+    {
+      "id": "repo-tests-p12-128",
+      "statement": "Signing in from that sign-in page returns the user to the page they asked for.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/address-book/address-book-auth.spec.ts:17-21",
+      "quote": "test('allows signing into a page past the address book landing page', async ({ pages, insPages }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-129",
+      "statement": "The address book list is the INS service's signed-in landing page: signing in lands on /address-book and the list's heading is what proves the session.",
+      "kind": "behaviour",
+      "ref": "fixtures/auth-state.ts:67-70",
+      "quote": "ins: {\n    landingPath: '/address-book',\n    landingHeading: (page) => new InsAddressBookListPage(page).heading,\n  },",
+      "confidence": "inferred",
+      "note": "mechanism: the suite's sign-in target for the INS domain; follows from every INS session being minted by landing on the address book list."
+    },
+    {
+      "id": "repo-tests-p12-130",
+      "statement": "A user whose identity holds more than one organisation is asked to choose one before reaching the address book.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:239-248, driven at tests/ins/e2e/features/address-book/address-book-cross-user-visibility.spec.ts:24-27",
+      "quote": "await organisationPicker.heading.waitFor({ ...pageLoadWait, state: 'visible' });\n    await organisationPicker.select(organisationSbi);",
+      "confidence": "verbatim",
+      "note": "mechanism: the shared sign-in helper; the cross-user test passes Sarah's SBI because her identity has two organisations."
+    },
+    {
+      "id": "repo-tests-p12-131",
+      "statement": "An address saved through the form is stored in the address book's own database, in a collection of addresses, holding its whole Standard Address Block and the roles that were ticked.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts:15-31",
+      "quote": "const collection = client.collection<AddressDocument>('trade-imports-address-book', 'addresses');\n      await expect.poll(() => collection.countDocuments({ name: createdName }), { timeout: timeouts.short }).toBe(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-132",
+      "statement": "A stored address record carries name, address line 1, an optional address line 2, town or city, an optional county, postcode, country code, phone and email, alongside its organisation, status, created and modified times and a version.",
+      "kind": "data",
+      "ref": "domain/ins/models/db/address-document.ts:4-21",
+      "quote": "export type AddressDocument = Partial<HeldRoles> & {\n  _id: ObjectId;\n  name: string;\n  addressLine1: string;\n  addressLine2?: string;\n  townOrCity: string;\n  county?: string;\n  postcode: string;\n  countryCode: string;\n  phone: string;\n  email: string;\n  organisationId: string;\n  status: string;\n  createdAt: Date;\n  modifiedAt: Date;\n  version: number;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-133",
+      "statement": "The persistence round-trip is only run on the local compose stack, which is the only place the database is reachable, and is tagged so it can be selected or left out.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts:10-13",
+      "quote": "test.describe('Address book persistence round-trip', { tag: '@mongodb' }, () => {\n  test.beforeEach(() => {\n    skipUnlessComposeEnvironment('the round-trip asserts on Mongo directly, which only the compose stack exposes');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-134",
+      "statement": "A deleted address is soft-deleted: it stays readable by its id as a record marked deleted, and deleting it again succeeds.",
+      "kind": "rule",
+      "ref": "adapters/http/address-book-api-client.ts:129,134, domain/ins/models/db/address-document.ts (status field)",
+      "quote": "/** One address by id, including a soft-deleted tombstone (`deleted: true`). */",
+      "confidence": "verbatim",
+      "note": "mechanism: the client contract the cleanup and reconcile routines in this part rely on; no test in this slice reads a tombstone back."
+    },
+    {
+      "id": "repo-tests-p12-135",
+      "statement": "Every record a test creates in the shared organisation is deleted once that test has finished, one record at a time, and a delete that fails is logged rather than failing the test.",
+      "kind": "non-functional",
+      "ref": "utils/address-book-cleanup.ts:33-45, fixtures/ui.ts:179-183",
+      "quote": "/** Soft-deletes every tracked record one at a time, logging each delete that fails. Never throws. */",
+      "confidence": "verbatim",
+      "note": "mechanism: the record-tracking client the address book specs are given."
+    },
+    {
+      "id": "repo-tests-p12-136",
+      "statement": "The address-book specs that work only through the API are given a fresh organisation of their own for each test, so their listings cannot see any other test's records.",
+      "kind": "non-functional",
+      "ref": "fixtures/ui.ts:184-188",
+      "quote": "const api = new RecordTrackingAddressBookApiClient(request, { organisationId: `e2e-isolated-organisation-${randomUUID()}` });",
+      "confidence": "verbatim",
+      "note": "mechanism: the isolatedOrganisationAddressBookApi fixture; it is why the tab, role and roles API tests can assert an exact set of names."
+    },
+    {
+      "id": "repo-tests-p12-137",
+      "statement": "A test that drives the list through the browser creates its records with a stamped name and searches for that stamp, because the shared organisation's book holds everyone else's records too.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/address-book/run-addresses.ts:13-16, tests/ins/e2e/features/address-book/address-book-list.spec.ts:115-121",
+      "quote": "const newRunSearchTerm = (): string => `Run ${randomUUID().replaceAll('-', '')}`;",
+      "confidence": "verbatim",
+      "note": "mechanism: how the suite isolates list assertions without an isolated organisation."
+    },
+    {
+      "id": "repo-tests-p12-138",
+      "statement": "A commercial transporter's country is fixed to Northern Ireland by a ruling, stored as the code GB-NIR and shown as the words \"Northern Ireland\" in both the address book and the journey.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/transporter-types.ts:32-35",
+      "quote": "/** A commercial transporter's country is fixed by the ruling: the code the address book stores it\n * under, and the word both the address book and the journey show for it. */\nexport const COMMERCIAL_TRANSPORTER_COUNTRY_CODE = 'GB-NIR';\nexport const COMMERCIAL_TRANSPORTER_COUNTRY_NAME = 'Northern Ireland';",
+      "confidence": "verbatim",
+      "note": "mechanism: a constants file this part reads, and the only ruling stated in prose anywhere in its slice. Recorded here because a ruling outranks a default; the transporter pages that assert it are part 14's, so the reconciler should expect a matching claim there."
+    },
+    {
+      "id": "repo-tests-p12-139",
+      "statement": "A transporter the suite creates through the API for the Transporter tab carries a name, a first address line, a town or city, a postcode, a country code, a phone, an email, its type and, for a commercial one, an approval number.",
+      "kind": "data",
+      "ref": "domain/ins/constants/trader-transporter.ts:32-47, used at tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:90-92",
+      "quote": "/** The address book's create request for a transporter form's details, in the shape the API\n * expects rather than the form's own field names. */",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes a transporter form's details into the API's own field names."
+    },
+    {
+      "id": "repo-tests-p12-140",
+      "statement": "An approval number is shown as given, in the form NI/TA/<year>/<number>.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts:91,100",
+      "quote": "transporterRequestOf(commercialTransporterDetails(name, 'NI/TA/2026/0099'), transporterTypes.commercial),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-141",
+      "statement": "The address book list is reached on a tab by one route: open the list, follow the tab's link, then search within it, and the suite waits for the tab and the search term to show in the address before asserting.",
+      "kind": "behaviour",
+      "ref": "flows/ins/journey.ts:38-47, page-objects/ins/address-book/list-page.ts:166-173",
+      "quote": "/** Opens the address book list on a tab and, when a search term is given, searches that tab with the Search button. */",
+      "confidence": "verbatim",
+      "note": "mechanism: the shared flow the tab, role-filter and transporter-type-filter specs drive the list through."
+    },
+    {
+      "id": "repo-tests-p12-142",
+      "statement": "Adding an address from the list runs through the address type question, the add form, the roles question and Save, and ends back on the list.",
+      "kind": "behaviour",
+      "ref": "flows/ins/journey.ts:73-87",
+      "quote": "/** Adds an address from the address book list: chooses the type, fills the form, ticks the roles and saves, landing on the list. */",
+      "confidence": "verbatim",
+      "note": "mechanism: the flow the list spec's add tests use; the pages themselves are part 13's."
+    },
+    {
+      "id": "repo-tests-p12-143",
+      "statement": "Every address type but Transporter asks the roles question; Transporter opens its own pages instead and carries no roles.",
+      "kind": "rule",
+      "ref": "domain/shared/constants/address-types.ts:10-16",
+      "quote": "/** The address types whose add form asks the roles question: every type but Transporter, which\n * opens the add-a-transporter pages instead and carries no roles. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p12-144",
+      "statement": "The roles each add form offers are fixed by the address type: Origin or Consignor offers Place of origin and Consignor; Destination, Consignee or Importer offers Place of destination, Consignee and Importer; Branch offers Branch address.",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-book-types.ts:127-131, relied on by flows/ins/journey.ts:78",
+      "quote": "export const rolesQuestionOptions: Record<AddressTypeAskingRoles, readonly AddressRole[]> = {\n  [addressTypes.originOrConsignor]: [addressRoles.placeOfOrigin, addressRoles.consignor],\n  [addressTypes.destinationConsigneeOrImporter]: [addressRoles.placeOfDestination, addressRoles.consignee, addressRoles.importer],\n  [addressTypes.branch]: [addressRoles.branchAddress],\n};",
+      "confidence": "verbatim",
+      "note": "Note the Destination tab's role filter lists Consignee, Importer, Place of destination while its add form asks Place of destination, Consignee, Importer: the two orders differ. Recorded as an ambiguity for the reconciler, not settled here."
+    },
+    {
+      "id": "repo-tests-p12-145",
+      "statement": "An address added from the list with no roles chosen holds the first role its address type offers.",
+      "kind": "rule",
+      "ref": "flows/ins/journey.ts:76-80",
+      "quote": "roles = rolesQuestionOptions[addressType].slice(0, 1),",
+      "confidence": "inferred",
+      "note": "mechanism: a default in the test flow, not a service behaviour. It is why an address added by the list spec lands on the Origin and Consignor tab holding Place of origin."
+    }
+  ]
+}

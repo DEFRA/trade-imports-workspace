@@ -1,0 +1,1012 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 12 — Route registration, the obligation manifest and the cross-page fit specs. Read in full: the set identity module (src/server/app/sets/high-risk-plants/set.js, 7 lines); the whole obligations folder (index.js 91 lines, whitelists.test.js 243, coverage.test.js 133 and the seven section files origin.js 14, arrival.js 131, parties.js 69, destination.js 15, commodity.js 109, contact.js 5, review.js 6 — 816 lines in all); the features composition root (journeys/linear/features/index.js 59 lines, evaluation.js 24, timing-windows.js 12, amend-endings.test.js 108); the three cross-page fit specs (type-ahead.fit.spec.js 457 lines with 18 test declarations, 8 of them parameterised over three type-aheads, section-caption.fit.spec.js 38 lines with 2 tests, page-title.fit.spec.js 48 lines with 2 tests); and the set gateway (src/server/app/routes-high-risk-plants.js 102 lines) with src/server/app/routes.js (1 line). Covered: the 40 Hapi routes the set registers from 18 route modules, all mounted under the /high-risk-plants prefix, naming which are collecting pages, which are the dashboard/hub/create/start endpoints, which are action slugs (amend, cancel-amend, delete, and the declared-but-unrouted copy) and which are the three party-edit pages; the 13 dispatch pages and the recorded reasons the dashboard, hub, delete, cancel-amend and party-edit stay out of that index; the 25 obligations of the manifest — each one's UUID, name, status, group (`within`), gate (`applyTo`) or cardinality (`requires`) and the feature that collects it; the manifest invariants the two test files hold (unique ids and names, terminating `within` chains, derived groups, resolvable `dependsOn`, continue-enforced commodityType and countryOfOrigin, per-line fields matching the set-owned commodity service's field list, every gate's allow-list non-empty and inside the service vocabulary, the origin-constraint rules including the 27 EU member states and seed potatoes as the single unconstrained category, and the notification-level gate values); the boot-time coverage check that refuses to mount the set when any leaf obligation is owned by no feature; the two statutory timing windows and what reads them; what amend-endings.test.js proves about how an amendment's pages end; and the caption, title and type-ahead patterns the three fit specs assert verbatim. Route paths were resolved through src/server/app/shared/paths.js and src/server/app/shared/kit.js's pageRoutes, and each page's slug through its feature's page.js; collecting features were resolved through each feature's evaluation.js bindings. Mechanism claims are marked. Read but left to other parts: each page's own controller, view, fields, copy and per-page specs; the flow, task-rows and entry-guard modules; the shared kit; the spec/ ledgers.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p12-001",
+      "statement": "The whole high-risk plants notification journey is served under the path prefix /high-risk-plants.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/set.js:6-7, src/server/app/routes-high-risk-plants.js:56, src/server/router.js:25-27",
+      "quote": "export const SET_ID = 'high-risk-plants'\nexport const SET_BASE = `/${SET_ID}`",
+      "confidence": "verbatim",
+      "note": "The prefix is applied where the set plugin is registered: `await server.register(serviceRoutes, { routes: { prefix: HIGH_RISK_PLANTS_BASE } })` in src/server/router.js, which is outside this part's read but is the only consumer of src/server/app/routes.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-002",
+      "statement": "Visiting the site root redirects to the set base, so a user who types the bare host lands on the plants notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/router.js:29-33",
+      "quote": "server.route({\n          method: 'GET',\n          path: '/',\n          handler: (_request, h) => h.redirect(DEFAULT_SET_BASE)\n        })",
+      "confidence": "verbatim",
+      "note": "Read outside this part's file list, as the mount of src/server/app/routes.js, which exports the set as `serviceRoutes`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-003",
+      "statement": "None of the journey's routes exist unless authentication is switched on, so with sign-in disabled the service serves no notification pages at all.",
+      "kind": "constraint",
+      "ref": "src/server/router.js:24-34",
+      "quote": "if (config.get('auth.enabled')) {\n        await server.register(serviceRoutes, {",
+      "confidence": "verbatim",
+      "note": "Read outside this part's file list, as the mount of src/server/app/routes.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-004",
+      "statement": "The set registers one flat route table assembled from eighteen feature route modules: cancel-amend, confirmation, declaration, check-answers, consignment contact, identification numbers, dashboard, hub, delete-notification, commodity type, the commodities list, the commodity details sub-page, origin, arrival status, arrival details, consignor, place of destination and party edit.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:40-59",
+      "quote": "export const allRoutes = [\n  ...cancelAmend.routes,\n  ...confirmation.routes,\n  ...declaration.routes,\n  ...checkAnswers.routes,\n  ...contact.routes,\n  ...identificationNumbers.routes,\n  ...dashboard.routes,\n  ...hub.routes,\n  ...deleteNotification.routes,\n  ...commodityType.routes,\n  ...commoditiesList.routes,\n  ...commodityDetails.routes,\n  ...origin.routes,\n  ...arrivalStatus.routes,\n  ...arrivalDetails.routes,\n  ...consignor.routes,\n  ...placeOfDestination.routes,\n  ...partyEdit.routes\n]",
+      "confidence": "verbatim",
+      "note": "The eighteen modules register 40 routes in total: 2 cancel-amend, 1 confirmation, 2 declaration, 2 notification-view, 2 contact picker, 2 identification-numbers, 4 dashboard, 1 hub, 2 delete, 2 commodity-type, 2 commodities, 2 commodities/details, 2 origin, 2 arrival-status, 2 arrival-details, 2 consignors/select, 2 destinations/select and 6 party-edit."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-005",
+      "statement": "The notification list is served at the set base itself, /high-risk-plants.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:159-163, src/server/app/shared/paths.js:9",
+      "quote": "export const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-006",
+      "statement": "A GET of /high-risk-plants/start starts a new notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:178-183, src/server/app/shared/paths.js:8",
+      "quote": "  {\n    method: 'GET',\n    path: startRoutePath(),\n    options: kit.routeOptions,\n    handler: startGet\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-007",
+      "statement": "A POST of /high-risk-plants/notifications creates a notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:172-177, src/server/app/shared/paths.js:7",
+      "quote": "  {\n    method: 'POST',\n    path: createRoutePath(),\n    options: kit.routeOptions,\n    handler: createPost\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-008",
+      "statement": "An amendment is begun by a POST to /high-risk-plants/notifications/{journeyId}/amend, never by following a link, so the action cannot be reached by typing a URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:166-171",
+      "quote": "  {\n    method: 'POST',\n    path: pageRoutePath(notificationActionSlugs.amend),\n    options: kit.routeOptions,\n    handler: amendPost\n  }",
+      "confidence": "verbatim",
+      "note": "No GET is registered for the amend slug: the only amend route is the POST."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-009",
+      "statement": "The task-list hub for one notification is served at /high-risk-plants/notifications/{journeyId}, and only as a GET.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:154-161, src/server/app/shared/paths.js:6",
+      "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: hubRoutePath(),\n    options: kit.pageRouteOptions(hubPage),\n    handler\n  }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-010",
+      "statement": "Every page of one notification sits under /high-risk-plants/notifications/{journeyId}/ followed by the page's own slug.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/paths.js:5",
+      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-011",
+      "statement": "Each collecting page is served by a pair of routes at one path, a GET that shows the page and a POST that saves it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:342-355",
+      "quote": "export const pageRoutes = (page, { get, post }) => [\n  {\n    method: 'GET',\n    path: pageRoutePath(page.slug),\n    options: pageRouteOptions(page),\n    handler: get\n  },\n  {\n    method: 'POST',\n    path: pageRoutePath(page.slug),\n    options: pageRouteOptions(page),\n    handler: redirectOnStaleAction(post)\n  }\n]",
+      "confidence": "verbatim",
+      "note": "mechanism: wraps every page POST handler in a stale-action redirect, so a submission aimed at a page the notification has moved past is redirected rather than saved. The route builder itself belongs to the shared kit part; it is quoted here because the route inventory rests on it."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-012",
+      "statement": "The commodity type question is served at the commodity-type slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/page.js:3, .../commodity-type/controller.js:151",
+      "quote": "  slug: 'commodity-type',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-013",
+      "statement": "The commodity list is served at the commodities slug and the details sub-page at commodities/details, so a line is added one level below the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:2-9",
+      "quote": "  id: 'commodities',\n  slug: 'commodities',",
+      "confidence": "verbatim",
+      "note": "The details page's own entry reads `id: 'commodity-details'` with `slug: 'commodities/details'`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-014",
+      "statement": "The origin question is served at the origin slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/page.js:3, .../origin/controller.js:165",
+      "quote": "  slug: 'origin',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-015",
+      "statement": "The arrival status question is served at the arrival-status slug and the arrival details at arrival-details.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/page.js:3, .../arrival-details/page.js:3",
+      "quote": "  slug: 'arrival-status',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-016",
+      "statement": "The three party pickers are served at consignors/select, destinations/select and consignment/contact/select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/page.js:3, .../place-of-destination/page.js:3, .../consignment-contact-select/page.js:3",
+      "quote": "  slug: 'consignors/select',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-017",
+      "statement": "Each party picker is served by the same GET and POST pair as any other collecting page, and a picker whose question does not apply to the notification redirects to the overview instead of showing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:189-199",
+      "quote": " * @param {Function} [picker.inScope] - tells from the journey state whether the page applies; out of scope it redirects to the overview.",
+      "confidence": "verbatim",
+      "note": "The picker route builder is shared by the three pickers; its own page behaviour belongs to the party-picker part."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-018",
+      "statement": "The identification numbers page is served at the identification-numbers slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/page.js:3, .../identification-numbers/controller.js:93",
+      "quote": "  slug: 'identification-numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-019",
+      "statement": "Check your answers is served at the notification-view slug, so reviewing a notification and viewing a submitted one share one address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/page.js:2-3",
+      "quote": "  id: 'notification-view',\n  slug: 'notification-view',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-020",
+      "statement": "The declaration is served at the declaration slug with a GET and a POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/page.js:3, .../declaration/controller.js:132",
+      "quote": "  slug: 'declaration',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-021",
+      "statement": "The confirmation page is served at the confirmation slug as a GET only, so it cannot be submitted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:47-54",
+      "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: pageRoutePath(page.slug),\n    options: kit.pageRouteOptions(page),\n    handler: get\n  }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-022",
+      "statement": "A notification is deleted through a GET and a POST at the delete slug, which is a confirmation page rather than a link that deletes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/page.js:2-3, .../delete-notification/controller.js:78-91",
+      "quote": "  id: 'delete-notification',\n  slug: 'delete',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-023",
+      "statement": "An amendment is abandoned through a GET and a POST at the cancel-amend slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:85-98, src/server/app/shared/kit.js:73",
+      "quote": "export const CANCEL_AMEND_SLUG = 'cancel-amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-024",
+      "statement": "A notification carries four actions: amend, cancel-amend, copy and delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/notification-action-slugs.js:4-9",
+      "quote": "export const notificationActionSlugs = Object.freeze({\n  amend: 'amend',\n  cancelAmend: CANCEL_AMEND_SLUG,\n  copy: 'copy',\n  delete: deleteNotificationPage.slug\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-025",
+      "statement": "Copying a notification is named as an action but is not served: no route in the set registers the copy slug, so a request to it is a 404.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/notification-action-slugs.js:7, src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:40-59",
+      "quote": "  copy: 'copy',",
+      "confidence": "inferred",
+      "note": "Follows from the action slug being declared and treated as an action by the entry guard while no module in allRoutes registers a path ending in the copy slug — only amend (POST), cancel-amend and delete have routes."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-026",
+      "statement": "A picked party's own copy of the address is edited at consignors/edit, destinations/edit and consignment/contact/edit, one GET and POST pair for each of the three parties.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.js:127-132, src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:23-36",
+      "quote": "export const routes = PARTIES.flatMap((party) =>\n  kit.pageRoutes(\n    { slug: party.editSlug, maturity: partyEditPage.maturity },\n    { get: get(party), post: post(party) }\n  )\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-027",
+      "statement": "Thirteen pages are dispatch pages — confirmation, declaration, check answers, the consignment contact picker, identification numbers, commodity type, the commodities list, the commodity details sub-page, origin, arrival status, arrival details, the consignor picker and the place-of-destination picker.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:24-38",
+      "quote": "export const dispatchPages = [\n  confirmation.meta,\n  declaration.meta,\n  checkAnswers.meta,\n  contact.meta,\n  identificationNumbers.meta,\n  commodityType.meta,\n  commoditiesList.meta,\n  commodityDetails.meta,\n  origin.meta,\n  arrivalStatus.meta,\n  arrivalDetails.meta,\n  consignor.meta,\n  placeOfDestination.meta\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-028",
+      "statement": "The notification list and the task-list hub are not journey pages: they collect nothing, are never gated and are never a task row.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:20-23",
+      "quote": "// Neither the dashboard nor the hub exports meta: they collect nothing, are\n// never gated and are never a task row, so they stay out of the dispatch index.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-029",
+      "statement": "Deleting a notification and cancelling an amendment are actions on a notification rather than steps in the journey, and the party-edit page is reached only from a picked address's Edit details link.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:22-23",
+      "quote": "// Delete-notification and cancel-amend are action slugs, not journey pages, and\n// party-edit is reached only from a picked address's Edit details link.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-030",
+      "statement": "Every request to the set is checked by the journey entry guard before the page runs, and a request that fails it is redirected away rather than served.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:85-94",
+      "quote": "        server.ext(\n          'onPreHandler',\n          async (request, h) => {\n            const target = await runInRequestContext(request, SET_ID, () =>\n              journeyEntryGuardTarget(request, h)\n            )\n            return target ? h.redirect(target).takeover() : h.continue\n          },\n          { sandbox: 'plugin' }\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-031",
+      "statement": "The set refuses to start if any of its configuration seams is unfilled or any of its journey cookies is unregistered, so a misconfigured journey fails at boot rather than serving half a journey.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:98, src/server/app/set-completeness.js:26-37",
+      "quote": " * Refuse to mount a set that has not configured every required seam or\n * registered every journey cookie.",
+      "confidence": "verbatim",
+      "note": "mechanism: checks the set's own registration against the seam registry and the Hapi server's cookie states at mount time; it works on configuration, not on a notification's data."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-032",
+      "statement": "The set wires one thing at a time at boot: its obligation manifest, its fulfilment bindings, its journey flow (sections, task rows, row status, flow-only keys, entry guard target, section caption and layout), its check-your-answers readiness rule, its page dispatch, its record and session stores and its journey cookie.",
+      "kind": "integration",
+      "ref": "src/server/app/routes-high-risk-plants.js:66-84",
+      "quote": "        configureObligationSet(SET_ID, highRiskPlantsObligationSet)\n        configureFulfilmentRegistry(SET_ID, featureEvaluationBindings)\n        configureJourneyFlow(SET_ID, {\n          sections,\n          taskRows,\n          rowStatus,\n          insTypeQuestionUrl,\n          flowOnlyKeys: FLOW_ONLY_KEYS,\n          entryGuardTarget,\n          sectionCaption: sectionCaptionOf,\n          layout: LAYOUT\n        })\n        configureReadyForCheckYourAnswers(SET_ID, readyForCheckYourAnswers)",
+      "confidence": "verbatim",
+      "note": "mechanism: composes the set's content modules into the journey-agnostic engine's per-set seams. It names what the set owns, not what a user sees."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-033",
+      "statement": "Every request is tagged with the set it belongs to before authentication runs, so the service can serve more than one journey set from one host.",
+      "kind": "integration",
+      "ref": "src/server/app/routes-high-risk-plants.js:56-65",
+      "quote": "        registerSetMount(SET_ID, SET_BASE)\n        await withSetContext(SET_ID, async () => {\n          server.ext(\n            'onPreAuth',",
+      "confidence": "verbatim",
+      "note": "mechanism: enters a per-request set context so the shared path, copy and persistence helpers resolve against this set. Quote reflows the file's indentation."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-034",
+      "statement": "The model holds no display words: the set is refused at boot if any obligation carries a label, title or hint.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:79, src/server/app/obligation-purity.js:4-9",
+      "quote": "// Model purity gate: no display logic in the model. A boot-time check over the\n// live model — no `label`/`title`/`hint` etc. on any obligation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-035",
+      "statement": "The notification's rule manifest holds twenty-five obligations.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:61-87",
+      "quote": "export const obligations = [\n  lateNotificationIndicator,\n  contactAddress,\n  supplierIdentificationNumber,\n  producerIdentificationNumber,\n  cropIdentificationNumber,\n  consignmentNumber,\n  consignor,\n  commodityType,\n  commodityLine,\n  category,\n  genus,\n  species,\n  commodityCode,\n  quantity,\n  potatoVariety,\n  potatoIntendedUse,\n  eppoCode,\n  sizeOfTree,\n  phytosanitaryTreatments,\n  countryOfOrigin,\n  arrivalStatus,\n  arrivalDate,\n  arrivalTime,\n  proposedPlaceOfLanding,\n  placeOfDestination\n]",
+      "confidence": "verbatim",
+      "note": "The manifest is split across seven section files — origin, arrival, parties, destination, commodity, contact and review — and re-exported from one index."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-036",
+      "statement": "The service records whether a notification was made late, as an optional system value the notifier never answers.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/review.js:1-6",
+      "quote": "export const lateNotificationIndicator = {\n  id: 'c9e1043b-7fba-42d2-80c2-6d6384d9630c',\n  name: 'lateNotificationIndicator',\n  status: 'optional',\n  system: true\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the review feature's binding (features/review/evaluation.js), not by a page a user visits."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-037",
+      "statement": "A notification must carry a contact address, for every commodity type, collected by the consignment contact picker.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/contact.js:1-5",
+      "quote": "export const contactAddress = {\n  id: 'a9e33c57-8b13-4c7d-92db-0460fd0d2f68',\n  name: 'contactAddress',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "No applyTo, so it is always in scope. The collecting feature is consignment-contact-select, whose meta declares `collects: [CONTACT_ADDRESS]`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-038",
+      "statement": "A supplier identification number is required only when the notification is for plants for planting, and is out of scope for every other commodity type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:29-39",
+      "quote": "export const supplierIdentificationNumber = {\n  id: '26c11d80-6b9c-4211-9fad-1e47046658cb',\n  name: 'supplierIdentificationNumber',\n  status: 'mandatory',\n  applyTo: equalsGate(\n    commodityType,\n    'plants-for-planting',\n    { inScope: true, status: 'mandatory' },\n    { inScope: false }\n  )\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the identification-numbers page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-039",
+      "statement": "A producer identification number is required only when the notification is for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:41-51",
+      "quote": "export const producerIdentificationNumber = {\n  id: '3c59568c-1954-4cae-9c96-65274ea68b1c',\n  name: 'producerIdentificationNumber',\n  status: 'mandatory',\n  applyTo: equalsGate(\n    commodityType,\n    'potatoes',\n    { inScope: true, status: 'mandatory' },\n    { inScope: false }\n  )\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the identification-numbers page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-040",
+      "statement": "A crop identification number is required only when the notification is for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:53-63",
+      "quote": "export const cropIdentificationNumber = {\n  id: '33d7105c-776d-475d-8653-414f326182cd',\n  name: 'cropIdentificationNumber',\n  status: 'mandatory',\n  applyTo: equalsGate(\n    commodityType,\n    'potatoes',\n    { inScope: true, status: 'mandatory' },\n    { inScope: false }\n  )\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the identification-numbers page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-041",
+      "statement": "A consignment number may be given on any notification and is never required.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:65-69",
+      "quote": "export const consignmentNumber = {\n  id: '1d3e1a55-6e0e-4322-ae2c-48a43b6c7b71',\n  name: 'consignmentNumber',\n  status: 'optional'\n}",
+      "confidence": "verbatim",
+      "note": "No applyTo, so it is in scope for every commodity type. Collected by the identification-numbers page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-042",
+      "statement": "A consignor is required only for plants for planting and for wood and cut trees, and a potato notification is never asked for one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:7-27",
+      "quote": "    reasons: [\n        {\n          code: 'obligation.consignor.applicable.becauseCommodityType',\n          explanation:\n            'consignor applies to plants for planting and wood and cut trees'\n        }\n      ]",
+      "confidence": "verbatim",
+      "note": "Obligation id 478148de-8e15-4c44-a435-15f24a1c177b, status mandatory, gated with includesGate on commodityType. Collected by the consignor picker. Quote reflows the file's indentation."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-043",
+      "statement": "Every notification must say what is being imported — its commodity type — and the question applies whatever the answer.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:4-8",
+      "quote": "export const commodityType = {\n  id: '9f2c4b71-3e58-4a6d-9c02-71d8f5a3e6b4',\n  name: 'commodityType',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the commodity-type page; every other commodity-type gate in the manifest reads this one answer."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-044",
+      "statement": "A notification must carry at least one commodity line, and a notification with no line at all is refused with the code obligation.commodityLines.atLeastOne.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:14-21",
+      "quote": "export const commodityLine = {\n  id: 'a3d6c1f0-5b27-4e93-9a41-0c8b6e2d7f15',\n  name: 'commodityLines',\n  requires: {\n    minEntries: 1,\n    errorCode: 'obligation.commodityLines.atLeastOne'\n  }\n}",
+      "confidence": "verbatim",
+      "note": "This is the manifest's one cardinality rule, and its one group: it is always in scope and is collected by the commodities list."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-045",
+      "statement": "The commodity lines are a group that is always in scope, and a notification holding no line satisfies it vacuously as far as the fields below it are concerned.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:10-13",
+      "quote": "// The consignment's commodity lines. A structural group, always in scope: it\n// becomes one because every field below names it in `within`. The floor is the\n// model's, not the page's — a notification with no line is vacuously satisfied\n// without it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-046",
+      "statement": "Every commodity line must say which category it is, and that answer decides which of the other per-line questions the line is asked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:23-30",
+      "quote": "// The per-line gate. Every other field on a line reads it at the same identity\n// level, so each gate is a same-frame `allowListed` with a null projection.\nexport const category = {\n  id: 'b47e2d18-6c39-4f05-8b52-1d9c7f3e8a26',\n  name: 'category',\n  within: commodityLine,\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "Collected by the commodities feature, whose bindings own the ten per-line leaves."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-047",
+      "statement": "Every commodity line must carry a quantity, whichever category it is, and it is the one per-line field with no category condition.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:32-40",
+      "quote": "// Every line carries a quantity, whichever category it is, so this one field\n// needs no gate. The service still names its categories, so the page and the\n// model read one list for every field alike.\nexport const quantity = {\n  id: 'c58f3e29-7d4a-4016-9c63-2e0d8a4f9b37',\n  name: 'quantity',\n  within: commodityLine,\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-048",
+      "statement": "Genus, species, commodity code, potato variety, potato intended use, EPPO code, size of tree and phytosanitary treatments are each required on a commodity line only when the line's category asks for that field, and the list of categories that ask for it comes from the set's own commodity service rather than the manifest.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:49-109",
+      "quote": "const gatedOnCategory = (id, name) => ({\n  id,\n  name,\n  within: commodityLine,\n  status: 'mandatory',\n  applyTo: allowListed(\n    category,\n    () => categoriesRequiring(name),\n    null,\n    appliesBecauseCategory(name)\n  )\n})",
+      "confidence": "verbatim",
+      "note": "Ids: genus d6903f3a-8e5b-4127-8d74-3f1e9b5a0c48, species e7a14b4b-9f6c-4238-9e85-401fac6b1d59, commodityCode f8b25c5c-a07d-4349-8f96-512abd7c2e6a, potatoVariety 09c36d6d-b18e-445a-9007-623bce8d3f7b, potatoIntendedUse 1ad47e7e-c29f-456b-8118-734cdf9e408c, eppoCode 2be58f8f-d3a0-467c-9229-845de0af519d, sizeOfTree 3cf69090-e4b1-478d-833a-956ef1b062ae, phytosanitaryTreatments 4d07a1a1-f5c2-489e-944b-a67f02c173bf. Each is mandatory within commodityLine. All eight, with category and quantity, are collected by the commodities feature."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-049",
+      "statement": "Each per-line field's reason for applying is recorded in the words \"<field> applies on lines whose category asks for it\", under the code obligation.<field>.applicable.becauseCategory.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:42-47",
+      "quote": "const appliesBecauseCategory = (field) => [\n  {\n    code: `obligation.${field}.applicable.becauseCategory`,\n    explanation: `${field} applies on lines whose category asks for it`\n  }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-050",
+      "statement": "Which categories ask for a per-line field is looked up only when the rule is checked, so the manifest reads no reference data when the service starts.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:49-57",
+      "quote": " * A per-line field scoped to the categories the set-owned service says ask for\n * it. The allow-list is read lazily, at gate execution: an obligation module\n * does no IO and reads no reference data when it loads.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-051",
+      "statement": "A notification carries one country of origin for the whole consignment, whatever its commodity type, and must give it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/origin.js:1-14",
+      "quote": "// Where the consignment comes from. One notification-level answer for\n// potatoes, plants and wood alike: the statute names a different scope for\n// each, but a notification carries one origin.",
+      "confidence": "verbatim",
+      "note": "Id 5e18b2b2-06d3-49af-a55c-b78013d284c0, status mandatory, no applyTo. Collected by the origin page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-052",
+      "statement": "Which countries a particular category may come from — ware potatoes from four countries, conifer wood without bark from four others, everything else from an EU member State — is checked on the origin page against the set's own commodity service, not by the manifest's rules, because the category sits on each commodity line while the origin is one answer for the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/origin.js:5-9",
+      "quote": "// The per-category narrowing — ware potatoes from four countries, conifer wood\n// without bark from four others, everything else from an EU member State — is\n// not a gate here. A gate reads its own frame, and `category` lives one frame\n// down on each commodity line, so the narrowing is validated on the page\n// against the set-owned commodities service instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-053",
+      "statement": "Whether the consignment has already arrived in Great Britain is asked only of notifications for plants for planting and for wood and cut trees.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:20-54",
+      "quote": "    explanation:\n      'arrivalStatus applies to notifications for plants for planting and for wood and cut trees'",
+      "confidence": "verbatim",
+      "note": "Id 6f29c3c3-17e4-45b0-b66d-c89124e395d1, status mandatory, includesGate on commodityType with the reason code obligation.arrivalStatus.applicable.becauseCommodityType. Collected by the arrival-status page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-054",
+      "statement": "The notifier says whether the consignment has arrived rather than the service working it out from the arrival date, because one branch of the rules turns on arrival in the country and the other on arrival at the destination, and a date alone cannot tell them apart.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:28-39",
+      "quote": " * The notifier says so rather than the service deriving it from the arrival\n * date: reg 26(2)(a) branches on arrival in the country and reg 26(2)(b) on\n * arrival at the intended destination, and a date alone cannot say which\n * branch a consignment arriving today is in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-055",
+      "statement": "When a change of commodity type takes the arrival status out of scope, the answer already given is removed rather than kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:36-39",
+      "quote": " * A top-level scalar gate on a top-level scalar answer, so the whole\n * notification is either asked the question or not — the engine purges the\n * answer when a change of commodity type takes it out of scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-056",
+      "statement": "Every notification must give an arrival date, whatever its commodity type, and the three different ways the question is worded are a matter for the arrival-details page, not for the rule.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:56-70",
+      "quote": " * One obligation for every commodity type, because every notification owes a\n * date: reg 24A(2)(a) asks potatoes for the expected date, and reg 26(2)(a)\n * asks plants and wood for the expected date of landing or, once the\n * consignment is here, the date it first arrived. Which of those three\n * sentences a notifier is shown is the arrival-details page's business — the\n * matter owed is the same one.",
+      "confidence": "verbatim",
+      "note": "Id 63e22d64-b9a0-40b4-aec6-0f5f48bdd556, status mandatory, no applyTo. Collected by the arrival-details page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-057",
+      "statement": "An expected time of arrival is asked only of potato notifications, and the answer is removed if the notification changes to another commodity type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:79-101",
+      "quote": " * Reg 24A(2)(a) asks potatoes for 'the expected time and date of their\n * arrival'. Reg 26(2)(a) asks plants and wood for a date alone, so the time is\n * a potato matter and the engine purges it when a notification changes to\n * another commodity type.",
+      "confidence": "verbatim",
+      "note": "Id 0d05c100-b887-4a12-8251-673bc1e1ac31, status mandatory, equalsGate on commodityType = potatoes, reason code obligation.arrivalTime.applicable.becauseCommodityType with the words 'arrivalTime applies to notifications for potatoes'. Collected by the arrival-details page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-058",
+      "statement": "A proposed place of landing is asked only of potato notifications; plants and wood are never asked for one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:110-131",
+      "quote": " * Reg 24A(2)(aa) is the only landing element in the statute; reg 26(2) has\n * none, so plants and wood are never asked. Gated the same way as the time, on\n * the same notification-level answer.",
+      "confidence": "verbatim",
+      "note": "Id 1c706e7c-6d61-4e47-8bb4-e53efcd72809, status mandatory, equalsGate on commodityType = potatoes, reason code obligation.proposedPlaceOfLanding.applicable.becauseCommodityType with the words 'proposedPlaceOfLanding applies to notifications for potatoes'. Collected by the arrival-details page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-059",
+      "statement": "Every notification must give one place of destination — where the consignment is going, or where it is being kept once it is here — and which of those three questions the notifier is shown is decided from the arrival status by the page, not by the rule.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:1-15",
+      "quote": "// Where the consignment is going, or — once it is here — where it is being\n// kept. One notification-level answer for every commodity type: reg 24A(2)(c)\n// asks potatoes for their intended destination and reg 26(2)(b) asks plants\n// and wood for the intended destination or the current location. The matter\n// owed is the same one, so it is one obligation and never a gate; which of the\n// three sentences a notifier is shown is the page's business, decided from the\n// arrival status.",
+      "confidence": "verbatim",
+      "note": "Id 7eb0d717-f852-43f7-9377-c6a9c301d702, status mandatory, no applyTo. Collected by the place-of-destination picker."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-060",
+      "statement": "The place of destination a notification holds is a copy of the organisation's address-book record taken when it was picked, and a later change to that record does not reach the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:9-10",
+      "quote": "// The answer is a copy of a record in the organisation's address book, taken\n// when it is picked; a later change to the record does not reach it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-061",
+      "statement": "The commodity lines are the manifest's only group, and the set of groups is worked out from what the other obligations sit within rather than listed by hand.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:89-91, src/server/app/sets/high-risk-plants/obligations/coverage.test.js:91-104",
+      "quote": "export const groups = obligations.filter((obligation) =>\n  obligations.some((other) => other.within === obligation)\n)",
+      "confidence": "verbatim",
+      "note": "coverage.test.js checks the derived groups by identity, so a hand-written stand-in for the commodity-line group fails: 'a hand-written copy of a group object would pass a structural comparison and then fail every `within === group` test the evaluator makes'."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-062",
+      "statement": "No two obligations may share an id or a name, because a duplicate would make one of them silently invisible to the service and corrupt every lookup by name.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js:67-80",
+      "quote": "    // Duplicate ids collide in every id-keyed structure the evaluator builds;\n    // one wins and the loser is silently invisible.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-063",
+      "statement": "Every chain of obligations nested inside another must end, so no obligation can sit inside itself or inside a loop.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js:82-89",
+      "quote": "describe('structural integrity — no cycles in `within` references', () => {\n  it('Should terminate every within-chain in null', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-064",
+      "statement": "Every conditional obligation must declare which answers its condition reads, so the service can always say what a question depends on.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js:106-121",
+      "quote": "    // Closures are opaque to the reachability prover, so a gate must declare\n    // the ids it reads — explicitly, or derivably through its helper\n    // metadata.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-065",
+      "statement": "The commodity type and the country of origin are both enforced when the user presses Continue, so a page cannot be left without them.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js:123-133",
+      "quote": "  it('Should enforce commodityType when the user continues', () => {\n    // A contains check, never an equality one: the test fixtures merge their\n    // own entries into this module-level Set at setup.\n    expect(ENFORCED_AT_CONTINUE).toContain(COMMODITY_TYPE)\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-066",
+      "statement": "Every per-line question but the category must be a field the set's own commodity service names, and the service's field list must have a question for every field in it, so the manifest and the catalogue cannot drift apart.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:48-66",
+      "quote": "      'a per-line obligation whose name is not a service field is in scope for no category'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-067",
+      "statement": "Every per-line field except the quantity is conditional on the line's category, and the quantity carries no condition at all.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:68-78",
+      "quote": "  it('Should gate every per-line field except the quantity every line carries', () => {",
+      "confidence": "verbatim",
+      "note": "This is the one exception the per-line gating invariant allows."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-068",
+      "statement": "No per-line question may be scoped to no category at all, or to a category the commodity service does not offer.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:81-96",
+      "quote": "        `${obligation.name} applies on no category`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-069",
+      "statement": "No per-line question may be scoped to a category that no commodity type offers, because it could then never come into scope on any notification.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:98-111",
+      "quote": "        `${obligation.name} applies on a category no commodity type offers, so it can never come into scope`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-070",
+      "statement": "An origin constraint may only name categories a commodity line can actually carry, and each category is bound by at most one constraint.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:113-131",
+      "quote": "      'an origin constraint names a category no line can carry'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-071",
+      "statement": "Seed potatoes may come from anywhere the origin list offers, and they are the only category with no origin restriction.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:133-142",
+      "quote": "  it('Should leave seed potatoes unconstrained', () => {\n    expect(constrainedCategories).not.toContain(SEED_POTATOES)\n    expect(originCountriesFor(SEED_POTATOES)).toEqual([])",
+      "confidence": "verbatim",
+      "note": "This is the single exception the origin-constraint coverage invariant allows: 'a category the service offers has no origin constraint' may list seed-potatoes and nothing else."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-072",
+      "statement": "Every country an origin constraint names must be a country the origin question itself offers.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:144-152",
+      "quote": "        `${constraint.id} names a country the origin block does not offer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-073",
+      "statement": "The origin constraints are ordered narrowest first, by how many countries each allows.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:154-161",
+      "quote": "  it('Should order the constraints narrowest first', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-074",
+      "statement": "The EU member states constraint allows 27 countries: every country the origin question offers except Iceland, Liechtenstein, Norway and Switzerland.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:163-173",
+      "quote": "  it('Should hold the origin block minus the four non-member states', async () => {",
+      "confidence": "verbatim",
+      "note": "The four excluded codes are listed as `const NON_MEMBER_STATES = ['IS', 'LI', 'NO', 'CH']`, and the constraint is asserted to hold exactly 27 countries."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-075",
+      "statement": "Each constrained category is answered from the one constraint that binds it, and the constraint lists cannot be added to at runtime.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:175-189",
+      "quote": "  it('Should refuse a caller that tries to extend a constraint', () => {\n    expect(() => originConstraints().push({ id: 'anywhere' })).toThrow(\n      TypeError\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-076",
+      "statement": "The arrival status question is admitted for exactly two commodity types, plants for planting and wood and cut trees, and for no other value the service offers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:191-212",
+      "quote": "  it('Should admit only plants for planting and wood and cut trees', () => {\n    expect([...gateValues()]).toEqual([\n      'plants-for-planting',\n      'wood-and-cut-trees'\n    ])\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-077",
+      "statement": "The pair of commodity types that get the post-arrival branch is written out rather than worked out, so a new commodity type the service starts offering is not asked the arrival status until someone decides it should be.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:10-18",
+      "quote": "// The two commodity types reg 26(2) gives a post-arrival branch. Reg 24A gives\n// the potato notification none, so it is never asked. Listed rather than\n// derived: journey-spec.json rules arrivalStatus.activatedBy.includes as this\n// exact pair, so a commodity type the service starts offering stays out of the\n// gate until someone rules it in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-078",
+      "statement": "The arrival time and the proposed place of landing are each admitted for potatoes and nothing else, and both read the commodity type answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:214-233",
+      "quote": "      it('Should admit potatoes and nothing else', () => {\n        expect(obligationMetadata(obligation).value).toBe('potatoes')\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-079",
+      "statement": "The consignor question reads the commodity type answer and is admitted for plants for planting and wood and cut trees only.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js:236-243",
+      "quote": "it('Should gate consignor on the two supported plants and wood types', () => {\n  const metadata = obligationMetadata(consignor)\n  expect(metadata.dependsOn).toEqual([commodityType.id])\n  expect(metadata.values).toEqual(['plants-for-planting', 'wood-and-cut-trees'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-080",
+      "statement": "Every question the notification owes is collected by exactly one page: the service refuses to start and names the offenders when any of them is collected by none.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:67, src/server/app/routes-high-risk-plants.js:80, src/server/app/bridge/fulfilment-registry.js:156-163",
+      "quote": "  const missing = leaves.filter((obligation) => !owners.has(obligation.id))\n  if (missing.length > 0) {\n    fail(\n      `obligations owned by no feature: ${missing\n        .map((obligation) => obligation.name)\n        .join(', ')}`\n    )\n  }",
+      "confidence": "verbatim",
+      "note": "This is the coverage invariant for the manifest, checked at boot by assertFulfilmentBindingCoverage() against the set's featureEvaluationBindings. The only exception is a group: a group obligation is not a leaf, so the commodity-line group needs no collecting page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-081",
+      "statement": "Ten features collect the notification's answers: review, the consignment contact, identification numbers, commodity type, commodities, origin, arrival status, arrival details, place of destination and consignor.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/evaluation.js:13-24",
+      "quote": "export const featureEvaluationBindings = Object.freeze([\n  review,\n  contact,\n  identificationNumbers,\n  commodityType,\n  commodities,\n  origin,\n  arrivalStatus,\n  arrivalDetails,\n  placeOfDestination,\n  consignor\n])",
+      "confidence": "verbatim",
+      "note": "mechanism: binds each obligation in the manifest to the field a feature saves it under, so the engine can tell whether a question has been answered. Between them the ten features own all 24 leaf obligations — review 1, contact 1, identification numbers 4, commodity type 1, commodities 10, origin 1, arrival status 1, arrival details 3, place of destination 1 and consignor 1."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-082",
+      "statement": "Check your answers, the declaration, the confirmation, the commodity details sub-page, the hub and the dashboard collect none of the notification's answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/evaluation.js:1-12",
+      "quote": "import { evaluationBindings as review } from './review/evaluation.js'",
+      "confidence": "inferred",
+      "note": "Follows from evaluation.js naming only ten features, none of them check-answers, declaration, confirmation, commodity details, hub or dashboard; their controllers' meta declares `collects: []` except declaration, which collects only its own flow key."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-083",
+      "statement": "No two pages may claim the same question, and two pages that save a grouped question must agree on where it lives, or the service refuses to start.",
+      "kind": "constraint",
+      "ref": "src/server/app/bridge/fulfilment-registry.js:115-127",
+      "quote": "      fail(\n        `group ${group.obligation.name} has conflicting path/token declarations`\n      )",
+      "confidence": "verbatim",
+      "note": "mechanism: validates the set's fulfilment bindings against each other and against the manifest at boot."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-084",
+      "statement": "A potato notification is due two days before the consignment arrives.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:1-10",
+      "quote": " * Potatoes are notified ahead of arrival (reg 24A(1)); plants for planting and\n * wood may be notified up to four days after it (reg 26(1)).",
+      "confidence": "verbatim",
+      "note": "The figure is `export const POTATO_DAYS_BEFORE_ARRIVAL = 2`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-085",
+      "statement": "A notification for plants for planting or for wood may be made up to four days after the consignment arrives.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:12",
+      "quote": "export const PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-086",
+      "statement": "Both notification windows are held in one place, so every hint that names a window and every lateness decision reads the same figure and no page can show a different one.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:4-9",
+      "quote": " * Both numbers are\n * written here and nowhere else — the commodity-type option hints, the\n * arrival-details validation and the lateness rules all read them from this\n * module rather than repeating the figure.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-087",
+      "statement": "The windows are read by the commodity type page's option hints, the arrival status page and the review section's lateness rule; the arrival details page does not read them, although the module says the arrival-details validation does.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:6-8",
+      "quote": " * written here and nowhere else — the commodity-type option hints, the\n * arrival-details validation and the lateness rules all read them from this\n * module rather than repeating the figure.",
+      "confidence": "inferred",
+      "note": "Follows from the files that import the two constants: commodity-type/controller.js, arrival-status/controller.js, review/late-rule.js and review/lateness.js, plus their tests and fit specs. No file under arrival-details imports either constant, so the comment names a reader the code does not have."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-088",
+      "statement": "An amendment ends every task-row page with exactly the controls that page shows on a draft, so nothing is added or taken away just because the notification is being amended.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js:72-83",
+      "quote": "    'Should end the %s page with exactly the controls it shows on a draft',\n    async (_id, page) => {\n      const draft = await renderPage(page, { amend: false })\n      const amending = await renderPage(page, { amend: true })\n\n      expect(saveControlsOf(amending)).toBe(saveControlsOf(draft))\n    }",
+      "confidence": "verbatim",
+      "note": "The test runs over every page of every task row, taken from taskRows.flatMap((row) => row.pages)."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-089",
+      "statement": "A question page offers two buttons, Save and continue and Save and return to overview, followed by a link that cancels back to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js:85-97",
+      "quote": "  it('Should offer Save and continue, Save and return to overview and a link to cancel back to the overview', async () => {",
+      "confidence": "verbatim",
+      "note": "The second button submits `value=\"hub\" name=\"exit\"`, and the link points at the notification's hub path. The words come from the shared saveActions copy keys saveAndContinue, saveAndReturnToHub and cancelAndReturnToHub."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-090",
+      "statement": "The commodity list ends with Save and continue alone, both on a draft and while amending.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js:99-107",
+      "quote": "  it('Should end the commodities list with the controls it shows on a draft, Save and continue alone', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-091",
+      "statement": "Every page carries a section caption immediately above its heading, as the element directly before the h1 rather than text elsewhere on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:14-25",
+      "quote": "    // The selector pins placement: the caption must be the element directly\n    // above the page heading, not text floating elsewhere in the content.\n    await expect(\n      page.locator('span.govuk-caption-xl + h1.govuk-heading-xl')\n    ).toHaveText(dashboardCopy.title)",
+      "confidence": "verbatim",
+      "note": "The caption is a govuk-caption-xl span and the heading a govuk-heading-xl h1."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-092",
+      "statement": "The notification list is captioned \"Dashboard\" above the heading \"Import notification service\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:14-25, src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.en.js:8, .../features/dashboard/copy/copy.en.js:2",
+      "quote": "    dashboard: 'Dashboard',",
+      "confidence": "verbatim",
+      "note": "The heading text comes from the dashboard copy's `title: 'Import notification service'`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-093",
+      "statement": "A captioned page has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:27-37",
+      "quote": "  test('has no serious or critical axe violations with a caption on the page', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-094",
+      "statement": "A page's browser title reads the page name, then the service name, then GOV.UK, joined by hyphens: for example \"What are you importing? - Import notification service - GOV.UK\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:26-32, src/server/app/shared/copy.en.js:3-5",
+      "quote": "    await expect(page).toHaveTitle(\n      `${commodityTypeCopy.title} - ${serviceName} - ${govukSuffix}`\n    )",
+      "confidence": "verbatim",
+      "note": "serviceName is 'Import notification service', govukSuffix is 'GOV.UK', and the commodity type page's title is 'What are you importing?'."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-095",
+      "statement": "When a page comes back showing errors, its browser title is prefixed \"Error: \" in front of the whole title.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:34-47, src/server/app/shared/copy.en.js:4",
+      "quote": "    await expect(page).toHaveTitle(\n      `${errorTitlePrefix}${commodityTypeCopy.title} - ${serviceName} - ${govukSuffix}`\n    )",
+      "confidence": "verbatim",
+      "note": "errorTitlePrefix is 'Error: '."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-096",
+      "statement": "Three questions are answered with a search box that suggests as the user types: the country of origin, the proposed place of landing and a commodity line's genus.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:43-91",
+      "quote": "const typeAheads = [\n  {\n    name: 'Country of origin',\n    inputId: 'countryOfOrigin',",
+      "confidence": "verbatim",
+      "note": "The other two entries are named 'Proposed place of landing' (inputId proposedPlaceOfLanding) and 'Commodity details genus' (inputId genus). Eight of the spec's eighteen tests run against each of the three, so 24 of its 34 runs are these three pages checked alike."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-097",
+      "statement": "Each search box opens empty and carries its page's own placeholder: \"Search for a country\" on the origin page, \"Select a place of landing\" on the arrival details page, and none on the genus field.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:124-131",
+      "quote": "      await expect(input).toHaveAttribute('placeholder', searchPlaceholder)\n      await expect(input).toHaveValue('')",
+      "confidence": "verbatim",
+      "note": "searchPlaceholder values: originCopy.country.searchPlaceholder = 'Search for a country', arrivalCopy.placeOfLanding.searchPlaceholder = 'Select a place of landing', and the genus entry sets `searchPlaceholder: ''`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-098",
+      "statement": "A search box shows a square button flush with the right-hand edge of the box, top and bottom aligned with it, and shows no dropdown arrow.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:133-150",
+      "quote": "    test('shows a square button flush with the right of the box and no dropdown arrow', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-099",
+      "statement": "The search button is hidden from assistive technology and from the tab order, and clicking it only moves focus into the box without leaving the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:152-171",
+      "quote": "    test('keeps the button out of assistive technology and the tab order, and focuses the box when it is clicked', async ({",
+      "confidence": "verbatim",
+      "note": "The button is a span carrying aria-hidden=\"true\" and no tabindex, and the page URL is unchanged after the click."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-100",
+      "statement": "A suggestion shows the letters the user typed in bold: typing \"fra\" bolds \"Fra\" in France, \"dov\" bolds \"Dov\" in Port of Dover - GB DVR, and \"cast\" bolds \"Cast\" in Castanea.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:173-179",
+      "quote": "    test(`shows ${bold} in bold in the ${suggestion} suggestion after typing ${typed}`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-101",
+      "statement": "Accents do not have to match: typing \"Dóv\" suggests Port of Dover and typing \"Cást\" suggests Castanea, each with the unaccented letters bolded, and typing an accented name such as Réunion matches the accented entry.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:181-193",
+      "quote": "    test(`shows ${accentedBold} in bold in the ${accentedSuggestion} suggestion after typing ${accentedTyped}`, async ({",
+      "confidence": "verbatim",
+      "note": "The origin entry's accented case types 'Réunion' and expects the FR-LRE entry's whole name bolded."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-102",
+      "statement": "A page with a search box has no serious or critical accessibility violations, with the button showing and with a suggestion list open.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:195-207",
+      "quote": "    test('has no serious or critical axe violations with a suggestion list open', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-103",
+      "statement": "Without JavaScript each of the three questions is a plain select found by its own label, whose first option is the page's own prompt with no value, with no search button, no suggestion list and nothing hidden from assistive technology.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:210-238",
+      "quote": "    test('is a native select found by its label, sized as a GOV.UK label of its size, whose first option is the page select text, with no button', async ({",
+      "confidence": "verbatim",
+      "note": "The first option's text is the page's selectText — 'Select a country', 'Select a place of landing' and 'Select a genus' — and its value is the empty string."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-104",
+      "statement": "The country of origin and proposed place of landing labels are medium-sized GOV.UK labels, and the genus label is small.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:46-90, :227",
+      "quote": "        await expectGovukLabelSize(page, formGroup.locator('label'), labelSize)",
+      "confidence": "verbatim",
+      "note": "labelSize is 'm' for countryOfOrigin and proposedPlaceOfLanding and 's' for genus."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-105",
+      "statement": "Each search box is described by its field's hint, and a field with no hint has no description: the hints are \"Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.\" for the place of landing and \"Start typing to search for a genus.\" for the genus.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:226",
+      "quote": "        await expect(select).toHaveAccessibleDescription(hint ?? '')",
+      "confidence": "verbatim",
+      "note": "The country of origin entry declares no hint, so its description is empty. Hint wording read from arrival-details and commodities copy.en.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-106",
+      "statement": "Choosing a country announces the change exactly once, whether the suggestion is clicked, chosen with Enter after arrowing down, or settled by leaving the box on an exact match, and the underlying answer is set to that country's code.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:241-293",
+      "quote": "  test('announces one change when a suggestion is clicked', async ({\n    page\n  }) => {",
+      "confidence": "verbatim",
+      "note": "Three tests, one per way of choosing; each asserts exactly one change event and the native select holding the chosen code."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-107",
+      "statement": "The country search box is described to a screen reader as \"When autocomplete results are available use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:308-315",
+      "quote": "    const assistiveHint =\n      'When autocomplete results are available use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-108",
+      "statement": "Typing in the country box announces how many results are available, such as \"1 result is available.\", and arrowing onto one announces it with its place among them, such as \"Iceland 1 of 1 is highlighted\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:317-341",
+      "quote": "    await expect(statusRegion(page, '1 result is available.')).toHaveCount(1)",
+      "confidence": "verbatim",
+      "note": "The announcement is read from one of two status regions, #countryOfOrigin__status--A or #countryOfOrigin__status--B, and the highlight announcement is asserted as `1 result is available. ${iceland.name} 1 of 1 is highlighted`."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-109",
+      "statement": "The search button is drawn in the GOV.UK brand colour with a white magnifying glass.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:349-368",
+      "quote": "  test('draws the search button GOV.UK blue with a white magnifying glass', async ({",
+      "confidence": "verbatim",
+      "note": "Asserted against the GOV.UK palette's 'brand' and 'inverse-text' colours rather than hard-coded hex values."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-110",
+      "statement": "The search box and its suggestions use GOV.UK typography, in the same family and size as a standard GOV.UK text input.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:370-388",
+      "quote": "    await expect(input).toHaveCSS('font-family', /^\"?GDS Transport/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-111",
+      "statement": "A focused search box shows the GOV.UK focus colour, outline width and inset shadow of a focused GOV.UK input.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:390-411",
+      "quote": "  test('gives the enhanced input the GOV.UK focus colour and outline width, and the inset shadow of a focused GOV.UK input', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-112",
+      "statement": "A search box that comes back with an error shows the standard GOV.UK error border, and its error message is shown in the GOV.UK error colour.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js:413-435",
+      "quote": "  test('gives the enhanced input the standard GOV.UK error border', async ({",
+      "confidence": "verbatim",
+      "note": "The error case is produced by pressing Save and continue on the origin page with no country chosen, which shows originCopy.errors.countryRequired in the error summary."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-113",
+      "statement": "The notification list's start button reads \"Start a new notification\", and pressing it opens the commodity type question, whose heading and legend are \"What are you importing?\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:12-18",
+      "quote": "const startAtCommodityType = async (page) => {\n  await page.goto(BASE)\n  await page.getByRole('button', { name: dashboardCopy.startButton }).click()\n  await expect(\n    page.getByRole('heading', { level: 1, name: commodityTypeCopy.legend })\n  ).toBeVisible()\n}",
+      "confidence": "verbatim",
+      "note": "dashboardCopy.startButton is 'Start a new notification' and commodityTypeCopy.legend is 'What are you importing?'."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-114",
+      "statement": "Every page of the journey requires a signed-in user: all three cross-page specs sign in before they can reach a page.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:21-24, .../section-caption.fit.spec.js:10-12, .../type-ahead.fit.spec.js:119-122",
+      "quote": "  test.beforeEach(async ({ page }) => {\n    await signIn(page)\n    await startAtCommodityType(page)\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p12-115",
+      "statement": "The caption pattern is proven on the notification list alone: no spec in this part asserts the caption above the heading of any collecting page, so what caption each journey section shows is not held to by a cross-page test.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:9-38",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in section-caption.fit.spec.js, which has two tests and both start at the set base; the section captions module itself and its copy are read by another part."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-116",
+      "statement": "The title pattern is proven on the commodity type page alone: no spec in this part asserts the title of the hub, the notification list, check your answers, the declaration or the confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:20-48",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in page-title.fit.spec.js, whose two tests both begin at the commodity type page."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-117",
+      "statement": "The three cross-page specs assert English copy only: none of them checks the Welsh caption, title or search-box wording, although every feature keeps a copy.cy.js beside its copy.en.js.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js:6-8, .../section-caption.fit.spec.js:6-7, .../type-ahead.fit.spec.js:21-23",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every copy import in the three specs: all are copy.en.js. Whether the Welsh copy exists and what it says is another part's claim."
+    },
+    {
+      "id": "repo-plantsfrontend-p12-118",
+      "statement": "Nothing in the obligation manifest says how long an answer is allowed to be, what characters it may hold or what its error message says: the manifest carries only ids, names, statuses, groups and conditions.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:61-91",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at all seven section files and the index. The only message-like values are the reason codes and explanations on the gates and the commodity-line errorCode. Field-level validation and its wording live with each page, which other parts claim."
+    }
+  ]
+}

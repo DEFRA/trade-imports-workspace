@@ -1,0 +1,1259 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 12, Transporters (trade-imports-animals-frontend at main 4c2119da, tag 0.286.0). Read in full, under src/server/app/sets/live-animals/journeys/linear/features/transport/: page.js (the five transporter page ids and slugs, plus the two part-11 pages), evaluation.js (the transport feature's obligation bindings), transporter-details-save.js (the save sequence shared by both add forms), copy/copy.en.js and copy/copy.cy.js (only the transporters, transporterAdd, transportersSelect, commercialTransporterDetails and privateTransporterDetails keys are claimed here; portOfEntry and transitCountries belong to part 11), transporters/ (controller, template, rows.js, transporter-record.js, validate.js), transporter-add/, transporters-select/, commercial-transporter-details/ and private-transporter-details/ (controller and template each), and fit/transporters.fit.spec.js (9 describe blocks, 52 tests once the parametrised loops are expanded), fit/commercial-transporter-details.fit.spec.js (4 describe blocks, 27 tests expanded) and fit/axe.js. To state what the pages show, it also read the transporter service the pages call (src/server/app/services/transporters/index.js, records.js, register.js), the oneOf and maxText validators (src/server/app/lib/validate/validators.js), the shared oneOf default message (src/server/app/shared/copy.en.js), shared/save-actions.njk, and the transport entries in flow/flow.js, flow/task-rows.js and flow/section-captions (index.js and copy.en.js). Pages covered: /transporters (the transporter list: guidance, search, the six-column table with status tags, Add a transporter, save), /transporters/add (the transporter type chooser), /transporters/select (the approved commercial register, which nothing links to), /transporters/add/commercial (the add-commercial form with its Northern Ireland fixed country) and /transporters/add/private (the add-private form with its country select). Claims run in that page order: route and reach, heading and caption, copy, fields with labels, hints, options and whether required, validation messages verbatim, branches and where they lead, buttons and links, what is saved; then the organisation transporter store, the Welsh copy, and the fit tests (each test is cited in the ref of the claim it proves, and the accessibility and validation-pattern tests have claims of their own).",
+  "claims": [
+    {
+      "id": "repo-frontend-p12-001",
+      "statement": "The transporter list, at the journey slug 'transporters', is the third and last page of the transport section, after port of entry and transit countries.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:54-59; features/transport/page.js:14-17",
+      "quote": "pages: [portOfEntryPage, transitCountriesPage, transportersPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-002",
+      "statement": "The transporter list is the journey's only transporter step: adding a transporter that is not on it is a detour off the list page, not a step of the linear journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:56-57; features/transport/page.js:11-25",
+      "quote": "One transporter step: the list. Adding a transporter that is not on it\n    // is a detour off that page, not a leg of the journey (design release 1).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-003",
+      "statement": "The overview's 'transporter' task row is made up of the transporter list page alone, and spans the transporter type and both transporter answers because the list declares all three.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:76-78",
+      "quote": "{ id: 'transporter', pages: [transportersPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-004",
+      "statement": "The transporter list page declares that it collects three answers: transporterType, commercialTransporter and privateTransporter. Picking one row settles all three, because each record carries its own type.",
+      "kind": "data",
+      "ref": "features/transport/transporters/transporters.controller.js:17-28",
+      "quote": "collects: ['transporterType', 'commercialTransporter', 'privateTransporter']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-005",
+      "statement": "The transport feature binds the answers transporterType, commercialTransporter and privateTransporter to the obligations of the same names, which is how the model evaluates them.",
+      "kind": "integration",
+      "ref": "features/transport/evaluation.js:17-24",
+      "quote": "scalar({ field: 'transporterType', obligation: transporterType }),\n  scalar({\n    field: 'commercialTransporter',\n    obligation: commercialTransporter\n  }),\n  scalar({ field: 'privateTransporter', obligation: privateTransporter }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-006",
+      "statement": "The transporter list page is captioned 'Transport and arrival', the same section caption as the port of entry page.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:63; section-captions/copy/copy.en.js:17",
+      "quote": "transportAndArrival: 'Transport and arrival'",
+      "confidence": "inferred",
+      "note": "Inferred by joining the caption index (transportAndArrival pages: [portOfEntryPage, transportersPage]) to its copy; the list's template renders sectionCaption(caption)."
+    },
+    {
+      "id": "repo-frontend-p12-007",
+      "statement": "The transporter list page heading is 'Transporter details'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:98; transporters/transporters.njk:16",
+      "quote": "title: 'Transporter details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-008",
+      "statement": "Under the heading, the transporter list explains who the transporter is: 'This is the person or company responsible for transporting the consignment.'",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:99-100; transporters.fit.spec.js test 'opens the transporter task on the list, carrying the introduction and the authorisation guidance'",
+      "quote": "'This is the person or company responsible for transporting the consignment.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-009",
+      "statement": "The transporter list states the authorisation rule's lead-in: the transporter must hold a valid transporter authorisation issued by DAERA or APHA in the UK if any of the listed conditions apply.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:103-104; transporters/transporters.njk:20",
+      "quote": "'Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-010",
+      "statement": "The first authorisation condition, shown as a bullet: transporting any live vertebrate animals in, to, from or through Great Britain.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:106",
+      "quote": "'transporting any live vertebrate animals in, to, from or through Great Britain (GB)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-011",
+      "statement": "The second authorisation condition, shown as a bullet: travelling on journeys of over 65 km.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:107",
+      "quote": "'travelling on journeys of over 65 km'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-012",
+      "statement": "The third authorisation condition, shown as a bullet: transporting as part of an economic (commercial) activity.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:108",
+      "quote": "'transporting as part of an economic (commercial) activity'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-013",
+      "statement": "The transporter list links to the economic-activity section of the GOV.UK animal welfare in transport guidance, with the link text 'Find out how to transport animals in connection with an economic activity (opens in a new tab)'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:110-116; transporters/transporters.njk:26-28",
+      "quote": "linkHref:\n        'https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-014",
+      "statement": "The guidance link opens in a new tab, with rel 'noreferrer noopener'.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.njk:27; transporters.fit.spec.js expectTransporterGuidance",
+      "quote": "rel=\"noreferrer noopener\" target=\"_blank\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-015",
+      "statement": "The transporter list states that documents issued by DAERA are valid for use in GB.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:117",
+      "quote": "'Documents issued by DAERA are valid for use in GB.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-016",
+      "statement": "The transporter list states that documents issued in any EU member state are not valid for use in GB.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:118-119",
+      "quote": "'Documents issued in any EU member state are not valid for use in GB.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-017",
+      "statement": "The transporter table sits in a fieldset whose medium legend is 'Select a transporter'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:101; transporters/transporters.njk:122-131",
+      "quote": "legend: 'Select a transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-018",
+      "statement": "Above the table, the transporter list has a search box labelled 'Search' (small bold label, two-thirds width).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:148-152; transporters/transporters.njk:52-59; transporters.fit.spec.js test 'carries a labelled search, hinted with what it matches, above the list'",
+      "quote": "label: 'Search'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-019",
+      "statement": "The search box hint names what it matches: 'Name, address or approval number'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:150",
+      "quote": "hint: 'Name, address or approval number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-020",
+      "statement": "A secondary 'Search' button submits the search. It is a submit on the page's own form (action=search), so the filtering is done on the server and works without JavaScript.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.njk:45-66; transporters.controller.js:39-41",
+      "quote": "The filtering happens on the\n       server, so a trader without JavaScript searches the same list the same\n       way.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-021",
+      "statement": "The search box comes before the transporter table in the page.",
+      "kind": "behaviour",
+      "ref": "transporters.fit.spec.js test 'carries a labelled search, hinted with what it matches, above the list'",
+      "quote": "Above the list, not below it: a search a trader meets after the rows is\n    // a search they have already scrolled past.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-022",
+      "statement": "A search matches a term against each transporter's name, address and approval number joined together, so a term spanning two of them can still match.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/rows.js:36-49; transporters.fit.spec.js tests 'searching by name leaves only the matching transporter on the list', 'searching by approval number finds the transporter it belongs to', 'searching by address finds the transporter at it'",
+      "quote": "Design release 1 searches over the three facts its list shows — the name,\n * the address and the approval number — joined so a term spanning two of them\n * still finds its row.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-023",
+      "statement": "Search ignores letter case and accents: both the term and the transporter text are lower-cased and stripped of diacritics, so 'Garcia' finds 'García'. The term is trimmed first.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/rows.js:24-34,55-60",
+      "quote": "Lower case and stripped of accents, so a trader types \"Garcia\" for \"García\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-024",
+      "statement": "An empty search term is not a search: the whole list is shown, as on first arrival.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/rows.js:51-60",
+      "quote": "An empty term is not a search: the whole list stands",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-025",
+      "statement": "Searching validates nothing and saves nothing. The page re-renders with the term kept in the box, still on the transporter list and with no error summary.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:127-139; transporters.fit.spec.js test 'keeps the term in the box and stays on the list, saving nothing'",
+      "quote": "Searching filters the list in place: nothing is validated and nothing is\n  // committed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-026",
+      "statement": "A row the trader had picked stays picked through a search: the pick is carried in a hidden 'selected' field, so it is still checked if the search leaves that row on the list.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.njk:36-43; transporters.controller.js:130-139",
+      "quote": "the row the\n  // trader had picked stays picked if the search\n  // leaves it on the list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-027",
+      "statement": "When a search matches nothing, the page says 'No transporters match your search.' in place of the table, and no table is shown.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:153; transporters/transporters.njk:105-119; transporters.fit.spec.js test 'says so when nothing matches, rather than showing an empty table'",
+      "quote": "noMatches: 'No transporters match your search.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-028",
+      "statement": "When an error shows while the list has no rows, the error summary link goes to the search box (#search) rather than to a radio, because there is no radio to link to.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:64-70",
+      "quote": "href: (field) => (rows.length ? `#${field}` : '#search')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-029",
+      "statement": "The transporter table has six columns, in order: a visually hidden 'Select' column holding the radio, then Name, Address, Approval number, Type and Status.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:136-143; transporters/transporters.njk:106-116; transporters.fit.spec.js test 'lists every transporter the service knows about in headed columns, each row showing its address, approval number and type'",
+      "quote": "selectHidden: 'Select',\n      name: 'Name',\n      address: 'Address',\n      approvalNumber: 'Approval number',\n      type: 'Type',\n      status: 'Status'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-030",
+      "statement": "Each transporter row is picked with a small radio (field 'transporter') whose visually hidden label reads 'Select <transporter name>'. The first radio has the id 'transporter' so an error summary link lands on it.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.njk:74-86; rows.js:62-72",
+      "quote": "'<span class=\"govuk-visually-hidden\">' + copy.selectRowPrefix + \" \" + (row.name | escape) + '</span>'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-031",
+      "statement": "A row's Address cell is the transporter's address parts joined with commas, in the order address line 1, address line 2, address line 3, town or city, county, postcode, country. Blank parts are left out.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/transporter-record.js:6-22",
+      "quote": "ADDRESS_ORDER.map((part) => address[part])\n    .filter(Boolean)\n    .join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-032",
+      "statement": "A private transporter has no approval number, so its Approval number cell is left blank rather than showing a placeholder.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/rows.js:66-75; transporters.fit.spec.js 'lists every transporter...' test",
+      "quote": "A private transporter has no approval number, so that\n * column is blank on its row rather than carrying a placeholder.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-033",
+      "statement": "The Type column shows 'Commercial' or 'Private', so a trader can tell which kind each row is.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:121-126; rows.js:76",
+      "quote": "Commercial: 'Commercial',\n      Private: 'Private'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-034",
+      "statement": "The Status column shows a tag: 'Approved' in green for an approved transporter, and 'New' in magenta (shown as pink) for one that has been added but not yet approved.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:127-133; rows.js:12-22; transporters.fit.spec.js test 'tags an approved transporter green and a newly added one pink'",
+      "quote": "[APPROVED]: 'govuk-tag--green',\n  [NEW]: 'govuk-tag--magenta'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-035",
+      "statement": "The list shows every transporter the organisation can pick: the ones it has added itself, newest first, followed by the ones the service ships. An added record replaces a shipped one of the same name, so one name means one row.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/index.js:28-47; register.js:35-41; transporters.controller.js:33-37",
+      "quote": "Every transporter this organisation can pick: the ones it has added for\n * itself, then the ones the service ships.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-036",
+      "statement": "The service ships two commercial transporters on the list: García Livestock Transport SL (approval number ES-T2-45001294, Switzerland) and J & G Campbell LTD (approval number UK/BURY/T2/00104115, Belgium). Both are marked Approved.",
+      "kind": "data",
+      "ref": "src/server/app/services/transporters/records.js:71-104",
+      "quote": "name: 'García Livestock Transport SL',\n    approvalNumber: 'ES-T2-45001294',",
+      "confidence": "verbatim",
+      "note": "The shipped list is a local fixture, not served data: the address book cannot represent a transporter's approval number (EUDPA-294, D13), records.js:3-6."
+    },
+    {
+      "id": "repo-frontend-p12-037",
+      "statement": "Nothing has ruled what status the two shipped commercial transporters should show. Their 'Approved' status is a placeholder until the commercial register's owner rules.",
+      "kind": "data",
+      "ref": "src/server/app/services/transporters/records.js:26-31,75-78",
+      "quote": "Unruled: design release 1 has no row for this transporter, so no register\n    // has said what it may be labelled. Placeholder until the commercial\n    // register's owner rules — see inc-122's open question.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-038",
+      "statement": "The service ships four private transporters, with statuses copied from design release 1: Aberdeen Livestock Ltd (Approved, United Kingdom), Romanian Agri Exports SRL (New, Romania), Slovak Farm Export (Approved, Slovakia) and Finnish Livestock Oy (New, Finland).",
+      "kind": "data",
+      "ref": "src/server/app/services/transporters/records.js:26-29,105-153",
+      "quote": "Aberdeen Livestock Ltd and\n * Slovak Farm Export approved, Romanian Agri Exports SRL and Finnish Livestock\n * Oy new.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-039",
+      "statement": "A secondary 'Add a transporter' button below the table is the way off the list for a trader whose transporter is not on it. It links to /transporters/add.",
+      "kind": "behaviour",
+      "ref": "features/transport/copy/copy.en.js:154; transporters/transporters.njk:133-138; transporters.controller.js:71-76",
+      "quote": "add: 'Add a transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-040",
+      "statement": "When the transporter list is reached from a Change link, the 'Add a transporter' link keeps the change context (?change=1), so the trader returns to the summary rather than the journey.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:71-76; transporters.fit.spec.js test 'the add route keeps the change context on its back link'",
+      "quote": "Reached from a Change link, the add route has to keep the context or\n    // the trader is dropped into the journey instead of the summary.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-041",
+      "statement": "The transporter list ends with the full set of save actions: 'Save and continue', 'Save and return to overview', and a 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.njk:140-146; src/server/app/shared/save-actions.njk:6,12-22",
+      "quote": "{{ saveActions(\n      hubHref,\n      { text: sharedCopy.saveActions.saveAndContinue, name: \"action\", value: \"save\" },\n      sharedCopy.saveActions\n    ) }}",
+      "confidence": "inferred",
+      "note": "Inferred from the macro's default showReturnControls = true; the return-control wording is in save-actions.njk's comment, outside this part."
+    },
+    {
+      "id": "repo-frontend-p12-042",
+      "statement": "The transporter list's back link goes to the overview (the hub).",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:56-58",
+      "quote": "backLink: hubPath(journey.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-043",
+      "statement": "The transporter type is not asked before the list. Opening the transporter step goes straight to the list, never to the 'Choose a transporter type' question.",
+      "kind": "behaviour",
+      "ref": "transporters.fit.spec.js test 'does not ask the transporter type before the list'; transporters.controller.js:17-23",
+      "quote": "the record carries its own type, so the type is read off the pick\n * rather than asked in front of the list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-044",
+      "statement": "Picking a commercial transporter on the list saves transporterType 'Commercial' and a commercialTransporter answer with the record's name, address and approval number.",
+      "kind": "data",
+      "ref": "features/transport/transporters/transporter-record.js:24-45; transporters.fit.spec.js test 'picking a commercial transporter saves it with its type and persists'",
+      "quote": "transporterType: COMMERCIAL,\n        commercialTransporter: {\n          name: chosen.name,\n          address: { ...chosen.address },\n          approvalNumber: chosen.approvalNumber\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-045",
+      "statement": "Picking a private transporter on the list saves transporterType 'Private' and a privateTransporter answer with the record's name and full address, contact details included. Nothing has to be typed again: the add-private form opens prefilled with it.",
+      "kind": "data",
+      "ref": "features/transport/transporters/transporter-record.js:29-37; transporters.fit.spec.js test 'picking a private transporter saves it with its type and persists — the branch the old flow had no list for'",
+      "quote": "transporterType: PRIVATE,\n        privateTransporter: {\n          name: chosen.name,\n          address: { ...chosen.address }\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-046",
+      "statement": "When a transporter is picked, the transporter answer of the other type is removed by the obligation model, not by the list page.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/transporter-record.js:24-28",
+      "quote": "the answer it fills is\n * the one that type puts in scope — the other is purged by the obligation\n * model, not by this.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-047",
+      "statement": "Saving the transporter list with no row picked shows no error and saves nothing: the journey carries on. The list has no required-selection check.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/validate.js:28-31; transporters.controller.js:118-121,148-152; src/server/app/lib/validate/validators.js:169-176",
+      "quote": "Joi.string()\n      .allow('')\n      .valid('', ...values)",
+      "confidence": "inferred",
+      "note": "Inferred: oneOf accepts the empty string, and commitOrSkip commits nothing when no record is chosen. The message 'Select a transporter from the list' only fires for a value that is not on the list. No fit test covers a blank list submit."
+    },
+    {
+      "id": "repo-frontend-p12-048",
+      "statement": "A submitted transporter value that is not on the organisation's list is refused with 'Select a transporter from the list'. The error summary links to and focuses the first radio, and no radio is left checked.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:156; transporters/validate.js:28-31; transporters.fit.spec.js test 'transporter validation: out-of-list value links to and focuses the cleared group'",
+      "quote": "transporterRequired: 'Select a transporter from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-049",
+      "statement": "When a trader comes back to the list, the transporter already saved on the notification is checked. It is matched by name, ignoring letter case and spacing, because the notification stores the transporter's details and not the id of its row.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:83-101; transporters.fit.spec.js tests 'picking a commercial transporter saves it with its type and persists', 'picking a private transporter saves it with its type and persists'",
+      "quote": "Matched on name: the notification\n * stores the transporter's details, not the id of the row it came from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-050",
+      "statement": "If the transporter saved on the notification is no longer on the organisation's list, the list page shows the error 'Select a transporter from the list. The one you chose is no longer available.' when it opens.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:157-158; transporters/validate.js:33-50; transporters.controller.js:103-116",
+      "quote": "'Select a transporter from the list. The one you chose is no longer available.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-051",
+      "statement": "After a successful save, the transporter list sends the trader to the journey's next target. In the fit tests, starting from the section, that is the Overview.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:169-170; transporters.fit.spec.js 'picking a commercial transporter...' (expects heading 'Overview')",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-052",
+      "statement": "If saving the pick fails in a recoverable way, the transporter list is shown again with a recoverable-error message, the pick and search term kept, and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters/transporters.controller.js:150-167",
+      "quote": "{ selectedId: chosen?.id, query },\n        { recoverableError: true }\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-053",
+      "statement": "The 'Choose a transporter type' page is at /transporters/add, off the linear journey. It is reached only from the list's 'Add a transporter' button, by a trader who could not find their transporter.",
+      "kind": "behaviour",
+      "ref": "features/transport/page.js:19-25; transporter-add/transporter-add.controller.js:23-28; transporters.fit.spec.js test 'reaches the type question from the list, not before it'",
+      "quote": "Off the linear journey: the first step of adding a transporter that is not\n * on the list. Asked only of a trader who could not find theirs",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-054",
+      "statement": "The four add-route pages (type chooser, approved commercial register, add-commercial form, add-private form) are captioned 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:64-72; section-captions/copy/copy.en.js:18; transporters.fit.spec.js tests 'heads the type question with the choice it asks for...' and 'heads the private form as an addition, under the same caption'; commercial-transporter-details.fit.spec.js test 'the commercial branch of the add route opens the form, under the new-transporter caption'",
+      "quote": "newTransporter: 'Add a new transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-055",
+      "statement": "The type chooser's heading is 'Choose a transporter type', directly under the caption.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:162; transporter-add/transporter-add.njk:10-11",
+      "quote": "title: 'Choose a transporter type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-056",
+      "statement": "Between the heading and the choice, the type chooser shows a warning: 'Before you add this transporter, please ensure you have already searched for it first.'",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:169-170; transporter-add/transporter-add.njk:13-15",
+      "quote": "'Before you add this transporter, please ensure you have already searched for it first.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-057",
+      "statement": "The type chooser's radio group legend, 'What type of transporter will move the animals?', is visually hidden: it is read by screen readers but not shown.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:166; transporter-add/transporter-add.njk:24-31",
+      "quote": "legend: 'What type of transporter will move the animals?'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-058",
+      "statement": "The type chooser offers two radios, Private first: 'Private transporter' (value Private, no hint) and 'Commercial' (value Commercial).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:171-182; transporter-add/transporter-add.njk:33-45; transporters.fit.spec.js expectBranchOptions",
+      "quote": "Private: {\n        text: 'Private transporter'\n      },\n      Commercial: {\n        text: 'Commercial',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-059",
+      "statement": "The Commercial option has the hint 'This can only be a commercial transporter from Northern Ireland.'",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:180",
+      "quote": "hint: 'This can only be a commercial transporter from Northern Ireland.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-060",
+      "statement": "The type chooser has no hint on the radio group as a whole.",
+      "kind": "copy",
+      "ref": "transporters.fit.spec.js expectBranchOptions",
+      "quote": "Design release 1 drops the journey-describing group hint entirely.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-061",
+      "statement": "A submitted transporter type that is not Private or Commercial is refused with the shared message 'Select a valid option'. The error summary links to and focuses the first radio, and no radio is left checked.",
+      "kind": "rule",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:33-35; src/server/app/shared/copy.en.js:93; transporters.fit.spec.js test 'transporter type validation: out-of-list value links to and focuses the cleared group'",
+      "quote": "oneOf: 'Select a valid option'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-062",
+      "statement": "Submitting the type chooser saves the chosen transporterType on the notification.",
+      "kind": "data",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:82-93",
+      "quote": "await state.commit(request, h, values)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-063",
+      "statement": "Choosing Commercial leads to the add-commercial form at /transporters/add/commercial.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:67-80; transporters.fit.spec.js test 'commercial branch routes to the add-commercial form'",
+      "quote": "if (transporterType === COMMERCIAL) {\n    return commercialTransporterDetailsPage.slug\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-064",
+      "statement": "Choosing Private leads to the add-private form at /transporters/add/private.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:73-80; transporters.fit.spec.js test 'private branch routes to its details page and persists on back'",
+      "quote": "privateTransporterDetailsPage.slug",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-065",
+      "statement": "Submitting the type chooser with nothing chosen shows no error and returns the trader to the transporter list.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:67-80",
+      "quote": "An unanswered question\n * adds nothing, so it goes back to the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-066",
+      "statement": "The type chooser keeps the change context on the page it leads to.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:106-111",
+      "quote": "kit.withChangeContext(\n      request,\n      pagePath(request.params.journeyId, branchSlug(values.transporterType))\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-067",
+      "statement": "The type chooser's back link returns to the transporter list. When the trader came from a Change link, it keeps ?change=1.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:45-49; transporters.fit.spec.js tests 'the type question goes back to the list' and 'the add route keeps the change context on its back link'",
+      "quote": "backLink: kit.withChangeContext(\n        request,\n        pagePath(journey.journeyId, transportersPage.slug)\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-068",
+      "statement": "Coming back to the type chooser, the saved transporter type is still checked. For example, after choosing Private and pressing back from the private form, Private is checked.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:60-65; transporters.fit.spec.js test 'private branch routes to its details page and persists on back'",
+      "quote": "transporterType: answers.transporterType ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-069",
+      "statement": "The type chooser, the approved commercial register, the add-commercial form and the add-private form each end with the primary button alone, with no return-to-overview controls, because they are reached from the list rather than the overview.",
+      "kind": "behaviour",
+      "ref": "transporter-add.njk:48-50; transporters-select.njk:28-30; commercial-transporter-details.njk:130-132; private-transporter-details.njk:100-102; transporters.fit.spec.js tests 'reaches the type question from the list, not before it' and 'private transporter page ends with the primary alone, being reached from the type question'; commercial-transporter-details.fit.spec.js test 'ends with the primary alone, being reached from the type question'",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-070",
+      "statement": "If saving the transporter type fails in a recoverable way, the type chooser is shown again with a recoverable-error message and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-add/transporter-add.controller.js:91-104",
+      "quote": "recoverableError: true\n      }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-071",
+      "statement": "The approved commercial register page at /transporters/select still exists and can be opened, but nothing links to it any more. It was kept from the earlier flow that asked the transporter type before the list.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:22-29; page.js:27-30; transporters.fit.spec.js openCommercialRegister",
+      "quote": "Nothing links\n * to it now that the add route's commercial arm is the add-commercial form and\n * the transporter list carries the register's rows itself.",
+      "confidence": "verbatim",
+      "note": "An orphaned page: a candidate for removal or a deliberate keep, which this source does not rule on. The fit suite still exercises it by typing the URL."
+    },
+    {
+      "id": "repo-frontend-p12-072",
+      "statement": "The approved commercial register page's heading, which is also the radio group legend, is 'Search for an approved commercial transporter'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:185; transporters-select/transporters-select.njk:14-22",
+      "quote": "title: 'Search for an approved commercial transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-073",
+      "statement": "The register page's hint explains that selecting a transporter copies their name, address and approval number into the notification.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:186; transporters.fit.spec.js test 'commercial transporter page renders address and approval details'",
+      "quote": "hint: 'Selecting a transporter copies their name, address and approval number into this notification.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-074",
+      "statement": "The register page offers one radio for each shipped commercial transporter only, not the organisation's own added ones. Each radio is labelled with the name and hinted '<address> — approval number <number>'.",
+      "kind": "copy",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:62-72; copy.en.js:187-188; services/transporters/index.js:49-52",
+      "quote": "optionHint: (address, approvalNumber) =>\n      `${address} — approval number ${approvalNumber}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-075",
+      "statement": "A register value that is not one of the shipped commercial transporters is refused with 'Select a transporter from the list'. The error summary links to and focuses the first radio, and no radio is left checked.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:189-191; transporters-select.controller.js:34-40; transporters.fit.spec.js test 'commercial transporter validation: out-of-list value links to and focuses the cleared group'",
+      "quote": "transporterRequired: 'Select a transporter from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-076",
+      "statement": "Picking on the register saves a commercialTransporter answer (name, address, approval number) and sends the trader to the step after the transporter list. Submitting with nothing picked saves nothing.",
+      "kind": "data",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:82-128; transporters.fit.spec.js test 'commercial transporter selection saves and persists'",
+      "quote": "Adding a transporter finishes the transporter step, so the journey carries\n  // on from the list rather than from this spoke.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-077",
+      "statement": "Coming back to the register, the saved commercial transporter is checked, matched on its exact name. A commercial pick made on the main list also shows checked here.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:71,75-80; transporters.fit.spec.js test 'picking a commercial transporter saves it with its type and persists'",
+      "quote": "checked: option.name === values.selectedName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-078",
+      "statement": "The register page's back link goes to the type chooser and keeps any change context.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:50-54",
+      "quote": "pagePath(journey.journeyId, transporterAddPage.slug)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-079",
+      "statement": "If saving a register pick fails in a recoverable way, the register page is shown again with a recoverable-error message, the pick kept, and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporters-select/transporters-select.controller.js:105-122",
+      "quote": "{ selectedName: chosen?.name },\n        { recoverableError: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-080",
+      "statement": "The add-commercial form at /transporters/add/commercial is how a trader enters a commercial transporter that is not on the list. They give its authorisation number, name, address and contact details by hand.",
+      "kind": "behaviour",
+      "ref": "features/transport/page.js:32-40; commercial-transporter-details.controller.js:26-33",
+      "quote": "The form a\n * trader fills in for a commercial transporter that is not on the list, giving\n * its authorisation number, name, address and contact details (design release\n * 1).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-081",
+      "statement": "The add-commercial form's heading is 'Add commercial transporter'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:194; commercial-transporter-details.njk:11-12",
+      "quote": "title: 'Add commercial transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-082",
+      "statement": "The add-commercial form opens with a notification banner titled 'Help with transporter authorisation'. It repeats the list's authorisation guidance word for word: the DAERA/APHA lead-in, the three conditions, the economic-activity link (new tab), the DAERA-valid line and the EU-not-valid line.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:195-199; commercial-transporter-details.controller.js:40-43; commercial-transporter-details.njk:14-29; commercial-transporter-details.fit.spec.js test 'opens with the transporter-authorisation guidance the list states'",
+      "quote": "guidanceTitle: 'Help with transporter authorisation'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-083",
+      "statement": "The add-commercial form asks first for 'Transporter authorisation number' (two-thirds width).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:202; commercial-transporter-details.njk:35-43",
+      "quote": "approvalNumber: 'Transporter authorisation number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-084",
+      "statement": "The add-commercial form asks for 'Name or organisation name' (autocomplete name).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:203; commercial-transporter-details.njk:45-51",
+      "quote": "nameOrOrganisationName: 'Name or organisation name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-085",
+      "statement": "The add-commercial form asks for 'Address line 1' and 'Address line 2 (optional)' (autocomplete address-line1 and address-line2).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:204-205; commercial-transporter-details.njk:53-67",
+      "quote": "addressLine1: 'Address line 1',\n      addressLine2: 'Address line 2 (optional)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-086",
+      "statement": "The add-commercial form asks for 'Town or city' (two-thirds width, autocomplete address-level2) and 'County (optional)' (two-thirds width).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:206-207; commercial-transporter-details.njk:69-84",
+      "quote": "townOrCity: 'Town or city',\n      county: 'County (optional)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-087",
+      "statement": "The add-commercial form asks for 'Postcode or zip code' (width-10, autocomplete postal-code).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:208; commercial-transporter-details.njk:86-93",
+      "quote": "postalOrZipCode: 'Postcode or zip code'",
+      "confidence": "verbatim",
+      "note": "The add-private form capitalises the same label differently: 'Postcode or Zip code' (copy.en.js:254)."
+    },
+    {
+      "id": "repo-frontend-p12-088",
+      "statement": "On the add-commercial form, the 'Country' is fixed to Northern Ireland. It shows as a disabled select with that one option, and a hidden field posts 'Northern Ireland' because a disabled control sends no value.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details.njk:95-106; copy.en.js:214-216; commercial-transporter-details.fit.spec.js test 'fixes the country to Northern Ireland and does not let the trader change it'",
+      "quote": "A commercial transporter added by hand can only be a Northern Irish one,\n       so the country is shown and cannot be changed (Design release 1).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-089",
+      "statement": "A posted country other than Northern Ireland on the add-commercial form is treated as tampering. It is refused with 'A commercial transporter you add must be in Northern Ireland', not quietly corrected.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:108-111; copy.en.js:236-237",
+      "quote": "countryFixed:\n        'A commercial transporter you add must be in Northern Ireland'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-090",
+      "statement": "The commercial transporter's country is stored as the English 'Northern Ireland' whatever language the page is read in, because it is an answer and not display text. The Welsh page shows 'Gogledd Iwerddon'.",
+      "kind": "data",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:45-49; copy.cy.js:181",
+      "quote": "Stored in English whatever the page is read in, because\n * it is an answer on the notification and not display text.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-091",
+      "statement": "After the address, the add-commercial form has a medium heading 'Enter contact details', followed by 'Email address' (type email, autocomplete email) and then 'Phone number' (type tel, width-20, autocomplete tel).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:200,210-211; commercial-transporter-details.njk:108-128; commercial-transporter-details.fit.spec.js test 'asks for the authorisation number, the name, the address and the contact details'",
+      "quote": "contactHeading: 'Enter contact details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-092",
+      "statement": "On the add-commercial form, the phone number is hinted 'For international numbers include the country code'.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:213; commercial-transporter-details.njk:119-128",
+      "quote": "telephoneHint: 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-093",
+      "statement": "The add-commercial form's mandatory fields are required only once the trader has entered anything. A completely blank form saves nothing and carries on with no errors.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:116-126; transporter-details-save.js:42-48; commercial-transporter-details.fit.spec.js test 'a completely blank commercial transporter record is optional'",
+      "quote": "const recordProvided = (values) =>\n  ENTERED_FIELDS.some((field) => values[field] !== '')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-094",
+      "statement": "On a started add-commercial form, an empty authorisation number shows 'Enter the transporter authorisation number'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:218; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty transporter authorisation number links to and focuses the preserved field'",
+      "quote": "approvalNumberRequired: 'Enter the transporter authorisation number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-095",
+      "statement": "On a started add-commercial form, an empty name shows 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:219; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty name or organisation name ...'",
+      "quote": "nameRequired: 'Enter a name or organisation name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-096",
+      "statement": "On a started add-commercial form, an empty address line 1 shows 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:220; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty address line 1 ...'",
+      "quote": "addressLine1Required: 'Enter address line 1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-097",
+      "statement": "On a started add-commercial form, an empty town or city shows 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:221; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty town or city ...'",
+      "quote": "townOrCityRequired: 'Enter a town or city'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-098",
+      "statement": "On a started add-commercial form, an empty postcode shows 'Enter a postcode or zip code'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:222; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty postcode or zip code ...'",
+      "quote": "postalOrZipCodeRequired: 'Enter a postcode or zip code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-099",
+      "statement": "On a started add-commercial form, an empty email address shows 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:223; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty email address ...'",
+      "quote": "emailRequired: 'Enter an email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-100",
+      "statement": "On a started add-commercial form, an empty phone number shows 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:224; commercial-transporter-details.fit.spec.js 'commercial transporter validation: empty phone number ...'",
+      "quote": "telephoneRequired: 'Enter a phone number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-101",
+      "statement": "On the add-commercial form, an authorisation number over 50 characters shows 'Transporter authorisation number must be 50 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:85,93-97; copy.en.js:225-226; commercial-transporter-details.fit.spec.js 'commercial transporter validation: authorisation number over 50 characters ...'",
+      "quote": "'Transporter authorisation number must be 50 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-102",
+      "statement": "On the add-commercial form, a name over 255 characters shows 'Name or organisation name must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:86,98; copy.en.js:227; commercial-transporter-details.fit.spec.js 'name or organisation name over 255 characters'",
+      "quote": "nameMaxLength: 'Name or organisation name must be 255 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-103",
+      "statement": "On the add-commercial form, address line 1 over 255 characters shows 'Address line 1 must be 255 characters or less', and address line 2 over 255 characters shows 'Address line 2 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:99-100; copy.en.js:228-229; commercial-transporter-details.fit.spec.js 'address line 1 over 255 characters' and 'address line 2 over 255 characters'",
+      "quote": "addressLine1MaxLength: 'Address line 1 must be 255 characters or less',\n      addressLine2MaxLength: 'Address line 2 must be 255 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-104",
+      "statement": "On the add-commercial form, town or city over 100 characters shows 'Town or city must be 100 characters or less', and county over 100 characters shows 'County must be 100 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:87,101-102; copy.en.js:230-231; commercial-transporter-details.fit.spec.js 'town or city over 100 characters' and 'county over 100 characters'",
+      "quote": "townOrCityMaxLength: 'Town or city must be 100 characters or less',\n      countyMaxLength: 'County must be 100 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-105",
+      "statement": "On the add-commercial form, a postcode over 12 characters shows 'Postcode or zip code must be 12 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:88,103-107; copy.en.js:232-233; commercial-transporter-details.fit.spec.js 'postcode or zip code over 12 characters'",
+      "quote": "'Postcode or zip code must be 12 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-106",
+      "statement": "On the add-commercial form, an email address over 254 characters shows 'Email address must be 254 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:90,112; copy.en.js:234; commercial-transporter-details.fit.spec.js 'email address over 254 characters'",
+      "quote": "emailMaxLength: 'Email address must be 254 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-107",
+      "statement": "On the add-commercial form, a phone number over 20 characters shows 'Phone number must be 20 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:89,113; copy.en.js:235; commercial-transporter-details.fit.spec.js 'phone number over 20 characters'",
+      "quote": "telephoneMaxLength: 'Phone number must be 20 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-108",
+      "statement": "Neither add form checks the format of the email address or the phone number, only that they are present and within their length limits.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:92-114; private-transporter-details.controller.js:67-90",
+      "quote": "maxText('emailAddress', MAX_EMAIL_LENGTH, copy.errors.emailMaxLength),\n  maxText('telephoneNumber', MAX_PHONE_LENGTH, copy.errors.telephoneMaxLength)",
+      "confidence": "inferred",
+      "note": "Inferred from the validators composed for both forms. The inputs are type=email and type=tel, but the forms are novalidate, so the browser does not check them either."
+    },
+    {
+      "id": "repo-frontend-p12-109",
+      "statement": "On both add forms, entered values are trimmed of surrounding spaces before they are validated for presence and saved.",
+      "kind": "rule",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:169-172; private-transporter-details.controller.js:174-177",
+      "quote": "(payload[field] ?? '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-110",
+      "statement": "On both add forms, the error summary lists the errors in the order the page asks the fields. Each link focuses its field, and every value the trader entered, valid or not, is kept.",
+      "kind": "behaviour",
+      "ref": "commercial-transporter-details.controller.js:61-74,174-183; private-transporter-details.controller.js:46-59,179-188; commercial-transporter-details.fit.spec.js 'commercial transporter required validations' and 'commercial transporter format validations'; transporters.fit.spec.js 'private transporter required validations' and 'private transporter format validations'",
+      "quote": "The fields the page shows, in the order it asks for them — the order the\n * error summary lists them in too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-111",
+      "statement": "Saving the add-commercial form records a commercialTransporter answer on the notification with the name, the approval number and an address holding address lines 1 and 2, town or city, county, postcode, country 'Northern Ireland', phone number and email address.",
+      "kind": "data",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:185-202; commercial-transporter-details.fit.spec.js test 'saves a hand-entered commercial transporter and persists every value'",
+      "quote": "name: values.nameOrOrganisationName,\n  approvalNumber: values.approvalNumber,\n  address: {",
+      "confidence": "verbatim",
+      "note": "Unlike the private form, the hand-added commercial record carries no countryCode."
+    },
+    {
+      "id": "repo-frontend-p12-112",
+      "statement": "Coming back to the add-commercial form, every saved value is filled in again, and the country still shows Northern Ireland.",
+      "kind": "behaviour",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:153-167; commercial-transporter-details.fit.spec.js test 'saves a hand-entered commercial transporter and persists every value'",
+      "quote": "approvalNumber: saved?.approvalNumber ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-113",
+      "statement": "A commercial transporter added by hand is also kept on the organisation's own list as a Commercial transporter with status New, so the list offers it on later notifications. Nothing in the service approves it.",
+      "kind": "behaviour",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:204-216",
+      "quote": "It goes\n * on as a commercial transporter that has not been approved yet, which is what\n * the organisation knows about it: nothing here has approved anything.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-114",
+      "statement": "A transporter added through either form is shown on the list, checked, when the trader returns to the list. Saving the list again leaves the added record as it is.",
+      "kind": "behaviour",
+      "ref": "commercial-transporter-details.fit.spec.js and transporters.fit.spec.js test 'a transporter the trader added is on the list, checked, and saving the list again leaves it alone'",
+      "quote": "The transporter joined the list on the way through, so it is the row the\n    // notification already names and the one that comes back checked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-115",
+      "statement": "On both add forms, the transporter is added to the organisation's list only after the notification has saved it. A failed save never leaves a transporter on the list that no notification names.",
+      "kind": "rule",
+      "ref": "features/transport/transporter-details-save.js:16-20,49-50",
+      "quote": "That happens only after the notification itself has taken the answer, so a\n * failed save never leaves a transporter on the list that no notification\n * names.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-116",
+      "statement": "After a successful save on either add form, the journey carries on from the transporter list's next step rather than from the form. In the fit tests that is the Overview.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-details-save.js:65-68",
+      "quote": "Adding a transporter finishes the transporter step, so the journey carries\n    // on from the list rather than from this spoke.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-117",
+      "statement": "If a save on either add form fails in a recoverable way, the form is shown again with a recoverable-error message, the entered values kept, and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "features/transport/transporter-details-save.js:52-59",
+      "quote": "recoverableError: true\n          })\n        ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-118",
+      "statement": "The add-commercial form's back link goes to the type chooser and keeps any change context.",
+      "kind": "behaviour",
+      "ref": "features/transport/commercial-transporter-details/commercial-transporter-details.controller.js:137-140; commercial-transporter-details.fit.spec.js test 'the form goes back to the type question'",
+      "quote": "pagePath(journey.journeyId, transporterAddPage.slug)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-119",
+      "statement": "The add-private form is at /transporters/add/private, and its heading is 'Add private transporter'.",
+      "kind": "copy",
+      "ref": "features/transport/page.js:42-45; copy.en.js:241; private-transporter-details.njk:10-11; transporters.fit.spec.js test 'heads the private form as an addition, under the same caption'",
+      "quote": "title: 'Add private transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-120",
+      "statement": "Under its heading, the add-private form says 'Enter the name and address of the private transporter moving the animals.'",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:242-243; transporters.fit.spec.js test 'private transporter page renders all address fields and explanatory copy'",
+      "quote": "'Enter the name and address of the private transporter moving the animals.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-121",
+      "statement": "The add-private form asks, in order: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code' and 'Country'. It has no authorisation number field.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:248-258; private-transporter-details.njk:19-74; transporters.fit.spec.js test 'private transporter page renders all address fields and explanatory copy'",
+      "quote": "nameOrOrganisationName: 'Name or organisation name',\n      addressLine1: 'Address line 1',\n      addressLine2: 'Address line 2 (optional)',\n      townOrCity: 'Town or city',\n      county: 'County (optional)',\n      postalOrZipCode: 'Postcode or Zip code',\n      country: 'Country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-122",
+      "statement": "The add-private form's Country is a select. It opens with the placeholder 'Select a country' (empty value) and a disabled divider, then lists every address country by name.",
+      "kind": "copy",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:104-112; copy.en.js:263",
+      "quote": "{ value: '', text: copy.countryPlaceholder },\n  { text: '──────────', disabled: true },",
+      "confidence": "verbatim",
+      "note": "The countries come from services/countries addressCountries(). The code says it includes United Kingdom ahead of the offered list (controller.js:194-195)."
+    },
+    {
+      "id": "repo-frontend-p12-123",
+      "statement": "After the country, the add-private form has a medium heading 'Enter contact details', then 'Email address' and then 'Phone number', with email first.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:247,256-257; private-transporter-details.njk:76-98; transporters.fit.spec.js test 'private transporter page heads the contact details after the address, email first'",
+      "quote": "Design release 1 closes the address at the country and heads the contact\n       details separately, email first",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-124",
+      "statement": "On the add-private form, the phone number is hinted 'For international numbers include the country code', the same hint as the commercial form.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.en.js:259-262; transporters.fit.spec.js test 'private transporter phone number hints the international dialling code'",
+      "quote": "telephoneHint: 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-125",
+      "statement": "The add-private form's mandatory fields are required only once the trader has entered anything, the country included. A completely blank form saves nothing and carries on to the Overview.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:92-102; transporters.fit.spec.js test 'a completely blank private transporter record is optional'",
+      "quote": "const recordProvided = (values) =>\n  FIELD_ORDER.some((field) => values[field] !== '')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-126",
+      "statement": "On a started add-private form, an empty name shows 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:265; transporters.fit.spec.js 'private transporter validation: empty name or organisation name links to and focuses the preserved field'",
+      "quote": "nameRequired: 'Enter a name or organisation name'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-127",
+      "statement": "On a started add-private form, an empty address line 1 shows 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:266; transporters.fit.spec.js 'private transporter validation: empty address line 1 ...'",
+      "quote": "addressLine1Required: 'Enter address line 1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-128",
+      "statement": "On a started add-private form, an empty town or city shows 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:267; transporters.fit.spec.js 'private transporter validation: empty town or city ...'",
+      "quote": "townOrCityRequired: 'Enter a town or city'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-129",
+      "statement": "On a started add-private form, an empty postcode shows 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:268; transporters.fit.spec.js 'private transporter validation: empty postcode or Zip code ...'",
+      "quote": "postalOrZipCodeRequired: 'Enter a postcode or Zip code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-130",
+      "statement": "On a started add-private form, no country chosen shows 'Select a country'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:269; transporters.fit.spec.js 'private transporter validation: empty country ...'",
+      "quote": "countryRequired: 'Select a country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-131",
+      "statement": "On a started add-private form, an empty phone number shows 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:270; transporters.fit.spec.js 'private transporter validation: empty phone number ...'",
+      "quote": "telephoneRequired: 'Enter a phone number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-132",
+      "statement": "On a started add-private form, an empty email address shows 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "features/transport/copy/copy.en.js:271; transporters.fit.spec.js 'private transporter validation: empty email address ...'",
+      "quote": "emailRequired: 'Enter an email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-133",
+      "statement": "On the add-private form, a name over 255 characters shows 'Name or organisation name must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:61,69-73; copy.en.js:272; transporters.fit.spec.js 'private transporter validation: name or organisation name over 255 characters ...'",
+      "quote": "nameMaxLength: 'Name or organisation name must be 255 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-134",
+      "statement": "On the add-private form, address line 1 or address line 2 over 255 characters shows 'Address line 1 must be 255 characters or less' or 'Address line 2 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:74-75; copy.en.js:273-274; transporters.fit.spec.js 'address line 1 over 255 characters' and 'address line 2 over 255 characters'",
+      "quote": "addressLine1MaxLength: 'Address line 1 must be 255 characters or less',\n      addressLine2MaxLength: 'Address line 2 must be 255 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-135",
+      "statement": "On the add-private form, town or city over 100 characters shows 'Town or city must be 100 characters or less', and county over 100 characters shows 'County must be 100 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:62,76-77; copy.en.js:275-276; transporters.fit.spec.js 'town or city over 100 characters' and 'county over 100 characters'",
+      "quote": "townOrCityMaxLength: 'Town or city must be 100 characters or less',\n      countyMaxLength: 'County must be 100 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-136",
+      "statement": "On the add-private form, a postcode over 12 characters shows 'Postcode or Zip code must be 12 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:63,78-82; copy.en.js:277-278; transporters.fit.spec.js 'postcode or Zip code over 12 characters'",
+      "quote": "'Postcode or Zip code must be 12 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-137",
+      "statement": "On the add-private form, a phone number over 20 characters shows 'Phone number must be 20 characters or less', and an email address over 254 characters shows 'Email address must be 254 characters or less'.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:64-65,88-89; copy.en.js:282-283; transporters.fit.spec.js 'phone number over 20 characters' and 'email address over 254 characters'",
+      "quote": "telephoneMaxLength: 'Phone number must be 20 characters or less',\n      emailMaxLength: 'Email address must be 254 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-138",
+      "statement": "On the add-private form, a country that is not on the offered list is refused with 'Select a country from the list'. The select is cleared and focused from the summary link, and the other entered values are kept.",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:83-87; copy.en.js:279; transporters.fit.spec.js test 'private transporter validation: out-of-list country focuses the cleared select and preserves other values'",
+      "quote": "countryFromList: 'Select a country from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-139",
+      "statement": "If the country saved on a private transporter is no longer offered, the add-private form opens with the country cleared and the error 'The saved country is no longer available. Select a country from the list.'",
+      "kind": "rule",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:149-172; copy.en.js:280-281",
+      "quote": "'The saved country is no longer available. Select a country from the list.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-140",
+      "statement": "Saving the add-private form records a privateTransporter answer with the name and an address holding address lines 1 and 2, town or city, county, postcode, the country's display name and its ISO code, phone number and email address. United Kingdom is stored with the code GB.",
+      "kind": "data",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:190-213; transporters.fit.spec.js test 'saves and persists a complete private transporter record'",
+      "quote": "the journey answer keeps both the\n// display name and the ISO code so persistence has a code to write without a\n// reverse lookup",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-141",
+      "statement": "Coming back to the add-private form, the saved name, address, country and contact details are filled in again.",
+      "kind": "behaviour",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:138-172; transporters.fit.spec.js test 'saves and persists a complete private transporter record'",
+      "quote": "nameOrOrganisationName: saved?.name ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-142",
+      "statement": "A private transporter added by hand is also kept on the organisation's own list as a Private transporter with status New, so the list offers it on later notifications.",
+      "kind": "behaviour",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:215-227",
+      "quote": "It goes\n * on as a private transporter that has not been approved yet",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-143",
+      "statement": "A transporter added on one notification is on the list of the organisation's next notification, with the address and type it was added with and the status New. Picking it there fills in the whole record, contact details included.",
+      "kind": "behaviour",
+      "ref": "transporters.fit.spec.js test 'a transporter added on one notification is on the list of the next one, ready to pick'",
+      "quote": "A second notification, started from nothing. The transporter is on its\n    // list, carrying the address and the type it was added with.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-144",
+      "statement": "The add-private form's back link goes to the type chooser and keeps any change context.",
+      "kind": "behaviour",
+      "ref": "features/transport/private-transporter-details/private-transporter-details.controller.js:122-126; transporters.fit.spec.js test 'private branch routes to its details page and persists on back'",
+      "quote": "pagePath(journey.journeyId, transporterAddPage.slug)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-145",
+      "statement": "Transporters an organisation adds are held in the frontend process's memory. They are lost on a restart and not shared between instances, because there is no transporter register service yet and durable storage is backend work still to come.",
+      "kind": "constraint",
+      "ref": "src/server/app/services/transporters/register.js:12-28",
+      "quote": "Process-local, so a record does not outlive a restart and is not shared\n * between instances.",
+      "confidence": "verbatim",
+      "note": "A stored transporter can therefore drop off the list after a restart, which is when the 'no longer available' list error (repo-frontend-p12-050) would show."
+    },
+    {
+      "id": "repo-frontend-p12-146",
+      "statement": "Added transporters belong to the organisation, never to the user or the session, the same way the organisation's address book does.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/register.js:24-26",
+      "quote": "Scoped on the organisation and never on the user or the session",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-147",
+      "statement": "Two transporters with the same name, ignoring case and extra spacing, are the same transporter. Adding one again updates the organisation's existing record rather than adding a second row.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/register.js:30-33,55-66",
+      "quote": "Re-entering a transporter corrects the record the\n * organisation already has rather than putting a second row beside it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-148",
+      "statement": "A hand-added transporter is not kept on any organisation's list when the request has no organisation, or when it has no name. The notification still holds the answer.",
+      "kind": "rule",
+      "ref": "src/server/app/services/transporters/register.js:43-58",
+      "quote": "Ignores a record with no organisation to file it under",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-149",
+      "statement": "Welsh copy exists for all five transporter pages, but it is a machine draft that no translator has reviewed, and it must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "features/transport/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-150",
+      "statement": "The Welsh headings for the transporter pages are 'Manylion y cludwr' (list), 'Dewiswch fath o gludwr' (type chooser), 'Chwilio am gludwr masnachol cymeradwy' (register), 'Ychwanegu cludwr masnachol' (add commercial) and 'Ychwanegu cludwr preifat' (add private).",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.cy.js:90,141,156,165,208",
+      "quote": "title: 'Manylion y cludwr'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-151",
+      "statement": "The Welsh guidance link points to the same English GOV.UK guidance URL as the English page.",
+      "kind": "copy",
+      "ref": "features/transport/copy/copy.cy.js:103-104",
+      "quote": "'https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-152",
+      "statement": "The fit suite checks the transporter list, the searched list, the type chooser, the approved commercial register, the add-private form, and the add-commercial form both clean and with errors, and holds each to having no serious or critical axe violations against WCAG 2.0, 2.1 and 2.2 A/AA tags.",
+      "kind": "non-functional",
+      "ref": "fit/axe.js:4-19; transporters.fit.spec.js 'transporter pages accessibility' (4 tests) and 'a searched list has no serious or critical axe violations'; commercial-transporter-details.fit.spec.js 'the form has no serious or critical axe violations' and 'the form in its error state has no serious or critical axe violations'",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p12-153",
+      "statement": "The fit tests reach the transporter list by starting a notification, unlocking the sections, opening 'Arrival details' from the overview and pressing 'Save and continue'. That shows the list is the step reached from the port of entry page.",
+      "kind": "behaviour",
+      "ref": "transporters.fit.spec.js openTransporterList (lines 53-61); commercial-transporter-details.fit.spec.js openCommercialForm",
+      "quote": "await page.getByRole('link', { name: copy.portOfEntry.title }).click()\n  await submit(page)",
+      "confidence": "inferred",
+      "note": "In the fit test the transit countries page is skipped on this path: it is a conditional step (task-rows.js:75), so a fresh notification goes from arrival details to the transporter list."
+    },
+    {
+      "id": "repo-frontend-p12-154",
+      "statement": "The transporter list's status tags have no tested meaning beyond display: nothing in this slice says whether a New (unapproved) transporter may be submitted on a notification, or what approval would involve.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/rows.js:12-22; transporters.controller.js; transporters/validate.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the list controller, validation and both add forms: picking or adding a New transporter is accepted exactly like an Approved one."
+    },
+    {
+      "id": "repo-frontend-p12-155",
+      "statement": "The transporter list has no message for submitting with nothing picked. 'Select a transporter from the list' exists as copy but only fires for a value that is not on the list.",
+      "kind": "rule",
+      "ref": "features/transport/transporters/validate.js:28-31; copy.en.js:156",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The key is named transporterRequired, but the oneOf validator allows the empty string, so the list never asks for a transporter. Whether one is mandatory for submission is left to the obligation model, outside this part."
+    }
+  ]
+}

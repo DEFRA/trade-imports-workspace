@@ -386,11 +386,22 @@ name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
   of command names, with anything else as `other`. A command counts as
   a failure when the driver reports it failed (`CommandFailedEvent`: a
   network error or an `ok: 0` reply), or when an `ok: 1` reply carries
-  `writeErrors` (a duplicate key, say) or a `writeConcernError` (a
-  majority write-concern timeout, say). For those two it records a
-  `MongoReplyWriteException` whose message holds only the error codes
-  and code names, never the server's `errmsg`: a duplicate key's
-  `errmsg` holds the key's value. A command that never
+  `writeErrors` (a document failing validation, say) or a
+  `writeConcernError` (a majority write-concern timeout, say). For those
+  two it records a `MongoReplyWriteException` whose message holds only
+  the error codes and code names, never the server's `errmsg`, which
+  can hold a document's values.
+- **A duplicate key is a success, on both paths.** Whether it arrives as
+  a `CommandFailedEvent` (a `MongoServerException`) or in an `ok: 1`
+  reply's `writeErrors`, the server did its job: the caller asked for a
+  unique key and was told it is taken. Test it with
+  `ErrorCategory.fromErrorCode(code) == ErrorCategory.DUPLICATE_KEY`, in
+  one helper both paths call. A service that uses ShedLock needs this
+  most: ShedLock takes a lock by upserting its document, and when
+  another task holds the lock the upsert gets E11000. On
+  animals-backend (EUDPA-816) that was 27 `findAndModify` "failures" in
+  20 minutes from the outbox poller alone, which would have kept the
+  "calls failing" alert firing. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
 - **Alerts.** Which rules a service with a database gets:
@@ -401,7 +412,12 @@ name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
   servers, recovery, and one log line per change at the level and with
   the message above, none while another server still accepts writes),
   unit tests that feed the command listener a reply with `writeErrors`
-  and one with a `writeConcernError`, an integration test that the application's own client
+  and one with a `writeConcernError` (each a failure), unit tests that
+  feed it a `CommandFailedEvent` with a duplicate key and an `ok: 1`
+  reply whose only `writeErrors` are duplicate keys (each a success),
+  and a reply mixing a duplicate key with another write error (a failure
+  whose message names only the other error), as animals-backend's
+  `MongoCallRecorderTest` does, an integration test that the application's own client
   reports available (it goes red if the listener is not registered), and
   an integration test with a throwaway Testcontainers database that is
   started, seen available, stopped, and seen unavailable. Do not stop the
@@ -409,7 +425,10 @@ name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
 
 ### Tests
 
-address-book's tests are the ones to copy.
+address-book's tests are the ones to copy, except for a duplicate key:
+address-book's `aDuplicateKeyInsertIsRecordedAsAFailureOfInsert` still
+records it as a failure. For that, copy animals-backend's
+`ExternalCallRecorderIT` and `MongoCallRecorderTest`.
 
 | Test                                                                                                                                                                                              | Proves                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -418,7 +437,8 @@ address-book's tests are the ones to copy.
 | An integration test with `aws.emf.enabled=true`, `aws.emf.environment=Local` and `aws.emf.step=1s` in its `@TestPropertySource` (`EmfMeterRegistryIT`), so EMF writes to the console every second | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
 | The same integration test records a call and waits up to 10 seconds for an EMF document on the console, captured with `testsupport/CapturedConsole`                                               | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start`                                                                                                                                             |
 | An integration test per annotated class (`AddressTimingIT`)                                                                                                                                       | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix                                                                                                                    |
-| An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects, and a duplicate-key insert)                                                              | The failure is recorded against the right dependency and operation                                                                                                                                                                                    |
+| An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects)                                                                                          | The failure is recorded against the right dependency and operation                                                                                                                                                                                    |
+| The same integration test inserts a duplicate key (animals-backend's `insert_shouldRecordASuccess_whenTheKeyIsADuplicate`)                                                                        | The insert is recorded as a success of `mongodb/insert`, not a failure                                                                                                                                                                                |
 | The existing health check test                                                                                                                                                                    | `/health` is still `UP` with no components                                                                                                                                                                                                            |
 
 Run the repo's full build before pushing:

@@ -116,3 +116,19 @@ export const installRefusingPreCommitHook = (dir, message) => {
 export const createFatClone = async (barePath, dir) => {
   await execa('git', ['clone', '--quiet', `file://${barePath}`, dir])
 }
+
+/**
+ * Ref names with `origin/HEAD` left out, so a recording holds the branches
+ * a run left and not git's pointer at the remote's default branch. Whether
+ * a fetch writes that pointer when it is missing differs between git
+ * versions, and `tim workspace branch` leaves it out of a branch list for
+ * the same reason.
+ *
+ * @param {string[]} refNames
+ * @returns {string[]}
+ */
+export const branchRefsOnly = (refNames) =>
+  refNames.filter(
+    (refName) =>
+      refName !== 'refs/remotes/origin/HEAD' && refName !== 'origin/HEAD'
+  )

@@ -1,904 +1,689 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 5, Commodity search and consignment details, read in full at repos/trade-imports-animals-frontend main 4c2119da under src/server/app/sets/live-animals/journeys/linear/features/commodities: page.js (three page ids and slugs), evaluation.js (the commodity line and unit obligation bindings), copy/copy.en.js and copy/copy.cy.js (search and consignmentDetails keys claimed here; identification keys belong to part 6), the search folder (search.controller.js, search.njk, matching.js, actions/commit-selection.js, selection/keys.js, line-key.js, selected-keys.js, view-model/selected-summary.js, legend.js, species-label.js, commodity-groups.js), the consignment-details folder (consignment-details.controller.js, consignment-details.njk, fields.js, lines.js, _selected-commodities-table.njk, _species-quantities.njk, remove/post-remove.js, remove/actions.js, view-model/selected-rows.js, groups.js, values.js, validation/count-drop.js) and the fit folder (search.fit.spec.js, 13 tests; consignment-details.fit.spec.js, 18 tests counting the four generated invalid-quantity tests; axe.js). Two pages are covered: the commodity search page at /commodities (heading, inset, search box with a 3-character minimum, word-prefix and code-prefix matching, results grouped per commodity with one tick box per species, carried selections, the N selected panel with Clear all, the commodity-code help details, the select-a-commodity error, and what saving writes and where it goes) and the Commodity details page at /consignment-details (empty-load redirect, the Selected commodities table with commodity-level and, for code 01061900, species-level Remove, Add another commodity, per-commodity and per-species headings, number of animals and number of packages fields with their validation, the count-drop rule against identifier records, and save). To state which commodities ask for packages and which are listed species by species, services/commodities/index.js and stub.js were consulted for the helpers these pages call; claims resting on them are marked inferred. Welsh copy was read for parity only. Unit tests (*.test.js) were left out per the partition.",
+  "structure": "Part 5, the overview task list and the notification actions, read eleven files of repos/trade-imports-animals-frontend in full: the hub feature folder (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, hub.fit.spec.js, 538 lines), the notification-actions feature folder (page.js, controller.js, notification-actions.fit.spec.js), and two live-animals flow files (flow/task-rows.js, flow/notification-action-slugs.js). Supporting reads for route and constant values only, not claimed beyond what the slice shows: src/server/app/shared/paths.js (hubRoutePath, pageRoutePath, pagePath, hubPath, dashboardPath), src/server/app/shared/trail.js:12-16 (TRAIL_START.overview is 'overview', so the trail parameter reads ?from=overview), src/server/app/shared/kit.js:71 (CANCEL_AMEND_SLUG is 'cancel-amend'), src/server/app/sets/live-animals/journeys/linear/features/delete-notification/page.js:3 (slug 'delete'), features/check-answers/page.js:3 (slug 'notification-view') and features/check-answers/controller.js:258 (its only registered route), and shared/copy.en.js:51-64 for the shared button strings the two fit specs drive. The part covers one page, the overview at GET /notifications/{journeyId} (its H1 'Overview', the 'Your commodities' totals section, the 'Notification task list' of six numbered section groups holding twelve task rows, and the Review and submit / Return to dashboard button pair), the twelve task rows' titles, hint, link targets and the two status words a row can show, every behaviour the 23 hub fit tests prove, the four notification action slugs (amend, cancel-amend, copy, delete) of which this feature registers only POST /notifications/{journeyId}/copy, that route's success, no-copy, recoverable-failure and stale-token outcomes, the four notification-actions fit tests, and Welsh key parity for the hub's copy. It stops before the confirmation pages the actions lead to (part 7), the dashboard that renders the Copy as new button, the check-answers review page, and the generic flow, gate and status layers under src/server/app/flow and src/server/app/bridge.",
   "claims": [
     {
       "id": "repo-frontend-p5-001",
-      "statement": "The commodity search page has the page id 'commodities' and is served at the journey path /commodities.",
+      "statement": "A trader reaches the live-animals notification overview at GET /notifications/{journeyId} under the set base, with the notification's own reference in the path.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:1",
-      "quote": "export const commoditiesPage = { id: 'commodities', slug: 'commodities' }",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:133-140, with src/server/app/shared/paths.js:6",
+      "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: hubRoutePath(),\n    options: pageRouteOptions(hubPage),\n    handler\n  }\n]",
+      "confidence": "verbatim",
+      "note": "paths.js:6 is `export const hubRoutePath = () => '/notifications/{journeyId}'`."
     },
     {
       "id": "repo-frontend-p5-002",
-      "statement": "A user reaches the commodity search page from the overview (hub) link 'What are you importing?'.",
+      "statement": "The overview takes no form submission: the hub feature registers a GET route only.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js:36",
-      "quote": "await page.getByRole('link', { name: 'What are you importing?' }).click()",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:133-140",
+      "quote": "method: 'GET',\n    path: hubRoutePath(),",
+      "confidence": "inferred",
+      "note": "Both controls on the page are govukButton calls given an href, so they render as links styled as buttons (template.njk:43-54)."
     },
     {
       "id": "repo-frontend-p5-003",
-      "statement": "The commodity search page heading (and page title) is 'What are you importing?'.",
+      "statement": "The overview page's heading and browser title both read \"Overview\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:5; search/search.njk:14",
-      "quote": "title: 'What are you importing?',",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:2 and controller.js:121-122",
+      "quote": "title: 'Overview',",
+      "confidence": "verbatim",
+      "note": "controller.js passes `pageTitle: copy.title, heading: copy.title`, and template.njk:6 renders the heading as `<h1 class=\"govuk-heading-xl\">`."
     },
     {
       "id": "repo-frontend-p5-004",
-      "statement": "The commodity search page shows the journey section caption above its heading.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:13",
-      "quote": "{{ sectionCaption(caption) }}",
+      "statement": "The overview page is at maturity \"detailing\": its behaviour has not been signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/page.js:1",
+      "quote": "export const hubPage = { id: 'hub', maturity: 'detailing' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-005",
-      "statement": "The commodity search page shows inset text saying a separate notification is required for each health certificate and that consignments without a health certificate must still be notified.",
+      "statement": "The overview opens with a \"Your commodities\" section headed at level 2.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:6-7; search/search.njk:16-18",
-      "quote": "'A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified.'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:4, template.njk:8-9",
+      "quote": "heading: 'Your commodities',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-006",
-      "statement": "The search page has a search-type text field 'commoditySearch' labelled 'Search for a commodity' at medium label size, three-quarters width.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:8; search/search.njk:30-39",
-      "quote": "searchLabel: 'Search for a commodity',",
+      "statement": "The \"Your commodities\" section shows two half-width boxes side by side, the first for animals and the second for packages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:10-25",
+      "quote": "<div class=\"govuk-grid-row\">\n      <div class=\"govuk-grid-column-one-half govuk-!-margin-bottom-4\">\n        <section class=\"app-commodity-total\" aria-label=\"{{ copy.commodityTotals.animalsRegionLabel }}\">",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-007",
-      "statement": "The search field's hint says the trader can search by commodity name, commodity code or species name, and must enter at least 3 characters.",
+      "statement": "The animals box reads its total, then the label \"Animals\", then the caption \"Total number of animals in this consignment\", and is announced as \"Animals summary\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:9-10",
-      "quote": "'You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:5-7, template.njk:12-16",
+      "quote": "animalsLabel: 'Animals',\n    animalsCaption: 'Total number of animals in this consignment',\n    animalsRegionLabel: 'Animals summary',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-008",
-      "statement": "A secondary 'Search' button submits the form with action 'search', which re-renders the page with the query and the current selection kept, without saving anything.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:41-46; search/search.controller.js:72-74",
-      "quote": "if (payload.action === SEARCH_ACTION) {\n    return rerender(request, h, { selected, query })\n  }",
+      "statement": "The packages box reads its total, then the label \"Packages/boxes\", then the caption \"Total number of packages in this consignment\", and is announced as \"Packages summary\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:8-10, template.njk:19-23",
+      "quote": "packagesLabel: 'Packages/boxes',\n    packagesCaption: 'Total number of packages in this consignment',\n    packagesRegionLabel: 'Packages summary'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-009",
-      "statement": "The search query is trimmed of surrounding whitespace, and results are listed only when the trimmed query is at least 3 characters long.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js:4-9",
-      "quote": "export const MIN_SEARCH_LENGTH = 3\n\nexport const normaliseQuery = (value) => String(value ?? '').trim()\n\nexport const isSearchable = (query) =>\n  normaliseQuery(query).length >= MIN_SEARCH_LENGTH",
-      "confidence": "verbatim"
+      "statement": "The animals total on the overview is the sum of every commodity line's number of animals, and the packages total the sum of every line's number of packages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:102-111",
+      "quote": "const buildCommodityTotals = (answers, evaluation) => {\n  const lines = state.collectionView(answers, ['commodityLines'], evaluation)\n  return {\n    animals: sumOverLines(lines, 'numberOfAnimalsQuantity'),\n    packages: sumOverLines(lines, 'numberOfPackages')\n  }\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: adds up the commodity lines' numberOfAnimalsQuantity and numberOfPackages answers for display on the overview."
     },
     {
       "id": "repo-frontend-p5-010",
-      "statement": "On first load the search page lists no commodities or tick boxes: the page lists nothing of its own accord until a long-enough query is entered.",
+      "statement": "A commodity line whose number of animals or number of packages is blank or not a number counts as zero in the overview totals rather than breaking the page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:31-43",
-      "quote": "Empty until the query is long enough — the\n * page lists nothing of its own accord.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:97-100",
+      "quote": "const toCount = (value) => {\n  const count = Number((value ?? '').toString().trim())\n  return Number.isFinite(count) ? count : 0\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: coerces a commodity line's count answer to a number for the overview totals."
     },
     {
       "id": "repo-frontend-p5-011",
-      "statement": "A query matches a commodity name or species label when its words, case-insensitively and split on any non-alphanumeric character, are a consecutive run of word-prefixes in that text (so 'tau' matches 'Bos taurus' and 'bos tau' matches only in that order).",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js:11-37",
-      "quote": "A query matches text when its words are a run of word-prefixes in that text.\n * So 'tau' matches 'Bos taurus' on its second word, and 'bos tau' matches only\n * where the two words run in that order.",
+      "statement": "Both totals read 0 on a notification where no commodity has been added.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:462-473",
+      "quote": "test('both boxes read 0 before a commodity is added', async ({ page }) => {\n    await startNotification(page)\n\n    await expect(\n      page.getByRole('heading', {\n        level: 2,\n        name: copy.commodityTotals.heading\n      })\n    ).toBeVisible()\n\n    await expectTotalBoxes(page, '0', '0')\n  })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-012",
-      "statement": "A query also matches a commodity when the commodity code starts with the query (so '010' narrows to the 0101/0102 range).",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js:39-44",
-      "quote": "Commodity codes are digit strings, so they match on prefix rather than on\n * whole words — '010' narrows to the 0101/0102 range the way a trader expects.",
+      "statement": "Each totals box reads in the order number, then label, then caption, with the \"Your commodities\" heading at level 2 and each box's label at level 3.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:475-500, with the helper at :94-113",
+      "quote": "test('each box reads as the number, then the label, then the caption', async ({\n    page\n  }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-013",
-      "statement": "When the query matches a commodity's name or code, every species under that commodity is listed; otherwise only the species whose own label matches are listed.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:10-19",
-      "quote": "Name or code hits the whole commodity, so every species under it stays in\n// the results; otherwise only the species that match on their own.",
+      "statement": "The totals boxes hold no link and no button: they report numbers and lead nowhere.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:502-509",
+      "quote": "test('the boxes hold no link and no button', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-014",
-      "statement": "A species is matched on the label the trader is shown, so its English common name is searchable as well as its scientific name.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:11-13",
-      "quote": "A species matches on the label the trader is shown, so the common name in front of the\n// scientific name is searchable rather than decorative.",
+      "statement": "On a phone-width screen the two totals boxes stack one above the other and the overview has no horizontal overflow.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:511-525",
+      "quote": "test('the boxes stack with no horizontal overflow on a small screen', async ({\n    page\n  }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-015",
-      "statement": "Search results are grouped one fieldset per matching commodity, in the commodity catalogue's order, and a commodity with no matching species is left out.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:44-50; search/search.njk:48-60",
-      "quote": "return commodities\n    .list()\n    .map((name) => ({\n      legend: legendFor(name),\n      items: itemsFor(name, query, selected)\n    }))\n    .filter((group) => group.items.length > 0)",
+      "statement": "Below the commodity totals the overview shows a section headed \"Notification task list\" at level 2.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:18, template.njk:28-29, hub.fit.spec.js:151-163",
+      "quote": "taskListHeading: 'Notification task list',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-016",
-      "statement": "Each results group's legend (small fieldset legend) names the commodity followed by its commodity code in brackets, for example 'Cow (0102)'.",
+      "statement": "The task list is grouped into six numbered sections headed, in order, \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Addresses\" and \"6. Contact address\", with nothing after them.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/legend.js:5-6; search/search.njk:55",
-      "quote": "export const legendFor = (name) =>\n  `${name} (${commodities.commodityCodeFor(name)})`",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:19-26, hub.fit.spec.js:151-163",
+      "quote": "groups: {\n    'about-the-consignment': '1. About the consignment',\n    'description-of-the-goods': '2. Description of the goods',\n    'transport-and-arrival': '3. Transport and arrival',\n    documents: '4. Documents',\n    'consignment-parties': '5. Addresses',\n    'contact-address': '6. Contact address'\n  },",
+      "confidence": "verbatim",
+      "note": "The fifth group's heading is \"5. Addresses\" while the task row inside it is titled \"Consignment addresses\" (see the addresses row claim)."
     },
     {
       "id": "repo-frontend-p5-017",
-      "statement": "Each species is offered as a small tick box (field name 'species') labelled with its English common name followed by its scientific name in brackets; a species with no common name is labelled with its commodity's name instead.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.js:12-13; search/search.njk:51-58",
-      "quote": "export const speciesLabelFor = (name, option) =>\n  `${option.commonName ?? name} (${option.text})`",
+      "statement": "Each section heading is rendered at level 3 inside its own named region, and each region holds exactly one task list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:31-40, hub.fit.spec.js:165-183",
+      "quote": "{% for group in groups %}\n      <section aria-labelledby=\"{{ group.id }}-heading\">\n        <h3 class=\"govuk-heading-m\" id=\"{{ group.id }}-heading\">{{ group.caption }}</h3>\n        {{ govukTaskList({\n          idPrefix: group.id,\n          items: group.items,\n          classes: \"app-task-list govuk-!-margin-bottom-8\"\n        }) }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-018",
-      "statement": "A species already chosen (saved on the notification or ticked earlier on the page) shows as ticked when it appears in the results.",
+      "statement": "A journey section that owns no task row is not shown on the overview at all, which is why the start and review sections have no heading there.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:21-29",
-      "quote": "checked: selected.includes(key)",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:83-95",
+      "quote": "journeySections()\n    .map((section) => ({ section, rows: taskRowsOfSection(section) }))\n    .filter(({ rows }) => rows.length > 0)",
+      "confidence": "inferred",
+      "note": "The eight journey sections live in another part's flow/journey-flow.js; the hub's own copy names only the six that carry rows."
     },
     {
       "id": "repo-frontend-p5-019",
-      "statement": "When a query of at least 3 characters matches nothing, the page says 'No results found'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:12; search/search.controller.js:44; search/search.njk:61-62",
-      "quote": "noResults: 'No results found',",
+      "statement": "The \"Main import reason\" task sits in the first section, \"1. About the consignment\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:180-183",
+      "quote": "await expect(\n      sectionRegion(page, 'about-the-consignment').getByRole('link')\n    ).toContainText([copy.rows.importReason.title])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-020",
-      "statement": "A query shorter than 3 characters lists nothing and shows no 'No results found' message and no error, so the only cue is the hint.",
+      "statement": "The second section lists its tasks in the order \"Commodity details\", \"Identification details\", \"Additional details\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:44; fit/search.fit.spec.js:95-101",
-      "quote": "noResults: isSearchable(query) && groups.length === 0,",
-      "confidence": "gap",
-      "note": "Looked in search.controller.js, search.njk and the copy files: no message tells the trader their query was too short."
-    },
-    {
-      "id": "repo-frontend-p5-021",
-      "statement": "Species chosen under an earlier query that are not in the current results are carried through the form as hidden 'selection' values, so a selection can be built up across several searches.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:24-28; search/selection/selected-keys.js:6-10",
-      "quote": "A choice made under an earlier\n// query rides back as a hidden `selection` value. The page's selection is the\n// two together: what is carried, plus what is ticked in the results on screen.",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:280-292",
+      "quote": "await expect(\n      sectionRegion(page, 'description-of-the-goods').getByRole('link')\n    ).toHaveText([\n      copy.rows.consignmentDetails.title,\n      copy.rows.animalIdentification.title,\n      copy.rows.additionalDetails.title\n    ])",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-frontend-p5-021",
+      "statement": "The overview's task list holds twelve rows: origin, commodities, import reason, commodity details, identification details, additional details, arrival details, transit countries, transport details, documents, consignment addresses and contact.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:28-73",
+      "quote": "export const taskRows = [\n  { id: 'origin', pages: [originPage] },",
+      "confidence": "verbatim",
+      "note": "The twelve row ids in task-rows.js match the twelve keys of copy.rows in the hub's copy.en.js exactly; two of them (animalIdentification, transitCountries) are conditional and may be hidden."
+    },
+    {
       "id": "repo-frontend-p5-022",
-      "statement": "A submitted selection is filtered to valid commodity-and-species pairs from the catalogue and put into canonical order (commodity list order, then that commodity's species order), whatever order the boxes were ticked in.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/keys.js:8-26",
-      "quote": "Canonical selection order: commodity list order, then that commodity's\n// species order — so the details page renders deterministic groups whatever\n// order the boxes were ticked in.",
+      "statement": "The origin task is titled \"Where is this consignment coming from?\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:28-30",
+      "quote": "origin: {\n      title: 'Where is this consignment coming from?'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-023",
-      "statement": "When at least one species is chosen, a selection panel shows the heading '<N> selected'.",
+      "statement": "The commodities task is titled \"What are you importing?\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:14; search/search.njk:65-67",
-      "quote": "heading: (count) => `${count} selected`,",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:31-33",
+      "quote": "commodities: {\n      title: 'What are you importing?'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-024",
-      "statement": "The selection panel lists each chosen commodity by its legend (name and code) in bold, followed by its chosen species labels separated by commas, grouped by commodity in canonical order.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js:20-39; search/search.njk:68-74",
-      "quote": "<span class=\"govuk-!-font-weight-bold\">{{ group.legend }}</span>: {{ group.items | join(\", \") }}",
+      "statement": "The import reason task is titled \"Main import reason\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:34-36",
+      "quote": "importReason: {\n      title: 'Main import reason'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-025",
-      "statement": "The selection panel has a secondary 'Clear all' button (action 'clear') that empties the selection on screen and keeps the query.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:15; search/search.njk:75-80; search/search.controller.js:66-68",
-      "quote": "if (payload.action === CLEAR_ACTION) {\n    return rerender(request, h, { selected: [], query })\n  }",
+      "statement": "The commodity numbers task is titled \"Commodity details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:37-39",
+      "quote": "consignmentDetails: {\n      title: 'Commodity details'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-026",
-      "statement": "Clear all does not change the saved notification: it only re-renders the page with nothing chosen, and the saved commodity lines change only when the page is saved.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:57-68",
-      "quote": "return rerender(request, h, { selected: [], query })",
-      "confidence": "inferred",
-      "note": "rerender only renders the view; nothing is written to state on the clear path."
+      "statement": "The additional details task is titled \"Additional details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:40-42",
+      "quote": "additionalDetails: {\n      title: 'Additional details'\n    },",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-027",
-      "statement": "The search page has a details component 'Help with commodity codes'.",
+      "statement": "The animal identification task is titled \"Identification details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:18; search/search.njk:90-93",
-      "quote": "summary: 'Help with commodity codes',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:43-45",
+      "quote": "animalIdentification: {\n      title: 'Identification details'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-028",
-      "statement": "The commodity codes help says commodity codes are internationally recognised reference numbers.",
+      "statement": "The arrival task is titled \"Arrival details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:19-20",
-      "quote": "'Commodity codes are internationally recognised reference numbers.'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:46-48",
+      "quote": "arrivalDetails: {\n      title: 'Arrival details'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-029",
-      "statement": "The commodity codes help says a commodity code describes a specific product when importing or exporting goods.",
+      "statement": "The transit countries task is titled \"Transit countries\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:21-22",
-      "quote": "'A commodity code describes a specific product when importing or exporting goods.'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:49-51",
+      "quote": "transitCountries: {\n      title: 'Transit countries'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-030",
-      "statement": "The commodity codes help ends 'You can look up commodity codes using the Trade Tariff tool (opens in a new tab).', linking to https://www.gov.uk/trade-tariff in a new tab with rel 'noreferrer noopener'.",
+      "statement": "The transporter task is titled \"Transport details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:23-25; search/search.njk:87",
-      "quote": "lookupPrefix: 'You can look up commodity codes using the',\n      lookupLink: 'Trade Tariff tool (opens in a new tab)',\n      lookupHref: 'https://www.gov.uk/trade-tariff'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:52-54",
+      "quote": "transporter: {\n      title: 'Transport details'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-031",
-      "statement": "The search page ends with the shared save actions: 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:95; src/server/app/shared/copy.en.js:63-67",
-      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
-      "confidence": "inferred",
-      "note": "Button texts come from the shared copy (part 1); the search spec uses 'Save and continue'."
-    },
-    {
-      "id": "repo-frontend-p5-032",
-      "statement": "Saving the search page with no species chosen re-renders it with the error 'Select a commodity' and a 400 status.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:28; search/search.controller.js:76-83",
-      "quote": "selectCommodity: 'Select a commodity'",
+      "statement": "The addresses task is titled \"Consignment addresses\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:55-58",
+      "quote": "addresses: {\n      title: 'Consignment addresses',",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-frontend-p5-032",
+      "statement": "The consignment addresses task carries the hint \"Consignor or Exporter, Consignee, Importer and Place of Destination\", and it is the only task on the overview with a hint.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:57, hub.fit.spec.js:294-313",
+      "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination'",
+      "confidence": "verbatim",
+      "note": "The fit test asserts the hint is the accessible description of that row's link, followed by the status word, and that every other row's link has only its status word as its accessible description."
+    },
+    {
       "id": "repo-frontend-p5-033",
-      "statement": "The 'Select a commodity' error is attached to the species tick boxes when results are listed, and to the search box when nothing is listed; the error summary links to that control.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:31-34",
-      "quote": "The error belongs on the control the trader must fix: the tick boxes when\n  // results are listed, the search box when there is nothing yet to tick.",
+      "statement": "The contact task is titled \"Contact address for this consignment\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:59-61",
+      "quote": "contact: {\n      title: 'Contact address for this consignment'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-034",
-      "statement": "The search page's back link returns to the overview (hub).",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:37",
-      "quote": "backLink: hubPath(journey.journeyId),",
+      "statement": "The documents task is titled \"Upload documents\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:62-64",
+      "quote": "documents: {\n      title: 'Upload documents'\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-035",
-      "statement": "A commodity line is one commodity plus one species; the commodity-and-species pair is the line's identity.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/line-key.js:1-4",
-      "quote": "One commodity line = one commodity plus ONE species. The pair is\n * the line's identity for batch reconcile.",
-      "confidence": "verbatim"
+      "statement": "A task on the overview shows one of exactly two status words: a green \"Complete\" tag or a blue \"To do\" tag.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:36-44, copy/copy.en.js:14-17",
+      "quote": "const COMPLETE_TAG = {\n  tag: { text: copy.statuses.complete, classes: 'govuk-tag--green' }\n}\nconst TO_DO_TAG = {\n  tag: { text: copy.statuses.toDo, classes: 'govuk-tag--blue' }\n}",
+      "confidence": "verbatim",
+      "note": "The copy file gives `complete: 'Complete'` and `toDo: 'To do'`."
     },
     {
       "id": "repo-frontend-p5-036",
-      "statement": "Saving a selection reconciles the notification's commodity lines with the chosen pairs: a pair already on the notification keeps its line, a new pair gets a new line, and a pair no longer chosen loses its line.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/actions/commit-selection.js:26-33",
-      "quote": "await state.reconcileEntriesAt(\n    request,\n    h,\n    ['commodityLines'],\n    lineKey,\n    selected.map(seedLine)\n  )",
-      "confidence": "inferred",
-      "note": "Read from a keyed reconcile by lineKey; the fit test 'adds another commodity while preserving an existing quantity' shows existing lines keep their quantities."
+      "statement": "A task reads \"Complete\" only when every answer it covers is given and none of its stored answers is invalid; anything else, including a part-answered or not-applicable task that is still shown, reads \"To do\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:43-44 and :118",
+      "quote": "const statusTag = (status, invalid) =>\n  status === FULFILLED && !invalid ? COMPLETE_TAG : TO_DO_TAG",
+      "confidence": "verbatim",
+      "note": "mechanism: chooses a task-list tag from the row's computed status and the set of rows whose stored answers no longer validate (invalidRowIds)."
     },
     {
       "id": "repo-frontend-p5-037",
-      "statement": "A new commodity line is stored with the commodity, the species, a commodity type set to the species' owning type id (never blank), and blank number of packages and number of animals.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/actions/commit-selection.js:9-24",
-      "quote": "The line's type is its species' owning type id — always non-blank, so every\n// line completes. Multi-type commodities (Cow) carry the type determined by\n// the checked species; single-type commodities collapse to their one type id.",
+      "statement": "The overview never shows a task as unavailable: no \"Cannot start yet\" status is rendered, and every task shown reads Complete or To do.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:392-415, with the helper at :48-54",
+      "quote": "test('leads the secondary Return to dashboard button, with no task shut as Cannot start yet', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-038",
-      "statement": "After a successful save the search page goes to the Commodity details page, keeping the change context (?change=1) when there is one; 'Save and return to overview' goes to the overview instead.",
+      "statement": "Every task on the overview is a link to its first open page, and that link carries the overview as the page's return trail (?from=overview).",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/actions/commit-selection.js:34-40",
-      "quote": "return h.redirect(\n    kit.hubExitTarget(request) ??\n      kit.withChangeContext(\n        request,\n        pagePath(request.params.journeyId, consignmentDetailsPage.slug)\n      )\n  )",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:46 and :57-61",
+      "quote": "const fromOverview = (href) => withTrail(href, [TRAIL_START.overview])",
+      "confidence": "verbatim",
+      "note": "shared/trail.js:12-16 gives TRAIL_START.overview the value 'overview', so the query reads ?from=overview, as the fit spec's href assertions show."
     },
     {
       "id": "repo-frontend-p5-039",
-      "statement": "The search page is the page that collects the notification's commodity lines.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:18",
-      "quote": "export const meta = { ...page, collects: ['commodityLines'] }",
+      "statement": "A conditional task is hidden from the overview when it does not apply to the notification or when none of its pages can be opened yet.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:51-55 and :73-75",
+      "quote": "const isHiddenRow = (row, status, scope) =>\n  row.conditional && (status === NA || !somePageOpens(row, scope))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-040",
-      "statement": "On load the search page's selection is taken from the commodity lines already saved on the notification.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:52-55; search/selection/selected-keys.js:12-13",
-      "quote": "export const storedKeys = (answers) =>\n  normaliseKeys((answers.commodityLines ?? []).map(lineKey))",
-      "confidence": "verbatim"
+      "statement": "The identification details task and the transit countries task are the only conditional tasks, so they are the only two that can be absent from the overview.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:56-64",
+      "quote": "    id: 'animalIdentification',\n    pages: [animalIdentificationPage],\n    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: hasAnyCommodityLine\n  },",
+      "confidence": "verbatim",
+      "note": "The transit countries row is `{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true }` at :64, with no `applies`, so it is hidden only while its page's gate is shut; the gate itself lives in the transport feature, another part."
     },
     {
       "id": "repo-frontend-p5-041",
-      "statement": "Each commodity line's commodity, commodity type, species, number of animals and number of packages are evaluated against the commodityCode, commodityType, species, numberOfAnimals and numberOfPackages obligations.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js:47-54",
-      "quote": "lineLeaf('commoditySelection', commodityCode),\n  lineLeaf('commodityType', commodityType),\n  lineLeaf('speciesSelection', species),\n  lineLeaf('numberOfAnimalsQuantity', numberOfAnimals, {\n    convert: toNumberWhenParses\n  }),\n  lineLeaf('numberOfPackages', numberOfPackages),",
+      "statement": "While no commodity has been chosen the identification details task is absent from the overview, and the \"2. Description of the goods\" heading is still shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:251-264",
+      "quote": "test('overview: when no commodity is chosen, the animal identification row is absent', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-042",
-      "statement": "For evaluation, a number of animals held as text is converted to a number when it parses as one; blank or non-numeric text is left as it is.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js:39-45",
-      "quote": "const toNumberWhenParses = (value) => {\n  if (typeof value !== 'string' || value.trim() === '') {\n    return value\n  }\n  const parsed = Number(value)\n  return Number.isFinite(parsed) ? parsed : value\n}",
+      "statement": "Once a commodity that carries identifiers is chosen, the identification details task appears on the overview as a link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:266-278",
+      "quote": "test('overview: when a commodity carrying identifiers is chosen, the animal identification row appears', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-043",
-      "statement": "Each animal identifier record under a commodity line is evaluated for microchip, passport, tattoo, ear tag, horse name and permanent address against obligations of the same names.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js:27-31,55-60",
-      "quote": "unitLeaf('animalIdentifierMicrochip', microchip),\n  unitLeaf('animalIdentifierPassport', passport),\n  unitLeaf('animalIdentifierTattoo', tattoo),\n  unitLeaf('animalIdentifierEarTag', earTag),\n  unitLeaf('horseName', horseName),\n  unitLeaf('permanentAddress', permanentAddress)",
+      "statement": "On a newly started notification the origin task already reads \"Complete\" while the commodities and commodity details tasks read \"To do\", and each is a link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:120-149",
+      "quote": "test('renders navigation copy and the task statuses of a newly entered journey', async ({",
       "confidence": "verbatim",
-      "note": "The identification page that collects these is part 6; recorded here because evaluation.js is in this part's read list."
+      "note": "The same test asserts the Overview heading and all six section headings are visible."
     },
     {
       "id": "repo-frontend-p5-044",
-      "statement": "The Welsh copy for the search and Commodity details pages is a machine draft that has not been reviewed by a translator, and its key tree matches the English.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:1-6",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "statement": "Ten tasks can be opened from the overview before any commodity is chosen: origin, commodities, import reason, commodity details, additional details, arrival details, transport details, consignment addresses, contact and documents.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:185-211",
+      "quote": "const openFromTheStart = [\n      copy.rows.origin,\n      copy.rows.commodities,\n      copy.rows.importReason,\n      copy.rows.consignmentDetails,\n      copy.rows.additionalDetails,\n      copy.rows.arrivalDetails,\n      copy.rows.transporter,\n      copy.rows.addresses,\n      copy.rows.contact,\n      copy.rows.documents\n    ]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-045",
-      "statement": "The Welsh count-drop message uses a simple numeric style without Welsh plural mutations, pending translator review.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:3-6",
-      "quote": "Welsh pluralisation differs from English; this machine draft uses the\n// simple numeric style ('N cofnod dynodwr') rather than risking wrong\n// mutations. A translator should review every function leaf.",
+      "statement": "The commodity details task links to the consignment-details page, and while no commodity is chosen opening it leads the trader to the \"What are you importing?\" question instead.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:234-249 and :336-351",
+      "quote": "await expect(\n      details.getByRole('link', { name: copy.rows.consignmentDetails.title })\n    ).toHaveAttribute('href', /\\/consignment-details\\?from=overview$/)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-046",
-      "statement": "The Commodity details page has the page id 'consignmentDetails' and is served at the journey path /consignment-details.",
+      "statement": "Opening the arrival details task from the overview with only the country of origin answered shows the port of entry question, and saving it leads on to the commodity search.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:3-6",
-      "quote": "export const consignmentDetailsPage = {\n  id: 'consignmentDetails',\n  slug: 'consignment-details'\n}",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:213-232",
+      "quote": "test('saving arrival details with only the country of origin answered opens What are you importing?', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-047",
-      "statement": "The Commodity details page heading (and page title) is 'Commodity details', shown under the section caption.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32; consignment-details/consignment-details.njk:10-11",
-      "quote": "title: 'Commodity details',",
-      "confidence": "verbatim"
+      "statement": "Leaving a question page with \"Cancel and return to overview\" returns the trader to the overview with the answers unsaved, so the commodity details task still reads \"To do\" while the commodities task reads \"Complete\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:84-90 and :336-351",
+      "quote": "await page\n    .getByRole('link', { name: sharedCopy.saveActions.cancelAndReturnToHub })\n    .click()\n  await expectHub(page)",
+      "confidence": "verbatim",
+      "note": "shared/copy.en.js:64 gives cancelAndReturnToHub the words 'Cancel and return to overview'."
     },
     {
       "id": "repo-frontend-p5-048",
-      "statement": "Loading the Commodity details page with no commodity lines on the notification redirects to the commodity search page (keeping the change context), so Back, refresh or a bookmark cannot land on an empty details page.",
+      "statement": "Saving a question page with \"Save and return to overview\" returns the trader to the overview, and the task whose answers were saved then reads \"Complete\" while the other tasks keep their statuses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:64-81",
-      "quote": "With none\n// left it has nothing to ask, so a load sends the user to the commodity\n// question — the same rule the removal applies on the way out, applied on\n// the way in, so a browser Back, a refresh or a bookmark cannot land on an\n// empty details page.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:76-82 and :353-367",
+      "quote": "test('reads Complete once the numbers are saved, leaving the other rows alone', async ({",
+      "confidence": "verbatim",
+      "note": "shared/copy.en.js:63 gives saveAndReturnToHub the words 'Save and return to overview'."
     },
     {
       "id": "repo-frontend-p5-049",
-      "statement": "The Commodity details page's back link returns to the overview (hub); Commodity details is its own overview task.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:49; fit/search.fit.spec.js:47-48",
-      "quote": "Commodity details is its own hub task now, so its back link returns to the\n// hub.",
+      "statement": "A task's completeness is measured over the answers assigned to it, so the commodities task ignores each commodity line's identifiers, number of animals and number of packages.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:30-43",
+      "quote": "    id: 'commodities',\n    pages: [commoditiesPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        except: [\n          'animalIdentifiers',\n          'numberOfAnimalsQuantity',\n          'numberOfPackages'\n        ]\n      }\n    ]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-050",
-      "statement": "The Commodity details page shows a 'Selected commodities' table (medium caption) with the columns 'Commodity code', 'Common name' and a visually hidden 'Actions' column.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:34-39; consignment-details/_selected-commodities-table.njk:18-27",
-      "quote": "caption: 'Selected commodities',\n      commodityCode: 'Commodity code',\n      commonName: 'Common name',\n      actionsHidden: 'Actions',",
+      "statement": "The commodity details task is complete when every commodity line has its number of animals and number of packages, and nothing else.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:45-54",
+      "quote": "    id: 'consignmentDetails',\n    pages: [consignmentDetailsPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        only: ['numberOfAnimalsQuantity', 'numberOfPackages']\n      }\n    ]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-051",
-      "statement": "The Selected commodities table has one row per selected commodity, showing its commodity code, its name and a Remove action.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js:8-12,23-33",
-      "quote": "One Selected commodities row per commodity, except under commodity code\n// 01061900",
+      "statement": "The identification details task is complete when every commodity line has its animal identifiers, and it does not apply at all while the notification has no commodity line.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:56-61",
+      "quote": "    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: hasAnyCommodityLine",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-052",
-      "statement": "Under commodity code 01061900 (cat, dog, ferret and other live mammals) the table gives each chosen species its own row, named by the species' common name (or the commodity's name when it has none), with a Remove that drops only that species.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js:14-33",
-      "quote": "there the design gives each chosen species its own row, named by\n// the species rather than by the commodity, with a Remove that drops that\n// species and keeps the rest of the commodity (design 01-14).",
-      "confidence": "verbatim",
-      "note": "The code and the meaning of 01061900 come from services/commodities/index.js:53-60 (speciesListedIndividually)."
+      "statement": "A single-species notification can reach the review with no animal identifier saved, and its identification details task still reads \"Complete\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:429-442",
+      "quote": "test('a single-species notification reaches the review with no identifier saved', async ({",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-053",
-      "statement": "Each row's Remove is a link-styled submit button reading 'Remove' with the row's name as visually hidden text (so it is announced as, for example, 'Remove Cow').",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:39; consignment-details/_selected-commodities-table.njk:10",
-      "quote": "<button type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"{{ row.removeAction }}\">{{ copy.remove }}<span class=\"govuk-visually-hidden\"> {{ row.name }}</span></button>",
-      "confidence": "verbatim"
+      "statement": "The consignment addresses task covers two pages, the addresses page and the CPH number page, and stays short of complete until every addressable animal has a permanent address even when both pages' answers are given.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:67-71, with rowStatus at :86-94",
+      "quote": "    id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress",
+      "confidence": "verbatim",
+      "note": "rowStatus turns a fulfilled row whose extraAnswerGiven is false into IN_PROGRESS, which the hub renders as the \"To do\" tag."
     },
     {
       "id": "repo-frontend-p5-054",
-      "statement": "Remove is a form post carrying the CSRF crumb, never a link, so no GET can remove a commodity.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:27-30; consignment-details/consignment-details.njk:17-21",
-      "quote": "A removal drops every line of one commodity group, so it submits the page\n// form — the crumb travels with it and no GET can trigger it.",
-      "confidence": "verbatim"
+      "statement": "A task that does not apply to the notification is reported as not applicable rather than as part-answered, which is what lets a conditional task be hidden.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:86-94",
+      "quote": "export const rowStatus = (row, answers, inScope, evaluation) => {\n  if (!rowApplies(row, answers, evaluation)) {\n    return NA\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: computes a task row's status from its assigned answers, the notification's scope and the obligation evaluation."
     },
     {
       "id": "repo-frontend-p5-055",
-      "statement": "Removing a commodity row drops every commodity line (every species) of that commodity; a commodity index that does not name a selected commodity is refused with a 400 before anything changes.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:31-43",
-      "quote": "const kept = (answers.commodityLines ?? []).filter(\n    (entry) => entry.commoditySelection !== name\n  )",
-      "confidence": "verbatim"
+      "statement": "The overview ends with two buttons in order: a primary \"Review and submit\" and a secondary \"Return to dashboard\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:12-13, template.njk:43-54, hub.fit.spec.js:392-415",
+      "quote": "reviewAndSubmit: 'Review and submit',\n  returnToDashboard: 'Return to dashboard',",
+      "confidence": "verbatim",
+      "note": "The fit test also measures the first against the GOV.UK primary button style and the second against govuk-button--secondary."
     },
     {
       "id": "repo-frontend-p5-056",
-      "statement": "Removing a species row drops that one commodity line and keeps the rest of its commodity; a line index that is missing or not under a species-listed commodity is refused with a 400.",
+      "statement": "\"Review and submit\" leads to the notification view at /notifications/{journeyId}/notification-view?from=overview.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:45-63",
-      "quote": "A species removal drops one line and leaves the rest of its commodity in\n// place. The page only offers it for the commodities the design lists species\n// by species, so the line index must name a stored line of one of those;\n// anything else is refused before any reconcile runs.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:48-49, hub.fit.spec.js:375-390",
+      "quote": "const reviewHref = (journeyId) =>\n  fromOverview(pagePath(journeyId, notificationViewPage.slug))",
+      "confidence": "verbatim",
+      "note": "The fit test asserts the href matches /\\/notifications\\/[^/]+\\/notification-view\\?from=overview$/."
     },
     {
       "id": "repo-frontend-p5-057",
-      "statement": "After a removal the user returns to the Commodity details page while any line is left, or to the commodity search page when the last line was removed (keeping the change context).",
+      "statement": "\"Review and submit\" opens the review whatever state the notification is in: with only the country of origin answered it reaches the draft review, and it does so again once every answer section is complete.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:12-25",
-      "quote": "While a line is left the page still has quantities to collect, so a removal\n// returns to it. Take the last line out and it has nothing to ask, so the user\n// goes back to the commodity question instead",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:375-390 and :417-427",
+      "quote": "test('opens the review from a notification with only the origin answered', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-058",
-      "statement": "Removing a commodity also removes any animal identifier records held on its lines, because the whole line is dropped.",
+      "statement": "The overview shows nothing to say a notification is ready to review: there is no readiness banner, no progress count and no change to the Review and submit button when every task reads Complete.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:38-41",
-      "quote": "await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)",
-      "confidence": "inferred",
-      "note": "Identifier records are stored under each line (evaluation.js groups unit under line), so dropping the line drops them. No confirmation step is shown before removal."
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:1-55 and controller.js:120-130",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the hub template (which renders only the heading, the totals section, the task list and the two buttons), in the handler's view model (pageTitle, heading, copy, sharedCopy, journeyStrip, commodityTotals, groups, reviewHref, dashboardHref) and in the hub copy file; none holds a readiness state. The review page's own gate, readyForCheckYourAnswers, sits in another part's flow."
     },
     {
       "id": "repo-frontend-p5-059",
-      "statement": "Below the table an 'Add another commodity' link returns to the commodity search page (keeping the change context), where the existing selection is still chosen.",
+      "statement": "\"Return to dashboard\" leads to the set's own notification list at the set base, and clicking it takes the trader there.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:33; consignment-details/consignment-details.controller.js:54-57; consignment-details/consignment-details.njk:23-25",
-      "quote": "addAnother: 'Add another commodity',",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:129, hub.fit.spec.js:315-328",
+      "quote": "dashboardHref: dashboardPath()",
+      "confidence": "verbatim",
+      "note": "shared/paths.js:15 gives `dashboardPath = () => setBase()`; the fit test asserts the button's href is the set base and that clicking it lands there."
     },
     {
       "id": "repo-frontend-p5-060",
-      "statement": "The quantity form shows one block per selected commodity with a large heading '<commodity name> (<commodity code>)', followed by a visible section break.",
+      "statement": "The overview has no back link.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:13-14,41",
-      "quote": "<h2 class=\"govuk-heading-l\">{{ group.name }} ({{ group.code }})</h2>",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:315-320",
+      "quote": "await expect(backLink(page)).toHaveCount(0)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-061",
-      "statement": "Within each commodity block, each chosen species has its own medium heading naming the species (its scientific name label, or its stored value when the catalogue has no label) and its own quantity fields.",
+      "statement": "The overview shows the shared journey strip for the notification, so its reference and status are on the page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:9-19; consignment-details/_species-quantities.njk:15-16",
-      "quote": "speciesText:\n    commodities.speciesLabel(entry.speciesSelection) ?? entry.speciesSelection,",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:125, template.njk:1",
+      "quote": "journeyStrip: journeyStrip(journey),",
+      "confidence": "inferred",
+      "note": "The template extends shared/layout.njk, which renders the strip; the strip's own copy ('Draft', 'Submitted' and the rest) belongs to the shared layout part. The notification-actions fit spec reads 'Draft' off a copied notification's overview."
     },
     {
       "id": "repo-frontend-p5-062",
-      "statement": "Type size steps down from commodity heading (large) to species heading (medium) to quantity labels (small) on purpose, so several commodities' questions and hints do not run together.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:7-12",
-      "quote": "The commodity heading is set at the page-heading size on purpose: the\n   commodity blocks are the substance of the page and the h1 above them only\n   names it, so the design steps the type down from the commodity to the\n   species to the quantity labels.",
+      "statement": "The overview has no serious or critical accessibility violations, whether nothing but the origin is answered, the notification is part complete, or the commodity totals are showing.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:350, :444-454 and :527-537",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Hub with commodity totals')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-063",
-      "statement": "Each species line has a 'Number of animals' field (small label, width-5, numeric input mode, no hint), named numberOfAnimalsQuantity-<line index>.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:41-43; consignment-details/_species-quantities.njk:18-26; consignment-details/fields.js:16",
-      "quote": "label: 'Number of animals'",
-      "confidence": "verbatim"
+      "statement": "Four actions can be taken on a live-animals notification from outside the question pages: amend, cancel amend, copy and delete, reached at the slugs amend, cancel-amend, copy and delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/notification-action-slugs.js:4-9",
+      "quote": "export const notificationActionSlugs = Object.freeze({\n  amend: 'amend',\n  cancelAmend: CANCEL_AMEND_SLUG,\n  copy: 'copy',\n  delete: deleteNotificationPage.slug\n})",
+      "confidence": "verbatim",
+      "note": "shared/kit.js:71 gives CANCEL_AMEND_SLUG the value 'cancel-amend' and delete-notification/page.js:3 the slug 'delete'."
     },
     {
       "id": "repo-frontend-p5-064",
-      "statement": "For commodities that take a package count, each species line also has a 'Number of packages (when required)' field with the hint 'Such as crates, bags or boxes' (small label, width-5, numeric input mode), named numberOfPackages-<line index>.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:44-47; consignment-details/_species-quantities.njk:28-39",
-      "quote": "label: 'Number of packages (when required)',\n      hint: 'Such as crates, bags or boxes'",
-      "confidence": "verbatim"
+      "statement": "Of those four actions the notification-actions feature itself serves only copy, as a POST to /notifications/{journeyId}/copy.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:58-65",
+      "quote": "export const routes = [\n  {\n    method: 'POST',\n    path: pageRoutePath(notificationActionSlugs.copy),\n    options: kit.pageRouteOptions(notificationActionsPage),\n    handler: copyPost\n  }\n]",
+      "confidence": "verbatim",
+      "note": "Amend, cancel amend and delete are served by their own features, which other parts cover."
     },
     {
       "id": "repo-frontend-p5-065",
-      "statement": "The number of packages field is shown, validated and saved only for commodities on the commodity service's package-count list (which includes Bees, the Birds of Prey commodities, Cat and Cow); other commodities ask only for the number of animals.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:13-14; view-model/groups.js:31; src/server/app/sets/live-animals/services/commodities/stub.js:55",
-      "quote": "export const packagesApply = (commoditySelection) =>\n  commodities.packageCountCommodities().includes(commoditySelection)",
-      "confidence": "inferred",
-      "note": "The list's members come from services/commodities/stub.js, outside this part's read list; only the first entries were looked at."
+      "statement": "The notification-actions page is at maturity \"detailing\": its behaviour has not been signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/page.js:1-4",
+      "quote": "export const notificationActionsPage = {\n  id: 'notification-actions',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-066",
-      "statement": "The number of animals is mandatory on every species line: a blank value shows 'Enter the number of animals'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:49; consignment-details/fields.js:22-28",
-      "quote": "animalsRequired: 'Enter the number of animals',",
+      "statement": "Copying a notification succeeds by taking the trader straight to the new draft's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:39-42",
+      "quote": "return copied\n      ? h.redirect(hubPath(copied.journeyId))\n      : h.redirect(dashboardPath())",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-067",
-      "statement": "The number of animals must be a whole number of at least 1: anything else shows 'Enter a whole number greater than 0'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:50; consignment-details/fields.js:22-28",
-      "quote": "animalsWholeNumber: 'Enter a whole number greater than 0',",
-      "confidence": "verbatim"
+      "statement": "A copy that produces no new notification sends the trader back to the notification list rather than showing an error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:39-42",
+      "quote": "      : h.redirect(dashboardPath())",
+      "confidence": "inferred",
+      "note": "The branch is reached when copyJourney returns nothing; nothing is logged on it."
     },
     {
       "id": "repo-frontend-p5-068",
-      "statement": "The number of packages is optional, but when given must be a whole number of at least 1: anything else shows 'Number of packages must be a whole number, like 5'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:51; consignment-details/fields.js:29-36",
-      "quote": "packagesWholeNumber: 'Number of packages must be a whole number, like 5',",
-      "confidence": "verbatim"
+      "statement": "A copy request carries where it was started from, and the service distinguishes a copy started on the notification view from one started on the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:15-23",
+      "quote": "const originPath = (request) =>\n  request.payload?.copyOrigin === 'notification-view'\n    ? pagePath(request.params.journeyId, 'check-answers')\n    : dashboardPath()",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the posted copyOrigin field to pick where a refused or failed copy returns the trader."
     },
     {
       "id": "repo-frontend-p5-069",
-      "statement": "No upper limit is set on the number of animals or the number of packages.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:22-35",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Only min: 1 is passed to requiredIntegerInRange and integerInRange; looked in fields.js and the copy files for a maximum and its message and found none."
+      "statement": "When a copy cannot be saved, the trader is shown the page they started from again, carrying a recoverable-error message, with an HTTP 500 status: the notification view if the copy was started there, otherwise the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:20-38",
+      "quote": "const recoverCopy = (request, h) =>\n  request.payload?.copyOrigin === 'notification-view'\n    ? renderNotificationView(request, h, { recoverableError: true })\n    : renderDashboard(request, h, { recoverableError: true })",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-070",
-      "statement": "Quantity validation runs per species line, so each line with a problem gets its own error message and error summary link that focuses its field; entered values are kept (trimmed) on the re-rendered page.",
+      "statement": "A copy posted against a notification that has moved on since the page was loaded is refused, and the trader is returned to where they started with a stale-action marker in the URL (?staleAction=1).",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:94-98; view-model/values.js:14-20",
-      "quote": "const values = payloadValues(payload, lines)\n  const { errors } = validate(fieldsFor(lines), payload)\n  if (errors) {\n    return render(request, h, journey, lines, values, errors)\n  }",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:43-55",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      request.logger.info(\n        {\n          journeyId: request.params.journeyId,\n          reason: 'stale-concurrency-token'\n        },\n        'Copy refused as stale'\n      )\n      return h.redirect(`${originPath(request)}?staleAction=1`)\n    }",
+      "confidence": "verbatim",
+      "note": "The refusal is logged once at info with the notification's id and the reason."
     },
     {
       "id": "repo-frontend-p5-071",
-      "statement": "Count-drop rule: once the quantities are otherwise valid, a line that already holds animal identifier records cannot be given a number of animals lower than the number of records.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:12-21; consignment-details/consignment-details.controller.js:100-114",
-      "quote": "if (!Number.isInteger(entered) || entered >= records) {\n    return []\n  }",
-      "confidence": "verbatim"
+      "statement": "A copy refused as stale that was started on the notification view sends the trader to /notifications/{journeyId}/check-answers, a path the service serves no page at, so the refusal does not land on the review page it means to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:17",
+      "quote": "    ? pagePath(request.params.journeyId, 'check-answers')",
+      "confidence": "inferred",
+      "note": "'check-answers' appears as a path nowhere else in src/server: the review page's slug is 'notification-view' (features/check-answers/page.js:3) and its only route comes from pageRoutes(page, ...) at features/check-answers/controller.js:258. The copy handler's own success and failure paths use the page objects' slugs rather than this literal."
     },
     {
       "id": "repo-frontend-p5-072",
-      "statement": "The count-drop error reads 'You have <N> identifier record(s) for <species> but entered <M> animal(s). Remove identifier records or keep the higher count.', pluralised by count.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:1,52-53",
-      "quote": "`You have ${plural(records, 'identifier record')} for ${species} but entered ${plural(entered, 'animal')}. Remove identifier records or keep the higher count.`",
-      "confidence": "verbatim"
+      "statement": "A copy request carries the version of the notification it was started from, so a trader's copy can be checked against the record's current version.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:25-33",
+      "quote": "const concurrencyToken =\n    request.payload?.concurrencyToken != null\n      ? Number(request.payload.concurrencyToken)\n      : undefined",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the posted concurrencyToken field and passes it as a number to copyJourney; a request without one passes nothing."
     },
     {
       "id": "repo-frontend-p5-073",
-      "statement": "The count-drop error shows against the line's number of animals field, but its error summary link goes to that line's card on the identification page (#identification-card-<line index>, keeping the change context).",
+      "statement": "A trader copies a notification from the notification list with a button reading \"Copy as new\" that also names the notification's reference for a screen reader.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:24-33",
-      "quote": "href: `${kit.withChangeContext(\n        request,\n        pagePath(request.params.journeyId, animalIdentificationPage.slug)\n      )}#identification-card-${index}`",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:22-27",
+      "quote": "page\n    .getByRole('button', {\n      name: `${sharedCopy.notificationActions.copy.text} ${dashboardCopy.actionHidden(sourceReference)}`\n    })\n    .click()",
+      "confidence": "verbatim",
+      "note": "shared/copy.en.js:52-54 gives the copy action the words 'Copy as new'; the hidden reference text belongs to the dashboard feature, another part."
     },
     {
       "id": "repo-frontend-p5-074",
-      "statement": "The count-drop error summary uses the shared error summary title.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:109-112",
-      "quote": "titleText: sharedCopy.errorSummary.title,",
+      "statement": "Copying a notification creates a separate draft: the trader lands on an overview whose reference differs from the source's, and the notification shows as Draft.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:34-45",
+      "quote": "test('copy creates a separate draft notification', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-075",
-      "statement": "Saving the Commodity details page stores the number of animals on every line, and the number of packages only on lines of package-count commodities, then goes to the next page the flow names (the overview, per the fit spec).",
+      "statement": "The copy keeps the source notification's answers: the new draft's origin task reads Complete and holds the same country of origin.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:116-126; fit/consignment-details.fit.spec.js:209-212",
-      "quote": "numberOfAnimalsQuantity: values[animalsField(index)],\n      ...(packagesApply(entry.commoditySelection)\n        ? { numberOfPackages: values[packagesField(index)] }\n        : {})",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:47-64",
+      "quote": "test('copy preserves the source answers in the new draft', async ({\n    page\n  }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-076",
-      "statement": "The Commodity details page creates no lines of its own: it only updates the quantities on lines the search page created.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:32",
-      "quote": "export const meta = { ...page, collects: [] }",
+      "statement": "After a copy both the source notification and the copy are listed, each under its own reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:66-81",
+      "quote": "test('copy leaves both source and copied notifications on the dashboard', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-077",
-      "statement": "On load, the Commodity details page fills each field with the quantity already saved on its line.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/values.js:6-12",
-      "quote": "export const storedValues = (lines) =>",
+      "statement": "A copied notification's overview has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:83-90",
+      "quote": "test('copied notification hub has no serious or critical axe violations', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-078",
-      "statement": "The Commodity details page ends with the shared save actions 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'.",
+      "statement": "Nothing in the notification-actions feature proves what amend, cancel amend or delete do: its only tests are the four copy tests.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:35; fit/consignment-details.fit.spec.js:289-307",
-      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-079",
-      "statement": "Accessibility rule for these fit specs: a page passes when axe, run with the wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa tags, finds no serious or critical violations.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/axe.js:4-19",
-      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:29-91",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every test in the feature's fit spec (copy creates a separate draft, copy preserves the source answers, copy leaves both on the dashboard, copied hub axe) and at its controller, which registers the copy route alone. The other three slugs' behaviour sits in the amend, cancel-amend and delete features, which other parts cover."
     },
     {
       "id": "repo-frontend-p5-080",
-      "statement": "Fit test proves the search page first shows the inset, the search box with its label and hint, and the help details, with no tick boxes and no selection panel.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'offers a search box and lists nothing until it is used'",
-      "quote": "test('offers a search box and lists nothing until it is used'",
-      "confidence": "verbatim"
+      "statement": "The overview carries no caption above its heading: the page opens straight on the \"Overview\" H1.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:5-7",
+      "quote": "{% block journeyContent %}\n  <h1 class=\"govuk-heading-xl\">{{ heading }}</h1>",
+      "confidence": "gap",
+      "note": "Looked at the hub template's journeyContent block (nothing before the H1), the handler's view model (no caption key, controller.js:120-130), the hub copy file (no caption key) and shared/layout.njk (which holds no caption). The set's question pages take a section caption from the journey flow, which is another part."
     },
     {
       "id": "repo-frontend-p5-081",
-      "statement": "Fit test proves the help details explain commodity codes and link to the Trade Tariff tool in a new tab with rel 'noreferrer noopener'.",
+      "statement": "A trader starting a live-animals notification lands on the overview, and every journey page's Save or Cancel and return action brings them back to it.",
       "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'explains commodity codes and links out to the Trade Tariff tool'",
-      "quote": "test('explains commodity codes and links out to the Trade Tariff tool'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-082",
-      "statement": "Fit test proves a 2-character query ('Bo') lists no tick boxes and no 'No results found' message.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'lists nothing for a query shorter than three characters'",
-      "quote": "test('lists nothing for a query shorter than three characters'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-083",
-      "statement": "Fit test proves searching 'Bos' lists exactly two species tick boxes, grouped under the 'Cow (0102)' fieldset.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'groups the matching species under their commodity heading'",
-      "quote": "test('groups the matching species under their commodity heading'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-084",
-      "statement": "Fit test proves searching 'Bos' offers 'Cattle (Bos spp.)' and 'Domestic cattle (Bos taurus)', common name first with the scientific name in brackets.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'offers each species as its common name with the scientific name after it'",
-      "quote": "const BOS_SPP_LABEL = 'Cattle (Bos spp.)'\nconst BOS_TAURUS_LABEL = 'Domestic cattle (Bos taurus)'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-085",
-      "statement": "Fit test proves searching the common name 'cattle' finds both cattle species under Cow and nothing else.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'finds a species by its common name'",
-      "quote": "test('finds a species by its common name'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-086",
-      "statement": "Fit test proves the code query '0106' renders separate 'Cat (01061900)' and 'Dog (01061900)' groups, offering 'Cat (Felis catus)' and 'Dog (Canis lupus familiaris)'.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'renders a separate group per matching commodity'",
-      "quote": "test('renders a separate group per matching commodity'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-087",
-      "statement": "Fit test proves a query matching nothing ('zzz') shows 'No results found' and no tick boxes.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'says so when nothing matches'",
-      "quote": "test('says so when nothing matches'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-088",
-      "statement": "Fit test proves the selection panel keeps species chosen under earlier queries while a different query is shown, counts them ('2 selected'), and disappears after Clear all.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'counts and lists what has been chosen, and clears it on request'",
-      "quote": "test('counts and lists what has been chosen, and clears it on request'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-089",
-      "statement": "Fit test proves the search page's back link returns to the Overview.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'back link returns to the overview'",
-      "quote": "test('back link returns to the overview'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-090",
-      "statement": "Fit test proves saving with nothing chosen shows 'Select a commodity' in the error summary, whose link focuses the search box, and no selection panel.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'validation: no commodity links to and focuses the search box'",
-      "quote": "test('validation: no commodity links to and focuses the search box'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-091",
-      "statement": "Fit test proves species chosen under different queries (Felis catus, Bos taurus, Bison bison) are saved in canonical order (Bison bison, Bos taurus, Felis catus) on the Commodity details page, and the reopened search page shows '3 selected' with exactly those.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'saves pairs found under different queries, in canonical order'",
-      "quote": "test('saves pairs found under different queries, in canonical order'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-092",
-      "statement": "Fit test proves a species already saved on the notification shows ticked when it reappears in search results.",
-      "kind": "behaviour",
-      "ref": "fit/search.fit.spec.js — 'ticks a result that is already on the notification'",
-      "quote": "test('ticks a result that is already on the notification'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-093",
-      "statement": "Fit test proves the search page, with a selection, results and the help open, has no serious or critical axe violations.",
-      "kind": "non-functional",
-      "ref": "fit/search.fit.spec.js — 'has no serious or critical axe violations'",
-      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Commodity search')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-094",
-      "statement": "Fit test proves the Commodity details page renders the Selected commodities table (Cow 0102, Cat 01061900), a species heading per line, and fields whose accessible names are the labels, with no description on number of animals and the packages hint on number of packages.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'renders grouped species quantities and collection table'",
-      "quote": "test('renders grouped species quantities and collection table'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-095",
-      "statement": "Fit test proves the commodity heading is large, the species heading medium and both quantity labels small.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'steps the type down from commodity heading to species heading to quantity labels'",
-      "quote": "test('steps the type down from commodity heading to species heading to quantity labels'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-096",
-      "statement": "Fit test proves Cow keeps a commodity-level remove ('Remove Cow', remove:0) while Cat, on 01061900, gets a species-level remove ('Remove Cat', remove-species:1).",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'lists a commodity on code 01061900 as a species row whose remove drops that species alone'",
-      "quote": "test('lists a commodity on code 01061900 as a species row whose remove drops that species alone'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-097",
-      "statement": "Fit test proves the Commodity details back link returns to the Overview.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'back link returns to the overview the hub task came from'",
-      "quote": "test('back link returns to the overview the hub task came from'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-098",
-      "statement": "Fit test proves a non-whole number of animals ('2.5') shows 'Enter a whole number greater than 0', whose summary link focuses the field, with the invalid value kept.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: invalid number of animals for Bos taurus links to and focuses the preserved value'",
-      "quote": "['number of animals for Bos taurus', FIRST_ANIMALS_QUANTITY_FIELD, '2.5'],",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-099",
-      "statement": "Fit test proves a non-numeric number of packages ('boxes') shows 'Number of packages must be a whole number, like 5', whose summary link focuses the field, with the value kept and other fields unchanged.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: invalid number of packages for Bos taurus links to and focuses the preserved value'",
-      "quote": "['number of packages for Bos taurus', FIRST_PACKAGES_FIELD, 'boxes'],",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-100",
-      "statement": "Fit test proves a number of animals of '0' shows 'Enter a whole number greater than 0', whose summary link focuses the field, with the value kept.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: invalid number of animals for Felis catus links to and focuses the preserved value'",
-      "quote": "['number of animals for Felis catus', SECOND_ANIMALS_QUANTITY_FIELD, '0'],",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-101",
-      "statement": "Fit test proves a negative number of packages ('-1') for Cat shows 'Number of packages must be a whole number, like 5', so Cat lines are asked for packages too.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: invalid number of packages for Felis catus links to and focuses the preserved value'",
-      "quote": "['number of packages for Felis catus', 'numberOfPackages-1', '-1']",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-102",
-      "statement": "Fit test proves saving with every number of animals blank holds the page and shows 'Enter the number of animals' once per species, in the summary and on each field, with the first link focusing the first field.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: when every animal count is blank, holds the page and names each species'",
-      "quote": "test('validation: when every animal count is blank, holds the page and names each species'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-103",
-      "statement": "Fit test proves when one number of animals is filled, only the blank species gets the required error, and the filled value is kept.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'validation: when one animal count is filled, only the blank species is named'",
-      "quote": "test('validation: when one animal count is filled, only the blank species is named'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-104",
-      "statement": "Fit test proves Save and continue stores every species line's animals and packages counts, goes to the Overview, and the counts reappear when the page is reopened.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'saves and persists per-species counts'",
-      "quote": "test('saves and persists per-species counts'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-105",
-      "statement": "Fit test proves removing the Cat species row drops Cat from the table and leaves Cow's saved number of animals unchanged.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'removes one species row without changing another quantity'",
-      "quote": "test('removes one species row without changing another quantity'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-106",
-      "statement": "Fit test proves removing the Cow commodity row drops Cow, keeps Cat and Cat's saved count travels with it.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'removes one commodity group without changing another quantity'",
-      "quote": "test('removes one commodity group without changing another quantity'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-107",
-      "statement": "Fit test proves removing the last commodity returns to the commodity search page, and going to /consignment-details with nothing selected also lands on the search page.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'removing the last commodity returns to the commodity question'",
-      "quote": "test('removing the last commodity returns to the commodity question'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-108",
-      "statement": "Fit test proves Add another commodity reopens search with the saved species still ticked, and adding a dog keeps the existing counts while the new line's number of animals starts blank.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'adds another commodity while preserving an existing quantity'",
-      "quote": "test('adds another commodity while preserving an existing quantity'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-109",
-      "statement": "Fit test proves the Commodity details page's button group holds 'Save and continue', 'Save and return to overview' and the 'Cancel and return to overview' link.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'ends with all three controls now the hub links straight here'",
-      "quote": "test('ends with all three controls now the hub links straight here'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p5-110",
-      "statement": "Fit test proves 'Save and return to overview' stores the counts and returns to the Overview.",
-      "kind": "behaviour",
-      "ref": "fit/consignment-details.fit.spec.js — 'save and return to overview stores the counts and marks the row Completed'",
-      "quote": "test('save and return to overview stores the counts and marks the row Completed'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:73-90 and :120-125",
+      "quote": "const expectHub = (page) =>\n  expect(page.getByRole('heading', { name: copy.title })).toBeVisible()",
       "confidence": "verbatim",
-      "note": "The test name says it marks the row Completed, but the test asserts only the Overview heading and the stored counts, not the row's status."
+      "note": "Every test in the hub fit spec opens with startNotification(page) and then finds the Overview heading; the copy action lands there too (notification-actions.fit.spec.js:39-41)."
     },
     {
-      "id": "repo-frontend-p5-111",
-      "statement": "Fit test proves the Commodity details page has no serious or critical axe violations.",
-      "kind": "non-functional",
-      "ref": "fit/consignment-details.fit.spec.js — 'has no serious or critical axe violations'",
-      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Commodity details')",
-      "confidence": "verbatim"
+      "id": "repo-frontend-p5-079",
+      "statement": "The overview is offered in Welsh with every English key translated: the Welsh copy carries the same key tree as the English, with no key missing and none extra.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js:2-67 against copy/copy.en.js:1-66",
+      "quote": "title: 'Trosolwg',",
+      "confidence": "verbatim",
+      "note": "Both files hold title, commodityTotals (heading, animalsLabel, animalsCaption, animalsRegionLabel, packagesLabel, packagesCaption, packagesRegionLabel), reviewAndSubmit, returnToDashboard, statuses (complete, toDo), taskListHeading, groups (the six section ids) and rows (the twelve row ids, with hint only under addresses). The Welsh file is headed 'MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'"
     }
   ]
 }

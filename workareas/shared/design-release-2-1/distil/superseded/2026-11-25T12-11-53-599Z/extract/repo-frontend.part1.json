@@ -1,0 +1,1454 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 1, shared layout, copy and journey flow, read at repos/trade-imports-animals-frontend main 4c2119da (tag 0.286.0). Read in full: src/server/app/shared/ (layout.njk, kit.js, copy.js, copy-leaves.js, copy.en.js, copy.cy.js, paths.js, set-context.js, save-actions.njk, error-summary.njk, error.njk, section-caption.njk; unit tests left out), src/server/app/routes-live-animals.js, routes.js, set-completeness.js, sets/live-animals/set.js, journeys/linear/config.js, features/index.js, features/evaluation.js, features/system/evaluation.js, flow/flow.js, flow/task-rows.js, flow/run.js, flow/stored-answers.js, flow/entry-guard.js, flow/section-captions/ (index.js, copy/copy.en.js, copy/copy.cy.js), the section-caption, page-title and service-navigation fit specs, fit/journey-smoke.fit.spec.js, fit/live-animals-journey.js and fit/sign-in.js. Page ids and slugs were looked up in each feature's page.js only to name the flow's pages. Covered: the page shell (title pattern, GOV.UK header, service navigation and its four items, alpha phase banner and feedback link, back link, notification banners for recoverable and stale-action errors, journey status strip, footer links, error page and unauthorised copy); every shared copy string and validator default, with the Welsh files read for existence and parity; the save-actions, error-summary and section-caption components and the shared view-model helpers (change context, exit to hub, date field, recoverable save); the set mount at /live-animals with session auth on every route and the 28 mounted route modules; the ten flow sections and their pages, the review gate, the opening run's 14 steps, the 12 hub task rows with their parts and applicability, stored-answer demotion, the deep-link entry guard; the 8 caption sections and their strings; and every test in the four fit specs. Gaps recorded: no language toggle, a placeholder Manage account link, and no custom skip link.",
+  "claims": [
+    {
+      "id": "repo-frontend-p1-001",
+      "statement": "Every page's browser title reads the page name, then the service name, then GOV.UK, joined by ' - '.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk block pageTitle",
+      "quote": "{{ pageTitle }} - {{ sharedCopy.layout.serviceName }} - {{ sharedCopy.layout.govukSuffix }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-002",
+      "statement": "When a page shows an error summary, its browser title is prefixed with 'Error: '.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk block pageTitle; src/server/app/shared/copy.en.js:4",
+      "quote": "{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %} ... errorTitlePrefix: 'Error: '",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-003",
+      "statement": "The service name shown in the service navigation and page titles is 'Import notification service'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:3",
+      "quote": "serviceName: 'Import notification service'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-004",
+      "statement": "The GOV.UK suffix in the page title is the brand word 'GOV.UK' and is the same in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:5-7; src/server/app/shared/copy.cy.js:6",
+      "quote": "govukSuffix: 'GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-005",
+      "statement": "The GOV.UK header's logo links to https://www.gov.uk/.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk block govukHeader",
+      "quote": "homepageUrl: \"https://www.gov.uk/\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-006",
+      "statement": "The service navigation shows the service name linked to the set's dashboard (the home URL resolved inside the request's set, /live-animals).",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk block govukServiceNavigation; src/server/app/shared/kit.js:148-151",
+      "quote": "serviceName: sharedCopy.layout.serviceName,\n    serviceUrl: homeUrl ... homeUrl: dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-007",
+      "statement": "The service navigation items appear only when the user is signed in; a signed-out page shows the service name with no items.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk block govukServiceNavigation",
+      "quote": "{% set navigationItems = [] %}\n  {% if userSession and userSession.isAuthenticated %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-008",
+      "statement": "The service navigation offers four items in this order: Dashboard, Address book, Manage account, Log out.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:14-20; src/server/app/shared/layout.njk block govukServiceNavigation",
+      "quote": "dashboard: 'Dashboard',\n      addressBook: 'Address book',\n      manageAccount: 'Manage account',\n      logOut: 'Log out'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-009",
+      "statement": "The service navigation's collapsed-menu button reads 'Menu', and the navigation landmark is named 'Menu'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:15; features/service-navigation.fit.spec.js navigation()",
+      "quote": "menuButton: 'Menu'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-010",
+      "statement": "The Dashboard navigation item links to the set's own dashboard path (/live-animals), not the bare root.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk block govukServiceNavigation; src/server/app/shared/paths.js dashboardPath",
+      "quote": "text: sharedCopy.layout.serviceNavigation.dashboard,\n        href: homeUrl",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-011",
+      "statement": "The Dashboard navigation item is marked as the current item on the dashboard and on every page under /live-animals/notifications, so it stays current inside a notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js inDashboardSection; src/server/app/shared/layout.njk active",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
+      "confidence": "inferred",
+      "note": "The template marks the item when activeNavigationItem == \"dashboard\"; that value is set from inDashboardSection in src/config/nunjucks/context/context.js, outside this part's read. The service-navigation fit spec proves both cases."
+    },
+    {
+      "id": "repo-frontend-p1-012",
+      "statement": "The Address book navigation item links to an address-book URL supplied by the page context (the Import Notification Service's address book), not a page inside this set.",
+      "kind": "integration",
+      "ref": "src/server/app/shared/layout.njk block govukServiceNavigation",
+      "quote": "text: sharedCopy.layout.serviceNavigation.addressBook,\n        href: addressBookUrl",
+      "confidence": "inferred",
+      "note": "addressBookUrl is filled from insAddressBookUrl() in src/config/nunjucks/context/context.js, outside this part's read."
+    },
+    {
+      "id": "repo-frontend-p1-013",
+      "statement": "The Manage account navigation item is a placeholder: it links to '#' and leads nowhere.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk top-level set manageAccountUrl",
+      "quote": "{% set manageAccountUrl = \"#\" %}",
+      "confidence": "verbatim",
+      "note": "No manage-account page exists in this slice."
+    },
+    {
+      "id": "repo-frontend-p1-014",
+      "statement": "The Log out navigation item links to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk top-level set signOutUrl",
+      "quote": "{% set signOutUrl = \"/auth/sign-out\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-015",
+      "statement": "The phase banner shows a grey 'Alpha' tag.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk block beforeContent; src/server/app/shared/copy.en.js:10",
+      "quote": "tag: { text: sharedCopy.layout.phaseBanner.tag, classes: \"govuk-tag--grey\" } ... tag: 'Alpha'",
+      "confidence": "verbatim",
+      "note": "Comment: 'Grey tag to match Design release 1; the GDS phase-banner example leaves the tag blue.'"
+    },
+    {
+      "id": "repo-frontend-p1-016",
+      "statement": "The phase banner reads 'This is a new service. Help us improve it and give your feedback by email.', with 'give your feedback by email' as the link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:11-12; src/server/app/shared/layout.njk block beforeContent",
+      "quote": "bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-017",
+      "statement": "The phase banner's feedback link is an email link to the APHA service desk, the same in both languages.",
+      "kind": "integration",
+      "ref": "src/server/app/shared/layout.njk top-level set feedbackUrl",
+      "quote": "{% set feedbackUrl = \"mailto:APHAServiceDesk@apha.gov.uk\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-018",
+      "statement": "Pages show no breadcrumbs: a page gets one route back, the back link, and one route up, the service navigation.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk block beforeContent",
+      "quote": "No breadcrumbs: Design release 1 gives a page one route backwards — the\n     back link — and one route up, the service navigation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-019",
+      "statement": "A back link labelled 'Back' appears above the content only on pages that supply a back-link target.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk block beforeContent; src/server/app/shared/copy.en.js:8",
+      "quote": "{% if backLink %}\n    {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-020",
+      "statement": "Page content sits in a two-thirds column by default; a 'display' page uses the full width.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:19-22; src/server/app/shared/layout.njk block content",
+      "quote": "form: 'govuk-grid-column-two-thirds',\n  display: 'govuk-grid-column-full'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-021",
+      "statement": "When a save fails with a recoverable backend error, the page shows an alert banner titled 'There is a problem' saying 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:36-39; src/server/app/shared/layout.njk block content",
+      "quote": "title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-022",
+      "statement": "A recoverable backend failure during a save re-renders the page with the recoverable-error banner instead of failing; a stale-version conflict and any other error are not treated as recoverable.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:178-190",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      throw error\n    }\n    if (isRecoverableBackendError(error)) {\n      return { failure: await onRecoverableFailure() }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-023",
+      "statement": "When a form post is refused because the notification was changed since the page was opened, the user is redirected back to the same page with staleAction=1 in the query.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:192-203",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-024",
+      "statement": "A page refused for a stale notification shows an alert banner titled 'The notification has been updated' saying 'This notification was updated since you opened it. Review the details and try again.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:47-50; src/server/app/shared/layout.njk block content",
+      "quote": "title: 'The notification has been updated',\n    body: 'This notification was updated since you opened it. Review the details and try again.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-025",
+      "statement": "Every page view carries the notification's concurrency token, so a save can be checked against the version the user opened.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:154",
+      "quote": "concurrencyToken: journey?.concurrencyToken ?? null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-026",
+      "statement": "A page inside a notification can show a strip above its content with the notification's status tag and its reference in bold.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk block content (app-journey-strip); src/server/app/shared/kit.js:52-58",
+      "quote": "{{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}\n          <span class=\"govuk-body govuk-!-font-weight-bold\">{{ journeyStrip.reference }}</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-027",
+      "statement": "The status strip shows a blue 'Draft' tag for a draft notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:34-37; src/server/app/shared/copy.en.js:69",
+      "quote": "[DRAFT]: {\n    text: sharedCopy.journeyStrip.draft,\n    classes: 'govuk-tag--blue' ... draft: 'Draft'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-028",
+      "statement": "The status strip shows a green 'Submitted' tag for a submitted notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:38-41; src/server/app/shared/copy.en.js:70",
+      "quote": "[SUBMITTED]: {\n    text: sharedCopy.journeyStrip.submitted,\n    classes: 'govuk-tag--green' ... submitted: 'Submitted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-029",
+      "statement": "The status strip shows a yellow 'Amending' tag for a notification being amended.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:42-45; src/server/app/shared/copy.en.js:71",
+      "quote": "[AMEND]: {\n    text: sharedCopy.journeyStrip.amend,\n    classes: 'govuk-tag--yellow' ... amend: 'Amending'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-030",
+      "statement": "The status strip shows a grey 'Deleted' tag for a deleted notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:46-49; src/server/app/shared/copy.en.js:72",
+      "quote": "[DELETED]: {\n    text: sharedCopy.journeyStrip.deleted,\n    classes: 'govuk-tag--grey' ... deleted: 'Deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-031",
+      "statement": "The footer has a 'Privacy' link to https://www.gov.uk/help/privacy-notice.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk block govukFooter; src/server/app/shared/copy.en.js:22",
+      "quote": "href: \"https://www.gov.uk/help/privacy-notice\",\n          text: sharedCopy.layout.footer.privacy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-032",
+      "statement": "The footer has a 'Cookies' link to https://www.gov.uk/help/cookies.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk block govukFooter; src/server/app/shared/copy.en.js:23",
+      "quote": "href: \"https://www.gov.uk/help/cookies\",\n          text: sharedCopy.layout.footer.cookies",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-033",
+      "statement": "The footer has an 'Accessibility statement' link to https://www.gov.uk/help/accessibility-statement.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk block govukFooter; src/server/app/shared/copy.en.js:24",
+      "quote": "href: \"https://www.gov.uk/help/accessibility-statement\",\n          text: sharedCopy.layout.footer.accessibility",
+      "confidence": "verbatim",
+      "note": "All three footer links point at generic GOV.UK help pages rather than service-specific privacy, cookies or accessibility pages."
+    },
+    {
+      "id": "repo-frontend-p1-034",
+      "statement": "The layout offers no language toggle: nothing in the page shell lets a user switch to Welsh, and shared copy resolves to English unless a locale is passed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk (whole file); src/server/app/shared/copy.js copyFor",
+      "quote": "",
+      "confidence": "gap",
+      "note": "copy.js says locale selection 'plugs in via the `locale` argument when it is' commissioned; kit.js calls copyFor({ en: sharedEn, cy: sharedCy }) with no locale."
+    },
+    {
+      "id": "repo-frontend-p1-035",
+      "statement": "Copy falls back to English when the requested language is unknown, and English is the default language.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/copy.js copyFor",
+      "quote": "export const copyFor = (locales, locale = DEFAULT_LOCALE) =>\n  locales[locale] ?? locales[DEFAULT_LOCALE]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-036",
+      "statement": "A Welsh shared copy file exists with the same keys as the English one, but it is a machine draft not reviewed by a translator and must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-037",
+      "statement": "Every shared copy value must be a non-empty string or a function that builds a string.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy-leaves.js isCopyLeaf",
+      "quote": "typeof value === 'function' ||\n  (typeof value === 'string' && value.trim().length > 0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-038",
+      "statement": "The layout sets no skip link of its own, so pages carry only the standard GOV.UK template's 'Skip to main content' link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk extends govuk/template.njk",
+      "quote": "{% extends \"govuk/template.njk\" %}",
+      "confidence": "inferred",
+      "note": "The layout overrides no skipLink block and shared copy has no skip-link string, so the skip link text is the govuk-frontend default in English only."
+    },
+    {
+      "id": "repo-frontend-p1-039",
+      "statement": "The signed-in user's email or name is shown nowhere on the page, and there is no 'Sign out' link outside the navigation's 'Log out'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js 'shows the signed-in user nowhere, as Design release 1 does not'",
+      "quote": "await expect(page.getByText(STUB_USER_EMAIL)).toHaveCount(0)\n    await expect(\n      page.getByRole('link', { name: 'Sign out', exact: true })\n    ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-040",
+      "statement": "The sign-in failure page is titled 'Sorry, we are unable to sign you in' with the heading 'Sorry, we are unable to sign you in.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:27-29",
+      "quote": "title: 'Sorry, we are unable to sign you in',\n    heading: 'Sorry, we are unable to sign you in.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-041",
+      "statement": "The sign-in failure page asks the user to 'Please try again', with 'try again' as a link to sign in.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:30-31",
+      "quote": "bodyPrefix: 'Please',\n    signInLinkText: 'try again'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-042",
+      "statement": "The shared error page shows a large heading and one paragraph of message, inside the shared layout.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/error.njk",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n\n  <p class=\"govuk-body\">{{ message }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-043",
+      "statement": "The error page text for a page that does not exist is 'Page not found'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:41",
+      "quote": "notFound: 'Page not found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-044",
+      "statement": "The error page text for a forbidden request is 'Forbidden'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:42",
+      "quote": "forbidden: 'Forbidden'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-045",
+      "statement": "The error page text for an unauthenticated request is 'You need to sign in to view this page'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:43",
+      "quote": "unauthorized: 'You need to sign in to view this page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-046",
+      "statement": "The error page text for a bad request is 'There is a problem with your request'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:44",
+      "quote": "badRequest: 'There is a problem with your request'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-047",
+      "statement": "The error page text for any other failure is 'Something went wrong'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:45",
+      "quote": "unexpected: 'Something went wrong'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-048",
+      "statement": "The error page on a path outside any set uses the shared layout with no caption, back link or overview link, and its home link is the root.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:164-176",
+      "quote": "// No caption, back link or hub link: all three are journey chrome, and there\n  // is no journey here. The home link is the root, which redirects to the\n  // default set.\n  homeUrl: '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-049",
+      "statement": "The root path redirects to the default set's dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:148-151, 167-170",
+      "quote": "The home link is the root, which redirects to the\n  // default set.",
+      "confidence": "inferred",
+      "note": "Stated in comments; the redirect route itself is outside this part's read."
+    },
+    {
+      "id": "repo-frontend-p1-050",
+      "statement": "Every error summary in the service is titled 'There is a problem'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:33-35; src/server/app/shared/kit.js:87",
+      "quote": "errorSummary: {\n    title: 'There is a problem'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-051",
+      "statement": "The error summary appears only when a page has at least one error, and lists one entry per field error in the order the errors were raised.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:78-91; src/server/app/shared/error-summary.njk",
+      "quote": "if (entries.length === 0) {\n    return null\n  } ... errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-052",
+      "statement": "Each error summary entry links to the field on the same page by default, and can instead link to another page where a page asks for it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:62, 66-71",
+      "quote": "Defaults to the in-page anchor `#key`; pass a builder when the entries link\n * somewhere else, such as another page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-053",
+      "statement": "The error summary takes focus when shown, except on a page that renders it without the user having just been refused, which keeps focus where it is.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:72-74",
+      "quote": "keep the caret where it is\n * instead of moving it to the summary. Set it on a page that renders the\n * summary without the user having just been refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-054",
+      "statement": "A field with an error shows that error's message against the field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:93-94",
+      "quote": "fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-055",
+      "statement": "The shared notification action to copy a notification is labelled 'Copy as new'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:53",
+      "quote": "text: 'Copy as new'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-056",
+      "statement": "After a copy, a success message titled 'Notification copied' says 'A new draft notification has been created.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:54-55",
+      "quote": "successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-057",
+      "statement": "The shared notification action to delete a notification is labelled 'Delete'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:58",
+      "quote": "text: 'Delete'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-058",
+      "statement": "After a delete, a success message titled 'Notification deleted' says 'The notification has been deleted.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:59-60",
+      "quote": "successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-059",
+      "statement": "Address pickers offer a shared 'Add a new address' link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:75",
+      "quote": "addNewAddress: 'Add a new address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-060",
+      "statement": "When a chosen address is not in the user's address book, the error reads 'The address could not be found in your address book. Select another address or try adding it again.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:77-78",
+      "quote": "'The address could not be found in your address book. Select another address or try adding it again.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-061",
+      "statement": "When the address book cannot be reached, the error reads 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:79-80",
+      "quote": "'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-062",
+      "statement": "The default error for a choice outside the allowed options is 'Select a valid option'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:93",
+      "quote": "oneOf: 'Select a valid option'",
+      "confidence": "verbatim",
+      "note": "validatorDefaults are fallbacks used when a page passes no message of its own."
+    },
+    {
+      "id": "repo-frontend-p1-063",
+      "statement": "The default error for an invalid postcode is 'Enter a valid postcode'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:94",
+      "quote": "postcode: 'Enter a valid postcode'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-064",
+      "statement": "The default error for an invalid vehicle registration is 'Enter a valid registration number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:95",
+      "quote": "vehicleReg: 'Enter a valid registration number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-065",
+      "statement": "The default error for an invalid UK phone number is 'Enter a valid UK telephone number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:96",
+      "quote": "ukPhone: 'Enter a valid UK telephone number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-066",
+      "statement": "The default error for an invalid date is 'Enter a valid date'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:97",
+      "quote": "date: 'Enter a valid date'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-067",
+      "statement": "The default error for an invalid time is 'Enter a real time, like 14:30'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:98",
+      "quote": "time: 'Enter a real time, like 14:30'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-068",
+      "statement": "The default error for a value that is not a whole number is 'Enter a whole number'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:99",
+      "quote": "wholeNumber: 'Enter a whole number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-069",
+      "statement": "The default error for text over its length limit is 'Enter N characters or fewer', with the limit filled in.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:100",
+      "quote": "maxLength: (max) => `Enter ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-070",
+      "statement": "The default error for a number out of range is 'Enter a number between MIN and MAX', with the bounds filled in.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:101",
+      "quote": "numberBetween: (min, max) => `Enter a number between ${min} and ${max}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-071",
+      "statement": "The primary button on a journey page reads 'Save and continue' unless the page supplies its own.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/save-actions.njk; src/server/app/shared/copy.en.js:64",
+      "quote": "{{ govukButton(primary or { text: copy.saveAndContinue }) }} ... saveAndContinue: 'Save and continue'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-072",
+      "statement": "A page the overview links to directly ends with three controls: the primary button, a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/save-actions.njk header comment",
+      "quote": "a page the hub links to directly ends with all three controls —\n   the primary, \"Save and return to overview\" and \"Cancel and return to\n   overview\" — so a trader can stop and leave from where the hub sent them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-073",
+      "statement": "A page reached from another page, not from the overview, ends with the primary button alone, and the trader leaves the way they came in.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/save-actions.njk header comment; fit/live-animals-journey.js:485-507",
+      "quote": "A page reached from another page ends with the primary alone, and the trader leaves the way they came in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-074",
+      "statement": "'Save and return to overview' saves the page's answers and then goes to the notification's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk; src/server/app/shared/kit.js:96-97",
+      "quote": "name: \"exit\",\n        value: \"hub\" ... request.payload?.exit === 'hub' ? hubPath(request.params.journeyId) : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-075",
+      "statement": "'Cancel and return to overview' is a plain link to the overview, so it leaves without saving.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk",
+      "quote": "<a class=\"govuk-link\" href=\"{{ hubHref }}\">{{ copy.cancelAndReturnToHub }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-076",
+      "statement": "The notification's task-list page is called 'Overview' on screen; 'hub' is an internal name that never appears to users.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/save-actions.njk header comment",
+      "quote": "The\n   two return controls name the page they lead to, which is headed \"Overview\";\n   \"hub\" is the internal name for it and never appears on screen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-077",
+      "statement": "A page opened with ?change=1 (a change from the review page) keeps that flag on its own links, and its save returns to the review page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:99-108",
+      "quote": "export const withChangeContext = (request, href) =>\n  changeContext(request) ? `${href}?change=1` : href ... ? pagePath(request.params.journeyId, CYA_SLUG)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-078",
+      "statement": "After a save, the next page is: the overview if the user chose 'Save and return to overview'; otherwise the review page in change context; otherwise the next opening-run step while the opening run is in progress; otherwise the next page in the same flow section.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:104-120",
+      "quote": "hubExitTarget(request) ??\n    (changeContext(request)\n      ? pagePath(request.params.journeyId, CYA_SLUG)\n      : fallback) ... (await runTarget(request, page.id, scope)) ??\n      nextInSection(page.id, scope, request.params.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-079",
+      "statement": "The review page's slug is notification-view.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:60",
+      "quote": "export const CYA_SLUG = 'notification-view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-080",
+      "statement": "A section caption renders as a span directly above the page heading, large by default, and nothing renders when a page has no caption.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/section-caption.njk",
+      "quote": "{% macro sectionCaption(text, classes = \"govuk-caption-l\") %}\n  {%- if text %}<span class=\"{{ classes }}\">{{ text }}</span>{% endif -%}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-081",
+      "statement": "A date field is a single text box, width 10, taking a date as d/m/yyyy, with an optional earliest and latest date passed to the date picker.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:220-273",
+      "quote": "/^(?<day>\\d{1,2})\\/(?<month>\\d{1,2})\\/(?<year>\\d{4})$/ ... classes: 'govuk-input--width-10' ... minDate,\n    maxDate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-082",
+      "statement": "A date that cannot be read as d/m/yyyy is kept as typed and shown back to the user, so it is refused again rather than silently lost.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:225-228, 233-236",
+      "quote": "`readDate` hands back what it could not\n * split, so an unreadable date survives a round trip and is still refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-083",
+      "statement": "Every journey page route, GET and POST, requires a signed-in session.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:15, 205-218",
+      "quote": "export const routeOptions = { auth: 'session' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-084",
+      "statement": "The live-animals set is mounted under the path /live-animals.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/set.js",
+      "quote": "export const SET_ID = 'live-animals'\nexport const SET_BASE = `/${SET_ID}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-085",
+      "statement": "Under the set's mount, the dashboard is at /, starting a notification posts to /notifications, a notification's overview is at /notifications/{journeyId}, and each page is at /notifications/{journeyId}/{slug}.",
+      "kind": "data",
+      "ref": "src/server/app/shared/paths.js",
+      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`\nexport const hubRoutePath = () => '/notifications/{journeyId}'\nexport const createRoutePath = () => '/notifications'\nexport const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-086",
+      "statement": "The live-animals set mounts 28 route modules: dashboard, overview, origin, commodity search, consignment details, animal identification, import reason, additional details, documents, addresses, party picker, address return, party edit, CPH number, port of entry, transit countries, transporters, add transporter, select transporters, commercial transporter details, private transporter details, contact, check answers, cancel amend, notification actions, delete notification, declaration and confirmation.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js allRoutes; src/server/app/routes-live-animals.js server.route",
+      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...hub.routes,\n  ...origin.routes, ... ...declaration.routes,\n  ...confirmation.routes\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-087",
+      "statement": "Fourteen pages declare what they collect for the notification: origin, commodities, consignment details, animal identification, import reason, additional details, documents, addresses, CPH number, port of entry, transit countries, transporters, contact and declaration.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/index.js dispatchPages",
+      "quote": "export const dispatchPages = [\n  origin.meta,\n  commoditiesSearch.meta, ... contactSelect.meta,\n  declaration.meta\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-088",
+      "statement": "The approved reference number for the port office (poApprovedReferenceNumber) is filled in by the system, not by a page the user answers.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/system/evaluation.js",
+      "quote": "export const evaluationBindings = feature('system', [\n  scalar({\n    field: 'poApprovedReferenceNumber',\n    obligation: poApprovedReferenceNumber\n  })\n])",
+      "confidence": "inferred",
+      "note": "Inferred from the binding sitting under a 'system' feature with no page; 'port office' is a reading of the 'po' prefix and is not stated in this slice."
+    },
+    {
+      "id": "repo-frontend-p1-089",
+      "statement": "Answers are evaluated per feature in this order: system, origin, import reason, additional details, addresses, transport, contact, CPH number, commodities, documents.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/evaluation.js",
+      "quote": "export const featureEvaluationBindings = Object.freeze([\n  system,\n  origin,\n  importReason,\n  additionalDetails,\n  addresses,\n  transport,\n  contact,\n  cphNumber,\n  commodities,\n  documents\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-090",
+      "statement": "The service refuses to start if the set has not configured every required piece of its journey (flow, obligations, persistence and so on) or has not registered its journey cookies, rather than serving an empty dashboard.",
+      "kind": "non-functional",
+      "ref": "src/server/app/set-completeness.js; src/server/app/routes-live-animals.js assertSetConfigured",
+      "quote": "A set that forgets one\n * therefore renders an empty dashboard to a real user instead of failing.\n *\n * Refusing at registration turns that into a boot failure.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-091",
+      "statement": "The set keeps four session cookies: known journeys, opening run, flow-only answers and address-handshake tokens.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/config.js",
+      "quote": "knownJourneys: 'liveAnimalsKnownJourneys',\n  openingRun: 'liveAnimalsOpeningRun',\n  flowOnlyAnswers: 'liveAnimalsFlowOnlyAnswers',\n  addressHandshakeTokens: 'liveAnimalsAddressHandshakeTokens'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-092",
+      "statement": "The entry guard runs before every live-animals route handler and redirects the user when it names a target.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-live-animals.js server.ext('onPreHandler')",
+      "quote": "journeyEntryGuardTarget(request, h)\n            )\n            return target ? h.redirect(target).takeover() : h.continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-093",
+      "statement": "The notification journey has ten flow sections in this order: start, origin, commodities, animal identification, consignment, documents, addresses, transport, contact, review.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections",
+      "quote": "id: 'start' ... id: 'origin' ... id: 'commodities' ... id: 'animalIdentification' ... id: 'consignment' ... id: 'documents' ... id: 'addresses' ... id: 'transport' ... id: 'contact' ... id: 'review'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-094",
+      "statement": "The start section holds the dashboard page alone.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[0]",
+      "quote": "id: 'start',\n    pages: [dashboardPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-095",
+      "statement": "The origin section holds the origin page alone (slug origin).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[1]",
+      "quote": "id: 'origin',\n    pages: [originPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-096",
+      "statement": "The commodities section holds the commodity search page (slug commodities) then the consignment details page (slug consignment-details).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[2]",
+      "quote": "id: 'commodities',\n    pages: [commoditiesPage, consignmentDetailsPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-097",
+      "statement": "The animal identification section holds the identification page alone (slug commodities/identification).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[3]",
+      "quote": "id: 'animalIdentification',\n    pages: [animalIdentificationPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-098",
+      "statement": "The consignment section holds the import reason page (slug import-reason) then the additional details page (slug additional-details).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[4]",
+      "quote": "id: 'consignment',\n    pages: [importReasonPage, additionalDetailsPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-099",
+      "statement": "The documents section holds the accompanying documents page alone (slug accompanying-documents).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[5]",
+      "quote": "id: 'documents',\n    pages: [documentsPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-100",
+      "statement": "The addresses section holds the addresses page (slug addresses) then the CPH number page (slug cph-number).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[6]",
+      "quote": "id: 'addresses',\n    pages: [addressesPage, cphNumberPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-101",
+      "statement": "The transport section holds port of entry (slug port-of-entry), transit countries (slug transit-countries) and the transporter list (slug transporters), in that order.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[7]",
+      "quote": "pages: [portOfEntryPage, transitCountriesPage, transportersPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-102",
+      "statement": "The transporter list is the only transporter step in the journey; adding a transporter not on the list is a detour off that page, not a step of the journey.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[7] comment",
+      "quote": "// One transporter step: the list. Adding a transporter that is not on it\n    // is a detour off that page, not a leg of the journey (design release 1).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-103",
+      "statement": "The contact section holds the consignment contact page alone (slug consignment/contact/select).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[8]",
+      "quote": "id: 'contact',\n    pages: [consignmentContactSelectPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-104",
+      "statement": "The review section holds the review page (notification-view), the declaration page and the confirmation page, in that order.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[9]",
+      "quote": "pages: [notificationViewPage, declarationPage, confirmationPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-105",
+      "statement": "The review section opens only once the notification is ready for check your answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js sections[9]",
+      "quote": "gate: (scope) => scope.readyForCheckYourAnswers",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-106",
+      "statement": "Readiness for check your answers is the roll-up of the overview's task rows.",
+      "kind": "rule",
+      "ref": "src/server/app/routes-live-animals.js configureReadyForCheckYourAnswers",
+      "quote": "// The readiness seam is fail-closed until L1 injects the roll-up, so\n        // this hands `bridge/scope.js` the real task-row roll-up",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-107",
+      "statement": "The declaration answer is held in the session as journey state, not saved as part of the notification.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js FLOW_ONLY_KEYS; flow/entry-guard.js userEntered comment",
+      "quote": "export const FLOW_ONLY_KEYS = ['declaration'] ... flow-only keys such as\n * `declaration` are session state rather than canonical fulfilment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-108",
+      "statement": "The answer sections are every flow section except review.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js answerSections",
+      "quote": "export const answerSections = sections.filter(\n  (section) => section.id !== 'review'\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-109",
+      "statement": "A new notification's opening run takes 'Save and continue' through the whole notification, from the origin page to the review page, without stopping at the overview; the overview is reached only through 'Save and return to overview'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS comment",
+      "quote": "The run is the whole\n * notification, not a first leg of it: \"Save and continue\" carries a new\n * notification from the origin page through to the review page in one pass,\n * and the hub is somewhere the user chooses to go through the secondary\n * \"Save and return to overview\" button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-110",
+      "statement": "The opening run visits 14 steps in this order: origin, commodity search, consignment details, import reason, animal identification, additional details, port of entry, transit countries, transporters, accompanying documents, addresses, CPH number, consignment contact, review.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS",
+      "quote": "{ id: originPage.id, ... { id: commoditiesPage.id, ... consignmentDetailsPage.id ... importReasonPage.id ... animalIdentificationPage.id ... additionalDetailsPage.id ... portOfEntryPage.id ... transitCountriesPage.id ... transportersPage.id ... documentsPage.id ... addressesPage.id ... cphNumberPage.id ... consignmentContactSelectPage.id ... { id: notificationViewPage.id, target: reviewTarget }",
+      "confidence": "verbatim",
+      "note": "The run order differs from the flow-section order: the run puts import reason before animal identification, and transport before documents and addresses, whereas the sections put animal identification before consignment and documents and addresses before transport."
+    },
+    {
+      "id": "repo-frontend-p1-111",
+      "statement": "The opening run skips any step whose page gate does not yet pass and moves to the next step that does.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js flowPageTarget, nextRunTarget",
+      "quote": "pageGatePasses(page, scope) ? pagePath(journeyId, page.slug) : null ... for (const step of RUN_STEPS.slice(index + 1)) {\n    const target = step.target(scope, journeyId)\n    if (target) {\n      return target",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-112",
+      "statement": "The opening run reaches the review page only when every task row is ready; a run that arrives with the notification incomplete goes to the overview instead.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js reviewTarget",
+      "quote": "it opens once\n * every task row is ready. A run that arrives with the notification still\n * incomplete falls through to the hub instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-113",
+      "statement": "When no later run step is open, the run ends on the notification's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js nextRunTarget",
+      "quote": "return hubPath(journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-114",
+      "statement": "The commodity part of the run is two pages: a batch search, then one consolidated details page that stays closed until a commodity line exists.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS comment",
+      "quote": "The commodity leg is a two-page shape: batch search then the consolidated\n * details page (whose derived gate holds until a line exists).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-115",
+      "statement": "The identification step is one page with a card per species, held closed until a commodity line exists.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS comment",
+      "quote": "The\n * identification step is a single card-per-species surface, gated like every\n * other flow page (its RULE 1 prerequisite holds it until a line exists).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-116",
+      "statement": "The add-transporter pages behind the transporter list hand the run back at the list's step when they save.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS comment",
+      "quote": "The\n * transporter leg is one step, the list; the add spokes behind it are a\n * detour, and they hand the run back at the list's step when they save.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-117",
+      "statement": "In the run, the addresses page and the CPH number page each stop the run only if this notification needs them, each deciding by its own gate.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS comment",
+      "quote": "The addresses leg lists both of its pages; each one's derived gate decides on\n * its own whether the run stops there",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-118",
+      "statement": "The overview has 12 task rows in this order: origin, commodities, consignment details, import reason, additional details, animal identification, arrival details, transit countries, transporter, addresses, contact, documents.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows",
+      "quote": "{ id: 'origin', ... id: 'commodities', ... id: 'consignmentDetails', ... { id: 'importReason', ... { id: 'additionalDetails', ... id: 'animalIdentification', ... { id: 'arrivalDetails', ... { id: 'transitCountries', ... { id: 'transporter', ... { id: 'addresses', ... { id: 'contact', ... { id: 'documents', pages: [documentsPage] }",
+      "confidence": "verbatim",
+      "note": "How the overview groups and labels these rows lives in the hub feature, another part's slice."
+    },
+    {
+      "id": "repo-frontend-p1-119",
+      "statement": "The origin task row covers the origin page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[0]",
+      "quote": "{ id: 'origin', pages: [originPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-120",
+      "statement": "The commodities task row covers the commodity search page and every commodity-line answer except the animal identifiers, the number of animals and the number of packages.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[1]",
+      "quote": "collection: 'commodityLines',\n        except: [\n          'animalIdentifiers',\n          'numberOfAnimalsQuantity',\n          'numberOfPackages'\n        ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-121",
+      "statement": "The consignment details task row covers the consignment details page and only the number of animals and number of packages on each commodity line.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[2]",
+      "quote": "collection: 'commodityLines',\n        only: ['numberOfAnimalsQuantity', 'numberOfPackages']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-122",
+      "statement": "The import reason task row covers the import reason page, and the additional details task row covers the additional details page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[3], taskRows[4]",
+      "quote": "{ id: 'importReason', pages: [importReasonPage] },\n  { id: 'additionalDetails', pages: [additionalDetailsPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-123",
+      "statement": "The animal identification task row covers only the animal identifiers on each commodity line, and is conditional.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[5]",
+      "quote": "parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: identifiesAnAnimal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-124",
+      "statement": "The animal identification task row appears on the overview only once a chosen commodity is one that carries an identifier of its own; with nothing chosen, the row is left off entirely.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js identifiesAnAnimal comment",
+      "quote": "Design release 1 puts the identification task on the hub only once a chosen\n// commodity carries an identifier of its own, and leaves it off the page\n// entirely until then",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-125",
+      "statement": "The arrival details task row covers the port of entry page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[6]",
+      "quote": "{ id: 'arrivalDetails', pages: [portOfEntryPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-126",
+      "statement": "The transit countries task row covers the transit countries page and is conditional.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[7]",
+      "quote": "{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-127",
+      "statement": "The transporter task row covers the transporter list page, which holds the transporter type and both transporter address blocks.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[8]",
+      "quote": "// The list declares all three transporter answers, so the row still spans\n  // the type and both address blocks from the one page.\n  { id: 'transporter', pages: [transportersPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-128",
+      "statement": "The addresses task row covers both the addresses page and the CPH number page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[9]",
+      "quote": "{ id: 'addresses', pages: [addressesPage, cphNumberPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-129",
+      "statement": "The contact task row covers the consignment contact page, and the documents task row covers the accompanying documents page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js taskRows[10], taskRows[11]",
+      "quote": "{ id: 'contact', pages: [consignmentContactSelectPage] },\n  { id: 'documents', pages: [documentsPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-130",
+      "statement": "A task row that does not apply to the notification is Not applicable whatever its answers, leaves the overview and does not count as work owed before submission.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js rowApplies, rowStatus",
+      "quote": "// A row with no `applies` test is always applicable; one that answers no is\n// Not applicable however its parts roll up, which is what lets a `conditional`\n// row leave the hub and stand down as submit-readiness work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-131",
+      "statement": "A task row whose stored answers no longer pass its own pages' rules is shown as 'To do' on the overview, even if every answer is present.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/stored-answers.js invalidRowIds",
+      "quote": "/** The task-row ids whose stored answers no longer pass their own page's\n * rules — what the hub demotes back to \"To do\" however the engine still\n * counts them. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-132",
+      "statement": "On the review page, a card whose rows hold an answer that no longer passes its rules shows one error, the first message its rows produce, not every broken answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/stored-answers.js cardStoredErrors",
+      "quote": "keyed to the first message their rows produced — a card names one\n * broken answer, not every one behind it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-133",
+      "statement": "Opening a notification page directly sends the user to the origin page when the notification has neither an opening run started in this session nor any answer the user entered.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js entryGuardTarget",
+      "quote": "/** Deep-link guard: a journey with neither a run record in this session nor\n * committed user answers is sent to the entry page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-134",
+      "statement": "The entry guard covers the notification's overview and every page under it, but not the create path, the origin page and anything under it, or the amend, cancel-amend, copy and delete actions.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js guardedJourneyPath",
+      "quote": "const ACTION_SLUGS = new Set(['amend', 'cancel-amend', 'copy', 'delete']) ... const isEntrySurface =\n    slug === originPage.slug || slug.startsWith(`${originPage.slug}/`)\n  return Boolean(journeyId) && !isEntrySurface",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-135",
+      "statement": "Only answers the user entered count as progress for the entry guard: system-populated answers and session-only answers such as the declaration do not.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js userEntered",
+      "quote": "/** Only a model answer the USER entered starts a journey. System populated\n * obligations do not represent user progress",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-136",
+      "statement": "Pages carry a caption naming the section of the notification they belong to, chosen by where the page sits in the journey, not per page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections comment",
+      "quote": "The caption above a page heading tells someone part-way through a long\n * notification which part of it they are in, so the value is a property of\n * where the page sits in the journey, not of the page's own copy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-137",
+      "statement": "The caption sections are finer than the overview's task-row groups: identification is captioned with the other consignment questions, and arrival, transit and adding a transporter each have their own caption.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections comment",
+      "quote": "the hub files animal identification with the other\n * commodity work and puts every transport row under one group, while the\n * caption keeps identification with the rest of the consignment questions and\n * separates arrival, transit and adding a transporter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-138",
+      "statement": "The dashboard is captioned 'Dashboard'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.dashboard",
+      "quote": "{ id: 'dashboard', pages: [dashboardPage] } ... dashboard: 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-139",
+      "statement": "The origin, commodity search, consignment details, animal identification and import reason pages are captioned 'About the consignment'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.aboutTheConsignment",
+      "quote": "id: 'aboutTheConsignment',\n    pages: [\n      originPage,\n      commoditiesPage,\n      consignmentDetailsPage,\n      animalIdentificationPage,\n      importReasonPage\n    ] ... aboutTheConsignment: 'About the consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-140",
+      "statement": "The additional details page is captioned 'Commodity details'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.commodityDetails",
+      "quote": "{ id: 'commodityDetails', pages: [additionalDetailsPage] } ... commodityDetails: 'Commodity details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-141",
+      "statement": "The addresses page and the CPH number page are captioned 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.consignmentParties",
+      "quote": "{ id: 'consignmentParties', pages: [addressesPage, cphNumberPage] } ... consignmentParties: 'Consignment parties'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-142",
+      "statement": "The transit countries page is captioned 'Movement'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.movement",
+      "quote": "{ id: 'movement', pages: [transitCountriesPage] } ... movement: 'Movement'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-143",
+      "statement": "The port of entry page and the transporter list page are captioned 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.transportAndArrival",
+      "quote": "{ id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] } ... transportAndArrival: 'Transport and arrival'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-144",
+      "statement": "The add transporter, select transporters, commercial transporter details and private transporter details pages are captioned 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.newTransporter",
+      "quote": "id: 'newTransporter',\n    pages: [\n      transporterAddPage,\n      transportersSelectPage,\n      commercialTransporterDetailsPage,\n      privateTransporterDetailsPage\n    ] ... newTransporter: 'Add a new transporter'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-145",
+      "statement": "The accompanying documents page is captioned 'Documents'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections; copy/copy.en.js sections.documents",
+      "quote": "{ id: 'documents', pages: [documentsPage] } ... documents: 'Documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-146",
+      "statement": "The overview, review, contact address, declaration and confirmation pages carry no caption and open straight into their heading.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections comment",
+      "quote": "The overview, check-your-\n * answers, contact-address, declaration and confirmation pages open straight\n * into their heading",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-147",
+      "statement": "The delete-notification and cancel-amend pages carry no caption because they interrupt the journey rather than belong to a section.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections comment",
+      "quote": "delete-notification and cancel-amend are interruptions\n * rather than steps in a section.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-148",
+      "statement": "The address picker pages take their caption from the addresses feature rather than from the section captions.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js captionSections comment",
+      "quote": "The address pickers carry their own caption\n * from the addresses feature.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-149",
+      "statement": "Welsh section captions exist for all eight sections, marked as an unreviewed machine draft.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/copy/copy.cy.js",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-150",
+      "statement": "Test: on the origin page the caption 'About the consignment' is the element directly above the page heading, and it is the only caption on the page.",
+      "kind": "behaviour",
+      "ref": "features/section-caption.fit.spec.js 'names the section immediately above the heading of a consignment question'",
+      "quote": "page.locator('span.govuk-caption-l + h1.govuk-heading-l')\n    ).toHaveText(originCopy.title)\n    await expect(page.locator(ANY_GOVUK_CAPTION)).toHaveText(\n      ABOUT_THE_CONSIGNMENT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-151",
+      "statement": "Test: on the import reason page, whose question legend is visually hidden, the caption 'About the consignment' still sits directly above the page heading and the legend is hidden.",
+      "kind": "behaviour",
+      "ref": "features/section-caption.fit.spec.js 'names the section on a page whose question is a hidden legend'",
+      "quote": "page.locator('legend').filter({ hasText: importReasonCopy.legend })\n    ).toHaveClass(/govuk-visually-hidden/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-152",
+      "statement": "Test: the dashboard shows an extra-large 'Dashboard' caption directly above its extra-large heading.",
+      "kind": "behaviour",
+      "ref": "features/section-caption.fit.spec.js 'names the dashboard above its heading'",
+      "quote": "page.locator('span.govuk-caption-xl + h1.govuk-heading-xl')\n    ).toHaveText(dashboardCopy.title)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-153",
+      "statement": "Test: the overview shows no caption, as Design release 1 does.",
+      "kind": "behaviour",
+      "ref": "features/section-caption.fit.spec.js 'leaves the overview bare, as Design release 1 does'",
+      "quote": "await expect(page.locator(ANY_GOVUK_CAPTION)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-154",
+      "statement": "Test: a captioned page has no serious or critical WCAG 2 A or AA accessibility violations, ignoring govuk-frontend's known conditional-reveal false positive.",
+      "kind": "non-functional",
+      "ref": "features/section-caption.fit.spec.js 'has no serious or critical axe violations with a caption on the page'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])\n      .analyze()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-155",
+      "statement": "Test: the origin page's title reads its page name, the service name and GOV.UK, joined by hyphens.",
+      "kind": "behaviour",
+      "ref": "features/page-title.fit.spec.js 'reads page name, service name and GOV.UK, joined by hyphens'",
+      "quote": "await expect(page).toHaveTitle(\n      `${originCopy.title} - ${serviceName} - ${govukSuffix}`\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-156",
+      "statement": "Test: when the origin page shows an error (region answered Yes with no region code), the title starts with the error prefix in front of the whole title.",
+      "kind": "behaviour",
+      "ref": "features/page-title.fit.spec.js 'puts the error prefix in front of the whole title when the page shows errors'",
+      "quote": "`${errorTitlePrefix}${originCopy.title} - ${serviceName} - ${govukSuffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-157",
+      "statement": "Test: the dashboard's service navigation offers exactly the four items Dashboard, Address book, Manage account and Log out.",
+      "kind": "behaviour",
+      "ref": "features/service-navigation.fit.spec.js 'offers the four items on the dashboard'",
+      "quote": "await expect(navigation(page).getByRole('listitem')).toHaveText(ITEMS)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-158",
+      "statement": "Test: on the dashboard, the Dashboard navigation link is marked as the current page.",
+      "kind": "behaviour",
+      "ref": "features/service-navigation.fit.spec.js 'marks the dashboard as the current section'",
+      "quote": ").toHaveAttribute('aria-current', 'true')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-159",
+      "statement": "Test: on the overview inside a notification, the Dashboard navigation link is still marked as current.",
+      "kind": "behaviour",
+      "ref": "features/service-navigation.fit.spec.js 'keeps the dashboard marked on a page inside a notification'",
+      "quote": "await startNotification(page)\n\n    await expect(\n      navigation(page).getByRole('link', { name: serviceNavigation.dashboard })\n    ).toHaveAttribute('aria-current', 'true')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-160",
+      "statement": "Test: from inside a notification, the Dashboard navigation link points at /live-animals and following it lands on the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/service-navigation.fit.spec.js 'reaches the dashboard from inside a notification'",
+      "quote": ").toHaveAttribute('href', BASE) ... await expect(page).toHaveURL(BASE)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-161",
+      "statement": "Test: the Log out navigation link points at /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "features/service-navigation.fit.spec.js 'offers sign-out from the navigation'",
+      "quote": "navigation(page).getByRole('link', { name: serviceNavigation.logOut })\n    ).toHaveAttribute('href', '/auth/sign-out')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-162",
+      "statement": "Test: the dashboard with its service navigation has no serious or critical WCAG 2 A or AA accessibility violations.",
+      "kind": "non-functional",
+      "ref": "features/service-navigation.fit.spec.js 'has no serious or critical axe violations'",
+      "quote": "Service navigation has serious/critical accessibility violations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-163",
+      "statement": "Test: the dashboard's 'Start a new notification' button creates a notification and opens its origin page, headed 'Origin of the import'.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:38-40",
+      "quote": "await page.getByRole('button', { name: 'Start a new notification' }).click()\n    await expect(heading('Origin of the import')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-164",
+      "statement": "Test: revisiting the origin page of a new, unanswered notification shows the origin page again rather than looping, because the entry page is exempt from the guard.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:42-45",
+      "quote": "// The entry page is exempt from the guard, so revisiting it is not a\n    // redirect loop.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-165",
+      "statement": "Test: in the opening run, 'Save and continue' carries a new notification through the headings 'Origin of the import', 'What are you importing?', 'Commodity details', 'Main reason for import', 'Identification details', 'Additional details' and on to 'Arrival details' without visiting the overview.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:31-79",
+      "quote": "// The run carries the notification on rather than dropping it on the hub.\n    await expect(heading('Arrival details')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-166",
+      "statement": "Test: choosing 'Internal market' as the import reason reveals a 'Purpose in the internal market' question on the same page.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:60-63",
+      "quote": "await page.getByRole('radio', { name: 'Internal market' }).check()\n    await expect(\n      page.getByRole('group', { name: 'Purpose in the internal market' })\n    ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-167",
+      "statement": "Test: going to the overview ends the opening run, so a later save on the origin page returns to the overview, headed 'Overview'.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:81-89",
+      "quote": "// The hub is somewhere the user chooses to go, and reaching it ends run\n    // mode, so later task saves return to the ordinary hub resting state.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-168",
+      "statement": "Test: the opening run carries a new notification through every question to the review page, headed 'Review your notification', without sending the user to the overview on the way.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:92-129",
+      "quote": "// No question in the notification sent the user to the hub on the way.\n    await expect(page).toHaveURL(/\\/notification-view$/)\n    await expect(heading('Review your notification')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-169",
+      "statement": "Test: documents are optional, so the opening run passes through the accompanying documents page and the user continues without adding one.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:117-120",
+      "quote": "// Documents are optional, so the run passes through the page and the user\n    // continues without adding one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-170",
+      "statement": "Test: a notification opened in another browser session, holding no answers, sends that visitor from its overview to its origin page.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:131-151",
+      "quote": "await strangerPage.goto(hubUrl)\n\n    await expect(strangerPage).toHaveURL(`${hubUrl}/origin`)",
+      "confidence": "verbatim",
+      "note": "The second context is not signed in through the spec's beforeEach and still reaches the origin page; whether notification access is scoped to the user who created it is not shown in this slice."
+    },
+    {
+      "id": "repo-frontend-p1-171",
+      "statement": "Test: changing the animal identification from the review page (with ?change=1) keeps the change context through removing an animal, and saving returns to the review page showing the new ear tag.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:178-198",
+      "quote": "await page.getByRole('button', { name: 'Save and continue' }).click()\n    await expect(page).toHaveURL(/\\/notification-view(?:#.*)?$/)\n    await expect(page.getByText('UK000000000002')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-172",
+      "statement": "Test: the review page offers one Change link per card, and no longer offers a change link to the identification page.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:172-177",
+      "quote": "// The review offers one Change link per card (design release 1), and the\n    // Species card's goes to the consignment details. The review no longer\n    // offers a change-context route to the identification page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-173",
+      "statement": "Test: following 'Change uploaded documents' from the review page keeps the change context while documents are added, and saving returns to the review page listing the new document.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:206-226",
+      "quote": "await page.getByRole('link', { name: 'Change uploaded documents' }).click()\n    await expect(page).toHaveURL(\n      /\\/accompanying-documents\\?change=1(?:&attempt=\\d+)?$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-174",
+      "statement": "Test: an uploaded document shows 'Check completed' in its row on the documents page.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:163-167",
+      "quote": ").toContainText('Check completed')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-175",
+      "statement": "Fit tests sign in through a stub sign-in route, as organisation stub-org-1 by default, which exists only when stub mode is on.",
+      "kind": "constraint",
+      "ref": "fit/sign-in.js",
+      "quote": "Signs in via the stub-auth route (see server/auth/stub-sign-in.js) - no\n * real Defra ID stub involved, only reachable when STUB_MODE=true.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-176",
+      "statement": "The overview reaches the review through a 'Review and submit' primary button under its task list, offered whatever the notification still owes, not through a task row.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:476-483",
+      "quote": "Design release 1 reaches the review from a primary button under the hub's\n * task list rather than from a task row, and offers it whatever the\n * notification still owes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-177",
+      "statement": "The overview's task links a returning user follows are 'Where is this consignment coming from?', 'What are you importing?', 'Identification details', 'Main reason for import', 'Roles and addresses', 'Arrival details', 'Contact address for this consignment' and 'Upload documents'.",
+      "kind": "copy",
+      "ref": "fit/live-animals-journey.js:446-473; fit/journey-smoke.fit.spec.js:161",
+      "quote": "await task('Where is this consignment coming from?') ... await task('What are you importing?') ... await task('Identification details') ... await task('Main reason for import') ... await task('Roles and addresses') ... await task('Arrival details') ... await task('Contact address for this consignment')",
+      "confidence": "verbatim",
+      "note": "Seen through the shared test driver; the hub's own copy is another part's slice. 'Upload documents' comes from journey-smoke.fit.spec.js:161."
+    },
+    {
+      "id": "repo-frontend-p1-178",
+      "statement": "Working from the overview, one task link can carry the user through several pages before returning: 'Main reason for import' runs on to additional details, 'Roles and addresses' on to the CPH number, and 'Arrival details' on to transit countries and the transporter.",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js completeAnswerSections:459-470",
+      "quote": "await task('Main reason for import')\n  await answerImportReason(page)\n  await answerAdditionalDetails(page)\n\n  await task('Roles and addresses')\n  await answerRolesAndAddresses(page)\n  await answerCphNumber(page)\n\n  await task('Arrival details')\n  await answerArrivalDetails(page)\n  await answerTransitCountries(page)\n  await answerTransporter(page)",
+      "confidence": "inferred",
+      "note": "Inferred from the driver chaining page answers after one task click with no return to the overview between them; matches next-in-section navigation in kit.js nextTarget."
+    },
+    {
+      "id": "repo-frontend-p1-179",
+      "statement": "The service does not show who is signed in, and the Manage account item has no destination, so account management is not built.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk manageAccountUrl",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in layout.njk, shared copy and the route modules list: no manage-account page or account route exists in this slice."
+    }
+  ]
+}

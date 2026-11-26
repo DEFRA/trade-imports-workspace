@@ -12,12 +12,12 @@ import { renderCheckText, renderStoppedText } from './index.js'
 const readyEnv = {
   SONAR_TOKEN: 'sonar-test-token',
   ANTHROPIC_API_KEY: '',
-  TMUX: '/private/tmp/tmux-501/default,1234,0',
+  TMUX: '',
   STY: ''
 }
 
 describe('tim nightly check', () => {
-  test('Should exit 0 with ready true when every check passes', async () => {
+  test('Should exit 0 with ready true when every check passes in a session outside tmux and screen', async () => {
     const root = await createNightlyWorkspace()
 
     const run = await runTimInWorkspace(root, ['nightly', 'check', '--json'], {
@@ -38,21 +38,6 @@ describe('tim nightly check', () => {
 
     expect(run.exitCode).toBe(MISSING_DEP)
     expect(envelopeOf(run).result.ready).toBe(false)
-  })
-
-  test('Should exit 3 when the session is not inside tmux or screen', async () => {
-    const root = await createNightlyWorkspace()
-
-    const run = await runTimInWorkspace(root, ['nightly', 'check', '--json'], {
-      env: { ...readyEnv, TMUX: '', STY: '' }
-    })
-
-    expect(run.exitCode).toBe(MISSING_DEP)
-    expect(
-      envelopeOf(run).result.checks.find(
-        ({ name }) => name === 'detached-session'
-      ).ok
-    ).toBe(false)
   })
 })
 

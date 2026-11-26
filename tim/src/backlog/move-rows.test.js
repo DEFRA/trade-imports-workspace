@@ -4,21 +4,13 @@ import {
   indexWithMovedRows,
   planMoveRows
 } from './move-rows.js'
+import { row as backlogRow } from './__fixtures__/backlog-rows.js'
 
 const SOURCE = 'shared/hrp/themes/origin'
 const TARGET = 'shared/hrp/themes/origin-b'
 
-const row = (id, fields = {}) => ({
-  id,
-  title: `Row ${id}`,
-  detail: 'What and why.',
-  acceptanceCriteria: ['Something a user sees.'],
-  dependsOn: [],
-  status: 'todo',
-  theme: 'origin',
-  repos: ['frontend'],
-  ...fields
-})
+const row = (id, fields = {}) =>
+  backlogRow({ id, theme: 'origin', repos: ['frontend'], ...fields })
 
 const splitBacklog = (increments) => ({
   programme: 'hrp-origin',

@@ -1,0 +1,829 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 13 read every one of the 23 files in src/server/app/shared/ in full (2,828 lines): the page chrome (layout.njk, layout.test.js), the shared view-model kit (kit.js, kit.test.js), the save controls every collecting page ends with (save-actions.njk, save-actions.test.js), the caption macro (section-caption.njk, section-caption.test.js), the error page and error summary partials (error.njk, error-summary.njk), the Back-link trail (trail.js, trail.test.js), the set registry and its per-set seams (set-context.js, set-context.test.js), the URL shapes (paths.js), the paging helpers (paging.js), the macro loader (render-macro.js, render-macro.test.js) and the shared copy pair with its locale resolver and leaf convention (copy.js, copy.en.js, copy.cy.js, copy.test.js, copy-leaves.js). It covers the chrome shown on every page of the high-risk plants set (header, service navigation, Alpha phase banner, Back link, journey status strip, recoverable-error and stale-action banners, content column width, footer, page title), every control save-actions.njk offers a collecting page, the error-summary and error-page partials and their copy, every key of shared/copy.en.js and shared/copy.cy.js verbatim with the chrome each feeds, the URL shapes paths.js defines, the paging rules paging.js defines, and the Back-link trail and return marker. trail.js, set-context.js, render-macro.js, copy-leaves.js, readDate and inDashboardSection are claimed as mechanism. Two things the part's covers expected are not in the slice and are recorded as gaps: kit.js holds no Nunjucks macros (the shared macros live in save-actions.njk and section-caption.njk, and kit.js is a JavaScript view-model and route-option module), and paging.js defines no page size. The slice stops at the set's own pages, which parts 1 to 11 claim.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p13-001",
+      "statement": "Every page of the service is built on the GOV.UK Frontend page template, so it carries the standard GOV.UK header, footer and skip link unless the page overrides them.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:1",
+      "quote": "{% extends \"govuk/template.njk\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-002",
+      "statement": "The service is called \"Import notification service\" and that name is shown in the service navigation bar on every page.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:3, src/server/app/shared/layout.njk:52",
+      "quote": "serviceName: 'Import notification service'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-003",
+      "statement": "A page's browser title reads the page name, then the service name, then GOV.UK, separated by hyphens.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:18",
+      "quote": "{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} - {{ sharedCopy.layout.serviceName }} - {{ sharedCopy.layout.govukSuffix }}{% endblock %}",
+      "confidence": "verbatim",
+      "note": "layout.test.js:267 holds it: \"Should join the page name, the service name and GOV.UK with hyphens\", asserting `Create an import notification - ${serviceName} - ${govukSuffix}`."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-004",
+      "statement": "When a page shows an error summary its browser title begins \"Error: \" in front of the whole title.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:4, src/server/app/shared/layout.test.js:273",
+      "quote": "errorTitlePrefix: 'Error: '",
+      "confidence": "verbatim",
+      "note": "layout.test.js:273 holds it: \"Should keep the error prefix in front of the whole title\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-005",
+      "statement": "The GOV.UK header crown links to https://www.gov.uk/ and sits in a width container.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:21",
+      "quote": "govukHeader({\n    homepageUrl: \"https://www.gov.uk/\",\n    classes: \"app-header\",\n    containerClasses: \"govuk-width-container\"\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-006",
+      "statement": "A signed-in user is offered four navigation links in the service navigation bar, in this order: Dashboard, Address book, Manage account, Log out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:30, src/server/app/shared/copy.en.js:12",
+      "quote": "menuButton: 'Menu',\n      dashboard: 'Dashboard',\n      addressBook: 'Address book',\n      manageAccount: 'Manage account',\n      logOut: 'Log out'",
+      "confidence": "verbatim",
+      "note": "layout.test.js:43 holds the four items and their order; copy.test.js:62 holds the five labels including the menu button."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-007",
+      "statement": "Dashboard in the navigation and the service name both go to the set's own base URL; Address book goes to the address-book URL the page is given; Manage account goes to \"#\"; Log out goes to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:10, src/server/app/shared/layout.test.js:57",
+      "quote": "expect(links.map((a) => a.getAttribute('href'))).toEqual([\n      SET_BASE,\n      ADDRESS_BOOK_URL,\n      '#',\n      '/auth/sign-out'\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-008",
+      "statement": "Manage account is not built: its link is the placeholder \"#\" and goes nowhere.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:11",
+      "quote": "{% set manageAccountUrl = \"#\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-009",
+      "statement": "A page shown to someone who is not signed in carries the service name but no navigation links at all, and no Log out link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:29, src/server/app/shared/layout.test.js:112",
+      "quote": "{% set navigationItems = [] %}\n  {% if userSession and userSession.isAuthenticated %}",
+      "confidence": "verbatim",
+      "note": "layout.test.js:112 holds it: \"Should carry the service name and no items when there is no user\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-010",
+      "statement": "The Dashboard navigation item is marked as the current page, with aria-current, when the page says the dashboard section is active; outside any section no item is marked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:35, src/server/app/shared/layout.test.js:80",
+      "quote": "active: activeNavigationItem == \"dashboard\"",
+      "confidence": "verbatim",
+      "note": "layout.test.js:80 asserts one active item and one aria-current=\"true\"; layout.test.js:96 asserts neither appears outside a section."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-011",
+      "statement": "The navigation collapses behind a button labelled \"Menu\" on small screens.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:54, src/server/app/shared/copy.en.js:13",
+      "quote": "menuButtonText: sharedCopy.layout.serviceNavigation.menuButton",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-012",
+      "statement": "No page shows the signed-in user's name or email address, and there is no user header band.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.test.js:104",
+      "quote": "expect(html).not.toContain('Sam Example')\n    expect(html).not.toContain('sam@example.test')\n    expect(html).not.toContain('app-service-header')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-013",
+      "statement": "Every page carries a phase banner tagged \"Alpha\" in grey reading \"This is a new service. Help us improve it and give your feedback by email.\", where \"give your feedback by email\" is a link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:60, src/server/app/shared/copy.en.js:7",
+      "quote": "tag: 'Alpha',\n      bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
+      "confidence": "verbatim",
+      "note": "The full stop after the link is in the template, not the copy: `{{ ... }} <a ...>{{ ... }}</a>.`"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-014",
+      "statement": "The feedback link opens an email to APHAServiceDesk@apha.gov.uk.",
+      "kind": "integration",
+      "ref": "src/server/app/shared/layout.njk:9",
+      "quote": "{% set feedbackUrl = \"mailto:APHAServiceDesk@apha.gov.uk\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-015",
+      "statement": "The phase banner is shown on signed-out pages as well as signed-in ones, and sits above the Back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.test.js:140",
+      "quote": "expect(html.indexOf(PHASE_BANNER)).toBeLessThan(\n      html.indexOf('govuk-back-link')\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-016",
+      "statement": "A page shows a Back link labelled \"Back\" only when it supplies somewhere for it to go.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:66, src/server/app/shared/copy.en.js:6",
+      "quote": "{% if backLink %}\n    {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}\n  {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-017",
+      "statement": "No page shows a breadcrumb trail, even when breadcrumbs are passed to the layout: neither the breadcrumb component nor its text appears.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.test.js:200",
+      "quote": "it('Should render no breadcrumb trail and none of its text when breadcrumbs are passed', () => {",
+      "confidence": "verbatim",
+      "note": "The part's covers names \"the breadcrumb trail\". The shared chrome deliberately renders none; the only trail in this slice is the `from` query-string trail that feeds the Back link (trail.js), which is a different thing."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-018",
+      "statement": "A page-maturity banner is included on every page, between the phase banner and the Back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:65",
+      "quote": "{% include \"page-maturity/banner.njk\" %}",
+      "confidence": "verbatim",
+      "note": "The banner template itself is outside this part's slice; the page's maturity level reaches it from the route (see repo-plantsfrontend-p13-035)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-019",
+      "statement": "When a save fails on a recoverable backend problem the page shows a notification banner titled \"There is a problem\" reading \"Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.\", announced as an alert.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:74, src/server/app/shared/copy.en.js:34",
+      "quote": "recoverableError: {\n    title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-020",
+      "statement": "When an action is refused because the notification changed since the page was opened, the page shows a notification banner titled \"The notification has been updated\" reading \"This notification was updated since you opened it. Review the details and try again.\", announced as an alert.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:81, src/server/app/shared/copy.en.js:45",
+      "quote": "staleActionRejected: {\n    title: 'The notification has been updated',\n    body: 'This notification was updated since you opened it. Review the details and try again.'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-021",
+      "statement": "A page of a notification shows a status strip above its content holding a coloured status tag, the notification's reference in bold, and, while the notification is being amended, a \"Cancel amend\" link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:88",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\">\n          {{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}\n          <span class=\"govuk-body govuk-!-font-weight-bold\">{{ journeyStrip.reference }}</span>",
+      "confidence": "verbatim",
+      "note": "layout.test.js:162 holds the tag, the reference and the single Cancel amend link; layout.test.js:182 holds that a draft strip carries no link at all."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-022",
+      "statement": "The status strip's tag reads Draft in blue, Submitted in green, Amend in yellow or Deleted in grey, according to the notification's status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:52",
+      "quote": "[DRAFT]: {\n    text: sharedCopy.journeyStrip.draft,\n    classes: 'govuk-tag--blue'\n  },\n  [SUBMITTED]: {\n    text: sharedCopy.journeyStrip.submitted,\n    classes: 'govuk-tag--green'\n  },\n  [AMEND]: {\n    text: sharedCopy.journeyStrip.amend,\n    classes: 'govuk-tag--yellow'\n  },\n  [DELETED]: {\n    text: sharedCopy.journeyStrip.deleted,\n    classes: 'govuk-tag--grey'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-023",
+      "statement": "The status strip's status words are Draft, Submitted, Amend, Deleted, and its amend control reads \"Cancel amend\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:66",
+      "quote": "journeyStrip: {\n    draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amend',\n    cancelAmend: 'Cancel amend',\n    deleted: 'Deleted'\n  }",
+      "confidence": "verbatim",
+      "note": "copy.test.js:26 pins all five strings exactly."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-024",
+      "statement": "Cancel amend is offered only while a notification is being amended, and it goes to that notification's cancel-amend page.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:81",
+      "quote": "journey.status === AMEND\n    ? {\n        href: pagePath(journey.journeyId, CANCEL_AMEND_SLUG),\n        text: sharedCopy.journeyStrip.cancelAmend\n      }\n    : undefined",
+      "confidence": "verbatim",
+      "note": "kit.test.js:94 holds it for an amending and a draft notification."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-025",
+      "statement": "A page may turn the Cancel amend control off while still showing the status strip, and may leave the status strip off the page altogether.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:98",
+      "quote": "export const journeyStrip = (journey, { offerCancelAmend = true } = {}) =>",
+      "confidence": "verbatim",
+      "note": "kit.test.js:106 and kit.test.js:115 hold both, and hold that the concurrency token is still carried when the strip is off."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-026",
+      "statement": "A notification's reference shown in the status strip is its journey id.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:101",
+      "quote": "reference: journey.journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-027",
+      "statement": "Every page's footer offers three links: Privacy, Cookies and Accessibility statement, going to the GOV.UK privacy notice, cookies page and accessibility statement.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:100, src/server/app/shared/copy.en.js:19",
+      "quote": "href: \"https://www.gov.uk/help/privacy-notice\",\n          text: sharedCopy.layout.footer.privacy\n        },\n        {\n          href: \"https://www.gov.uk/help/cookies\",\n          text: sharedCopy.layout.footer.cookies\n        },\n        {\n          href: \"https://www.gov.uk/help/accessibility-statement\",\n          text: sharedCopy.layout.footer.accessibility\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-028",
+      "statement": "The service shows no cookie banner on any page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:59",
+      "quote": "{% block beforeContent %}",
+      "confidence": "gap",
+      "note": "The layout overrides head, pageTitle, govukHeader, govukServiceNavigation, beforeContent, content, govukFooter and bodyEnd, and none of them renders a cookie banner; the footer links to the GOV.UK cookies page instead. Looked in layout.njk and in every other file of src/server/app/shared/."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-029",
+      "statement": "Every page carries a cross-site request forgery token in a meta tag in its head, and loads one application stylesheet and one application script module.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/layout.njk:13",
+      "quote": "<meta name=\"csrf-token\" content=\"{{ crumb }}\">\n  <link href=\"{{ getAssetPath('stylesheets/application.scss') }}\" rel=\"stylesheet\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-030",
+      "statement": "The page's own script is loaded at the end of the body, so a page's content is usable before any JavaScript runs.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/layout.njk:121",
+      "quote": "{% block bodyEnd %}\n  <script type=\"module\" src=\"{{ getAssetPath('application.js') }}\"></script>\n{% endblock %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-031",
+      "statement": "A page's content sits in one column that is two-thirds of the page width by default, and a page that shows data rather than asking questions takes the full container width.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:73, src/server/app/shared/kit.js:38",
+      "quote": "form: 'govuk-grid-column-two-thirds',\n  display: 'govuk-grid-column-full'",
+      "confidence": "verbatim",
+      "note": "layout.test.js:222 holds both, including that no page renders an empty class attribute."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-032",
+      "statement": "A page that asks for a width the service does not define is refused outright rather than rendered without a width, and an inherited Object property name is not accepted as a width.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:43",
+      "quote": "throw new Error(\n      `Unknown surface '${surface}'. Expected one of: ${Object.keys(SURFACES).join(', ')}`\n    )",
+      "confidence": "verbatim",
+      "note": "layout.test.js:249 and layout.test.js:255 hold both refusals."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-033",
+      "statement": "Every page of the service requires a signed-in session.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:24",
+      "quote": "export const routeOptions = { auth: 'session' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-034",
+      "statement": "Every collecting page of a notification is reachable at /notifications/{journeyId}/<page slug>, answering both a request to show the page and a request to save it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:342, src/server/app/shared/paths.js:5",
+      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-035",
+      "statement": "A page's maturity level travels with its route, which is how the maturity banner knows what to say about the page being shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:33",
+      "quote": "export const pageRouteOptions = (page) => ({ ...routeOptions, app: { page } })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-036",
+      "statement": "A collecting page ends with a primary button reading \"Save and continue\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/save-actions.njk:18, src/server/app/shared/copy.en.js:62",
+      "quote": "{{ govukButton(primary or { text: copy.saveAndContinue }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-037",
+      "statement": "A collecting page the overview links to also offers a secondary button reading \"Save and return to overview\", in the same button group as the primary button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:22, src/server/app/shared/copy.en.js:63",
+      "quote": "{{ govukButton({\n        text: copy.saveAndReturnToHub,\n        classes: \"govuk-button--secondary\",\n        name: \"exit\",\n        value: \"hub\"\n      }) }}",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:35 holds that both buttons sit in the button group."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-038",
+      "statement": "Pressing \"Save and return to overview\" saves the page's answers and goes to the notification's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:167",
+      "quote": "export const hubExitTarget = (request) =>\n  request.payload?.exit === 'hub' ? hubPath(request.params.journeyId) : null",
+      "confidence": "verbatim",
+      "note": "kit.test.js:304 holds that only the named hub exit goes to the overview. save-actions.test.js:46 holds that the secondary button posts exit=hub."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-039",
+      "statement": "A collecting page the overview links to also offers a \"Cancel and return to overview\" link, on its own line below the two buttons, going to the notification's overview without saving.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:31, src/server/app/shared/copy.en.js:64",
+      "quote": "<p class=\"govuk-body\">\n      <a class=\"govuk-link\" href=\"{{ params.hubHref }}\">{{ copy.cancelAndReturnToHub }}</a>\n    </p>",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:35 holds it is outside the button group and after it."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-040",
+      "statement": "A page reached from another page rather than from the overview ends with the primary button alone: no \"Save and return to overview\" button and no \"Cancel and return to overview\" link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:16, src/server/app/shared/save-actions.test.js:59",
+      "quote": "{% set showReturnControls = params.showReturnControls if params.showReturnControls is defined else true %}",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:68 holds that the button group is kept even then, so the primary button still sits with whatever follows it."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-041",
+      "statement": "A page may name its own primary button in place of \"Save and continue\", and the return controls are kept or dropped independently of that choice.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.test.js:72",
+      "quote": "it('Should let a page reached from another page name its own primary and show it alone', () => {",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:107 holds that a page the overview links to keeps both return controls even when it names its own primary."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-042",
+      "statement": "A page may add extra buttons or button-styled links straight after the primary button, inside the button group and before \"Save and return to overview\", keeping the classes it gives each one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:19, src/server/app/shared/save-actions.test.js:83",
+      "quote": "{% for button in params.buttonsAfterPrimary %}\n      {{ govukButton(button) }}\n    {% endfor %}",
+      "confidence": "verbatim",
+      "note": "save-actions.test.js:91 pins the order as Save and continue, the extras in the order given, then Save and return to overview."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-043",
+      "statement": "The save controls are built from the GOV.UK button component and its button group, with no custom markup of their own.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/save-actions.njk:1",
+      "quote": "{% from \"govuk/components/button/macro.njk\" import govukButton %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-044",
+      "statement": "The service's save controls are worded \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:61",
+      "quote": "saveActions: {\n    saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'\n  }",
+      "confidence": "verbatim",
+      "note": "copy.test.js:99 pins all three exactly, though its own title calls them \"the four save-action labels\" while asserting three: the title and the assertion disagree, which the reconciler may want to know."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-045",
+      "statement": "Saving a valid page goes to the next page of the journey that applies, and when no page is left it goes to the notification's review page at the slug notification-view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:170",
+      "quote": "const landing = nextStepLanding(page.id, scope, journeyId)\n  if (!landing) {\n    return pagePath(journeyId, CYA_SLUG)\n  }",
+      "confidence": "verbatim",
+      "note": "CYA_SLUG is 'notification-view' (kit.js:71)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-046",
+      "statement": "When the next page that applies needs a required earlier answer the trader has not given, saving opens the page that asks for that earlier answer instead.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:175",
+      "quote": "'Save and continue opened the page that asks for a missing earlier answer'",
+      "confidence": "verbatim",
+      "note": "The move is logged once with the notification id, the page saved, the page opened and the missing answer ids."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-047",
+      "statement": "Saving a page records the page just saved on the trail the next page carries, so that page's Back link returns to it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:202",
+      "quote": "export const nextTarget = (request, page, scope) =>\n  hubExitTarget(request) ??\n  pushTrail(request, nextPagePath(request, page, scope), page.slug)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-048",
+      "statement": "A page's error summary is titled \"There is a problem\" and lists one entry per field error, each linking to the field on the page.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:123, src/server/app/shared/copy.en.js:31",
+      "quote": "titleText: sharedCopy.errorSummary.title,\n    disableAutoFocus,\n    errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
+      "confidence": "verbatim",
+      "note": "errorSummary.title is 'There is a problem'; the default link is the in-page anchor `#` plus the field name (kit.js:107)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-049",
+      "statement": "A page with no field errors shows no error summary.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:127",
+      "quote": "const entries = Object.entries(fieldErrors ?? {})\n  if (entries.length === 0) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-050",
+      "statement": "A page may point its error summary entries somewhere other than the field on the page, such as another page, and may leave the caret where it is instead of moving it to the summary when the trader was not just refused.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:109",
+      "quote": "@param {boolean} [options.disableAutoFocus] - keep the caret where it is\n * instead of moving it to the summary. Set it on a page that renders the\n * summary without the user having just been refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-051",
+      "statement": "The error summary is rendered from the GOV.UK error summary component and appears only when the page has one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/error-summary.njk:3",
+      "quote": "{% if errorSummary %}\n  {{ govukErrorSummary(errorSummary) }}\n{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-052",
+      "statement": "A field that was answered wrongly shows its message against the field itself, as well as in the summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:138",
+      "quote": "export const fieldError = (fieldErrors, field) =>\n  fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the page's map of field key to message into the error-message parameter a GOV.UK form component takes."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-053",
+      "statement": "An error page shows a large heading and one paragraph of message, inside the same chrome as every other page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/error.njk:4",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n\n  <p class=\"govuk-body\">{{ message }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-054",
+      "statement": "The error pages read \"Page not found\", \"Forbidden\", \"You need to sign in to view this page\", \"There is a problem with your request\", and \"Something went wrong\" for anything else.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:38",
+      "quote": "errorPage: {\n    notFound: 'Page not found',\n    forbidden: 'Forbidden',\n    unauthorized: 'You need to sign in to view this page',\n    badRequest: 'There is a problem with your request',\n    unexpected: 'Something went wrong'\n  }",
+      "confidence": "verbatim",
+      "note": "copy.test.js:87 pins all five exactly."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-055",
+      "statement": "An error page offers no way back into the service: it has no Back link, no link to the dashboard and no error summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/error.njk:1",
+      "quote": "{% extends \"shared/layout.njk\" %}",
+      "confidence": "inferred",
+      "note": "It follows from the template holding only a heading and a paragraph, and from the Back link appearing only when a page supplies one (repo-plantsfrontend-p13-016). The service navigation is still there for a signed-in user."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-056",
+      "statement": "When a trader cannot be signed in, the page reads \"Sorry, we are unable to sign you in.\" and offers \"Please try again\", where \"try again\" is a link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:25",
+      "quote": "unauthorised: {\n    title: 'Sorry, we are unable to sign you in',\n    heading: 'Sorry, we are unable to sign you in.',\n    bodyPrefix: 'Please',\n    signInLinkText: 'try again'\n  }",
+      "confidence": "verbatim",
+      "note": "The browser title drops the full stop the heading carries."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-057",
+      "statement": "A page that sits outside every notification set, such as the sign-in error page, is shown in chrome whose Dashboard link goes to the site root, with no status strip.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:214",
+      "quote": "export const serverWideBase = (title) => ({\n  layout: SERVER_WIDE_LAYOUT,\n  pageTitle: title,\n  homeUrl: '/',\n  journeyStrip: null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-058",
+      "statement": "A page that may or may not belong to a notification set is shown in the chrome of whichever set its URL falls under, and in the site-wide chrome when it falls under none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:234",
+      "quote": "const setId = setIdForPath(requestPath)\n  return setId\n    ? withSetContext(setId, () => base(title))\n    : serverWideBase(title)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-059",
+      "statement": "A page of a notification is given the caption naming the section of the journey it belongs to, and a page the journey deliberately leaves uncaptioned shows none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:268",
+      "quote": "caption: journeySectionCaption(page?.id),",
+      "confidence": "verbatim",
+      "note": "kit.test.js:27 holds all three cases: a captioned page, a page the journey leaves bare, and a page that supplies no identity at all."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-060",
+      "statement": "A section caption is shown above the page heading as a large caption by default, and a page may ask for another caption size.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/section-caption.njk:1",
+      "quote": "{% macro sectionCaption(text, classes = \"govuk-caption-l\") %}\n  {%- if text %}<span class=\"{{ classes }}\">{{ text }}</span>{% endif -%}",
+      "confidence": "verbatim",
+      "note": "section-caption.test.js:14 holds the extra-large caption a dashboard asks for, the large default, and that an uncaptioned page renders nothing at all."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-061",
+      "statement": "Every page of a notification carries a link to that notification's overview and the token that proves which version of the notification the trader is looking at.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:271",
+      "quote": "hubHref: hasJourney ? hubPath(journeyId) : undefined,\n    journeyStrip: showJourneyStrip\n      ? journeyStrip(journey, { offerCancelAmend })\n      : null,\n    concurrencyToken: journey?.concurrencyToken ?? null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-062",
+      "statement": "When a trader saves a page after the notification has changed underneath them, the save is refused and the page is shown again with the stale-action banner, keeping any trail the URL carried.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:322",
+      "quote": "const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "verbatim",
+      "note": "kit.test.js:137 holds the redirect to `/notifications/journey-1/origin?from=notification-view&staleAction=1` and the single info log naming the notification id and the token posted."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-063",
+      "statement": "A refused save is logged once with the notification id, the route and the keys of the fields in error, never the messages the trader is shown.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/kit.js:156",
+      "quote": "errorCodes: Object.keys(fieldErrors)",
+      "confidence": "verbatim",
+      "note": "kit.test.js:256 holds that the field keys are logged and the messages are not, and that a refusal with no field errors logs its named reason instead."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-064",
+      "statement": "When the backend is briefly unavailable the page's own fallback is shown and the failure is logged once as a warning with the notification id and the error, and the page keeps working.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:294",
+      "quote": "'Save failed on a recoverable backend error, fallback response sent'",
+      "confidence": "verbatim",
+      "note": "kit.test.js:167 holds that a save that succeeds logs nothing, that a recoverable failure logs one warning carrying the error and answers with the fallback, that extra ids the page passes are logged beside the notification id, and that a stale token or any other error is passed on unlogged."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-065",
+      "statement": "A date is asked for as a single text box ten characters wide, written as d/m/yyyy, shown through the Ministry of Justice date picker, with an optional hint and an optional earliest and latest date.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:399",
+      "quote": "classes: 'govuk-input--width-10',\n    label: { text: label, classes: labelClasses },\n    hint: hint ? { text: hint } : undefined,\n    errorMessage: error ? { text: error } : undefined,\n    value: dateInputValue(value),\n    minDate,\n    maxDate,",
+      "confidence": "verbatim",
+      "note": "kit.test.js:43 holds that supplied bounds and the value come through as d/m/yyyy text and that both bounds are left out when none are given."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-066",
+      "statement": "A date field's label is small by default and the page may ask for a larger one; its form group always carries the house date-picker class, followed by any extra classes the page passes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:422",
+      "quote": "formGroup: {\n      classes: ['app-date-picker', formGroupClasses].filter(Boolean).join(' ')\n    }",
+      "confidence": "verbatim",
+      "note": "kit.test.js:64 pins the class alone and the class followed by the page's own, and kit.test.js:81 pins the medium and small label sizes."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-067",
+      "statement": "A date the trader typed is read back as its day, month and year when it is written as d/m/yyyy, comes back empty when the box was left blank, and is shown back to them unchanged when it is written any other way.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:357",
+      "quote": "const match = /^(?<day>\\d{1,2})\\/(?<month>\\d{1,2})\\/(?<year>\\d{4})$/.exec(raw)\n  if (!match) {\n    return raw\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the single date text box's posted string into the day, month and year parts the notification stores, and back again for display."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-068",
+      "statement": "The notification list is at the set's own base URL, a new notification is created at /notifications under it, a notification's overview is at /notifications/<id>, each of its pages at /notifications/<id>/<slug>, and the journey can also be entered at /start.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:5",
+      "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`\nexport const hubRoutePath = () => '/notifications/{journeyId}'\nexport const createRoutePath = () => '/notifications'\nexport const startRoutePath = () => '/start'\nexport const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim",
+      "note": "The high-risk plants set mounts at /high-risk-plants, so its list is /high-risk-plants and its pages /high-risk-plants/notifications/<id>/<slug> (trail.test.js:69 shows the built URL)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-069",
+      "statement": "The notification list and the create-a-notification URLs under it count as the dashboard section of the service, which is what marks Dashboard as the current navigation item.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paths.js:17",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
+      "confidence": "verbatim",
+      "note": "mechanism: decides from the request path alone which navigation item is active."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-070",
+      "statement": "A paged list numbers its pages from 1, and a page number in the URL that is not a whole number of 1 or more is ignored rather than refused.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paging.js:5",
+      "quote": "export const pageAskedFor = (value) => {\n  if (!A_WHOLE_NUMBER.test(value ?? '')) {\n    return undefined\n  }\n  const asked = Number(value)\n  return asked >= FIRST_PAGE ? asked : undefined\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-071",
+      "statement": "A list shows Previous and Next links only when it runs to more than one page, Previous only when there is a page before and Next only when there is a page after.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/paging.js:13",
+      "quote": "const minimumPagesToPaginate = 2\n  if (totalPages < minimumPagesToPaginate) {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "The Previous and Next wording is passed in by the list that uses it, not held here."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-072",
+      "statement": "The shared paging helpers set no page size: how many rows a list shows per page is decided by the list, not centrally.",
+      "kind": "data",
+      "ref": "src/server/app/shared/paging.js:1",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The part's covers expects \"the page size they define\". paging.js holds only FIRST_PAGE, the whole-number check and the previous/next links; no size constant appears in it or anywhere else in src/server/app/shared/."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-073",
+      "statement": "A page's Back link goes to the place the trader actually came from, read from a trail the URL carries, and falls back to the notification's overview when the URL names no place.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:197",
+      "quote": "const newest = entries.at(-1)\n  return newest === undefined\n    ? fallbackHref\n    : trailEntryHref(newest, entries.slice(0, -1), journeyId)",
+      "confidence": "verbatim",
+      "note": "trail.test.js:66 holds the Back link to the newest place carrying the places before it, and trail.test.js:74 and :142 hold the fallback to Overview."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-074",
+      "statement": "Back can lead to the notification's overview, the notification list, the Import Notification Service type question, or any page of the journey by its slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:12",
+      "quote": "export const TRAIL_START = Object.freeze({\n  overview: 'overview',\n  dashboard: 'dashboard',\n  ins: 'ins'\n})",
+      "confidence": "verbatim",
+      "note": "trail.test.js:121 to :131 hold each: Overview, the dashboard, and /ins-question/j-1 for the Import Notification Service question."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-075",
+      "statement": "A trail in the URL naming anywhere the journey does not have is ignored, the Back link falls back, and the attempt is logged once as a warning per request.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/trail.js:34",
+      "quote": "return entries.length > 0 && entries.every((entry) => recognised.has(entry))\n    ? { entries }\n    : { entries: [], unrecognised: String(received) }",
+      "confidence": "verbatim",
+      "note": "trail.test.js:146 holds it for an unknown place, an absolute URL, an unknown place beneath a known one, an empty trail, and a trail given more than once. Claimed here as a weakness the service already closes: a URL cannot send Back anywhere of the sender's choosing."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-076",
+      "statement": "A trail remembers at most 40 places, losing the oldest when a further one is added.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/trail.js:10",
+      "quote": "export const LONGEST_TRAIL = 40",
+      "confidence": "verbatim",
+      "note": "trail.test.js:46 holds that a trail past the longest loses its oldest place and keeps the newest."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-077",
+      "statement": "The trail travels in the URL's query string as a comma-separated list named \"from\", newest last.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/trail.js:7",
+      "quote": "export const TRAIL_PARAMETER = 'from'\nexport const TRAIL_SEPARATOR = ','",
+      "confidence": "verbatim",
+      "note": "trail.test.js:40 pins the built URL as `?x=1&from=overview%2Cscalars%2Citems`, joining a query string the href already had."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-078",
+      "statement": "A page sent to from elsewhere can be told which page to return to afterwards, carried in the URL as \"return\", and that instruction is honoured only when it names one of the pages the sending page allows.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/trail.js:95",
+      "quote": "if (allowedSlugs.includes(marker)) {\n    return { honouredSlug: marker }\n  }",
+      "confidence": "verbatim",
+      "note": "trail.test.js:202 holds that no marker and an allowed marker log nothing, and an unallowed one is dropped and logged once at warn. Claimed as a weakness already closed: a URL cannot redirect the trader off the service."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-079",
+      "statement": "A refused trail or return marker is logged cut to 200 characters, and each is logged at most once per request even when both are refused on the same request.",
+      "kind": "non-functional",
+      "ref": "src/server/app/shared/trail.js:58",
+      "quote": "const longestLoggedValue = 200",
+      "confidence": "verbatim",
+      "note": "mechanism: holds a per-request record of which warnings have been written, keyed off the request, so a value repeated in several links is logged once. trail.test.js:252 and :260 hold the cut and the one-each rule."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-080",
+      "statement": "The service can host more than one notification set side by side, each under its own URL prefix, and a request is answered by the set whose prefix its path falls under, the longest matching prefix winning.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/set-context.js:29",
+      "quote": "const under = path === prefix || path.startsWith(`${prefix}/`)\n    if (under && (!match || prefix.length > mounts.get(match).length)) {\n      match = setId\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: works on the request path and the registered set prefixes. set-context.test.js:106 holds that /health and /auth/sign-out fall outside every set, that a longer sibling name such as /high-risk-plants-archive is not treated as inside, and that the longest matching prefix wins over the first registered."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-081",
+      "statement": "Every page, pre-handler and extension of a set runs with that set and the signed-in trader's verified organisation bound to the request, so a page of one set can never read another set's configuration or another organisation's data by accident.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:81",
+      "quote": "export const runInRequestContext = (request, setId, fn) =>\n  withOrganisationId(organisationIdOf(request), () => withSetContext(setId, fn))",
+      "confidence": "verbatim",
+      "note": "mechanism: wraps every method a route declares. set-context.test.js:193 holds the handler, an options handler, bare and array extensions and every pre entry all running inside their own set, and that a non-function handler such as a static asset directory is passed through untouched."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-082",
+      "statement": "A set that does not configure everything the platform requires of it is refused when it is mounted, with the missing piece and the call that would supply it named.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:191",
+      "quote": "export const unconfiguredSeamsOf = (setId) =>\n  [...requiredSeams]\n    .filter(([, seam]) => !seam.has(setId))\n    .map(([label, { configuredBy }]) => `${label} (${configuredBy})`)",
+      "confidence": "verbatim",
+      "note": "mechanism: works on the per-set registry of configuration seams. set-context.test.js:343 holds that a seam answers with the value configured for the active set and names the seam and the set when one never configured it."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-083",
+      "statement": "A set that mounts without a URL prefix starting with a slash is refused outright.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:11",
+      "quote": "if (!prefix?.startsWith('/')) {\n    throw new Error(`Set \"${setId}\" needs a mount prefix`)\n  }",
+      "confidence": "verbatim",
+      "note": "set-context.test.js:19 holds both the missing prefix and the unrooted prefix."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-084",
+      "statement": "When only one notification set is mounted, pages built outside a request still resolve to it, so the service works as a single-set service without any set being named.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/set-context.js:43",
+      "quote": "const soleSetId = () => (mounts.size === 1 ? [...mounts.keys()][0] : undefined)",
+      "confidence": "verbatim",
+      "note": "mechanism: falls back to the sole mounted set. set-context.test.js:57 holds the fallback, and :74 holds that an active set beats it."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-085",
+      "statement": "A table cell can show a GOV.UK component by rendering the component's macro to HTML, with the text in its arguments escaped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/render-macro.js:23",
+      "quote": "export const templateMacros = (template) =>",
+      "confidence": "verbatim",
+      "note": "mechanism: loads a template's exported macros once and hands them back as functions over the arguments a cell passes. render-macro.test.js:6 holds that 'Origin & route' comes back as 'Origin &amp; route'."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-086",
+      "statement": "Every string a trader reads is held in a copy module per language, and the service resolves English whenever the language asked for is unknown or unstated.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/copy.js:17",
+      "quote": "export const copyFor = (locales, locale = DEFAULT_LOCALE) =>\n  locales[locale] ?? locales[DEFAULT_LOCALE]",
+      "confidence": "verbatim",
+      "note": "copy.test.js:8 holds all three: the requested locale, the default and the fallback."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-087",
+      "statement": "A trader cannot read the service in Welsh: Welsh copy exists for every shared string but nothing lets them choose it, so every page resolves English.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/copy.js:10",
+      "quote": "Every\n * call site resolves `en` because no locale toggle is wired yet — locale\n * selection (cookie, language toggle) plugs in via the `locale` argument.",
+      "confidence": "verbatim",
+      "note": "copy.test.js:19 confirms that asking for 'cy' falls back to English when only an English bundle is supplied."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-088",
+      "statement": "The Welsh shared copy is a machine draft no translator has reviewed, and is not fit to show a trader until it has Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p13-089",
+      "statement": "The Welsh chrome names the service \"Gwasanaeth hysbysu mewnforio\", prefixes an error title with \"Gwall: \", labels Back \"Yn ôl\", keeps GOV.UK as the brand word, tags the phase \"Alffa\" with \"Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —\" and \"rhowch eich adborth drwy e-bost\", and labels the navigation Dewislen, Dangosfwrdd, Llyfr cyfeiriadau, Rheoli cyfrif and Allgofnodi, with the footer Preifatrwydd, Cwcis and Datganiad hygyrchedd.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:3",
+      "quote": "serviceName: 'Gwasanaeth hysbysu mewnforio',\n    errorTitlePrefix: 'Gwall: ',\n    govukSuffix: 'GOV.UK',\n    back: 'Yn ôl',",
+      "confidence": "verbatim",
+      "note": "copy.test.js:54, :72 and :80 hold that the Welsh banner and navigation carry the same keys as English and that both locales close a page title with GOV.UK."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-090",
+      "statement": "The Welsh copy carries the same wording for the error summary (\"Mae problem\"), the recoverable-error banner, the error pages, the stale-notification banner, the notification actions, the save controls (\"Cadw a pharhau\", \"Cadw a dychwelyd i'r trosolwg\", \"Canslo a dychwelyd i'r trosolwg\") and the status strip (Drafft, Wedi'i gyflwyno, Diwygio, Canslo diwygio, Wedi'i ddileu).",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:62",
+      "quote": "saveActions: {\n    saveAndContinue: 'Cadw a pharhau',\n    saveAndReturnToHub: \"Cadw a dychwelyd i'r trosolwg\",\n    cancelAndReturnToHub: \"Canslo a dychwelyd i'r trosolwg\"\n  }",
+      "confidence": "verbatim",
+      "note": "copy.test.js:36, :107 and :113 pin the Welsh strip and save controls and hold the key trees identical to English."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-091",
+      "statement": "Every shared copy key has a value in both English and Welsh, and no key is left blank in either.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.test.js:122",
+      "quote": "describe('shared copy module', () => {\n  itHoldsCopyAtEveryLeaf(sharedEn, sharedCy)\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: the check walks a copy module to its leaves and accepts a non-empty string or a string-returning function as a leaf (copy-leaves.js:9, :17)."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-092",
+      "statement": "A notification list offers \"Copy as new\" and \"Delete\" on a notification, confirming afterwards with \"Notification copied\" / \"A new draft notification has been created.\" and \"Notification deleted\" / \"The notification has been deleted.\"",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:49",
+      "quote": "notificationActions: {\n    copy: {\n      text: 'Copy as new',\n      successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'\n    },\n    delete: {\n      text: 'Delete',\n      successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'\n    }\n  }",
+      "confidence": "verbatim",
+      "note": "The Welsh equivalents are at copy.cy.js:50. The list page that renders these is part 1's slice; this part claims the shared wording."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-093",
+      "statement": "When a field's own page gives no message, a wrong answer is refused with one of these default messages: \"Select a valid option\", \"Enter a valid postcode\", \"Enter a valid registration number\", \"Enter a valid UK telephone number\", \"Enter a valid date\", \"Enter a real time, like 14:30\", \"Enter a whole number\", \"Enter <n> characters or fewer\", or \"Enter a number between <min> and <max>\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:82",
+      "quote": "oneOf: 'Select a valid option',\n  postcode: 'Enter a valid postcode',\n  vehicleReg: 'Enter a valid registration number',\n  ukPhone: 'Enter a valid UK telephone number',\n  date: 'Enter a valid date',\n  time: 'Enter a real time, like 14:30',\n  wholeNumber: 'Enter a whole number',\n  maxLength: (max) => `Enter ${max} characters or fewer`,\n  numberBetween: (min, max) => `Enter a number between ${min} and ${max}`",
+      "confidence": "verbatim",
+      "note": "The Welsh equivalents are at copy.cy.js:76. These are fallbacks only: a page that passes its own message shows that instead."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-094",
+      "statement": "The shared macro kit is the save controls and the section caption; there is no macro library beyond those two, and the rest of the shared kit is view-model building and route wiring rather than markup.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:1",
+      "quote": "import { dashboardPath, hubPath, pagePath, pageRoutePath } from './paths.js'",
+      "confidence": "gap",
+      "note": "The part's covers expects \"every macro in kit.js\". kit.js is a JavaScript module and defines no Nunjucks macro: it exports route options and route pairs, the chrome builders base/serverWideBase/chromeFor, the status strip, the error summary and field error view models, the save-and-continue target, the refusal and recoverable-save logging and the Ministry of Justice date field. The only Nunjucks macros in src/server/app/shared/ are saveActions (save-actions.njk) and sectionCaption (section-caption.njk), and the two partials error.njk and error-summary.njk; all are claimed above."
+    },
+    {
+      "id": "repo-plantsfrontend-p13-095",
+      "statement": "Beyond the Ministry of Justice date picker, every shared component of the chrome is a GOV.UK Frontend one: back link, notification banner, phase banner, service navigation, tag, header, footer, button, button group, error summary.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:3",
+      "quote": "{% from \"govuk/components/back-link/macro.njk\" import govukBackLink %}\n{% from \"govuk/components/notification-banner/macro.njk\" import govukNotificationBanner %}\n{% from \"govuk/components/phase-banner/macro.njk\" import govukPhaseBanner %}\n{% from \"govuk/components/service-navigation/macro.njk\" import govukServiceNavigation %}\n{% from \"govuk/components/tag/macro.njk\" import govukTag %}",
+      "confidence": "verbatim",
+      "note": "The only non-GOV.UK classes in the shared chrome are the house classes app-header, app-journey-strip and app-date-picker."
+    }
+  ]
+}

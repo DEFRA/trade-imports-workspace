@@ -11,9 +11,10 @@ and 25 Nov 2026, after the digest job was written.
 
 ## Shape
 
-- **Where it runs:** one Claude Code session on the always-on Mac Studio,
-  started inside tmux or screen so it outlives the SSH connection that opened
-  it. This machine does nothing else, so the jobs own the workspace clone and
+- **Where it runs:** one ordinary interactive Claude Code session on the
+  always-on Mac Studio, opened at the workspace root over SSH and left open.
+  The jobs fire while it is idle, and you can watch them work in that window.
+  This machine does nothing else, so the jobs own the workspace clone and
   its `repos/`. `CronCreate` registers the jobs. Recurring jobs expire after
   7 days, so `/nightly-start` re-registers them all in one command.
 - **What triggers work:** Dependabot raises the PRs. The nightly job fixes
@@ -39,12 +40,16 @@ and 25 Nov 2026, after the digest job was written.
 On the Mac Studio, over SSH:
 
 ```bash
-tmux new -s nightly            # or: screen -S nightly
 cd ~/git/defra/trade-imports-workspace
 claude                         # auto mode
 /nightly-start
-# detach: Ctrl-b d (tmux) or Ctrl-a d (screen), then close the laptop
+# leave the session open: the jobs fire while it is idle, in this window
 ```
+
+- `/nightly-start` offers to run one job straight away, so you can watch it
+  work without waiting for its cron.
+- Closing the SSH connection ends the session, and the jobs with it. Keep
+  the connection open.
 
 - Stop the Mac sleeping: `sudo pmset -a sleep 0`, or "Prevent automatic
   sleeping" in Energy settings. Turn off automatic macOS update installs.
@@ -63,7 +68,7 @@ claude                         # auto mode
 | 0.2 | `config/dependency-sets.json` and `tim deps dependabot <repo> [--write\|--check]`, which generates each repo's Dependabot groups, ignores and cooldown. | Done on the branch. animals-frontend's generated config is on its own branch |
 | 0.3 | Unattended mode on `tim govuk` and `tim npm`. See 0.3 below. | Built and tested on the branch; proven live by step 1.5 |
 | 0.4 | `/nightly-start` and `tim nightly check\|stopped`. | Done on the branch |
-| 0.5 | `tim nightly check` refuses a session that is not inside tmux or screen, so a `/nightly-start` from a bare SSH shell does not die when the laptop closes. | Done on the branch |
+| 0.5 | `tim nightly check` does not require tmux or screen: the jobs run in an ordinary session you watch over SSH. Changes under the workspace's `workareas/` do not fail `clean-checkouts`. | Done on `chore/EUDPA-802-nightly-check-ignores-workareas` |
 
 ### 0.3 Unattended mode in tim
 

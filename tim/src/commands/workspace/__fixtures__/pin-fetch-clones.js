@@ -2,6 +2,7 @@ import { execa } from 'execa'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  branchRefsOnly,
   createBareRepo,
   createFatClone
 } from '../../../test-support/git-fixtures.js'
@@ -165,5 +166,8 @@ export const readPinnedState = async (dir) => {
     'refs/remotes'
   )
   const lines = (text) => text.split('\n').filter(Boolean)
-  return { refspecs: lines(refspecs), remoteRefs: lines(remoteRefs) }
+  return {
+    refspecs: lines(refspecs),
+    remoteRefs: branchRefsOnly(lines(remoteRefs))
+  }
 }

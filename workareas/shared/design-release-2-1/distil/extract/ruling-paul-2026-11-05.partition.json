@@ -1,0 +1,31 @@
+{
+  "source": "ruling:paul-2026-11-05",
+  "structure": "A single short Markdown ruling file, 47 lines (workareas/shared/design-release-2-1/sources/ruling-paul-2026-11-05.md), from Paul, dated 5 November 2026, on what the address book stores for an address's type and uses (EUDPA-711). It is laid out in two halves. The first half quotes Paul verbatim in six block quotes, grouped under four framing lines: on reviewing address types, roles and categories (\"Role\" is better terminology than \"use\"; proceed with the renaming and keep category out of the API for now, adding it back later if it becomes a first-class public concept; code changes to add new roles make sense); on the ticket's acceptance criteria, which still described a stored type and uses (\"yes change the AC on the ticket. The correct change was made.\"); on the addresses saved before the change (delete the entire collection on dev and test with CDP tooling, none of the addresses has any value); and on paging the list and the pickers, which the Design Release 2.1 prototype does not page (pagination is needed else the service will struggle, even though it is missing in the prototype, and the lack of it is causing an issue in test environments where organisations have thousands of addresses). The second half is the main session's reading: eight numbered claims, each marked New, Done or a confirmation, covering the six roles and the rename, roles-only storage with no stored address type, the sending/receiving/branch grouping as an internal rule with its refusals, the list's role/searchRole parameters, adding a role in code, the ticket's own description and criteria, no migration of saved addresses, and keeping pagination with page and pageSize 1 to 100 defaulting to 25. Scope is the whole file; nothing is left out. Short enough for one agent to read every word of, so it is one part.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Whole ruling",
+      "scope": "The whole file: the four framing lines, the six verbatim block quotes under them, and the eight numbered claims the main session read from them. There is no other part.",
+      "read": [
+        "workareas/shared/design-release-2-1/sources/ruling-paul-2026-11-05.md"
+      ],
+      "covers": [
+        "The framing line and quotes on address types, roles and categories: \"Role\" is better terminology than \"use\"; proceed with the renaming as discussed and for now keep category out of the API, with the option to add it back later if it becomes a first-class public concept; code changes to add new roles make sense",
+        "The framing line and quote on the ticket's acceptance criteria, which still described a stored type and uses: change the AC on the ticket, the correct change was made",
+        "The framing line and quote on addresses saved before the change: delete the entire collection on the two shared environments, dev and test, using CDP tooling, as the simplest thing, because none of the addresses has any value",
+        "The framing line and the two quotes on paging the list and the pickers, which the Design Release 2.1 prototype does not page: pagination is needed else the service will struggle, it is needed even though it is missing in the prototype, and the lack of it is causing an issue in test environments where organisations have thousands of addresses",
+        "Claim 1 (New): an address holds the roles it can play on a notification, the six being place of origin, consignor, consignee, importer, place of destination and branch address, and \"use\" is renamed \"role\" everywhere, in the record, the API, the code, the copy keys, the tests and the spec",
+        "Claim 2 (New, replacing the stored required type of inc-059 and inc-070): the address book stores roles only and requires at least one, does not store an address type and ignores one a client sends, the address type being the INS front door's grouping of roles worked out from them, in the add flow's first step, the tabs and the United Kingdom-only country",
+        "Claim 3 (New): the grouping of roles into sending, receiving and branch is the address book's internal rule rather than part of its API, it refuses roles from more than one group and refuses a consignee, importer or place of destination outside the United Kingdom, and the grouping is added to the API only if it becomes a public concept",
+        "Claim 4 (New): the address book list takes role, repeatable and any-of, and searchRole, in place of addressType, use and searchUse",
+        "Claim 5 (New): a role a new notification type needs is added in code, each role in exactly one group",
+        "Claim 6 (Done 5 November): EUDPA-711's description and acceptance criteria say roles, not a stored type and uses",
+        "Claim 7 (New): addresses saved before the change are not migrated, and after release the addresses collection is dropped in dev and test with CDP tooling and the address book restarted, while locally the stack is restarted",
+        "Claim 8 (confirming a decision taken earlier on this ticket): the address book's list and every address picker keep pagination though the Design Release 2.1 prototype has none, the list API pages with page and pageSize of 1 to 100 defaulting to 25, and no requirement to list an organisation's addresses unpaginated, req-611's 'unpaginated', is built",
+        "For each numbered claim, whether the quotes above say it in so many words (verbatim) or only imply it (inferred), checked against the quotes and recorded only where they support it",
+        "Any gap the ruling leaves open on what it touches, recorded as a gap claim, such as whether category ever becomes a first-class public concept in the API and the grouping becoming part of the API"
+      ],
+      "prefix": "ruling-paul-2026-11-05-p1"
+    }
+  ]
+}

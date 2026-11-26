@@ -1,0 +1,1890 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 15, the set's journey specification. Read in full: src/server/app/sets/high-risk-plants/spec/journey-spec.json (2,814 lines) and src/server/app/sets/high-risk-plants/spec/fixtures/happy-path.json (one line). journey-spec.json has seven top-level keys: specVersion (1), journey (high-risk-plants-import-notification), sources (7 entries: the PHNNS policy docx, two Confluence pages, the mural images, the prototype repo, the live-animals frontend repo and the engine skeleton commit, all status extracting), behaviours (98 entries, each id/source/status/detail with later '| Ruling:' and '| Ruled at D<n>-<docket>' supersessions appended in place, and an optional decision id), fieldGroups (one, address), sections (8 flow sections holding 15 pages: start [dashboard, hub], commodity [commodity-type, commodities, commodity-details], origin [origin], arrival [arrival-status, arrival-details], destination [place-of-destination], parties [consignor-select, identification-numbers], contact [consignment-contact-select], review [notification-view, declaration, confirmation], the review section alone gated on readyForCheckYourAnswers) and obligations (29: commodityType, the commodityLines collection and its nine per-line members, countryOfOrigin, arrivalStatus, arrivalDate, arrivalTime, proposedPlaceOfLanding, placeOfDestination, consignor, three identification numbers, consignmentNumber, contactAddress, declaration and the four system values referenceNumber, dateOfNotification, notificationStatus, lateNotificationIndicator). Covered: specVersion and journey, every source entry, every behaviour by id, the address field group, every section and page with its route, copy, collects and gates, every obligation with its level, mandate, widget, values, validation and conditional gate, and the places where the specification and the repo have moved apart. The spec/fixtures/happy-path.json beside it holds no values. Stops short of spec/decisions.json, spec/conflicts.json, spec/backlog-extras.json and spec/panel/ (parts 16 and 17).",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p15-001",
+      "statement": "The high-risk plants set keeps a machine-readable specification of its own journey at schema version 1.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:2",
+      "quote": "\"specVersion\": 1,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-002",
+      "statement": "The journey the specification describes is the high-risk plants import notification.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:3",
+      "quote": "\"journey\": \"high-risk-plants-import-notification\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-003",
+      "statement": "The specification cites the Plant Health National Notification Scheme policy document as a source, held as a docx in the high-risk-plants requirements workarea.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:6-10 (sources phnns-policy)",
+      "quote": "\"id\": \"phnns-policy\",\n      \"type\": \"document\",\n      \"ref\": \"workareas/high-risk-plants/high-risk-plants-requirements/Plant Health National Notification Scheme (PHNNS).docx\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-004",
+      "statement": "The specification cites a Confluence user-needs page, page id 6518997286, as the source of the NNS-UN user needs.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:13-15 (sources confluence-user-needs)",
+      "quote": "\"id\": \"confluence-user-needs\",\n      \"type\": \"confluence\",\n      \"ref\": \"6518997286\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-005",
+      "statement": "The specification cites a Confluence requirements page, page id 6518997274, as the source of the notification data requirements.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:20-22 (sources confluence-requirements)",
+      "quote": "\"id\": \"confluence-requirements\",\n      \"type\": \"confluence\",\n      \"ref\": \"6518997274\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-006",
+      "statement": "The specification cites a set of mural images as a source, including the service blueprint and the data-fields board.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:27-29 (sources mural)",
+      "quote": "\"id\": \"mural\",\n      \"type\": \"images\",\n      \"ref\": \"workareas/high-risk-plants/high-risk-plants-requirements/mural\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-007",
+      "statement": "The specification cites the GB-notification-service design prototype repo as a source, by a path under a named person's home directory.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:34-36 (sources prototype)",
+      "quote": "\"id\": \"prototype\",\n      \"type\": \"repo\",\n      \"ref\": \"/Users/samfarrington/git/defra/defra-design/GB-notification-service\"",
+      "confidence": "verbatim",
+      "note": "The locator is a machine-specific absolute path, so the citation cannot be resolved from another checkout."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-008",
+      "statement": "The specification cites the live animals frontend repo as a source, which is where its same-as-animals and variant-of-animals relations point.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:41-43 (sources live-animals)",
+      "quote": "\"id\": \"live-animals\",\n      \"type\": \"repo\",\n      \"ref\": \"repos/trade-imports-animals-frontend\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-009",
+      "statement": "The specification cites the plants frontend's own engine skeleton at one pinned commit as a source for platform behaviour.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:48-50 (sources skeleton)",
+      "quote": "\"id\": \"skeleton\",\n      \"type\": \"code\",\n      \"ref\": \"src/server@0a8dead14aba9bf1a1d972177b4e04d4a5d5193d\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-010",
+      "statement": "Every one of the specification's seven sources is still marked as being extracted rather than finished.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:10, 17, 24, 31, 38, 45, 52",
+      "quote": "\"status\": \"extracting\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-011",
+      "statement": "An address on a plants notification holds a name or organisation name, two address lines, a town or city, a county, a postcode, a country, a phone number and an email address, with the second address line and the county optional.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:696-708 (fieldGroups address)",
+      "quote": "nameOrOrganisationName | addressLine1 | addressLine2 (optional) | townOrCity | county (optional) | postcode | country | phone | email",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-012",
+      "statement": "The address fields have the same maximum lengths as live animals: 255 for the name and both address lines, 100 for town or city and county, 12 for the postcode, 20 for the phone number and 254 for the email address.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:708 (fieldGroups address detail)",
+      "quote": "max lengths 255/255/255/100/100/12/-/20/254",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-013",
+      "statement": "The consignor and place of destination both use the shared address shape and resolve their records from the organisation-scoped address book.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:708 (fieldGroups address detail)",
+      "quote": "Plants usages (consignor, placeOfDestination) reference it through fieldGroupRef and resolve records from the org-scoped address book as animals does.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-014",
+      "statement": "The journey is laid out in eight sections in one order: start, commodities, origin, arrival, destination, addresses, contact, then check and submit.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:711-1100 (sections) and :735 (dashboard notes)",
+      "quote": "sections are added in the brief's order (start, commodity, origin, arrival, destination, parties, contact, review) — no source forced a different order",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-015",
+      "statement": "Only the check and submit section is gated: every other section opens with no gate of its own.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:715, 765, 833, 861, 908, 942, 994, 1019 (section gate fields)",
+      "quote": "\"gate\": null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-016",
+      "statement": "The service's home page is a notification list at the site root titled Import notification service, captioned Dashboard, which collects nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:718-731 (sections start, page dashboard)",
+      "quote": "\"route\": \"/ (dashboardPath; animals page.js slug is the empty string — the spec cannot hold an empty slug, so the implementor uses slug '' to mirror animals)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-017",
+      "statement": "The dashboard's Start a new notification button creates the record, mints its reference and opens the commodity type question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:732-734 (dashboard startButton, startAction)",
+      "quote": "\"startButton\": \"Start a new notification\",\n          \"startAction\": \"POST /notifications creates the record (reference minted) and redirects to commodity-type\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-018",
+      "statement": "The dashboard's introduction tells the trader to use the service to notify high-risk plants for planting, potatoes, or wood and cut trees imported from EU member states under the Plant Health National Notification Scheme, and offers a GOV.UK guidance link only while a guidance URL is set.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:737 (dashboard body)",
+      "quote": "Use this service to tell the plant health authorities about high-risk plants for planting, potatoes, or wood and cut trees you are importing from EU member states, as required by the Plant Health National Notification Scheme.",
+      "confidence": "verbatim",
+      "note": "Marked provisionalCopy: true, with no Welsh body."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-019",
+      "statement": "The notification's own overview page sits at /notifications/{journeyId} under the heading Overview and collects nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:740-751 (sections start, page hub)",
+      "quote": "\"route\": \"/notifications/{journeyId} (hubPath; the hub has no sub-slug — 'hub' here is the id, the implementor registers it at hubPath())\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-020",
+      "statement": "The overview lists four numbered groups: 1 About the consignment (commodities, origin), 2 Arrival and destination (arrival, destination), 3 Addresses (consignor, identification numbers, contact) and 4 Check and submit (review), and closes with a secondary Return to dashboard button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:752-756 (hub groups, footerButton)",
+      "quote": "1. About the consignment [commodities, origin] | 2. Arrival and destination [arrival, destination] | 3. Addresses [consignor, identificationNumbers, contact] | 4. Check and submit [review]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-021",
+      "statement": "An overview row reads Completed, In progress, Not yet started, Optional or Cannot start yet, with green, light blue and blue tags for the first three.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:754 (hub statuses)",
+      "quote": "Completed (govuk-tag--green) | In progress (govuk-tag--light-blue) | Not yet started (govuk-tag--blue) | Optional (plain text) | Cannot start yet (govuk-task-list__status--cannot-start-yet)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-022",
+      "statement": "The animals overview's commodity totals panel is deliberately not reproduced on the plants overview.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:757 (hub notes)",
+      "quote": "The animals 'Your commodities' totals panel (bespoke app-commodity-total CSS, animal/package counts) is NOT copied — govuk-* only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-023",
+      "statement": "The journey's first question, at /notifications/{journeyId}/commodity-type, asks What are you importing? and collects the notification's commodity type.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:768-781 (sections commodity, page commodity-type)",
+      "quote": "\"slug\": \"commodity-type\",\n          \"title\": \"What are you importing?\",\n          \"gate\": null,\n          \"collects\": [\"commodityType\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-024",
+      "statement": "The commodity type page is the journey's entry page: the entry guard redirects there, a new notification opens there, and Back goes to the overview once any answer is committed and to the dashboard before that.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:782-784 (commodity-type backLink, notes)",
+      "quote": "The journey entry page: the entry guard redirects here, a new notification opens here, and its identity is what the restored entry guard needs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-025",
+      "statement": "When the notification already holds commodity lines, the commodity type page warns above the radios that changing the answer will remove the commodities already added.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:784 (commodity-type notes)",
+      "quote": "the page renders govukWarningText above the radios (provisional copy) \"Changing your answer will remove the commodities you have already added.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-026",
+      "statement": "The commodities list page at /notifications/{journeyId}/commodities owns the commodity lines and shows each saved line in a table of category, genus or variety and quantity with Change and Remove links and an Add another commodity button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:787-802 (sections commodity, page commodities)",
+      "quote": "govukTable of saved lines (Category | Genus or variety | Quantity | Change | Remove) or empty text -> Add another commodity (secondary button to commodities/details) -> Continue + return controls",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-027",
+      "statement": "Opening the commodities list with no lines saved sends the trader straight to the commodity details entry page, and a list with no lines refuses to continue with Add at least one commodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:802-803 (commodities shape, errorCopy)",
+      "quote": "a load with zero lines redirects to the entry sub-page (copied from animals consignmentDetails emptyRedirect, inverted)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-028",
+      "statement": "Arriving at the commodities list after a commodity type change shows a banner saying how many commodities were removed, and that load does not bounce the trader to the entry page.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:805 (commodities notes, ruled d-023)",
+      "quote": "the page renders a govukNotificationBanner (provisional copy) \"We removed <n> commodities that are not <commodityType label>\" and does not apply its zero-lines redirect to the entry sub-page for that load",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-029",
+      "statement": "The commodity details page at /notifications/{journeyId}/commodities/details adds or edits one commodity line, asking the category first and revealing the rest of the line's fields from it, and shows only the primary save control because it is reached from the list rather than the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:808-824 (sections commodity, page commodity-details)",
+      "quote": "category govukRadios (only the values for the chosen commodityType) -> fields revealed per category via scope.has('commodityLines[i].<name>') -> Save and add another (action=add) | Save and continue (primary) ; ?index=n edits an existing line",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-030",
+      "statement": "The commodity details page reveals genus, species, commodity code, quantity, EPPO code, size and treatments for plants and wood lines, and variety, quantity and intended use for potato lines.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:825 (commodity-details notes, ruled d-050)",
+      "quote": "fields revealed by category are genus/species/commodity code/quantity/EPPO code/size/treatments, or variety/quantity/intended use for potatoes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-031",
+      "statement": "The origin page at /notifications/{journeyId}/origin, titled Origin of the import, collects the country of origin alone, with no region code and no internal reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:836-845 (sections origin, page origin)",
+      "quote": "plants collects countryOfOrigin alone (no region code in any plants source; the optional reference lives on identification-numbers as consignmentNumber) and narrows the country list by the commodity categories chosen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-032",
+      "statement": "When the consignment holds a ware potato line, the origin page shows an inset above the country search telling the trader to notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain, and that Spain does not include the Balearic Islands.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:853 (origin notes, ruled d-031)",
+      "quote": "\"Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-033",
+      "statement": "The arrival status page at /notifications/{journeyId}/arrival-status asks Has the consignment arrived in Great Britain? as its heading and collects the arrival status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:864-879 (sections arrival, page arrival-status)",
+      "quote": "\"title\": \"Has the consignment arrived in Great Britain?\",\n          \"gate\": null,\n          \"collects\": [\"arrivalStatus\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-034",
+      "statement": "A potato notification never sees the arrival status question: the page is reachable only for plants for planting and wood and cut trees, and potatoes go straight to the arrival details.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:879 (arrival-status notes, ruled d-002)",
+      "quote": "reachable only while arrivalStatus is in scope (commodityType is plants-for-planting or wood-and-cut-trees); potato notifications skip straight to arrival-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-035",
+      "statement": "The arrival details page at /notifications/{journeyId}/arrival-details collects the arrival date for every notification and, for potatoes only, an arrival time and a proposed place of landing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:882-898 (sections arrival, page arrival-details)",
+      "quote": "mojDatePicker (arrivalDate, label by state) -> time input (arrivalTime, potatoes only, scope.has) -> accessible-autocomplete proposedPlaceOfLanding (potatoes only, scope.has) -> save actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-036",
+      "statement": "Plants notifications ask nothing about transport: the arrival details page drops the means of transport, transport identification and transport document reference the animals page collects, because no plants source names them.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:891 (arrival-details divergence)",
+      "quote": "no transport section exists in any plants source",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-037",
+      "statement": "The destination page at /notifications/{journeyId}/destinations/select picks the place of destination from the address book and changes its heading between Place of destination and Where is the consignment now? depending on whether the consignment has arrived.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:911-926 (sections destination, page place-of-destination)",
+      "quote": "\"headingByState\": \"Place of destination (potatoes, not-yet-arrived) | Where is the consignment now? (already-arrived)\"",
+      "confidence": "verbatim",
+      "note": "A later snagging entry on the same page renames the pre-arrival headings to Place of destination so the h1 matches the title and the task row."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-038",
+      "statement": "The destination page's description tells a pre-arrival trader the address is where the goods will be kept after arrival and that a plant health inspector may spot check there, and asks an already-arrived trader for the address where the consignment is being kept, or its intended destination if it is still on its way.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:931-935 (place-of-destination descriptionByState)",
+      "quote": "\"already-arrived\": \"Give the address where the consignment is being kept. If it is still on its way to its intended destination, give that destination. A plant health inspector may carry out a spot check here.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-039",
+      "statement": "Picking a destination copies the chosen record's name, phone, email and address onto the notification, and Edit details changes that copy for this notification only.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:928 (place-of-destination storage)",
+      "quote": "copy { pickedFromId, name, phone, email, address } on the notification; pickedFromId only pre-selects the record when the picker reopens; edited for this notification only via Edit details (party-edit)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-040",
+      "statement": "The consignor page at /notifications/{journeyId}/consignors/select, captioned Addresses and described as the sender of the consignment, is the only party picker the plants journey has.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:945-961 (sections parties, page consignor-select)",
+      "quote": "\"description\": \"This is the sender of the consignment.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-041",
+      "statement": "A potato notification never sees the consignor page: it is passed over by Save and continue and its overview row is hidden, because the potato regulation names no consignor.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:964 (consignor-select notes, ruled d-014)",
+      "quote": "Passed over by Save and continue and the hub row hidden (NA) for potatoes; reached only for plants for planting and wood and cut trees.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-042",
+      "statement": "The identification numbers page at /notifications/{journeyId}/identification-numbers collects the supplier number for plants for planting, the producer and crop numbers for potatoes, and an optional consignment number for every notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:967-985 (sections parties, page identification-numbers)",
+      "quote": "supplierIdentificationNumber (plants for planting only) | producerIdentificationNumber + cropIdentificationNumber (potatoes only) | consignmentNumber (always, optional) — each rendered and validated only when scope.has(); for wood the page shows the optional consignment number alone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-043",
+      "statement": "The identification numbers overview row is Optional for a wood notification and required for potatoes and plants for planting.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:987 (identification-numbers notes)",
+      "quote": "The hub row is Optional for wood (only the optional consignment number is in scope) and required for potatoes and plants for planting",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-044",
+      "statement": "The contact page at /notifications/{journeyId}/consignment/contact/select, titled Contact address for consignment, offers flat radios over every address-book record, copies the chosen record inline, renders no section caption and accepts a blank answer leaving its overview row In progress.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:997-1012 (sections contact, page consignment-contact-select)",
+      "quote": "copied from animals contact: flat radios over every address-book record (name + address hint), inline copy on save, blank allowed at page level with the hub row left In progress.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-045",
+      "statement": "The contact pick carries the record's telephone number and email address onto the notification, so the check your answers contact card shows name, address lines, country, telephone number and email address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1012 (consignment-contact-select notes, ruled d-013)",
+      "quote": "the inline copy carries address.phone and address.email from the record, so the Check your answers Contact card renders name, address lines, country, telephone number and email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-046",
+      "statement": "Check your answers at /notifications/{journeyId}/notification-view opens only once every overview row is complete, not applicable or optional, and until then the review row reads Cannot start yet.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1025-1028 (notification-view gate)",
+      "quote": "authored section gate copied from animals: every task row FULFILLED, NA or OPTIONAL; the review hub row shows Cannot start yet until then",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-047",
+      "statement": "Check your answers groups its summary cards into About the consignment (what you are importing, then one card per commodity line), Arrival and destination, and Addresses, and shows no consignor card for a potato notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1039 (notification-view sections)",
+      "quote": "1. About the consignment [What you are importing card; one Commodity card per line] | 2. Arrival and destination [Arrival details card; Place of destination card] | 3. Addresses [Consignor card (plants for planting and wood only — c-026); Identification numbers card; Contact card: rows Name and Address]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-048",
+      "statement": "Check your answers ends with Now submit your notification, the line Continue to the declaration to submit your notification and a Continue button.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1041 (notification-view submitBlock)",
+      "quote": "Now submit your notification | Continue to the declaration to submit your notification. | Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-049",
+      "statement": "Check your answers refuses to continue while a party copy breaks the address rules or the country of origin does not match the commodities, naming each in the error summary with a link back to the page that fixes it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1043 (notification-view errorCopy)",
+      "quote": "Correct the address details for the consignor | Correct the address details for the place of destination | Correct the contact address details for this consignment | Select a country of origin that matches the commodities in the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-050",
+      "statement": "A submitted notification's view has no Change links, shows a late banner when the stored late flag says late, and carries a header with the reference heading, the status tag, the date line, Amend, Delete notification and the import reference numbers, with no Copy as new.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1042 (notification-view readOnly)",
+      "quote": "SUBMITTED: no Change links, late-notification banner when lateNotificationIndicator is late; AMEND: the amendment-cancelled banner after ?cancelled=1; for DRAFT and SUBMITTED, the view header holds the reference heading, the status tag, the date line (Date created or Date submitted), Amend (submitted only), Delete notification and the import reference numbers; there is no Copy as new",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-051",
+      "statement": "A draft's check your answers warns above the submit block when submitting today would be late, while leaving the submit block and Continue unchanged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1046 (notification-view lateWarning)",
+      "quote": "DRAFT status only: govukWarningText above the submit block when lateness(now, answers) is late (c-035); the submit block and Continue are unchanged",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-052",
+      "statement": "Back from a submitted notification's view, including one shown after a cancelled amendment, goes to the notification list, while a draft's or an amendment's goes to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1044 (notification-view backLink)",
+      "quote": "a submitted notification, including one shown after a cancelled amendment, goes back to the notification list; a draft's review or an amendment goes back to the overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-053",
+      "statement": "The declaration page at /notifications/{journeyId}/declaration shows one checkbox, a Date of declaration line for today and a Continue button, and Back goes to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1049-1066 (sections review, page declaration)",
+      "quote": "\"dateLine\": \"Date of declaration: {today, d MMMM yyyy en-GB}\",\n          \"button\": \"Continue\",\n          \"backLink\": \"notification-view\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-054",
+      "statement": "The declaration's statements say the trader is notifying the competent authority as required under the Plant Health National Notification Scheme, understands a spot check may happen without prior notice, and understands that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1070 (declaration body)",
+      "quote": "I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme. | I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held. | I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.",
+      "confidence": "verbatim",
+      "note": "Provisional copy; the five animals declaration statements are dropped and no third-party authority clause is shown."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-055",
+      "statement": "Opening or posting the declaration on an already submitted notification sends the trader to the confirmation page instead.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1067 (declaration alreadySubmitted)",
+      "quote": "GET/POST on a SUBMITTED journey redirect to confirmation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-056",
+      "statement": "The confirmation page at /notifications/{journeyId}/confirmation is titled Import notification submitted and shows a panel with the reference number, reached by GET only, with a non-submitted notification redirected to the overview and no back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1073-1094 (sections review, page confirmation)",
+      "quote": "govukPanel titleText Import notification submitted, html Your reference number <br><strong>{referenceNumber}</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-057",
+      "statement": "The confirmation page displays the reference number, the date of notification, the notification status and the late notification indicator.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1086-1091 (confirmation displays)",
+      "quote": "\"referenceNumber\",\n            \"dateOfNotification\",\n            \"notificationStatus\",\n            \"lateNotificationIndicator\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-058",
+      "statement": "The confirmation page tells the trader a spot check may be carried out at the place of destination without prior notice, that the notification can be viewed or amended from the dashboard and resubmitted, and to contact the relevant plant health authority for help.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1093 (confirmation body)",
+      "quote": "What happens next: the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check at the place of destination without prior notice.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-059",
+      "statement": "The confirmation page prints the status as its tag label, Submitted, never the stored constant.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1093 (confirmation body) and :1095 (ruled d-061)",
+      "quote": "Status: {notificationStatus tag label — Submitted / Wedi’i gyflwyno — never the raw constant}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-060",
+      "statement": "Every page reached from the overview ends with three controls, Save and continue, Save and return to overview and Cancel and return to overview, while a child page such as a collection entry sub-page or a picker shows the primary control alone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:60 (behaviours save-and-return)",
+      "quote": "Every hub-linked page ends with three controls (Save and continue | Save and return to overview | Cancel and return to overview); child pages (collection entry sub-pages, pickers reached from a parent) show the primary alone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-061",
+      "statement": "Save and return to overview commits the page and opens the overview whichever page it is pressed on, and a draft and a notification being amended show the same three controls.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:60 (behaviours save-and-return, ruling)",
+      "quote": "A draft and a notification being amended show the same three controls on every hub-linked page. Save and return to overview commits the page and opens the Overview, whichever page it is pressed on.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-062",
+      "statement": "An answer whose controlling answer moves it out of scope is purged and never restored, and scope is worked out afresh on every read and write rather than stored.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:67 (behaviours scope-and-wipe-on-exit)",
+      "quote": "Scope is derived from the manifest on every read and write, never stored; a value whose controlling answer moves it out of scope is purged and never restored (Yes-No-Yes).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-063",
+      "statement": "The commodity type controls whether the journey asks the arrival status, arrival time, proposed place of landing, consignor, supplier number, producer number and crop number, and each line's category controls whether it asks genus, species, commodity code, potato variety, potato intended use, EPPO code, size of tree and phytosanitary treatments.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:67 (behaviours scope-and-wipe-on-exit, ruled at D4 and D3)",
+      "quote": "(commodityType gates arrivalStatus, arrivalTime, proposedPlaceOfLanding, consignor, supplierIdentificationNumber, producerIdentificationNumber, cropIdentificationNumber; per-line category gates genus, species, commodityCode, potatoVariety, potatoIntendedUse, eppoCode, sizeOfTree, phytosanitaryTreatments).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-064",
+      "statement": "A request for any notification page other than the commodity type page, the create path and the amend, cancel-amend, copy and delete actions is admitted only when the notification already holds a committed answer, and is otherwise redirected to the commodity type page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:73 (behaviours entry-guard)",
+      "quote": "is admitted only when the journey holds at least one committed USER answer; otherwise redirect to the entry page. The plants entry page is commodity-type (first journey page).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-065",
+      "statement": "A Change link on check your answers opens the page that collects the answer and remembers where the trader came from, and Save and continue there carries on to check your answers, while Save and add another and Remove inside the commodity loop never jump to check your answers early.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:79 (behaviours cya-change-round-trip)",
+      "quote": "A Change link on check your answers opens the page that collects the answer, carrying where the trader came from. Save and continue then carries on through the journey to check your answers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-066",
+      "statement": "The declaration posts its confirmation then submits the notification: a success makes it submitted and opens the confirmation, a refused submit returns to check your answers, and an already submitted notification goes straight to the confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:86 (behaviours declaration-and-submit-gate)",
+      "quote": "POST commits the flow-only answer then state.submitJourney; success -> SUBMITTED and redirect to confirmation; a not-ok result redirects to CYA; an already-SUBMITTED journey redirects straight to confirmation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-067",
+      "statement": "Save and continue follows one page order from every start, commodity type, commodities, origin, arrival status, arrival details, place of destination, consignor, identification numbers, contact, then check your answers, and that order is the order the overview lists its tasks in.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:92 (behaviours opening-run)",
+      "quote": "commodity-type -> commodities (a zero-line load redirects to commodities/details; the entry sub-page is no step of the order, and its Save and continue returns to the list) -> origin -> arrival-status -> arrival-details -> place-of-destination -> consignor-select -> identification-numbers -> consignment-contact-select -> check your answers (notification-view)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-068",
+      "statement": "When the next page that applies needs a missing earlier answer, the commodity type or the country of origin, Save and continue opens the page that asks for it, and from the last page that applies it opens check your answers even when the notification is incomplete.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:92 (behaviours opening-run, ruling)",
+      "quote": "When that page needs a required earlier answer that is missing (the commodity type, the country of origin) it goes to the page that asks for it, and the page it opens is always one the Overview offers. From the last page that applies it goes to check your answers even when the notification is incomplete.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-069",
+      "statement": "An overview row is a submit-readiness unit worked out over all the answers its pages collect, it links to its first page the trader can reach, and it decides nothing about where Save and continue goes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:99 (behaviours hub-task-list-and-row-status) and :92",
+      "quote": "A task row is a submit-readiness unit computed over the union of its pages' collects",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-070",
+      "statement": "Every journey page shows a status strip above the heading: a tag reading Draft, Submitted, Amending or Deleted in blue, green, yellow or grey, followed by the reference number in bold, with the Welsh tags Drafft, Wedi'i gyflwyno, Wrthi'n diwygio and Wedi'i ddileu.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:105 (behaviours journey-strip)",
+      "quote": "a govukTag Draft (blue) / Submitted (green) / Amending (yellow) / Deleted (grey) followed by the bold reference number (notificationStatus + referenceNumber). Welsh: Drafft / Wedi’i gyflwyno / Wrthi’n diwygio / Wedi’i ddileu.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-071",
+      "statement": "A page carries the name of its notification section as a caption above the heading, Dashboard, About the consignment, Arrival, Destination or Addresses, while the overview, the contact page, check your answers, the declaration and the confirmation are deliberately bare.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:111 (behaviours section-captions)",
+      "quote": "Dashboard | About the consignment (commodity-type, commodities, commodity-details, origin) | Arrival (arrival-status, arrival-details) | Destination (place-of-destination) | Addresses (consignor-select, identification-numbers)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-072",
+      "statement": "A page with errors shows one error summary titled There is a problem with a link per field error, prefixes its title with Error:, repeats each message beside its field, and answers every validation failure with HTTP 400 rather than the animals mixture of 200s.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:117 (behaviours error-summary-and-http-400)",
+      "quote": "Plants answers EVERY validation failure with HTTP 400 — animals is inconsistent (seven pages return 200 with the error page; live-animals note) and that inconsistency is not copied.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-073",
+      "statement": "When a save fails recoverably the page comes back with the trader's answers kept, HTTP 500 and a banner reading There is a problem: Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:123 (behaviours recoverable-save-and-stale-action)",
+      "quote": "(There is a problem: Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.) and HTTP 500, keeping the submitted values",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-074",
+      "statement": "A save made against a stale copy of the notification redirects back to the same page with a banner reading The notification has been updated, and every form posts a CSRF crumb and the loaded notification's concurrency token, which the backend replaces on each save.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:123 (behaviours recoverable-save-and-stale-action)",
+      "quote": "a STALE_CONCURRENCY_TOKEN error redirects to the same URL with ?staleAction=1, which shows The notification has been updated banner. Every form posts a hidden crumb (CSRF) and a hidden concurrencyToken from the loaded journey",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-075",
+      "statement": "The plants journey keeps two of its own browser cookies, one listing the notifications this session may see and act on and one holding the declaration answer, and never shares them with the animals journey.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:129 (behaviours session-cookies)",
+      "quote": "named in journeys/linear/config.js and never shared with animals: highRiskPlantsKnownJourneys (ids this session may list/act on), highRiskPlantsFlowOnlyAnswers (declaration per journey)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-076",
+      "statement": "Most pages let a blank answer through so the trader can save and come back, with only the country of origin, the declaration, the fields of a commodity line being added, the commodity type, the arrival status and the arrival date refused at page level.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:135 (behaviours lenient-page-validation)",
+      "quote": "Plants additionally requires at page level: commodityType (the entry gate; nothing downstream makes sense without it), arrivalStatus and arrivalDate (the timing rules hang on them). The obligation status, not the page, holds the hub row and the submit gate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-077",
+      "statement": "The commodity type and the country of origin are required earlier answers: later pages are not offered on the overview until they are answered, and blocked rows read Cannot start yet.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:141 (behaviours enforced-at-continue)",
+      "quote": "Two obligations are required earlier answers, enforced when the user continues: commodityType and countryOfOrigin (ENFORCED_AT_CONTINUE in bridge/obligation-source.js). Derived page gates keep the Overview from offering a later page until they are answered, and the hub shows Cannot start yet on blocked rows.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-078",
+      "statement": "An address picker shows the party title and hint, a search box hinted Name, address or country with a Search button, and a results table of Select, Name, Address, Country and View details showing eight addresses a page with pagination beyond that, an inset naming the address already chosen, the chosen row ticked, and No addresses match your search. when the search finds none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:148 (behaviours address-book-picker)",
+      "quote": "a results govukTable (Select radio | Name | Address | Country | View details) showing eight of the addresses the picker found a page, with GOV.UK pagination under the results where more than eight were found, whose page links carry the search text and the address held as chosen while a submitted search returns to the first page, and an inset above them naming the address held as chosen, No addresses match your search. when empty, and the picked row checked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-079",
+      "statement": "A later change or deletion in the address book never reaches a notification that copied the record, but a copy that breaks the edit page's rules makes check your answers refuse Continue and the declaration refuse Submit, and each picker narrows the organisation's book to its own role plus any address saved with no role.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:148 (behaviours address-book-picker)",
+      "quote": "Later address-book edits or deletes never reach a draft, amend or submitted notification; Check your answers refuses Continue, and the declaration refuses Submit, while a copy breaks the edit-page rules.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-080",
+      "statement": "The notification list shows the notifications this browser session knows, scoped to the signed-in organisation and leaving out deleted ones, with a keyword or reference filter, a results label, a sort by arrival or creation date defaulting to arrival newest first, one summary card per notification, per-status actions, pagination, and the empty text You have not started any notifications in this session.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:154 (behaviours dashboard-listing)",
+      "quote": "Right column: results label (No Results / Showing 1 Result / Showing {a} to {b} of {n} Results), Sort by (Arrival newest/oldest, Date created newest/oldest; default arrivalDate desc) with Update sort, one govuk-summary-card per notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-081",
+      "statement": "A plants notification card shows the commodity type with the first line's category or genus, the country of origin, the arrival date, the consignor, a status tag with a Late tag where it applies, and the dates created and submitted, with the consignor cell empty for a potato notification.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:154 (behaviours dashboard-listing, ruled d-014)",
+      "quote": "Plants swaps the animal-specific cells (Commodity = commodityType + first line category/genus; Arrival = arrivalDate).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-082",
+      "statement": "A date is entered in one box in the day/month/year format d/m/yyyy through the Ministry of Justice date picker and stored as day, month and year parts, while the arrival time is a plain text box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:160 (behaviours date-and-time-entry)",
+      "quote": "Dates use the MoJ date picker through kit.dateField: one text box, format d/m/yyyy, width-10, optional min/max as d/m/yyyy text attributes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-083",
+      "statement": "The country of origin, the genus and the proposed place of landing are chosen through an accessible autocomplete over a select, while the commodity type, the category and the arrival status are radios with per-option hints; countries store their two-letter code and ports show as name then code.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:166 (behaviours select-and-autocomplete-widgets)",
+      "quote": "Countries store ISO alpha-2 codes; ports display as {name} - {code} with value = code; genus stores the SI spelling as the code until a reference service assigns ids.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-084",
+      "statement": "Every page carries the same chrome: a GOV.UK header, a service navigation named Import notification service with Dashboard, Address book, Manage account and Log out once signed in, an Alpha phase banner with a feedback link, no breadcrumbs, a three-link footer of Privacy, Cookies and Accessibility statement, and the page title pattern ending in Import notification service.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:172 (behaviours layout-chrome)",
+      "quote": "three-link footer (Privacy | Cookies | Accessibility statement); csrf meta; page title pattern [Error: ]{pageTitle} | Import notification service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-085",
+      "statement": "Every feature carries an English and a Welsh copy file, the Welsh is machine-drafted and headed as not reviewed by a translator, and today the service always serves English because no locale toggle, cookie or language attribute exists.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:178 (behaviours welsh-copy-seam)",
+      "quote": "controllers call copyFor({ en, cy }) which today always resolves en (no locale toggle, cookie or lang attribute exists in animals or the plants engine)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-086",
+      "statement": "The service refuses to start when an answer the journey expects is collected by no page, when an answer belongs to no feature, or when display text such as a label or hint has been put in the obligation model.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:184 (behaviours boot-guards-three)",
+      "quote": "Three guards run in routes.js before routes are added, so a partial increment fails the server start, not a test",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-087",
+      "statement": "Four values are system-populated rather than asked: the reference number, the date of notification, the notification status and the late notification indicator.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:184 (behaviours boot-guards-three)",
+      "quote": "the four system obligations (referenceNumber, dateOfNotification, notificationStatus, lateNotificationIndicator) must be listed there or live on the record envelope",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-088",
+      "statement": "Every label, hint, option text and error message lives in the owning feature's copy files, never in the obligation model, and each conditional rule is built from a fixed set of helpers with its allow-list taken from the set's own commodities service and pinned by a test.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:190 (behaviours model-purity-and-helper-vocabulary)",
+      "quote": "Obligations carry identity, scope, mandate and invariants only — every label, hint, option text and error message in this spec lives in the owning feature's copy pair",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-089",
+      "statement": "The copy convention and copy parity checks run over every feature's copy pair, each English leaf must differ from its Welsh unless justified in an allow-list, and the pair of section-caption copy files joins the parity check with the captions.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:196 (behaviours copy-tripwires-restore, ruling d-084)",
+      "quote": "The dashboard increment rewrites copy-convention.test.js and copy-parity.test.js in the same commit as the first feature folder; the two restore extras (restore-copy-convention-tripwire, restore-copy-parity-tripwire) are withdrawn and their detail folds into the dashboard increment's plan.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-090",
+      "statement": "A page re-renders the trader's raw answers with HTTP 400 when validation fails and commits only cleaned values, and only the names the journey recognises may be saved, so helper form fields such as the index, the action and the search text are stripped first.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:203 (behaviours controller-contract)",
+      "quote": "Only obligation names and declared flow-only keys may be committed — helper form fields (index, action, search) are stripped first or assertRecognisedAnswerKeys throws.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-091",
+      "statement": "The commodity lines are a two-page collection: the list page owns the group, the entry page adds one line or edits the one named by its index, Remove deletes a line by position, a line with no answers is never saved, at least one line is required and there is no maximum and no nested collection.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:209 (behaviours collections-two-page-batch)",
+      "quote": "requires.minEntries 1 with errorCode obligation.commodityLines.atLeastOne is the floor; there is no sibling-count cap (MAX_ENTRIES_FROM stays empty) and no nested collection.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-092",
+      "statement": "The three commodity types, the nine categories and their grouping, the fifteen genus entries and the hardwood narrowing, the per-category allow-lists and the per-category origin narrowing are served by the set's own commodities service so the lists can change without a code release.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:216 (behaviours set-owned-commodities-service)",
+      "quote": "Policy requires the list to be amendable without a code release (commodity-list-dynamic-and-maintainable) — the service boundary is where that lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-093",
+      "statement": "A table of contract tests pins which answers each collecting page's valid post saves, including the answer needed to bring a conditional field into scope.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:222 (behaviours contract-test-table)",
+      "quote": "a manual L1 table pinning that each collecting controller's valid POST commits exactly the committable names in its meta.collects (with any scope seed that brings conditional obligations into scope — e.g. commodityType=potatoes for arrivalTime)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-094",
+      "statement": "Each page is proved by a browser test covering its first render, a successful save and redirect, persistence on reload, every validation rule, kept values after an error, every error summary link moving focus, Back, Save and return, Cancel and Change navigation, the purge when an answer leaves scope, its check your answers rows and its overview row states.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:228 (behaviours feature-test-conventions-and-axe)",
+      "quote": "covers initial render, happy-path save and redirect, reload persistence, each validation rule, value preservation on error, every error-summary link moving focus, Back / Save and return / Cancel / Change navigation, conditional scope-skip-purge, CYA rows and Change links, and the hub row states.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-095",
+      "statement": "Every page is checked for accessibility on both its first render and its error state against the WCAG 2.0, 2.1 and 2.2 AA rule sets, failing on any serious or critical violation, and no page may narrow that list.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:228 (behaviours feature-test-conventions-and-axe, ruled d-074)",
+      "quote": "AxeBuilder withTags [wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa] on the initial render AND the validation-error state, failing on serious or critical",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-096",
+      "statement": "Every change to the plants journey must end with the set tests, the whole test run, the format check, the lint run and the feature browser tests all green, and the journey browser tests too when the journey or its shared helpers change.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:234 (behaviours verification-ladder)",
+      "quote": "npm run test:high-risk-plants; npm test (pretest builds the frontend; runs the L1 tripwires and the contract table — the only command that does); npm run format:check; npm run lint (eslint neostandard + sonarjs, stylelint gds, depcruise); PORT=3053 npm run test:fit:features; npm run test:fit:journeys when the whole journey or shared FIT helpers change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-097",
+      "statement": "The browser tests run in two groups against a self-started stub server on port 3003, or 3053 when the workspace stack is up: one group per feature and one that walks the whole journey from a happy-path fixture.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:240 (behaviours playwright-projects-and-journey-smoke)",
+      "quote": "playwright.config.js defines two fit projects against a self-started STUB_MODE server (default port 3003; PORT=3053 when the workspace stack is up): features (every **/*.fit.spec.js under the set) and journeys (fit/journey-smoke.fit.spec.js driven by flow/fixtures/happy-path.json — neither exists).",
+      "confidence": "verbatim",
+      "note": "The claim that neither the smoke spec nor the fixture exists is stale: see the disagreement claim on the happy-path fixture."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-098",
+      "statement": "The code is held to four layers: only the routes file reaches into a set, the platform never reaches into a set, obligations never reach into journey pages, one journey never reaches into a sibling, and no imports may form a circle.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:246 (behaviours layer-rules-depcruise)",
+      "quote": "only routes.js imports sets/**; L2 (engine/model/bridge/flow/services/lib/shared/analysis) never imports sets; obligations never import journeys; one journey never imports a sibling; sets never import L1; the engine never imports services",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-099",
+      "statement": "Every save replaces the whole evaluated and purged set of answers in the record, derived state such as scope and status is rebuilt on read rather than stored, and the plants backend holds the answers as one opaque payload because it has no typed content fields.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:252 (behaviours persistence-mapper-a-only)",
+      "quote": "the plants backend has no typed content fields, so every plants obligation round-trips through the opaque fulfilments payload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-100",
+      "statement": "A stub run serves stub reference data and records and signs its own session in, with sign-in still enforced, while a real run signs in through Defra ID and primes the countries and ports at start-up; the stub switch is refused in production.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:258 (behaviours stub-mode-and-sign-in)",
+      "quote": "STUB_MODE is one service-wide switch (refused in production): a stub run serves stub reference data, the stub records/session adapters, and signs its own session via /auth/stub-sign-in?organisationId=<org> (default stub-org-1, user STUB0001/2100010101) — auth is still enforced.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-101",
+      "statement": "Pages are server-rendered by preference, and the only client-side code in the journey is the accessible autocomplete on the origin, arrival details and commodity details pages.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:264 (behaviours client-js-webpack-entries)",
+      "quote": "Prefer server-rendered controls. When a page genuinely needs a client bundle (the accessible-autocomplete on origin, arrival-details and commodity-details already ships as a common component; any add-another or conditional-reveal enhancement beyond govuk radios)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-102",
+      "statement": "Every page is audited by Lighthouse after signing in, with floors of 0.60 for performance and 0.70 for accessibility and best practices, and no search-engine assertion is to be added.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:270 (behaviours lighthouse-audit-per-page)",
+      "quote": "desktop preset, signing in first through the Defra ID stub, score floors performance 0.60 / accessibility 0.70 / best-practices 0.70 and NO SEO assertion (none should be added)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-103",
+      "statement": "A trader can change any answer before submitting, through save and return, the overview statuses, inline validation and a Change link on every check your answers row; the policy paper says nothing about amending after submission.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:276 (behaviours amend-before-submitting)",
+      "quote": "The paper says nothing about amendment after submission — that is notification-actions-after-submission (open question, c-030).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-104",
+      "statement": "The journey has no payment step, fee display or invoice reference anywhere, because the decision was taken not to charge for these activities.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:282 (behaviours no-fees-no-payment-step)",
+      "quote": "There is no payment step, fee display or invoice reference anywhere in the journey.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-105",
+      "statement": "The journey must not ask for, require or upload an export certificate, a phytosanitary certificate or any other document, so it has no documents collection, no upload page and no document references.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:288 (behaviours no-export-certificate-or-documents)",
+      "quote": "The journey must not ask for, require or upload an export certificate, phytosanitary certificate or any other document — no documents collection, no upload page, no document references.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-106",
+      "statement": "The notification is not matched to a customs declaration and holds no goods, so the journey collects no customs reference and no transport or port of exit details.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:294 (behaviours customs-no-sps-hold-or-matching)",
+      "quote": "the journey collects no customs reference (MRN, entry number) and no transport or port-of-exit details — none of animals' transport section is copied",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-107",
+      "statement": "Plant passports stay a separate regime: the notification neither asks for, uploads nor replaces passport data, and the supplier identification number and EPPO code are typed in rather than read from a document.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:300 (behaviours plant-passports-remain-separate)",
+      "quote": "Plant passports are a separate regime: the notification does not ask for, upload or replace passport data.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-108",
+      "statement": "The journey's order follows what is arriving, when and where: commodity, then origin, then arrival, then destination, then parties, then contact, then review, and the category, genus, origin, destination and date are coded or structured rather than free text so inspectors can decide where to spot check.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:306 (behaviours receive-what-when-where)",
+      "quote": "are the spine of the journey and the section order: commodity (what) -> origin (where from) -> arrival (when) -> destination (where to) -> parties -> contact -> review",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-109",
+      "statement": "A notification carries exactly one commodity type, chosen first, so a mixed consignment needs two notifications, and the commodity type page's hint says so.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:312 (behaviours one-notification-per-commodity-type)",
+      "quote": "A notification therefore carries exactly one commodityType chosen first; a mixed consignment is two notifications. The commodity-type hint says so.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-110",
+      "statement": "A question outside the consignment's scope is neither shown, validated nor saved, and a page whose every question is out of scope is skipped, so the trader is asked only what their consignment needs.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:318 (behaviours proportionate-questions-by-scope)",
+      "quote": "out-of-scope fields are neither rendered nor validated nor committed, arrival-status is skipped for potatoes, and the derived gates hide a page whose every obligation is out of scope",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-111",
+      "statement": "The digital submission is the written notification to the authority, attributed to the signed-in organisation and user, kept as a submitted record with a unique reference, a date of notification and the declaration, and no separate notifier identity is typed in.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:324 (behaviours written-notification-attributable)",
+      "quote": "The signed-in organisation is the professional operator; no separate notifier identity is typed (c-038).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-112",
+      "statement": "Back on every journey page and on check your answers returns to where the trader came from, the place travelling on the link or form rather than being held in the session, with the entry page going back to the overview once answers exist and to the dashboard otherwise, the declaration going back to check your answers and the confirmation having no back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:330 (behaviours back-link-rules)",
+      "quote": "The entry page (commodity-type) goes Back to the Overview when the notification already has committed answers and to the dashboard otherwise.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-113",
+      "statement": "The trail of places Back can return to keeps the newest forty, past which the oldest drop and Back ends at the overview.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:330 (behaviours back-link-rules, ruling)",
+      "quote": "the trail keeps the newest 40 places, past which the oldest drop and Back ends at the Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-114",
+      "statement": "The trace chain for an outbreak is the consignor, the supplier, producer and crop identification numbers, the country of origin and the place of destination or current location, all captured as required matters with nothing extra asked, and the identifiers stored exactly as entered.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:337 (behaviours track-and-trace-data)",
+      "quote": "The consignor, supplier identification number, producer and crop identification numbers, country of origin and place of destination / current location are the trace chain and are all captured as required matters; nothing extra is asked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-115",
+      "statement": "A late or post-arrival notification is accepted and recorded rather than blocked: the arrival date has no future-only rule, the declaration submits whatever the timing, and lateness is recorded as a flag shown to the notifier and the authority.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:343 (behaviours late-accepted-not-rejected)",
+      "quote": "A late or post-arrival notification is therefore ACCEPTED and recorded, never blocked: arrivalDate has no future-only rule, the declaration submits regardless of timing, and lateness is a flag (lateNotificationIndicator) shown to the notifier and the authority.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-116",
+      "statement": "Five journeys are the service's worked examples and test fixtures: ware potatoes from Spain or Poland, ware potatoes notified late, seed potatoes from any EU country, spruce from any EU country, and conifer wood from Italy, France, Portugal or Spain.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:349 (behaviours use-cases-as-test-fixtures)",
+      "quote": "Ware potatoes from Spain/Poland; Ware potatoes from Spain/Portugal with a late notification; Seed potatoes from any EU country; Spruce (Picea) from any EU country; Conifer wood from Italy, France, Portugal or Spain",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-117",
+      "statement": "A single-question radios page uses its legend as the page heading with the section caption above it, a single-input page uses a heading with the field label as the heading, and an address picker keeps a heading plus a description.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:355 (behaviours single-question-heading-convention)",
+      "quote": "a single-question radios page (commodity-type, arrival-status) uses the legend as the page heading with the section caption above it; a single-input page uses an h1 with the label as the heading; the address pickers keep animals' h1 + description.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-118",
+      "statement": "The journey is built from GOV.UK Frontend 6.x and Ministry of Justice Frontend 11.x components and utility classes only, with no hand-rolled components and no custom CSS, and the animals service's bespoke classes and totals panel are not copied.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:361 (behaviours govuk-toolbox-only)",
+      "quote": "no hand-rolled components or custom CSS. Animals' bespoke classes (app-commodity-total*, notification-list__*, app-link-button, app-form-inline) and its custom hub totals panel are debt and are not copied",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-119",
+      "statement": "The plants journey asks no reason for import and no purpose question, so it uses none of the import reason and purpose, transport reference or commercial transporter services the platform carries.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:367 (behaviours import-reason-purpose-service-unused)",
+      "quote": "No plants source asks a reason-for-import or purpose question (the potato 'intended use' and the optional 'use' are free-text per-line matters) — so the plants journey does not use this service and the platform's transport-reference and commercial-transporters services are likewise unused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-120",
+      "statement": "Guidance is published outside the service: the journey has no separate guidance or before-you-start pages, and meets the trader's need to understand the scheme through the dashboard introduction, a GOV.UK guidance link, the commodity type option hints and per-field hints.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:373 (behaviours guidance-link-not-in-journey-pages)",
+      "quote": "are met inside the journey by the dashboard intro copy, a GOV.UK guidance link, the commodity-type option hints (timing windows) and per-field hint text, not by separate guidance or before-you-start pages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-121",
+      "statement": "A potato notification must be made at least two days before the expected arrival and a plants or wood notification before arrival or no later than four days after it, and a notification outside its window is flagged as late.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:379 (behaviours timing-window-enforcement-and-late-highlight)",
+      "quote": "potatoes: late if submitted after arrivalDate minus 2 days; plants/wood: late if submitted more than 4 days after arrivalDate; a future date is never late",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-122",
+      "statement": "Lateness is worked out once, in London time, on calendar days ignoring the arrival time, stored on the record at the first submission and read back by the confirmation, the submitted view and the notification list rather than recomputed.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:379 (behaviours timing-window-enforcement-and-late-highlight, ruled d-007)",
+      "quote": "calendar-day rule per c-031 (potatoes late after arrivalDate minus 2, plants and wood late after arrivalDate plus 4; arrivalTime ignored; a future date is never late for plants and wood)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-123",
+      "statement": "The trader says whether the consignment has arrived rather than the service working it out from the date, with Yes offered first, and the question is asked before the arrival details and the destination.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:386 (behaviours consignment-status-selected-or-derived, ruling d-090)",
+      "quote": "Build the user-selected arrivalStatus radios page (Yes first) for plants and wood, placed before arrival-details and place-of-destination; potatoes have no status and Save and continue passes over the page by the derived gate. The service never derives the status from the date.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-124",
+      "statement": "Every string the notifier reads says Great Britain, and no nation check is applied to the destination address, so Scottish and Welsh destinations are notified through this service.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:393 (behaviours england-vs-great-britain, ruled d-009)",
+      "quote": "Great Britain in all notifier-facing copy; no nation check on placeOfDestination; Scottish and Welsh destinations notify through this service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-125",
+      "statement": "The origin page refuses a country outside the lists allowed for the categories on the notification, naming the allowed countries in the error, and check your answers re-checks the same rule and refuses to continue with a Change link to the origin page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:400 (behaviours origin-value-list-by-commodity, ruled d-056)",
+      "quote": "an out-of-scope origin is rejected with the narrowingErrorCopy sentence naming the allowed countries; Balearic inset (potato-scope-guidance, c-021) when a ware-potatoes line exists; notification-view re-checks and refuses POST with a Change link to origin.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-126",
+      "statement": "The allowed origins are Poland, Portugal, Romania or Spain for ware potatoes, Italy, France, Portugal or Spain for conifer wood without bark, any EU member state for plants and other wood, and any primed country for seed potatoes, with the effective list the intersection of those for the categories present.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:400 (behaviours origin-value-list-by-commodity, ruled d-056)",
+      "quote": "effective list = intersection of the per-category lists for the categories present in commodityLines (ware-potatoes PL/PT/RO/ES; conifer-wood-without-bark IT/FR/PT/ES; plants and other wood EU_MEMBER_STATES; seed-potatoes ANY_PRIMED_COUNTRY)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-127",
+      "statement": "Changing the commodity type keeps the lines whose category belongs to the new type and drops the rest, warning before the change while lines exist and reporting the number removed in a banner on the commodities list, whichever save control was pressed.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:407 (behaviours commodity-type-change-reconciles-lines, ruling d-092)",
+      "quote": "keep lines whose category is in the new type's set, drop the rest with wipe semantics), the page warns before when lines exist, and it redirects to the commodities list with ?removed=<n> carrying where the trader came from, whichever save control was pressed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-128",
+      "statement": "The arrival date is any real calendar date with no sanity window and no picker limits, except that an already-arrived consignment cannot be dated in the future, and a past expected date for potatoes is accepted and simply shows up as late.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:414 (behaviours arrival-date-window, ruling d-010)",
+      "quote": "Build arrivalDate as a real calendar date with no sanity window and no picker min/max, except a maximum of today when arrivalStatus = already-arrived, from one bounds helper beside arrival-details.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-129",
+      "statement": "The notification reference is shown exactly as the backend mints it, a two-digit year and six characters with no type-code prefix, because the plants type code has not been decided, and the frontend never validates or parses it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:421 (behaviours reference-number-prefix, ruling d-063)",
+      "quote": "The frontend never validates or parses the reference, so the journey builds on the unprefixed backend format shown verbatim",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-130",
+      "statement": "A notification's status is one of draft, submitted, being amended or deleted, all four reachable, shown as the tags Draft, Submitted, Amending and Deleted, and lateness is never a status value but a separate tag and banner.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:428 (behaviours notification-status-vocabulary, ruled d-064)",
+      "quote": "the dashboard tag and journey strip read Draft / Submitted / Amending / Deleted and all four are reachable in the first pass (Amend is in scope, c-030); the Late tag on the dashboard card and the banners are the lateNotificationIndicator rendering, never a status value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-131",
+      "statement": "The notification list offers View, Amend and Delete on a submitted notification, Resume and Delete on a draft, and Resume, Cancel amendment and Delete while amending, and the read-only view offers Delete when submitted and a Cancel amendment link while amending, with no Copy as new anywhere.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:435 (behaviours notification-actions-after-submission, ruled d-065)",
+      "quote": "dashboard SUBMITTED: View | Amend | Delete; DRAFT: Resume | Delete; AMEND: Resume | Cancel amendment | Delete; CYA read-only offers Delete (SUBMITTED) and the Cancel amendment link (AMEND)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-132",
+      "statement": "The service's name, feedback address, helpdesk contact lines and the homes of the Address book and Manage account links are undecided, so the inherited chrome ships as it is and the help text names the relevant plant health authority with no contact lines.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:442 (behaviours service-name-feedback-and-support, ruled d-070)",
+      "quote": "the shared chrome ships verbatim; the confirmation help block names the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) with no contact lines and carries provisionalCopy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-133",
+      "statement": "The country list comes from reference data's SPS origin block, whose captured membership is the EU-27 plus Iceland, Liechtenstein, Norway and Switzerland, and the proposed place of landing comes from reference data's ports of entry endpoint, which is built and MDM-backed.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:449 (behaviours country-block-and-ports-endpoint, ruled d-057)",
+      "quote": "countries stay on GBNAG_SPS_EX, whose captured membership (EU-27 + IS, LI, NO, CH) covers every statutory origin, with the per-category narrowing in the set-owned commodities service (c-022)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-134",
+      "statement": "There is no eligibility checker and no before-you-start page, and the dashboard's guidance link appears only while a real URL is set rather than as a placeholder link.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:456 (behaviours guidance-before-you-start, ruled d-071)",
+      "quote": "no eligibility or before-you-start page this run. The dashboard intro names the scheme and the three commodity groups and carries a GOV.UK guidance link only when guidanceUrl is set (never a # link)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-135",
+      "statement": "The journey never asks which authority the notification goes to and shows no copy saying it has been sent anywhere, collecting only the commodity type and place of destination that routing would need.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:463 (behaviours competent-authority-routing, ruled d-011)",
+      "quote": "the journey collects commodityType and placeOfDestination only, never asks which authority applies and shows no routing copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-136",
+      "statement": "There is no bulk upload: no file, template or upload page appears anywhere, and if one is ever built it must produce the same answers and pass the same validation as the form.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:470 (behaviours bulk-upload, ruling d-036)",
+      "quote": "No file, template or upload page appears in the spec.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-137",
+      "statement": "The service cannot read consignment details out of an existing document: there is no upload and extract route.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:477 (behaviours import-from-existing-documents, ruling d-037)",
+      "quote": "Not built in this phase. NNS-UN-042 stays a parked convenience need.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-138",
+      "statement": "A trader cannot reuse a previous notification: there is no Copy as new action and no notification-copied banner, and the prototype's templates pattern is not adopted.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:484 (behaviours reuse-previous-consignment, ruled d-038)",
+      "quote": "the dashboard and CYA action sets omit Copy as new and the Notification copied banner until this is unparked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-139",
+      "statement": "No agent party, agent sign-in, authorisation or importer-to-agent link is collected, and the declaration carries no third-party authority clause.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:491 (behaviours agent-acting-on-behalf, ruling d-039)",
+      "quote": "The signed-in Defra ID organisation is the notifier; no agent party, agent sign-in model, authorisation or importer-agent link is collected. The declaration carries no third-party authority clause (c-028).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-140",
+      "statement": "There is no plant-operator registration step: signing in with Defra ID is the only thing a trader must do before notifying.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:498 (behaviours plant-operator-registration, ruling d-040)",
+      "quote": "Defra ID sign-in is the only precondition (c-039).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-141",
+      "statement": "This frontend holds no regulator screen, filter or report; what the regulator needs is collected as coded category, genus and country, a structured destination address, the arrival date and status, the late flag and a stable reference.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:505 (behaviours regulator-views, ruling d-041)",
+      "quote": "No regulator screen, filter or report in this frontend.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-142",
+      "statement": "The service records no inspection outcome, no non-notified consignment and no risk level: inspector-side capture lives elsewhere.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:512 (behaviours inspector-recording, ruling d-042)",
+      "quote": "No inspector-side capture in this frontend: no outcome recording, no non-notified-consignment record, no risk level.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-143",
+      "statement": "There is no export or download feature; the journey's duty to analysts is met by storing coded, structured values and extraction is backend work.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:519 (behaviours analyst-export, ruling d-043)",
+      "quote": "No export or download feature in this frontend.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-144",
+      "statement": "There is no admin or list-maintenance screen and no spot-check percentage anywhere in the journey; a policy change to a commodity, category, genus or origin list is a data change in the set's commodities service.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:526 (behaviours risk-classification-and-list-maintenance, ruling d-044)",
+      "quote": "No admin or list-maintenance surface in this frontend, and spot-check percentages and risk classifications are not represented in the notifier journey.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-145",
+      "statement": "The journey has no check booked step, appointment slot, inspection date or notice to the trader; the only trace of checks is the confirmation and destination copy saying a check may happen without prior notice.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:533 (behaviours spot-check-scheduling, ruling d-045)",
+      "quote": "No scheduling, appointment, 'check booked' step or notice to the trader in this frontend; the hand-off to scheduling systems is backend work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-146",
+      "statement": "The journey carries no documents collection, upload page, uploader route, virus-scan polling or document reference at all.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:540 (behaviours document-uploads-out-of-scope, ruling d-046)",
+      "quote": "No documents collection, upload page, cdp-uploader route, virus-scan polling or document reference in this run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-147",
+      "statement": "Submitting a notification writes the record and nothing else: there is no outbox, no event publishing and no routing on to other systems, and the confirmation makes no promise about where the notification has gone.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:547 (behaviours outbox-and-gbnag-publishing-out-of-scope, ruling d-047)",
+      "quote": "No outbox, no GBN-AG or other event publishing, no PIMS routing in this run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-148",
+      "statement": "The plants notification list shows plants notifications only, with no by-type filter, no journey-type label on a card and no combined list, so a trader who imports both animals and plants uses two dashboards.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:554 (behaviours combined-ins-list-out-of-scope, ruling d-048)",
+      "quote": "No cross-journey 'By type' filter, no 'Plants' card label, no combined list; the INS front door owns any cross-journey list later.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-149",
+      "statement": "The journey's share of the management information is coded values for the commodity type, category, genus and ISO country of origin, and the record's created and submitted timestamps; it measures nothing itself and adds no question for reporting.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:561 (behaviours mi-metrics-eight, ruled d-082)",
+      "quote": "the journey owes metrics 1-3 coded values (commodityType, category, genus as input.values; countryOfOrigin as ISO 3166-1 alpha-2) and metric 6 two envelope timestamps (createdAt at create, submittedAt = dateOfNotification at finalise); it measures nothing itself and adds no question for MI",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-150",
+      "statement": "The notification list's Date submitted row is empty against the real backend, because the backend's list projection carries no submitted date.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:561 (behaviours mi-metrics-eight, ruled d-082)",
+      "quote": "the plants backend list projection carries no submittedAt (NotificationView: referenceNumber, concurrencyToken, status, created), so real/marshal/list-item.js:32 hardcodes submittedAt null and the dashboard Date submitted row is empty in real mode",
+      "confidence": "verbatim",
+      "note": "The specification records this as a defect with a fix extra named dashboard-date-submitted-real-list."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-151",
+      "statement": "Submission is synchronous: the confirmation page appears only once the record has been stored as submitted with its date of notification stamped server-side, a failed store re-renders the declaration with the recoverable error, and no queue, batch or optimistic confirmation may come between.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:568 (behaviours live-access-synchronous-submission, ruled d-066)",
+      "quote": "no queue, batch or optimistic step may be introduced between submit and the persisted record",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-152",
+      "statement": "Equal internal access for Defra policy, Scottish Government and the Forestry Commission is another product's job; this journey's only part in it is the confirmation naming all three authorities without preferring one.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:575 (behaviours equal-access-defra-policy-sg-fc, ruled d-083)",
+      "quote": "its one touchpoint is the confirmation page naming all three competent authorities without preferring one",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-153",
+      "statement": "Accessibility is held at WCAG 2.2 AA per page by the automated checks and the Lighthouse floor, with no page allowed to narrow the rule list or lower the floor, while a manual WCAG 2.2 audit and the service's own accessibility statement are still owed.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:582 (behaviours nfr-accessible-wcag-2-2-aa, ruled d-074)",
+      "quote": "no page increment may narrow the axe tag list or lower the 0.70 floor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-154",
+      "statement": "GDS standards are met by the toolbox components, one thing per page, the error summary, the task list overview, check your answers, the confirmation panel and the Alpha phase banner, which stays until the programme changes phase.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:589 (behaviours nfr-gds-standards, ruled d-075)",
+      "quote": "the Alpha phase banner stays until the programme moves phase (mural: Alpha Phase Confirmed - Update as Required, file:blueprint)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-155",
+      "statement": "Before any copy taken from live animals ships, it is swept for animal-specific wording, the known case being the country of origin error that says the animal.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:589 (behaviours nfr-gds-standards, ruled d-075)",
+      "quote": "the copy pass sweeps it for animal-specific nouns — the known instance is countryOfOrigin errorCopy (Select the country where the animal originates from)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-156",
+      "statement": "The personal data on a notification is the nominated contact's name, address, telephone number and email copied from the address book, plus the consignor's name and address, and no page may add personal data the policy paper does not list.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:596 (behaviours nfr-gdpr, ruled d-013 and d-076)",
+      "quote": "contactAddress (the nominated contact's name, address, telephone number and email address copied inline from the address book — c-025), consignor name and address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-157",
+      "statement": "No lawful basis, privacy notice or retention period has been settled, and the backend stamps an expiry on a notification only outside production, so how long a production record is kept is undefined.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:596 (behaviours nfr-gdpr, ruled d-076)",
+      "quote": "the plants backend stamps expireAt = created + ttl days in non-production only and never in production (NotificationService.stampExpiry; NotificationAggregate.expireAt), so production retention is undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-158",
+      "statement": "The trader signs in with Defra ID and sees only their own organisation's notifications; internal username and password access is another product's concern and nothing more is built here.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:603 (behaviours nfr-secure-internal-login, ruled d-077)",
+      "quote": "Defra ID OIDC sign-in in real mode, the stub session with auth still enforced in STUB_MODE, and organisation-scoped records stand as adopted under stub-mode-and-sign-in and dashboard-listing; nothing more is built.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-159",
+      "statement": "Nothing in the journey may stop a trader submitting because of the time of day, and lateness is judged on the London calendar day so a submission at any hour is judged on the right day.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:610 (behaviours nfr-available-24x7-and-load, ruled d-078)",
+      "quote": "The SI windows are counted in days with no hour-of-day cut-off (reg 24A(1) at least two days before; reg 26(1) no later than four days after), so nothing in the journey may gate submission by time of day.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-160",
+      "statement": "The first release is English only, with the page language set to English and no language toggle, even though the requirement for a Welsh service stands, and no Welsh is invented.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:617 (behaviours nfr-english-and-welsh, ruled d-079)",
+      "quote": "it ships English-only with html lang en so assistive technology reads the page correctly, and copyFor keeps resolving en",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-161",
+      "statement": "Every answer for which a source gives a list is stored as a code and rendered through a label function, and every other answer is free text with a maximum length.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:624 (behaviours nfr-standardise-information, ruled d-058)",
+      "quote": "coded where a source gives a list (commodityType, category, genus, countryOfOrigin, proposedPlaceOfLanding, arrivalStatus, notificationStatus — stored as codes, rendered via service labels), free text with a max length otherwise (c-011)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-162",
+      "statement": "Validation covers required-ness, membership for coded values including the per-category origin narrowing, a real calendar date, an HH:MM time, a whole number of one or more for quantity, a reference pattern for the consignment number and maximum lengths elsewhere, with no format yet for the commodity code, the EPPO code or the three identification numbers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:631 (behaviours nfr-data-validation, ruled d-059)",
+      "quote": "required-ness per the SI mandate; membership for coded values including the per-category origin narrowing with its notification-view re-check; dateText for arrivalDate; a new HH:MM time factory for arrivalTime; requiredIntegerInRange min 1 for quantity; the animals consignment-number pattern; animals max lengths elsewhere",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-163",
+      "statement": "Every question must trace to the statutory matters or the policy paper's common data list and no change may add one that does not, with the consignment number the only optional question, labelled optional and never gating readiness.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:638 (behaviours nfr-minimise-trader-effort, ruled d-080)",
+      "quote": "every question must trace to annex:5/reg:24A(2), reg:26(2) or the paper's Common Data list (annex:6 — Name of person making entry, Contact number, Contact address, Contact email), and no increment may add one that does not",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-164",
+      "statement": "The requirement that the system be sustainable is recorded with no reading adopted, and nothing in the journey depends on it.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:645 (behaviours nfr-sustainable, ruled d-081)",
+      "quote": "Parked for policy to define (environmental, financial or maintainability); the panel adopts no reading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-165",
+      "statement": "The wood scope conditions on bark, origin, height and form are carried in the category option labels, and the exclusion of preservative-treated wood is a hint with its exception for cut coniferous trees, so the journey asks no screening question and has no page telling a trader they need not notify.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:652 (behaviours wood-scope-caveats-as-guidance, ruled d-030)",
+      "quote": "guidance only — the five category value labels carry the bark, origin, height and form conditions and category.input.hintByCommodityType carries the preservative exclusion with its cut-coniferous-trees exception (c-007); fuller scope text belongs with guidance-before-you-start, outside the journey pages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-166",
+      "statement": "The seed and ware potato split is made by the line's category, the origin narrowing is validation, and the trader is never asked to declare that potatoes were suspected of having been grown somewhere.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:659 (behaviours potato-scope-guidance, ruled d-031)",
+      "quote": "the seed/ware split is the per-line category; the origin narrowing is validation owned by origin-value-list-by-commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-167",
+      "statement": "The previous notification scheme and the Northern Irish and Irish services can only refine wording and value lists later, never change what the notification collects, because the statutory list fixes that.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:666 (behaviours previous-scheme-and-ni-roi-precedents, ruled d-072)",
+      "quote": "Annex 2 equals the SI matters, so the previous scheme cannot change WHAT is collected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-168",
+      "statement": "Because the policy paper is a draft, every list is data behind the commodities service, each timing window is a single named constant read by the lateness rule and any hint that quotes it, and the territory wording and authority names are copy, so a policy change is a data or copy change rather than a model change.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:673 (behaviours day-one-critical-and-list-volatility, ruled d-073)",
+      "quote": "the timing windows POTATO_DAYS_BEFORE_ARRIVAL = 2 (reg 24A(1)) and PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4 (reg 26(1)) are exported from one module beside the arrival-details feature and are the only place a window is written",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-169",
+      "statement": "Checks are made without prior notice, so the journey holds no check booked step, appointment slot or inspection date, and a post-arrival trader may give a current location instead of the destination, which is why the arrival status and the destination are captured together.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:680 (behaviours checks-without-prior-notice-no-booking-step)",
+      "quote": "Policy also notes a post-arrival notifier may give a current location instead of the destination, so a check may happen elsewhere than first notified — that is why arrivalStatus + placeOfDestination are captured together.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-170",
+      "statement": "The name of the person making the entry is read as the name on the contact address the trader picked, rather than the signed-in user's own name.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:686 (behaviours name-of-person-making-entry)",
+      "quote": "'Name of person making entry' (annex:6/common-data/item:1) is read in the first pass as the picked contact's name carried by contactAddress",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-171",
+      "statement": "A trader cannot type an EU consignor's name and address on the notification: the consignor must be added to the address book first and then picked, and the address book demands a phone number and email address the law does not.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:692 (behaviours consignor-typed-fallback)",
+      "quote": "First pass: picker only, same as animals — the trader adds the consignor in the INS address book first; the pick is copied onto the notification and Edit details changes that copy for this notification only (EUDPA-662).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-172",
+      "statement": "A notification asks once, and must have, what the trader is importing, offered as three radios labelled Potatoes (seed or ware), Plants for planting and Wood and cut trees.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1103-1118 (obligations commodityType)",
+      "quote": "\"values\": [\"potatoes\", \"plants-for-planting\", \"wood-and-cut-trees\"],\n        \"valueLabels\": \"Potatoes (seed or ware) | Plants for planting | Wood and cut trees\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-173",
+      "statement": "Each commodity type option carries its timing rule as a hint: potatoes must be notified at least 2 days before the expected date of arrival, and plants and wood before arrival or no later than 4 days after it; choosing nothing gives the error Select what you are importing.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1114-1118 (obligations commodityType input.valueHints, errorCopy)",
+      "quote": "You must notify at least 2 days before the expected date of arrival. | You must notify before arrival, or no later than 4 days after the date of arrival. | You must notify before arrival, or no later than 4 days after the date of arrival.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-174",
+      "statement": "A notification holds one or more commodity lines, at least one being required, each line carrying a category, genus, species, commodity code, quantity, potato variety, potato intended use, EPPO code, size of tree and phytosanitary treatments as its scope allows.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1167-1193 (obligations commodityLines)",
+      "quote": "\"item\": [\n        \"category\",\n        \"genus\",\n        \"species\",\n        \"commodityCode\",\n        \"quantity\",\n        \"potatoVariety\",\n        \"potatoIntendedUse\",\n        \"eppoCode\",\n        \"sizeOfTree\",\n        \"phytosanitaryTreatments\"\n      ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-175",
+      "statement": "A line is identified by its position in the notification rather than by any lasting identifier, and one line covers one category with its genus or variety.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:1194 (obligations commodityLines identity)",
+      "quote": "one line per category + genus/variety; the entry page reconciles by position (snapshot-local index), never by a durable id",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-176",
+      "statement": "Each line must say its category, chosen from nine values: seed potatoes, ware potatoes, plants for planting, trees for planting, conifer wood with bark or isolated bark, conifer wood without bark from Italy, France, Portugal or Spain, cut coniferous trees more than 3 metres high, and wood of sweet chestnut, ash or plane either keeping its natural round surface or in unprocessed chips.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations category input.valueLabels)",
+      "quote": "Seed potatoes | Ware potatoes | Plants for planting | Trees for planting | Conifer wood with bark, or isolated bark of conifer | Conifer wood without bark (from Italy, France, Portugal or Spain) | Cut coniferous trees more than 3 metres high | Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface | Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-177",
+      "statement": "The categories a line may hold depend on the notification's commodity type: seed and ware potatoes for potatoes, plants for planting and trees for planting for plants, and the five wood values for wood and cut trees, and the page offers only those.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations category input.valuesByCommodityType)",
+      "quote": "\"valuesByCommodityType\":{\"potatoes\":[\"seed-potatoes\",\"ware-potatoes\"],\"plants-for-planting\":[\"plants-for-planting\",\"trees-for-planting\"],\"wood-and-cut-trees\":[\"conifer-wood-with-bark\",\"conifer-wood-without-bark\",\"cut-coniferous-trees\",\"hardwood-round-surface\",\"hardwood-chips\"]}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-178",
+      "statement": "A wood notification's category question is hinted that preservative-treated wood does not need to be notified unless it is cut coniferous trees more than 3 metres high, and the plants options are hinted to separate shrubs and cuttings from trees, whose height will be asked.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations category input.hintByCommodityType, valueHintsByValue)",
+      "quote": "\"wood-and-cut-trees\":\"Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-179",
+      "statement": "A plants for planting, trees for planting or hardwood line must name its genus, chosen by type-ahead from fifteen entries: Castanea, Cedrus, Coffea, Fraxinus, Lavandula, Nerium oleander, Olea europaea, Picea, Pinus, Platanus, Polygala myrtifolia, Prunus, Quercus, Salvia rosmarinus and Ulmus.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations genus)",
+      "quote": "Castanea (sweet chestnut) | Cedrus (cedar) | Coffea (coffee) | Fraxinus (ash) | Lavandula (lavender) | Nerium oleander (oleander) | Olea europaea (olive) | Picea (spruce) | Pinus (pine) | Platanus (plane) | Polygala myrtifolia (myrtle-leaf milkwort) | Prunus (plums, cherry etc) | Quercus (oak) | Salvia rosmarinus (rosemary) | Ulmus (elm)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-180",
+      "statement": "A hardwood line offers only Castanea, Fraxinus and Platanus, a conifer line is asked no genus at all, and the page never offers a genus it would then reject.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations genus input.valuesByCategory, valuesNote)",
+      "quote": "the commodity-details page renders only valuesByCategory[category] from the set-owned commodities service (three entries for hardwood-round-surface and hardwood-chips, fifteen otherwise) and POST validates against that same list; it never offers fifteen and rejects twelve (c-017)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-181",
+      "statement": "A plants for planting or trees for planting line must give the species as free text of up to 58 characters, hinted with the example Quercus robur and to enter the name as it appears on the plant passport.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations species)",
+      "quote": "For example, Quercus robur. Enter the species name as it appears on the plant passport.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-182",
+      "statement": "Every line except a potato one must give the commodity code, free text of up to 58 characters hinted as the code from the UK Trade Tariff with the example 0602 20 20 and no format check.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations commodityCode)",
+      "quote": "The commodity code for these goods from the UK Trade Tariff. For example, 0602 20 20.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-183",
+      "statement": "Every line must give a quantity as a whole number of one or more, hinted as the number of plants, tubers, trees or units of wood, with no unit asked.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations quantity)",
+      "quote": "For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-184",
+      "statement": "A quantity that is not a whole number greater than nought is refused with Enter a whole number greater than 0, and a missing one with Enter the quantity.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations quantity errorCopy)",
+      "quote": "Enter the quantity | Enter a whole number greater than 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-185",
+      "statement": "A potato line must give its variety as free text of up to 58 characters, hinted with the example Maris Piper, so a consignment of several varieties is several lines.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations potatoVariety)",
+      "quote": "Per line so a shipment of several varieties is several lines (c-012); the SI pairs variety with quantity, which is the shared quantity obligation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-186",
+      "statement": "A potato line must give its intended use as free text of up to 58 characters, hinted with the examples planting, processing or fresh sale, because no source supplies a list of options.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations potatoIntendedUse)",
+      "quote": "For example, planting, processing or fresh sale.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-187",
+      "statement": "The optional use question the second-tier sources list for plants and wood lines is not built, because the only intended-use matter in the statutory list is the potato one.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations potatoIntendedUse notes, ruled d-050)",
+      "quote": "The only intended-use matter in the SI is the potato one (annex:5/reg:24A(2)(b)); the tier-2 Use (optional) for plants and wood lines is not built (c-014: absent from reg 26(2), Annex 2 and Annex 6).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-188",
+      "statement": "A plants for planting or trees for planting line must give the EPPO code for the plant, free text of up to 58 characters hinted with the example QUERO for Quercus robur.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations eppoCode)",
+      "quote": "The EPPO code for the plant. For example, QUERO for Quercus robur.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-189",
+      "statement": "The EPPO code has no pattern check, because genus-level codes such as 1QUEG carry a leading digit so the codes are not a fixed letter-only shape.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations eppoCode validationRaw)",
+      "quote": "no pattern — EPPO codes are not a fixed letter-only shape (genus-level codes such as 1QUEG carry a leading digit), so a format check waits for an EPPO lookup service or a policy-named scheme",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-190",
+      "statement": "A trees for planting or cut coniferous trees line must give the size of the trees, free text of up to 58 characters hinted to give the height in metres with the example 3.5.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations sizeOfTree)",
+      "quote": "Give the height in metres. For example, 3.5.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-191",
+      "statement": "Every wood line must say what phytosanitary treatments have been applied, in a three-row text area of up to 400 characters hinted with heat treatment and kiln drying as examples.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations phytosanitaryTreatments)",
+      "quote": "Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-192",
+      "statement": "A notification must give one country of origin, labelled Country of origin, chosen by type-ahead over the countries reference list and stored as its two-letter code.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations countryOfOrigin)",
+      "quote": "services/countries originCountries() over reference-data /countries?blocks=GBNAG_SPS_EX (captured membership: EU-27 plus IS, LI, NO, CH) — stores ISO 3166-1 alpha-2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-193",
+      "statement": "The country search shows Select a country as its select text, Search for a country as its placeholder and No countries found when nothing matches, and refuses a blank answer with Select the country where the consignment originates from.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations countryOfOrigin input.widgetDetail, errorCopy)",
+      "quote": "showAllValues; select text Select a country; search placeholder Search for a country (Chwiliwch am wlad in Welsh); noResults No countries found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-194",
+      "statement": "A country outside the allowed list is refused with a message naming the countries that are allowed, such as Select Poland, Portugal, Romania or Spain for ware potatoes, and on check your answers with Select a country of origin that matches the commodities in the consignment.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations countryOfOrigin narrowingErrorCopy, cyaErrorCopy)",
+      "quote": "\"ware-potatoes\":\"Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-195",
+      "statement": "A plants or wood notification must say whether the consignment has arrived in Great Britain, offered as Yes, it has already arrived and No, it has not arrived yet.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalStatus)",
+      "quote": "\"values\":[\"already-arrived\",\"not-yet-arrived\"],\"valueLabels\":\"Yes, it has already arrived | No, it has not arrived yet\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-196",
+      "statement": "Each arrival status option explains what it means: an already-arrived answer makes it a post-arrival notification due no later than 4 days after arrival, giving the date it arrived and where it is now, and a not-yet-arrived answer a pre-arrival one giving the expected date of landing and the intended destination.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalStatus input.valueHints)",
+      "quote": "You are making a post-arrival notification. It must be made no later than 4 days after the date of arrival. You will give the date it arrived and where it is now. | You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-197",
+      "statement": "A notification must give one arrival date, whose label changes with the consignment: Expected date of arrival for potatoes, Expected date of landing in Great Britain before arrival, and Date the consignment first arrived in Great Britain once it has arrived.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalDate input.labelByState)",
+      "quote": "\"labelByState\":{\"potatoes\":\"Expected date of arrival\",\"not-yet-arrived\":\"Expected date of landing in Great Britain\",\"already-arrived\":\"Date the consignment first arrived in Great Britain\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-198",
+      "statement": "The arrival date is hinted with the example 27/3/2026, and a potato notification is told to enter the date the potatoes arrived if they already have.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalDate input.hintByState)",
+      "quote": "\"potatoes\":\"For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-199",
+      "statement": "An unreal arrival date is refused with Enter a real arrival date, a missing one with Enter the arrival date, and a future date on an already-arrived consignment with The date the consignment arrived cannot be in the future.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalDate errorCopy)",
+      "quote": "Enter a real arrival date | Enter the arrival date | The date the consignment arrived cannot be in the future",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-200",
+      "statement": "A potato notification must also give the expected time of arrival as a 24-hour time, hinted Use the 24-hour clock. For example, 14:30, refused with Enter a real time, like 14:30.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalTime)",
+      "quote": "Use the 24-hour clock. For example, 14:30.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-201",
+      "statement": "The arrival time box does not ask for a numeric keypad, because a numeric keypad cannot type the colon the format needs and the field would be uncompletable on a phone.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations arrivalTime notes)",
+      "quote": "inputmode numeric was dropped: a numeric keypad cannot type the colon the HH:MM format requires, so the field would be uncompletable on a phone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-202",
+      "statement": "A potato notification must give the proposed place of landing, chosen by type-ahead from the ports of entry reference list and stored as the port code, hinted to select where the potatoes will enter Great Britain and to search by port or airport name or code.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations proposedPlaceOfLanding)",
+      "quote": "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-203",
+      "statement": "The places of landing come from 77 reference-data entries including Dover, Folkestone, Portsmouth, Harwich, Hull, Holyhead, Newhaven, Poole, Purfleet and Tilbury 2 Ro-Ro, and a blank answer is refused with Select the proposed place of landing.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations proposedPlaceOfLanding input.service, errorCopy)",
+      "quote": "stub from the captured ports-of-entry.json fixture (77 MDM entries including Dover, Folkestone, Portsmouth, Harwich, Hull, Holyhead, Newhaven, Poole, Purfleet, Tilbury 2 Ro-Ro); stores the port code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-204",
+      "statement": "Every notification must give a place of destination, picked from the address book, whose label reads Place of destination before arrival and Where the consignment is now once it has arrived, and which accepts an address anywhere in the United Kingdom.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations placeOfDestination)",
+      "quote": "\"labelByState\":{\"potatoes\":\"Place of destination\",\"not-yet-arrived\":\"Place of destination\",\"already-arrived\":\"Where the consignment is now\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-205",
+      "statement": "Picking no destination is refused with Select a place of destination from the list, and on check your answers with Select an address for the place of destination, with Welsh for the first already written.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations placeOfDestination errorCopy, errorCopyCy, cyaErrorCopy)",
+      "quote": "\"errorCopy\": \"Select a place of destination from the list\",\n      \"errorCopyCy\": \"Dewiswch fan cyrchfan o’r rhestr\",\n      \"cyaErrorCopy\": \"Select an address for the place of destination\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-206",
+      "statement": "A plants or wood notification must give the consignor, labelled Consignor and hinted This is the sender of the consignment, picked from the address book, and a potato notification is asked for none.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations consignor)",
+      "quote": "\"label\": \"Consignor\",\n      \"labelCy\": \"Anfonwr\",\n      \"hint\": \"This is the sender of the consignment.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-207",
+      "statement": "Switching a notification to potatoes purges the consignor already held, and picking none on a plants or wood notification is refused with Select a consignor from the list, or Select an address for the consignor on check your answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations consignor notes, errorCopy, cyaErrorCopy)",
+      "quote": "gated on commodityType (reg 26(2)(f) only; reg 24A(2) has no consignor) using the same includesGate shape as arrivalStatus, wipeOnExit so a switch to potatoes purges it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-208",
+      "statement": "A plants for planting notification must give the identification number of the supplier of the plants, once per notification, as free text of up to 58 characters hinted as the supplier's plant passport registration number with the example GB-12345.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations supplierIdentificationNumber)",
+      "quote": "The supplier's plant passport registration number. For example, GB-12345.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-209",
+      "statement": "A potato notification must give the identification number of the producer of the potatoes, once per notification, as free text of up to 58 characters hinted as the producer's registration number, for example from the Seed Potato Classification Scheme or the national register.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations producerIdentificationNumber)",
+      "quote": "The producer's registration number. For example, from the Seed Potato Classification Scheme or the national register.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-210",
+      "statement": "A potato notification must also give the crop identification number, once per notification, as free text of up to 58 characters hinted as the number that identifies the crop the potatoes came from.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations cropIdentificationNumber)",
+      "quote": "The number that identifies the crop the potatoes came from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-211",
+      "statement": "Every notification may give an optional consignment number, labelled Consignment number (optional) and hinted as any reference the trader uses to identify the consignment, or to leave it blank.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations consignmentNumber)",
+      "quote": "Any reference you use to identify this consignment, or leave blank.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-212",
+      "statement": "A consignment number may be up to 58 characters of letters, numbers and underscores only, refused otherwise with Consignment number must only contain letters, numbers and underscores, and it never gates submit readiness.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations consignmentNumber validationRaw, errorCopy)",
+      "quote": "maxText 58; pattern ^\\w*$; trimmed — copied from animals internalReferenceNumber; none given by the plants sources",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-213",
+      "statement": "Every notification must give a contact address for the consignment, picked from the address book, hinted that selecting a contact copies their name and address into the notification and refused blank at submission with Select a contact address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations contactAddress)",
+      "quote": "Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-214",
+      "statement": "One contact pick satisfies all four pieces of common data, because the copied record carries the name, the address, the telephone number and the email address, and none of them is typed separately.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations contactAddress notes, ruled d-003 and d-025)",
+      "quote": "so Common Data items 1-4 are all satisfied here and nothing is typed separately",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-215",
+      "statement": "A notification is submitted only with the declaration ticked, whose sentence reads that the trader confirms having reviewed and complying with the declaration and that the information submitted is true and correct.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations declaration label)",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-216",
+      "statement": "Submitting without ticking the declaration is refused with Confirm that the information is true and correct before submitting, and the declaration answer is held outside the notification record as a flow-only answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations declaration errorCopy, flowOnly)",
+      "quote": "\"errorCopy\": \"Confirm that the information is true and correct before submitting\",\n      \"errorCopyCy\": \"Cadarnhewch fod yr wybodaeth yn wir ac yn gywir cyn cyflwyno\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-217",
+      "statement": "Every notification carries a reference the system mints at creation, never typed by the trader, labelled Your reference number and shown on the journey strip, the list card title, the confirmation panel and the read-only view.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations referenceNumber)",
+      "quote": "journey strip on every journey page, dashboard card title, confirmation panel, CYA read-only view (copied from animals)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-218",
+      "statement": "The reference is a two-digit year and six Crockford base32 characters, excluding I, L, O and U, with no type-code prefix as the animals service has.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations referenceNumber input.format)",
+      "quote": "{PREFIX-}YY-XXXXXX — two-digit year, six Crockford base32 chars (0-9 A-Z excluding I L O U); the plants type-code prefix is unknown (animals: GBN-AG-)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-219",
+      "statement": "Every notification carries a date of notification stamped by the persistence layer at submission rather than from the browser clock, shown on the confirmation, the read-only view and the list card's Date submitted.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations dateOfNotification)",
+      "quote": "stamped by the persistence layer at each finalise (backend NotificationService.write LocalDateTime.now(); stub finalise ISO now), never from the browser clock",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-220",
+      "statement": "Resubmitting after an amendment moves the date of notification to the latest submission, and the first submission's date is neither kept nor shown.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations dateOfNotification notes, ruled d-062)",
+      "quote": "after a re-submit from AMEND this is the latest submission — the backend re-stamps submittedAt (NotificationService.write) and the stub finalise re-stamps — matching animals Date submitted; the first-submission date is not separately kept or shown",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-221",
+      "statement": "Every notification carries a status of DRAFT, SUBMITTED, AMEND or DELETED, shown as Draft, Submitted, Amending or Deleted on the journey strip, the list card and the confirmation, with machine-drafted Welsh labels.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations notificationStatus)",
+      "quote": "\"values\":[\"DRAFT\",\"SUBMITTED\",\"AMEND\",\"DELETED\"],\"valueLabels\":\"Draft | Submitted | Amending | Deleted\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-222",
+      "statement": "A submitted notification carries a stored on-time or late flag, worked out from the London start of the submission day against the arrival date and the commodity type, and that flag never blocks submission.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator)",
+      "quote": "notificationDay = startOfDayInZone(clock, Europe/London) where clock is the finalise clock read in the declaration POST; arrivalDay = startOfUtcDay(arrivalDate parts)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-223",
+      "statement": "A late notification shows a banner titled Important and headed Your notification was made outside the required timing, with the rule for its commodity type followed by It has still been accepted and recorded, and a red Late tag beside the status on the list card.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator input.rendered)",
+      "quote": "title Important, heading Your notification was made outside the required timing, body = the rule string for commodityType followed by It has still been accepted and recorded.; a govukTag Late (govuk-tag--red) beside the status tag on the dashboard card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-224",
+      "statement": "A draft whose submission today would be late is warned on check your answers with If you submit this notification today it will be late, the rule, and You can still submit it, and nothing is stored from that warning.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator input.rendered)",
+      "quote": "\"If you submit this notification today it will be late. {rule} You can still submit it.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-225",
+      "statement": "The rules a late notification quotes read that notifications for potatoes must be made at least two days before the expected date of arrival, and that notifications for plants for planting and wood must be made no later than four days after the date of arrival.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator notes, ruled d-006)",
+      "quote": "potatoes — \"Notifications for potatoes must be made at least {POTATO_DAYS_BEFORE_ARRIVAL} days before the expected date of arrival.\"; plants and wood — \"Notifications for plants for planting and wood must be made no later than {PLANTS_WOOD_DAYS_AFTER_ARRIVAL} days after the date of arrival.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-226",
+      "statement": "The late flag is set once, at the first submission from draft, and is left alone when a notification is resubmitted after an amendment, even though the submitted date moves.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations lateNotificationIndicator input.derivation)",
+      "quote": "Computed by one pure helper (review/lateness.js) at the FIRST submission only — committed as a system value in fulfilment immediately before records.finalise when the journey is DRAFT — and left untouched when finalising from AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-227",
+      "statement": "The happy-path fixture kept beside the specification holds no values, so it seeds no journey of its own.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/fixtures/happy-path.json:1",
+      "quote": "{ \"schema_version\": 1, \"values\": {} }",
+      "confidence": "gap",
+      "note": "The journey's real seeding fixture is journeys/linear/flow/fixtures/happy-path.json, which holds the use-case walkthroughs (another part's slice). The one in spec/fixtures is an empty stub."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-228",
+      "statement": "The journey's end-to-end walkthrough fixture does exist and opens with ware potatoes from Spain notified before arrival, although the specification says it does not exist.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:240 (behaviours playwright-projects-and-journey-smoke) against journeys/linear/flow/fixtures/happy-path.json:2-3",
+      "quote": "journeys (fit/journey-smoke.fit.spec.js driven by flow/fixtures/happy-path.json — neither exists)",
+      "confidence": "inferred",
+      "note": "The specification's statement is stale: the fixture now holds named use cases such as \"Ware potatoes from Spain, notified before arrival\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-229",
+      "statement": "The table of contract tests the specification describes as missing is now in place at src/server/app/contract.test.js.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:222 (behaviours contract-test-table) against src/server/app/contract.test.js",
+      "quote": "The file does not exist; the first plants collecting controller (commodity-type) recreates it and every later collecting page adds a case",
+      "confidence": "inferred",
+      "note": "The specification's statement that the file does not exist no longer holds."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-230",
+      "statement": "The unused import reason and purpose, transport reference and commercial transporter services the specification debates keeping have since been removed from the service.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:367 (behaviours import-reason-purpose-service-unused) against src/server/app/services/",
+      "quote": "Whether to delete or keep them is a declared chore at the start of the backlog.",
+      "confidence": "inferred",
+      "note": "src/server/app/services/ now holds only _capture, address-book, countries, persistence, ports and set-context, so the chore has been done and the behaviour's description of the repo is stale."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-231",
+      "statement": "The specification's list of pages covers none of the amend, cancel amendment, delete notification or party edit pages the service serves, so their headings, fields and messages are specified nowhere in it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:711-1100 (sections) against journeys/linear/features/",
+      "quote": "The delete-notification-page (before key:e2e-start-section) and cancel-amend-page (before key:e2e-review-section) chore extras copy the two confirmation pages from animals",
+      "confidence": "inferred",
+      "note": "The feature folders cancel-amend, delete-notification and party-edit exist in the set, but the specification names them only inside behaviour and page notes, never as pages of its own sections."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-232",
+      "statement": "The specification gives no Welsh wording for the pages and fields that are new to plants, because its rule is to copy the animals Welsh only where the English is identical and to invent none.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:178 (behaviours welsh-copy-seam) and the provisionalCopy pages",
+      "quote": "the spec copies animals' Welsh only where the English is verbatim animals and invents none",
+      "confidence": "gap",
+      "note": "Every plants-only page and obligation is marked provisionalCopy with no Welsh counterpart, so the Welsh half of the journey is unspecified."
+    },
+    {
+      "id": "repo-plantsfrontend-p15-233",
+      "statement": "The specification settles no format for the commodity code, the EPPO code or the supplier, producer and crop identification numbers, so each is free text until a source names its scheme.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json:631 (behaviours nfr-data-validation, ruled d-059)",
+      "quote": "PARKED (no source names a scheme): commodity-code format, EPPO format, supplier/producer/crop identification-number formats",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-plantsfrontend-p15-234",
+      "statement": "The specification settles no unit for a quantity or a tree size, so a wood consignment measured by weight or volume cannot be stated as such.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/journey-spec.json (obligations quantity notes and sizeOfTree validationRaw)",
+      "quote": "Unit is unstated in every source (annex:5/reg:26(2)(d), reg:24A(2)(d)); a unit selector or decimal quantity for wood is parked",
+      "confidence": "gap"
+    }
+  ]
+}

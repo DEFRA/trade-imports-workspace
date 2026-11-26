@@ -16,7 +16,12 @@
   "reposWhy": "Design Release 2.1 covers the GBN-AG animals notification journey, live animals and germinal products as sibling sets (animals frontend and backend), the address lookup stub that answers its address searches locally and the MDM country and port fixtures the stub tidy-up regenerates (stub), the notifications dashboard and address book (owned by the INS front door, its read model in ins-backend, and the address-book system of record), and the reference lists the journey reads, including the port traffic type that orders the port list (reference-data); the tests repo holds every service's end-to-end suite; the k6 performance suite (perftests) uses the live-animals set root, which keeps rendering the reframed notification list, and the INS home at '/', whose heading and read-model load change only when the blocked INS dashboard summary is built. The high-risk plants frontend (plantsfrontend) shares the journey engine, overview, review, declaration, confirmation, amend and delete pages, party pickers and notification list, and takes the same change in the same increment wherever a row changes something it also has.",
   "themes": "Group increments into themes drawn from the evidence, with boundaries set by the code each theme touches (repo and folder), so each theme can be built in parallel on a separate machine without pull requests that conflict with another theme's.",
   "precedence": [
+    "ruling:ian-2026-11-25b",
+    "ruling:ian-2026-11-25",
     "ruling:ian-2026-11-23",
+    "ruling:sam-2026-11-19",
+    "ruling:sam-2026-11-17",
+    "ruling:sam-2026-11-16",
     "ruling:ian-2026-11-16",
     "ruling:design-2026-11-13",
     "ruling:ian-2026-11-11",
@@ -25,8 +30,10 @@
     "ruling:sam-2026-11-09",
     "ruling:interaction-designer-2026-11-09",
     "ruling:ian-2026-11-06",
+    "ruling:paul-2026-11-05",
     "ruling:sam-2026-11-04",
     "ruling:sam-2026-10-26",
+    "ruling:paul-2026-10-14",
     "ruling:sam-2026-10-09-pm",
     "ruling:sam-2026-10-09-templates",
     "ruling:sam-2026-10-09",
@@ -289,6 +296,55 @@
       "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-11-09.md",
       "scope": "whole file",
       "role": "Sam's answer to design question 13: the country search keeps the accessible autocomplete's own screen-reader announcements, so the custom 'Country search results' label and 'Selected <country>' announcement are dropped. Address search is concept work and is parked; Design Release 2.1 mixes concept work with work for the deadline."
+    },
+    {
+      "id": "ruling:sam-2026-11-19",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-11-19.md",
+      "scope": "whole file",
+      "role": "the owner's answers to the overview and review theme's engineering review: plants shows the notification task list heading visibly as live animals does, reading \"Notification task list\" in both services; each posting button on the notification view header gets its own form, as every other posting button in the service does, so Amend and Copy as new each post their own and Delete stays a link to the delete confirmation page outside both, in the live animals and plants frontends; tests find live animals review cards by GOV.UK structure and role rather than by the words of a numbered heading; every other atypical item the review found is fixed, except the local stack's automatic uploader restart, the plants journey spec ruling deleted rather than superseded, the tests repo's deleted docs note on why Cancel amend waits on the URL, and the animals backend unit tests that build a real DocumentService on stubbed repositories; and the fixes land in as few increments as sensible rather than one per item. It also replaces the 16 November ruling's \"what stays\" clause on outstanding items: the animals backend stops storing the outstanding items list and the rule that works it out comes off the OutstandingItem enum, both re-added with the future outstanding-actions banner, while the submitted date is still recorded. \"Answers differ from submitted\" is a non-null yes or no flag, which the animals frontend's local stub takes from the backend's shape rather than working out itself."
+    },
+    {
+      "id": "ruling:sam-2026-11-17",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-11-17.md",
+      "scope": "whole file",
+      "role": "the owner's decision on the review page's wording where the prototype names one thing two ways, replacing the 16 November orchestrator decision to take each question page's own wording: the exit port is \"Port of exit\" everywhere, check your answers included, and \"Exit border control post\" is not used; the arrival date is \"Arrival date at port of entry\" everywhere, check your answers included, and \"Arrival date at destination\" is not used; and addresses read the same on check your answers, the overview task list and the addresses page itself, with section heading \"Addresses\", \"Consignment addresses\" as the H1, task row and card title, and \"Complete consignment addresses\" as the incomplete-card validation message. Section numbers stay, the overview row's hint stays, and plants takes the same address wording because plants matches animals on these pages."
+    },
+    {
+      "id": "ruling:sam-2026-11-16",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-11-16.md",
+      "scope": "whole file",
+      "role": "the owner's decision that plants' customs document code is C085, the CDS code for the Common Health Entry Document for Plants, Plant Products and Other Objects, while C640 stays the animals code, which unblocks req-2002 and inc-199; and that no new \"Submitted action required\" status is introduced. A notification submitted with outstanding items, such as a missing health certificate, is SUBMITTED like any other: agreed with Syed Islam, a status that does not align with the notification flow is not added, and outstanding actions are shown through a banner-style alert that the dashboard designs under test introduce. This withdraws the 9 October afternoon ruling's \"Submitted action required\" status (req-902's status, req-1987's new status) and the 'Action required' tag on the live animals list (inc-131's action-required criteria), and nothing action-required is shown until that banner design is agreed: the status tag reads 'Submitted', and the view's action-required warning, its 'Continue' and the review's 'Upload a valid health certificate' error come out with the status (req-902, req-903, req-907). \"Completed\" stays out until a real source of completion exists. Its own \"what stays\" clause on recording the outstanding items left at submission is replaced by ruling:sam-2026-11-19, which keeps only the submitted date."
+    },
+    {
+      "id": "ruling:paul-2026-11-05",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-paul-2026-11-05.md",
+      "scope": "whole file",
+      "role": "the decision on what the address book stores for an address's type and uses (EUDPA-711): \"use\" is renamed \"role\" everywhere, in the record, the API, the code, the copy keys, the tests and the spec, and an address holds the roles it can play on a notification, being place of origin, consignor, consignee, importer, place of destination and branch address. The address book stores roles only and requires at least one; it does not store an address type and ignores one a client sends, the address type being the INS front door's grouping of roles worked out from them. The grouping of roles into sending, receiving and branch is the address book's internal rule rather than part of its API, and it refuses roles from more than one group, and a consignee, importer or place of destination outside the United Kingdom. The list takes role, repeatable and any-of, and searchRole, in place of addressType, use and searchUse. A role a new notification type needs is added in code, each role in exactly one group. Addresses saved before the change are not migrated: after release the addresses collection is dropped in dev and test with CDP tooling and the address book restarted, and locally the stack is restarted. The address book's list and every address picker keep pagination even though the Design Release 2.1 prototype has none, the list API paging with page and pageSize of 1 to 100 defaulting to 25, because organisations in test environments hold thousands of addresses; no requirement to list an organisation's addresses unpaginated is built, which ruling:ian-2026-11-23 point 6 later reads the other way for req-611 and so outranks on that point alone."
+    },
+    {
+      "id": "ruling:paul-2026-10-14",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-paul-2026-10-14.md",
+      "scope": "whole file",
+      "role": "the decision that the address book's add-details step keeps a 'County (optional)' field between 'Town or city' and 'Postcode or Zip code', as the edit page (inc-073) and the view page (inc-064) already do, replacing inc-062's criterion that the add-details step has no County field. Given while starting the address-book theme ahead of the team's go-ahead and marked to confirm with Sam. Its ground is that the V4 Address Block gives every address block the same fields, County included, and ranks above the prototype, so a Design Release 2.1 page leaving County out is a prototype mistake; and that an add form which cannot set a field the record, the view and the edit form all carry would lose data on a round trip."
+    },
+    {
+      "id": "ruling:ian-2026-11-25",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-ian-2026-11-25.md",
+      "scope": "whole file",
+      "role": "the decision that pagination is kept everywhere and that its earlier removal was an error: every address book list and every address picker pages, and no requirement says a list of an organisation's addresses is served or shown unpaginated. It drops req-611's 'unpaginated' clause and supersedes ruling:ian-2026-11-23 point 6 on that point alone, because that point's reasoning rested on the address book's list endpoint taking no role and so having to be read whole and paged for display, which is no longer true of the service: RequestedListFilters takes roles and searchRoles, AddressController lists one page at a time with page and pageSize, and ListPaging sets 1 to 100 defaulting to 25, exactly the bounds ruling:paul-2026-11-05 point 8 names. The role filter runs in the service before the page is cut, so paging the API cannot make it wrong, and Paul's point 8 stands in full. The rest of ruling:ian-2026-11-23 stands: the pickers page at eight, the one-page clause of inc-087's criteria 7, 8 and 9 stays dropped with req-594 and req-595, and the 'Selected address' restatement comes back with the paging. EUDPA-827 is the fix and has landed on the animals frontend's main. It settles conflict c-292 by keeping the plants contact picker's pagination and inset, and the contact picker pages at eight rather than five, confirmed by Ian the same day, so every picker in both journeys pages at the figure the INS address book list already uses and ruling:ian-2026-11-23 point 1 set for the other pickers."
+    },
+    {
+      "id": "ruling:ian-2026-11-25b",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-ian-2026-11-25b.md",
+      "scope": "whole file",
+      "role": "the answers to the two notification view header questions the 25 November re-distil raised from ruling:sam-2026-11-19 point 2. It settles c-438: once the amend confirmation page exists, 'Amend this notification' on the header is a link to that page rather than a posting button, because the first click then changes nothing, a POST that only renders a page is the wrong verb and leaves a re-POST on the back button without JavaScript, and Delete already opens its confirmation page by href in the same header; Copy as new keeps its own form because it still changes something, Delete stays a link, and no action shares another's form, in live animals, germinal products and plants alike. Point 2 of the 19 November ruling is unweakened, its subject being that no action shares another action's form, which a link does not do. It settles c-447 the other way from the default: the plants header gains a Copy as new action so both journeys offer the same three actions. That is wiring rather than a feature build, because every layer beneath it is already on main - the plants backend serves POST /{referenceNumber}/copy with a NotificationCopyMapper, the plants frontend's real and stub persistence both implement copy, and its engine holds copyJourney - and only the header's copyAction and route are missing. The plants backend therefore needs nothing and trade-imports-plants-backend does not join this programme's repos; inc-123 takes plantsfrontend alongside backend, frontend and tests, and inc-124's stale-copy return takes plants too. Plants' copy carries plants' own answers, so the carried-over-trade against cleared-shipment split is read against plants' own fields rather than copied field for field."
     }
   ]
 }

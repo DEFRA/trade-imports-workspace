@@ -203,6 +203,30 @@ describe('tim theme-ticket matches tools/theme-ticket', () => {
   }, 180_000)
 })
 
+describe('tim theme-ticket derive --out', () => {
+  test('Should make the folder it writes into when the folder is not there yet', async () => {
+    const outFile = 'workareas/release/not-made-yet/derived.json'
+    const recordings = await playThemeTicketSteps({
+      runCommand: async (staged, step) =>
+        step.name === 'written to a file'
+          ? runTim(staged, {
+              ...step,
+              args: [...step.args.slice(0, -1), outFile]
+            })
+          : {}
+    })
+    const run = recordings.find(
+      (each) => each.case === 'derive: written to a file'
+    )
+
+    expect(run.exitCode).toBe(0)
+    expect(run.stdout).toBe(`Wrote ${outFile}\n`)
+    expect(JSON.parse(run.out)).toEqual(
+      expect.objectContaining({ theme: 'arrival' })
+    )
+  }, 180_000)
+})
+
 describe('tim theme-ticket comment', () => {
   test('shows its dry-run and --confirm examples in --help', async () => {
     const { stdout } = await runTimWithoutWorkspace([

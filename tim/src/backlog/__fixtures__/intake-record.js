@@ -20,7 +20,7 @@ export const intakeRecord = (overrides = {}) => ({
   updated: '2026-11-25T09:00:00.000+0000',
   readiness: { verdict: 'READY', reasons: ['Every criterion is observable.'] },
   statements: [statement()],
-  repos: { workspace: 'The change is to workspace tooling.' },
+  repos: { frontend: 'The change is to the address picker.' },
   questions: [],
   ...overrides
 })

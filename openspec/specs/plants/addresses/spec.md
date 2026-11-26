@@ -77,7 +77,7 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: The picker offers a search of its own list, reporting how many matched, and shows eight of the addresses it found a page
 **ID**: REQ-PLANTS-ADDR-002
-The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. It MUST report under the heading "Select an address" how many are shown out of the total found, offer them as one group with that name, and show eight a page of the addresses it found — the picker's whole list, or the matches when a search narrows it. Where more than eight were found it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page, the address held as chosen and the trail the trader arrived on; where eight or fewer were found it MUST offer none. A submitted search MUST start again at the first page. A page past the last page MUST serve the last page, and a page that is not a page number MUST serve the first; each MUST be logged once with the page asked for and the page served. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list, from its first page.
+The system MUST search the picker's list on the server, from the button named "Search" beside the box or by pressing Enter, narrowing it to matching records. A record MUST match when its name, its address or its country's name contains the search term. It MUST report under the heading "Select an address" how many are shown out of the total found, offer them as one group with that name, and show eight a page of the addresses it found — the picker's whole list, or the matches when a search narrows it. Where more than eight were found it MUST offer GOV.UK pagination under the table, whose links carry the search term, the page, the address held as chosen and the trail the trader arrived on; where eight or fewer were found it MUST offer none. A submitted search MUST start again at the first page. A page past the last page MUST serve the last page, and a page that is not a page number MUST serve the first; each MUST be logged once with the page asked for and the page served. A search matching nothing MUST say so, not show an empty table; clearing it MUST restore the whole list, from its first page.
 
 #### Scenario: The picker shows eight of its list a page, counted against the whole list
 **ID**: SCN-PLANTS-ADDR-002-A
@@ -116,6 +116,13 @@ The system MUST search the picker's list on the server, from the button named "S
 - **WHEN** they search for a term matching one or more addresses
 - **THEN** only those addresses are shown
 - **AND** under the heading "Select an address" the page reads "Showing <shown> out of <total> results" for the matches
+
+#### Scenario: Searching for a country's name lists the picker's addresses in that country
+**ID**: SCN-PLANTS-ADDR-002-K
+- **GIVEN** the user is on the consignor, place of destination or consignment contact picker
+- **WHEN** they search for the name of a country, such as "France" or "United Kingdom"
+- **THEN** the list is narrowed to the picker's addresses in that country, whether or not the name or address holds the country's name
+- **AND** the page reports how many were found
 
 #### Scenario: A search matching nothing says so, rather than showing an empty table
 **ID**: SCN-PLANTS-ADDR-002-C

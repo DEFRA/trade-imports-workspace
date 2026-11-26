@@ -10,7 +10,7 @@ import {
   question,
   statement
 } from './__fixtures__/intake-record.js'
-import { ticketBacklogRepos } from './__fixtures__/ticket-workareas.js'
+import { ticketBacklogRepos } from './__fixtures__/workarea-workspace.js'
 
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -338,20 +338,35 @@ describe('#checkBacklog for a ticket backlog', () => {
     const record = intakeRecord({ repos: {} })
 
     expect(problemsOf({ record })).toEqual([
-      'intake.json gives no reason for repo workspace, which the backlog builds in.'
+      'intake.json gives no reason for repo frontend, which the backlog builds in.'
     ])
   })
 
   test('names a repo the record explains that the backlog does not build in', () => {
     const record = intakeRecord({
       repos: {
-        workspace: 'The change is to workspace tooling.',
+        frontend: 'The change is to the address picker.',
         tests: 'The tests repo shows what is proven.'
       }
     })
 
     expect(problemsOf({ record })).toEqual([
       'intake.json explains repo tests, which the backlog does not build in.'
+    ])
+  })
+
+  test('refuses the workspace repo in a ticket backlog, naming its key', () => {
+    const backlog = ticketBacklog([citedRow()], {
+      repos: {
+        workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
+      }
+    })
+    const record = intakeRecord({
+      repos: { workspace: 'The spec changes.' }
+    })
+
+    expect(problemsOf({ backlog, record })).toEqual([
+      "The backlog builds in the workspace repo as workspace. Ticket mode builds under the branch lifecycle, which never takes the workspace as a repo: remove workspace from the backlog's repos, every row's repos and intake.json."
     ])
   })
 

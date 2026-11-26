@@ -14,7 +14,7 @@ import {
   slugOfSummary
 } from './from-ticket.js'
 import { backlogOf, row } from './__fixtures__/backlog-rows.js'
-import { makeTicketWorkspace } from './__fixtures__/ticket-workareas.js'
+import { makeWorkareaWorkspace } from './__fixtures__/workarea-workspace.js'
 
 const atlassian = useAtlassianFixtureServer()
 let workspace
@@ -131,13 +131,13 @@ describe('#existingWorkareaFor', () => {
     existingWorkareaFor({ workspaceRoot: workspace.root, key, workarea })
 
   test('Should find none when no folder is named for the key', () => {
-    workspace = makeTicketWorkspace({ folders: ['other-thing'] })
+    workspace = makeWorkareaWorkspace({ folders: ['other-thing'] })
 
     expect(lookup()).toBeNull()
   })
 
   test('Should keep the folder it finds, and its slug', () => {
-    workspace = makeTicketWorkspace({ folders: ['eudpa-29-old-slug'] })
+    workspace = makeWorkareaWorkspace({ folders: ['eudpa-29-old-slug'] })
 
     expect(lookup()).toEqual({
       workarea: 'shared/eudpa-29-old-slug',
@@ -146,13 +146,13 @@ describe('#existingWorkareaFor', () => {
   })
 
   test('Should find a folder named by the bare key, with no slug', () => {
-    workspace = makeTicketWorkspace({ folders: ['eudpa-29'] })
+    workspace = makeWorkareaWorkspace({ folders: ['eudpa-29'] })
 
     expect(lookup()).toEqual({ workarea: 'shared/eudpa-29', slug: '' })
   })
 
   test('Should not take another ticket whose number starts the same, or a file', () => {
-    workspace = makeTicketWorkspace({
+    workspace = makeWorkareaWorkspace({
       folders: ['eudpa-294-other'],
       files: { 'eudpa-29-notes.md': 'notes' }
     })
@@ -161,7 +161,7 @@ describe('#existingWorkareaFor', () => {
   })
 
   test('Should refuse when two folders match, naming both and the --workarea option', () => {
-    workspace = makeTicketWorkspace({
+    workspace = makeWorkareaWorkspace({
       folders: ['eudpa-29-first', 'eudpa-29-second']
     })
 
@@ -171,7 +171,7 @@ describe('#existingWorkareaFor', () => {
   })
 
   test('Should use the workarea it is told to, even when two folders match', () => {
-    workspace = makeTicketWorkspace({
+    workspace = makeWorkareaWorkspace({
       folders: ['eudpa-29-first', 'eudpa-29-second']
     })
 
@@ -182,7 +182,7 @@ describe('#existingWorkareaFor', () => {
   })
 
   test('Should refuse a workarea that climbs out of workareas/', () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     expect(() => lookup('EUDPA-29', '../elsewhere')).toThrow(
       /must be a path inside workareas/
@@ -207,7 +207,7 @@ describe('#fetchTicketIntoWorkarea', () => {
     readFileSync(inWorkarea('sources/ticket-eudpa-210.md'), 'utf8')
 
   test('Should write the ticket file with the description, comments, linked page, parent, links and subtasks', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     await fetchTicket()
 
@@ -229,7 +229,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should save the image and PDF attachments beside the ticket file, and list all three in it', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const { attachments } = await fetchTicket()
 
@@ -253,7 +253,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should write the tests repo and the ticket as the two sources, with the ticket file as the ticket locator', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const { sourcesFile } = await fetchTicket()
 
@@ -291,7 +291,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should record the branch and when Jira last updated the ticket', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const { recordFile } = await fetchTicket({
       now: () => new Date('2026-11-24T10:00:00.000Z')
@@ -306,7 +306,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should name the workarea and the branch from the ticket, and list its blocker', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     expect(await fetchTicket()).toMatchObject({
       workarea: WORKAREA,
@@ -317,7 +317,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should keep the folder and slug it first named when the summary has since changed', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     await fetchTicket()
     atlassian().changeTicket('EUDPA-210', {
       summary: 'Something else entirely'
@@ -330,7 +330,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should take the summary slug for a workarea named by the bare key', async () => {
-    workspace = makeTicketWorkspace({ folders: ['eudpa-210'] })
+    workspace = makeWorkareaWorkspace({ folders: ['eudpa-210'] })
 
     expect(await fetchTicket()).toMatchObject({
       workarea: 'shared/eudpa-210',
@@ -339,7 +339,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should keep a sources file already there', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     await fetchTicket()
     writeFileSync(inWorkarea('sources.json'), '{"edited":true}\n')
 
@@ -352,7 +352,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should refuse a workarea with a built row, and ask Jira nothing', async () => {
-    workspace = makeTicketWorkspace({
+    workspace = makeWorkareaWorkspace({
       backlogs: {
         'shared/eudpa-210-old': backlogOf(
           row({ id: 'inc-001', status: 'done' }),
@@ -370,7 +370,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should fetch into a workarea whose backlog has no built row', async () => {
-    workspace = makeTicketWorkspace({
+    workspace = makeWorkareaWorkspace({
       backlogs: { 'shared/eudpa-210-old': backlogOf(row({ id: 'inc-001' })) }
     })
 
@@ -380,7 +380,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should list a parent Jira will not give, and carry on', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     atlassian().changeTicket('EUDPA-210', { parent: { key: 'EUDPA-9999' } })
 
     const { skipped } = await fetchTicket()
@@ -395,7 +395,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should list an attachment that cannot be downloaded as not saved, and carry on', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     atlassian().changeTicket('EUDPA-210', {
       attachment: [
         {
@@ -427,7 +427,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should list an attachment as not saved, with the reason, when Jira refuses to list it', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     atlassian().refuseAttachmentListing('EUDPA-210', 500)
 
     const { attachments, skipped } = await fetchTicket()
@@ -442,7 +442,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should keep two attachments that share a filename, each with its own bytes', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     const sameName = (id) => ({
       id,
       filename: 'screen.png',
@@ -473,7 +473,7 @@ describe('#fetchTicketIntoWorkarea', () => {
   })
 
   test('Should still write the ticket file and the sources file for a ticket with no attachments', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     atlassian().changeTicket('EUDPA-210', { attachment: [] })
 
     const { attachments } = await fetchTicket()
@@ -497,7 +497,7 @@ describe('#checkTicketForChanges', () => {
     })
 
   test('Should find the ticket unchanged when Jira has not updated it since the record', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     await fetchTicketIntoWorkarea({
       workspaceRoot: workspace.root,
       key: 'EUDPA-210'
@@ -513,7 +513,7 @@ describe('#checkTicketForChanges', () => {
   })
 
   test('Should find the ticket changed when Jira updated it after the record', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     await fetchTicketIntoWorkarea({
       workspaceRoot: workspace.root,
       key: 'EUDPA-210'
@@ -529,7 +529,7 @@ describe('#checkTicketForChanges', () => {
   })
 
   test('Should say no workarea holds the ticket, and ask Jira nothing', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     await expect(check()).rejects.toMatchObject({
       code: 'NOT_FOUND',
@@ -540,7 +540,7 @@ describe('#checkTicketForChanges', () => {
   })
 
   test('Should say a workarea with no record of the ticket has none, and ask Jira nothing', async () => {
-    workspace = makeTicketWorkspace({ folders: ['eudpa-210-old'] })
+    workspace = makeWorkareaWorkspace({ folders: ['eudpa-210-old'] })
 
     await expect(check()).rejects.toMatchObject({
       code: 'NOT_FOUND',

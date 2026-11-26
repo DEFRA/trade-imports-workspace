@@ -1,0 +1,891 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 8 read, in full, the three review feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features: check-answers (page.js, controller.js, template.njk, copy.en.js, copy.cy.js, view-model/index.js, view-model/outstanding-parties.js, view-model/rows/change-link.js, summary-row.js, value-text.js, check-answers.fit.spec.js), declaration (page.js, controller.js, template.njk, copy.en.js, copy.cy.js, declaration.fit.spec.js) and confirmation (page.js, controller.js, template.njk, copy.en.js, copy.cy.js, confirmation.fit.spec.js), plus the shared review folder (review/evaluation.js binding the lateness indicator, review/lateness.js computing it) and obligations/sections/review.js (one system obligation, lateNotificationIndicator). For label and number context only it also looked at features/timing-windows.js (2 and 4 days), the arrival-details dateLabels, the place-of-destination headings and kit.CYA_SLUG; those files belong to other parts. Covered: the check your answers page (slug notification-view: three numbered sections, its cards and rows in order, change links, Not provided, outstanding-party and origin errors, the submit section and save actions, the draft late warning, the read-only submitted view with Delete, the late banner, the AMEND Cancel amendment link and success banner); the declaration page (three statements, one checkbox, date of declaration, error, submit flow, lateness stamping, failure handling, submitted redirect); the confirmation page (panel and reference, body, date, late banner, two links, no back link, draft redirect); the lateness rules; the review obligation; and every test in the three fit specs (3 + 4 + 2 = 9). It stops at the dashboard the confirmation links to.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p8-001",
+      "statement": "The check your answers page lives at /notifications/{reference}/notification-view and answers both GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/page.js:1; controller.js:119",
+      "quote": "export const notificationViewPage = {\n  id: 'notification-view',\n  slug: 'notification-view'\n}",
+      "confidence": "verbatim",
+      "note": "The full path comes from the fit spec's cyaUrl, setUrl('/notifications/[^/]+/notification-view$')."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-002",
+      "statement": "A user reaches check your answers from the task list hub by the 'Check and submit' link once every prerequisite section is answered; the opening run stops at the hub rather than going there automatically.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:98-106",
+      "quote": "// The opening run stops at the hub once every prerequisite section is\n  // answered but the review gate itself needs a manual visit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-003",
+      "statement": "The check your answers page heading (h1) is 'Check your answers'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:15; template.njk:21",
+      "quote": "title: 'Check your answers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-004",
+      "statement": "The check your answers page shows the shared section caption above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:20",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "verbatim",
+      "note": "The caption text comes from the shared kit (another part)."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-005",
+      "statement": "The check your answers page's Back link goes to the notification's task list hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:60",
+      "quote": "backLink: hubPath(current.journey.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-006",
+      "statement": "The check your answers page uses the wider 'display' content column rather than the standard form column.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:62",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "inferred",
+      "note": "That 'display' is the wider column is inferred from the surface name; the class mapping lives in shared/kit.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-007",
+      "statement": "Check your answers groups the answers under three numbered h2 section headings, in order: '1. About the consignment', '2. Arrival and destination', '3. Consignment parties'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:35-39; view-model/index.js:230-237",
+      "quote": "sections: {\n    consignment: '1. About the consignment',\n    arrival: '2. Arrival and destination',\n    parties: '3. Consignment parties'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-008",
+      "statement": "Each section on check your answers is shown as GOV.UK summary cards, each card title an h3.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:34-42",
+      "quote": "card: { title: { text: card.title, headingLevel: 3 }, actions: card.actions },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-009",
+      "statement": "Section 1 opens with an 'Import details' card with two rows: 'What are you importing?' (the commodity type label) and 'Country of origin' (the origin country's reference-data label).",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:143-151; copy/copy.en.js:41,49-50",
+      "quote": "title: copy.cards.import,\n      rows: [\n        answerRow('commodityType', copy.typeLabels[answers.commodityType]),\n        answerRow('countryOfOrigin', originCountryLabel)\n      ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-010",
+      "statement": "Check your answers shows the commodity type as 'Potatoes (seed or ware)', 'Plants for planting' or 'Wood and cut trees'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:76-80",
+      "quote": "typeLabels: {\n    potatoes: 'Potatoes (seed or ware)',\n    'plants-for-planting': 'Plants for planting',\n    'wood-and-cut-trees': 'Wood and cut trees'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-011",
+      "statement": "Section 1 then shows one card per commodity line, titled 'Commodity 1', 'Commodity 2' and so on.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:66-69",
+      "quote": "const title = `${copy.cards.commodity} ${index + 1}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-012",
+      "statement": "Each commodity card's first row is 'Category', showing the category's label.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:79-82",
+      "quote": "readOnlyRow(\n            copy.labels.category,\n            copy.categoryLabels[entry.category]\n          ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-013",
+      "statement": "Check your answers labels the nine categories: 'Seed potatoes', 'Ware potatoes', 'Plants for planting', 'Trees for planting', 'Conifer wood with bark, or isolated bark of conifer', 'Conifer wood without bark (from Italy, France, Portugal or Spain)', 'Cut coniferous trees more than 3 metres high', 'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface', 'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:81-95",
+      "quote": "categoryLabels: {\n    'seed-potatoes': 'Seed potatoes',\n    'ware-potatoes': 'Ware potatoes',\n    'plants-for-planting': 'Plants for planting',\n    'trees-for-planting': 'Trees for planting',\n    'conifer-wood-with-bark':\n      'Conifer wood with bark, or isolated bark of conifer',\n    'conifer-wood-without-bark':\n      'Conifer wood without bark (from Italy, France, Portugal or Spain)',\n    'cut-coniferous-trees': 'Cut coniferous trees more than 3 metres high',\n    'hardwood-round-surface':\n      'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface',\n    'hardwood-chips':\n      'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-014",
+      "statement": "After Category, a commodity card shows one row for each line field the category asks for, in the category's field order, using the labels 'Genus', 'Species', 'Commodity code', 'Variety', 'Quantity', 'Intended use', 'EPPO code', 'Size of the trees' and 'Phytosanitary treatments applied'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:83-88; copy/copy.en.js:59-67",
+      "quote": "...lineFieldsFor(entry.category).map((field) =>\n            readOnlyRow(\n              copy.labels[field],",
+      "confidence": "verbatim",
+      "note": "Which fields each category has is set by services/commodities lineFieldsFor (another part)."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-015",
+      "statement": "A commodity card shows the genus with its common name, from a list of 15: Castanea (sweet chestnut), Cedrus (cedar), Coffea (coffee), Fraxinus (ash), Lavandula (lavender), Nerium oleander (oleander), Olea europaea (olive), Picea (spruce), Pinus (pine), Platanus (plane), Polygala myrtifolia (myrtle-leaf milkwort), Prunus (plums, cherry etc), Quercus (oak), Salvia rosmarinus (rosemary), Ulmus (elm).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:96-112; view-model/index.js:86",
+      "quote": "field === 'genus' ? copy.genusLabels[entry[field]] : entry[field]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-016",
+      "statement": "Commodity card rows have no change link of their own; the card has one 'Change' action that opens that line's commodity details page at ?index={n}&change=1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:70-77; check-answers.fit.spec.js:156-162",
+      "quote": "actions.items[0].href = detailsHref(\n        { params: { journeyId }, query: { change: '1' } },\n        { index }\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-017",
+      "statement": "Changing a commodity from check your answers goes details page, then Save and continue to the commodities list (?change=1), then Save and continue back to check your answers, which shows the new value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:156-169",
+      "quote": "await expect(page).toHaveURL(/\\/commodities\\?change=1$/)\n  await save(page).click()\n  await expect(page).toHaveURL(cyaUrl)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-018",
+      "statement": "Section 2 opens with an 'Arrival details' card.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:187; copy/copy.en.js:43",
+      "quote": "arrival: 'Arrival details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-019",
+      "statement": "The Arrival details card shows a 'Has the consignment arrived?' row only when the arrival status question is in scope (not for potatoes), with the values 'Yes, it has already arrived' or 'No, it has not arrived yet'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:166-168; copy/copy.en.js:52,113-116",
+      "quote": "statusLabels: {\n    'already-arrived': 'Yes, it has already arrived',\n    'not-yet-arrived': 'No, it has not arrived yet'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-020",
+      "statement": "The Arrival details card always shows a date row whose label depends on the arrival state: 'Expected date of arrival' for potatoes, 'Date the consignment first arrived in Great Britain' when already arrived, and 'Expected date of landing in Great Britain' when not yet arrived or when the status is unanswered.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:28-40,169-175",
+      "quote": "if (!scope.has(ARRIVAL_STATUS)) {\n    return POTATO_ARRIVAL\n  }\n  return answers[ARRIVAL_STATUS] === ALREADY_ARRIVED\n    ? ALREADY_ARRIVED\n    : NOT_YET_ARRIVED",
+      "confidence": "verbatim",
+      "note": "Label strings are arrival-details copy dateLabels (another part's file)."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-021",
+      "statement": "Check your answers shows the arrival date as day/month/year with no leading zeros (for example 9/10/2026).",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/value-text.js:20-21",
+      "quote": "isBlank(value) ? NOT_PROVIDED : `${value.day}/${value.month}/${value.year}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-022",
+      "statement": "The Arrival details card shows an 'Arrival time' row only when arrival time is in scope.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:176; copy/copy.en.js:53",
+      "quote": "...scopedRows(['arrivalTime']),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-023",
+      "statement": "The Arrival details card shows a 'Place of landing' row only when it is in scope, showing the port's reference-data label (for example 'Port of Dover (GB DVR)').",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:114-116,177-179; copy/copy.en.js:54",
+      "quote": "proposedPlaceOfLanding: 'Place of landing',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-024",
+      "statement": "Section 2's second card is the place of destination, titled 'Place of destination' for potatoes and not-yet-arrived consignments, and 'Where is the consignment now?' for already-arrived consignments.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:188-194",
+      "quote": "partyCard(\n        'placeOfDestination',\n        destinationCopy.headings[arrivalState],",
+      "confidence": "verbatim",
+      "note": "Title strings are place-of-destination copy headings (another part's file)."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-025",
+      "statement": "Each party card (place of destination, consignor, contact) shows four read-only rows: 'Name', 'Address' (the address lines then the country, joined with commas), 'Telephone number' and 'Email address', with one card-level Change link to the party's picker page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:49-64",
+      "quote": "readOnlyRow(copy.labels.name, party?.name),\n    readOnlyRow(\n      copy.labels.address,\n      party &&\n        [addressText(party.address), party.address?.country]\n          .filter(Boolean)\n          .join(', ')\n    ),\n    readOnlyRow(copy.labels.telephoneNumber, party?.address?.telephoneNumber),\n    readOnlyRow(copy.labels.emailAddress, party?.address?.emailAddress)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-026",
+      "statement": "Check your answers reads each saved party (place of destination, consignor, contact) from the organisation's address book by its saved address id, and treats an address that is missing or deleted as not provided.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:27-42",
+      "quote": "const party = saved.addressId\n      ? await addressBook.party(organisationIdOf(request), saved.addressId)\n      : saved\n    if (party && !party.deleted) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-027",
+      "statement": "Section 3 shows a 'Consignor or exporter' card only when the consignor question is in scope; potato notifications have no consignor card.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:208-218; check-answers.fit.spec.js:139-141",
+      "quote": "...(scope.has('consignor')\n      ? [\n          partyCard(\n            'consignor',\n            copy.cards.consignor,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-028",
+      "statement": "Section 3 shows an 'Identification numbers' card with a row for each identifier in scope, in order: 'Identification number of the supplier of the plants', 'Identification number of the producer of the potatoes', 'Crop identification number', 'Consignment number (optional)'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:42-47,219; copy/copy.en.js:68-73",
+      "quote": "const IDENTIFIERS = [\n  'supplierIdentificationNumber',\n  'producerIdentificationNumber',\n  'cropIdentificationNumber',\n  'consignmentNumber'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-029",
+      "statement": "Section 3 ends with a 'Contact' party card for the consignment contact.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js:220-226; copy/copy.en.js:46",
+      "quote": "contact: 'Contact'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-030",
+      "statement": "Any row with no answer shows 'Not provided'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/value-text.js:8-13; copy/copy.en.js:23",
+      "quote": "notProvided: 'Not provided',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-031",
+      "statement": "Each answer row in the Import details, Arrival details and Identification numbers cards has its own 'Change' link, with visually hidden text of the row label in lower case, leading to the page that asks that question with ?change=1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/summary-row.js:4-22; rows/change-link.js:12-25",
+      "quote": "export const changeHref = (journeyId, obligationId) =>\n  withChange(pagePath(journeyId, slugOfPage(pageOfObligation(obligationId))))",
+      "confidence": "verbatim",
+      "note": "The fit spec finds the link by accessible name 'Change country of origin (Import details)', so the card title is appended by the summary card component."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-032",
+      "statement": "Changing an answer from check your answers and pressing Save and continue returns the user to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:147-155",
+      "quote": "await expect(page).toHaveURL(/\\/origin\\?change=1$/)\n  await save(page).click()\n  await expect(page).toHaveURL(cyaUrl)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-033",
+      "statement": "A party role that was answered but whose saved address no longer resolves shows an error: 'Select an address for the consignor' or 'Select an address for the place of destination'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/outstanding-parties.js:8-17; copy/copy.en.js:25-30",
+      "quote": "errors: {\n    parties: {\n      consignor: 'Select an address for the consignor',\n      placeOfDestination: 'Select an address for the place of destination'\n    }\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-034",
+      "statement": "A party role that was never answered shows 'Not provided' on check your answers and raises no error.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/outstanding-parties.js:8-11",
+      "quote": "Only a previously answered role whose saved reference no longer resolves\n * needs correction. A role never answered displays Not provided without error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-035",
+      "statement": "The contact has no outstanding-address error message on check your answers; only the consignor and place of destination do.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:26-29",
+      "quote": "consignor: 'Select an address for the consignor',\n      placeOfDestination: 'Select an address for the place of destination'",
+      "confidence": "inferred",
+      "note": "Inferred from the errors.parties copy holding only two keys; which roles are checked is REFERENCE_PARTIES in parties/index.js (another part). If contactAddress were in that list its error text would be undefined."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-036",
+      "statement": "Check your answers also re-checks the saved country of origin against the current commodities, and shows the origin page's error when it no longer fits.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:50-55; check-answers.fit.spec.js:199-238",
+      "quote": "...(await originErrors(current)),",
+      "confidence": "verbatim",
+      "note": "The fit spec changes seed to ware potatoes and expects an error naming Poland; the error text and rule belong to the origin part."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-037",
+      "statement": "Each error in check your answers' error summary links to the Change page for that answer (for example /origin?change=1).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:79-82; check-answers.fit.spec.js:230-237",
+      "quote": "href: (field) => changeHref(current.journey.journeyId, field),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-038",
+      "statement": "On a draft or amendment, check your answers shows outstanding errors as soon as the page loads (without moving focus to the summary), not only after Continue.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:44-55,94-95",
+      "quote": "const render = async (request, h, current, disableAutoFocus = true) => {",
+      "confidence": "inferred",
+      "note": "GET renders with the computed errors and disableAutoFocus true; POST re-renders with disableAutoFocus false."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-039",
+      "statement": "Pressing Continue on check your answers with an outstanding error re-shows the page with status 400 and the error summary focused.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:104-112",
+      "quote": "if (Object.keys(errors).length > 0) {\n    return (await render(request, h, current, false)).code(\n      HTTP_STATUS_BAD_REQUEST\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-040",
+      "statement": "Pressing Continue on check your answers when the notification is not yet ready for review sends the user back to the task list hub.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:113-115",
+      "quote": "if (!current.scope.readyForCheckYourAnswers) {\n    return h.redirect(hubPath(current.journey.journeyId))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-041",
+      "statement": "Pressing Continue on a ready, error-free check your answers page goes to the declaration page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:116; check-answers.fit.spec.js:170-173",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, current.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-042",
+      "statement": "Below the answers, an editable check your answers page shows an h2 'Now submit your notification' and the text 'Continue to the declaration to submit your notification.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:31-34; template.njk:49-50",
+      "quote": "submit: {\n    heading: 'Now submit your notification',\n    body: 'Continue to the declaration to submit your notification.'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-043",
+      "statement": "Check your answers' primary button is 'Continue'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:24; template.njk:54",
+      "quote": "continue: 'Continue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-044",
+      "statement": "Check your answers also offers the shared save-and-return button, which goes to the hub, and a cancel link back to the hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:54; check-answers.fit.spec.js:176-197",
+      "quote": "{{ saveActions(hubHref, primary = { text: copy.continue }, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim",
+      "note": "Button and link text are sharedCopy.saveActions.saveAndReturnToHub and cancelAndReturnToHub (the shared part)."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-045",
+      "statement": "The check your answers form posts a CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:51-53",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n      <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-046",
+      "statement": "On a draft whose submission today would be late, check your answers shows a warning above the submit section: 'If you submit this notification today it will be late. {rule} You can still submit it.', with icon fallback text 'Warning'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:6-8; controller.js:65-71; template.njk:46-48",
+      "quote": "warning: (rule) =>\n      `If you submit this notification today it will be late. ${rule} You can still submit it.`,\n    icon: 'Warning',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-047",
+      "statement": "The late warning on check your answers shows only on a draft, not on an amendment.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:65-71",
+      "quote": "lateWarning:\n      current.journey.status === state.DRAFT &&",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-048",
+      "statement": "The late rule shown for potatoes reads 'Notifications for potatoes must be made at least 2 days before the expected date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:9-10; controller.js:74-77",
+      "quote": "potatoes: (days) =>\n      `Notifications for potatoes must be made at least ${days} days before the expected date of arrival.`,",
+      "confidence": "verbatim",
+      "note": "days is POTATO_DAYS_BEFORE_ARRIVAL = 2 in features/timing-windows.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-049",
+      "statement": "The late rule shown for plants for planting and wood reads 'Notifications for plants for planting and wood must be made no later than 4 days after the date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:11-12; controller.js:74-77",
+      "quote": "plantsAndWood: (days) =>\n      `Notifications for plants for planting and wood must be made no later than ${days} days after the date of arrival.`",
+      "confidence": "verbatim",
+      "note": "days is PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4 in features/timing-windows.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-050",
+      "statement": "A submitted notification opens check your answers read-only: no Change links, no error summary, no submit section and no Continue button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:45,50-55; view-model/rows/change-link.js:27-28; template.njk:43-56; declaration.fit.spec.js:208-211",
+      "quote": "const readOnly = current.journey.status === state.SUBMITTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-051",
+      "statement": "The read-only submitted view shows a red 'Delete notification' warning button linking to the notification's delete page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk:43-44; controller.js:83; copy/copy.en.js:75",
+      "quote": "{{ govukButton({ text: copy.delete, href: deleteHref, classes: \"govuk-button--warning\" }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-052",
+      "statement": "Posting to check your answers on a submitted notification just redirects back to the read-only view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:99-101",
+      "quote": "if (current.journey.status === state.SUBMITTED) {\n    return h.redirect(pagePath(current.journey.journeyId, page.slug))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-053",
+      "statement": "When a submitted notification was stored as late, the read-only view shows a notification banner titled 'Important' with heading 'Your notification was made outside the required timing' and body '{rule} It has still been accepted and recorded.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:2-5; controller.js:72-73; template.njk:27-33",
+      "quote": "title: 'Important',\n    heading: 'Your notification was made outside the required timing',\n    accepted: 'It has still been accepted and recorded.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-054",
+      "statement": "The read-only view's late banner reads the stored late indicator, not today's date.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:72-73",
+      "quote": "lateNotification:\n      readOnly && current.answers.lateNotificationIndicator === 'late',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-055",
+      "statement": "When the notification is being amended, check your answers shows a 'Cancel amendment' link under the heading, leading to the cancel-amend page, in place of Delete (ruled c-030).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js:84-89; template.njk:22-26; copy/copy.en.js:17-18",
+      "quote": "// Ruled c-030: AMEND offers Cancel amendment instead of Delete; the\n    // success banner shows once, after cancel-amend's own redirect.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-056",
+      "statement": "After an amendment is cancelled, the read-only view shows, once, a success banner titled 'Success' with 'The amendment has been cancelled and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js:19-21; controller.js:90; template.njk:11-18",
+      "quote": "successTitle: 'Success',\n    successBody:\n      'The amendment has been cancelled and the submitted version restored.'",
+      "confidence": "verbatim",
+      "note": "Triggered by ?cancelled=1 on the read-only view, set by cancel-amend's redirect; the banner has role alert."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-057",
+      "statement": "The check your answers Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-058",
+      "statement": "The declaration page lives at /notifications/{reference}/declaration and answers GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/page.js:1-4; controller.js:111",
+      "quote": "export const declarationPage = {\n  id: 'declaration',\n  slug: 'declaration'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-059",
+      "statement": "The declaration page heading (h1) is 'Declaration', below the section caption.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:3; template.njk:10-11",
+      "quote": "title: 'Declaration',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-060",
+      "statement": "The declaration's first bulleted statement is 'I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:5; template.njk:13-15",
+      "quote": "'I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-061",
+      "statement": "The declaration's second statement is 'I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:6",
+      "quote": "'I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-062",
+      "statement": "The declaration's third statement is 'I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:7",
+      "quote": "'I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-063",
+      "statement": "The declaration asks for one checkbox: 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', unticked by default and ticked if previously saved.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:9-10; template.njk:21-31; controller.js:63",
+      "quote": "declarationLabel:\n    'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-064",
+      "statement": "The declaration page shows 'Date of declaration:' followed by today's date written out in full (for example 9 October 2026), in UK time.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:28-34,52; copy/copy.en.js:11; template.njk:33",
+      "quote": "dateOfDeclaration: 'Date of declaration:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-065",
+      "statement": "The declaration page's button is 'Continue'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:12; template.njk:35",
+      "quote": "continueButton: 'Continue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-066",
+      "statement": "The declaration checkbox is required: continuing without it shows 'Confirm that the information is true and correct before submitting' with status 400, and the error summary link focuses the checkbox.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:24-26,74-79; copy/copy.en.js:13-16; declaration.fit.spec.js:162-178",
+      "quote": "requiredOneOf('declaration', ['confirmed'], copy.errors.declarationRequired)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-067",
+      "statement": "The declaration page's Back link goes to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:46; declaration.fit.spec.js:154-159",
+      "quote": "backLink: pagePath(journey.journeyId, kit.CYA_SLUG),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-068",
+      "statement": "The declaration page has only the Continue button; it offers no save-and-return or cancel action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:17-36",
+      "quote": "{{ govukButton({ text: copy.continueButton }) }}",
+      "confidence": "inferred",
+      "note": "Inferred from the template, which uses govukButton rather than the shared saveActions macro."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-069",
+      "statement": "Confirming the declaration saves the declaration answer and then submits the notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:82-95",
+      "quote": "await state.commit(request, h, {\n        declaration: value.declaration,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-070",
+      "statement": "When a draft is submitted, the declaration stores a late notification indicator ('late' or 'on-time') worked out from today's date, the commodity type and the arrival date; an amendment resubmission does not recompute it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:86-92",
+      "quote": "...(journey.status === state.DRAFT && {\n          lateNotificationIndicator: lateness(\n            requestClock(request),\n            answers.commodityType,\n            answers.arrivalDate\n          )\n        })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-071",
+      "statement": "A late notification can still be submitted; lateness never blocks submission.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:180-197",
+      "quote": "test('accepts a late notification and shows the stored late banner on the read-only view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-072",
+      "statement": "After a successful submission the user goes to the confirmation page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:108",
+      "quote": "return h.redirect(pagePath(journey.journeyId, 'confirmation'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-073",
+      "statement": "If the submission is refused (not ok), the user is sent back to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:105-107",
+      "quote": "if (!result.ok) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))\n  }",
+      "confidence": "verbatim",
+      "note": "The page does not say why the submission was refused; the reason surfaces as check your answers' own errors, if any."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-074",
+      "statement": "If saving or submitting fails, the declaration page is shown again with the user's choice kept, the shared recoverable-error message, and status 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:82-103",
+      "quote": "() =>\n      render(request, h, journey, values, {}, true).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-075",
+      "statement": "Opening or posting the declaration for an already submitted notification redirects to the confirmation page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:58-70; declaration.fit.spec.js:217-220",
+      "quote": "if (journey.status === state.SUBMITTED) {\n    return h.redirect(pagePath(journey.journeyId, 'confirmation'))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-076",
+      "statement": "The declaration statements are provisional pending content review, and the Welsh is a machine draft that must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:1; copy/copy.cy.js:1-2",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-077",
+      "statement": "The confirmation page lives at /notifications/{reference}/confirmation and is GET only, with no form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/page.js:1; controller.js:53-61",
+      "quote": "// Confirmation is a read-only receipt; there is no form or POST action.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-078",
+      "statement": "Opening the confirmation page for a notification that is not submitted redirects to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:33-35; confirmation.fit.spec.js:188-199",
+      "quote": "if (journey.status !== state.SUBMITTED) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-079",
+      "statement": "The confirmation page shows a green panel titled 'Notification submitted' (the h1) with 'Your notification reference' and, on the next line in bold, the notification reference.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:7-9; copy/copy.en.js:3-4",
+      "quote": "{% set referenceHtml %}{{ copy.reference }}<br><strong>{{ reference }}</strong>{% endset %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-080",
+      "statement": "The reference shown on confirmation is the notification's journey id.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:39",
+      "quote": "reference: journey.journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-081",
+      "statement": "Below the panel the confirmation page says 'Your notification has been submitted. Keep the reference for your records.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js:5; template.njk:10",
+      "quote": "body: 'Your notification has been submitted. Keep the reference for your records.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-082",
+      "statement": "The confirmation page shows 'Date of notification:' followed by the submission date written out in full, in UK time.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:21-29,40; copy/copy.en.js:6; template.njk:11",
+      "quote": "dateOfNotification: 'Date of notification:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-083",
+      "statement": "When the notification was stored as late, the confirmation page shows the same 'Important' banner as the read-only view: 'Your notification was made outside the required timing' and '{rule} It has still been accepted and recorded.' (ruled c-030 and c-035).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js:7-17; template.njk:12-18",
+      "quote": "// Ruled c-030/c-035: the same rule strings and banner heading as the\n  // submitted check-answers view, reading the stored lateNotificationIndicator.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-084",
+      "statement": "The confirmation page's late banner uses the indicator stored at first submission and never recomputes it from the submission time (c-030).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:41-43",
+      "quote": "// The stored value committed at first finalise, never recomputed here\n    // from submittedAt (c-030).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-085",
+      "statement": "The confirmation page links to 'View your notification', the read-only check your answers view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:48; template.njk:19; copy/copy.en.js:18",
+      "quote": "viewNotification: 'View your notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-086",
+      "statement": "The confirmation page links to 'Return to dashboard', the notifications dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:49; template.njk:20; copy/copy.en.js:19",
+      "quote": "returnToDashboard: 'Return to dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-087",
+      "statement": "The confirmation page has no Back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:37; confirmation.fit.spec.js:160-162",
+      "quote": "await expect(\n    page.getByRole('link', { name: sharedCopy.layout.back, exact: true })\n  ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-088",
+      "statement": "The confirmation page has no 'what happens next' section: it says nothing about inspection, spot checks, emails or what the user should do after submitting.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk; copy/copy.en.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the confirmation template and both copy files; the only text after the panel is the body, the date, the late banner and two links."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-089",
+      "statement": "The confirmation copy is provisional pending content review, and its Welsh is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js:1; copy/copy.cy.js:1",
+      "quote": "// Provisional plants copy pending content review.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-090",
+      "statement": "A potato notification is late when today (UK time) is after the day 2 days before the arrival date.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js:26-35",
+      "quote": "const deadline = addUtcDays(\n    arrivalDay,\n    potato ? -POTATO_DAYS_BEFORE_ARRIVAL : PLANTS_WOOD_DAYS_AFTER_ARRIVAL\n  )\n  return startOfDayInZone(clock, 'Europe/London') > deadline\n    ? 'late'\n    : 'on-time'",
+      "confidence": "verbatim",
+      "note": "So notifying exactly 2 days before arrival is on time; 1 day before or on the day is late. The fit spec's late case uses an arrival date of today."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-091",
+      "statement": "A plants for planting or wood and cut trees notification is late when today (UK time) is after the day 4 days after the arrival date.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js:19-35",
+      "quote": "!['plants-for-planting', 'wood-and-cut-trees'].includes(commodityType)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-092",
+      "statement": "A notification with no valid arrival date, or with any other commodity type, is treated as on time.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js:15-25",
+      "quote": "if (!isRealDate(Number(year), Number(month), Number(day))) {\n    return 'on-time'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-093",
+      "statement": "The 2-day potato window and the 4-day plants and wood window come from the regulations (reg 24A(1) and reg 26(1)) and are defined once for every page that uses them.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:1-12",
+      "quote": "Potatoes are notified ahead of arrival (reg 24A(1)); plants for planting and\n * wood may be notified up to four days after it (reg 26(1)).",
+      "confidence": "verbatim",
+      "note": "File sits outside this part's read list; cited because lateness.js and all three review pages import it."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-094",
+      "statement": "The lateness check takes the current time from a per-request clock, so tests can set the date without changing system time.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js:11-12",
+      "quote": "// One seam for each request; callers can supply a clock without changing global time.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-095",
+      "statement": "The review section has one obligation, lateNotificationIndicator: optional and system-set (never asked of the user).",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/review.js:1-6",
+      "quote": "export const lateNotificationIndicator = {\n  id: 'c9e1043b-7fba-42d2-80c2-6d6384d9630c',\n  name: 'lateNotificationIndicator',\n  status: 'optional',\n  system: true\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-096",
+      "statement": "The late notification indicator is saved as a single value on the notification under the review feature.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/evaluation.js:7-12",
+      "quote": "export const evaluationBindings = feature('review', [\n  scalar({\n    field: 'lateNotificationIndicator',\n    obligation: lateNotificationIndicator\n  })\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-097",
+      "statement": "The declaration answer is collected by the declaration page; check your answers and confirmation collect nothing.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:19; check-answers/controller.js:23; confirmation/controller.js:18",
+      "quote": "export const meta = { ...page, collects: ['declaration'] }",
+      "confidence": "verbatim",
+      "note": "No obligation for 'declaration' appears in obligations/sections/review.js; where it is declared is outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-098",
+      "statement": "Every check your answers, declaration and confirmation fit test holds the page to no serious or critical axe violations under WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:114-123; declaration.fit.spec.js:115-124; confirmation.fit.spec.js:114-123",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-099",
+      "statement": "Fit test proves: a completed potato notification shows check your answers with the h1, all three section headings, no consignor card, the saved variety, the contact email twice (destination and contact), accessible Change links for origin and Commodity 1 that return to review, an updated quantity after change, and Continue leading to the declaration.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:127-174",
+      "quote": "test('renders saved answers, scoped cards and accessible Change links that return to review'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-100",
+      "statement": "Fit test proves: check your answers' Back link and cancel link both go to the hub, and the save-and-return button returns to the hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:176-197",
+      "quote": "test('offers Back, Save and return, and Cancel to Overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-101",
+      "statement": "Fit test proves: switching seed potatoes to ware potatoes from check your answers makes Continue stay on check your answers with an origin error naming Poland that links to /origin?change=1, and the error state is accessible.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js:199-238",
+      "quote": "test('rechecks a saved origin after a commodity change and exposes an accessible correction link'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-102",
+      "statement": "Fit test proves: the declaration shows its h1, all three statements, an unticked checkbox, the date of declaration, no serious accessibility violations, and a Back link to check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:137-160",
+      "quote": "test('renders the plants declaration and Back navigation with no serious accessibility violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-103",
+      "statement": "Fit test proves: continuing the declaration without ticking shows the required error in an alert summary whose link focuses the checkbox, and the error state is accessible.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:162-178",
+      "quote": "test('requires confirmation, focuses the checkbox from the summary and has an accessible error state'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-104",
+      "statement": "Fit test proves: a potato notification arriving today shows the late warning on check your answers, still submits to confirmation, and the read-only view then shows the late banner (surviving reload) with no Continue and no Change links; revisiting the declaration redirects to confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:180-221",
+      "quote": "test('accepts a late notification and shows the stored late banner on the read-only view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-105",
+      "statement": "Fit test proves: an on-time notification submits to confirmation and its read-only view shows no late banner and no Continue button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:223-249",
+      "quote": "test('submits an on-time notification without a late banner'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-106",
+      "statement": "Fit test proves: confirmation shows the 'Notification submitted' h1, the reference, the body, no Back link and no serious accessibility violations; it survives reload; 'View your notification' opens the read-only view with no Change links; 'Return to dashboard' opens the dashboard with its start button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js:138-186",
+      "quote": "test('shows an accessible submitted receipt, survives reload and links to the notification and dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-107",
+      "statement": "Fit test proves: opening confirmation for a draft lands on check your answers instead of a receipt.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js:188-199",
+      "quote": "test('returns a draft to check answers instead of showing a receipt'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-108",
+      "statement": "No fit test covers check your answers for plants for planting or wood (consignor card, arrival status row, already-arrived labels), the plants and wood late rule, the outstanding-party errors, the AMEND Cancel amendment link and banner, the Delete button, or a refused or failed submission.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js; declaration/declaration.fit.spec.js; confirmation/confirmation.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "All nine fit tests drive a seed-potato notification only. Unit tests (*.test.js) are out of this source's scope and were not read."
+    }
+  ]
+}

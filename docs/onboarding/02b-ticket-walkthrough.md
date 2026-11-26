@@ -81,7 +81,10 @@ Don't memorise this run — read the real thing:
 
 - `workareas/ticket-skill-demo/*.log` — the three transcripts this deck is built from
 - `.claude/skills/ticket/SKILL.md` — what the skill actually executes
-- `plan / implement / refactor EUDPA-X` — how you launch each phase
+- `plan / implement by hand / refactor EUDPA-X` — how you launch each phase.
+  A plain "implement EUDPA-X" or "build EUDPA-X" goes to
+  `requirements-pipeline` ticket mode instead, which builds it through the
+  build loop
 
 ## Try it
 

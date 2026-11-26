@@ -1,538 +1,899 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 14 (Declaration and confirmation), read at repos/trade-imports-animals-frontend main 4c2119da. Read in full: features/declaration (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, declaration.fit.spec.js) and features/confirmation (page.js, controller.js, template.njk, outstanding.js, copy/copy.en.js, copy/copy.cy.js, confirmation.fit.spec.js), all under src/server/app/sets/live-animals/journeys/linear/features. To state what declaration submit does, also read check-answers/refusal.js (the refusal predicate the declaration calls) and the CYA_SLUG and recoverableSave definitions in src/server/app/shared/kit.js; those files belong to other parts and only their effect on these two pages is claimed. Covered: the declaration page at /notifications/{id}/declaration (heading, five declaration statements with two bullet lists, the single 'confirmed' checkbox, the date of declaration line, Continue button, the required-checkbox error verbatim, back link to check answers, the already-submitted redirect, the review-refusal redirect, the recoverable save failure, and the commit plus submit to confirmation); the confirmation page at /notifications/{id}/confirmation (GET only, the redirect for an unsubmitted notification, the panel with title and reference number, the outstanding-documents section and when it shows, the transporting, view-or-amend and getting-help sections with every link and the create-a-new-notification POST button, no back link); Welsh copy parity for both pages (machine-draft); and every test in declaration.fit.spec.js (5 tests) and confirmation.fit.spec.js (5 tests). Unit tests (controller.test.js, template.test.js, copy.test.js) are outside the partition's scope and were not claimed.",
+  "structure": "Part 14, the consignment addresses page and the INS address hand-off. Read in full: the addresses feature's own files at src/server/app/sets/live-animals/journeys/linear/features/addresses/ — page.js (5 lines), controller.js (285), template.njk (54), evaluation.js (22), parties.js (66), party-held.js (1), party-inline.js (17), party-for-fulfilment-id.js (34), address-summary.js (21), same-as-action.js (18), frozen-parties.js (48), ins-handshake.js (92), assert-party-bindings.js (19), test-support.js (30), address-return/controller.js (215), copy/copy.en.js (91), copy/copy.cy.js (93) and fit/address-return.fit.spec.js (68). To quote the strings and paths those files reach for, these files outside the part were also read but are another part's to claim: shared/copy.en.js (saveActions and addressHandshake copy), shared/kit.js (base, pageRoutes, nextTarget, recoverableSave, logRefusal, redirectOnStaleAction), shared/trail.js, shared/paths.js, sets/live-animals/set.js, flow/flow.js, flow/task-rows.js, flow/section-captions, obligations/sections/parties.js and misc.js, page-maturity/copy/copy.en.js, common/helpers/ins-address-book-urls.js and organisation-id.js, services/address-book/index.js and to-wire-address.js, services/countries/index.js, features/cph-number/shape.js, features/permanent-address/cards.js and saved-addresses.js, features/contact/evaluation.js, features/commodities/action-prefix.js, features/addresses/party-edit/edit-href.js and features/addresses/party-picker/selection.js and view-model/address-lines.js. What it covers: the one page at GET and POST /live-animals/notifications/{journeyId}/addresses — its caption, heading, intro, warning, maturity banner, hidden form fields and save buttons; the five party sections in display order with every title, hint, add-link and select-error string; the chosen-address inset, its Change and Edit details links and their hrefs; the same-as copy control, its three refusals and its recoverable-save failure; the conditional CPH number and Permanent address sections; the added-address success banner and its single showing; the hand-off out to the INS address book's add-an-address page (journey type, fulfilment ids, single-use handshake token, cookies); and the whole return hand-off at GET /live-animals/notifications/{journeyId}/address-return — its four landings, four refusals, address lookup, not-found and unavailable handling, and where each landing sends the trader. It also covers what address-return.fit.spec.js proves, Welsh key parity, and the display and storage mechanisms (address lines, address summary, inline frozen party copies, party-to-fulfilment-id mapping). It leaves the party picker page, the party edit form and their own copy files to part 15, and the permanent-address and CPH pages themselves to their own parts.",
   "claims": [
     {
       "id": "repo-frontend-p14-001",
-      "statement": "The declaration page is served at the slug 'declaration' under a notification, so its path is /notifications/{notification id}/declaration.",
+      "statement": "The consignment addresses page is served at /live-animals/notifications/{journeyId}/addresses, and answers both a GET to show it and a POST to save it.",
       "kind": "behaviour",
-      "ref": "features/declaration/page.js:1-4; declaration.fit.spec.js:23",
-      "quote": "id: 'declaration',\n  slug: 'declaration'",
+      "ref": "features/addresses/page.js:1-5, features/addresses/controller.js:285, shared/kit.js:393-410, shared/paths.js:5, sets/live-animals/set.js:6-7",
+      "quote": "export const addressesPage = {\n  id: 'addresses',\n  slug: 'addresses',\n  maturity: 'detailing'\n}  …  export const routes = kit.pageRoutes(page, { get, post })  …  export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`  …  export const SET_BASE = `/${SET_ID}`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-002",
-      "statement": "The declaration page collects one answer, 'declaration'.",
-      "kind": "data",
-      "ref": "features/declaration/controller.js:21",
-      "quote": "export const meta = { ...page, collects: ['declaration'] }",
+      "statement": "The page's heading is 'Consignment addresses'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:5, features/addresses/template.njk:9",
+      "quote": "title: 'Consignment addresses'  …  <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-003",
-      "statement": "A user reaches the declaration page by pressing Continue on the check answers (notification-view) page.",
-      "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:129-135",
-      "quote": "await openReviewFromHub(page)\n    await page.getByRole('button', { name: 'Continue' }).click()\n    await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()",
-      "confidence": "verbatim"
+      "statement": "The caption above the heading reads 'Addresses'.",
+      "kind": "copy",
+      "ref": "features/addresses/template.njk:8, flow/section-captions/index.js:42-43, flow/section-captions/copy/copy.en.js:11",
+      "quote": "{{ sectionCaption(caption) }}  …  id: 'addresses',\n    pages: [addressesPage, cphNumberPage, permanentAddressPage]  …  addresses: 'Addresses',",
+      "confidence": "verbatim",
+      "note": "The caption copy itself belongs to the flow part; quoted here because this page renders it."
     },
     {
       "id": "repo-frontend-p14-004",
-      "statement": "The declaration page heading (h1) and page title is 'Declaration'.",
+      "statement": "Below the heading the page reads 'Add all the addresses that are involved in the consignment.'",
       "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:2; template.njk:8",
-      "quote": "title: 'Declaration',",
+      "ref": "features/addresses/copy/copy.en.js:6, features/addresses/template.njk:11",
+      "quote": "intro: 'Add all the addresses that are involved in the consignment.'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-005",
-      "statement": "The declaration page shows a level-2 heading 'I am the contact for the authorities and located in the UK.'",
+      "statement": "The page carries a GOV.UK warning reading 'Providing a false address is an act of fraud'.",
       "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:4; template.njk:10",
-      "quote": "contactUk: 'I am the contact for the authorities and located in the UK.',",
+      "ref": "features/addresses/copy/copy.en.js:7, features/addresses/template.njk:13",
+      "quote": "warning: 'Providing a false address is an act of fraud'  …  {{ govukWarningText({ text: copy.warning }) }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-006",
-      "statement": "Under the contact heading the declaration page says the user is complying with Regulation (EU) 2017/625, including on animal health and welfare.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:5-6; template.njk:12",
-      "quote": "'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
-      "confidence": "verbatim"
+      "statement": "The page is marked at maturity 'detailing', so it shows the maturity banner tagged 'Detailing' with the text 'We’re keeping this page. We’re still working out the detail.'",
+      "kind": "behaviour",
+      "ref": "features/addresses/page.js:4, page-maturity/copy/copy.en.js:8-11",
+      "quote": "maturity: 'detailing'  …  detailing: {\n      tag: 'Detailing',\n      text: 'We’re keeping this page. We’re still working out the detail.'\n    }",
+      "confidence": "verbatim",
+      "note": "Not a signed-off page: maturity is below 'agreed'."
     },
     {
       "id": "repo-frontend-p14-007",
-      "statement": "The declaration page shows a level-2 heading 'I confirm I am responsible for this consignment.'",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:7; template.njk:14",
-      "quote": "responsible: 'I confirm I am responsible for this consignment.',",
+      "statement": "The page sits in the journey's consignment-parties section alongside the CPH number page and the permanent address page.",
+      "kind": "behaviour",
+      "ref": "flow/flow.js:65-68",
+      "quote": "id: 'consignment-parties',\n    pages: [cphNumberPage, permanentAddressPage, addressesPage]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-008",
-      "statement": "Under the responsibility heading the declaration page says the user is responsible from submission until the consignment enters Great Britain, and until it has either of two outcomes.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:8-9; template.njk:16",
-      "quote": "'I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:'",
+      "statement": "A trader reaches the page from the notification overview's addresses task row, which covers the addresses page and the CPH number page.",
+      "kind": "behaviour",
+      "ref": "flow/task-rows.js:67-71",
+      "quote": "id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-009",
-      "statement": "The responsibility bullet list has two items: 'cleared official checks at the border' and 'reached the Place of Destination as stated on the health certificate or notification'.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:10-13; template.njk:18-22",
-      "quote": "'cleared official checks at the border',\n      'reached the Place of Destination as stated on the health certificate or notification'",
+      "statement": "The addresses task row is not complete until every animal that needs a permanent address has one, even when all five parties are chosen and the CPH number is given.",
+      "kind": "rule",
+      "ref": "flow/task-rows.js:70, features/permanent-address/cards.js:57-63",
+      "quote": "extraAnswerGiven: everyAddressableAnimalHasPermanentAddress  …  export const everyAddressableAnimalHasPermanentAddress = (\n  answers,\n  evaluation\n) =>\n  addressableUnits(answers, evaluation).every(({ unit }) =>\n    isPartyHeld(unit.permanentAddress)\n  )",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-010",
-      "statement": "The declaration page shows a level-2 heading 'I confirm that I am accountable for:'.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:14; template.njk:24",
-      "quote": "accountableFor: 'I confirm that I am accountable for:',",
+      "statement": "The page's Back link returns to the newest place on the trader's trail, and to the notification overview when the request carries no trail.",
+      "kind": "behaviour",
+      "ref": "features/addresses/controller.js:193, shared/trail.js:197-205",
+      "quote": "backLink: kit.trailBackLink(request),  …  const newest = entries.at(-1)\n  return newest === undefined\n    ? fallbackHref\n    : trailEntryHref(newest, entries.slice(0, -1), journeyId)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-011",
-      "statement": "The accountability bullet list has four items: payment for official controls at the border, arrangements to re-dispatch the consignment, costs of quarantine or isolation, and costs of destruction and disposal when instructed by the authorities.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:15-20; template.njk:26-30",
-      "quote": "'any payment for the official controls at the border',\n      'any arrangements to re-dispatch the consignment',\n      'any costs needed for quarantine or isolation of consignments',\n      'any costs needed for destruction and disposal of consignments, when instructed by the authorities'",
+      "statement": "The page's form carries hidden crumb and concurrencyToken values with every submission.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:15-17",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-012",
-      "statement": "The declaration page says the user is authorised as accountable for these things when raising notifications on behalf of a third party.",
+      "statement": "The page's foot offers 'Save and continue' and 'Save and return to overview'.",
       "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:21-22; template.njk:32",
-      "quote": "'I am authorised as being accountable for these things if raising notifications on behalf of a third party.'",
-      "confidence": "verbatim"
+      "ref": "features/addresses/template.njk:52, shared/copy.en.js:61-65",
+      "quote": "{{ saveActions({ hubHref: hubHref, copy: sharedCopy.saveActions }) }}  …  saveActions: {\n    saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'\n  },",
+      "confidence": "verbatim",
+      "note": "The shared save-actions partial is another part's; quoted here for the two buttons this page shows."
     },
     {
       "id": "repo-frontend-p14-013",
-      "statement": "The declaration page says the user can legally act on behalf of a third party in relation to the declaration's conditions.",
-      "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:23-24; template.njk:34",
-      "quote": "'I can legally act on behalf of a third party in relation to the conditions of this declaration.'",
-      "confidence": "verbatim"
+      "statement": "Submitting the page without pressing a same-as control saves nothing and moves on: to the notification overview when 'Save and return to overview' was pressed, otherwise to the next page in the journey that applies, or the check-your-answers page when none does.",
+      "kind": "behaviour",
+      "ref": "features/addresses/controller.js:276-283, shared/kit.js:208-245",
+      "quote": "const post = async (request, h) => {\n  const action = String(request.payload?.action ?? '')\n  if (isSameAsAction(action)) {\n    return postSameAs(request, h, sameAsTargetIdOf(action))\n  }\n  const { scope } = await state.get(request, h)\n  return h.redirect(kit.nextTarget(request, page, scope))\n}",
+      "confidence": "verbatim",
+      "note": "The page collects nothing of its own on POST: every answer is saved by the picker, the edit form or the return hand-off."
     },
     {
       "id": "repo-frontend-p14-014",
-      "statement": "The declaration page has a single checkbox, field name 'declaration' with value 'confirmed', labelled 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
-      "kind": "data",
-      "ref": "features/declaration/template.njk:40-50; copy/copy.en.js:26-27",
-      "quote": "name: \"declaration\",\n      ...\n          value: \"confirmed\",\n          text: copy.declarationLabel,",
-      "confidence": "verbatim",
-      "note": "Label text: 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.' The checkbox has no hint and no fieldset legend."
+      "statement": "A submission made after the notification changed is refused and the trader is sent back to the same page with a staleAction marker, rather than overwriting the newer answers.",
+      "kind": "behaviour",
+      "ref": "shared/kit.js:373-391 applied to features/addresses/controller.js:285",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      request.logger.info(\n        {\n          journeyId: request.params.journeyId,\n          postedConcurrencyToken: request.payload?.concurrencyToken\n        },\n        'Save refused: the notification changed since the page was shown'\n      )\n      const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "inferred",
+      "note": "Follows because kit.pageRoutes wraps every POST handler, this page's included, in redirectOnStaleAction."
     },
     {
       "id": "repo-frontend-p14-015",
-      "statement": "The declaration checkbox is pre-ticked when a declaration of 'confirmed' is already saved on the notification.",
+      "statement": "The page lists five parties, in this order: Place of origin, Consignor, Consignee, Importer, Place of destination.",
       "kind": "behaviour",
-      "ref": "features/declaration/controller.js:56; template.njk:47",
-      "quote": "checked: values.declaration == \"confirmed\"",
+      "ref": "features/addresses/parties.js:11-52, features/addresses/controller.js:166",
+      "quote": "export const PARTIES = [\n  {\n    id: 'placeOfOrigin',  …  id: 'consignor',  …  id: 'consignee',  …  id: 'importer',  …  id: 'placeOfDestination',  …  ...PARTIES.map(partySectionBuilder(request, journeyId, parties)),",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-016",
-      "statement": "The declaration page shows 'Date of declaration:' followed by today's date, written as day, full month name and year (for example 7 October 2026).",
-      "kind": "copy",
-      "ref": "features/declaration/controller.js:30-35,45; template.njk:52; copy/copy.en.js:28",
-      "quote": "dateOfDeclaration: 'Date of declaration:',",
+      "statement": "Each party is a section of its own with a heading, a hint paragraph beneath it, and the section's controls below that.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:19-22",
+      "quote": "{% for section in sections %}\n      <section aria-labelledby=\"{{ section.id }}-heading\">\n        <h2 class=\"govuk-heading-m\" id=\"{{ section.id }}-heading\">{{ section.title }}</h2>\n        <p class=\"govuk-hint\">{{ section.hint }}</p>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-017",
-      "statement": "The date of declaration is always the date the page is rendered and is formatted in English (en-GB) even when the page is shown in Welsh, so a Welsh user sees an English month name.",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:30-35",
-      "quote": "new Date(value).toLocaleDateString('en-GB', {",
-      "confidence": "inferred",
-      "note": "Inferred: the formatter hard-codes the en-GB locale while the copy switches between en and cy."
+      "statement": "The Place of origin section is headed 'Place of origin' with the hint 'The address where the animals begin their journey to Great Britain'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:32-37",
+      "quote": "placeOfOrigin: {\n      title: 'Place of origin',\n      hint: 'The address where the animals begin their journey to Great Britain',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-018",
-      "statement": "The declaration page's submit button reads 'Continue'.",
+      "statement": "With no place of origin chosen, the section offers a link reading 'Add a place of origin'.",
       "kind": "copy",
-      "ref": "features/declaration/copy/copy.en.js:29; template.njk:54",
-      "quote": "continueButton: 'Continue',",
+      "ref": "features/addresses/copy/copy.en.js:35, features/addresses/template.njk:46",
+      "quote": "add: 'Add a place of origin',  …  <a class=\"govuk-link\" href=\"{{ section.addLink.href }}\">{{ section.addLink.text }}</a>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-019",
-      "statement": "The declaration page's back link goes to the check answers page (notification-view).",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:40; shared/kit.js:60; declaration.fit.spec.js:90-105",
-      "quote": "backLink: pagePath(journey.journeyId, kit.CYA_SLUG),",
+      "statement": "The Consignor section is headed 'Consignor' with the hint 'This is the sender of the consignment.'",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:39-41",
+      "quote": "consignor: {\n      title: 'Consignor',\n      hint: 'This is the sender of the consignment.',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-020",
-      "statement": "Submitting the declaration without ticking the checkbox is rejected with the error 'Confirm that you have reviewed and comply with this declaration', and the page is re-shown with status 400.",
-      "kind": "rule",
-      "ref": "features/declaration/controller.js:26-28,67-70; copy/copy.en.js:30-33",
-      "quote": "requiredOneOf('declaration', ['confirmed'], copy.errors.declarationRequired)",
-      "confidence": "verbatim",
-      "note": "Error text: 'Confirm that you have reviewed and comply with this declaration'. Any value other than 'confirmed' is also rejected."
+      "statement": "With no consignor chosen, the section offers a link reading 'Add a consignor'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:42",
+      "quote": "add: 'Add a consignor',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-021",
-      "statement": "The declaration error is shown both in an error summary (as a link) and as an inline error message on the checkbox, and following the summary link focuses the checkbox.",
-      "kind": "behaviour",
-      "ref": "features/declaration/template.njk:6,42; declaration.fit.spec.js:69-88",
-      "quote": "errorMessage: errors.declaration and { text: errors.declaration },",
+      "statement": "The Consignee section is headed 'Consignee' with the hint 'This is the receiver or buyer of the consignment being shipped or transported.'",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:45-47",
+      "quote": "consignee: {\n      title: 'Consignee',\n      hint: 'This is the receiver or buyer of the consignment being shipped or transported.',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-022",
-      "statement": "Opening or submitting the declaration page for a notification that is already submitted redirects to that notification's confirmation page.",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:53-55,61-63; declaration.fit.spec.js:137-152",
-      "quote": "if (journey.status === state.SUBMITTED) {\n    return h.redirect(pagePath(journey.journeyId, confirmationPage.slug))",
+      "statement": "With no consignee chosen, the section offers a link reading 'Add a consignee'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:48",
+      "quote": "add: 'Add a consignee',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-023",
-      "statement": "After a valid tick, the declaration submit re-checks that the notification is ready for review; if it is refused, the user is redirected back to the check answers page and nothing is submitted.",
-      "kind": "rule",
-      "ref": "features/declaration/controller.js:72-74; check-answers/refusal.js reviewRefusal",
-      "quote": "if (await isReviewRefused(request, h)) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))",
-      "confidence": "verbatim",
-      "note": "The refusal predicate (owned by the check answers part) refuses when the notification is not ready for check your answers, has an invalid party, has an invalid stored review card, or has a document that is rejected or still being scanned. Its comment says it stops 'a bookmark or back-button' sneaking 'a stale submission past'."
+      "statement": "The Importer section is headed 'Importer' with the hint 'This is usually the same as the consignee. You can select a different person if needed.'",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:50-52",
+      "quote": "importer: {\n      title: 'Importer',\n      hint: 'This is usually the same as the consignee. You can select a different person if needed.',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-024",
-      "statement": "A valid declaration submit saves the declaration answer on the notification and then submits the notification.",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:78-81",
-      "quote": "await state.commit(request, h, values)\n      result = await state.submitJourney(request, h)",
+      "statement": "With no importer chosen, the section offers a link reading 'Add an importer'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:53",
+      "quote": "add: 'Add an importer',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-025",
-      "statement": "When the submit succeeds the user is redirected to the confirmation page.",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:94; declaration.fit.spec.js:137-147",
-      "quote": "return h.redirect(pagePath(journey.journeyId, confirmationPage.slug))",
+      "statement": "The Place of destination section is headed 'Place of destination' with the hint 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:56-58",
+      "quote": "placeOfDestination: {\n      title: 'Place of destination',\n      hint: 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-026",
-      "statement": "When the submit call returns a not-ok result, the user is redirected back to the check answers page with no message on the declaration page.",
-      "kind": "behaviour",
-      "ref": "features/declaration/controller.js:91-93",
-      "quote": "if (!result.ok) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))",
+      "statement": "With no place of destination chosen, the section offers a link reading 'Add a place of destination'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:59",
+      "quote": "add: 'Add a place of destination',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-027",
-      "statement": "When saving or submitting fails with a recoverable backend error, the declaration page is re-shown with the user's tick kept, a recoverable-error state and status 500; a stale concurrency token or any other error is not handled here and propagates.",
+      "statement": "Each party's add link opens that party's own address picker page: place-of-origin/select, consignors/select, consignees/select, importers/select or destinations/select, carrying the trader's trail.",
       "kind": "behaviour",
-      "ref": "features/declaration/controller.js:77-89; shared/kit.js:178-190",
-      "quote": "render(h, journey, values, {}, true).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "ref": "features/addresses/parties.js:16,22,30,38,46, features/addresses/controller.js:69,74",
+      "quote": "slug: 'place-of-origin/select',  …  slug: 'consignors/select',  …  slug: 'consignees/select',  …  slug: 'importers/select',  …  slug: 'destinations/select',  …  const href = kit.carryTrail(request, pagePath(journeyId, party.slug))  …  add: { href, text: party.add },",
       "confidence": "verbatim",
-      "note": "What the recoverable-error state shows is defined in the shared layout (another part)."
+      "note": "The picker pages themselves are part 15's."
     },
     {
       "id": "repo-frontend-p14-028",
-      "statement": "The declaration form posts with a CSRF crumb and a concurrency token as hidden fields.",
-      "kind": "constraint",
-      "ref": "features/declaration/template.njk:37-38",
-      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
-      "confidence": "verbatim"
+      "statement": "Each party has its own 'Select a … from the list' error message: 'Select a place of origin from the list', 'Select a consignor from the list', 'Select a consignee from the list', 'Select an importer from the list' and 'Select a place of destination from the list'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:36,42,48,54,60, features/addresses/parties.js:18,26,34,42,50",
+      "quote": "error: 'Select a place of origin from the list'  …  error: 'Select a consignor from the list'  …  error: 'Select a consignee from the list'  …  error: 'Select an importer from the list'  …  error: 'Select a place of destination from the list'",
+      "confidence": "verbatim",
+      "note": "The messages are defined with the parties but shown by the picker page, which is part 15's."
     },
     {
       "id": "repo-frontend-p14-029",
-      "statement": "The declaration page has Welsh copy for every English string, marked as a machine draft not yet reviewed by a translator.",
-      "kind": "constraint",
-      "ref": "features/declaration/copy/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
-      "confidence": "verbatim"
+      "statement": "Each party is bound to an address-book role, and only records offered for that role can be chosen: PLACE_OF_ORIGIN, CONSIGNOR, CONSIGNEE, IMPORTER and PLACE_OF_DESTINATION.",
+      "kind": "integration",
+      "ref": "features/addresses/parties.js:14,20,28,36,44, features/addresses/party-picker/selection.js:6-14, services/address-book/index.js:14-15",
+      "quote": "addressBookRole: 'PLACE_OF_ORIGIN',  …  addressBookRole: 'CONSIGNOR',  …  addressBookRole: 'CONSIGNEE',  …  addressBookRole: 'IMPORTER',  …  addressBookRole: 'PLACE_OF_DESTINATION',  …  export const offeredForRole = (record, role) =>\n  !role || record.roles.length === 0 || record.roles.includes(role)",
+      "confidence": "verbatim",
+      "note": "A record with no roles at all is offered for every role."
     },
     {
       "id": "repo-frontend-p14-030",
-      "statement": "A fit test proves the declaration page renders every declaration statement, both bullet lists, the checkbox, the 'Date of declaration:' line and the Continue button.",
+      "statement": "All five parties return the trader to the consignment addresses page once an address has been chosen or added.",
       "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:36 'renders every declaration statement and the current date'",
-      "quote": "test('renders every declaration statement and the current date'",
+      "ref": "features/addresses/parties.js:17,23,31,39,47",
+      "quote": "returnSlug: 'addresses',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-031",
-      "statement": "A fit test proves submitting unticked shows the error in the summary and inline, that the summary link focuses the checkbox, and that the checkbox stays unticked.",
+      "statement": "The consignment's contact address is a sixth party of the same kind, bound to the address-book role BRANCH_ADDRESS and returning to the contact select page, but it is not one of the sections on the consignment addresses page.",
       "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:69 'declaration validation: when unchecked, links to and focuses the clear checkbox'",
-      "quote": "test('declaration validation: when unchecked, links to and focuses the clear checkbox'",
-      "confidence": "verbatim"
+      "ref": "features/addresses/parties.js:54-62, features/addresses/controller.js:166",
+      "quote": "export const CONTACT_PARTY = {\n  id: 'contactAddress',\n  addressBookRole: 'BRANCH_ADDRESS',\n  slug: consignmentContactSelectPage.slug,\n  editSlug: 'consignment/contact/edit',\n  returnSlug: consignmentContactSelectPage.slug,",
+      "confidence": "verbatim",
+      "note": "It matters to this part because the address-book hand-off maps it like the other five; the contact page itself is another part's."
     },
     {
       "id": "repo-frontend-p14-032",
-      "statement": "A fit test proves the declaration back link points at and returns to the check answers page.",
-      "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:90 'back link returns to check answers'",
-      "quote": "test('back link returns to check answers'",
+      "statement": "A party counts as answered only when its stored answer carries a name.",
+      "kind": "rule",
+      "ref": "features/addresses/party-held.js:1",
+      "quote": "export const isPartyHeld = (party) => Boolean(party?.name)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-033",
-      "statement": "A fit test holds the declaration page to no serious or critical axe violations against WCAG 2 A and AA.",
-      "kind": "non-functional",
-      "ref": "features/declaration/declaration.fit.spec.js:107 'has no serious or critical axe violations'",
-      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "statement": "Once a party has an address, its section shows that address in an inset panel with the chosen name in bold on the first line and the address lines beneath it.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:30-34, features/addresses/controller.js:76-78",
+      "quote": "{% if section.chosen %}\n          {% call govukInsetText() %}\n            {% if section.chosen.name %}<strong>{{ section.chosen.name }}</strong><br>{% endif %}\n            {% for line in section.chosen.lines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}\n          {% endcall %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-034",
-      "statement": "A fit test proves a complete notification can be declared and submitted, lands on the confirmation page, and that revisiting the declaration URL afterwards redirects to confirmation.",
+      "statement": "The address shown in a party's inset is laid out as up to three street lines, then one last line joining the town or city, county, postcode and country with commas, with any empty part left out.",
       "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:137 'submits a complete notification, redirects to confirmation and keeps the declaration'",
-      "quote": "test('submits a complete notification, redirects to confirmation and keeps the declaration'",
+      "ref": "features/addresses/controller.js:77, features/addresses/party-picker/view-model/address-lines.js:3-24",
+      "quote": "const STREET_PARTS = ['addressLine1', 'addressLine2', 'addressLine3']\nconst LOCALITY_PARTS = ['townOrCity', 'county', 'postcode']\nconst streetLinesThenLocalityLine = (address, localityLineParts) =>\n  [\n    ...STREET_PARTS.map((part) => address[part]),\n    localityLineParts.filter(Boolean).join(', ')\n  ].filter(Boolean)  …  export const insetAddressLines = ({ address }) =>\n  streetLinesThenLocalityLine(address, [\n    ...localityParts(address),\n    address.country\n  ])",
       "confidence": "verbatim",
-      "note": "Despite the name, the test does not assert the saved declaration value; it asserts the post-submit redirect from the declaration URL."
+      "note": "mechanism: turns one stored party address into the lines the inset panel prints, dropping empty parts and appending the country name to the locality line."
     },
     {
       "id": "repo-frontend-p14-035",
-      "statement": "The declaration page can be opened directly by URL on a notification that has only its origin answered; the page itself does not check that earlier sections are complete before showing.",
+      "statement": "A party section with an address offers a 'Change' link and an 'Edit details' link, each ending in a visually hidden copy of the section's own heading in lower case so each link reads uniquely to a screen reader.",
       "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js:15-28; controller.js:51-57",
-      "quote": "await answerOriginEntry(page)\n\n  await page.goto(declarationUrl)\n  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()",
-      "confidence": "inferred",
-      "note": "Inferred from the GET handler (only the submitted check) and the spec's set-up, which reaches the page after answering origin only. Completeness is enforced at submit by the review-refusal check (repo-frontend-p14-023)."
+      "ref": "features/addresses/template.njk:35-40, features/addresses/controller.js:52, features/addresses/copy/copy.en.js:8-9",
+      "quote": "<a class=\"govuk-link govuk-!-margin-right-3\" href=\"{{ section.chosen.changeHref }}\">{{ copy.change }}<span class=\"govuk-visually-hidden\"> {{ section.hiddenSuffix }}</span></a>\n            {% if section.chosen.editDetailsHref %}\n              <a class=\"govuk-link\" href=\"{{ section.chosen.editDetailsHref }}\">{{ copy.editDetails }}<span class=\"govuk-visually-hidden\"> {{ section.hiddenSuffix }}</span></a>  …  hiddenSuffix: title.toLowerCase(),  …  change: 'Change',\n    editDetails: 'Edit details',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-036",
-      "statement": "The confirmation page is served at the slug 'confirmation' under a notification, so its path is /notifications/{notification id}/confirmation, and it answers GET only.",
+      "statement": "'Change' on a party section reopens that party's address picker, so changing a party means choosing a different address from the address book rather than editing the one held.",
       "kind": "behaviour",
-      "ref": "features/confirmation/page.js:1-4; controller.js:35-42",
-      "quote": "method: 'GET',\n    path: pageRoutePath(page.slug),",
+      "ref": "features/addresses/controller.js:69,78",
+      "quote": "const href = kit.carryTrail(request, pagePath(journeyId, party.slug))  …  changeHref: href,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-037",
-      "statement": "Opening the confirmation page for a notification that is not submitted redirects to that notification's hub (task list).",
+      "statement": "'Edit details' on a party section opens that party's own edit form — place-of-origin/edit, consignors/edit, consignees/edit, importers/edit or destinations/edit — with a return marker naming the addresses page so the form comes back here.",
       "kind": "behaviour",
-      "ref": "features/confirmation/controller.js:22-24; confirmation.fit.spec.js:89-98",
-      "quote": "if (journey.status !== state.SUBMITTED) {\n    return h.redirect(hubPath(journey.journeyId))",
-      "confidence": "verbatim"
+      "ref": "features/addresses/controller.js:79-84, features/addresses/party-edit/edit-href.js:4-8, features/addresses/parties.js:16,22,30,38,46",
+      "quote": "editDetailsHref: partyEditHref(\n        journeyId,\n        party,\n        'addresses',\n        kit.requestTrail(request)\n      )  …  export const partyEditHref = (journeyId, party, returnSlug, trail) =>\n  withTrail(\n    withReturnMarker(pagePath(journeyId, party.editSlug), returnSlug),\n    trail\n  )  …  editSlug: 'place-of-origin/edit',",
+      "confidence": "verbatim",
+      "note": "The edit form itself is part 15's."
     },
     {
       "id": "repo-frontend-p14-038",
-      "statement": "The confirmation page title is 'Import notification submitted' and it has no back link.",
-      "kind": "copy",
-      "ref": "features/confirmation/copy/copy.en.js:2; controller.js:26; confirmation.fit.spec.js:131-133",
-      "quote": "title: 'Import notification submitted',",
+      "statement": "A party with no address shows no inset panel and no Change or Edit details link — only its add link, and the same-as button where one is offered.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:30,41-48, features/addresses/controller.js:53",
+      "quote": "{% if section.chosen %}  …  {% else %}\n          <p class=\"govuk-body\">\n            {% if section.sameAs %}  …  <a class=\"govuk-link\" href=\"{{ section.addLink.href }}\">{{ section.addLink.text }}</a>\n          </p>\n        {% endif %}  …  ...(chosen ? { chosen } : { addLink: add, ...(sameAs && { sameAs }) })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-039",
-      "statement": "The confirmation page shows a GOV.UK panel titled 'Import notification submitted' with 'Your reference number' and, in bold beneath it, the reference number.",
+      "statement": "The page shows no 'Incomplete', 'Not provided' or similar status wording against a party that has no address: the absence of an inset and the presence of the add link are the only signal.",
       "kind": "copy",
-      "ref": "features/confirmation/template.njk:5-9; copy/copy.en.js:3-6",
-      "quote": "title: 'Import notification submitted',\n    referencePrefix: 'Your reference number'",
-      "confidence": "verbatim"
+      "ref": "features/addresses/template.njk:19-49, features/addresses/copy/copy.en.js:3-30",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the page template, the hub copy block and the page controller's section builders; there is no incomplete, missing or not-provided string anywhere in the addresses feature. Incomplete wording exists only on the check-your-answers page (features/check-answers/view-model/incomplete-cards.js), which is another part's."
     },
     {
       "id": "repo-frontend-p14-040",
-      "statement": "The reference number shown on the confirmation page is the notification's own journey id (the id in its URL), not a separately issued reference.",
-      "kind": "data",
-      "ref": "features/confirmation/controller.js:28; confirmation.fit.spec.js:16-21",
-      "quote": "referenceNumber: journey.journeyId,",
-      "confidence": "verbatim"
+      "statement": "The page offers no way to remove a party once it has an address: a chosen party can only be changed to a different address or have its details edited.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:35-40, features/addresses/controller.js:70-88",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a remove or clear control in the template, the section builders, the page's POST handler and the hub copy block; the only actions the page accepts are a same-as copy and a plain save."
     },
     {
       "id": "repo-frontend-p14-041",
-      "statement": "The confirmation page does not repeat the date of declaration.",
-      "kind": "rule",
-      "ref": "features/confirmation/confirmation.fit.spec.js:24-29",
-      "quote": "// The declaration date is shown once, on the declaration page. Design release 1\n// takes the submitted page from the reference panel straight to what the trader\n// still has to do, so the date is not repeated here.",
+      "statement": "Three of the five parties offer a one-press copy of another party's address: the Consignor section offers 'Same as place of origin', and the Importer and Place of destination sections each offer 'Same as consignee'.",
+      "kind": "behaviour",
+      "ref": "features/addresses/same-as-action.js:3-7, features/addresses/copy/copy.en.js:10-13, features/addresses/controller.js:56-65",
+      "quote": "const SOURCE_PARTY_ID_BY_TARGET_ID = {\n  consignor: 'placeOfOrigin',\n  importer: 'consignee',\n  placeOfDestination: 'consignee'\n}  …  sameAs: {\n      placeOfOrigin: 'Same as place of origin',\n      consignee: 'Same as consignee'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-042",
-      "statement": "When the submitted notification has no documents, the confirmation page shows a section headed 'Before the consignment is imported' with 'You still need to:' and the bullet 'upload the health certificate and any other required documents'.",
-      "kind": "copy",
-      "ref": "features/confirmation/outstanding.js:27-30; template.njk:11-19; copy/copy.en.js:7-11",
-      "quote": "heading: 'Before the consignment is imported',\n    intro: 'You still need to:',\n    documents: 'upload the health certificate and any other required documents'",
+      "statement": "The Place of origin and Consignee sections offer no same-as control, because no other party is named as a source for them.",
+      "kind": "behaviour",
+      "ref": "features/addresses/same-as-action.js:3-10, features/addresses/controller.js:57-64",
+      "quote": "export const sourcePartyIdFor = (targetPartyId) =>\n  SOURCE_PARTY_ID_BY_TARGET_ID[targetPartyId]  …  const sourcePartyId = sourcePartyIdFor(party.id)\n  const sourceParty = sourcePartyId && parties[sourcePartyId]\n  return (\n    sourceParty && {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-043",
-      "statement": "The outstanding-items section is left out entirely when the list is empty, which today means when the notification has at least one document.",
+      "statement": "A same-as control appears only when the party it would fill has no address and the party it would copy from already has one.",
       "kind": "rule",
-      "ref": "features/confirmation/outstanding.js:15-16,29; template.njk:11",
-      "quote": "return documents.length === 0 ? [copy.outstanding.documents] : []",
-      "confidence": "verbatim"
+      "ref": "features/addresses/controller.js:53,56-64,68",
+      "quote": "const held = parties[party.id]  …  ...(chosen ? { chosen } : { addLink: add, ...(sameAs && { sameAs }) })  …  const sourceParty = sourcePartyId && parties[sourcePartyId]\n  return (\n    sourceParty && {",
+      "confidence": "verbatim",
+      "note": "The parties map holds a display party only for a party whose stored answer has a name, so an empty source party gives no control."
     },
     {
       "id": "repo-frontend-p14-044",
-      "statement": "A notification can be submitted with no documents, because the documents obligation has a cap but no minimum and no required-one-of.",
-      "kind": "rule",
-      "ref": "features/confirmation/outstanding.js:8-13",
-      "quote": "// Submission does not require documents — the documents group carries only a\n// cap, no floor and no required-one-of (obligations/sections/documents.js) — so\n// a notification can be submitted with the health certificate still to come.",
+      "statement": "The same-as control is a submit button styled as a link that posts the page with an action value of 'same-as:' followed by the party being filled, and it too ends in the visually hidden section heading.",
+      "kind": "behaviour",
+      "ref": "features/addresses/template.njk:44, features/addresses/same-as-action.js:12-18, features/commodities/action-prefix.js:1-5",
+      "quote": "<button type=\"submit\" class=\"govuk-link app-link-button govuk-!-margin-right-3\" name=\"action\" value=\"{{ section.sameAs.value }}\">{{ section.sameAs.label }}<span class=\"govuk-visually-hidden\"> {{ section.hiddenSuffix }}</span></button>  …  const sameAsAction = actionsPrefixed('same-as:')  …  actionFor: (key) => `${prefix}${key}`,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-045",
-      "statement": "Design release 1 has a second outstanding bullet for animal identifiers, which the confirmation page does not show yet; it is held back on the open identifier-completeness decision (what counts as a complete identifier record), recorded on inc-153 in the parity backlog.",
-      "kind": "rule",
-      "ref": "features/confirmation/outstanding.js:18-26",
-      "quote": "// Design release 1 carries a second bullet, for animal identifiers, which this\n// journey can now reach: ... That bullet is not held\n// back for reachability. It waits on the identifier-completeness decision —\n// what counts as a complete identifier record — which is still open, and is\n// recorded as an open question on inc-153 in the parity backlog.",
+      "statement": "Pressing a same-as control copies the source party's stored address onto the target party, saves it, and brings the trader back to the consignment addresses page where the target now shows that address.",
+      "kind": "behaviour",
+      "ref": "features/addresses/controller.js:256-273",
+      "quote": "const { failure } = await kit.recoverableSave(\n    request,\n    () =>\n      state.commit(request, h, {\n        [targetPartyId]: copyOfStoredParty(sourceAnswer)\n      }),  …  return h.redirect(addressesHref(request))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-046",
-      "statement": "A consignment declaring a single identified species can be submitted with no identifier record saved, because the identifier obligation only asks for a record where more than one commodity line carries a typed identifier set.",
-      "kind": "rule",
-      "ref": "features/confirmation/outstanding.js:19-23",
-      "quote": "the identifier obligation asks for a record only\n// where more than one commodity line carries a typed identifier set\n// (obligations/sections/commodities/identifiers.js, floorAppliesToParent with\n// moreThanOne), so a consignment declaring a single identified species is\n// submitted with no identifier record saved at all.",
-      "confidence": "verbatim"
+      "statement": "The copy a same-as control makes is an independent copy: it keeps the name, phone, email and address of the source but drops the address-book record it was picked from, so the two parties are not linked afterwards and the source party is left untouched.",
+      "kind": "behaviour",
+      "ref": "features/addresses/party-inline.js:11-17, features/addresses/controller.js:260-262",
+      "quote": "export const copyOfStoredParty = ({\n  pickedFromId: _pickedFromId,\n  ...storedParty\n}) => ({\n  ...storedParty,\n  address: { ...storedParty.address }\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes one stored party answer into the answer saved for another party, dropping the pickedFromId that ties an answer to its address-book record and shallow-copying the address block."
     },
     {
       "id": "repo-frontend-p14-047",
-      "statement": "The confirmation page has a section 'Transporting the consignment' telling the user to tell the transporter the consignment must go directly to the place of destination on entry to Great Britain.",
-      "kind": "copy",
-      "ref": "features/confirmation/copy/copy.en.js:13-15; template.njk:21-22",
-      "quote": "heading: 'Transporting the consignment',\n    direct:\n      'Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.',",
-      "confidence": "verbatim"
+      "statement": "After a same-as copy the target party is shown like any other chosen party, with its own Change and Edit details links, so the copy can then be changed or edited on its own.",
+      "kind": "behaviour",
+      "ref": "features/addresses/controller.js:68,76-85",
+      "quote": "const held = parties[party.id]  …  chosen: held && {\n      name: held.name,\n      lines: insetAddressLines(held),\n      changeHref: href,\n      editDetailsHref: partyEditHref(",
+      "confidence": "inferred",
+      "note": "Follows because the same-as save writes an ordinary party answer with a name, and the section builder treats any named answer as chosen."
     },
     {
       "id": "repo-frontend-p14-048",
-      "statement": "The transporting section says the animals or consignment may need to be inspected, and if so the animals must stay at the place of destination for either the time stated on the health certificate or 48 hours if no time is specified.",
-      "kind": "copy",
-      "ref": "features/confirmation/copy/copy.en.js:16-21; template.njk:23-29",
-      "quote": "inspection: 'The animals or consignment may need to be inspected.',\n    stay: 'If so, the animals must stay at the place of destination for either:',\n    stayItems: [\n      'the time stated on the health certificate',\n      '48 hours if no time is specified'\n    ]",
+      "statement": "A same-as submission for a pair the page does not offer is refused, logged as 'same-as-pair-not-offered', and the trader is returned to the addresses page with nothing saved.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:220-238",
+      "quote": "export const SAME_AS_REFUSAL = Object.freeze({\n  pairNotOffered: 'same-as-pair-not-offered',  …  if (!sourcePartyId) {\n    return refuseSameAs(request, h, {\n      targetPartyId,\n      reason: SAME_AS_REFUSAL.pairNotOffered\n    })\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-049",
-      "statement": "The confirmation page has a section 'How to view or amend this notification' saying the user can view or amend it from their dashboard and resubmit it.",
-      "kind": "copy",
-      "ref": "features/confirmation/copy/copy.en.js:24-25; template.njk:31-32",
-      "quote": "heading: 'How to view or amend this notification',\n    body: 'You can view or amend this notification from your dashboard and resubmit it.',",
+      "statement": "A same-as submission whose source party has no address is refused, logged as 'same-as-source-empty', and the trader is returned to the addresses page with nothing saved.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:222,240-248",
+      "quote": "sourceEmpty: 'same-as-source-empty',  …  const sourceAnswer = answers[sourcePartyId]\n  if (!isPartyHeld(sourceAnswer)) {\n    return refuseSameAs(request, h, {\n      targetPartyId,\n      sourcePartyId,\n      reason: SAME_AS_REFUSAL.sourceEmpty\n    })\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-050",
-      "statement": "The confirmation page has a link 'Return to your dashboard' that goes to the dashboard (the service's base path).",
-      "kind": "behaviour",
-      "ref": "features/confirmation/template.njk:34; controller.js:30; copy/copy.en.js:26; confirmation.fit.spec.js:136-145",
-      "quote": "dashboardLink: 'Return to your dashboard',",
-      "confidence": "verbatim"
+      "statement": "A same-as submission for a party that already has an address is refused, logged as 'same-as-target-already-held', and the trader is returned to the addresses page with the existing address left as it was.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:223,249-255",
+      "quote": "targetAlreadyHeld: 'same-as-target-already-held'  …  if (isPartyHeld(answers[targetPartyId])) {\n    return refuseSameAs(request, h, {\n      targetPartyId,\n      sourcePartyId,\n      reason: SAME_AS_REFUSAL.targetAlreadyHeld\n    })\n  }",
+      "confidence": "verbatim",
+      "note": "So a same-as press can never overwrite an address already chosen."
     },
     {
       "id": "repo-frontend-p14-051",
-      "statement": "The confirmation page has a 'Create a new notification' control, a button styled as a link that POSTs to the same create route as the dashboard's start action, starting a fresh notification on the origin page.",
+      "statement": "When a same-as copy cannot be saved because the backend is briefly unavailable, the addresses page is shown again with its recoverable-error message and the response carries HTTP 500.",
       "kind": "behaviour",
-      "ref": "features/confirmation/template.njk:36-44; controller.js:31; copy/copy.en.js:27; confirmation.fit.spec.js:147-162",
-      "quote": "{# Starting a notification is a POST (it creates a record), so this is a\n     form styled as a link rather than an anchor — same route and same idiom as\n     the dashboard's start action. #}",
+      "ref": "features/addresses/controller.js:257-271",
+      "quote": "async () =>\n      (await renderAddresses(request, h, { recoverableError: true })).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      ),",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-052",
-      "statement": "The confirmation page has a 'Getting help' section giving importsriskmanagement@apha.gov.uk as a mailto link for help with import notifications for live animals or germinal products.",
-      "kind": "copy",
-      "ref": "features/confirmation/template.njk:46-47; copy/copy.en.js:30-32",
-      "quote": "importsEmailPrefix:\n      'To get help with import notifications for live animals or germinal products, email',",
-      "confidence": "verbatim"
+      "statement": "Every party answer is stored on the notification as a copy of the address taken when it was chosen — its name, phone, email, address lines and ISO country code — not as a live reference to the address-book record, so a later change in the address book does not change the notification.",
+      "kind": "data",
+      "ref": "features/addresses/party-inline.js:3-9, services/address-book/to-wire-address.js:7-14",
+      "quote": "export const answerForInlineParty = (chosen) => ({\n  pickedFromId: chosen.id,\n  name: chosen.name,\n  phone: chosen.address?.phone,\n  email: chosen.address?.email,\n  address: toWireAddress(chosen.address ?? {})\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes a chosen address-book record into the party answer stored on the notification. The id of the record it came from is kept as pickedFromId."
     },
     {
       "id": "repo-frontend-p14-053",
-      "statement": "The getting-help section tells users to contact APHA for technical help, by telephone 0330 041 6999 or email APHAServiceDesk@apha.gov.uk (mailto link), Monday to Friday, 8:30am to 5pm, except bank holidays.",
-      "kind": "copy",
-      "ref": "features/confirmation/template.njk:48-53; copy/copy.en.js:33-37",
-      "quote": "technicalHelp:\n      'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:',\n    telephone: 'Telephone: 0330 041 6999',\n    emailPrefix: 'Email:',\n    openingHours: 'Monday to Friday, 8:30am to 5pm, except bank holidays',",
-      "confidence": "verbatim"
+      "statement": "A party's stored address keeps addressLine1, addressLine2, townOrCity, county, postcode and the ISO country code only — a third address line is not kept.",
+      "kind": "data",
+      "ref": "services/address-book/to-wire-address.js:7-14",
+      "quote": "export const toWireAddress = (address = {}) => ({\n  addressLine1: address.addressLine1,\n  addressLine2: address.addressLine2,\n  townOrCity: address.townOrCity,\n  county: address.county,\n  postcode: address.postcode,\n  countryCode: address.countryCode\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: the wire shape of a party address. The inset on this page still reads addressLine3, so a third line would be shown if one were ever stored."
     },
     {
       "id": "repo-frontend-p14-054",
-      "statement": "The getting-help section links 'contact HMRC' to the GOV.UK HMRC customs, international trade and excise enquiries page for help with a customs declaration.",
-      "kind": "copy",
-      "ref": "features/confirmation/template.njk:54; copy/copy.en.js:38-39",
-      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries\">{{ copy.help.customsLink }}</a>",
-      "confidence": "verbatim"
+      "statement": "The country shown for a party is the address book's name for the stored ISO country code, falling back to the code itself when no name is known.",
+      "kind": "behaviour",
+      "ref": "features/addresses/frozen-parties.js:20-38, services/countries/index.js:142-144",
+      "quote": "country: await addressBookCountryName(address.countryCode),  …  export const addressBookCountryName = async (code) =>\n  (await addressBookCountries()).find((option) => option.code === code)?.name ??\n  code",
+      "confidence": "verbatim",
+      "note": "mechanism: turns one stored party answer into the display party the page renders, resolving the country code to a name and folding the party's phone and email into the address block."
     },
     {
       "id": "repo-frontend-p14-055",
-      "statement": "The getting-help section has a link 'Find out about call charges' to https://www.gov.uk/call-charges.",
-      "kind": "copy",
-      "ref": "features/confirmation/template.njk:55-57; copy/copy.en.js:40",
-      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/call-charges\">{{ copy.help.callCharges }}</a>",
-      "confidence": "verbatim"
+      "statement": "The page builds its six possible party sections from the five consignment parties plus the contact address, and shows a section as chosen only for those whose stored answer has a name.",
+      "kind": "behaviour",
+      "ref": "features/addresses/frozen-parties.js:14-17,40-48",
+      "quote": "const JOURNEY_PARTY_IDS = [\n  ...PARTIES.map((party) => party.id),\n  CONTACT_PARTY.id\n]  …  export const partiesFromStoredAnswers = async (answers = {}) => {\n  const entries = await Promise.all(\n    JOURNEY_PARTY_IDS.map(async (partyId) => [\n      partyId,\n      await toDisplayParty(answers[partyId])\n    ])\n  )\n  return Object.fromEntries(entries)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: reads every party answer at once so the page can show each party and decide which same-as controls apply. The contact address is in the map but has no section on this page."
     },
     {
       "id": "repo-frontend-p14-056",
-      "statement": "The two help email addresses are hard-coded in the confirmation template rather than held in the copy files, so the Welsh page shows the same addresses.",
-      "kind": "constraint",
-      "ref": "features/confirmation/template.njk:47,51",
-      "quote": "href=\"mailto:importsriskmanagement@apha.gov.uk\">importsriskmanagement@apha.gov.uk</a>",
-      "confidence": "inferred",
-      "note": "Inferred from the template: the addresses and the HMRC and call-charges URLs are literal in template.njk, while the surrounding text comes from copy."
+      "statement": "The scope expects parties that are frozen and cannot be changed; the page has no such notion — every party with an address offers Change, and nothing marks a party as locked.",
+      "kind": "behaviour",
+      "ref": "features/addresses/frozen-parties.js:1-48, features/addresses/controller.js:67-88, features/addresses/template.njk:30-48",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the whole addresses feature for a locked, frozen or read-only party. The file named frozen-parties.js is about the party answer being a frozen copy of the address-book record (claims repo-frontend-p14-052 and repo-frontend-p14-055), not about a party a trader may not change. The repo's only other use of the word is the permanent-address and check-answers features, which are other parts'."
     },
     {
       "id": "repo-frontend-p14-057",
-      "statement": "The confirmation page has Welsh copy for every English string, marked as a machine draft not yet reviewed by a translator.",
-      "kind": "constraint",
-      "ref": "features/confirmation/copy/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
-      "confidence": "verbatim"
+      "statement": "All five consignment parties are mandatory answers and always in scope.",
+      "kind": "rule",
+      "ref": "features/addresses/evaluation.js:13-22, obligations/sections/parties.js:6-34",
+      "quote": "export const evaluationBindings = feature('addresses', [\n  scalar({ field: 'placeOfOrigin', obligation: placeOfOrigin }),  …  export const placeOfOrigin = {\n  id: '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c',\n  name: 'placeOfOrigin',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim",
+      "note": "The obligations file's own header says these are 'Standard address blocks — always in scope.'"
     },
     {
       "id": "repo-frontend-p14-058",
-      "statement": "A fit test proves opening the confirmation page for an unsubmitted notification redirects to its hub.",
-      "kind": "behaviour",
-      "ref": "features/confirmation/confirmation.fit.spec.js:89 'redirects an unsubmitted notification back to its hub'",
-      "quote": "test('redirects an unsubmitted notification back to its hub'",
-      "confidence": "verbatim"
+      "statement": "The page is answerable for five answers — consignor, place of destination, place of origin, consignee and importer — so those are the answers it owns for status and wiping.",
+      "kind": "data",
+      "ref": "features/addresses/controller.js:33-42",
+      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'consignor',\n    'placeOfDestination',\n    'placeOfOrigin',\n    'consignee',\n    'importer'\n  ]\n}",
+      "confidence": "verbatim",
+      "note": "The CPH number and permanent address are collected by their own pages, even though this page shows them."
     },
     {
       "id": "repo-frontend-p14-059",
-      "statement": "A fit test proves that after a complete submission without documents the confirmation page shows the reference, the outstanding-documents section, the transporting, view-or-amend and help copy, no declaration date and no back link.",
+      "statement": "When the county parish holding number is in scope, a sixth section follows the five parties, headed 'County parish holding (CPH) number' with the hint 'The county parish holding (CPH) number identifies the holding where the animals will be kept.' and a link reading 'Add a CPH number'.",
       "kind": "behaviour",
-      "ref": "features/confirmation/confirmation.fit.spec.js:122 'renders the notification reference and all feature copy, with no declaration date and no back link'",
-      "quote": "test('renders the notification reference and all feature copy, with no declaration date and no back link'",
-      "confidence": "verbatim",
-      "note": "The help assertions do not check the importsriskmanagement email line or the APHAServiceDesk email link."
-    },
-    {
-      "id": "repo-frontend-p14-060",
-      "statement": "A fit test proves the 'Return to your dashboard' link points at and returns to the dashboard.",
-      "kind": "behaviour",
-      "ref": "features/confirmation/confirmation.fit.spec.js:136 'dashboard link returns to the dashboard'",
-      "quote": "test('dashboard link returns to the dashboard'",
+      "ref": "features/addresses/controller.js:90-103,167-169, features/addresses/copy/copy.en.js:14-18",
+      "quote": "...(scope.has('countyParishHoldingCph')\n    ? [cphSection(request, journeyId, answers)]\n    : []),  …  cph: {\n      title: 'County parish holding (CPH) number',\n      hint: 'The county parish holding (CPH) number identifies the holding where the animals will be kept.',\n      add: 'Add a CPH number'\n    },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p14-061",
-      "statement": "A fit test proves 'Create a new notification' starts a fresh notification with a different reference, landing on 'Origin of the import', without returning to the dashboard.",
+      "id": "repo-frontend-p14-060",
+      "statement": "A CPH number already given is shown in the section's inset as the number alone with its parts separated by slashes, with a Change link to the CPH number page and no Edit details link.",
       "kind": "behaviour",
-      "ref": "features/confirmation/confirmation.fit.spec.js:149 'create-a-new-notification starts a fresh notification'",
-      "quote": "// Second consignment, no detour: the page starts a fresh notification without\n  // sending the trader back to the dashboard for the start button.",
+      "ref": "features/addresses/controller.js:91-102, features/cph-number/shape.js:27-32",
+      "quote": "chosen: cphNumber && {\n      lines: [displayedCphNumber(cphNumber)],\n      changeHref: href\n    }  …  return isWholeCphNumber(value) ? partsOf(value).join('/') : value",
+      "confidence": "verbatim",
+      "note": "mechanism: formats the stored CPH number for display; a value that is not a whole CPH number is shown as entered. The CPH number page itself is another part's."
+    },
+    {
+      "id": "repo-frontend-p14-061",
+      "statement": "A 'Permanent address' section appears on the page only when some commodity line on the notification needs a permanent address, and is left off entirely otherwise.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:123-132,170-178, features/permanent-address/cards.js:41-42",
+      "quote": "if (!anyLineNeedsPermanentAddress(answers, evaluation)) {\n    return null\n  }  …  export const anyLineNeedsPermanentAddress = (answers, evaluation) =>\n  linesNeedingPermanentAddress(answers, evaluation).length > 0",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-062",
-      "statement": "A fit test holds the confirmation page to no serious or critical axe violations against WCAG 2 A and AA.",
-      "kind": "non-functional",
-      "ref": "features/confirmation/confirmation.fit.spec.js:164 'has no serious or critical axe violations'",
-      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "statement": "The Permanent address section is headed 'Permanent address' and explains 'A permanent address is where an animal:' followed by the bullets 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)', with a link reading 'Add a permanent address'.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.en.js:19-29, features/addresses/controller.js:143-148, features/addresses/template.njk:24-28",
+      "quote": "permanentAddress: {\n      title: 'Permanent address',\n      leadIn: 'A permanent address is where an animal:',\n      bullets: [\n        'will permanently reside',\n        'can be checked by the Animal and Plant Health Agency (APHA)'\n      ],\n      add: 'Add a permanent address',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-063",
-      "statement": "No fit test proves the confirmation page with documents uploaded, where the outstanding-items section should be absent.",
+      "statement": "The Permanent address section's link opens the permanent address page with a return marker naming the addresses page, so that page comes back here when it is done.",
       "kind": "behaviour",
-      "ref": "features/confirmation/confirmation.fit.spec.js (whole file)",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked through all five tests: every submitted test uses the same no-documents journey."
+      "ref": "features/addresses/controller.js:133-139",
+      "quote": "const href = kit.carryTrail(\n    request,\n    kit.withReturnMarker(\n      pagePath(journeyId, permanentAddressPage.slug),\n      page.slug\n    )\n  )",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-064",
-      "statement": "No fit test proves the declaration submit's refusal path (a stale or incomplete notification sent back to check answers) or the recoverable save failure.",
+      "statement": "When every animal that needs a permanent address has one and a single address covers them all, the section shows that address's name and lines in its inset with a Change link.",
       "kind": "behaviour",
-      "ref": "features/declaration/declaration.fit.spec.js (whole file)",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked through all five tests; these paths may be covered by controller.test.js, which is outside this part's read."
+      "ref": "features/addresses/controller.js:105-121,140-154",
+      "quote": "const oneAddressChosen = (permanentAddress, href) => ({\n  name: permanentAddress.name,\n  lines: insetAddressLines(permanentAddress),\n  changeHref: href\n})  …  (oneAddressCoversEveryAddressableAnimal(permanentAddresses)\n        ? oneAddressChosen(permanentAddresses[0].permanentAddress, href)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-065",
-      "statement": "The confirmation page shows nothing that tells the user an email or other confirmation has been sent, and says nothing about what happens to the notification next at the border beyond the transporting guidance.",
+      "statement": "When several different permanent addresses have been given, the section shows a count instead of an address: 'Permanent addresses added for N animals'.",
       "kind": "copy",
-      "ref": "features/confirmation/template.njk; copy/copy.en.js",
+      "ref": "features/addresses/controller.js:118-121,152-153, features/addresses/copy/copy.en.js:27-28",
+      "quote": "const countOfAnimalsChosen = (count, href) => ({\n  lines: [copy.permanentAddress.addedForAnimals(count)],\n  changeHref: href\n})  …  addedForAnimals: (count) =>\n        `Permanent addresses added for ${count} animals`",
+      "confidence": "verbatim",
+      "note": "The count is the number of addressable animals, not the number of distinct addresses."
+    },
+    {
+      "id": "repo-frontend-p14-066",
+      "statement": "One address is treated as covering every addressable animal when there is only one addressable animal, or when every one of them was answered as the place of destination.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:105-110, features/permanent-address/cards.js:13",
+      "quote": "const oneAddressCoversEveryAddressableAnimal = (permanentAddresses) =>\n  permanentAddresses.length === 1 ||\n  permanentAddresses.every(\n    ({ permanentAddressOrigin }) =>\n      permanentAddressOrigin === PLACE_OF_DESTINATION\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: decides between showing one address and showing a count, over the per-animal permanent addresses read from the stored answers."
+    },
+    {
+      "id": "repo-frontend-p14-067",
+      "statement": "While any addressable animal still owes a permanent address, the section shows no inset at all and only its add link, even when other animals already have one.",
+      "kind": "behaviour",
+      "ref": "features/addresses/controller.js:140-153",
+      "quote": "const everyAnimalAnswered =\n    permanentAddresses.length > 0 &&\n    everyAddressableAnimalHasPermanentAddress(answers, evaluation)  …  chosen:\n      everyAnimalAnswered &&",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-068",
+      "statement": "After an address has been added in the INS address book, the consignment addresses page shows a success banner titled 'Success' reading '<the address's name> address added to your address book'.",
+      "kind": "copy",
+      "ref": "features/addresses/ins-handshake.js:64-75, features/addresses/controller.js:212-215, shared/copy.en.js:75-78",
+      "quote": "const { title, text } = sharedCopy.addressHandshake.addedBanner\n  return {\n    titleText: title,\n    text: text(added.name)\n  }  …  addedBanner: {\n      title: 'Success',\n      text: (name) => `${name} address added to your address book`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-069",
+      "statement": "The added-address banner is shown once only: showing it clears it, so it is gone the next time the page is loaded.",
+      "kind": "behaviour",
+      "ref": "features/addresses/ins-handshake.js:64-75, features/addresses/controller.js:212-215",
+      "quote": "export const takeAddedAddressBanner = (request, h) => {\n  const added = request.state[addedAddressBannerCookie()]\n  if (!added) {\n    return null\n  }\n  h.unstate(addedAddressBannerCookie())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-070",
+      "statement": "The banner is carried between the address book and the addresses page in a cookie named liveAnimalsAddedAddressBanner.",
+      "kind": "data",
+      "ref": "features/addresses/ins-handshake.js:60-62, engine/persistence/session.js:46-47, sets/live-animals/journeys/linear/config.js:8",
+      "quote": "export const setAddedAddressBanner = (h, addressName) => {\n  h.state(addedAddressBannerCookie(), { name: addressName })\n}  …  addedAddressBanner: 'liveAnimalsAddedAddressBanner',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-071",
+      "statement": "Returning from the address book having selected an address lands the trader on the Consignment addresses page with the added-address banner naming that address.",
+      "kind": "behaviour",
+      "ref": "features/addresses/fit/address-return.fit.spec.js:42-60",
+      "quote": "test('the added address banner on the Consignment addresses page is still shown ten seconds later and is gone after a reload', async ({\n  page\n}) => {  …  await returnFromTheAddressBookWith(page, {\n    fulfilmentId: consignor.id,\n    addressId: added.id,\n    landing: ADDRESS_LANDING.SELECT\n  })\n  await expect(addressesHeading).toBeVisible()\n  await expect(addedBanner).toContainText(text(added.name))",
+      "confidence": "verbatim",
+      "note": "Proven end to end by the one test in address-return.fit.spec.js, driven with a stub address-book record that holds the CONSIGNOR role."
+    },
+    {
+      "id": "repo-frontend-p14-072",
+      "statement": "The added-address banner does not time out: it is still on the page ten seconds after it appeared.",
+      "kind": "behaviour",
+      "ref": "features/addresses/fit/address-return.fit.spec.js:62-63",
+      "quote": "await page.clock.runFor(10_000)\n  await expect(addedBanner).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-073",
+      "statement": "Reloading the Consignment addresses page clears the added-address banner while leaving the page itself in place.",
+      "kind": "behaviour",
+      "ref": "features/addresses/fit/address-return.fit.spec.js:65-67",
+      "quote": "await page.reload()\n  await expect(addressesHeading).toBeVisible()\n  await expect(addedBanner).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-074",
+      "statement": "The banner is announced to assistive technology as an alert named 'Success'.",
+      "kind": "non-functional",
+      "ref": "features/addresses/fit/address-return.fit.spec.js:46-48",
+      "quote": "const { title, text } = sharedCopy.addressHandshake.addedBanner\n  const addressesHeading = page.getByRole('heading', { name: copy.hub.title })\n  const addedBanner = page.getByRole('alert', { name: title })",
+      "confidence": "inferred",
+      "note": "Follows from the fit spec locating the banner by the alert role; the banner component itself is the shared layout's, another part's."
+    },
+    {
+      "id": "repo-frontend-p14-075",
+      "statement": "A trader who wants an address the book does not hold is sent out to the INS address book's add-an-address page, under a link reading 'Add a new address'.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:77-92, common/helpers/ins-address-book-urls.js:18-19, features/addresses/copy/copy.en.js:88, shared/copy.en.js:74",
+      "quote": "export const issueInsAddAddressUrl = (request, h, notificationId, party) => {  …  return insAddAddressUrl({  …  export const insAddAddressUrl = (params) =>\n  buildInsFrontendUrl(`${ADDRESS_BOOK_PATH}/add?${new URLSearchParams(params)}`)  …  addNewAddress: sharedCopy.addressHandshake.addNewAddress,  …  addNewAddress: 'Add a new address',",
+      "confidence": "verbatim",
+      "note": "The picker page that renders the link is part 15's; the URL and token are issued here."
+    },
+    {
+      "id": "repo-frontend-p14-076",
+      "statement": "The hand-off to the address book carries four things: the journey type 'gbn-ag', the notification's id, the fulfilment id of the party being filled, and a handshake token.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:11,86-91",
+      "quote": "export const JOURNEY_TYPE = 'gbn-ag'  …  return insAddAddressUrl({\n    'journey-type': JOURNEY_TYPE,\n    'notification-id': notificationId,\n    'fulfilment-id': fulfilmentId,\n    'handshake-token': token\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-077",
+      "statement": "Each hand-off issues a fresh random handshake token, 16 bytes shown as hexadecimal, stored against that fulfilment id in a cookie named liveAnimalsAddressHandshakeTokens.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:21,33-41,83-84, sets/live-animals/journeys/linear/config.js:7",
+      "quote": "const HANDSHAKE_TOKEN_BYTES = 16  …  const token = crypto.randomBytes(HANDSHAKE_TOKEN_BYTES).toString('hex')\n  storeHandshakeToken(request, h, fulfilmentId, token)  …  addressHandshakeTokens: 'liveAnimalsAddressHandshakeTokens',",
+      "confidence": "verbatim",
+      "note": "Several hand-offs can be open at once: the cookie holds one token per fulfilment id."
+    },
+    {
+      "id": "repo-frontend-p14-078",
+      "statement": "No add-an-address hand-off is offered for a party the service cannot name a fulfilment id for.",
+      "kind": "rule",
+      "ref": "features/addresses/ins-handshake.js:78-81",
+      "quote": "const fulfilmentId = fulfilmentIdForParty(party)\n  if (!fulfilmentId) {\n    return undefined\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-079",
+      "statement": "The fulfilment id the hand-off sends is the identifier of the answer the party fills: 89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c for the place of origin, 9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d for the consignor, abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e for the consignee, bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f for the importer, cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60 for the place of destination and f037e8f9-a0b1-4c26-8d72-fe5f60718293 for the consignment's contact address.",
+      "kind": "integration",
+      "ref": "features/addresses/party-for-fulfilment-id.js:5-34, features/addresses/evaluation.js:13-22, features/contact/evaluation.js:7-9, obligations/sections/parties.js:6-34, obligations/sections/misc.js:5-9",
+      "quote": "const nonIndexedFulfilmentId = binding.obligation.id\n      map.set(nonIndexedFulfilmentId, party)  …  export const consignor = {\n  id: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',  …  export const contactAddress = {\n  id: 'f037e8f9-a0b1-4c26-8d72-fe5f60718293',",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the two-way map between a party and the fulfilment id the address book is handed, over the addresses and contact fulfilment bindings. The ids are the obligation ids, not identifiers invented for the hand-off."
+    },
+    {
+      "id": "repo-frontend-p14-080",
+      "statement": "Only a single-valued answer can take part in the address-book hand-off: a party bound to a repeating answer is refused outright with 'Party fulfilment mapping only supports scalar bindings'.",
+      "kind": "constraint",
+      "ref": "features/addresses/assert-party-bindings.js:8-18",
+      "quote": "export const assertPartyBindingsAreScalar = () => {\n  for (const binding of [\n    ...addressesBindings.bindings,\n    ...contactBindings.bindings\n  ]) {\n    if (binding.kind !== 'scalar') {\n      throw new Error(\n        `Party fulfilment mapping only supports scalar bindings; ${binding.field} is ${binding.kind}`\n      )\n    }\n  }\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-081",
+      "statement": "The INS address book returns the trader to /live-animals/notifications/{journeyId}/address-return, a page reached by GET only.",
+      "kind": "integration",
+      "ref": "features/addresses/address-return/controller.js:208-215, shared/paths.js:5",
+      "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: pageRoutePath('address-return'),\n    options: pageRouteOptions(addressesPage),\n    handler: get\n  }\n]",
+      "confidence": "verbatim",
+      "note": "It is registered with the addresses page's own route options, so it is reached under the same conditions as the page itself."
+    },
+    {
+      "id": "repo-frontend-p14-082",
+      "statement": "The return carries four things in its query: fulfilment-id, handshake-token, addressId and landing.",
+      "kind": "integration",
+      "ref": "features/addresses/address-return/controller.js:157-162,186",
+      "quote": "const returned = {\n    journeyId: request.params.journeyId,\n    fulfilmentId: request.query['fulfilment-id'] ?? '',\n    addressId: request.query.addressId ?? '',\n    landing: request.query[ADDRESS_LANDING_PARAM] ?? ''\n  }  …  request.query['handshake-token'] ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-083",
+      "statement": "The landing the address book names may be one of three: select, return or cancel.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:13-19",
+      "quote": "export const ADDRESS_LANDING_PARAM = 'landing'\n\nexport const ADDRESS_LANDING = Object.freeze({\n  SELECT: 'select',\n  RETURN: 'return',\n  CANCEL: 'cancel'\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-084",
+      "statement": "A return naming a fulfilment id the service does not know is refused with a 400 Bad Request reading 'Unknown fulfilment', and the refusal is logged as 'Address return refused'.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:38-49,165-173",
+      "quote": "const party = partyForFulfilmentId(returned.fulfilmentId)\n  if (!party) {\n    throw logAndRefuse(\n      request,\n      returned,\n      'unknown-fulfilment',\n      'Unknown fulfilment'\n    )\n  }  …  'Address return refused'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-085",
+      "statement": "A return naming a landing that is not select, return or cancel is refused with a 400 Bad Request reading 'Unknown landing'.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:60-62",
+      "quote": "if (!Object.values(ADDRESS_LANDING).includes(landing)) {\n    throw logAndRefuse(request, returned, 'unknown-landing', 'Unknown landing')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-086",
+      "statement": "A return that names a landing other than cancel but no address is refused with a 400 Bad Request reading 'Missing address'.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:63-65",
+      "quote": "if (landing !== ADDRESS_LANDING.CANCEL && !addressId) {\n    throw logAndRefuse(request, returned, 'address-missing', 'Missing address')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-087",
+      "statement": "A return that names no landing at all but does carry an address is treated as a selection.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:55-59",
+      "quote": "const validLandingOf = (request, returned) => {\n  const { addressId, landing } = returned\n  if (!landing) {\n    return addressId ? ADDRESS_LANDING.SELECT : BACK_WITHOUT_LANDING\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-088",
+      "statement": "A return that names neither a landing nor an address — someone simply coming back — takes the trader to that party's address picker, saves nothing and needs no handshake token.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:24,58,176-180",
+      "quote": "const BACK_WITHOUT_LANDING = 'back'  …  const landing = validLandingOf(request, returnedForParty)\n  if (landing === BACK_WITHOUT_LANDING) {\n    logLanding(request, { journeyId, partyId: party.id, landing })\n    return h.redirect(partyPageHref(journeyId, party))\n  }",
+      "confidence": "verbatim",
+      "note": "The token check comes after this branch, so a bare return is always honoured."
+    },
+    {
+      "id": "repo-frontend-p14-089",
+      "statement": "Every other return must carry the handshake token the service issued for that fulfilment id, and one that does not is refused with a 400 Bad Request reading 'Invalid handshake'.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:69-79, features/addresses/ins-handshake.js:43-48",
+      "quote": "const consumeHandshakeToken = (request, h, returned, handshakeToken) => {\n  if (!verifyHandshakeToken(request, returned.fulfilmentId, handshakeToken)) {\n    throw logAndRefuse(\n      request,\n      returned,\n      'invalid-handshake',\n      'Invalid handshake'\n    )\n  }  …  export const verifyHandshakeToken = (request, fulfilmentId, token) => {\n  if (!token) {\n    return false\n  }\n  return handshakeTokenMap(request)[fulfilmentId] === token\n}",
+      "confidence": "verbatim",
+      "note": "Security: this is the check that stops a return being replayed or forged for a party the trader never started a hand-off for. The token is compared against the trader's own cookie, so a return cannot be honoured in someone else's session."
+    },
+    {
+      "id": "repo-frontend-p14-090",
+      "statement": "A handshake token is used once: it is forgotten as soon as the return is accepted, and the whole cookie is dropped once no hand-off is outstanding.",
+      "kind": "rule",
+      "ref": "features/addresses/address-return/controller.js:78, features/addresses/ins-handshake.js:50-58",
+      "quote": "clearHandshakeToken(request, h, returned.fulfilmentId)  …  export const clearHandshakeToken = (request, h, fulfilmentId) => {\n  const map = { ...handshakeTokenMap(request) }\n  delete map[fulfilmentId]\n  if (Object.keys(map).length === 0) {\n    h.unstate(addressHandshakeTokensCookie())\n    return\n  }\n  h.state(addressHandshakeTokensCookie(), map)\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-091",
+      "statement": "A trader who cancels in the address book is returned to the notification overview, and nothing is saved.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:189-192",
+      "quote": "if (landing === ADDRESS_LANDING.CANCEL) {\n    logLanding(request, { journeyId, partyId: party.id, landing })\n    return h.redirect(hubPath(journeyId))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-092",
+      "statement": "An address returned as a selection is read back from the address book, copied onto the party as its answer, and the trader is taken to that party's return page — the Consignment addresses page for all five consignment parties — with the added-address banner naming it.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:112-144,202-205, features/addresses/parties.js:17",
+      "quote": "const saveAddressAndLandOnReturnPageWithBanner = async (\n  request,\n  h,\n  { journeyId, party, addressId, landing, chosen }\n) => {  …  setAddedAddressBanner(h, chosen.name)\n  logLanding(request, { journeyId, partyId: party.id, landing, addressId })\n  return h.redirect(pagePath(journeyId, party.returnSlug))\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-093",
+      "statement": "An address returned with the 'return' landing is read back and the banner is shown, but it is not saved onto the party: the trader is taken to that party's address picker to choose it there.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:146-154,202-205",
+      "quote": "const landOnPartyPageWithBanner = (\n  request,\n  h,\n  { journeyId, party, addressId, landing, chosen }\n) => {\n  setAddedAddressBanner(h, chosen.name)\n  logLanding(request, { journeyId, partyId: party.id, landing, addressId })\n  return h.redirect(partyPageHref(journeyId, party))\n}",
+      "confidence": "verbatim",
+      "note": "So 'select' means the address book chose the party's address for the trader, and 'return' means it only added the address to the book."
+    },
+    {
+      "id": "repo-frontend-p14-094",
+      "statement": "The returned address is read scoped to the organisation on the trader's signed-in session, so a record belonging to another organisation is never returned.",
+      "kind": "non-functional",
+      "ref": "features/addresses/address-return/controller.js:86-91, common/helpers/organisation-id.js:9-10",
+      "quote": "const chosen = await chosenPartyFor(\n      organisationIdOf(request),\n      addressId,\n      party.addressBookRole\n    )  …  export const organisationIdOf = (request) =>\n  sessionOrganisationId(request?.auth?.credentials)",
+      "confidence": "verbatim",
+      "note": "Security: the address id comes from the query, so the organisation scope on the read is what keeps the lookup to the trader's own address book."
+    },
+    {
+      "id": "repo-frontend-p14-095",
+      "statement": "An address that has been deleted, or that is not offered for the party's address-book role, is treated as though it had never been chosen.",
+      "kind": "rule",
+      "ref": "features/addresses/party-picker/selection.js:4-14",
+      "quote": "/** A picker selection, looked up in the book. A missing, soft-deleted or\n * wrong-role record is treated as no selection (UCD — never entered). */\nexport const chosenPartyFor = async (orgId, selectedId, role) => {\n  if (!selectedId) {\n    return undefined\n  }\n  const record = await addressBook.party(orgId, selectedId)\n  return record && !record.deleted && addressBook.offeredForRole(record, role)\n    ? record\n    : undefined\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-096",
+      "statement": "When the returned address cannot be found in the trader's address book, nothing is saved and the party's address picker is shown again with the message 'The address could not be found in your address book. Select another address or try adding it again.'",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:92-99,198-200, features/addresses/ins-handshake.js:23-31, shared/copy.en.js:80-82",
+      "quote": "request.logger.info(\n      { ...logged, reason: 'address-not-found' },\n      'Returned address not found, party page shown again'\n    )\n    return { handshakeError: 'not-found' }  …  if (code === 'not-found') {\n    return handshakeErrors.notFound\n  }  …  notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-097",
+      "statement": "When the address book cannot be reached while reading the returned address, nothing is saved and the party's address picker is shown again with the message 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:100-109,198-200, features/addresses/ins-handshake.js:26-28, shared/copy.en.js:82-84",
+      "quote": "} catch (error) {\n    if (!isRecoverableBackendError(error)) {\n      throw error\n    }\n    request.logger.warn(\n      { ...logged, err: error },\n      'Returned address could not be read, party page shown again'\n    )\n    return { handshakeError: 'unavailable' }  …  unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim",
+      "note": "An error that is not a recoverable backend error is not swallowed: it is raised and handled as a server error."
+    },
+    {
+      "id": "repo-frontend-p14-098",
+      "statement": "When the selected address was read but could not be saved onto the party, the trader is sent to that party's address picker with the same address-book-unavailable message, rather than being left thinking the address was saved.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:112-143",
+      "quote": "const commitCopyOfAddress = (request, h, { journeyId, party, chosen }) =>\n  kit.recoverableSave(\n    request,\n    async () => {\n      await state.commit(request, h, {\n        [party.id]: answerFor(party, chosen)\n      })\n    },\n    async () =>\n      h.redirect(\n        partyPageHref(journeyId, party, {\n          handshakeError: 'unavailable'\n        })\n      )\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-099",
+      "statement": "Every honoured return is logged as 'Returned from the address book' with the notification, the party, the landing and the address id.",
+      "kind": "non-functional",
+      "ref": "features/addresses/address-return/controller.js:51-53,142,152,178,190",
+      "quote": "const logLanding = (request, fields) => {\n  request.logger.info(fields, 'Returned from the address book')\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-100",
+      "statement": "The handshake error is passed to the party's picker page as a query parameter, and an empty value is left off the URL altogether.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:26-36,199",
+      "quote": "const partyPageHref = (journeyId, party, query = {}) => {\n  const path = pagePath(journeyId, party.slug)\n  const params = new URLSearchParams()\n  for (const [key, value] of Object.entries(query)) {\n    if (value) {\n      params.set(key, value)\n    }\n  }\n  const search = params.toString()\n  return search ? `${path}?${search}` : path\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the redirect URL back to a party page, dropping empty query values."
+    },
+    {
+      "id": "repo-frontend-p14-101",
+      "statement": "A return from the address book does not carry the trader's trail, so the Back link on the Consignment addresses page they land on falls back to the notification overview.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-return/controller.js:143,153,179,191, shared/trail.js:197-205",
+      "quote": "return h.redirect(pagePath(journeyId, party.returnSlug))",
+      "confidence": "inferred",
+      "note": "Follows because every redirect in the return handler builds a plain page path with no trail, and trailBackLink falls back to the overview when a request carries no trail."
+    },
+    {
+      "id": "repo-frontend-p14-102",
+      "statement": "The address book's own return URL is not recorded in this repo: nothing in the addresses feature says how the INS address book is told where to come back to.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:77-92, common/helpers/ins-address-book-urls.js:18-19",
       "quote": "",
       "confidence": "gap",
-      "note": "The slice is silent on a confirmation email or a 'what happens next' section for the notification itself; recorded so the reconciler can weigh it against design sources."
+      "note": "Looked at the four query parameters the add-address hand-off sends, the url helper it uses, and the whole return handler. The helpers that build view-an-address URLs take an explicit `return` path, but the add-address hand-off sends no return path — the address book must derive the address-return URL from journey-type and notification-id itself."
+    },
+    {
+      "id": "repo-frontend-p14-103",
+      "statement": "The address a party section shows can also be rendered as a single comma-separated line, either ending at the country or stopping at the postcode.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-summary.js:1-21",
+      "quote": "const ADDRESS_PARTS_TO_POSTCODE = [\n  'addressLine1',\n  'addressLine2',\n  'addressLine3',\n  'townOrCity',\n  'county',\n  'postcode'\n]\nconst ADDRESS_LINE_PARTS = [...ADDRESS_PARTS_TO_POSTCODE, 'country']  …  export const addressSummary = (address = {}) =>\n  lineOf(address, ADDRESS_LINE_PARTS)\n\nexport const addressSummaryEndingAtPostcode = (address = {}) =>\n  lineOf(address, ADDRESS_PARTS_TO_POSTCODE)",
+      "confidence": "verbatim",
+      "note": "mechanism: summarises one address into a single line, dropping empty parts. Defined with the addresses feature but used by the transporters list (full line including country) and the contact address page (line ending at the postcode), both other parts'."
+    },
+    {
+      "id": "repo-frontend-p14-104",
+      "statement": "The Welsh copy file for this page carries the same keys as the English one, with the page title 'Cyfeiriadau’r llwyth', and is marked as machine-drafted Welsh that no translator has reviewed and must not ship user-facing without Welsh Language Standards sign-off.",
+      "kind": "copy",
+      "ref": "features/addresses/copy/copy.cy.js:1-93",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.  …  hub: {\n    title: 'Cyfeiriadau’r llwyth',",
+      "confidence": "verbatim",
+      "note": "Key parity checked key by key against copy.en.js: hub (title, intro, warning, change, editDetails, sameAs.placeOfOrigin, sameAs.consignee, cph.title, cph.hint, cph.add, permanentAddress.title, leadIn, two bullets, add, addedForAnimals), parties (five parties each with title, hint, add, error) and picker (every key) all match; both files take addNewAddress and handshakeErrors from their own shared copy file."
+    },
+    {
+      "id": "repo-frontend-p14-105",
+      "statement": "A test-support helper exists so any page that shows the added-address banner can be held to showing it exactly once, with the banner titled 'Success' and reading 'New Farm address added to your address book' on the first load and nothing on the second.",
+      "kind": "behaviour",
+      "ref": "features/addresses/test-support.js:16-30",
+      "quote": "export const expectAddedAddressBannerShownOnce = async (getHandler) => {  …  expect(first.view.context.successBanner).toEqual({\n    titleText: 'Success',\n    text: 'New Farm address added to your address book'\n  })\n  expect(first.unstated).toEqual([addedAddressBannerCookie()])\n  expect(second.view.context.successBanner).toBeNull()\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: a shared assertion over the banner cookie, used by the unit tests of the pages that show the banner. The unit tests themselves are out of the source's scope."
+    },
+    {
+      "id": "repo-frontend-p14-106",
+      "statement": "The page itself enforces no validation: a trader can save and continue from it with no party chosen, no CPH number and no permanent address, and sees no error summary or error message on the page.",
+      "kind": "rule",
+      "ref": "features/addresses/controller.js:276-283, features/addresses/template.njk:1-54",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a validate.js in the addresses feature folder (there is none), for any error-summary or field-error block in the template (there is none), and for any check before the redirect in the page's POST handler (there is none beyond the same-as refusals). The mandatory parties are enforced elsewhere — the task-row status and the check-your-answers refusal, both other parts'."
     }
   ]
 }

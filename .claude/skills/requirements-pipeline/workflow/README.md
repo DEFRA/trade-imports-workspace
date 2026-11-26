@@ -44,7 +44,8 @@ never open over each other's trace and no prompt carries a `cd`.
 source and cuts it into parts, each small enough for one agent to read in full; one agent per
 part then reads its slice word for word and claims everything in it; tim merges the parts. A
 small source is one part. There is no lighter path, because a thin extract caps everything
-downstream: a page, field or rule nobody claimed never reaches a requirement.
+downstream: a page, field or rule nobody claimed never reaches a requirement. The one deliberate exception is
+[ticket mode](../references/TICKET.md) for one ready ticket.
 
 **Every later stage is as deep as extract.** Reconcile is cut into areas by an area plan, one
 think-tier reconciler an area; every question is challenged by its own agent; every area's rows are
@@ -249,7 +250,8 @@ first log line is the resolved configuration.
 `stopped.reason` is one of `status-failed`, `snapshot-failed`, `ticket-source`, `read-failed`,
 `check-relay-mismatch`, `refute-incomplete`, `fix-failed`, `fix-incomplete` or `out-of-shape`. For each, the main session
 reads the detail, fixes what it names and launches again: a rerun keeps every row id. An
-escalation hands the ticket to DISTIL or to a person, with the reason.
+escalation hands the ticket to DISTIL or to a person, with the reason. What the main session does after the
+intake returns, from the questions to the merge, is in [`../references/TICKET.md`](../references/TICKET.md).
 
 ## The increment build loop
 

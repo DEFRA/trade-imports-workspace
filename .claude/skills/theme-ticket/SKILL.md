@@ -1,6 +1,6 @@
 ---
 name: theme-ticket
-description: 'Write and maintain the business-facing Jira tickets for a theme that has already been built: one Story per service domain, with a background, a plain-English description of what changes for the user, and acceptance criteria copied from the openspec behaviour specification, for the BAs, POs and SMEs who validate the theme in a test environment. Also reports which tickets openspec has since moved on from. Triggers: "write the theme ticket", "theme ticket for EUDPA-X", "write the business tickets for <theme>", "split the theme ticket by domain", "regenerate the theme tickets", "which theme tickets are stale". NOT for raising a brand-new ticket from a conversation — that is ticket-creator, which interviews the user and drafts for iteration; this derives its content from work that already exists and owns the per-domain split. NOT for judging whether a ticket is ready for refinement (ticket-refiner), NOT for planning or implementing a ticket (the ticket skill — this writes no code), NOT for changing openspec itself (spec-catchup, spec-cover — this only reads it), and NOT for editing a backlog (requirements-pipeline owns that; this reads a theme backlog for row titles and repos but never writes to it).'
+description: 'Write and maintain the business-facing Jira tickets for a theme that has already been built: one Story per service domain, with a background, a plain-English description of what changes for the user, and acceptance criteria copied from the openspec behaviour specification, for the BAs, POs and SMEs who validate the theme in a test environment. Also reports which tickets openspec has since moved on from. For a ticket backlog, where one person's own Jira ticket is being built, it never rewrites that ticket: it posts one what-shipped comment listing the shipped scenarios by domain, and updates that comment on a rerun. Triggers: "write the theme ticket", "theme ticket for EUDPA-X", "write the business tickets for <theme>", "split the theme ticket by domain", "regenerate the theme tickets", "which theme tickets are stale", "comment on EUDPA-X what shipped". NOT for raising a brand-new ticket from a conversation — that is ticket-creator, which interviews the user and drafts for iteration; this derives its content from work that already exists and owns the per-domain split. NOT for judging whether a ticket is ready for refinement (ticket-refiner), NOT for building or implementing a ticket (requirements-pipeline ticket mode) or planning it or implementing it by hand (the ticket skill — this writes no code), NOT for changing openspec itself (spec-catchup, spec-cover — this only reads it), and NOT for editing a backlog (requirements-pipeline owns that; this reads a theme backlog for row titles and repos but never writes to it).'
 ---
 
 A theme's rows are built across every repo they touch, on one branch, and the
@@ -37,9 +37,15 @@ table: [`docs/agent-skills.md`](../../../docs/agent-skills.md)
 | "the build loop is starting on `<theme>`" | START flow |
 | "`<theme>` has merged", "the theme merged to main" | MERGE flow |
 | "which theme tickets are stale", "are the tickets out of date" | STALE flow |
+| "comment on `<KEY>` what shipped", the end of a ticket-mode run | The ticket path, for a ticket backlog (see "A ticket backlog's own ticket") |
+
+`tim theme-ticket start` reports the backlog's `ticket`. When it is not null,
+the backlog is a ticket backlog and the ticket path applies, whatever the
+phrase.
 
 NOT for raising a ticket from scratch (`ticket-creator`), assessing refinement
-readiness (`ticket-refiner`), planning or building a ticket's code (`ticket`),
+readiness (`ticket-refiner`), building a ticket's code (`requirements-pipeline`
+ticket mode), planning a ticket or implementing it by hand (`ticket`),
 editing openspec (`spec-catchup`, `spec-cover`) or editing a backlog
 (`requirements-pipeline`).
 
@@ -54,6 +60,30 @@ points. Nothing here waits for a person.
 | The build loop starts on the theme | START | Status → `In Dev`. No description change; openspec is still being written row by row. |
 | The loop drains the theme | WRITE | Derive, split by domain, update the stub as one domain and create the others, each `In Dev`. This is the real fill-in. |
 | The theme merges to `main` | MERGE | Regenerate against `main` so the spec links do not point at a deleted branch, then status → `Deskcheck`. |
+
+### A ticket backlog's own ticket
+
+A backlog whose envelope names a `ticket` is one person's Jira ticket, built on
+one branch by `requirements-pipeline` ticket mode. That ticket is never
+rewritten: no description or summary push, and no per-domain Stories. The same
+four points apply like this:
+
+| When | What happens |
+|---|---|
+| The ticket is split off | Nothing. There is no STUB: the ticket already exists |
+| The build loop starts | START, unchanged: status → `In Dev` |
+| The loop drains | `tim theme-ticket derive --workarea <workarea> --theme <ticket key> --out <workareaDir>/tickets/derived.json`, then the comment step: a dry run, then `--confirm`. One comment lists the shipped scenarios by domain |
+| The branch merges to `main` | Re-derive with `--workarea <workarea> --branch main --commits-from <branch>`, run the comment step again (it edits the same comment, so its links now point at `main`), then `tim jira transition <KEY> "Deskcheck"` |
+
+```bash
+tim theme-ticket comment --workarea <workarea> --derived <workareaDir>/tickets/derived.json
+tim theme-ticket comment --workarea <workarea> --derived <workareaDir>/tickets/derived.json --confirm
+```
+
+The comment is found on the ticket by its heading line, so a rerun edits it and
+never adds a second. A ticket with more than one comment carrying the heading
+is refused, naming their ids. The comment step runs only after the branch's
+spec files are pushed, because it links to them.
 
 **Why the loop itself does not call this.** The theme builds run
 `lifecycle: "branch"`, which raises no ticket, moves no status and "refuses a
@@ -108,6 +138,10 @@ ticket that told the business something untrue.
    so the writes are visible after the fact. And when `tim theme-ticket derive` fails
    — counts that do not sum, an unmapped openspec area — stop and say so rather
    than publishing a ticket you cannot vouch for.
+8. **A person's ticket is never rewritten.** For a ticket backlog, push no
+   description or summary and create no per-domain Stories. `start` reports the
+   backlog's `ticket`, and `push` refuses that key. The only writes are the
+   one what-shipped comment and the status moves.
 
 ## How a service is attributed to a domain
 
@@ -440,7 +474,8 @@ All under `tim theme-ticket` (`--help` on each):
 
 | Command | Purpose |
 |---|---|
-| `start` | Step 0 dispatcher — emits `MODE: <NAME>` plus the workarea paths, branch and existing ticket keys |
+| `start` | Step 0 dispatcher — emits `MODE: <NAME>` plus the workarea paths, branch, the backlog's `ticket` and existing ticket keys |
 | `derive` | Finds the theme's row commits, reads the scenarios they added from the current specs, splits scenarios, files and rows by domain, and fails if the counts do not sum |
 | `push` | Posts a ticket folder's description and summary together, refusing hard-wrapped prose and `{expand}`; a dry run until `--confirm` |
 | `stale` | Compares each ticket's cited spec files against its Jira update time and reports what needs regenerating |
+| `comment` | For a ticket backlog, posts one what-shipped comment on its ticket, or edits the one already there; a dry run until `--confirm` |

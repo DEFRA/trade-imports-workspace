@@ -1,13 +1,9 @@
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  statSync
-} from 'node:fs'
+import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
+import { backlogTicketOf } from './backlog-ticket.js'
 import { currentBranch } from './git.js'
+import { isFolder, textFieldOf } from './ticket-folder.js'
 
 const MODES = ['STUB', 'START', 'WRITE', 'MERGE', 'STALE']
 
@@ -59,9 +55,6 @@ const byCodePoint = (left, right) => {
   return left > right ? 1 : 0
 }
 
-const isFolder = (path) =>
-  statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
-
 const themesIn = (workareaDir) => {
   const themesDir = join(workareaDir, 'themes')
   if (!isFolder(themesDir)) return []
@@ -71,14 +64,6 @@ const themesIn = (workareaDir) => {
     .sort(byCodePoint)
 }
 
-const createdKeyIn = (folder) => {
-  const created = join(folder, 'ticket.created.json')
-  if (!existsSync(created)) return ''
-  const key = JSON.parse(readFileSync(created, 'utf8')).key
-  if (key === null || key === undefined || key === false) return ''
-  return String(key)
-}
-
 const existingTicketsIn = (ticketsDir) =>
   readdirSync(ticketsDir)
     .filter((name) => !name.startsWith('.'))
@@ -86,13 +71,14 @@ const existingTicketsIn = (ticketsDir) =>
     .sort(byCodePoint)
     .map((folder) => ({
       folder,
-      key: createdKeyIn(join(ticketsDir, folder))
+      key: textFieldOf(join(ticketsDir, folder, 'ticket.created.json'), 'key')
     }))
 
 /**
  * Starts the theme-ticket skill: works out the mode, makes sure the
- * workarea has a `tickets/` folder, and lists the ticket folders already
- * there with the Jira key each one produced.
+ * workarea has a `tickets/` folder, lists the ticket folders already there
+ * with the Jira key each one produced, and reports the Jira ticket the
+ * workarea's backlog names.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -100,7 +86,7 @@ const existingTicketsIn = (ticketsDir) =>
  * @param {string} [args.workarea] - A path under `workareas/`
  * @param {string} [args.theme] - Needed by every mode except STALE
  * @param {string} [args.mode] - STUB, START, WRITE, MERGE or STALE, in any case
- * @returns {Promise<{mode: string, workarea: string, theme: string|null, branch: string, workareaDir: string, ticketsDir: string, existingTickets: Array<{folder: string, key: string}>}>}
+ * @returns {Promise<{mode: string, workarea: string, theme: string|null, ticket: string|null, branch: string, workareaDir: string, ticketsDir: string, existingTickets: Array<{folder: string, key: string}>}>}
  * @throws {TimError} USAGE without a workarea, for an unknown mode, or without a theme where the mode needs one; NOT_FOUND when the workarea is missing
  */
 export const startThemeTicket = async ({
@@ -143,6 +129,7 @@ export const startThemeTicket = async ({
     mode: namedMode,
     workarea,
     theme: theme || null,
+    ticket: backlogTicketOf(workareaDir),
     branch,
     workareaDir,
     ticketsDir,

@@ -1,6 +1,6 @@
 ---
 name: service-observability
-description: 'Add custom metrics, dependency call logging, a Grafana dashboard and alerts to one CDP service, then promote them and prove the alerts fire. Use when a ticket asks for observability on a single trade-imports service (triggers: "add observability to", "add metrics and alerts to", "add a dashboard and alerts to", "service-observability", "observability for EUDPA-"). NOT for planning or implementing a ticket in general — use the ticket skill and point its plan at these steps. NOT for reviewing code already written — use review or code-style.'
+description: 'Add custom metrics, dependency call logging, a Grafana dashboard and alerts to one CDP service, then promote them and prove the alerts fire. Use when a ticket asks for observability on a single trade-imports service (triggers: "add observability to", "add metrics and alerts to", "add a dashboard and alerts to", "service-observability", "observability for EUDPA-"). NOT for building a ticket in general through the loop — use requirements-pipeline ticket mode — and NOT for planning one or implementing it by hand in general — use the ticket skill and point its plan at these steps. NOT for reviewing code already written — use review or code-style.'
 ---
 
 The recipe for giving one CDP service the observability the platform

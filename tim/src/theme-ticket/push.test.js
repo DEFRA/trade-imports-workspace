@@ -11,13 +11,25 @@ const SUMMARY = 'The theme in one line'
 
 const jira = mockJiraForEachTest()
 
-let folder
+let root
 
-afterEach(() => folder && rmSync(folder, { recursive: true, force: true }))
+afterEach(() => root && rmSync(root, { recursive: true, force: true }))
 
-const ticketFolder = ({ key, summary, description = DESCRIPTION }) => {
-  folder = mkdtempSync(join(tmpdir(), 'tim-theme-ticket-push-'))
+const ticketFolder = ({
+  key,
+  summary,
+  description = DESCRIPTION,
+  backlogTicket
+}) => {
+  root = mkdtempSync(join(tmpdir(), 'tim-theme-ticket-push-'))
+  const folder = backlogTicket ? join(root, 'tickets', 'animals') : root
   mkdirSync(folder, { recursive: true })
+  if (backlogTicket) {
+    writeFileSync(
+      join(root, 'backlog.json'),
+      JSON.stringify({ ticket: backlogTicket, repos: {} })
+    )
+  }
   writeFileSync(join(folder, 'description.txt'), description)
   if (key) {
     writeFileSync(join(folder, 'ticket.created.json'), JSON.stringify({ key }))
@@ -106,6 +118,32 @@ describe('#pushDescription refusals', () => {
     ).rejects.toMatchObject({
       message: expect.stringContaining('description.txt uses {expand}.')
     })
+  })
+
+  test('Should refuse the ticket a ticket backlog names before any request, even with confirm', async () => {
+    const dir = ticketFolder({
+      key: 'EUDPA-9',
+      summary: SUMMARY,
+      backlogTicket: 'EUDPA-9'
+    })
+
+    await expect(
+      pushDescription({ folder: dir, confirm: true })
+    ).rejects.toMatchObject({
+      message: `tim theme-ticket push: EUDPA-9 is the ticket the backlog beside ${dir} names, and its description is a person's. Post the what-shipped comment with tim theme-ticket comment instead.`
+    })
+  })
+
+  test('Should still push another ticket under the same workarea', async () => {
+    const dir = ticketFolder({
+      key: 'EUDPA-9',
+      summary: SUMMARY,
+      backlogTicket: 'EUDPA-100'
+    })
+
+    const pushed = await pushDescription({ folder: dir })
+
+    expect(pushed.mode).toBe('dry-run')
   })
 
   test('Should refuse without a folder as a usage error', async () => {

@@ -233,6 +233,13 @@ export const createJiraClient = ({
 
   const postJson = (path, body, action) => sendJson('POST', path, body, action)
 
+  const commentOf = (data) => ({
+    id: data.id,
+    author: data.author?.displayName ?? null,
+    createdAt: data.created,
+    body: data.body
+  })
+
   const postIssueLink = ({ type, inwardKey, outwardKey, action }) =>
     postJson(
       '/rest/api/2/issueLink',
@@ -506,12 +513,24 @@ export const createJiraClient = ({
         { body },
         `addComment(${key})`
       )
-      return {
-        id: data.id,
-        author: data.author?.displayName ?? null,
-        createdAt: data.created,
-        body: data.body
-      }
+      return commentOf(data)
+    },
+
+    /**
+     * @param {string} key
+     * @param {string} commentId - The comment to replace
+     * @param {string} body - Jira wiki markup, not markdown
+     * @returns {Promise<{id: string, author: string|null, createdAt: string, body: string}>}
+     * @throws {TimError} NOT_FOUND when the issue or the comment does not exist; USAGE carrying Jira's reason when it refuses the text
+     */
+    editComment: async (key, commentId, body) => {
+      const data = await sendJson(
+        'PUT',
+        `/rest/api/2/issue/${encodeURIComponent(key)}/comment/${encodeURIComponent(commentId)}`,
+        { body },
+        `editComment(${key}, ${commentId})`
+      )
+      return commentOf(data)
     },
 
     /**

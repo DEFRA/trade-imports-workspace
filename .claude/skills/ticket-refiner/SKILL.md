@@ -1,6 +1,6 @@
 ---
 name: ticket-refiner
-description: 'Assess whether a Jira ticket is READY for team refinement and estimation, producing a READY / NEEDS WORK / SPIKE REQUIRED verdict in workareas/ticket-refinement/EUDPA-X/review.md. Use when the user asks to validate a ticket''s description, AC, repos, dependencies and sizing BEFORE refinement (triggers: "is ticket EUDPA-X ready", "pre-refinement", "refine EUDPA-X", "refinement check"). NOT for authoring brand-new tickets (use the ticket-creator skill: "assess existing ticket readiness" vs "create new"). NOT for planning or implementing an already-refined ticket (use the ticket skill: "assess readiness" vs "plan/implement").'
+description: 'Assess whether a Jira ticket is READY for team refinement and estimation, producing a READY / NEEDS WORK / SPIKE REQUIRED verdict in workareas/ticket-refinement/EUDPA-X/review.md. Use when the user asks to validate a ticket''s description, AC, repos, dependencies and sizing BEFORE refinement (triggers: "is ticket EUDPA-X ready", "pre-refinement", "refine EUDPA-X", "refinement check"). NOT for authoring brand-new tickets (use the ticket-creator skill: "assess existing ticket readiness" vs "create new"). NOT for building or implementing an already-refined ticket (use requirements-pipeline ticket mode), and NOT for planning it or implementing it by hand (use the ticket skill: "assess readiness" vs "plan/implement").'
 context: fork
 allowed-tools: [Bash, Read, Glob, Edit, Write]
 argument-hint: 'EUDPA-XXXXX'
@@ -36,8 +36,9 @@ by name via the Task tool.
 
 Triggers: "is ticket EUDPA-X ready", "pre-refinement", "refine EUDPA-X",
 "refinement check". NOT for authoring brand-new tickets — use the
-`ticket-creator` skill. NOT for planning/implementing an already-refined
-ticket — use the `ticket` skill.
+`ticket-creator` skill. NOT for building an already-refined ticket — use
+`requirements-pipeline` ticket mode. NOT for planning it or implementing it by
+hand — use the `ticket` skill.
 
 ## Subagents
 

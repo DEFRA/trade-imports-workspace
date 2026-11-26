@@ -303,11 +303,13 @@ tim theme-ticket start "which theme tickets are stale" --workarea shared/design-
 tim theme-ticket derive --workarea shared/design-release-2-1 --theme origin-page --out derived.json
 tim theme-ticket stale --workarea shared/design-release-2-1
 tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
+tim theme-ticket comment --workarea shared/eudpa-832 --derived workareas/shared/eudpa-832/tickets/derived.json --confirm
 ```
 
 - `start` prints `MODE: <NAME>` (STUB, START, WRITE, MERGE or STALE, from
   `--mode` or the trigger phrase), then indented JSON with the workarea's
-  paths, the branch and each ticket folder with its Jira key. It makes the
+  paths, the branch, the Jira ticket its backlog names (`ticket`, null when
+  it names none) and each ticket folder with its Jira key. It makes the
   workarea's `tickets/` folder if it is missing.
 - `derive` finds the commits that wrote the theme's openspec (scoped by the
   theme, a Jira key `tickets.json` records for it, or a row scope), takes
@@ -323,7 +325,14 @@ tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journe
   update, as instants with their offsets. It reads only.
 - `push` posts `description.txt` and the summary from `ticket.json` in one
   update, refusing hard-wrapped prose and `{expand}`. It is a dry run that
-  sends nothing until `--confirm`.
+  sends nothing until `--confirm`. It refuses the ticket a ticket backlog
+  names: that description is a person's.
+- `comment` posts one what-shipped comment on the ticket a ticket backlog
+  names, from the file `derive --out` wrote: each domain's scenarios, each
+  linked to its spec file. It finds the earlier comment by its heading line
+  and edits it in place, so a second run never adds a second comment, and
+  refuses a ticket with more than one. It never changes the description or
+  summary, and is a dry run until `--confirm`.
 - A usage error exits 2; every other refusal exits 1.
 
 ### `tim understanding-check` — the understanding-check skill's steps
@@ -1389,6 +1398,7 @@ Each reads the repos a backlog builds from its envelope `repos` map.
 tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 \
   --in-dev-status "In Dev" --done-status Done --json  # derive, ticket, branch
 tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
+tim build branch shared/my-programme --open --json          # the envelope's branch, opened in every repo and the workspace
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
 tim build gate shared/my-programme --json                   # unit+FIT (repos at once), then k6 alone, then E2E
 tim build gate shared/my-programme --serial --json          # one rung at a time: unit, then FIT, then E2E
@@ -1429,9 +1439,23 @@ remote has it, else from the repo's default branch. It changes nothing if a
 repo it would move has uncommitted work (exit 1, `DIRTY_TREE`, naming the
 files). Running it again is a no-op.
 
+`tim build branch --open` opens a ticket's branch. It takes the branch from
+the backlog's envelope when none is given, adds the workspace repo after the
+envelope's repos (unless the envelope maps it), and gives each repo with no
+commits of its own on the branch, counted from its default branch, one empty
+opening commit. The commit runs the repo's own git hooks and takes nothing
+from the index. A hook that refuses it fails that repo with
+`OPENING_COMMIT_FAILED`; the others still report. Each repo's result also
+says whether origin has the branch and whether a push is still needed, read
+with `git ls-remote origin`, or null with git's reason when origin cannot be
+read. It never pushes and never calls GitHub. Like the rest of `tim build
+branch` it has no dry run: it refuses before any change when a repo has
+uncommitted work, and a second run is a no-op.
+
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog
-repo: the unit rungs, the FIT rungs (each on the first free port at or above
+repo, keyed by the repo's folder name (the workspace repo's is
+`trade-imports-workspace`, wherever it is cloned): the unit rungs, the FIT rungs (each on the first free port at or above
 the one gates.json plans for it, passed to its script as `PORT`; a rung that
 moves records `{planned, used, heldBy}` in its `ports`, so two clones can run
 the same FIT suite at once) and the E2E rungs against

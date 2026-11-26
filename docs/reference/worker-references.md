@@ -34,6 +34,8 @@ artifacts that downstream `tools/` scripts consume.
 | `requirements-pipeline` | `workflow/distil/briefs/consolidate.md` | Per-area row drafts into `distil/areas/<id>/rows.json` (six at a time), then one combiner into `backlog.json`: thin full-stack slices, themes at feature-folder granularity, `todo` and `blocked` rows rewritten to the latest rulings, every other row held fixed |
 | `requirements-pipeline` | `workflow/distil/briefs/combine-review.md` | One-shot — merges the finished rows that suit combining, which `tim backlog combine-candidates` lists, in `backlog.json`: a row merged away keeps its id and becomes `merged-into`, naming the row it went into |
 | `requirements-pipeline` | `references/REPORT.md` | One-shot — drafts the decision-led DISTIL report, returned as text |
+| `requirements-pipeline` | `workflow/intake/briefs/read.md` | The ticket intake's reader and its one fixer — investigation, intake record and combined backlog for one ticket, run by `workflow/ticket-intake.js` |
+| `requirements-pipeline` | `workflow/intake/briefs/refute.md` | The ticket intake's refuting agent — a verdict on every row, split and statement, and a challenge on every question, run by `workflow/ticket-intake.js` |
 | `spec-catchup` | `references/CAPABILITY_JUDGE.md` | Per-capability judgement against the suite report and source — `judge-<capability>.json` only, parent applies |
 | `spec-cover` | `references/GAP_JUDGE.md` | Per-gap Then-to-assert mapping and test proposal — `judge-<id>.json` only, parent writes and probes |
 

@@ -51,6 +51,7 @@ describe('#startThemeTicket', () => {
       mode: 'MERGE',
       workarea: 'release',
       theme: 'alpha',
+      ticket: null,
       branch: 'main',
       workareaDir: `${workspace.root}/workareas/release`,
       ticketsDir: `${workspace.root}/workareas/release/tickets`,
@@ -59,6 +60,23 @@ describe('#startThemeTicket', () => {
         { folder: 'zebra', key: 'EUDPA-2' }
       ]
     })
+  })
+
+  test('Should report the ticket the workarea’s backlog names', async () => {
+    workspace = await createGitWorkspace()
+    workspace.write({
+      'workareas/eudpa-9/backlog.json': '{"ticket":"EUDPA-9","repos":{}}\n'
+    })
+    await workspace.commit('chore: start')
+
+    const started = await startThemeTicket({
+      workspaceRoot: workspace.root,
+      workarea: 'eudpa-9',
+      theme: 'EUDPA-9',
+      mode: 'START'
+    })
+
+    expect(started.ticket).toBe('EUDPA-9')
   })
 
   test('Should make the tickets folder when the workarea has none', async () => {

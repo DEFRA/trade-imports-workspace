@@ -18,21 +18,13 @@ export const isSpecFile = (path) => SPEC_FILE.test(path)
 
 /**
  * The spec files a repo has changed since it left the base, its uncommitted
- * work included: the ladder runs before the land stage, so a spec the row has
- * just written is untracked and a spec it has just edited is unstaged.
- *
- * Playwright's own `--only-changed` is not used, and cannot be: every spec in
- * the tests repo imports the `@fixtures` barrel, which imports the
- * `@page-objects` barrel and every domain's journey flows, so one page-object
- * edit makes every spec a dependent. Measured on 26 November 2026: one changed
- * animals page object selected 871 tests in 173 files, plants visual specs
- * included. The dependency graph says everything depends on everything, which
- * is true and useless. A page object, fixture or flow therefore selects no spec
- * of its own here, and the pull request's whole-suite run is its only proof.
+ * work included. Imports are never followed, so a changed page object, fixture
+ * or flow yields no spec: see "Choosing e2e" in
+ * .claude/skills/requirements-pipeline/references/BUILD.md.
  *
  * @param {string} repoPath Absolute path to the repo
  * @param {string} base The ref the branch left, such as origin/main
- * @returns {Promise<string[]>} Repo-relative spec paths, sorted
+ * @returns {Promise<string[]>} Repo-relative spec paths, sorted, deletions left out
  * @throws {TimError} NOT_FOUND when the base is not in the repo
  */
 export const changedSpecPaths = async (repoPath, base = DEFAULT_BASE) => {
@@ -41,14 +33,9 @@ export const changedSpecPaths = async (repoPath, base = DEFAULT_BASE) => {
 }
 
 /**
- * The Playwright run that covers a change, rather than its repos' whole suites:
- * the spec files the branch changed, plus the specs the Behaviour Spec links to
- * the scenarios it touches.
- *
- * It passes with no tests, so a named covered spec the change deleted does not
- * fail the rung. No specs at all plans no run: a change that touches no spec
- * has nothing to prove against the stack, and the pull request runs the whole
- * suite either way.
+ * The Playwright run that covers a change, rather than its repos' whole suites.
+ * Passes with no tests, so a covered spec that no longer exists does not fail
+ * the rung. No specs at all plans no run at all.
  *
  * @param {object} args
  * @param {string[]} [args.specs] Spec paths the branch changed

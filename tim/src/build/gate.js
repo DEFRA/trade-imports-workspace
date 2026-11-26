@@ -48,14 +48,20 @@ const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 const DEFAULT_CHANGE_BASE = 'origin/main'
 
-// A path is relative to the repo it sits in, so a rung is given its own repo's
-// paths and no other's. A frontend's FIT specs would otherwise reach the tests
-// repo's Playwright run, which has no such files. A covered spec names its repo
-// the way `tim backlog standards --files` does, `<repoKey>:<path>`, so it needs
-// no guessing either.
 const byRepo = (repos, of) =>
   Object.fromEntries(repos.map(({ folder }) => [folder, of(folder)]))
 
+/**
+ * What a narrowed e2e run gives planRungs: each repo's own changed paths, the
+ * spec files among them, and the covered specs named for it. A covered spec
+ * names its repo first, `<repoKey>:<path>`.
+ *
+ * @param {{folder: string, path: string}[]} repos
+ * @param {string} base
+ * @param {string[]} coveredSpecs
+ * @returns {Promise<{changedByRepo: object, specsByRepo: object, coveredSpecsByRepo: object}>}
+ * @throws {TimError} NOT_FOUND when a repo does not have the base
+ */
 const narrowedScope = async (repos, base, coveredSpecs) => {
   const changedByRepo = Object.fromEntries(
     await Promise.all(
@@ -718,7 +724,9 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
  * @param {string} [args.leasePath] - The stack lease file
  * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos, stackAfterLocal and e2e
- * @param {'local'|'ci'} [args.e2e] - Where the e2e rungs run, over this machine's setting (default: local)
+ * @param {'local'|'targeted'|'ci'} [args.e2e] - Where the e2e rungs run, over this machine's setting (default: local). `targeted` runs only the spec files each repo changed since `base`, and plans no rung for a repo that changed nothing
+ * @param {string} [args.base] - The ref `targeted` diffs each repo against (default: origin/main)
+ * @param {string[]} [args.coveredSpecs] - Specs `targeted` runs whether or not the repo changed them, each named `<repoKey>:<path>`
  * @param {object} [args.env] - Extra environment for every command the gate runs
  * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object, e2e: {where: string, leftToCi: object[], evidence: string|null}}>}
  */

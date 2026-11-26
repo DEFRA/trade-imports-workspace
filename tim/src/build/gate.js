@@ -663,7 +663,8 @@ const layerDurations = (startedAt, ran) => {
  * With `e2e` 'ci' (or this machine's `e2e` setting, when no `e2e` is given)
  * the gate runs no e2e rung, takes no lease and runs no stack command: it
  * lists those rungs under `e2e.leftToCi`, and each pull request's E2E check
- * is their evidence. A gate whose only rungs are left to CI is green.
+ * is their evidence. A gate whose only rungs are left to CI is green, and so
+ * is a phase the repos have no rungs in, with no rungs.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -729,9 +730,8 @@ export const runGate = async ({
   const rungs = [...ran.local.map(({ result }) => result), ...ran.e2e.results]
   const stackClean =
     stack.wasUp !== false || stack.stoppedAfter || stack.keptForHolder
-  const gatedSomething = rungs.length > 0 || e2eReport.leftToCi.length > 0
   return {
-    green: gatedSomething && rungs.every(({ ok }) => ok) && stackClean,
+    green: rungs.every(({ ok }) => ok) && stackClean,
     phase,
     serial,
     logs,

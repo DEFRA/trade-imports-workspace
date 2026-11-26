@@ -2,7 +2,11 @@ import { describe, test, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadBacklogSchema, statusesOf } from './backlog-schema.js'
+import {
+  loadBacklogSchema,
+  loadIntakeSchema,
+  statusesOf
+} from './backlog-schema.js'
 import {
   WITHHELD_STATUSES,
   checkBacklog as checkAgainst,
@@ -51,6 +55,18 @@ const attempt = {
 describe('checkBacklog', () => {
   test('passes a row that says what, why and acceptance', () => {
     expect(checkBacklog(backlogOf(row()))).toEqual({
+      problems: [],
+      counts: { todo: 1 },
+      total: 1
+    })
+  })
+
+  test('keeps a backlog with no ticket to its own result, whatever record it is given', () => {
+    const result = checkAgainst(backlogOf(row()), schema, {
+      intakeRecord: { record: null, schema: loadIntakeSchema(workspaceRoot) }
+    })
+
+    expect(result).toEqual({
       problems: [],
       counts: { todo: 1 },
       total: 1

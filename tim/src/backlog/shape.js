@@ -8,14 +8,10 @@ import {
   externalDependencyProblems,
   themeProblems
 } from './themes.js'
+import { checkTicketBacklog } from './ticket-backlog.js'
 import { validateJson } from './validate-json.js'
 
-/**
- * The statuses the build never picks up. Named as a deny-list, so a status
- * nobody expected is picked up and seen rather than silently skipped
- * (requirements-pipeline BUILD.md, "Buildability is status and dependencies").
- * Every one is a status backlog.schema.json allows; a test holds them to it.
- */
+/** The statuses the build never picks up. */
 export const WITHHELD_STATUSES = new Set([
   'done',
   'deferred',
@@ -259,13 +255,13 @@ const envelopeProblems = (root, backlog, errors) =>
   )
 
 /**
- * Every way a backlog departs from backlog.schema.json, the one shape the
- * distiller writes and the build loop reads, plus the rules a schema cannot
- * hold: ids are unique, every dependency names another row in the backlog
- * without a cycle, every repo a row merges into is one of its own repos and
- * one the envelope names, and the theme rules in `themes.js`. Given a way to
- * read another workarea's backlog, every `externalDependsOn` must name a row
- * that backlog has.
+ * Every way a backlog departs from backlog.schema.json, plus the rules a
+ * schema cannot hold: ids are unique, every dependency names another row in
+ * the backlog without a cycle, every repo a row merges into is one of its own
+ * repos and one the envelope names, the theme rules in `themes.js` and the
+ * ticket-backlog rules in `ticket-backlog.js`. Given a way to read another
+ * workarea's backlog, every `externalDependsOn` must name a row that backlog
+ * has.
  *
  * @param {unknown} backlog - The parsed backlog.json
  * @param {object} schema - The parsed backlog.schema.json
@@ -273,10 +269,18 @@ const envelopeProblems = (root, backlog, errors) =>
  * @param {(workarea: string) => object|null} [options.readWorkareaBacklog] -
  *   Another workarea's parsed backlog, or null when it has none. Left out,
  *   `externalDependsOn` is not followed
- * @returns {{problems: string[], counts: Record<string, number>, total: number}}
+ * @param {{record: object|null, schema: object}} [options.intakeRecord] - The parsed
+ *   intake.json (null when the workarea has none) and its schema. Left out, a
+ *   ticket backlog is not held to its record
+ * @returns {{problems: string[], counts: Record<string, number>, total: number, intake?: object}}
+ *   `intake` summarises the record of a ticket backlog that has one
  * @throws {TimError} PARSE when the schema uses a keyword tim cannot check
  */
-export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
+export const checkBacklog = (
+  backlog,
+  schema,
+  { readWorkareaBacklog, intakeRecord } = {}
+) => {
   const errors = validateJson(schema, backlog)
   if (lacksIncrementsList(errors)) {
     return { problems: [NO_INCREMENTS], counts: {}, total: 0 }
@@ -299,6 +303,7 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
       ...mergeProblems(row, where, repoKeys)
     ]
   }
+  const ticketBacklog = checkTicketBacklog(backlog, intakeRecord)
   const problems = [
     ...envelopeProblems(schema, backlog, errors),
     ...duplicateIds(rows).map((id) => `${id} appears more than once.`),
@@ -306,7 +311,7 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
   ]
   const cycle = findCycle(dependencyEdges(rows))
   if (cycle) problems.push(`A dependsOn cycle: ${cycle.join(' → ')}.`)
-  problems.push(...themeProblems(backlog))
+  problems.push(...themeProblems(backlog), ...ticketBacklog.problems)
   if (readWorkareaBacklog) {
     problems.push(
       ...externalDependencyProblems(backlog, readWorkareaBacklog),
@@ -314,7 +319,12 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
       ...pickUpProblems(backlog, readWorkareaBacklog)
     )
   }
-  return { problems, counts: countByStatus(rows), total: rows.length }
+  return {
+    problems,
+    counts: countByStatus(rows),
+    total: rows.length,
+    ...(ticketBacklog.summary ? { intake: ticketBacklog.summary } : {})
+  }
 }
 
 const splitOffDependencyProblems = (backlog, readWorkareaBacklog) =>
@@ -343,8 +353,7 @@ const NO_OTHER_BACKLOGS = () => null
 /**
  * The first row, in file order, that is not withheld, whose every
  * dependency is `done`, and whose every `externalDependsOn` row is `done` in
- * its own workarea's backlog — the same rule the BUILD phase's derive step
- * states.
+ * its own workarea's backlog.
  *
  * @param {{increments: object[]}} backlog
  * @param {object} [options]

@@ -25,7 +25,7 @@ import {
   utcSeconds
 } from './workarea.js'
 
-const fetchTicket = async (ticket) => {
+export const fetchTicket = async (ticket) => {
   try {
     return await createJiraClient().getTicket(ticket, { withRendered: true })
   } catch (error) {
@@ -57,6 +57,33 @@ export const fetchPages = async (links, { log, skipped }) => {
     }
   }
   return pages
+}
+
+/**
+ * A ticket's comments and the Confluence pages its description links to.
+ * Comments or a page that cannot be read are left out, and listed in
+ * `skipped` with the reason.
+ *
+ * @param {object} args
+ * @param {string} args.ticket
+ * @param {string} args.description - The ticket's rendered description
+ * @param {(line: string) => Promise<void>} args.log - Receives each progress line
+ * @param {Array<{source: string, reason: string}>} args.skipped
+ * @returns {Promise<{comments: object[], pages: object[]}>}
+ */
+export const fetchCommentsAndPages = async ({
+  ticket,
+  description,
+  log,
+  skipped
+}) => {
+  await log('Fetching comments...')
+  const comments = await fetchComments(ticket, skipped)
+
+  await log('Checking for Confluence links...')
+  const links = confluenceLinksIn(description, process.env.JIRA_BASE_URL ?? '')
+  const pages = await fetchPages(links, { log, skipped })
+  return { comments, pages }
 }
 
 const metaFor = (fields, created) => ({
@@ -116,16 +143,13 @@ export const prepareRefinement = async ({
   await log('Fetching ticket details...')
   const fields = refinementFieldsOf(await fetchTicket(ticket))
 
-  await log('Fetching comments...')
   const skipped = []
-  const comments = await fetchComments(ticket, skipped)
-
-  await log('Checking for Confluence links...')
-  const links = confluenceLinksIn(
-    fields.description,
-    process.env.JIRA_BASE_URL ?? ''
-  )
-  const pages = await fetchPages(links, { log, skipped })
+  const { comments, pages } = await fetchCommentsAndPages({
+    ticket,
+    description: fields.description,
+    log,
+    skipped
+  })
 
   await log('Writing ticket.md...')
   writeFileSync(

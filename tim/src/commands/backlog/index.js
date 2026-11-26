@@ -12,6 +12,7 @@ import { resolveStandards, lintStandards } from '../../backlog/standards.js'
 import { resolveRepoKey } from '../../backlog/standards/repo-keys.js'
 import { TimError } from '../../errors.js'
 import { register as registerEdit } from './edit.js'
+import { register as registerFromTicket } from './from-ticket.js'
 import { register as registerLedger } from './ledger.js'
 import { register as registerRows } from './rows.js'
 import { register as registerSplit } from './split.js'
@@ -564,6 +565,7 @@ export const register = (program, { timVersion }) => {
       })
     )
 
+  registerFromTicket(backlog, { timVersion })
   registerLedger(backlog, { timVersion })
   registerRows(backlog, { timVersion })
   registerSplit(backlog, { timVersion })

@@ -47,25 +47,6 @@ const anthropicApiKeyCheck = (env) =>
         detail: 'ANTHROPIC_API_KEY is not set'
       }
 
-const detachedSessionCheck = (env) => {
-  if (isSet(env.TMUX)) {
-    return { name: 'detached-session', ok: true, detail: 'Running inside tmux' }
-  }
-  if (isSet(env.STY)) {
-    return {
-      name: 'detached-session',
-      ok: true,
-      detail: 'Running inside screen'
-    }
-  }
-  return {
-    name: 'detached-session',
-    ok: false,
-    detail:
-      'This session is not running inside tmux or screen, so it ends when the SSH connection closes. Start claude inside tmux new -s nightly or screen -S nightly.'
-  }
-}
-
 const stopFileCheck = (stop) =>
   stop.stopped
     ? {
@@ -95,13 +76,26 @@ const loadJobs = (workspaceRoot) => {
   }
 }
 
+const WORKSPACE_KEY = 'workspace'
+
 const checkoutsOf = (workspaceRoot) => [
-  { key: 'workspace', path: workspaceRoot },
+  { key: WORKSPACE_KEY, path: workspaceRoot },
   ...rosterOf(workspaceRoot).repos.map((repo) => ({
     key: repo,
     path: repoPath(workspaceRoot, repo)
   }))
 ]
+
+const isWorkareaChange = ({ path, from }) =>
+  [path, from]
+    .filter((changedPath) => changedPath !== undefined)
+    .every((changedPath) => changedPath.startsWith('workareas/'))
+
+const ignoreWorkspaceWorkareaChanges = (state) => {
+  if (state.key !== WORKSPACE_KEY || !state.cloned) return state
+  const changed = state.changed.filter((change) => !isWorkareaChange(change))
+  return { ...state, changed, dirty: changed.length > 0 }
+}
 
 const cleanCheckoutsCheck = (states) => {
   const dirty = states.filter(({ dirty }) => dirty).map(({ key }) => key)
@@ -109,7 +103,8 @@ const cleanCheckoutsCheck = (states) => {
     ? {
         name: 'clean-checkouts',
         ok: true,
-        detail: 'The workspace and every cloned repo are clean'
+        detail:
+          'The workspace, outside workareas/, and every cloned repo are clean'
       }
     : {
         name: 'clean-checkouts',
@@ -145,9 +140,10 @@ const repoSummaryOf = ({ key, cloned, branch = null, dirty = false }) => ({
 /**
  * Whether this session is ready to run the nightly jobs unattended, from
  * checks that need no GitHub: SONAR_TOKEN set, ANTHROPIC_API_KEY not set, the
- * session inside tmux (TMUX set) or screen (STY set), the stop file absent, `config/nightly-jobs.json` valid, and the workspace and
- * every cloned repo clean. With `fetch`, each fetches origin first and a
- * failed fetch fails the check.
+ * stop file absent, `config/nightly-jobs.json` valid, and the workspace and every cloned repo
+ * clean. Changes under the workspace's `workareas/`, tracked or untracked,
+ * do not count, and the workspace's entry in `repos` leaves them out too.
+ * With `fetch`, each fetches origin first and a failed fetch fails the check.
  *
  * @param {string} workspaceRoot
  * @param {object} [options]
@@ -160,14 +156,14 @@ export const checkNightlyReadiness = async (
   { env = process.env, fetch = false } = {}
 ) => {
   const { jobs, check: jobsCheck } = loadJobs(workspaceRoot)
-  const { repos: states } = await readRepoStates({
+  const { repos } = await readRepoStates({
     repos: checkoutsOf(workspaceRoot),
     fetch
   })
+  const states = repos.map(ignoreWorkspaceWorkareaChanges)
   const checks = [
     sonarTokenCheck(env),
     anthropicApiKeyCheck(env),
-    detachedSessionCheck(env),
     stopFileCheck(readStopFile(workspaceRoot)),
     jobsCheck,
     cleanCheckoutsCheck(states),

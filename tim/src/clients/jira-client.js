@@ -162,15 +162,11 @@ export const createJiraClient = ({
   }
   const normalisedBase = baseUrl.replace(/\/+$/, '')
 
-  const get = async (path, action) => {
-    const url = `${normalisedBase}${path}`
+  const getAndRead = async (path, action, { accept, readBody }) => {
     let response
     try {
-      response = await fetch(url, {
-        headers: {
-          Authorization: authHeader(user, token),
-          Accept: 'application/json'
-        }
+      response = await fetch(`${normalisedBase}${path}`, {
+        headers: { Authorization: authHeader(user, token), Accept: accept }
       })
     } catch (error) {
       throw new TimError('NETWORK', `${action}: ${error.message}`, error)
@@ -186,12 +182,30 @@ export const createJiraClient = ({
       mapped.jiraMessages = await jiraMessagesOf(response)
       throw mapped
     }
-    try {
-      return await response.json()
-    } catch (error) {
-      throw new TimError('PARSE', `${action}: invalid JSON response.`, error)
-    }
+    return readBody(response)
   }
+
+  const get = (path, action) =>
+    getAndRead(path, action, {
+      accept: 'application/json',
+      readBody: async (response) => {
+        try {
+          return await response.json()
+        } catch (error) {
+          throw new TimError(
+            'PARSE',
+            `${action}: invalid JSON response.`,
+            error
+          )
+        }
+      }
+    })
+
+  const getBytes = (path, action) =>
+    getAndRead(path, action, {
+      accept: '*/*',
+      readBody: async (response) => Buffer.from(await response.arrayBuffer())
+    })
 
   const sendJson = async (method, path, body, action) => {
     const url = `${normalisedBase}${path}`
@@ -218,6 +232,13 @@ export const createJiraClient = ({
   }
 
   const postJson = (path, body, action) => sendJson('POST', path, body, action)
+
+  const commentOf = (data) => ({
+    id: data.id,
+    author: data.author?.displayName ?? null,
+    createdAt: data.created,
+    body: data.body
+  })
 
   const postIssueLink = ({ type, inwardKey, outwardKey, action }) =>
     postJson(
@@ -472,11 +493,11 @@ export const createJiraClient = ({
         `/rest/api/2/issue/${encodeURIComponent(id)}/comment`,
         `getComments(${id})`
       )
-      return (data.comments ?? []).map((c) => ({
-        id: c.id,
-        author: c.author?.displayName ?? null,
-        createdAt: c.created,
-        body: c.body
+      return (data.comments ?? []).map((comment) => ({
+        id: comment.id,
+        author: comment.author?.displayName ?? null,
+        createdAt: comment.created,
+        body: comment.body
       }))
     },
 
@@ -492,19 +513,29 @@ export const createJiraClient = ({
         { body },
         `addComment(${key})`
       )
-      return {
-        id: data.id,
-        author: data.author?.displayName ?? null,
-        createdAt: data.created,
-        body: data.body
-      }
+      return commentOf(data)
+    },
+
+    /**
+     * @param {string} key
+     * @param {string} commentId - The comment to replace
+     * @param {string} body - Jira wiki markup, not markdown
+     * @returns {Promise<{id: string, author: string|null, createdAt: string, body: string}>}
+     * @throws {TimError} NOT_FOUND when the issue or the comment does not exist; USAGE carrying Jira's reason when it refuses the text
+     */
+    editComment: async (key, commentId, body) => {
+      const data = await sendJson(
+        'PUT',
+        `/rest/api/2/issue/${encodeURIComponent(key)}/comment/${encodeURIComponent(commentId)}`,
+        { body },
+        `editComment(${key}, ${commentId})`
+      )
+      return commentOf(data)
     },
 
     /**
      * Create an issue. `fields` is sent verbatim as Jira's `{fields: ...}`
-     * body — the caller (a manifest-to-fields mapping) owns the shape, this
-     * is a thin transport. `description` must already be Jira wiki markup,
-     * not markdown.
+     * body. `description` must be Jira wiki markup, not markdown.
      *
      * @param {object} fields
      * @returns {Promise<{key: string, id: string, url: string}>}
@@ -525,9 +556,8 @@ export const createJiraClient = ({
 
     /**
      * Change fields on an issue that already exists. `fields` is sent
-     * verbatim as Jira's `{fields: ...}` body, so the caller owns the
-     * shape — the same thin transport as `createIssue`. `description` must
-     * already be Jira wiki markup, not markdown.
+     * verbatim as Jira's `{fields: ...}` body. `description` must be Jira
+     * wiki markup, not markdown.
      *
      * @param {string} key
      * @param {object} fields
@@ -545,10 +575,9 @@ export const createJiraClient = ({
     },
 
     /**
-     * Attach each file to an issue as its own multipart POST, so one
-     * file failing (too large, a transient 5xx) never stops the rest —
-     * the caller gets a per-file result to build a partial-success receipt
-     * from, rather than the client throwing on the first failure.
+     * Attach each file to an issue as its own multipart POST. One file
+     * failing does not stop the rest, and is reported in its own result
+     * rather than thrown.
      *
      * @param {string} key
      * @param {string[]} filePaths - Absolute paths on disk
@@ -589,23 +618,37 @@ export const createJiraClient = ({
     },
 
     /**
-     * The filenames already attached to an issue, for skip-existing checks.
+     * The attachments on an issue.
      *
      * @param {string} key
-     * @returns {Promise<Array<{id: string, filename: string, size: number, created: string}>>}
+     * @returns {Promise<Array<{id: string, filename: string, mimeType: string|null, size: number, created: string}>>}
      */
     listAttachments: async (key) => {
       const data = await get(
         `/rest/api/2/issue/${encodeURIComponent(key)}?fields=attachment`,
         `listAttachments(${key})`
       )
-      return (data.fields?.attachment ?? []).map((a) => ({
-        id: a.id,
-        filename: a.filename,
-        size: a.size,
-        created: a.created
+      return (data.fields?.attachment ?? []).map((attachment) => ({
+        id: attachment.id,
+        filename: attachment.filename,
+        mimeType: attachment.mimeType ?? null,
+        size: attachment.size,
+        created: attachment.created
       }))
     },
+
+    /**
+     * The content of one attachment.
+     *
+     * @param {string} attachmentId - Jira's numeric attachment id
+     * @returns {Promise<Buffer>}
+     * @throws {TimError} AUTH when Jira refuses the credentials; NOT_FOUND when no attachment has the id; NETWORK when Jira cannot be reached
+     */
+    downloadAttachment: (attachmentId) =>
+      getBytes(
+        `/rest/api/2/attachment/content/${encodeURIComponent(attachmentId)}`,
+        `downloadAttachment(${attachmentId})`
+      ),
 
     /**
      * @param {string} attachmentId - Jira's numeric attachment id
@@ -705,13 +748,12 @@ export const createJiraClient = ({
 
     /**
      * Move an issue into the status with exactly this name. An issue already
-     * in it is left alone. The one implementation behind `tim jira
-     * transition` and `tim build start`'s move to the working status.
+     * in it is left alone.
      *
      * @param {string} key
      * @param {string} status - The status name, compared exactly
      * @param {object} [options]
-     * @param {string} [options.from] - The issue's status, when the caller already read it
+     * @param {string} [options.from] - The issue's current status; read from Jira when left out
      * @param {boolean} [options.matchTransitionName=false] - Also accept a transition with this name when no transition leads to a status with it
      * @param {string} [options.resolution] - Set this resolution as part of the move
      * @returns {Promise<{key: string, from: string|null, to: string|null, moved: boolean, transition: string|null, resolution?: string}>}
@@ -836,7 +878,9 @@ export const createJiraClient = ({
       return [...counts]
         .map(([label, count]) => ({ label, count }))
         .sort(
-          (a, b) => b.count - a.count || compareCodePoints(a.label, b.label)
+          (first, second) =>
+            second.count - first.count ||
+            compareCodePoints(first.label, second.label)
         )
     },
 
@@ -912,7 +956,7 @@ export const createJiraClient = ({
 const MAX_CHILD_PAGES = 50
 const MAX_SEARCH_PAGE_SIZE = 100
 
-const compareCodePoints = (a, b) => {
-  if (a < b) return -1
-  return a > b ? 1 : 0
+const compareCodePoints = (first, second) => {
+  if (first < second) return -1
+  return first > second ? 1 : 0
 }

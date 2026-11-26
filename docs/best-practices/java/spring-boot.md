@@ -9,36 +9,39 @@ Project baseline: Spring Boot 3.5, Java 25, Maven, Lombok. This doc covers the p
 Use **feature-based packages**, not layer-based. Each feature owns its controller, service, repository, model, and DTO.
 
 ```
-src/main/java/uk/gov/defra/tradeimportsanimals/
-├── TradeImportsAnimalsApplication.java
+src/main/java/uk/gov/defra/trade/imports/animals/
+├── Application.java
 ├── notification/
 │   ├── NotificationController.java
 │   ├── NotificationService.java
 │   ├── NotificationRepository.java
 │   ├── Notification.java           ← MongoDB document
-│   └── dto/
-│       ├── NotificationDto.java
-│       └── NotificationRequest.java
+│   └── NotificationDto.java
 ├── audit/
 │   ├── AuditRepository.java
 │   └── Audit.java
-├── config/
-│   ├── SecurityConfig.java
+├── configuration/
 │   ├── CacheConfig.java
 │   ├── MongoConfig.java
 │   └── MetricsConfig.java
-├── common/
-│   ├── exception/
-│   │   ├── GlobalExceptionHandler.java
-│   │   ├── NotFoundException.java
-│   │   └── ConflictException.java
-│   └── filter/
-│       ├── RequestTracingFilter.java
-│       └── AdminSecretFilter.java
+├── exceptions/
+│   ├── GlobalExceptionHandler.java
+│   ├── NotFoundException.java
+│   └── ConflictException.java
+├── filter/
+│   ├── RequestTracingFilter.java
+│   └── AdminSecretFilter.java
+├── logging/
+│   └── EcsEventEncoder.java
 └── metrics/
     ├── EmfMeterRegistry.java
-    └── NotificationMetrics.java
+    ├── ExternalCallRecorder.java      ← records each dependency call (meters, log line, outcome)
+    ├── MongoCallRecorder.java         ← MongoDB driver CommandListener
+    ├── AwsCallRecorder.java           ← AWS SDK ExecutionInterceptor (SNS)
+    └── DependencyAvailabilityMetrics.java
 ```
+
+This is an excerpt: each package holds more classes than are shown.
 
 ---
 
@@ -48,9 +51,9 @@ src/main/java/uk/gov/defra/tradeimportsanimals/
 @SpringBootApplication
 @EnableScheduling
 @EnableConfigurationProperties(AppConfig.class)
-public class TradeImportsAnimalsApplication {
+public class Application {
     public static void main(String[] args) {
-        SpringApplication.run(TradeImportsAnimalsApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 }
 ```
@@ -469,19 +472,33 @@ EmfMeterRegistry emfMeterRegistry(
         @Value("${aws.emf.namespace}") String namespace,
         @Value("${aws.emf.step}") Duration step,
         @Value("${aws.emf.environment:}") String environment) {
-    if (!environment.isBlank()) {
-        EnvironmentConfigurationProvider.getConfig()
-            .setEnvironmentOverride(Environments.valueOf(environment));
-        log.info("Writing metrics to the {} EMF environment", environment);
-    }
+    overrideEmfEnvironment(environment);
     EmfMeterRegistry registry = new EmfMeterRegistry(namespace, step, Clock.SYSTEM, MetricsLogger::new);
     registry.start(new NamedThreadFactory("emf-meter-registry"));
     log.info("Publishing metrics to CloudWatch namespace {} every {}", namespace, step);
     return registry;
 }
+
+@Bean
+ApplicationRunner emfPublishingOffLog(ObjectProvider<EmfMeterRegistry> emfMeterRegistry) {
+    return args -> {
+        if (emfMeterRegistry.getIfAvailable() == null) {
+            log.info("Not publishing metrics to CloudWatch: aws.emf.enabled is not true");
+        }
+    };
+}
+
+private static void overrideEmfEnvironment(String environment) {
+    if (environment.isBlank()) {
+        return;
+    }
+    EnvironmentConfigurationProvider.getConfig()
+        .setEnvironmentOverride(Environments.valueOf(environment));
+    log.info("Writing metrics to the {} EMF environment", environment);
+}
 ```
 
-`@ConditionalOnProperty` leaves the bean out entirely — no stub, no `if` check needed. Integration tests leave `aws.emf.enabled` false, so Spring Boot's in-memory registry is used and nothing is published.
+`@ConditionalOnProperty` leaves the bean out entirely — no stub, no `if` check needed. The condition is written once: the off-state log asks whether the bean exists rather than restating the property test. The EMF environment override changes JVM-wide state, so it sits in a method whose name says so, and the bean method only builds and starts the registry. Integration tests leave `aws.emf.enabled` false, so Spring Boot's in-memory registry is used and nothing is published.
 
 ---
 
@@ -849,9 +866,10 @@ log.info("Address lookup answered: status={}", response.getStatusCode().value())
 ```xml
 <configuration>
   <springProfile name="!local">
-    <!-- ECS format for deployed environments -->
+    <!-- ECS format for deployed environments. EcsEventEncoder, not EcsEncoder: it writes an
+         external-call line's event.* key-value pairs as the nested event object CDP's OpenSearch keeps. -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-      <encoder class="co.elastic.logging.logback.EcsEncoder">
+      <encoder class="uk.gov.defra.trade.imports.animals.logging.EcsEventEncoder">
         <serviceName>trade-imports-animals-backend</serviceName>
       </encoder>
     </appender>
@@ -1029,6 +1047,8 @@ public void countChange(Change change) {
 }
 ```
 
+Calls to MongoDB and SNS are recorded at the transport, not in the calling class: MongoDB by `MongoCallRecorder`, the driver's `CommandListener`, and SNS by `AwsCallRecorder`, an AWS SDK `ExecutionInterceptor`. Do not time them by hand. An S3 download is the exception: `S3DocumentService.streamToOutput` times its `get-object` call itself, summing the time spent in `getObject` and in each read of the body and leaving out the writes to the client, because a streamed body is still being read after the SDK call has returned. For the design, see the backend's `docs/design-notes.md` ("Metrics and dependency calls").
+
 Each metric name goes on the allowlist (`management.metrics.enable` in `application.yml`), or its meter publishes nothing.
 
 ---
@@ -1060,7 +1080,7 @@ class NotificationServiceIT {
 
 | Convention | Value |
 |-----------|-------|
-| Base package | `uk.gov.defra.tradeimportsanimals` |
+| Base package | `uk.gov.defra.trade.imports.animals` |
 | Java version | Java 25 (Amazon Corretto) |
 | Spring Boot | 3.5.x |
 | Build tool | Maven |

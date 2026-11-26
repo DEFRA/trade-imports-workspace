@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import {
   BACKLOG_SCHEMA_PATH,
+  INTAKE_SCHEMA_PATH,
   loadBacklogSchema,
+  loadIntakeSchema,
   recipeFieldsOf,
   rigoursOf,
   rowSchemaOf,
@@ -57,6 +59,42 @@ describe('the backlog schema', () => {
 
   test('describes every envelope field', () => {
     const undescribed = Object.entries(schema.properties)
+      .filter(([, field]) => !field.description)
+      .map(([name]) => name)
+
+    expect(undescribed).toEqual([])
+  })
+})
+
+describe('loadIntakeSchema', () => {
+  test('reads the intake schema from the workspace', () => {
+    expect(loadIntakeSchema(workspaceRoot).title).toBe('The intake record')
+  })
+
+  test('names the path when the workspace has no intake schema', () => {
+    const empty = realpathSync(mkdtempSync(join(tmpdir(), 'tim-schema-')))
+
+    const load = () => loadIntakeSchema(empty)
+
+    try {
+      expect(load).toThrow(
+        `Can't find the intake schema at ${join(empty, INTAKE_SCHEMA_PATH)}. tim checks every ticket backlog against it.`
+      )
+    } finally {
+      rmSync(empty, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('the intake schema', () => {
+  const intakeSchema = loadIntakeSchema(workspaceRoot)
+
+  test('uses only keywords tim can check', () => {
+    expect(validateJson(intakeSchema, {}).length).toBeGreaterThan(0)
+  })
+
+  test('describes every field of the record', () => {
+    const undescribed = Object.entries(intakeSchema.properties)
       .filter(([, field]) => !field.description)
       .map(([name]) => name)
 

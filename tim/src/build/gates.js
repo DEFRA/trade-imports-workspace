@@ -246,7 +246,9 @@ const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
  * The rungs a gate runs, in order: every repo's rungs for one phase before
  * the next phase starts, repos in backlog order, rungs in gates.json order.
  * A repo with no rungs, or an e2e suite with nothing covering the built
- * repos, comes back as a refused entry — never left out.
+ * repos, comes back as a refused entry — never left out. One phase that
+ * none of the repos has rungs for, when they have rungs in another phase,
+ * comes back empty; repos with no rungs in any phase are refused.
  *
  * @param {object} args
  * @param {object} args.gates - A parsed gates.json
@@ -275,6 +277,10 @@ export const planRungs = ({ gates, repos, phase = 'all', workspaceRoot }) => {
   )
   const plan = [...missing, ...rungs]
   if (plan.length > 0) return plan
+  const someRepoHasRungs = known.some(
+    ({ folder }) => gates.repos[folder].rungs.length > 0
+  )
+  if (phase !== 'all' && someRepoHasRungs) return []
   return [
     refused(
       folders.join(', ') || 'none',

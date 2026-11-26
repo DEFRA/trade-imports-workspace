@@ -13,11 +13,11 @@ module.exports = [
       ["A plan you can argue with", "decisions surfaced as text before code, not buried in a diff"],
       ["Green all the way", "baseline checked, tests re-run each step, CI driven to green"],
     ],
-    triggers: '"plan EUDPA-1234" · "implement EUDPA-1234" · "refactor" / "tidy up"',
+    triggers: '"plan EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"',
     demo: [
       ["Plan", "\"plan EUDPA-1234\" — it reads the ticket, comments and Confluence refs, works out the affected repos and their stacks, and bakes in the matching best-practice guides."],
       ["Read & challenge", "plan.md lays out a summary, a repos/stack table, numbered steps, the testing strategy and risks — with [ASSUMPTION] and [NEEDS VERIFICATION] flags for you to settle."],
-      ["Implement", "\"implement EUDPA-1234\" — it confirms the baseline tests pass, cuts a feature branch per repo, then works the plan step by step: smallest change, re-run tests, add tests."],
+      ["Implement", "\"implement EUDPA-1234 by hand\" or \"follow the plan\" — it confirms the baseline tests pass, cuts a feature branch per repo, then works the plan step by step: smallest change, re-run tests, add tests."],
       ["Stay in control", "it follows the plan you approved rather than a free hand, so the change matches what you agreed and nothing wanders off-scope."],
       ["Verify & hand off", "it triggers CI, waits for green, and reports the repos, files and tests it touched — ready for you to open the PR."],
     ],

@@ -324,6 +324,29 @@ describe('getComments', () => {
   })
 })
 
+describe('getComments without an author', () => {
+  test('gives a comment Jira shows no author for a null author', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-200/comment')
+      .reply(200, {
+        comments: [
+          { id: '2', created: '2026-06-09T10:00:00.000Z', body: 'unsigned' }
+        ]
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    expect(await client.getComments('EUDPA-200')).toEqual([
+      {
+        id: '2',
+        author: null,
+        createdAt: '2026-06-09T10:00:00.000Z',
+        body: 'unsigned'
+      }
+    ])
+  })
+})
+
 describe('addComment', () => {
   test('posts the body and returns the comment Jira created', async () => {
     const sent = { body: null }
@@ -393,6 +416,75 @@ describe('addComment', () => {
     await expect(client.addComment('EUDPA-200', 'x')).rejects.toMatchObject({
       code: 'RATE_LIMIT'
     })
+  })
+})
+
+describe('editComment', () => {
+  const COMMENT_PATH = '/rest/api/2/issue/EUDPA-200/comment/10500'
+
+  test('puts the body to the comment and returns the edited comment', async () => {
+    const sent = { body: null }
+    mockPool(BASE)
+      .put(COMMENT_PATH, (body) => {
+        sent.body = body
+        return true
+      })
+      .reply(200, {
+        id: '10500',
+        author: { displayName: 'Sam' },
+        created: '2026-10-20T10:00:00.000+0100',
+        body: 'Shipped: now on main.'
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const comment = await client.editComment(
+      'EUDPA-200',
+      '10500',
+      'Shipped: now on main.'
+    )
+
+    expect({ comment, sent: sent.body }).toEqual({
+      comment: {
+        id: '10500',
+        author: 'Sam',
+        createdAt: '2026-10-20T10:00:00.000+0100',
+        body: 'Shipped: now on main.'
+      },
+      sent: { body: 'Shipped: now on main.' }
+    })
+  })
+
+  test('carries Jira’s reason when it refuses the text', async () => {
+    mockPool(BASE)
+      .put(COMMENT_PATH)
+      .reply(400, { errors: { comment: 'Comment body can not be empty!' } })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', ' ')
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message:
+        'editComment(EUDPA-200, 10500): comment: Comment body can not be empty!'
+    })
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE).put(COMMENT_PATH).reply(401, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', 'x')
+    ).rejects.toMatchObject({ code: 'AUTH' })
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).put(COMMENT_PATH).reply(404, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.editComment('EUDPA-200', '10500', 'x')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
   })
 })
 
@@ -546,7 +638,7 @@ describe('attachFiles', () => {
 })
 
 describe('listAttachments', () => {
-  test('returns the filenames already on an issue', async () => {
+  test('returns the id, filename, mime type, size and creation time of each attachment on an issue', async () => {
     mockPool(BASE)
       .get('/rest/api/2/issue/EUDPA-999?fields=attachment')
       .reply(200, loadFixture('issue-attachments.json'))
@@ -556,10 +648,95 @@ describe('listAttachments', () => {
       {
         id: '10001',
         filename: 'screenshot.png',
+        mimeType: 'image/png',
         size: 4096,
         created: '2026-09-28T10:00:00.000+0000'
       }
     ])
+  })
+})
+
+describe('listAttachments without a mime type', () => {
+  test('gives an attachment Jira reports no mime type for a null mime type', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-999?fields=attachment')
+      .reply(200, {
+        fields: {
+          attachment: [
+            {
+              id: '10002',
+              filename: 'notes',
+              size: 10,
+              created: '2026-09-28T10:00:00.000+0000'
+            }
+          ]
+        }
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    expect(await client.listAttachments('EUDPA-999')).toEqual([
+      {
+        id: '10002',
+        filename: 'notes',
+        mimeType: null,
+        size: 10,
+        created: '2026-09-28T10:00:00.000+0000'
+      }
+    ])
+  })
+})
+
+describe('downloadAttachment', () => {
+  const client = () =>
+    createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+  test('returns the exact bytes Jira serves for the attachment', async () => {
+    const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff])
+    mockPool(BASE).get('/rest/api/2/attachment/content/10001').reply(200, bytes)
+
+    expect(await client().downloadAttachment('10001')).toEqual(bytes)
+  })
+
+  test('refuses an attachment Jira does not have as NOT_FOUND', async () => {
+    mockPool(BASE).get('/rest/api/2/attachment/content/99').reply(404, '')
+
+    await expect(client().downloadAttachment('99')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'downloadAttachment(99): not found.'
+    })
+  })
+
+  test('refuses a connection that fails as NETWORK', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/attachment/content/10001')
+      .replyWithError(new Error('connection reset'))
+
+    await expect(client().downloadAttachment('10001')).rejects.toMatchObject({
+      code: 'NETWORK',
+      message: expect.stringMatching(/^downloadAttachment\(10001\): /)
+    })
+  })
+
+  test("keeps Jira's error messages on a 400", async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/attachment/content/10001')
+      .reply(400, { errorMessages: ['The attachment cannot be read.'] })
+
+    await expect(client().downloadAttachment('10001')).rejects.toMatchObject({
+      code: 'USAGE',
+      jiraMessages: ['The attachment cannot be read.']
+    })
+  })
+
+  test('refuses credentials Jira rejects as AUTH', async () => {
+    mockPool(BASE).get('/rest/api/2/attachment/content/10001').reply(401, '')
+
+    await expect(client().downloadAttachment('10001')).rejects.toMatchObject({
+      code: 'AUTH',
+      message:
+        'downloadAttachment(10001): Jira rejected the credentials. Check JIRA_USER and JIRA_TOKEN.'
+    })
   })
 })
 
@@ -909,6 +1086,26 @@ describe('listBoardLabels', () => {
     const labels = await client.listBoardLabels(13780)
 
     expect(labels).toEqual(boardGoldens['labels-json'].stdout)
+  })
+
+  test('puts labels used equally often in code point order, whichever order the issues list them', async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/backlog?maxResults=1000&fields=labels')
+      .reply(200, {
+        issues: [
+          { fields: { labels: ['beta', 'alpha'] } },
+          { fields: { labels: ['gamma', 'gamma'] } },
+          { fields: { labels: ['alpha', 'beta'] } }
+        ]
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    expect(await client.listBoardLabels(13780)).toEqual([
+      { label: 'alpha', count: 2 },
+      { label: 'beta', count: 2 },
+      { label: 'gamma', count: 2 }
+    ])
   })
 
   test('maps 401 to TimError(AUTH)', async () => {

@@ -1,15 +1,13 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import {
-  cpSync,
-  mkdirSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync
-} from 'node:fs'
+import { cpSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import {
+  backlogPathIn,
+  readBacklogRows,
+  writeBacklogRows
+} from '../../backlog/__fixtures__/backlog-file.js'
 import {
   createCliWorkspace,
   envelopeOf,
@@ -36,18 +34,11 @@ const row = (overrides = {}) => ({
 
 let workspace
 
-const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
+const backlogPath = () => backlogPathIn(workspace, WORKAREA)
 
-const writeBacklog = (rows) => {
-  mkdirSync(dirname(backlogPath()), { recursive: true })
-  writeFileSync(
-    backlogPath(),
-    JSON.stringify({ programme: 'demo', increments: rows })
-  )
-}
+const writeBacklog = (rows) => writeBacklogRows(workspace, WORKAREA, rows)
 
-const readRows = () =>
-  JSON.parse(readFileSync(backlogPath(), 'utf8')).increments
+const readRows = () => readBacklogRows(workspace, WORKAREA)
 
 const idsOnDisk = () => readRows().map((candidate) => candidate.id)
 

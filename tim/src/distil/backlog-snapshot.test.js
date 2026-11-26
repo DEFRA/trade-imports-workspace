@@ -2,6 +2,7 @@ import { describe, test, expect, afterEach } from 'vitest'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { snapshotBacklog } from './backlog-snapshot.js'
+import { row } from '../backlog/__fixtures__/backlog-rows.js'
 import { makeDistilWorkspace } from '../test-support/distil-workspace.js'
 
 let workspace
@@ -60,17 +61,16 @@ describe('snapshotBacklog', () => {
     }))
     workspace.editJson(workspace.layout.backlog, (backlog) => ({
       ...backlog,
-      increments: [
-        ...backlog.increments,
-        { ...backlog.increments[1], id: 'inc-003', status: 'todo' }
-      ]
+      increments: [...backlog.increments, row({ id: 'inc-003' })]
     }))
 
     expect(snapshot({ compareTo: 'before' }).compared).toEqual({
       tag: 'before',
       removed: [],
       changed: [],
-      splitOffChanged: []
+      splitOffChanged: [],
+      added: ['inc-003'],
+      mergedAway: []
     })
   })
 
@@ -112,7 +112,85 @@ describe('snapshotBacklog', () => {
       tag: 'before',
       removed: ['inc-002'],
       changed: ['inc-001'],
-      splitOffChanged: []
+      splitOffChanged: [],
+      added: [],
+      mergedAway: []
+    })
+  })
+
+  describe('with rows merged away', () => {
+    const withThreeRowsToBuild = () => {
+      workspace = makeDistilWorkspace()
+      workspace.editJson(workspace.layout.backlog, (backlog) => ({
+        ...backlog,
+        increments: [...backlog.increments, row({ id: 'inc-003' })]
+      }))
+      snapshot({ save: 'before' })
+    }
+
+    const mergeAway = (id, notes) =>
+      editIncrement(id, (increment) => ({
+        ...increment,
+        status: 'merged-into',
+        notes
+      }))
+
+    test('names the row a merged-away row went into, from its notes', () => {
+      withThreeRowsToBuild()
+      mergeAway('inc-003', ['Went into inc-001: they share the same page.'])
+
+      expect(snapshot({ compareTo: 'before' }).compared.mergedAway).toEqual([
+        { id: 'inc-003', into: 'inc-001' }
+      ])
+    })
+
+    test('reports a merged-away row whose notes name no row', () => {
+      withThreeRowsToBuild()
+      mergeAway('inc-003', 'Combined with the other one.')
+
+      expect(snapshot({ compareTo: 'before' }).compared.mergedAway).toEqual([
+        { id: 'inc-003', into: null }
+      ])
+    })
+
+    test('reports a merged-away row whose notes name two rows', () => {
+      withThreeRowsToBuild()
+      mergeAway('inc-003', 'Went into inc-001, after inc-002.')
+
+      expect(snapshot({ compareTo: 'before' }).compared.mergedAway).toEqual([
+        { id: 'inc-003', into: null }
+      ])
+    })
+
+    test('reports a merged-away row whose notes name a row that is not still to build', () => {
+      withThreeRowsToBuild()
+      editIncrement('inc-001', (increment) => ({
+        ...increment,
+        status: 'done'
+      }))
+      mergeAway('inc-003', 'Went into inc-001.')
+
+      expect(snapshot({ compareTo: 'before' }).compared.mergedAway).toEqual([
+        { id: 'inc-003', into: null }
+      ])
+    })
+
+    test('does not take inc-0011 in a note for inc-001', () => {
+      withThreeRowsToBuild()
+      mergeAway('inc-003', 'Went into inc-0011.')
+
+      expect(snapshot({ compareTo: 'before' }).compared.mergedAway).toEqual([
+        { id: 'inc-003', into: null }
+      ])
+    })
+
+    test('reports no merged-away rows against a snapshot saved without the rows-to-build ids', () => {
+      withThreeRowsToBuild()
+      const snapshotPath = snapshot({ save: 'old' }).saved
+      workspace.editJson(snapshotPath, ({ rowsToBuild, ...saved }) => saved)
+      mergeAway('inc-003', ['Went into inc-001.'])
+
+      expect(snapshot({ compareTo: 'old' }).compared.mergedAway).toEqual([])
     })
   })
 

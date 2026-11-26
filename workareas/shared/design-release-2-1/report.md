@@ -2,7 +2,7 @@
 
 ## Summary
 
-- The backlog holds 68 increments: 40 ready to go and 12 blocked. The blocked rows wait on the INS front door dashboard's requirements (6), the authorities' outcome feed (3), the plants services publishing to the INS read model (1), the plants backend (1) and the owner picking templates up again (1). A further 14 rows are dropped, one is deferred and one is merged into another.
+- The backlog holds 68 increments: 40 ready to go and 11 blocked. The blocked rows wait on the INS front door dashboard's requirements (6), the authorities' outcome feed (3), the plants services publishing to the INS read model (1) and the plants backend (1). A further 11 rows are dropped, 4 are deferred and 2 are merged into others. The 4 deferred rows are the templates work Sam deferred as a theme on 25 November (inc-186, inc-196) and the two waiting-on-design rows that come back with a design: address search as concept work (inc-194) and the needs-action view's identifier warnings, which wait on the outstanding-actions banner (inc-271).
 - It builds the germinal products set end to end, reframes each animals notification list in place with plants' list beside it, builds amend, cancel amendment, copy as new and delete in both journeys, and brings the plants set's own records up to date.
 - 45 questions are open, all 45 challenged against precedence and every ruling. Precedence settled none of them this run. Each question lists the default that is built if nobody answers.
 - Before building: correct the goal in `sources.json` (see step 0). 19 of the 40 ready rows land after rows on split branches, so those branches merge first.

@@ -13,7 +13,7 @@
           "name": "Creating a notification records a creation event",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-created.spec.ts", "test": "writes a NotificationCreated event immediately on draft creation", "strength": "full", "notes": "Mongo outbox; notificationStatusCode DRAFT and statusChanges DRAFT" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-created.spec.ts", "test": "writes a NotificationCreated event on draft creation", "strength": "full", "notes": "Mongo outbox; notificationStatusCode DRAFT and statusChanges DRAFT" }
           ]
         },
         {
@@ -48,6 +48,16 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-created.spec.ts", "test": "writes a NotificationCreated event with consignor name when a submitted notification is copied", "strength": "full", "notes": "copy of a submitted notification; one NotificationCreated for the copy's aggregateId with consignorParty name and postal address from the source" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-001-G",
+          "name": "The submission event names no issuer",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts", "test": "the NotificationSubmitted outbox GBN-AG payload for the mandatory answers carries exactly the declared exchanged document fields", "strength": "partial", "notes": "runs only off the compose stack; not probed red" },
+            { "type": "unit", "repo": "trade-imports-dynamics-gateway", "file": "src/test/java/uk/gov/defra/cdp/dynamicsgateway/integration/NotificationSqsListenerIT.java", "test": "sqsToAsb_shouldEmitEverySchemaVersionInOrderOnOneSession_forOneNotification", "strength": "partial", "notes": "asserts the v3 and v4 exchanged document has no issuer; not probed red" },
+            { "type": "unit", "repo": "trade-imports-dynamics-gateway", "file": "src/test/java/uk/gov/defra/cdp/dynamicsgateway/notification/PimsPayloadMapperTest.java", "test": "mapToV4_shouldSendNoIssuerAndTheSameConsignmentAsV3", "strength": "partial", "notes": "not probed red" }
           ]
         },
         {

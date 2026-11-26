@@ -56,6 +56,7 @@ so the file is read in full where it matters and each route is claimed once.
 | `trace`, a corpus of zips | The traces of one spec file, or one journey step group, after you have indexed the corpus | Every trace zip by file name, and the spec file and test titles they came from |
 | `trace`, an already-mined set | A run of `pages/*.json` files in journey order, plus `integrations.md` as a part of its own | Every page file |
 | `confluence` | A run of consecutive sections, cut on its headings, with every table in them | Each section heading, as the page writes it |
+| `ticket` | The description, acceptance criteria and comments in the ticket file are one part. Each linked Confluence page in the file is a part of its own. The attachments are a part of their own, read one at a time | The ticket file's headings, each Confluence page's title, and each saved attachment by filename |
 | `document` | A run of consecutive sections or pages | Each heading, or the page range |
 | `web` | One page, or a few short pages that belong together | Each URL |
 | `image` | A run of consecutive images, in name order | Each file name |

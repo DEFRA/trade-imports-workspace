@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { splitOffRequirements } from '../backlog/split-off.js'
+import { countOf } from '../utils/count-of.js'
 import {
   DISTIL_SCHEMA_FILES,
   areaFilesOf,
@@ -35,8 +36,6 @@ const duplicatesIn = (values) =>
   Object.entries(Object.groupBy(values, (value) => value))
     .filter(([, copies]) => copies.length > 1)
     .map(([value]) => value)
-
-const countOf = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 const heldIdsOf = (verify) =>
   new Set(

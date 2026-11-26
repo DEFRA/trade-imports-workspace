@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { writeFileSync } from 'node:fs'
+import { chmodSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const IDENTITY = [
@@ -88,6 +88,25 @@ export const pushCommit = async (workPath, branch, fileName) => {
   await git(workPath, 'push', '--quiet', 'origin', branch)
   await git(workPath, 'switch', '--quiet', 'main')
   return sha
+}
+
+/**
+ * Give a clone a committer name and email, so a commit made in it by the code
+ * under test does not depend on the machine's own git identity.
+ */
+export const configureIdentity = async (dir) => {
+  await git(dir, 'config', 'user.name', 'tim-test')
+  await git(dir, 'config', 'user.email', 'tim-test@example.invalid')
+}
+
+/**
+ * Install a pre-commit hook in a clone that refuses every commit, writing
+ * `message` to stderr.
+ */
+export const installRefusingPreCommitHook = (dir, message) => {
+  const hook = join(dir, '.git', 'hooks', 'pre-commit')
+  writeFileSync(hook, `#!/bin/sh\necho "${message}" >&2\nexit 1\n`)
+  chmodSync(hook, 0o755)
 }
 
 /**

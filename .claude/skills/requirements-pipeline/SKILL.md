@@ -1,22 +1,24 @@
 ---
 name: requirements-pipeline
-description: Turn loose requirements into built, merged increments in two phases. DISTIL is one workflow launched after intake: it takes any mix of sources — Playwright trace sets, Confluence pages, web pages, documents (docx, PDF, text), images, rulings, another repo — extracts with provenance per source, verifies each extract with a different agent, reconciles across sources, records conflicts and open questions, and consolidates thin vertical slices into one backlog.json of full-stack increments in the one backlog shape, plus a decision-led report. BUILD launches that backlog through the increment build loop from the main session — the loop derives each next buildable increment itself and keeps building until a set number have landed or something stops it, so one launch drains as much of the backlog as its agent budget allows — then the session checks what landed and prints a copy-paste handover prompt. The executor is Claude or Codex, chosen per run. Use when the user wants requirements distilled into a backlog (triggers "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil") or wants a workarea backlog built, resumed or handed over (triggers "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build", "walk the pre-flight for <theme>", "triage the pre-flight"). Sources can be built things as readily as documents — the current state of a repo, a prototype, a design release — so comparing two built things is in scope: the sources are simply the current state and the other thing, and "what is different, and what must change" produces the same backlog of increments. NOT for one already-agreed change to a repo — that is frontend-change or ticket.
+description: Turn loose requirements into built, merged increments in three phases. TICKET takes one ready Jira ticket to green pull requests on one branch: it fetches the ticket, runs a light intake that writes a checked backlog, opens the branch in every repo and the workspace, builds under the branch lifecycle and ends at green pull requests for the user's go to merge (triggers "build EUDPA-X", "implement EUDPA-X", "backlog EUDPA-X", "get EUDPA-X into a backlog", "build EUDPA-X on a branch"). DISTIL is one workflow launched after intake: it takes any mix of sources — Playwright trace sets, Confluence pages, web pages, documents (docx, PDF, text), images, rulings, another repo — extracts with provenance per source, verifies each extract with a different agent, reconciles across sources, records conflicts and open questions, and consolidates thin vertical slices into one backlog.json of full-stack increments in the one backlog shape, plus a decision-led report. BUILD launches that backlog through the increment build loop from the main session — the loop derives each next buildable increment itself and keeps building until a set number have landed or something stops it, so one launch drains as much of the backlog as its agent budget allows — then the session checks what landed and prints a copy-paste handover prompt. The executor is Claude or Codex, chosen per run. Use when the user wants requirements distilled into a backlog (triggers "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil") or wants a workarea backlog built, resumed or handed over (triggers "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build", "walk the pre-flight for <theme>", "triage the pre-flight"). Sources can be built things as readily as documents — the current state of a repo, a prototype, a design release — so comparing two built things is in scope: the sources are simply the current state and the other thing, and "what is different, and what must change" produces the same backlog of increments. NOT for planning a ticket without building it (`ticket`), and NOT for a recipe change with no ticket (`frontend-change`).
 ---
 
 # requirements-pipeline
 
-Sources in → **one backlog shape** → built increments out. One skill, two phases, one
+Sources in → **one backlog shape** → built increments out. One skill, three phases, one
 file format between them.
 
 ```
 sources.json ──DISTIL──▶ workareas/<workarea>/backlog.json ──BUILD──▶ merged increments
              (workflow/distil.js) (references/backlog.schema.json)   (workflow/increment-build-loop.js)
+one ticket ──TICKET──▶ the same backlog, its branch opened ──BUILD──▶ green pull requests
 ```
 
-## The two phases
+## The three phases
 
 | Phase | Read | Use it when |
 |---|---|---|
+| TICKET | [`references/TICKET.md`](references/TICKET.md) | One Jira ticket that the refinement check calls READY, to build. The session fetches the ticket, runs the light intake (`workflow/ticket-intake.js`), takes the questions to the user, opens the envelope's branch in every repo and the workspace (`tim build branch --open`), pushes it and raises the draft pull requests, then launches the build loop under the branch lifecycle. It ends at green pull requests for the user's go to merge, with one what-shipped comment on the ticket. Anything bigger escalates to DISTIL |
 | DISTIL | [`references/DISTIL.md`](references/DISTIL.md) | You have requirement sources and no backlog, or new sources or rulings to fold into an existing backlog (re-distil keeps every existing id). The main session does intake: it writes `sources.json`, working out the target repos and precedence from the goal. Then it launches `workflow/distil.js`, which extracts, verifies, reconciles, consolidates and drafts the report. The main session saves the report and takes its questions to the user. A new source or an answer goes in by editing `sources.json` and launching again |
 | Pre-flight walker | [`references/PREFLIGHT_WALKER.md`](references/PREFLIGHT_WALKER.md) | BUILD's pre-flight found something on a split theme — a repo that has moved under its extract, or requirements a re-distil handed the theme. Presents them in one block, takes one batch keystroke string, then slow-tracks anything the user marks Discuss. Triggers: "walk the pre-flight for `<theme>`", "triage the pre-flight". Offer it unprompted when `tim backlog check` refuses a theme the user has asked to build |
 | BUILD | [`references/BUILD.md`](references/BUILD.md) | A backlog in the one shape exists and you want increments built, a stopped run resumed, or a run handed over. The repos come from the backlog envelope; the user gives only the epic, or, for a build onto an existing branch that raises no ticket and merges nothing, the branch (`lifecycle: 'branch'`). Every row keeps the Behaviour Spec (`openspec/`) current whatever its repos, and once a theme's last row lands the loop lints that theme's spec and stops on a scenario no test proves |
@@ -25,7 +27,7 @@ Read the phase file in full before you start it, and read
 [`references/backlog.schema.json`](references/backlog.schema.json) and
 [`references/SHAPE.md`](references/SHAPE.md) either way: the schema defines every field,
 and SHAPE.md holds the judgement rules a schema cannot. Together they are the contract
-both phases keep. A run can do DISTIL and stop for Sam's answers, then come back for BUILD in another
+every phase keeps. A run can do DISTIL and stop for Sam's answers, then come back for BUILD in another
 session — the backlog on disk is the only hand-off. Beside it, `deferred.md` lists everything the programme
 pushed out of its backlog: tickets raised or still to raise, a person's actions, and rows parked at a platform or
 access stop.
@@ -38,6 +40,7 @@ requirements-pipeline/
   references/
     backlog.schema.json    the one backlog.json shape: every envelope and row field, described
     SHAPE.md               what the schema cannot say: requirement not recipe, full-stack slice, what a criterion may name, provenance
+    intake.schema.json     the ticket intake's intake.json: readiness, numbered statements and what covers them, repos, questions, escalation
     sources.schema.json    DISTIL's sources.json: goal, repos, precedence, sources, and an optional themes rule
     partition.schema.json  one source's partition: its structure and the parts one agent each extracts
     extract.schema.json    one source's extract, and each of its part files: structure and claims
@@ -47,15 +50,18 @@ requirements-pipeline/
     requirements.schema.json  the reconciled requirements
     conflicts.schema.json  the reconciled conflicts: precedence or question, with a default
     challenge.schema.json  one question's challenge verdict: precedence, blocked or question
-    DISTIL.md              phase 1: intake → launch distil.js → fold in new sources → save the report
+    DISTIL.md              intake → launch distil.js → fold in new sources → save the report
     REPORT.md              the report's structure and writing rules
     TRACE_EXTRACTOR.md     how to extract a Playwright trace source
-    BUILD.md               phase 2: build the args → launch the loop → check what landed → handover
+    BUILD.md               build the args → launch the loop → check what landed → handover
+    TICKET.md              ticket mode: one ticket from entry to merge, with every command and gh step in order
     PREFLIGHT_WALKER.md    batch triage of what BUILD's pre-flight found on a split theme: moved repos, requirements never placed, requirements whose text changed
   workflow/
-    README.md              both workflows' config and stages; the loop's executors and what stops for a human
-    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → area plan → reconcile per area → cross-area → challenge → draft rows per area → combine → report
-    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, area-plan, reconcile, question-challenge, consolidate
+    README.md              every workflow's config and stages; the loop's executors and what stops for a human
+    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → area plan → reconcile per area → cross-area → challenge → draft rows per area → combine → combine review → report
+    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, area-plan, reconcile, question-challenge, consolidate, combine-review
+    ticket-intake.js       the ticket intake workflow: status → read → check → refute → fix → check again
+    intake/briefs/         the method each intake agent follows: read (the reader and the fixer) and refute
     increment-build-loop.js
     codex/                 the implement, review and fix briefs for executor: 'codex'
       schemas/             the output schemas those briefs answer in
@@ -65,8 +71,16 @@ requirements-pipeline/
 small enough to read in full; one agent per part reads its slice word for word and claims everything in it; tim
 merges the parts. A small source is one part. There is no lighter path and no switch for one, and characterise,
 extract and verify run on Opus by default (`models: {}`), because a thin extract caps everything downstream: a page,
-field or rule nobody claimed never reaches a requirement. To extract a source again after the method changes, run
+field or rule nobody claimed never reaches a requirement. The deliberate exception is [ticket mode](references/TICKET.md)
+for one ready ticket: it gives up the claim-by-claim extract, the per-claim verify, the reconcile across sources,
+the per-question challenge and the report, and it escalates to DISTIL on SPIKE REQUIRED, more than 3 questions, more
+than 4 rows or a second requirement source. To extract a source again after the method changes, run
 `tim distil reset` before the launch.
+
+**Combine rows by default, at every stage that creates them.** Each row carries a fixed cost: a ticket, a branch, a
+plan, its reviews, the ladder, pull requests and CI. DISTIL's combine review and the ticket intake both apply this. A
+row stands alone only with a reason in its notes. [`references/SHAPE.md`](references/SHAPE.md#rows-are-combined-by-default)
+says what counts as a reason.
 
 **Every later stage is as deep.** Reconcile is cut into areas (a journey page or page group, the dashboard, the
 address book, templates and the rest), one Opus reconciler an area weighing every claim about it, today's sources
@@ -114,9 +128,11 @@ Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-
 
 ## The tim commands
 
-Both phases and both workflows share these. `<workarea>` is the path under `workareas/`.
+Every phase and every workflow share these. `<workarea>` is the path under `workareas/`.
 
 ```bash
+tim backlog from-ticket <key> [--check] --json   # fetch one Jira ticket into a workarea and name it as the one source; --check says whether the ticket changed since
+tim build branch <workarea> --open --json        # open the envelope's branch in every repo and the workspace, one opening commit where a repo has none; never pushes
 tim distil status <workarea> --json      # every source's state and next step: the distil workflow's work list
 tim distil check <workarea> --source <id> --stage partition|extract|verify|all [--part <n>] [--chunk <n>] [--clear-parts] --json   # one source's files against the schemas and each other
 tim distil merge-extract <workarea> --source <id> --json  # join a source's extract parts into its one extract, stamping the scope hash
@@ -132,7 +148,7 @@ tim distil challenge <workarea> [--conflict <id> | --clear] --json   # the quest
 tim distil coverage <workarea> --json    # requirements and conflicts against the working set, every source backing something, every challenge verdict applied, and every adopted requirement in one increment or a theme split off early (a blocked one never in a todo row); problems scoped reconcile or backlog
 tim distil backlog-snapshot <workarea> [--save <tag>] [--compare-to <tag>] --json   # rows removed, rows built or set aside that changed, and split-off pointers changed, since a snapshot
 tim distil trace <workarea> --source <id> [--folder <name>] [--out <file>] --json -- <subcommand>     # the playwright trace CLI, in the source's own folder or a sub-folder of it, with a Playwright at least as new as the one that recorded the trace
-tim backlog check <workarea> --json      # the shape, dependencies, cycles, recipe fields, themes and externalDependsOn; exits 1 when out of shape
+tim backlog check <workarea> --json      # the shape, dependencies, cycles, recipe fields, themes and externalDependsOn; a ticket backlog is held to its intake.json; exits 1 when out of shape
 tim backlog next <workarea> --json       # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog split <workarea> [--write] [--branch-prefix <prefix>] --json   # a themed backlog into one backlog per theme, plus themes/themes.json with the landing order; skips themes split off early
 tim backlog split <workarea> --theme <id> [--theme <id>] [--write] --json  # split one ready theme off early: its rows leave backlog.json, which keeps a pointer in splitOff
@@ -153,10 +169,14 @@ nothing else lists the fields. Change one and check the others in the same chang
 |---|---|
 | [`references/backlog.schema.json`](references/backlog.schema.json) | Defines it: every field, required or not, the statuses, the recipe fields refused |
 | [`references/SHAPE.md`](references/SHAPE.md) | The judgement rules a schema cannot check |
+| [`references/intake.schema.json`](references/intake.schema.json) | Defines the intake record: the readiness verdict (held equal to `tim refine finalize`'s list by a test), the numbered statements and what covers them, the repos' reasons, the questions and the escalation |
+| `tim/src/backlog/ticket-backlog.js` | The rules a schema cannot check on a backlog whose envelope names a ticket: the record's key, every acceptance criterion covered or explained, row criteria citing the ticket, the questions' causes, escalation, and no themes. Gives the check result its summary of the record |
+| The ticket intake workflow ([`workflow/ticket-intake.js`](workflow/ticket-intake.js)) and its briefs ([`workflow/intake/briefs/`](workflow/intake/briefs/)) | The record's only writer. Runs `tim backlog check` until it passes and again after its one fix, and checks every relayed list against its count. Its agents' rails and model tiers are the distil workflow's, held byte-identical by the contract test |
+| `tim build branch --open` and [`references/TICKET.md`](references/TICKET.md) | Read the envelope's `branch` and `ticket`: the branch to open, and the scope of each opening commit. TICKET.md passes the same `branch` and the `ticket` as `scope` to the build loop |
 | The nine DISTIL schemas (`references/*.schema.json`) | Define `sources.json`, each partition, extract, extract part and verify file, `areas.json`, each area's reconciled file, `requirements.json`, `conflicts.json` and each challenge verdict, every field described |
 | `tim/src/distil/` (`tim distil`) | Validates every DISTIL file against those schemas at runtime, plus what a schema cannot say: unique ids, partitions and their part prefixes, every part present and the extract its parts merged, verdicts matching claims, missed ids, scope hashes, extract hashes, a repo source's checkout still being on the commit it was extracted from, cited claims and conflicts, every claim in an area, every source backing a requirement, every challenge verdict applied, and every adopted requirement in exactly one increment (a blocked one never in a todo row). Merges extract parts, verify parts and the areas' reconciled files, resets sources for a fresh extract or the later stages for a fresh reconcile, builds the working set and each area's, snapshots the backlog's rows and runs the trace CLI with a new enough Playwright |
 | The distil workflow ([`workflow/distil.js`](workflow/distil.js)) and its briefs ([`workflow/distil/briefs/`](workflow/distil/briefs/)) | Runs `tim distil` for its work list and every check, and gives each agent the schema it writes to. Checks every relayed count against another before it acts on it. Its combine step writes the backlog to its schema and runs `tim backlog check` and `tim distil coverage` until both pass |
-| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Refuses a split theme while its parent still holds requirements it has never placed in a row (the pointer's `pickUp`), so a re-distil's new requirements cannot be built past; a requirement whose text merely changed is left to judgement and does not refuse. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`), following `externalDependsOn` into other workareas |
+| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Runs the ticket-backlog rules when the envelope names a ticket. Refuses a split theme while its parent still holds requirements it has never placed in a row (the pointer's `pickUp`), so a re-distil's new requirements cannot be built past; a requirement whose text merely changed is left to judgement and does not refuse. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`), following `externalDependsOn` into other workareas |
 | `tim/src/backlog/themes.js` and `split.js` (`tim backlog split`) | The theme rules in SHAPE.md: unique ids, no theme cycle, no two themes touching the same code, every todo or blocked row in one theme, cross-theme dependencies matched by theme dependencies, and a split backlog's own envelope. `split.js` writes one backlog per theme, turning a cross-theme `dependsOn` into `externalDependsOn`, and the landing order; with `--theme` it splits one theme off early and leaves a `splitOff` pointer. `move-rows.js` (`--rows --to`) moves rows of a split backlog into a new theme's backlog, leaves a `movedOut` pointer, rewires dependencies both ways and relinks the programme's other backlogs |
 | `tim/src/backlog/split-off.js` | Reads the `splitOff` pointers and holds the rules a schema cannot check: a theme split off is never in `themes`, no row is in it or reuses a moved row's id, and no requirement is held twice. Reads a split backlog's `movedOut` pointers too: never its own theme, each theme once, no row reusing a moved id. `tim distil coverage`, `tim distil areas` and `tim distil backlog-snapshot` read the pointers through it |
 | The loop's preflight ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Runs `tim backlog check` on the run's workarea and refuses to start when it reports a problem, so a backlog out of shape, or a split theme holding requirements a re-distil handed it, cannot be built past by skipping BUILD's pre-flight. Its `backlogCheckProblems` relay is held to the command's output by `tim/src/backlog/workflow-contract.test.js` |
@@ -168,6 +188,6 @@ nothing else lists the fields. Change one and check the others in the same chang
 
 A new row field, a new status, or a renamed one starts in the schema and touches all of
 them. So does a new field in a DISTIL file: its schema first, then `tim distil`, then the
-brief that writes it. Both workflows' args contracts are checked by
+brief that writes it. Every workflow's args contract is checked by
 `tim/src/backlog/workflow-contract.test.js`, which scans this skill's `workflow/` as well as
 `.claude/workflows/`.

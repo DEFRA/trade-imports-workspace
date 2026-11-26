@@ -154,7 +154,7 @@ describe('the workspace gates.json', () => {
         run: 'tim build duplication',
         cwd: 'tim'
       },
-      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' },
+      { name: 'unit', phase: 'unit', run: 'coverage', cwd: 'tim' },
       {
         name: 'coverage',
         phase: 'unit',
@@ -579,9 +579,19 @@ describe('planRungs', () => {
     ])
   })
 
-  test('refuses a phase that no repo in the backlog has rungs for', () => {
+  test('plans no rungs for a phase the repos have none of, when they have rungs in another', () => {
     const plan = planRungs({
       gates: sampleGates(),
+      repos: [repo('plants-backend')],
+      phase: 'fit'
+    })
+
+    expect(plan).toEqual([])
+  })
+
+  test('refuses a phase when no repo in the backlog has rungs in any phase', () => {
+    const plan = planRungs({
+      gates: gatesWith({ 'plants-backend': { rungs: [] } }),
       repos: [repo('plants-backend')],
       phase: 'fit'
     })

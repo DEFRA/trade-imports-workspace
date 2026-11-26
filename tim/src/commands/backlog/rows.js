@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   workareaBacklogReader,
@@ -7,9 +8,11 @@ import {
 import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
+  loadIntakeSchema,
   rigoursOf,
   statusesOf
 } from '../../backlog/backlog-schema.js'
+import { combineCandidatesIn } from '../../backlog/combine-candidates.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import {
   checkBacklog,
@@ -17,12 +20,12 @@ import {
   setRowFields
 } from '../../backlog/shape.js'
 import { TimError } from '../../errors.js'
+import { countOf } from '../../utils/count-of.js'
 import { makeBacklogAction, parseOptions } from './shared.js'
 
 /**
- * The backlog.json under `workareas/<workarea>/`, the same path the build loop
- * and the BUILD phase take. Refuses an absolute path or one that climbs out
- * of workareas/ before any read.
+ * The backlog.json under `workareas/<workarea>/`. Refuses an absolute path or
+ * one that climbs out of workareas/ before any read.
  *
  * @param {string} workspaceRoot
  * @param {unknown} workarea
@@ -31,6 +34,18 @@ import { makeBacklogAction, parseOptions } from './shared.js'
  */
 export const backlogPathFor = (workspaceRoot, workarea) =>
   join(workareaDirFor(workspaceRoot, workarea), 'backlog.json')
+
+const intakeRecordFor = ({ workspaceRoot, workarea, backlog }) => {
+  if (typeof backlog?.ticket !== 'string') return undefined
+  const intakePath = join(
+    workareaDirFor(workspaceRoot, workarea),
+    'intake.json'
+  )
+  return {
+    record: existsSync(intakePath) ? readJsonFile(intakePath) : null,
+    schema: loadIntakeSchema(workspaceRoot)
+  }
+}
 
 const prSchema = z.object({ url: z.string().min(1) }).passthrough()
 
@@ -221,12 +236,37 @@ const describeCounts = (counts) =>
     .map(([status, count]) => `${count} ${status}`)
     .join(', ')
 
+const renderIntake = ({
+  ticket,
+  readiness,
+  statementCount,
+  rowsToBuildCount
+}) =>
+  `${ticket} is ${readiness}: ${countOf(statementCount, 'statement')}, ${countOf(rowsToBuildCount, 'row')} still to build.`
+
 const renderCheck = (result) =>
-  result.total
-    ? `${result.total} increments, all in shape: ${describeCounts(result.counts)}.`
-    : 'The backlog is in shape, and has no increments yet.'
+  [
+    result.total
+      ? `${result.total} increments, all in shape: ${describeCounts(result.counts)}.`
+      : 'The backlog is in shape, and has no increments yet.',
+    ...(result.intake ? [renderIntake(result.intake)] : [])
+  ].join('\n')
 
 const renderNext = (result) => result.next ?? 'NONE'
+
+const renderCombineCandidates = (result) =>
+  [
+    `${result.rowsToBuild} rows still to build, ${countOf(result.candidates.length, 'pair')} to look at for combining.`,
+    ...result.candidates.map(
+      ({ rows: [earlier, later], reason }) =>
+        `${earlier} and ${later}: ${reason}`
+    ),
+    ...(result.withoutTouches.length
+      ? [
+          `No touches, so paired only by what they wait on: ${result.withoutTouches.join(', ')}.`
+        ]
+      : [])
+  ].join('\n')
 
 const renderSet = (result) =>
   [
@@ -243,7 +283,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('check <workarea>')
     .description(
-      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, the one backlog shape the distiller writes and the build loop reads, that every dependency is in the backlog with no cycle, that its themes keep to their own code, and that every externalDependsOn row is in its own workarea's backlog`
+      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, that every dependency is in the backlog with no cycle, that its themes keep to their own code, and that every externalDependsOn row is in its own workarea's backlog. A backlog that names a ticket is also held to the intake.json beside it: every criterion of a row still to build (todo or blocked) ends with a bracket citing this ticket's statement ids, a repo or a ruling; every acceptance criterion is covered by a todo, blocked or done row or says why it is not built; a question holds the launch only for a named cause; an escalation is recorded when its signals trip, and then no row is left to build; and the backlog has no themes`
     )
     .addHelpText(
       'after',
@@ -255,10 +295,16 @@ export const register = (backlog, { timVersion }) => {
         run: ({ workspaceRoot, args }) => {
           const path = backlogPathFor(workspaceRoot, args[0])
           const schema = loadBacklogSchema(workspaceRoot)
+          const backlog = readJsonFile(path)
           const result = {
             path,
-            ...checkBacklog(readJsonFile(path), schema, {
-              readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+            ...checkBacklog(backlog, schema, {
+              readWorkareaBacklog: workareaBacklogReader(workspaceRoot),
+              intakeRecord: intakeRecordFor({
+                workspaceRoot,
+                workarea: args[0],
+                backlog
+              })
             })
           }
           if (result.problems.length) {
@@ -295,6 +341,26 @@ export const register = (backlog, { timVersion }) => {
           }
         },
         renderText: renderNext,
+        timVersion
+      })
+    )
+
+  backlog
+    .command('combine-candidates <workarea>')
+    .description(
+      'List the rows still to build that suit combining: pairs that share a code area, or where one waits only on the other. Counts the rows still to build and names those with no touches. Changes no file'
+    )
+    .addHelpText(
+      'after',
+      '\nExample: tim backlog combine-candidates shared/my-programme --json'
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }) => {
+          const path = backlogPathFor(workspaceRoot, args[0])
+          return { path, ...combineCandidatesIn(readJsonFile(path)) }
+        },
+        renderText: renderCombineCandidates,
         timVersion
       })
     )

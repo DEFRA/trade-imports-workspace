@@ -69,6 +69,10 @@ Never give these lines `event.category`, `event.action` or
 Never a field of its own such as `operation`, `status`, `journeyId` or
 `url`: CDP drops it.
 
+This list covers only the lines about a call. A service's other lines
+are not yet held to CDP's schema, and many of them write fields of
+their own. EUDPA-847 brings every deployed line onto it.
+
 The HTTP status is never `error.code`, on this line or the
 external-call line. The external-call line carries it as
 `http.response.status_code`, and any other line in `error.message`.

@@ -318,7 +318,7 @@ missing key. The first log line is the resolved configuration.
 | `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, the one reviewer that reads a `fast` row's whole change, and a theme's engineering reviewers and judge — and a `fast` row's plan goes to `code` instead. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers (`rigour` decides which of them run), the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, a theme's fixer and ladder, and the spec diff comment's writer and checker. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, the plan review recorder, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, the spec diff reader and poster, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
-| `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
+| `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'targeted'` keeps that rung and the lease but runs only the spec files the row itself changed (`--base HEAD`, so uncommitted work included, since the ladder runs before the land stage), and under the **branch lifecycle** replaces the baseline's rungs with a read of every check on each repo's open pull request; a repo the row never touched plans no e2e rung at all. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead. Every value still stops the run at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
 | `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed in full once, and revised whenever that review sends it back, with a second pass that re-checks only its findings; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with that second pass run only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
 | `workspace` | The root of the workspace clone the run builds in, as a tilde path. The launch passes it, so a run builds in the clone that launched it. With `null`, the first stage resolves the root from the session folder, then from `CLAUDE_PROJECT_DIR`, then from a fixed list of paths as a last resort. Every Bash command the run gives an agent, and the Codex executor's `-C`, use it |
@@ -370,11 +370,13 @@ args: `backlog.json` carries the status, ticket, branch, PRs and the last failed
 the row picks up at the stage that attempt reached — see
 [Resuming a row part-way through](#resuming-a-row-part-way-through).
 
-The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`, where
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, notOurs, ticketClaim, stopped}`, where
 `specChecks` holds one entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)),
 `reviewChecks` the checks left for whoever reviews a finished theme, `signedOffChecks` one entry per theme-end
 signed-off check (branch lifecycle), `refutedFindings` every finding verification refuted (see
-[Findings by kind](#findings-by-kind)), `ticketClaim` what [claiming the run's ticket](#claiming-the-runs-ticket)
+[Findings by kind](#findings-by-kind)), `notOurs` every row that landed with a check the base branch fails the same
+way (branch lifecycle only — a full-lifecycle row merges, so there its watcher sets `blocked` and the run stops),
+`ticketClaim` what [claiming the run's ticket](#claiming-the-runs-ticket)
 did, and `stopped` is `{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
@@ -456,7 +458,7 @@ ever.
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local',
+  e2e: 'targeted',
   resumeFrom: null,
   rigour: 'standard',
   workspace: null
@@ -1065,13 +1067,18 @@ The workspace stack is one compose project per machine, and a run that needs it 
 its whole length under one lease. The holder is the run id, `ibl-<the time the workspace agent
 read>`, so a resumed run keeps it.
 
-**A run only takes the lease when it needs it**: when `e2e` is `'local'` **and** some todo row
-still owes the gate's e2e phase, which the preflight works out from the backlog. Three kinds of
-run therefore start no containers, build no images and give nothing back, logging which reason
-applied: a `planOnly` run, an `e2e: 'ci'` run, and a `'local'` run whose every row carries
-`gatePhases` without `e2e`. On such a run the baseline reads each repo's open pull request with
-`gh pr checks` for its end-to-end evidence, and a pull request with no completed run yet counts
-as awaited rather than red.
+**A run only takes the lease when it needs it**: when `e2e` is `'local'` or `'targeted'` **and**
+some todo row still owes the gate's e2e phase, which the preflight works out from the backlog.
+Three kinds of run therefore start no containers, build no images and give nothing back, logging
+which reason applied: a `planOnly` run, an `e2e: 'ci'` run, and a local or targeted run whose
+every row carries `gatePhases` without `e2e`. On such a run the baseline reads each repo's open
+pull request with `gh pr checks` for its end-to-end evidence, and a pull request with no completed
+run yet counts as awaited rather than red.
+
+A `'targeted'` run still takes the lease, because it still runs an e2e rung — but a row that
+changed no spec in a repo plans no rung for it, so a theme of such rows keeps the stack up for
+nothing. That is the cost of holding one lease per run rather than per row, and it is why a row
+that changes only `openspec/` is better given `gatePhases` without `e2e`.
 
 Choose `e2e` at the launch from what the machine can actually do. Docker holding well under half
 the machine's memory, or a missing `config/machine.json`, points at `'ci'`: the documents theme
@@ -1277,7 +1284,7 @@ The worked example for the frontend alignment sync:
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local',
+  e2e: 'targeted',
   resumeFrom: null,
   rigour: 'standard',
   workspace: null

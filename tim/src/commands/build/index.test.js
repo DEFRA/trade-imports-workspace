@@ -351,14 +351,14 @@ describe('tim build gate', () => {
     expect(envelopeOf(run).result.serial).toBe(false)
   })
 
-  test('refuses an --e2e other than local or ci', async () => {
+  test('refuses an --e2e the gate does not offer', async () => {
     seedGateRepo({ test: 'echo tested' })
 
     const run = await runTim(['build', 'gate', WORKAREA, '--e2e', 'cloud'])
 
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,
-      stderr: '--e2e must be one of: local, ci.'
+      stderr: '--e2e must be one of: local, targeted, ci.'
     })
   })
 

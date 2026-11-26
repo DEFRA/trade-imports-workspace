@@ -938,11 +938,30 @@ describe('increment-build-loop', () => {
       })
 
       expect(run.error.message).toContain(
-        'config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it)'
+        'config.e2e must be "local" (the whole suite against the local stack), "targeted" (the specs this change reaches against the local stack, the whole suite on the pull requests) or "ci" (let the pull requests prove all of it)'
       )
       expect(run.agents).toEqual([])
     }
   )
+
+  test('accepts e2e targeted and runs on past validation to its first agent', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, e2e: 'targeted' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    // The resolved-configuration line is logged BEFORE e2e is validated, so it
+    // proves nothing on its own. A rejected value spawns no agent and errors on
+    // config.e2e; an accepted one gets as far as the preflight reading a
+    // backlog this fixture does not have.
+    expect({
+      agents: run.agents.length > 0,
+      error: run.error.message
+    }).toEqual({
+      agents: true,
+      error: expect.stringContaining('no readable backlog')
+    })
+  })
 
   test('stops before any agent when resumeFrom is missing', async () => {
     const run = await runLoop(scriptPath, {
@@ -1372,6 +1391,7 @@ describe('increment-build-loop', () => {
       signedOffChecks: [],
       specChecks: [],
       refutedFindings: [],
+      notOurs: [],
       ticketClaim: null,
       stopped: {
         reason: 'no-buildable',
@@ -1889,6 +1909,7 @@ describe('increment-build-loop', () => {
         signedOffChecks: [],
         specChecks: [],
         refutedFindings: [],
+        notOurs: [],
         ticketClaim: CLAIMED_RESULT,
         stopped: {
           reason: 'ticket-failed',
@@ -2067,6 +2088,30 @@ describe('increment-build-loop', () => {
 
       expect(prompt).toContain('--phase all')
       expect(prompt).not.toContain(CI_E2E_EVIDENCE_HEADING)
+    })
+
+    test('keeps the full lifecycle a local baseline gate under targeted, because its rows have no pull request yet', async () => {
+      const prompt = await baselinePromptWithE2e('targeted')
+
+      expect(prompt).toContain('--phase all')
+      expect(prompt).toContain('--e2e targeted')
+      expect(prompt).not.toContain(
+        'THE BASELINE IS EACH REPO’S OPEN PULL REQUEST'
+      )
+    })
+
+    // The base decides what a narrowed rung counts as the row's change, and it
+    // differs by lifecycle. The full lifecycle cuts a fresh branch per
+    // increment and preserves a failed attempt as a pushed commit, so HEAD
+    // would see none of a resumed row's work: the base branch is the row.
+    test('diffs a narrowed gate against the base branch under the full lifecycle', async () => {
+      expect(await baselinePromptWithE2e('targeted')).toContain(
+        '--e2e targeted --base origin/main'
+      )
+    })
+
+    test('passes no base when the run is not narrowed', async () => {
+      expect(await baselinePromptWithE2e('local')).not.toContain('--base')
     })
 
     test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
@@ -5028,6 +5073,7 @@ describe('increment-build-loop', () => {
               signedOffChecks: [],
               specChecks: [],
               refutedFindings: [],
+              notOurs: [],
               ticketClaim: null,
               stopped: {
                 reason: 'stack-held',
@@ -5394,6 +5440,7 @@ describe('increment-build-loop', () => {
             signedOffChecks: [],
             specChecks: [],
             refutedFindings: [],
+            notOurs: [],
             ticketClaim: CLAIMED_RESULT,
             stopped: {
               reason: 'no-buildable',
@@ -7693,6 +7740,46 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('runs no gate at all when the baseline comes from the pull requests', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect({
+          anyGateCommand: prompt.includes('tim build gate shared/'),
+          wholeGate: prompt.includes('--phase all'),
+          unit: prompt.includes('--phase unit')
+        }).toEqual({ anyGateCommand: false, wholeGate: false, unit: false })
+      })
+
+      test('gives the pull-request baseline the watcher’s own check reading, not a shorter copy', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('WAIT ON ITS CHECKS, then read their verdict')
+        expect(prompt).toContain('A STALE ROLLUP IS NOT A FAILURE')
+        expect(prompt).toContain('no checks reported')
+      })
+
+      test('does not redden the next row’s baseline for a failure an earlier row recorded as the base’s', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('WHOSE FAILURE IS IT?')
+        expect(prompt).toContain(
+          'an earlier row of this very run may\n   already have left it red for exactly that reason'
+        )
+      })
+
+      test('asks the pull-request baseline only for the repos the row builds', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('tests (DEFRA/trade-imports-ins-tests)')
+        expect(prompt).not.toContain(
+          'frontend (DEFRA/trade-imports-animals-frontend)'
+        )
+      })
+
       test('tells the ladder to skip a plan check needing the stack, and to carry on, when e2e is proved in CI', async () => {
         const prompt = promptOf(
           await runMergeRowWith({ e2e: 'ci' }),
@@ -7833,6 +7920,32 @@ describe('increment-build-loop', () => {
         expect(run.result.stopped.detail).toContain(
           `no open pull request for ${WORKING_BRANCH} in tests`
         )
+      })
+
+      // Twice now a prompt has asked an agent for a field its own schema
+      // refused under additionalProperties:false — `phase: "ci"`, then
+      // notOurs/onlyNotOurs — and each slipped past a read of the diff. This
+      // closes the class: no agent may be told to report a field its schema
+      // does not declare.
+      test('asks no agent for a whose-failure field its schema would refuse', async () => {
+        const run = await runMergeRow(FOUND, null)
+
+        const asked = run.agents
+          .filter(({ prompt }) => prompt.includes('report it in notOurs[]'))
+          .map(({ options }) => ({
+            label: options.label,
+            notOurs: Boolean(options.schema?.properties?.notOurs),
+            onlyNotOurs: Boolean(options.schema?.properties?.onlyNotOurs)
+          }))
+
+        expect(asked.length).toBeGreaterThan(0)
+        for (const agent of asked) {
+          expect(agent).toEqual({
+            label: agent.label,
+            notOurs: true,
+            onlyNotOurs: true
+          })
+        }
       })
 
       test('reads mergeability before it waits on the checks', async () => {
@@ -8105,15 +8218,133 @@ describe('increment-build-loop', () => {
         })
       })
 
-      test('tells the CI fixer a re-run does not refresh a check another job posted', async () => {
+      const BASE_RED_SPEC = 'tests/animals/e2e/visual/review.visual.spec.ts'
+
+      const RED_ON_BASE = {
+        green: false,
+        onlyNotOurs: true,
+        notOurs: [
+          {
+            repo: 'tests',
+            spec: BASE_RED_SPEC,
+            evidence: 'https://github.com/x/actions/runs/1 failure'
+          }
+        ],
+        failures: ['tests e2e: review.visual.spec.ts'],
+        blocked: 'none',
+        summary: 'red on main too'
+      }
+
+      const NOTE_POSTED = { ok: true, summary: 'noted on every pull request' }
+
+      const runRedOnBase = () =>
+        runMergeRow(FOUND, RED_ON_BASE, NOTE_POSTED, MARKED_DONE, NO_GATE)
+
+      test('lands the row and ends the run without stopping, when every red thing is red on the base branch too', async () => {
+        const run = await runRedOnBase()
+
+        expect({
+          stopped: run.result.stopped.reason,
+          outcome: run.result.increments[0].outcome
+        }).toEqual({ stopped: 'count-reached', outcome: 'landed' })
+      })
+
+      test('spends no fix attempt on a failure no commit on this branch can clear', async () => {
+        const run = await runRedOnBase()
+
+        expect(labelsOf(run)).not.toContain('inc-900 ci fix 1')
+      })
+
+      test('notes on every pull request that the red belongs to the base branch', async () => {
+        const run = await runRedOnBase()
+        const note = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 not-ours note'
+        )
+
+        expect(note.prompt).toContain(BASE_RED_SPEC)
+        expect(note.prompt).toContain(
+          'red here and red the same way on the base branch'
+        )
+      })
+
+      test('returns the base branch’s failures for the handover to report', async () => {
+        const run = await runRedOnBase()
+
+        expect(run.result.notOurs).toEqual([
+          {
+            id: 'inc-900',
+            prs: ['https://github.com/DEFRA/trade-imports-ins-tests/pull/227'],
+            notOurs: [expect.objectContaining({ spec: BASE_RED_SPEC })]
+          }
+        ])
+      })
+
+      test('records on the landed row that the red was the base branch’s, not the row’s', async () => {
+        const run = await runRedOnBase()
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'landed',
+          ci: expect.stringContaining('red on the base branch too')
+        })
+      })
+
+      const ciFixPrompt = async () => {
         const run = await runMergeRow(
           FOUND,
           { green: false, failures: ['lint'], summary: 'red' },
           null
         )
+        return promptOf(run, 'inc-900 ci fix 1')
+      }
 
-        expect(promptOf(run, 'inc-900 ci fix 1')).toContain(
+      const flattened = (text) => text.replace(/\s+/g, ' ')
+
+      test('tells the CI fixer a re-run does not refresh a check another job posted', async () => {
+        expect(await ciFixPrompt()).toContain(
           'Re-running a workflow does not refresh a check that another job posted'
+        )
+      })
+
+      test('has the branch CI fixer find out whether this branch broke it, before changing a line', async () => {
+        const prompt = await ciFixPrompt()
+
+        expect(prompt).toContain(
+          'FIND OUT WHETHER THIS BRANCH BROKE IT, BEFORE YOU CHANGE A LINE'
+        )
+        expect(prompt).toContain('--branch main --workflow')
+      })
+
+      test('refuses to let the branch CI fixer close a failure as pre-existing', async () => {
+        const prompt = flattened(await ciFixPrompt())
+
+        expect(prompt).toContain('THIS IS NOT A WAY TO CLOSE A FAILURE')
+        expect(prompt).toContain(
+          'the run stops so a person lands the fix on main'
+        )
+      })
+
+      test('has the branch CI fixer prove its fix by the failing spec files alone', async () => {
+        expect(flattened(await ciFixPrompt())).toContain(
+          'running THE FAILING SPEC FILES THEMSELVES, named after `--`, never a folder, a bare script or a `--grep` over a tag'
+        )
+      })
+
+      const watcherPrompt = async () =>
+        flattened(promptOf(await runMergeRow(FOUND, null), 'inc-900 ci watch'))
+
+      test('tells the branch watcher to check the half-taken base before it blames anything', async () => {
+        const prompt = await watcherPrompt()
+
+        expect(prompt).toContain('FIRST, THE HALF-TAKEN BASE')
+        expect(prompt).toContain('rev-list --count HEAD..origin/main')
+        expect(prompt).toContain(
+          'put NOTHING in notOurs[], and set onlyNotOurs false'
+        )
+      })
+
+      test('tells the branch watcher one failure of its own keeps onlyNotOurs false', async () => {
+        expect(await watcherPrompt()).toContain(
+          "A single failure of this branch's makes it false, however many of main's sit beside it"
         )
       })
 

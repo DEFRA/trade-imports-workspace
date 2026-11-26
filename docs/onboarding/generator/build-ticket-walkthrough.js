@@ -148,7 +148,7 @@ term(s, {
   x: 1.05, y: 5.0, w: 8.4, h: 1.5, title: "claude — workspace root",
   lines: [
     [["▸ ", "prompt", true], ["plan EUDPA-213", "prompt", true]],
-    [["▸ ", "prompt", true], ["implement EUDPA-213", "prompt", true]],
+    [["▸ ", "prompt", true], ["implement EUDPA-213 by hand", "prompt", true]],
     [["▸ ", "prompt", true], ["refactor EUDPA-213", "prompt", true]],
   ],
 });
@@ -331,7 +331,7 @@ s.addText("\"These were front-loaded deliberately — a fresh agent is most like
 footer(s, 8);
 
 // ===== DIVIDER — IMPLEMENT =====
-divider(pres, { n: 2, title: "Implement", blurb: "Build the plan, repo by repo, keeping the tests green and verifying every target live.", trigger: "implement EUDPA-213" });
+divider(pres, { n: 2, title: "Implement", blurb: "Build the plan, repo by repo, keeping the tests green and verifying every target live.", trigger: "implement EUDPA-213 by hand" });
 
 // 9 — Implement kick-off ----------------------------------------------
 s = pres.addSlide();
@@ -341,7 +341,7 @@ heading(s, "Implement · kick-off", "Baseline first, then investigate");
 term(s, {
   y: 1.55, h: 3.7, title: "claude — IMPLEMENT phase (references/IMPLEMENTOR.md)",
   lines: [
-    [["▸ ", "prompt", true], ["implement EUDPA-213", "prompt", true], ["   (+ the handover prompt)", "muted"]],
+    [["▸ ", "prompt", true], ["implement EUDPA-213 by hand", "prompt", true], ["   (+ the handover prompt)", "muted"]],
     "",
     [["$ ", "ok"], ["tim ticket prepare-implement EUDPA-213", "cmd"]],
     [["  → plan present; detect-tech re-validated; .implement-meta.json", "muted"]],
@@ -572,7 +572,7 @@ s.addText("Don't memorise this run — read the real thing", { x: M, y: 1.1, w: 
   const rows = [
     ["workareas/ticket-skill-demo/*.log", "the three transcripts this deck is built from — plan / implement / refactor"],
     [".claude/skills/ticket/SKILL.md", "what the skill actually executes — straight from source"],
-    ["plan / implement / refactor EUDPA-X", "how you launch each phase on a ticket of your own"],
+    ["plan / implement by hand / refactor EUDPA-X", "how you launch each phase on a ticket of your own"],
   ];
   let ly = 2.2;
   rows.forEach((l) => {

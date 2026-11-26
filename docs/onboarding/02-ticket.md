@@ -18,7 +18,7 @@ What you get:
 
 ## How you trigger it
 
-You launch it in natural language: "plan EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"
+You launch it in natural language: "plan EUDPA-1234" · "how should I implement EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"
 
 ## Watch it run
 
@@ -41,13 +41,13 @@ Everything lands under workareas/ticket-planning/EUDPA-X/ (gitignored).
 
 - **Reach for it when** — you're picking up a refined EUDPA ticket and about to start the work
 - **Where you decide** — you resolve the plan's open questions, and review the diff and PR — it never merges for you
-- **How it fits** — it hands off to review and code-style once the PR is up
+- **How it fits** — it hands off to review and code-style once the PR is up. "implement EUDPA-1234" or "build EUDPA-1234" goes to requirements-pipeline ticket mode instead
 
 ## Live view
 
 Don't memorise the surface — read the current version:
 
-- `plan / implement / refactor EUDPA-X` — how you launch each phase
+- `plan / implement by hand / refactor EUDPA-X` — how you launch each phase
 - `.claude/skills/ticket/SKILL.md` — what it does — straight from source
 - `workareas/ticket-planning/EUDPA-X/` — where the plan and context land
 

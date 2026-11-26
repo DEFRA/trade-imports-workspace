@@ -10,7 +10,7 @@ import {
   question,
   statement
 } from './__fixtures__/intake-record.js'
-import { ticketBacklogRepos } from './__fixtures__/ticket-workareas.js'
+import { ticketBacklogRepos } from './__fixtures__/workarea-workspace.js'
 
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),

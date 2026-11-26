@@ -1,25 +1,13 @@
-import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync
-} from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
-import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import { makeWorkareaWorkspace } from '../../backlog/__fixtures__/workarea-workspace.js'
 import { parseSplitOpts } from './split.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 const fixturePath = join(
   here,
   '..',
@@ -33,6 +21,7 @@ const fixturePath = join(
 const WORKAREA = 'shared/hrp'
 const THEMES = ['origin', 'commodity', 'documents']
 
+let held
 let workspace
 
 const pathOf = (workarea) =>
@@ -70,17 +59,13 @@ const setRow = (workarea, id, fields) => {
 }
 
 beforeEach(() => {
-  workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-split-')))
-  markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
-  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
-  mkdirSync(dirname(schemaCopy), { recursive: true })
-  cpSync(realSchemaPath, schemaCopy)
+  held = makeWorkareaWorkspace({ backlogSchemas: true })
+  workspace = held.root
   writeJson(pathOf(WORKAREA), readJson(fixturePath))
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  held.remove()
 })
 
 describe('tim backlog split', () => {

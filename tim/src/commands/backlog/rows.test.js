@@ -18,9 +18,9 @@ import {
   statement
 } from '../../backlog/__fixtures__/intake-record.js'
 import {
-  makeTicketWorkspace,
+  makeWorkareaWorkspace,
   ticketBacklogRepos
-} from '../../backlog/__fixtures__/ticket-workareas.js'
+} from '../../backlog/__fixtures__/workarea-workspace.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -31,7 +31,7 @@ let held
 
 const openWorkspace = (contents = {}) => {
   held?.remove()
-  held = makeTicketWorkspace({ backlogSchemas: true, ...contents })
+  held = makeWorkareaWorkspace({ backlogSchemas: true, ...contents })
 }
 
 const backlogPath = () => backlogPathIn(held.root, WORKAREA)
@@ -319,6 +319,40 @@ describe('tim backlog set', () => {
     expect(updated.openQuestions).toEqual(['Who may see drafts?'])
   })
 
+  test('removes an open question by its number and keeps the rest', async () => {
+    writeBacklog([
+      row({ openQuestions: ['Who may see drafts?', 'Does it merge?'] })
+    ])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '2'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
+  })
+
+  test('refuses an open question number that is not a whole number from 1', async () => {
+    writeBacklog([row({ openQuestions: ['Who may see drafts?'] })])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '0'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--remove-open-question must be the number of an open question, counting from 1.'
+    )
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
+  })
+
   test('sets a merge ref per repo and keeps the refs already there', async () => {
     writeBacklog([
       row({
@@ -535,7 +569,7 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
     )
   })
 

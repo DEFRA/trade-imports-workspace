@@ -1,6 +1,6 @@
 ---
 name: ticket
-description: 'Plan, implement by hand, or refactor work for an existing Jira ticket (EUDPA-XXXXX) end-to-end. Use when the user asks to scope, plan, follow a plan for, implement by hand, refactor, tidy up, or clean code for a specific ticket (triggers: "plan EUDPA-", "how should I implement EUDPA-", "implement EUDPA-X by hand", "follow the plan", "refactor", "tidy up", "clean"). Covers the full plan -> implement -> refactor cycle for one existing ticket. NOT for building or implementing a ticket through the build loop (use requirements-pipeline ticket mode), NOT for creating new tickets (use ticket-creator), NOT for assessing whether a ticket is ready for refinement (use ticket-refiner), NOT for reviewing an existing PR (use review or code-style).'
+description: 'Plan, implement by hand, or refactor work for an existing Jira ticket (EUDPA-XXXXX) end-to-end. Use when the user asks to scope, plan, follow a plan for, implement by hand, refactor, tidy up, or clean code for a specific ticket (triggers: "plan EUDPA-", "how should I implement EUDPA-", "implement EUDPA-X by hand", "follow the plan", "refactor", "tidy up", "clean"). Covers the full plan -> implement -> refactor cycle for one existing ticket. NOT for a plain "build EUDPA-X" or "implement EUDPA-X", which builds the ticket through the build loop (use requirements-pipeline ticket mode), NOT for creating new tickets (use ticket-creator), NOT for assessing whether a ticket is ready for refinement (use ticket-refiner), NOT for reviewing an existing PR (use review or code-style).'
 context: inline
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep]
 argument-hint: 'EUDPA-XXXXX'
@@ -17,8 +17,8 @@ peer phases share triggers but split on verb.
 | follow the plan / implement by hand | IMPLEMENT |
 | refactor / tidy / clean | REFACTOR |
 
-NOT for building a ticket through the build loop — use `requirements-pipeline`
-ticket mode. NOT for creating new tickets — use `ticket-creator`. NOT for assessing
+NOT for building a ticket through the build loop ("build EUDPA-X", or a plain
+"implement EUDPA-X" without "by hand") — use `requirements-pipeline` ticket mode. NOT for creating new tickets — use `ticket-creator`. NOT for assessing
 whether a ticket is ready for refinement — use `ticket-refiner`. NOT for
 reviewing someone's PR — use `review` (correctness across languages) or
 `code-style` (JS lint/style).

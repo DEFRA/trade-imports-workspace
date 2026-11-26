@@ -79,7 +79,7 @@ const rungSchema = z
       )
       .optional(),
     scope: z.array(z.string().min(1)).optional(),
-    scopeFrom: z.literal('pr-scope').optional(),
+    scopeFrom: z.literal('gate').optional(),
     ports: z.array(z.number().int().min(1).max(MAX_PORT)).optional(),
     forRepos: z.array(z.string().min(1)).min(1).optional(),
     exclusive: z.boolean().optional()
@@ -189,14 +189,26 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-const scopeRunsOf = (rung, repo, folders, workspaceRoot, e2eScope) => {
+// Under a narrowed run a rung proves what its OWN repo changed, so a repo the
+// change never touched plans no run: its suite would prove only what the pull
+// request's whole-suite run proves anyway. A rung that names its own scope, such
+// as the k6 performance suite, keeps that scope when its repo did change — it
+// has no finer granularity to narrow to.
+const narrowedRunsOf = (rung, repo, e2eScope) => {
+  const changed = e2eScope.changedByRepo[repo.folder] ?? []
+  if (changed.length === 0) return []
   if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
-  if (e2eScope) {
-    return changedScopeRuns({
-      specs: e2eScope.specsByRepo?.[repo.folder] ?? e2eScope.specs,
-      coveredSpecs: e2eScope.coveredSpecs
-    })
+  return changedScopeRuns({
+    specs: e2eScope.specsByRepo[repo.folder] ?? [],
+    coveredSpecs: e2eScope.coveredSpecsByRepo?.[repo.folder] ?? []
+  })
+}
+
+const scopeRunsOf = (rung, repo, folders, workspaceRoot, e2eScope) => {
+  if (e2eScope && rung.phase === 'e2e') {
+    return narrowedRunsOf(rung, repo, e2eScope)
   }
+  if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
   const services = folders.filter((folder) => folder !== repo.folder)
   return prScopeRuns(loadPrScope(workspaceRoot), services)
 }
@@ -265,10 +277,18 @@ const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
  * @param {object} args.gates - A parsed gates.json
  * @param {{folder: string, path: string}[]} args.repos - The backlog's repos, in order
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
- * @param {string} [args.workspaceRoot] - Needed only for a rung with scopeFrom
- * @param {{base: string, specs?: string[]}} [args.e2eScope] - Narrows every
- *   scopeFrom rung to the branch's own change instead of its repos' whole
- *   suites. Without it a scopeFrom rung runs what the pull requests run.
+ * @param {string} [args.workspaceRoot] - Needed only for a scopeFrom rung that
+ *   is not narrowed by e2eScope
+ * @param {object} [args.e2eScope] - Narrows every e2e rung to what its own repo
+ *   changed, instead of its repos' whole suites. Each map is keyed by repo
+ *   folder, so a repo's paths never reach another repo's rung. Without it an
+ *   e2e rung runs its own scope, or what the pull requests run.
+ * @param {Record<string, string[]>} args.e2eScope.changedByRepo - Every file
+ *   each repo changed; a repo with none plans no e2e rung
+ * @param {Record<string, string[]>} args.e2eScope.specsByRepo - The spec files
+ *   each repo changed
+ * @param {Record<string, string[]>} [args.e2eScope.coveredSpecsByRepo] - Specs
+ *   to run whether or not that repo changed them
  * @returns {object[]}
  */
 export const planRungs = ({

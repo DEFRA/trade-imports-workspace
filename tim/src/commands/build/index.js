@@ -180,12 +180,20 @@ const describeRungAndPorts = (rung) => [
 
 const rungLabel = ({ repo, name }) => `${repo} ${name}`
 
-const describeE2eLeftToCi = ({ leftToCi = [], evidence = null } = {}) =>
-  leftToCi.length > 0
-    ? [
-        `Left to CI, not run here: ${leftToCi.map(rungLabel).join(', ')}. The evidence is ${evidence}`
-      ]
-    : []
+const describeE2eLeftToCi = ({
+  where,
+  leftToCi = [],
+  evidence = null
+} = {}) => {
+  if (leftToCi.length > 0) {
+    return [
+      `Left to CI, not run here: ${leftToCi.map(rungLabel).join(', ')}. The evidence is ${evidence}`
+    ]
+  }
+  // A narrowed run that selected no spec runs no E2E rung at all, and a gate
+  // that says only "passed" reads exactly like one that ran the suite.
+  return where === 'targeted' ? [evidence] : []
+}
 
 const describeMachine = (machine) =>
   machine ? [`Ran with this machine’s settings from ${machine.config}.`] : []
@@ -443,8 +451,8 @@ const registerGate = (build, timVersion) =>
       'The ref --e2e targeted diffs the branch against to find the spec files it has changed. Imports are never followed, so a changed page object selects no spec of its own (default: origin/main)'
     )
     .option(
-      '--covered-spec <path>',
-      'A spec --e2e targeted runs whether or not the branch changed it, such as one the Behaviour Spec links to a scenario this change touches. Repeat for more than one',
+      '--covered-spec <repoKey:path>',
+      'A spec --e2e targeted runs whether or not the branch changed it, such as one the Behaviour Spec links to a scenario this change touches, named repo-first as `tests:tests/animals/e2e/features/amend.spec.ts`. Repeat for more than one. The build loop passes none: this is for a gate you run by hand',
       (path, paths = []) => [...paths, path]
     )
     .option(

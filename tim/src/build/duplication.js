@@ -33,21 +33,17 @@ const jscpdLauncher = createRequire(import.meta.url).resolve(
   'jscpd/run-jscpd.js'
 )
 
-const assertBaseExists = async (repoPath, base) => {
-  const { exitCode } = await run(
-    'git',
-    ['rev-parse', '--verify', '--quiet', `${base}^{commit}`],
-    { cwd: repoPath }
-  )
-  if (exitCode !== 0) {
-    throw new TimError(
-      'NOT_FOUND',
-      `Can't find ${base} in ${repoPath}. Fetch it, or name another base with --base.`
-    )
-  }
-}
-
-const changedTestFiles = async (repoPath, base) => {
+/**
+ * Every file a repo has changed since it left the base, committed or not:
+ * the merge-base diff plus the working tree's untracked files. A stage that
+ * runs before the land stage sees the row's own work only through the second
+ * half, so both are needed.
+ *
+ * @param {string} repoPath
+ * @param {string} base
+ * @returns {Promise<string[]>} Repo-relative paths, sorted, deletions left out
+ */
+export const changedFilesSince = async (repoPath, base) => {
   const changed = await gitLines(repoPath, [
     'diff',
     '--merge-base',
@@ -61,8 +57,25 @@ const changedTestFiles = async (repoPath, base) => {
     '--others',
     '--exclude-standard'
   ])
-  return [...new Set([...changed, ...untracked])].filter(isTestFile).sort()
+  return [...new Set([...changed, ...untracked])].sort()
 }
+
+export const assertBaseExists = async (repoPath, base) => {
+  const { exitCode } = await run(
+    'git',
+    ['rev-parse', '--verify', '--quiet', `${base}^{commit}`],
+    { cwd: repoPath }
+  )
+  if (exitCode !== 0) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Can't find ${base} in ${repoPath}. Fetch it, or name another base with --base.`
+    )
+  }
+}
+
+const changedTestFiles = async (repoPath, base) =>
+  (await changedFilesSince(repoPath, base)).filter(isTestFile)
 
 const testFilesOnDisk = async (repoPath) =>
   (

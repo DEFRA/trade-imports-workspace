@@ -428,7 +428,7 @@ describe('parseGates', () => {
               phase: 'e2e',
               run: 'test:docker-compose',
               scope: ['tests/ins/'],
-              scopeFrom: 'pr-scope',
+              scopeFrom: 'gate',
               forRepos: ['tests']
             }
           ]
@@ -445,7 +445,7 @@ describe('parseGates', () => {
     const problems = problemsOf(
       gatesWith({
         tests: {
-          rungs: [{ ...unitRung('unit', 'test'), scopeFrom: 'pr-scope' }]
+          rungs: [{ ...unitRung('unit', 'test'), scopeFrom: 'gate' }]
         }
       })
     )
@@ -612,7 +612,7 @@ describe('planRungs', () => {
               name: 'e2e',
               phase: 'e2e',
               run: 'test:docker-compose',
-              scopeFrom: 'pr-scope',
+              scopeFrom: 'gate',
               forRepos
             }
           ]
@@ -690,8 +690,8 @@ describe('loadGates', () => {
   })
 })
 
-describe('planRungs with e2eScope', () => {
-  const scopeFromGates = () =>
+describe('planRungs under a narrowed e2e run', () => {
+  const narrowedGates = () =>
     parseGates(
       gatesWith({
         'plants-frontend': { rungs: [unitRung('unit', 'test')] },
@@ -701,7 +701,18 @@ describe('planRungs with e2eScope', () => {
               name: 'e2e',
               phase: 'e2e',
               run: 'test:docker-compose',
-              scopeFrom: 'pr-scope',
+              scopeFrom: 'gate',
+              forRepos: ['plants-frontend']
+            }
+          ]
+        },
+        perftests: {
+          rungs: [
+            {
+              name: 'e2e-k6',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              exclusive: true,
               forRepos: ['plants-frontend']
             }
           ]
@@ -709,17 +720,27 @@ describe('planRungs with e2eScope', () => {
       })
     )
 
+  const everyRepo = [repo('plants-frontend'), repo('tests'), repo('perftests')]
+
   const e2eRungs = (plan) => plan.filter(({ phase }) => phase === 'e2e')
 
-  test('narrows a scopeFrom rung to the spec files the change touched', () => {
-    const plan = planRungs({
-      gates: scopeFromGates(),
-      repos: [repo('plants-frontend'), repo('tests')],
-      phase: 'e2e',
-      e2eScope: { specs: ['tests/plants/a.spec.ts'] }
-    })
+  const planWith = (e2eScope) =>
+    e2eRungs(
+      planRungs({
+        gates: narrowedGates(),
+        repos: everyRepo,
+        phase: 'e2e',
+        e2eScope
+      })
+    )
 
-    expect(e2eRungs(plan)).toEqual([
+  test('narrows a scopeFrom rung to the spec files its own repo changed', () => {
+    expect(
+      planWith({
+        changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+        specsByRepo: { tests: ['tests/plants/a.spec.ts'] }
+      })
+    ).toEqual([
       expect.objectContaining({
         repo: 'tests',
         name: 'e2e',
@@ -728,68 +749,64 @@ describe('planRungs with e2eScope', () => {
     ])
   })
 
-  test('plans no e2e rung when the change touched no spec', () => {
-    const plan = planRungs({
-      gates: scopeFromGates(),
-      repos: [repo('plants-frontend'), repo('tests')],
-      phase: 'e2e',
-      e2eScope: { specs: [] }
-    })
-
-    expect(e2eRungs(plan)).toEqual([])
-  })
-
-  test('leaves a rung that names its own scope alone', () => {
-    const plan = planRungs({
-      gates: sampleGates(),
-      repos: [repo('plants-frontend'), repo('plants-backend'), repo('tests')],
-      phase: 'e2e',
-      e2eScope: { base: 'origin/main' }
-    })
-
-    expect(e2eRungs(plan)).toEqual([
-      expect.objectContaining({ name: 'e2e-plants', scope: ['tests/plants/'] })
-    ])
-  })
-})
-
-describe('planRungs e2eScope per repo', () => {
-  const twoRepoGates = () =>
-    parseGates(
-      gatesWith({
-        'plants-frontend': { rungs: [unitRung('unit', 'test')] },
-        tests: {
-          rungs: [
-            {
-              name: 'e2e',
-              phase: 'e2e',
-              run: 'test:docker-compose',
-              scopeFrom: 'pr-scope',
-              forRepos: ['plants-frontend']
-            }
-          ]
-        }
-      })
-    )
-
-  test('gives a rung its own repo’s changed specs, not another repo’s', () => {
-    const plan = planRungs({
-      gates: twoRepoGates(),
-      repos: [repo('plants-frontend'), repo('tests')],
-      phase: 'e2e',
-      e2eScope: {
-        specsByRepo: {
-          'plants-frontend': ['fit/origin.fit.spec.js'],
-          tests: ['tests/plants/origin.spec.ts']
-        }
+  test('gives a rung its own repo’s specs and never another repo’s', () => {
+    const plan = planWith({
+      changedByRepo: {
+        'plants-frontend': ['fit/origin.fit.spec.js'],
+        tests: ['tests/plants/origin.spec.ts']
+      },
+      specsByRepo: {
+        'plants-frontend': ['fit/origin.fit.spec.js'],
+        tests: ['tests/plants/origin.spec.ts']
       }
     })
 
-    expect(plan.filter(({ phase }) => phase === 'e2e')).toEqual([
+    expect(plan).toEqual([
       expect.objectContaining({
         repo: 'tests',
         scope: ['tests/plants/origin.spec.ts', '--pass-with-no-tests']
       })
     ])
+  })
+
+  test('adds the covered specs named for that repo, and no others', () => {
+    const [run] = planWith({
+      changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      specsByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      coveredSpecsByRepo: {
+        tests: ['tests/plants/covered.spec.ts'],
+        perftests: ['src/k6/ignored.spec.ts']
+      }
+    })
+
+    expect(run.scope).toEqual([
+      'tests/plants/a.spec.ts',
+      'tests/plants/covered.spec.ts',
+      '--pass-with-no-tests'
+    ])
+  })
+
+  test('plans no rung for a repo the change never touched', () => {
+    expect(planWith({ changedByRepo: {}, specsByRepo: {} })).toEqual([])
+  })
+
+  test('keeps a rung that names its own scope, such as the k6 suite, when its repo changed', () => {
+    expect(
+      planWith({
+        changedByRepo: { perftests: ['src/k6/journeys.js'] },
+        specsByRepo: { perftests: [] }
+      })
+    ).toEqual([
+      expect.objectContaining({ repo: 'perftests', name: 'e2e-k6', scope: [] })
+    ])
+  })
+
+  test('plans no k6 rung when the change touched no performance file', () => {
+    const plan = planWith({
+      changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      specsByRepo: { tests: ['tests/plants/a.spec.ts'] }
+    })
+
+    expect(plan.map(({ repo: folder }) => folder)).toEqual(['tests'])
   })
 })

@@ -24,7 +24,8 @@ import {
   TIM_DUPLICATION,
   TIM_RUNGS
 } from './gates.js'
-import { changedSpecPaths } from './changed-scope.js'
+import { isSpecFile } from './changed-scope.js'
+import { assertBaseExists, changedFilesSince } from './duplication.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 import {
   defaultMachineConfigPath,
@@ -47,25 +48,43 @@ const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 const DEFAULT_CHANGE_BASE = 'origin/main'
 
-// A spec path is relative to the repo it sits in, so a rung is given its own
-// repo's changed specs and no other's. A frontend's FIT specs would otherwise
-// reach the tests repo's Playwright run, which has no such files.
-const changedSpecsByRepo = async (repos, base) =>
-  Object.fromEntries(
+// A path is relative to the repo it sits in, so a rung is given its own repo's
+// paths and no other's. A frontend's FIT specs would otherwise reach the tests
+// repo's Playwright run, which has no such files. A covered spec names its repo
+// the way `tim backlog standards --files` does, `<repoKey>:<path>`, so it needs
+// no guessing either.
+const byRepo = (repos, of) =>
+  Object.fromEntries(repos.map(({ folder }) => [folder, of(folder)]))
+
+const narrowedScope = async (repos, base, coveredSpecs) => {
+  const changedByRepo = Object.fromEntries(
     await Promise.all(
-      repos.map(async ({ folder, path }) => [
-        folder,
-        await changedSpecPaths(path, base)
-      ])
+      repos.map(async ({ folder, path }) => {
+        await assertBaseExists(path, base)
+        return [folder, await changedFilesSince(path, base)]
+      })
     )
   )
+  const covered = coveredSpecs.map((entry) => entry.split(/:(.+)/))
+  return {
+    changedByRepo,
+    specsByRepo: byRepo(repos, (folder) =>
+      changedByRepo[folder].filter((path) => isSpecFile(path))
+    ),
+    coveredSpecsByRepo: byRepo(repos, (folder) =>
+      covered.filter(([key]) => key === folder).map(([, path]) => path)
+    )
+  }
+}
 
-const TARGETED_E2E = {
+const targetedE2e = (specCount) => ({
   where: 'targeted',
   leftToCi: [],
   evidence:
-    'Only the specs this change reaches ran here. The whole suite runs on the pull request.'
-}
+    specCount === 0
+      ? 'No E2E rung ran here: this change touched no spec file. The whole suite runs on the pull request.'
+      : `Only the ${specCount} spec ${specCount === 1 ? 'file' : 'files'} this change touched ran here. The whole suite runs on the pull request.`
+})
 
 /**
  * Who the gate takes the stack lease as when no holder is given: this gate
@@ -728,7 +747,7 @@ export const runGate = async ({
   const e2eWhere = e2e ?? machine?.e2e
   const e2eScope =
     e2eWhere === 'targeted'
-      ? { specsByRepo: await changedSpecsByRepo(repos, base), coveredSpecs }
+      ? await narrowedScope(repos, base, coveredSpecs)
       : undefined
   const wholePlan = withMachineWorkers(
     planRungs({ gates, repos, phase, workspaceRoot, e2eScope }),
@@ -741,7 +760,7 @@ export const runGate = async ({
   const e2eReport = e2eInCi
     ? e2eLeftToCi(byPhase(wholePlan, 'e2e'))
     : e2eWhere === 'targeted'
-      ? TARGETED_E2E
+      ? targetedE2e(Object.values(e2eScope?.specsByRepo ?? {}).flat().length)
       : LOCAL_E2E
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {

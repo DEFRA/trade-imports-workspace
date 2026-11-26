@@ -101,3 +101,62 @@ describe('changedSpecPaths', () => {
     rmSync(root, { recursive: true, force: true })
   })
 })
+
+describe('changedSpecPaths and work that is not committed yet', () => {
+  const git = (cwd, args) =>
+    execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' })
+
+  const repoOnBranch = () => {
+    const root = mkdtempSync(join(tmpdir(), 'changed-scope-wip-'))
+    git(root, ['init', '--initial-branch=main'])
+    git(root, ['config', 'user.email', 'test@example.com'])
+    git(root, ['config', 'user.name', 'Test'])
+    mkdirSync(join(root, 'tests/animals'), { recursive: true })
+    writeFileSync(join(root, 'tests/animals/existing.spec.ts'), 'base\n')
+    git(root, ['add', '.'])
+    git(root, ['commit', '-m', 'base'])
+    git(root, ['checkout', '-b', 'feat/branch'])
+    return root
+  }
+
+  test('lists a spec the row has written but not committed', async () => {
+    const root = repoOnBranch()
+    writeFileSync(join(root, 'tests/animals/new.spec.ts'), 'new\n')
+
+    expect(await changedSpecPaths(root, 'main')).toEqual([
+      'tests/animals/new.spec.ts'
+    ])
+
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  test('lists a spec the row has edited but not staged', async () => {
+    const root = repoOnBranch()
+    writeFileSync(join(root, 'tests/animals/existing.spec.ts'), 'edited\n')
+
+    expect(await changedSpecPaths(root, 'main')).toEqual([
+      'tests/animals/existing.spec.ts'
+    ])
+
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  test('leaves out a spec the row deleted, which Playwright could not run', async () => {
+    const root = repoOnBranch()
+    git(root, ['rm', '-q', 'tests/animals/existing.spec.ts'])
+
+    expect(await changedSpecPaths(root, 'main')).toEqual([])
+
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  test('refuses a base the repo does not have, rather than reporting no specs', async () => {
+    const root = repoOnBranch()
+
+    await expect(changedSpecPaths(root, 'origin/nope')).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    })
+
+    rmSync(root, { recursive: true, force: true })
+  })
+})

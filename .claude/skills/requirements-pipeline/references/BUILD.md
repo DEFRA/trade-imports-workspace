@@ -198,17 +198,28 @@ after deployment. The loop still stops at `ci-red`. A `local` run's gate takes t
 same scope and runs it the same way: the suites whole in its `e2e` rung, then the
 tagged specs from every domain in an `e2e-tagged` rung.
 
-Under `targeted` the gate runs its E2E rung narrowed to the branch's own change:
-**the spec files the branch has changed since `--base`, and nothing else**, plus
-any spec passed as `--covered-spec`. Imports are never followed. `tim/src/build/changed-scope.js`
+Under `targeted` the gate runs its E2E rung narrowed to the row's own change:
+**the spec files the row has changed, and nothing else**. The loop passes
+`--base HEAD`, so that is the row's uncommitted work — the ladder runs before
+the land stage — rather than every row the theme has landed so far. A theme-end
+gate passes the base branch instead, because the whole branch is what it
+reviews. Imports are never followed. `tim/src/build/changed-scope.js`
 is the contract, and says why: Playwright's `--only-changed` cannot narrow this
 suite, because every spec imports the `@fixtures` barrel and that imports the
 `@page-objects` barrel, so one changed page object selects 871 tests in 173 files.
 **So a change to a page object, a fixture or a journey flow selects no spec of
-its own here, and the pull request's whole-suite run is its only proof.** A row
-that touches no spec plans no E2E rung at all — no rung, and no stack lease for
-one. The whole suite
+its own here, and the pull request's whole-suite run is its only proof.** A repo
+the row never touched plans no E2E rung at all, which is what keeps the k6
+performance suite — a rung with its own scope and no spec granularity — from
+running whole on a row that changed nothing in it. The whole suite
 still runs on the pull request, and the loop still stops at `ci-red`.
+
+`--covered-spec` runs a spec whether or not the row changed it, named repo-first
+(`tests:tests/animals/e2e/features/amend.spec.ts`). **The loop passes none** —
+it is for a gate you run by hand. Filling it from the scenarios' coverage links
+in `openspec/coverage/` would let a row re-prove behaviour it changed without
+touching the spec that covers it; until then, that case is the pull request's
+alone.
 
 The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
 <local, targeted or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and

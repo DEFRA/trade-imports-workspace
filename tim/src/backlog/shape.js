@@ -1,6 +1,7 @@
 import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
+import { editNotes } from './row-notes.js'
 import { followRef } from './schema-ref.js'
 import { pickUpAwaiting, splitOffOf } from './split-off.js'
 import {
@@ -424,7 +425,8 @@ const dependenciesFor = (row, ids, backlog) => {
 /**
  * Apply one set of build-state changes to one row, returning the new backlog
  * and what changed. Scalar fields are replaced; `note` and `openQuestion`
- * append; `pr` adds a pull request or merges into the one with the same url;
+ * append; `removeOpenQuestion` removes the open question at that position,
+ * counting from 1, before any `openQuestion` is added; `pr` adds a pull request or merges into the one with the same url;
  * `merge` sets a ref per repo key, keeping the row's other merge refs;
  * `dependsOn` replaces the row's dependencies with other rows of this backlog;
  * `attempt` replaces how far the last failed attempt got, or clears it when
@@ -435,9 +437,9 @@ const dependenciesFor = (row, ids, backlog) => {
  * @param {object} args
  * @param {{increments: object[]}} args.backlog
  * @param {string} args.id
- * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none', rigour?: string|'none'}} args.changes
+ * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, removeOpenQuestion?: number, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none', rigour?: string|'none'}} args.changes
  * @returns {{backlog: object, changed: Record<string, {before: unknown, after: unknown}>}}
- * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, or a dependency is the row itself or not in the backlog
+ * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, a dependency is the row itself or not in the backlog, or the row has no open question at `removeOpenQuestion`
  */
 export const setRowFields = ({ backlog, id, changes }) => {
   const index = backlog.increments.findIndex((row) => row.id === id)
@@ -452,8 +454,16 @@ export const setRowFields = ({ backlog, id, changes }) => {
   if (changes.note !== undefined) {
     after.notes = appendTo(before.notes, changes.note)
   }
+  if (changes.removeOpenQuestion !== undefined) {
+    after.openQuestions = editNotes({
+      backlog,
+      id,
+      remove: [changes.removeOpenQuestion],
+      field: 'openQuestions'
+    }).notes
+  }
   if (changes.openQuestion !== undefined) {
-    after.openQuestions = appendTo(before.openQuestions, changes.openQuestion)
+    after.openQuestions = appendTo(after.openQuestions, changes.openQuestion)
   }
   if (changes.pr !== undefined) after.prs = upsertPr(before.prs, changes.pr)
   if (changes.merge !== undefined) {

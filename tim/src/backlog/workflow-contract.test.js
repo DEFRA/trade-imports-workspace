@@ -64,6 +64,14 @@ const extractArgsContractBlock = (source) => {
   return source.slice(start, end + endMarker.length)
 }
 
+const markedBlock = (source, block) => {
+  const endMarker = `// <<< ${block}`
+  return source.slice(
+    source.indexOf(`// >>> ${block}:`),
+    source.indexOf(endMarker) + endMarker.length
+  )
+}
+
 const textBetween = (source, startMarker, endMarker) =>
   source.slice(
     source.indexOf(startMarker) + startMarker.length,
@@ -138,7 +146,15 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'workspace'
   ],
   'args-canary.js': ['list', 'n'],
-  'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
+  'distil.js': [
+    'workspace',
+    'workarea',
+    'only',
+    'tim',
+    'models',
+    'verifyChunk'
+  ],
+  'ticket-intake.js': ['workspace', 'workarea', 'tim', 'models']
 }
 
 const JIRA_AND_CI_KEYS = [
@@ -363,6 +379,13 @@ const modelOf = (run, label) =>
 const promptOf = (run, label) =>
   run.agents.find((entry) => entry.options.label === label).prompt
 
+const byLabel = (table) => (prompt, options) => table[options.label]
+
+const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+
+const optionsOf = (run, label) =>
+  run.agents.find((entry) => entry.options.label === label).options
+
 const runLoop = (
   path,
   {
@@ -459,17 +482,34 @@ const watchLoopExceptionPlacesIn = (prompt) => {
 }
 
 describe('every workflow script', () => {
-  test('finds at least the build loop, the distil workflow and the canary', () => {
+  test('finds at least the build loop, the distil and ticket intake workflows and the canary', () => {
     const names = workflowScripts().map((script) => script.name)
 
     expect(names).toEqual(
       expect.arrayContaining([
         'increment-build-loop.js',
         'distil.js',
+        'ticket-intake.js',
         'args-canary.js'
       ])
     )
   })
+
+  test.each(['agent-rails', 'model-tiers'])(
+    'carries the %s block once in distil.js and once in ticket-intake.js, byte-identical',
+    (block) => {
+      const sources = ['distil.js', 'ticket-intake.js'].map((name) =>
+        readFileSync(join(buildLoopDir, name), 'utf8')
+      )
+
+      expect(
+        sources.map((source) => countOccurrences(source, `// >>> ${block}:`))
+      ).toEqual([1, 1])
+      expect(
+        new Set(sources.map((source) => markedBlock(source, block))).size
+      ).toBe(1)
+    }
+  )
 
   test('carries the args-contract block exactly once', () => {
     for (const script of workflowScripts()) {
@@ -610,7 +650,8 @@ describe('every workflow script', () => {
 
   test.each([
     ['increment-build-loop.js', '### `increment-build-loop.js`'],
-    ['distil.js', '## `distil.js`']
+    ['distil.js', '## `distil.js`'],
+    ['ticket-intake.js', '## `ticket-intake.js`']
   ])(
     "documents exactly %s's required args in the workflow README",
     (script, heading) => {
@@ -1915,14 +1956,35 @@ describe('increment-build-loop', () => {
       )
     })
 
-    test('stops with derive-failed when the start agent copies no JSON', async () => {
+    test('starts again when the start agent copies tim JSON that does not parse', async () => {
+      const unparsedCopy = { exitCode: 0, stdout: `${START_ANSWER.stdout}}` }
+
       const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
-          { exitCode: 127, stdout: 'zsh: command not found: tim' }
+          unparsedCopy,
+          START_ANSWER,
+          null
         ]
+      })
+
+      expect(stageLabels(run).slice(0, 4)).toEqual([
+        'workspace',
+        'preflight',
+        'inc-900 start',
+        'inc-900 start'
+      ])
+      expect(run.result.stopped?.reason).not.toBe('derive-failed')
+    })
+
+    test('stops with derive-failed when the start agent copies no JSON twice', async () => {
+      const notFound = { exitCode: 127, stdout: 'zsh: command not found: tim' }
+
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, notFound, notFound]
       })
 
       expect(run.result.stopped).toEqual({
@@ -11777,6 +11839,15 @@ describe('distil', () => {
     backlogByStatus: { todo: 2 }
   }
   const REPORT_TEXT = '# demo: backlog report\n\n## Summary\n'
+  const NO_CANDIDATES = {
+    ok: true,
+    problems: [],
+    rowsToBuild: 2,
+    candidateCount: 0,
+    candidates: [],
+    withoutTouches: [],
+    summary: 'nothing to combine'
+  }
 
   const HAPPY_ANSWERS = {
     status: statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
@@ -11802,20 +11873,15 @@ describe('distil', () => {
     'draft rows tiers': DRAFTED,
     'combine rows': CONSOLIDATED,
     'check backlog': BACKLOG_OK,
+    'combine candidates': NO_CANDIDATES,
     report: { report: REPORT_TEXT, issues: [] }
   }
-
-  const byLabel = (table) => (prompt, options) => table[options.label]
 
   const runDistil = (argsOverride = {}, answerOverrides = {}) =>
     runWorkflowScript(scriptPath, {
       args: { ...DISTIL_ARGS, ...argsOverride },
       answers: byLabel({ ...HAPPY_ANSWERS, ...answerOverrides })
     })
-
-  const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
-  const optionsOf = (run, label) =>
-    run.agents.find((entry) => entry.options.label === label).options
 
   describe('its configuration', () => {
     test('resolves a JSON-string args to the same configuration as object args', async () => {
@@ -11969,6 +12035,7 @@ describe('distil', () => {
         'draft rows tiers',
         'combine rows',
         'check backlog',
+        'combine candidates',
         'report'
       ])
     })
@@ -12173,6 +12240,76 @@ describe('distil', () => {
           )
         }).toEqual({ part: true, verify: true })
       })
+    })
+
+    describe('a ticket source', () => {
+      const ticketSource = {
+        ...PENDING_SOURCE,
+        id: 'ticket:EUDPA-210',
+        kind: 'ticket',
+        slug: 'ticket-eudpa-210'
+      }
+      const forTicket = (answer) =>
+        JSON.parse(
+          JSON.stringify(answer).replaceAll('repo-tests', 'ticket-eudpa-210')
+        )
+      const runTicket = () =>
+        runDistil(
+          {},
+          {
+            status: statusWith([ticketSource, VERIFIED_SOURCE]),
+            'ticket:EUDPA-210 characterise': CHARACTERISED,
+            'ticket:EUDPA-210 check partition':
+              partitionedAs('ticket-eudpa-210'),
+            'ticket:EUDPA-210 extract part 1/2': extractedPart(1),
+            'ticket:EUDPA-210 extract part 2/2': extractedPart(2),
+            'ticket:EUDPA-210 merge extract': forTicket(MERGED_EXTRACT),
+            'ticket:EUDPA-210 verify 1/2': verifiedPart(1),
+            'ticket:EUDPA-210 verify 2/2': verifiedPart(2),
+            'ticket:EUDPA-210 merge': MERGED
+          }
+        )
+      const ticketBrief =
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/extract-ticket.md'
+
+      test('has the characterise, extract part and verify agents follow the ticket brief', async () => {
+        const run = await runTicket()
+
+        expect({
+          characterise: promptOf(run, 'ticket:EUDPA-210 characterise').includes(
+            ticketBrief
+          ),
+          part: promptOf(run, 'ticket:EUDPA-210 extract part 1/2').includes(
+            ticketBrief
+          ),
+          verify: promptOf(run, 'ticket:EUDPA-210 verify 1/2').includes(
+            ticketBrief
+          )
+        }).toEqual({ characterise: true, part: true, verify: true })
+      })
+    })
+
+    test('names a brief file for every kind sources.schema.json allows, and no other', () => {
+      const workflowKinds = wordsInJsArray(
+        readFileSync(scriptPath, 'utf8'),
+        'EXTRACT_KINDS'
+      )
+      const schemaKinds = JSON.parse(
+        readFileSync(
+          join(buildLoopDir, '..', 'references', 'sources.schema.json'),
+          'utf8'
+        )
+      ).$defs.source.properties.kind.enum
+
+      expect(workflowKinds).toEqual(schemaKinds)
+      expect(
+        workflowKinds.filter(
+          (kind) =>
+            !existsSync(
+              join(buildLoopDir, 'distil', 'briefs', `extract-${kind}.md`)
+            )
+        )
+      ).toEqual([])
     })
 
     test('merges the parts, then checks the verify stage', async () => {
@@ -12392,6 +12529,228 @@ describe('distil', () => {
       expect(run.result.stopped).toEqual({
         reason: 'status-failed',
         detail: 'tim distil status failed: sources.json has no "goal".'
+      })
+    })
+  })
+
+  describe('the combine review', () => {
+    const CANDIDATE = {
+      rows: ['inc-001', 'inc-002'],
+      sharedTouches: ['frontend:src/server/origin'],
+      waitingRow: 'inc-002',
+      reason: 'share frontend:src/server/origin; inc-002 waits only on inc-001'
+    }
+    const WITH_CANDIDATES = {
+      ...NO_CANDIDATES,
+      candidateCount: 1,
+      candidates: [CANDIDATE],
+      withoutTouches: ['inc-003']
+    }
+    const REVIEWED = {
+      ok: true,
+      merged: ['inc-002 into inc-001: one page, one plan'],
+      keptApart: ['inc-003 and inc-004: a different code area'],
+      decisions: ['Kept the origin page with its hint.'],
+      summary: 'merged one'
+    }
+    const SNAPSHOT_COMPARED = {
+      snapshotOk: true,
+      removed: [],
+      changed: [],
+      splitOffChanged: [],
+      added: [],
+      mergedAway: [{ id: 'inc-002', into: 'inc-001' }]
+    }
+    const AFTER_REVIEW = {
+      ...BACKLOG_OK,
+      ...SNAPSHOT_COMPARED,
+      backlogByStatus: { todo: 1, 'merged-into': 1 }
+    }
+    const runReview = ({
+      candidates = WITH_CANDIDATES,
+      check = AFTER_REVIEW
+    } = {}) =>
+      runDistil(
+        {},
+        {
+          'combine candidates': candidates,
+          'combine candidates again': candidates,
+          'combine review': REVIEWED,
+          'combine review send-back 1': REVIEWED,
+          'combine review send-back 2': REVIEWED,
+          'check combine review': check,
+          'check combine review 2': check,
+          'check combine review 3': check
+        }
+      )
+
+    test('runs no review agent and leaves the backlog alone when nothing is a candidate', async () => {
+      const run = await runDistil()
+
+      expect({
+        labels: labelsOf(run).filter((label) =>
+          /combine (candidates|review)/.test(label)
+        ),
+        combineReview: run.result.combineReview,
+        logged: run.logs.includes(
+          'combine review: shared/demo: no candidates, so backlog.json is left as it is'
+        )
+      }).toEqual({
+        labels: ['combine candidates'],
+        combineReview: {
+          ran: false,
+          candidates: 0,
+          rowsBefore: 2,
+          rowsAfter: 2,
+          merged: [],
+          keptApart: [],
+          decisions: []
+        },
+        logged: true
+      })
+      expect(promptOf(run, 'report')).toContain(
+        'THE COMBINE REVIEW found nothing to combine: 2 rows still to build stay 2.'
+      )
+    })
+
+    test('saves a snapshot, lists the candidates and counts the rows still to build, on the light tier', async () => {
+      const run = await runDistil()
+
+      const prompt = promptOf(run, 'combine candidates')
+      expect(prompt).toContain(
+        '`tim distil backlog-snapshot shared/demo --save combined --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim backlog combine-candidates shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim backlog check shared/demo --workspace ~/ws --json`'
+      )
+      expect(optionsOf(run, 'combine candidates').model).toBe('haiku')
+    })
+
+    test('has one think-tier agent follow the review brief, with every candidate and the checks', async () => {
+      const run = await runReview()
+
+      const prompt = promptOf(run, 'combine review')
+      expect(optionsOf(run, 'combine review').model).toBe('opus')
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/combine-review.md'
+      )
+      expect(prompt).toContain(
+        '- inc-001 and inc-002: share frontend:src/server/origin; inc-002 waits only on inc-001'
+      )
+      expect(prompt).toContain(
+        'These rows have no touches, so they pair only by what they wait on: inc-003.'
+      )
+      expect(prompt).toContain(
+        '`tim backlog check shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim distil coverage shared/demo --workspace ~/ws --json`'
+      )
+      expect(prompt).toContain(
+        '`tim distil backlog-snapshot shared/demo --compare-to combined --workspace ~/ws --json`'
+      )
+    })
+
+    test('runs after the combiner and before the report, and returns how many rows became how many', async () => {
+      const run = await runReview()
+
+      expect(labelsOf(run).slice(-4)).toEqual([
+        'combine candidates',
+        'combine review',
+        'check combine review',
+        'report'
+      ])
+      expect(run.result.combineReview).toMatchObject({
+        ran: true,
+        candidates: 1,
+        rowsBefore: 2,
+        rowsAfter: 1,
+        merged: REVIEWED.merged,
+        keptApart: REVIEWED.keptApart
+      })
+      expect(run.result.decisions.combine).toEqual(REVIEWED.decisions)
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('gives the report the counts, what merged and why the rest stand alone', async () => {
+      const run = await runReview()
+
+      const prompt = promptOf(run, 'report')
+      expect(prompt).toContain('2 rows still to build became 1')
+      expect(prompt).toContain('Say "2 rows became 1" in the summary.')
+      expect(prompt).toContain('- inc-002 into inc-001: one page, one plan')
+      expect(prompt).toContain('- inc-003 and inc-004: a different code area')
+    })
+
+    test.each([
+      [
+        'adds a row',
+        { ...AFTER_REVIEW, added: ['inc-009'] },
+        'inc-009: rows the review added. It adds no row: merge into a row that exists.'
+      ],
+      [
+        'removes a row',
+        { ...AFTER_REVIEW, removed: ['inc-002'] },
+        'backlog.json no longer has inc-002. Keep every existing row.'
+      ],
+      [
+        'merges a row whose notes name none',
+        {
+          ...AFTER_REVIEW,
+          mergedAway: [{ id: 'inc-002', into: null }]
+        },
+        'inc-002 is merged-into, but its notes do not name exactly one other row still to build. Add a note naming the row it went into, and no other row.'
+      ],
+      [
+        'merges a pair that is not a candidate',
+        {
+          ...AFTER_REVIEW,
+          mergedAway: [{ id: 'inc-004', into: 'inc-001' }]
+        },
+        'inc-004 into inc-001 is not one of the listed candidates. Merge only listed candidates.'
+      ]
+    ])('sends the review back when it %s', async (_, check, problem) => {
+      const run = await runReview({ check })
+
+      expect(labelsOf(run)).toContain('combine review send-back 1')
+      expect(promptOf(run, 'combine review send-back 1')).toContain(
+        `- ${problem}`
+      )
+    })
+
+    test('stops with the review stop reason when it is still wrong after the send-backs', async () => {
+      const run = await runReview({
+        check: { ...AFTER_REVIEW, added: ['inc-009'] }
+      })
+
+      expect(
+        labelsOf(run).filter((label) => label.startsWith('combine review'))
+      ).toEqual([
+        'combine review',
+        'combine review send-back 1',
+        'combine review send-back 2'
+      ])
+      expect(run.result.stopped).toEqual({
+        reason: 'combine-review-failed',
+        detail:
+          'backlog.json still has 1 problem(s) after 2 send-backs of the combine review: inc-009: rows the review added. It adds no row: merge into a row that exists.'
+      })
+      expect(run.result.report).toBeNull()
+    })
+
+    test('stops when the candidates step relays a different count than tim counted', async () => {
+      const run = await runReview({
+        candidates: { ...WITH_CANDIDATES, candidateCount: 2 }
+      })
+
+      expect(labelsOf(run)).toContain('combine candidates again')
+      expect(run.result.stopped).toEqual({
+        reason: 'combine-review-failed',
+        detail:
+          'the combine candidates step failed: the check relayed 1 candidates, but counted 2'
       })
     })
   })
@@ -12683,13 +13042,14 @@ describe('distil', () => {
       test('runs reconcile and consolidate again, then reports', async () => {
         const run = await runSentBack()
 
-        expect(labelsOf(run).slice(-7)).toEqual([
+        expect(labelsOf(run).slice(-8)).toEqual([
           'combine rows',
           'check backlog',
           'reconcile across areas, round 2',
           'coverage after reconcile across areas, round 2',
           'combine rows, round 2',
           'check backlog, round 2',
+          'combine candidates',
           'report'
         ])
       })
@@ -12877,7 +13237,7 @@ describe('distil', () => {
               'every entry of result.splitOff into splitOffBefore, exactly'
             ),
             expect.stringContaining(
-              'result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
+              'splitOffChanged, added and mergedAway, exactly'
             )
           ])
         })
@@ -13299,5 +13659,639 @@ describe('distil', () => {
     expect(run.result.stopped.reason).toBe('report-failed')
     expect(run.result.backlog.total).toBe(2)
     expect(run.result.report).toBeNull()
+  })
+})
+
+describe('ticket-intake', () => {
+  const scriptPath = join(buildLoopDir, 'ticket-intake.js')
+
+  const INTAKE_ARGS = {
+    workspace: '~/ws',
+    workarea: 'shared/demo',
+    tim: 'tim',
+    models: {}
+  }
+
+  const TICKET_SOURCE = { id: 'ticket:EUDPA-100', kind: 'ticket' }
+  const REPO_SOURCE = { id: 'repo:tests', kind: 'repo' }
+  const statusWith = (overrides = {}) => ({
+    ok: true,
+    abs: '/ws',
+    sources: [TICKET_SOURCE, REPO_SOURCE],
+    hadBacklog: false,
+    snapshotNotFound: true,
+    problems: [],
+    summary: 'read',
+    ...overrides
+  })
+
+  const READ = {
+    ok: true,
+    decisions: ['One row: both criteria change one code area.'],
+    summary: 'read'
+  }
+
+  const QUESTION = {
+    id: 'Q1',
+    question: 'Should the list include drafts?',
+    readings: ['Drafts are listed', 'Drafts are left out'],
+    default: 'Drafts are left out',
+    holdsLaunch: false
+  }
+
+  const intakeSummary = (overrides = {}) => ({
+    ticket: 'EUDPA-100',
+    readiness: 'READY',
+    statementIds: ['AC1', 'AC2'],
+    statementCount: 2,
+    notBuiltStatementIds: [],
+    questions: [QUESTION],
+    questionCount: 1,
+    escalation: null,
+    rowsToBuild: ['inc-001'],
+    rowsToBuildCount: 1,
+    ...overrides
+  })
+
+  const checkRelay = (overrides = {}) => ({
+    checkOk: true,
+    checkProblems: [],
+    intake: intakeSummary(),
+    candidatesOk: true,
+    candidatesProblems: [],
+    candidateCount: 0,
+    candidates: [],
+    snapshotOk: true,
+    snapshotProblems: [],
+    removed: [],
+    changed: [],
+    investigationFound: true,
+    summary: 'in shape',
+    ...overrides
+  })
+
+  const verdict = (kind, id, value = 'holds') => ({
+    kind,
+    id,
+    verdict: value,
+    finding: value === 'holds' || value === 'stands' ? 'none' : 'Reword it.'
+  })
+
+  const HOLDING = {
+    verdicts: [
+      verdict('row', 'inc-001'),
+      verdict('statement', 'AC1'),
+      verdict('statement', 'AC2'),
+      verdict('question', 'Q1', 'stands')
+    ],
+    missed: [],
+    summary: 'nothing to refute'
+  }
+
+  const WRONG_ROW = {
+    ...HOLDING,
+    verdicts: [verdict('row', 'inc-001', 'wrong'), ...HOLDING.verdicts.slice(1)]
+  }
+
+  const FIXED = {
+    ok: true,
+    answers: [
+      {
+        kind: 'row',
+        id: 'inc-001',
+        applied: true,
+        answer: 'Reworded its second criterion.'
+      }
+    ],
+    decisions: ['Kept one row.'],
+    summary: 'fixed'
+  }
+
+  const HAPPY_ANSWERS = {
+    status: statusWith(),
+    read: READ,
+    check: checkRelay(),
+    refute: HOLDING,
+    fix: FIXED,
+    'check after fix': checkRelay()
+  }
+
+  const runIntake = (argsOverride = {}, answerOverrides = {}) =>
+    runWorkflowScript(scriptPath, {
+      args: { ...INTAKE_ARGS, ...argsOverride },
+      answers: byLabel({ ...HAPPY_ANSWERS, ...answerOverrides })
+    })
+
+  describe('its configuration', () => {
+    test.each([
+      [
+        { workspace: '/Users/someone/ws' },
+        'config.workspace must be the workspace root as a tilde path'
+      ],
+      [
+        { workarea: 'shared/../secrets' },
+        'config.workarea must be a folder under workareas/'
+      ],
+      [{ tim: ' ' }, 'config.tim must be the command agents run tim with'],
+      [{ models: { heavy: 'opus' } }, 'config.models has no tier named heavy'],
+      [
+        { models: { think: 'gpt-5' } },
+        'config.models.think must be one of opus, sonnet, haiku, or "inherit"'
+      ]
+    ])('refuses %j before any agent', async (override, message) => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: { ...INTAKE_ARGS, ...override }
+      })
+
+      expect(run.error.message).toContain(message)
+      expect(run.agents).toEqual([])
+    })
+
+    test('names the models it resolved', async () => {
+      const run = await runIntake()
+
+      expect(run.logs).toContain(
+        'ticket-intake: models: think opus, light haiku'
+      )
+    })
+  })
+
+  describe('the agents', () => {
+    test('runs the reader, the refuting agent and the fixer on opus, and status and the checks on haiku', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect(
+        ['read', 'refute', 'fix', 'status', 'check', 'check after fix'].map(
+          (label) => optionsOf(run, label).model
+        )
+      ).toEqual(['opus', 'opus', 'opus', 'haiku', 'haiku', 'haiku'])
+    })
+
+    test('runs every agent as the default workflow agent with a schema', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect(
+        run.agents.map((entry) => ({
+          type: entry.options.agentType,
+          hasSchema: Boolean(entry.options.schema)
+        }))
+      ).toEqual(run.agents.map(() => ({ type: undefined, hasSchema: true })))
+    })
+
+    test('tells every agent not to spawn subagents and to finish its own task', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect(
+        run.agents.map(
+          (entry) =>
+            entry.prompt.includes('Do not spawn subagents or forks.') &&
+            entry.prompt.includes('finish the task you were given')
+        )
+      ).toEqual(run.agents.map(() => true))
+    })
+  })
+
+  describe('a first run where every verdict holds', () => {
+    test('runs status, read, check and refute only, and says no fix ran', async () => {
+      const run = await runIntake()
+
+      expect(labelsOf(run)).toEqual(['status', 'read', 'check', 'refute'])
+      expect(run.logs).toContain(
+        'ticket-intake: shared/demo: every one of 4 verdicts holds and the check found no problem, so no fix ran'
+      )
+    })
+
+    test('returns the rows to build, the verdict and every question with its default and whether it holds the launch', async () => {
+      const run = await runIntake()
+
+      expect(run.result).toMatchObject({
+        stopped: null,
+        ticket: 'EUDPA-100',
+        readiness: 'READY',
+        rowsToBuild: ['inc-001'],
+        questions: [
+          {
+            id: 'Q1',
+            question: 'Should the list include drafts?',
+            default: 'Drafts are left out',
+            holdsLaunch: false,
+            cause: null
+          }
+        ],
+        escalation: null,
+        refute: { fixRan: false, verdicts: { holds: 3, stands: 1 } },
+        files: {
+          investigation: '/ws/workareas/shared/demo/investigation.md',
+          intake: '/ws/workareas/shared/demo/intake.json',
+          backlog: '/ws/workareas/shared/demo/backlog.json'
+        }
+      })
+    })
+
+    test('does not ask the check to compare with an earlier backlog', async () => {
+      const run = await runIntake()
+
+      expect(promptOf(run, 'check')).not.toContain('--compare-to')
+    })
+  })
+
+  describe('a run where the refuting agent finds a wrong row', () => {
+    test('runs status, read, check, refute, fix and check again', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect(labelsOf(run)).toEqual([
+        'status',
+        'read',
+        'check',
+        'refute',
+        'fix',
+        'check after fix'
+      ])
+    })
+
+    test('gives the fixer the verdict, and returns its answer', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect(promptOf(run, 'fix')).toContain(
+        '- row:inc-001 (wrong): Reword it.'
+      )
+      expect(run.result.refute).toMatchObject({
+        fixRan: true,
+        answers: FIXED.answers
+      })
+    })
+
+    test('gives the fixer every missed item as a verdict to answer', async () => {
+      const refute = {
+        ...HOLDING,
+        missed: ['The ticket asks for a Welsh label.']
+      }
+      const fix = {
+        ...FIXED,
+        answers: [
+          {
+            kind: 'missed',
+            id: 'm1',
+            applied: true,
+            answer: 'Added it to the row.'
+          }
+        ]
+      }
+
+      const run = await runIntake({}, { refute, fix })
+
+      expect(promptOf(run, 'fix')).toContain(
+        '- missed:m1 (missed): The ticket asks for a Welsh label.'
+      )
+      expect(run.result.stopped).toBeNull()
+    })
+  })
+
+  describe('the prompts', () => {
+    const TWO_ROWS = checkRelay({
+      intake: intakeSummary({
+        rowsToBuild: ['inc-001', 'inc-002'],
+        rowsToBuildCount: 2
+      })
+    })
+    const TWO_ROW_VERDICTS = {
+      ...HOLDING,
+      verdicts: [
+        verdict('row', 'inc-001'),
+        verdict('row', 'inc-002'),
+        verdict('split', 'inc-001'),
+        verdict('split', 'inc-002'),
+        verdict('statement', 'AC1'),
+        verdict('statement', 'AC2'),
+        verdict('question', 'Q1', 'stands')
+      ]
+    }
+
+    test('sends the reader and the fixer to read.md, and the refuting agent to refute.md only', async () => {
+      const run = await runIntake({}, { refute: WRONG_ROW })
+
+      expect({
+        read: promptOf(run, 'read').includes('intake/briefs/read.md'),
+        fix: promptOf(run, 'fix').includes('intake/briefs/read.md'),
+        refute: promptOf(run, 'refute').includes('intake/briefs/refute.md'),
+        refuteReads: promptOf(run, 'refute').includes('read.md')
+      }).toEqual({ read: true, fix: true, refute: true, refuteReads: false })
+    })
+
+    test('lists every row, statement and question id the check relayed for the refuting agent', async () => {
+      const run = await runIntake()
+
+      expect(promptOf(run, 'refute')).toContain(
+        [
+          '- row inc-001: holds, wrong, missed',
+          '- statement AC1: holds, wrong, missed',
+          '- statement AC2: holds, wrong, missed',
+          '- question Q1: stands, settled, drop'
+        ].join('\n')
+      )
+    })
+
+    test('asks for a split verdict on each row when two rows are still to build', async () => {
+      const run = await runIntake(
+        {},
+        {
+          check: TWO_ROWS,
+          'check after fix': TWO_ROWS,
+          refute: TWO_ROW_VERDICTS
+        }
+      )
+
+      expect(promptOf(run, 'refute')).toContain(
+        '- split inc-001: holds, wrong\n- split inc-002: holds, wrong'
+      )
+    })
+
+    test('asks for no split verdict when one row is still to build', async () => {
+      const run = await runIntake()
+
+      expect(promptOf(run, 'refute')).not.toContain('- split ')
+    })
+  })
+
+  describe('the sources', () => {
+    test('returns an escalation and no rows after the status agent alone when a source is another kind', async () => {
+      const run = await runIntake(
+        {},
+        {
+          status: statusWith({
+            sources: [
+              TICKET_SOURCE,
+              { id: 'confluence:77', kind: 'confluence' }
+            ]
+          })
+        }
+      )
+
+      expect(labelsOf(run)).toEqual(['status'])
+      expect(run.result).toMatchObject({
+        stopped: null,
+        ticket: 'EUDPA-100',
+        rowsToBuild: [],
+        escalation: { signals: ['another requirement source'] }
+      })
+      expect(run.result.escalation.reason).toContain(
+        'confluence:77 (confluence)'
+      )
+    })
+
+    test('stops before any think agent, naming what it found, when there is no ticket source', async () => {
+      const run = await runIntake(
+        {},
+        { status: statusWith({ sources: [REPO_SOURCE] }) }
+      )
+
+      expect(labelsOf(run)).toEqual(['status'])
+      expect(run.result.stopped).toEqual({
+        reason: 'ticket-source',
+        detail:
+          'shared/demo/sources.json must hold exactly one ticket source. It holds 0: repo:tests (repo)'
+      })
+    })
+
+    test('stops when a snapshot fails for a reason other than there being no backlog', async () => {
+      const run = await runIntake(
+        {},
+        {
+          status: statusWith({
+            snapshotNotFound: false,
+            problems: ['backlog.json is not JSON.']
+          })
+        }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'snapshot-failed',
+        detail:
+          'tim distil backlog-snapshot could not save the backlog as it stands: backlog.json is not JSON.'
+      })
+    })
+  })
+
+  describe('an escalation', () => {
+    const ESCALATION = {
+      signals: ['spike'],
+      reason: 'Even the set of options is unknown.'
+    }
+
+    test('is returned with no rows and no refute when the check relays it', async () => {
+      const escalated = checkRelay({
+        intake: intakeSummary({
+          readiness: 'SPIKE REQUIRED',
+          escalation: ESCALATION,
+          rowsToBuild: [],
+          rowsToBuildCount: 0
+        })
+      })
+
+      const run = await runIntake({}, { check: escalated })
+
+      expect(labelsOf(run)).toEqual(['status', 'read', 'check'])
+      expect(run.result).toMatchObject({
+        stopped: null,
+        readiness: 'SPIKE REQUIRED',
+        rowsToBuild: [],
+        escalation: ESCALATION
+      })
+    })
+  })
+
+  describe('the relays', () => {
+    const SHORT_CHECK = checkRelay({
+      intake: intakeSummary({ statementIds: ['AC1'], statementCount: 2 })
+    })
+
+    test('asks the check again once when it relays fewer statement ids than it counted', async () => {
+      const run = await runIntake(
+        {},
+        { check: SHORT_CHECK, 'check again': checkRelay() }
+      )
+
+      expect(labelsOf(run)).toEqual([
+        'status',
+        'read',
+        'check',
+        'check again',
+        'refute'
+      ])
+      expect(run.logs).toContain(
+        'ticket-intake: check: the check relayed 1 statement ids, but counted 2. Asking again'
+      )
+    })
+
+    test('stops naming the mismatch when the check still relays fewer than it counted', async () => {
+      const run = await runIntake(
+        {},
+        { check: SHORT_CHECK, 'check again': SHORT_CHECK }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'check-relay-mismatch',
+        detail:
+          'the check relayed 1 statement ids, but counted 2, even when asked again'
+      })
+    })
+
+    test.each([
+      [
+        'rows to build',
+        checkRelay({
+          intake: intakeSummary({ rowsToBuild: [], rowsToBuildCount: 1 })
+        }),
+        'the check relayed 0 rows to build, but counted 1'
+      ],
+      [
+        'questions',
+        checkRelay({
+          intake: intakeSummary({ questions: [], questionCount: 1 })
+        }),
+        'the check relayed 0 questions, but counted 1'
+      ]
+    ])(
+      'stops when the check relays fewer %s than it counted',
+      async (_name, relay, problem) => {
+        const run = await runIntake({}, { check: relay, 'check again': relay })
+
+        expect(run.result.stopped.detail).toContain(problem)
+      }
+    )
+
+    test('asks the refuting agent again once when it gives no verdict for a relayed id', async () => {
+      const missing = {
+        ...HOLDING,
+        verdicts: HOLDING.verdicts.filter((entry) => entry.id !== 'AC2')
+      }
+
+      const run = await runIntake(
+        {},
+        { refute: missing, 'refute again': HOLDING }
+      )
+
+      expect(labelsOf(run)).toEqual([
+        'status',
+        'read',
+        'check',
+        'refute',
+        'refute again'
+      ])
+      expect(promptOf(run, 'refute again')).toContain(
+        '- no verdict for statement:AC2'
+      )
+    })
+
+    test('stops naming the id when the refuting agent still gives no verdict for it', async () => {
+      const missing = {
+        ...HOLDING,
+        verdicts: HOLDING.verdicts.filter((entry) => entry.id !== 'AC2')
+      }
+
+      const run = await runIntake(
+        {},
+        { refute: missing, 'refute again': missing }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'refute-incomplete',
+        detail:
+          "the refuting agent's verdicts were incomplete after being asked again: no verdict for statement:AC2"
+      })
+    })
+  })
+
+  describe('the fix', () => {
+    test('stops naming the verdict when the fixer leaves one unanswered', async () => {
+      const run = await runIntake(
+        {},
+        { refute: WRONG_ROW, fix: { ...FIXED, answers: [] } }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'fix-incomplete',
+        detail: 'the fixer left these verdicts unanswered: row:inc-001'
+      })
+    })
+
+    test('stops with every problem line when the second check is still out of shape', async () => {
+      const problems = [
+        'inc-001 criterion has no ticket, repo or ruling provenance bracket at its end: "The list is shown."',
+        'Statement AC2 is covered by inc-099, which is not in the backlog.'
+      ]
+      const stillWrong = checkRelay({
+        checkOk: false,
+        checkProblems: problems,
+        intake: null
+      })
+
+      const run = await runIntake(
+        {},
+        { refute: WRONG_ROW, 'check after fix': stillWrong }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'out-of-shape',
+        detail: `the backlog is still out of shape after one fix, with 2 problems:\n${problems.join('\n')}`
+      })
+    })
+
+    test('returns an escalation the fixer recorded', async () => {
+      const escalated = checkRelay({
+        intake: intakeSummary({
+          escalation: {
+            signals: ['too many rows'],
+            reason: 'Five rows remain.'
+          },
+          rowsToBuild: [],
+          rowsToBuildCount: 0
+        })
+      })
+
+      const run = await runIntake(
+        {},
+        { refute: WRONG_ROW, 'check after fix': escalated }
+      )
+
+      expect(run.result).toMatchObject({
+        stopped: null,
+        rowsToBuild: [],
+        escalation: { signals: ['too many rows'] }
+      })
+    })
+  })
+
+  describe('a rerun', () => {
+    const RERUN_STATUS = statusWith({
+      hadBacklog: true,
+      snapshotNotFound: false
+    })
+
+    test('has the check compare the backlog with the one saved at status', async () => {
+      const run = await runIntake({}, { status: RERUN_STATUS })
+
+      expect(promptOf(run, 'check')).toContain(
+        'tim distil backlog-snapshot shared/demo --compare-to before --workspace ~/ws --json'
+      )
+    })
+
+    test('sends a removed row to the fixer as a problem, and stops naming it when it is still removed', async () => {
+      const removed = checkRelay({ removed: ['inc-002'] })
+
+      const run = await runIntake(
+        {},
+        { status: RERUN_STATUS, check: removed, 'check after fix': removed }
+      )
+
+      expect(promptOf(run, 'fix')).toContain(
+        '- backlog.json no longer has inc-002. Keep every existing row id.'
+      )
+      expect(run.result.stopped).toEqual({
+        reason: 'out-of-shape',
+        detail:
+          'the backlog is still out of shape after one fix, with 1 problems:\nbacklog.json no longer has inc-002. Keep every existing row id.'
+      })
+    })
   })
 })

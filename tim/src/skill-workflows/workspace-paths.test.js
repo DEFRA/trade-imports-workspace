@@ -86,6 +86,11 @@ const ALLOWED = [
     why: 'an example of the workflow argument, which takes the clone as a tilde path'
   },
   {
+    file: '.claude/skills/requirements-pipeline/workflow/ticket-intake.js',
+    text: '"~/git/defra/trade-imports-workspace"',
+    why: 'an example of the workflow argument, which takes the clone as a tilde path'
+  },
+  {
     file: '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js',
     text: "'~/git/defra/trade-imports-workspace',",
     why: 'the clones the build loop tries when no workspace is given'

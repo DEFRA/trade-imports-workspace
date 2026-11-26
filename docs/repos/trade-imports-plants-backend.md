@@ -10,7 +10,7 @@ REST API microservice behind the high-risk plants import notification journey. I
 
 Owns:
 - The notification aggregate (`NotificationAggregate`): status (`DRAFT`, `SUBMITTED`, `AMEND`, `DELETED`), concurrency token, created/updated/submitted timestamps, `expireAt`, the notification content, fulfilments, and submitted baselines used for amend.
-- Reference number generation (`ReferenceNumberGenerator`; the latest commit adds an agreed plants type-code prefix).
+- Reference number generation (`ReferenceNumberGenerator`): `GBN-HRP-<yy>-<XXXXXX>`, where `<yy>` is the two-digit year and `<XXXXXX>` is 6 random Crockford base32 characters. Controllers check path references against `REFERENCE_NUMBER_PATTERN`.
 - Notification lifecycle: save, replace content, copy, submit, amend, cancel-amend, soft-delete, hard-delete, list, fulfilment view.
 - An audit trail of bulk deletions (`audit` collection).
 - Optional non-prod expiry: a Mongo TTL index removes app-created notifications whose `expireAt` has passed (`notification.ttl.expiry.enabled`, off by default).
@@ -27,7 +27,7 @@ Does NOT own:
 |-----------|--------|-----------|---------|
 | Inbound | trade-imports-plants-frontend | REST, port 8091, `/notifications` (trader routes require `Trade-Imports-Organisation-Id`; unscoped: GET `/reference-numbers`, bulk DELETE) | Notification CRUD and lifecycle |
 | Inbound | trade-imports-ins-tests | HTTP via workspace stack | End-to-end tests (the `plants` domain) |
-| Outbound | MongoDB | Spring Data, database `trade-imports-plants-backend` | `notifications` aggregate and `audit` collections |
+| Outbound | MongoDB | Spring Data, database `trade-imports-plants-backend` | `notification` (the `NotificationAggregate`) and `audit` collections |
 | Outbound | CloudWatch (EMF) | AWS embedded metrics to `AWS_EMF_AGENT_ENDPOINT` | Metrics |
 | Outbound | AWS STS | AWS SDK v2 client bean in `AwsConfig` | Credentials; other usage Unclear from code |
 
@@ -49,17 +49,18 @@ OpenFeign is a dependency (with a logging config) but no Feign client was found 
 | Dependency | Purpose |
 |-----------|---------|
 | MongoDB | Primary data store |
-| Floci | AWS emulation in local compose (S3, SQS listed in README; not used by the code found) |
-| Redis | Listed in compose; no use found in code |
+| Floci | AWS emulation in local compose. Its set-up script (`compose/floci/start.d/10-setup-resources.sh`) creates no resources, and the code uses no S3 or SQS |
 | CloudWatch | Metrics |
 
 ## How to run
 
 ```bash
-mvn spring-boot:run          # requires MongoDB
-mvn verify                   # includes integration tests; mvn test skips them
-docker compose --profile infra up -d       # MongoDB, Redis, Floci
-docker compose --profile services up --build -d
+docker compose up -d mongodb floci                     # infrastructure only
+mvn spring-boot:run -Dspring-boot.run.profiles=local   # against that local MongoDB
+mvn verify                                             # includes integration tests; mvn test skips them
+docker compose up --build -d                           # infrastructure and the service
 ```
+
+`compose.yml` has three services, `floci`, `mongodb` and `trade-imports-plants-backend`, and no profiles. The default profile turns on MongoDB SSL (`spring.data.mongodb.ssl.enabled: true`), so a local run needs the `local` profile, which turns it off. `docker/dev-run.sh` passes it too.
 
 Port: **8091**. Workspace stack service: `plants-backend`.

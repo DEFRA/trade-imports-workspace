@@ -51,9 +51,24 @@ export const replyWithBodyHeldBack = (statusCode, firstPart) => () => {
 }
 
 /**
+ * Record each request no mock answered, as `METHOD path`. Call it inside a
+ * test; `closeHttpMocks()` stops the recording.
+ *
+ * @returns {string[]} The unmatched requests, filled as they arrive
+ */
+export const recordUnmatchedRequests = () => {
+  const unmatched = []
+  nock.emitter.on('no match', ({ method, path }) =>
+    unmatched.push(`${method} ${path}`)
+  )
+  return unmatched
+}
+
+/**
  * Tear down all mocks and re-enable real network access.
  */
 export const closeHttpMocks = () => {
+  nock.emitter.removeAllListeners('no match')
   nock.cleanAll()
   nock.enableNetConnect()
 }

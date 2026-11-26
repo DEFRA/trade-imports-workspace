@@ -4,6 +4,9 @@ import { join } from 'node:path'
 import {
   DISTIL_SCHEMA_DIR,
   extractPartsOf,
+  isBuilt,
+  isMergedAway,
+  isToBuild,
   loadDistilSchemas,
   orphanFilesOf,
   readJsonLenient,
@@ -224,5 +227,40 @@ describe('requirementFingerprintOf', () => {
         { ...REQUIREMENT, blockedBy: 'CDP must open the port.' }
       ].map(requirementFingerprintOf)
     ).not.toContain(requirementFingerprintOf(REQUIREMENT))
+  })
+})
+
+describe('#row status predicates', () => {
+  test('Should read a row with no status, or todo, as to build and nothing else', () => {
+    expect(
+      [{}, { status: 'todo' }].map((row) => [
+        isToBuild(row),
+        isBuilt(row),
+        isMergedAway(row)
+      ])
+    ).toEqual([
+      [true, false, false],
+      [true, false, false]
+    ])
+  })
+
+  test('Should read a done row as built and nothing else', () => {
+    const row = { status: 'done' }
+
+    expect([isToBuild(row), isBuilt(row), isMergedAway(row)]).toEqual([
+      false,
+      true,
+      false
+    ])
+  })
+
+  test('Should read a merged-into row as merged away and nothing else', () => {
+    const row = { status: 'merged-into' }
+
+    expect([isToBuild(row), isBuilt(row), isMergedAway(row)]).toEqual([
+      false,
+      false,
+      true
+    ])
   })
 })

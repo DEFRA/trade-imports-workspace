@@ -3,7 +3,8 @@ import {
   commentsMarkdown,
   confluenceLinksIn,
   refinementFieldsOf,
-  reviewStub
+  reviewStub,
+  ticketMarkdown
 } from './ticket-markdown.js'
 
 describe('#reviewStub', () => {
@@ -68,5 +69,101 @@ describe('#refinementFieldsOf', () => {
       refinementFieldsOf({ id: 'K', summary: 'S', renderedDescription: '' })
         .description
     ).toBe('')
+  })
+})
+
+describe('#ticketMarkdown', () => {
+  const fields = refinementFieldsOf({
+    id: 'EUDPA-7',
+    summary: 'Tidy the logs',
+    type: 'Task',
+    status: 'To Do',
+    renderedDescription: '<p>Quieter logs.</p>'
+  })
+  const base = { fields, commentCount: 0, comments: '', confluence: '' }
+
+  test('Should give the metadata, description and empty comment and Confluence sections when given nothing more', () => {
+    expect(ticketMarkdown(base)).toBe(
+      [
+        '# EUDPA-7: Tidy the logs',
+        '',
+        '## Metadata',
+        '- **Type:** Task',
+        '- **Status:** To Do',
+        '- **Priority:** None',
+        '- **Labels:** ',
+        '- **Parent:** None',
+        '- **Assignee:** Unassigned',
+        '',
+        '## Description',
+        '',
+        '<p>Quieter logs.</p>',
+        '',
+        '## Acceptance Criteria',
+        '',
+        '<!-- Extract from description above - look for "AC:", "Acceptance Criteria:", numbered lists, Given/When/Then -->',
+        '',
+        '## Comments (0)',
+        '',
+        '',
+        '',
+        '## Confluence References',
+        '',
+        '\n'
+      ].join('\n')
+    )
+  })
+
+  test('Should add the parent, links, subtasks and attachments, each in its own section', () => {
+    const markdown = ticketMarkdown({
+      ...base,
+      parent: {
+        key: 'EUDPA-1',
+        summary: 'The epic',
+        status: 'In Progress',
+        description: '<p>Epic words.</p>\n'
+      },
+      links: [
+        {
+          relation: 'is blocked by',
+          otherKey: 'EUDPA-2',
+          otherStatus: 'Done',
+          otherSummary: 'The blocker'
+        }
+      ],
+      subtasks: [{ key: 'EUDPA-8', status: 'To Do', summary: 'The subtask' }],
+      attachments: [
+        {
+          filename: 'mock.png',
+          mimeType: 'image/png',
+          savedAs: 'workareas/shared/x/sources/attachments/mock.png'
+        },
+        {
+          filename: 'notes.docx',
+          mimeType: 'application/msword',
+          notSavedBecause: 'only images and PDFs are saved'
+        }
+      ]
+    })
+
+    expect(markdown).toContain(
+      '## Parent\n\n### EUDPA-1: The epic (In Progress)\n\n<p>Epic words.</p>\n\n## Linked tickets\n\n- is blocked by EUDPA-2 (Done): The blocker\n\n## Subtasks\n\n- EUDPA-8 (To Do): The subtask\n\n## Acceptance Criteria'
+    )
+    expect(
+      markdown.endsWith(
+        '## Attachments\n\n- mock.png (image/png): saved as workareas/shared/x/sources/attachments/mock.png\n- notes.docx (application/msword): not saved, only images and PDFs are saved\n'
+      )
+    ).toBe(true)
+  })
+
+  test('Should leave out a section whose list is empty', () => {
+    const markdown = ticketMarkdown({
+      ...base,
+      links: [],
+      subtasks: [],
+      attachments: []
+    })
+
+    expect(markdown).toBe(ticketMarkdown(base))
   })
 })

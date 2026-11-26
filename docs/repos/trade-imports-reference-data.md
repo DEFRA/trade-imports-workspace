@@ -77,7 +77,7 @@ The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-
 - **API docs:** SpringDoc OpenAPI
 - **Caching:** Caffeine (in-memory)
 - **Logging:** Logback with Elastic ECS format; AWS embedded metrics
-- **Tests:** JUnit 5 with Testcontainers (no mocks, per README); JaCoCo minimum 65%
+- **Tests:** JUnit 5. `IntegrationBase` starts a MongoDB container and MockServer containers for MDM and OAuth (`OAuthMockServerContainer`), and several tests use Mockito, MockServer or WireMock. JaCoCo minimum 65%
 - **Health:** `GET /health`
 
 ## Infrastructure dependencies
@@ -85,15 +85,15 @@ The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-
 | Dependency | Purpose |
 |-----------|---------|
 | MDM API and trade platform auth | Upstream data and tokens; `trade-imports-stub` locally |
-| MongoDB | Configured (`MONGO_URI`); stack waits for it. Use in code unclear. |
+| MongoDB | Configured (`MONGO_URI`) and the stack waits for it, but nothing reads or writes through it, and its health check is off (`management.health.mongo.enabled: false`). |
 | CloudWatch EMF endpoint | Metrics |
 
 ## How to run
 
 ```bash
-mvn spring-boot:run          # port 8086; needs MongoDB and an MDM source (the stub on 8087 by default)
+mvn spring-boot:run          # port 8086; needs an MDM source (the stub on 8087 by default) and the MongoDB it is configured for
 ```
 
-Workspace stack: `tim docker up` (service in the `backend` profile, `docker/stack/backend.compose.yml`). Use `-e reference-data` to run it from your IDE instead. The stack sets `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` to the stub and waits for the stub to be healthy (optional).
+Workspace stack: `tim docker up` (service in the `backend` profile, `docker/stack/backend.compose.yml`). Use `-e reference-data` to run it from your IDE instead. The stack sets `MDM_SERVICE_URL` and `TRADE_PLATFORM_AUTH_URL` to the stub and waits for the stub to be healthy. The wait is `required: false`, so the stack still starts when the stub is left out, for example with `-e stub`. `/countries` then fails until a stub answers, because it fetches an MDM token first.
 
 Port: **8086**

@@ -4,11 +4,7 @@ import { readJsonFile } from '../backlog/io.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { TimError } from '../errors.js'
 
-/**
- * The folder name the workspace repo itself goes by, wherever it is cloned:
- * gates.json keys its rungs by it, and the canonical clone (CLAUDE.md rule 1)
- * is called it.
- */
+/** The folder name the workspace repo itself goes by, wherever it is cloned. */
 export const WORKSPACE_FOLDER = 'trade-imports-workspace'
 
 const posix = (path) => normalize(path).split(sep).join('/')
@@ -37,19 +33,61 @@ const problemWith = (repos, result) => {
 }
 
 /**
- * The repos a backlog builds, from its envelope `repos` map, in the order the
- * map lists them. A repo at "." is the workspace repo itself: its folder is
- * always trade-imports-workspace, and `workspace` is true. `requireApproval`
- * is true when a person must approve the repo's pull request before it merges.
+ * The backlog envelope a workarea holds, with the path it was read from.
  *
  * @param {string} workspaceRoot
  * @param {string} workarea - A path under workareas/, such as shared/my-programme
- * @returns {{key: string, folder: string, path: string, workspace: boolean, requireApproval: boolean}[]}
- * @throws {TimError} USAGE when the backlog has no usable `repos` map; NOT_FOUND or PARSE from the read
+ * @returns {{envelope: object, backlogPath: string}}
+ * @throws {TimError} NOT_FOUND or PARSE from the read
  */
-export const readEnvelopeRepos = (workspaceRoot, workarea) => {
+export const readEnvelope = (workspaceRoot, workarea) => {
   const backlogPath = backlogPathFor(workspaceRoot, workarea)
-  const { repos } = readJsonFile(backlogPath)
+  return { envelope: readJsonFile(backlogPath), backlogPath }
+}
+
+/**
+ * The branch and the Jira ticket an envelope names, each null when the
+ * envelope has none.
+ *
+ * @param {{branch?: string, ticket?: string}} envelope
+ * @returns {{branch: string | null, ticket: string | null}}
+ */
+export const branchAndTicketOf = (envelope) => ({
+  branch: envelope.branch ?? null,
+  ticket: envelope.ticket ?? null
+})
+
+/**
+ * One repo of a backlog's `repos` map. A repo at "." is the workspace repo
+ * itself: its folder is always trade-imports-workspace, and `workspace` is
+ * true.
+ *
+ * @param {string} workspaceRoot
+ * @param {string} key
+ * @param {{path: string, requireApproval?: boolean}} entry
+ * @returns {{key: string, folder: string, path: string, workspace: boolean, requireApproval: boolean}}
+ */
+export const repoEntryOf = (workspaceRoot, key, { path, requireApproval }) => ({
+  key,
+  folder: isWorkspaceRoot(path) ? WORKSPACE_FOLDER : basename(path),
+  path: join(workspaceRoot, path),
+  workspace: isWorkspaceRoot(path),
+  requireApproval: requireApproval ?? false
+})
+
+/**
+ * The repos an envelope builds, from its `repos` map, in the order the map
+ * lists them. `requireApproval` is true when a person must approve the repo's
+ * pull request before it merges.
+ *
+ * @param {{repos?: object}} envelope
+ * @param {string} backlogPath - Named in the error
+ * @param {string} workspaceRoot
+ * @returns {{key: string, folder: string, path: string, workspace: boolean, requireApproval: boolean}[]}
+ * @throws {TimError} USAGE when the envelope has no usable `repos` map
+ */
+export const reposOf = (envelope, backlogPath, workspaceRoot) => {
+  const { repos } = envelope
   const result = reposSchema.safeParse(repos)
   if (!result.success || Object.keys(result.data).length === 0) {
     const detail = problemWith(repos, result)
@@ -58,15 +96,22 @@ export const readEnvelopeRepos = (workspaceRoot, workarea) => {
       `The backlog at ${backlogPath} needs a repos map naming each repo's path (${detail}).`
     )
   }
-  return Object.entries(result.data).map(
-    ([key, { path, requireApproval }]) => ({
-      key,
-      folder: isWorkspaceRoot(path) ? WORKSPACE_FOLDER : basename(path),
-      path: join(workspaceRoot, path),
-      workspace: isWorkspaceRoot(path),
-      requireApproval: requireApproval ?? false
-    })
+  return Object.entries(result.data).map(([key, entry]) =>
+    repoEntryOf(workspaceRoot, key, entry)
   )
+}
+
+/**
+ * The repos a workarea's backlog builds.
+ *
+ * @param {string} workspaceRoot
+ * @param {string} workarea - A path under workareas/, such as shared/my-programme
+ * @returns {{key: string, folder: string, path: string, workspace: boolean, requireApproval: boolean}[]}
+ * @throws {TimError} USAGE when the backlog has no usable `repos` map; NOT_FOUND or PARSE from the read
+ */
+export const readEnvelopeRepos = (workspaceRoot, workarea) => {
+  const { envelope, backlogPath } = readEnvelope(workspaceRoot, workarea)
+  return reposOf(envelope, backlogPath, workspaceRoot)
 }
 
 /**

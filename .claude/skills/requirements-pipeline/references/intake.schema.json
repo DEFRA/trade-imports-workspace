@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The intake record",
+  "description": "workareas/<workarea>/intake.json, beside backlog.json: what the ticket intake read from one fetched ticket. The intake workflow is its only writer. `tim backlog check` holds a backlog whose envelope names a ticket to it: every acceptance criterion statement is covered by a row still in play or carries the reason it is not built, every criterion of a row still to build ends with a bracket citing this ticket's statements, a repo or a ruling, and the repo keys, ids, questions and escalation follow the rules in SHAPE.md \"Ticket backlogs\". Rules a schema cannot hold are checked there.",
+  "type": "object",
+  "required": ["ticket", "updated", "readiness", "statements", "repos", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "ticket": {
+      "description": "The Jira key, copied from the fetch record sources/ticket-<key>.json, such as \"EUDPA-838\". It equals the backlog envelope's `ticket`.",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]+-[0-9]+$"
+    },
+    "updated": {
+      "description": "When Jira last updated the ticket, copied from the fetch record, such as \"2026-11-25T09:00:00.000+0000\".",
+      "$ref": "#/$defs/text"
+    },
+    "readiness": {
+      "description": "The ticket's readiness, judged by the refinement check's own rules (the ticket-refiner's Verdict Guidelines).",
+      "type": "object",
+      "required": ["verdict", "reasons"],
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "description": "The verdict. The list is the one `tim refine finalize` accepts.",
+          "enum": ["READY", "NEEDS WORK", "SPIKE REQUIRED"]
+        },
+        "reasons": {
+          "description": "Why, one plain sentence each. At least one.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "statements": {
+      "description": "Everything the ticket says that the backlog must account for, numbered. Row criteria cite these ids.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/statement" }
+    },
+    "repos": {
+      "description": "Why each repo is in the backlog: the repo key mapped to one sentence. The keys are the envelope's `repos`.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/text" }
+    },
+    "questions": {
+      "description": "The questions a person must answer. Minimal: a question the ticket, the code's rulings or a ruling source settles is not asked.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/question" }
+    },
+    "escalation": {
+      "description": "Present only when the ticket is not for this intake to build. A ticket that escalates hands over no row to build, so DISTIL or a person takes it over.",
+      "type": "object",
+      "required": ["signals", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "signals": {
+          "description": "The signals that tripped, each once.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "spike",
+              "too many questions",
+              "too many rows",
+              "another requirement source",
+              "needs people outside the session",
+              "open blocking link"
+            ]
+          }
+        },
+        "reason": {
+          "description": "Why, in plain words, for the person who takes the ticket over.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "statement": {
+      "type": "object",
+      "required": ["id", "kind", "text", "coveredBy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Upper-case letters then digits, keeping the ticket's own numbering where it has one, such as \"AC1\" or \"SCOPE2\".",
+          "type": "string",
+          "pattern": "^[A-Z]+[0-9]+$"
+        },
+        "kind": {
+          "description": "What the statement is: an acceptance criterion, a line of scope, a line of what is out of scope, or a background fact.",
+          "enum": [
+            "acceptance criterion",
+            "scope",
+            "out of scope",
+            "background"
+          ]
+        },
+        "text": {
+          "description": "The ticket's own words.",
+          "$ref": "#/$defs/text"
+        },
+        "coveredBy": {
+          "description": "The ids of the backlog rows that cover it. [] when no row does.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "notBuilt": {
+          "description": "Why no row builds it, in one sentence. An acceptance criterion with no row in play needs it.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "question", "readings", "default", "holdsLaunch"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Q then digits, such as \"Q1\".",
+          "type": "string",
+          "pattern": "^Q[0-9]+$"
+        },
+        "question": {
+          "description": "The question, in plain words.",
+          "$ref": "#/$defs/text"
+        },
+        "readings": {
+          "description": "The readings the ticket leaves, at least two.",
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "default": {
+          "description": "What gets built if nobody answers.",
+          "$ref": "#/$defs/text"
+        },
+        "holdsLaunch": {
+          "description": "True when the build must wait for the answer. Only a cause below holds the launch.",
+          "type": "boolean"
+        },
+        "cause": {
+          "description": "Why it holds the launch: security, access, data integrity, a contradiction with a signed-off scenario, or a contradiction with a rulings-ledger entry. Present when `holdsLaunch` is true, and only then.",
+          "enum": [
+            "security",
+            "access",
+            "data integrity",
+            "signed-off scenario",
+            "rulings ledger"
+          ]
+        }
+      }
+    }
+  }
+}

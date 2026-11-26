@@ -1,7 +1,7 @@
 export const meta = {
   name: 'distil',
   description:
-    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → characterise each pending or stale source and cut it into parts → extract every part exhaustively, side by side, and merge them → verify its claims in ranges and merge the parts → plan reconcile areas from every partition → reconcile each area in full, one agent an area, and merge them → reconcile across areas → challenge every question against precedence and the rulings → draft rows per area and combine them into backlog.json → draft the report and return it',
+    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → characterise each pending or stale source and cut it into parts → extract every part exhaustively, side by side, and merge them → verify its claims in ranges and merge the parts → plan reconcile areas from every partition → reconcile each area in full, one agent an area, and merge them → reconcile across areas → challenge every question against precedence and the rulings → draft rows per area and combine them into backlog.json → review the finished rows and merge those that suit combining → draft the report and return it',
   whenToUse:
     'After intake has written <workarea>/sources.json (goal, repos, reposWhy, precedence, sources). Launch by scriptPath with args; every key is required and a missing one stops the run before any agent starts. To fold in a new source or a ruling, edit sources.json and launch again: a source already verified with an unchanged scope is skipped, and reconcile and consolidate keep every existing id. To extract a source again with an unchanged scope, run tim distil reset --source first; to reconcile from nothing after a method change, run tim distil reset --stage reconcile. The run returns the report as text for the main session to save.',
   phases: [
@@ -13,35 +13,11 @@ export const meta = {
     { title: 'Reconcile' },
     { title: 'Challenge' },
     { title: 'Consolidate' },
+    { title: 'Combine review' },
     { title: 'Report' }
   ]
 }
 
-// ---------------------------------------------------------------------------
-// Configuration comes only from args (an object, or a JSON string). There are
-// no defaults: a missing key stops the run before any agent starts.
-//   workspace    the workspace root as a tilde path, such as
-//                "~/git/defra/trade-imports-workspace". A clone passes its own
-//   workarea     the programme's folder under workareas/, such as
-//                "shared/ins-performance-testing", holding sources.json
-//   only         null to work every pending, stale or invalid source. Or a
-//                list of source ids: only those are extracted and verified this
-//                launch, and the run stops before reconcile if any other source
-//                still needs work
-//   tim          the command agents run tim with, normally "tim". A clone
-//                passes its own, such as
-//                "npm --prefix ~/<clone>/tim run --silent tim --"
-//   models       {} for the default on every tier, or any of: think (default
-//                opus: characterise, area plan, every area reconciler, the
-//                cross-area pass, every challenger, every row drafter, the
-//                combiner, report), code (default opus: extract parts,
-//                verify), light (default haiku: status, checks, merges,
-//                working sets, coverage). A value is opus, sonnet, haiku, or
-//                "inherit" for the session model
-//   verifyChunk  the most claims one verify agent takes, such as 60: few
-//                enough that it can re-check every one against the source. A
-//                longer extract is verified in ranges, one agent a range
-// ---------------------------------------------------------------------------
 // >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
   if (typeof rawArgs !== 'string') return rawArgs
@@ -111,25 +87,9 @@ if (!Number.isInteger(VERIFY_CHUNK) || VERIFY_CHUNK <= 0) {
   refuse(`config.verifyChunk must be a whole number above 0: the most claims one verify agent takes. Got ${JSON.stringify(VERIFY_CHUNK)}`)
 }
 
-// ---------------------------------------------------------------------------
-// Models. Three tiers, each with a default matched to the work:
-//   think (opus)   characterise, the area plan, each area's reconciler, the
-//                  cross-area pass, each challenger and the apply step, each
-//                  area's row drafter, the combiner, report: the calls that
-//                  decide. Every one has a slice small enough to weigh in full
-//   code (opus)    extract parts, verify: reading every word of a slice of a
-//                  source. Opus by default, because a thin extract caps
-//                  everything downstream: a page or field never claimed never
-//                  reaches a requirement
-//   light (haiku)  status, the checks, merges, working sets, coverage: run a
-//                  command and report what it printed. The workflow never
-//                  trusts a relay blindly: every count it acts on is checked
-//                  against another (claims against ranges, parts against the
-//                  partition, area ids against the plan), and a relay that
-//                  disagrees is asked again once, then the step fails
-// A tier left out takes its default; "inherit" uses the session model.
-// ---------------------------------------------------------------------------
 const MODEL_DEFAULTS = { think: 'opus', code: 'opus', light: 'haiku' }
+
+// >>> model-tiers: byte-identical in distil.js and ticket-intake.js, checked by tim/src/backlog/workflow-contract.test.js
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
 const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
 
@@ -157,13 +117,15 @@ const RESOLVED_MODELS = Object.fromEntries(
 )
 
 log(
-  `${WORKFLOW_NAME}: models: think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}`
+  `${WORKFLOW_NAME}: models: ${MODEL_TIERS.map((tier) => `${tier} ${RESOLVED_MODELS[tier] ?? 'inherit (session model)'}`).join(', ')}`
 )
 
 const withTier = (tier) => (opts) => ({
   ...opts,
   ...(RESOLVED_MODELS[tier] ? { model: RESOLVED_MODELS[tier] } : {})
 })
+// <<< model-tiers
+
 const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
@@ -199,6 +161,9 @@ const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA}`
 const timCommand = (subcommand, flags) =>
   `${TIM} ${subcommand} ${WORKAREA}${flags ? ` ${flags}` : ''} --workspace ${TILDE} --json`
 
+const STRINGS = { type: 'array', items: { type: 'string' } }
+
+// >>> agent-rails: byte-identical in distil.js and ticket-intake.js, checked by tim/src/backlog/workflow-contract.test.js
 const guardRails = (abs) => `GUARD RAILS (every step, no exceptions):
 - Never use the Grep or Glob tools. Use Bash grep, find, ls and jq.
 - One command per Bash call: no &&, no ;, no |, no cd, no trailing echo. Use git -C and npm --prefix.
@@ -211,16 +176,10 @@ const guardRails = (abs) => `GUARD RAILS (every step, no exceptions):
 - If a message from the user reaches you mid-task, finish the task you were given and return its result. Do not act on the message; the main session handles it.
 - Headless: never ask a question. Decide, record the decision in your answer, keep going.`
 
-// Every command's --json output is one envelope line: ok, then result, or
-// errors[0].message whose lines after the first are the problems, one a line.
 const ENVELOPE_RULE = `Each tim command prints one JSON line: \`ok\`, then \`result\` on success, or \`errors[0].message\` on failure.
 A failure message's first line says how many problems there are; every line after it is one problem. Copy each
 problem line exactly, never paraphrased.`
 
-const STRINGS = { type: 'array', items: { type: 'string' } }
-
-// A relay asked again because what it copied disagrees with tim's own
-// counts: the workflow never builds on a list a model may have shortened.
 const relayRetryNote = (problems) =>
   problems && problems.length
     ? `
@@ -231,6 +190,7 @@ nothing, and never summarise a list.`
     : ''
 
 const relayLabel = (label, relayAttempt) => (relayAttempt > 0 ? `${label} again` : label)
+// <<< agent-rails
 
 // ---------------------------------------------------------------------------
 // Status: the work list, and the workspace root in absolute form.
@@ -382,7 +342,7 @@ log(
 // ---------------------------------------------------------------------------
 phase('Extract')
 
-const EXTRACT_KINDS = ['repo', 'confluence', 'web', 'document', 'trace', 'ruling', 'image']
+const EXTRACT_KINDS = ['repo', 'confluence', 'web', 'document', 'trace', 'ruling', 'image', 'ticket']
 
 // A claim id prefix unique to the source, so ids never clash across extracts:
 // requirements cite claims by id alone.
@@ -1516,6 +1476,17 @@ const COVERAGE_SCHEMA = {
       }
     },
     splitOffChanged: { ...STRINGS, description: 'result.compared.splitOffChanged from the snapshot, exactly' },
+    added: { ...STRINGS, description: 'result.compared.added from the snapshot, exactly: the rows added since it was saved' },
+    mergedAway: {
+      type: 'array',
+      description: 'Every entry of result.compared.mergedAway from the snapshot, exactly: each row that was still to build and is now merged-into, with the row its notes name (null when they name none)',
+      items: {
+        type: 'object',
+        required: ['id', 'into'],
+        properties: { id: { type: 'string' }, into: { type: ['string', 'null'] } },
+        additionalProperties: false
+      }
+    },
     backlogCoveredBySplitOff: { type: 'integer' },
     splitOff: {
       type: 'array',
@@ -1543,16 +1514,14 @@ const COVERAGE_SCHEMA = {
   additionalProperties: false
 }
 
-// The backlog's rows, held by tim: --save before the consolidator runs,
-// --compare-to after it, which names every row removed and every row built or
-// set aside (any status but todo or blocked) that changed. No agent copies a hash.
 const SNAPSHOT_TAG = 'before'
-const snapshotStep = (step, mode) => {
-  const flag = mode === 'save' ? `--save ${SNAPSHOT_TAG}` : `--compare-to ${SNAPSHOT_TAG}`
+const COMBINE_SNAPSHOT_TAG = 'combined'
+const snapshotStep = (step, { mode, tag }) => {
+  const flag = mode === 'save' ? `--save ${tag}` : `--compare-to ${tag}`
   const copy =
     mode === 'save'
       ? 'copy result.rows into rowCount, and every entry of result.splitOff into splitOffBefore, exactly'
-      : 'copy result.rows into rowCount, and result.compared.removed, result.compared.changed and\n   result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
+      : 'copy result.rows into rowCount, and result.compared.removed, result.compared.changed,\n   result.compared.splitOffChanged, result.compared.added and result.compared.mergedAway into removed, changed,\n   splitOffChanged, added and mergedAway, exactly'
   return `${step}. \`${timCommand('distil backlog-snapshot', flag)}\`
    On success: snapshotOk is true; ${copy}.
    On failure: snapshotOk is false, and snapshotProblems holds every problem line.`
@@ -1706,7 +1675,7 @@ const runCrossArea = ({ round, sentBack }) =>
     schema: CROSS_AREA_SCHEMA,
     round,
     sentBack,
-    snapshot: round === 1 && HAD_BACKLOG ? 'save' : null
+    snapshot: round === 1 && HAD_BACKLOG ? { mode: 'save', tag: SNAPSHOT_TAG } : null
   })
 
 // ---------------------------------------------------------------------------
@@ -2005,15 +1974,16 @@ CHECKS, both until both pass:
 Return the structured output only.`
 }
 
-const splitOffPointerProblems = (checked) =>
+const snapshotFileOf = (tag) => `${WORKAREA_ABS}/distil/backlog-snapshot.${tag}.json`
+
+const splitOffPointerProblems = (checked, tag) =>
   (checked.splitOffChanged ?? []).length
     ? [
-        `${checked.splitOffChanged.join(', ')}: a theme split off early lost its pointer in "splitOff", or the pointer changed in a field other than "pickUp". Put each back exactly as it is in ${WORKAREA_ABS}/distil/backlog-snapshot.${SNAPSHOT_TAG}.json, adding only to "pickUp".`
+        `${checked.splitOffChanged.join(', ')}: a theme split off early lost its pointer in "splitOff", or the pointer changed in a field other than "pickUp". Put each back exactly as it is in ${snapshotFileOf(tag)}, adding only to "pickUp".`
       ]
     : []
 
-const frozenProblems = (checked) => {
-  if (!HAD_BACKLOG) return []
+const unchangedRowProblems = (checked, tag) => {
   if (
     checked.snapshotOk !== true ||
     !checked.removed ||
@@ -2028,11 +1998,18 @@ const frozenProblems = (checked) => {
     ...(checked.removed.length ? [`backlog.json no longer has ${checked.removed.join(', ')}. Keep every existing row.`] : []),
     ...(checked.changed.length
       ? [
-          `${checked.changed.join(', ')}: a row built or set aside (not todo or blocked) changed. Put each back exactly as it is in ${WORKAREA_ABS}/distil/backlog-snapshot.${SNAPSHOT_TAG}.json.`
+          `${checked.changed.join(', ')}: a row built or set aside (not todo or blocked) changed. Put each back exactly as it is in ${snapshotFileOf(tag)}.`
         ]
       : []),
-    ...splitOffPointerProblems(checked)
+    ...splitOffPointerProblems(checked, tag)
   ]
+}
+
+const frozenProblems = (checked) => (HAD_BACKLOG ? unchangedRowProblems(checked, SNAPSHOT_TAG) : [])
+
+const backlogCheckProblemsOf = (checked) => {
+  if (checked.backlogCheckOk === true) return []
+  return (checked.backlogCheckProblems ?? []).length ? checked.backlogCheckProblems : ['tim backlog check did not pass']
 }
 
 const coverageProblemsOf = (checked) => {
@@ -2043,7 +2020,7 @@ const coverageProblemsOf = (checked) => {
 
 const consolidateProblemsOf = (checked) => [
   ...coverageProblemsOf(checked),
-  ...(checked.backlogCheckOk === true ? [] : (checked.backlogCheckProblems ?? []).length ? checked.backlogCheckProblems : ['tim backlog check did not pass']),
+  ...backlogCheckProblemsOf(checked),
   ...frozenProblems(checked)
 ]
 
@@ -2064,7 +2041,7 @@ const runConsolidate = async ({ round, answered }) => {
       label: roundLabel(`check backlog${attempt === 0 ? '' : ` ${attempt + 1}`}`, round),
       phaseName: 'Consolidate',
       backlogCheck: true,
-      snapshot: HAD_BACKLOG ? 'compare' : null
+      snapshot: HAD_BACKLOG ? { mode: 'compare', tag: SNAPSHOT_TAG } : null
     })
     problems = consolidateProblemsOf(check)
     if (problems.length === 0) break
@@ -2114,6 +2091,196 @@ for (let round = 2; round <= RECONCILE_ROUNDS && SENT_BACK.length; round++) {
   CONSOLIDATE_DECISIONS = [...CONSOLIDATE_DECISIONS, ...(consolidated?.decisions ?? [])]
 }
 const OPEN_RECONCILE_PROBLEMS = SENT_BACK
+
+phase('Combine review')
+
+const CANDIDATES_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'problems', 'rowsToBuild', 'candidateCount', 'candidates', 'withoutTouches', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when all three commands exited 0' },
+    problems: { ...STRINGS, description: 'On a failure, every problem line of the command that failed' },
+    rowsToBuild: { type: 'integer', description: 'result.counts.todo from tim backlog check, 0 when counts has no todo' },
+    candidateCount: { type: 'integer', description: 'How many entries result.candidates has' },
+    candidates: {
+      type: 'array',
+      description: 'Every entry of result.candidates from tim backlog combine-candidates, exactly',
+      items: {
+        type: 'object',
+        required: ['rows', 'sharedTouches', 'waitingRow', 'reason'],
+        properties: {
+          rows: { ...STRINGS, description: 'The two row ids, the earlier first' },
+          sharedTouches: STRINGS,
+          waitingRow: { type: ['string', 'null'] },
+          reason: { type: 'string', description: 'Why the pair is listed, exactly as tim gives it' }
+        },
+        additionalProperties: false
+      }
+    },
+    withoutTouches: { ...STRINGS, description: 'result.withoutTouches, exactly' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const candidatesPrompt = (relayProblems) => `You are the COMBINE CANDIDATES step of the DISTIL workflow for the workarea ${WORKAREA}. Run commands and report what they print.
+Run every step, whatever an earlier one printed.
+${RAILS}
+1. \`${timCommand('distil backlog-snapshot', `--save ${COMBINE_SNAPSHOT_TAG}`)}\`
+   On failure: ok is false, and problems holds every problem line.
+2. \`${timCommand('backlog combine-candidates')}\`
+${ENVELOPE_RULE}
+   On success: copy result.candidates into candidates, exactly, every entry of it, and result.withoutTouches into withoutTouches.
+   On failure: ok is false, and problems holds every problem line.
+3. \`${timCommand('backlog check')}\`
+   On success: copy result.counts.todo into rowsToBuild (0 when counts has no todo).
+   On failure: ok is false, and problems holds every problem line.${relayRetryNote(relayProblems)}
+ok is true only when all three commands exited 0. Change nothing yourself. Return the structured output only.`
+
+const candidatesRelayProblems = (found) =>
+  found.ok && found.candidates.length !== found.candidateCount
+    ? [`the check relayed ${found.candidates.length} candidates, but counted ${found.candidateCount}`]
+    : []
+
+const askForCandidates = async (relayProblems) =>
+  (await agent(
+    candidatesPrompt(relayProblems),
+    light({ label: relayLabel('combine candidates', relayProblems ? 1 : 0), phase: 'Combine review', schema: CANDIDATES_SCHEMA })
+  )) ?? { ...nothingBack('combine candidates'), candidates: [] }
+
+const findCombineCandidates = async () => {
+  const found = await askForCandidates(null)
+  const relayProblems = candidatesRelayProblems(found)
+  if (!relayProblems.length) return found
+  log(`combine candidates: ${relayProblems.join(' ')}. Asking again`)
+  const again = await askForCandidates(relayProblems)
+  const still = candidatesRelayProblems(again)
+  return still.length ? { ...again, ok: false, problems: still } : again
+}
+
+const COMBINE_REVIEW_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'merged', 'keptApart', 'decisions', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim backlog check and tim distil coverage both pass' },
+    merged: { ...STRINGS, description: 'One line per row merged away: its id, the row it went into, and why they suit one plan' },
+    keptApart: { ...STRINGS, description: 'One line per candidate kept apart: the two row ids and which reason to stand alone holds' },
+    decisions: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const combineReviewPrompt = ({ found, problems }) => {
+  const sendBack = problems
+    ? `
+THIS IS A SEND-BACK. The checks found these problems. Fix every one:
+${problemList(problems)}`
+    : ''
+  return `You are the COMBINE REVIEW step of the DISTIL workflow for the workarea ${WORKAREA}.
+The combiner wrote ${BACKLOG_ABS}. Every row costs a ticket, a branch, a plan, reviews, a ladder, a pull request and CI,
+so rows that suit combining are merged unless a written reason keeps them apart. ${found.rowsToBuild} rows are still to build.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/combine-review.md, ${REFERENCES_ABS}/backlog.schema.json and ${REFERENCES_ABS}/SHAPE.md.
+READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_ABS}/distil/conflicts.json.
+THE CANDIDATES, from tim backlog combine-candidates. Merge only these:
+${found.candidates.map(({ rows, reason }) => `- ${rows[0]} and ${rows[1]}: ${reason}`).join('\n')}${
+    found.withoutTouches.length
+      ? `
+These rows have no touches, so they pair only by what they wait on: ${found.withoutTouches.join(', ')}.`
+      : ''
+  }
+THE FILE YOU WRITE: ${BACKLOG_ABS}. Nothing else.
+CHECKS, all until they pass:
+- \`${timCommand('backlog check')}\`
+- \`${timCommand('distil coverage')}\`
+- \`${timCommand('distil backlog-snapshot', `--compare-to ${COMBINE_SNAPSHOT_TAG}`)}\`: its compared.added is [] and every entry of compared.mergedAway has an "into"${sendBack}
+Return the structured output only.`
+}
+
+const isListedPair = (candidates, id, into) => candidates.some(({ rows }) => rows.includes(id) && rows.includes(into))
+
+const addedRowProblems = (added) =>
+  added.length ? [`${added.join(', ')}: rows the review added. It adds no row: merge into a row that exists.`] : []
+
+const mergedAwayProblems = (mergedAway, candidates) => [
+  ...mergedAway
+    .filter(({ into }) => !into)
+    .map(({ id }) => `${id} is merged-into, but its notes do not name exactly one other row still to build. Add a note naming the row it went into, and no other row.`),
+  ...mergedAway
+    .filter(({ id, into }) => into && !isListedPair(candidates, id, into))
+    .map(({ id, into }) => `${id} into ${into} is not one of the listed candidates. Merge only listed candidates.`)
+]
+
+const reviewedRowProblems = (checked, candidates) => {
+  if (checked.snapshotOk !== true) return []
+  if (!Array.isArray(checked.added) || !Array.isArray(checked.mergedAway)) {
+    return ['tim distil backlog-snapshot did not report the rows added or merged away']
+  }
+  return [...addedRowProblems(checked.added), ...mergedAwayProblems(checked.mergedAway, candidates)]
+}
+
+const combineReviewProblemsOf = (checked, candidates) => [
+  ...coverageProblemsOf(checked),
+  ...backlogCheckProblemsOf(checked),
+  ...unchangedRowProblems(checked, COMBINE_SNAPSHOT_TAG),
+  ...reviewedRowProblems(checked, candidates)
+]
+
+const reviewAttempt = async ({ found, attempt, problems: sentBackProblems }) => {
+  const reviewed = await agent(
+    combineReviewPrompt({ found, problems: sentBackProblems }),
+    think({ label: attempt === 0 ? 'combine review' : `combine review send-back ${attempt}`, phase: 'Combine review', schema: COMBINE_REVIEW_SCHEMA })
+  )
+  const check = await runCoverage({
+    label: `check combine review${attempt === 0 ? '' : ` ${attempt + 1}`}`,
+    phaseName: 'Combine review',
+    backlogCheck: true,
+    snapshot: { mode: 'compare', tag: COMBINE_SNAPSHOT_TAG }
+  })
+  const problems = [...(reviewed ? [] : ['the combine review agent returned nothing']), ...combineReviewProblemsOf(check, found.candidates)]
+  if (problems.length > 0) log(`combine review: ${problems.length} problem(s) after attempt ${attempt + 1}`)
+  return { reviewed, check, problems }
+}
+
+const runCombineReview = async (found, attempt = 0, problems = null) => {
+  const outcome = await reviewAttempt({ found, attempt, problems })
+  return outcome.problems.length === 0 || attempt >= SEND_BACKS ? outcome : runCombineReview(found, attempt + 1, outcome.problems)
+}
+
+const summariseCombineReview = (candidates, review) =>
+  review
+    ? {
+        ran: true,
+        candidates: candidates.candidates.length,
+        rowsBefore: candidates.rowsToBuild,
+        rowsAfter: review.check.backlogByStatus?.todo ?? 0,
+        merged: review.reviewed.merged ?? [],
+        keptApart: review.reviewed.keptApart ?? [],
+        decisions: review.reviewed.decisions ?? []
+      }
+    : { ran: false, candidates: 0, rowsBefore: candidates.rowsToBuild, rowsAfter: candidates.rowsToBuild, merged: [], keptApart: [], decisions: [] }
+
+const combineReviewFailed = (detail) =>
+  stoppedResult('combine-review-failed', detail, { sources: SOURCE_COUNTS, ...countsFrom(finalCheck), goalConflicts: GOAL_CONFLICTS })
+
+const COMBINE_CANDIDATES = await findCombineCandidates()
+if (!COMBINE_CANDIDATES.ok) {
+  return combineReviewFailed(`the combine candidates step failed: ${(COMBINE_CANDIDATES.problems ?? []).join(' ') || COMBINE_CANDIDATES.summary}`)
+}
+
+const HAS_COMBINE_CANDIDATES = COMBINE_CANDIDATES.candidates.length > 0
+log(
+  HAS_COMBINE_CANDIDATES
+    ? `combine review: ${COMBINE_CANDIDATES.candidates.length} candidate pair(s) to review`
+    : `combine review: ${WORKAREA}: no candidates, so backlog.json is left as it is`
+)
+const COMBINE_REVIEW_RUN = HAS_COMBINE_CANDIDATES ? await runCombineReview(COMBINE_CANDIDATES) : null
+if (COMBINE_REVIEW_RUN?.problems.length) {
+  return combineReviewFailed(`backlog.json still has ${COMBINE_REVIEW_RUN.problems.length} problem(s) after ${SEND_BACKS} send-backs of the combine review: ${COMBINE_REVIEW_RUN.problems.join(' ')}`)
+}
+if (COMBINE_REVIEW_RUN) finalCheck = COMBINE_REVIEW_RUN.check
+const COMBINE_REVIEW = summariseCombineReview(COMBINE_CANDIDATES, COMBINE_REVIEW_RUN)
 
 const { requirements: REQUIREMENTS, conflicts: CONFLICTS, questions: QUESTIONS } = countsFrom(finalCheck)
 const BLOCKED = finalCheck.blocked ?? reconcileCheck.blocked ?? []
@@ -2213,6 +2380,17 @@ ${CHALLENGE.survived.length} survive (${CHALLENGE.survived.join(', ') || 'none'}
 THE BLOCKED REQUIREMENTS, each to build in a blocked increment once somebody acts:
 ${BLOCKED.map((blocked) => `- ${blocked.id}: ${blocked.blockedBy}`).join('\n') || '- none'}`
 
+const combineReviewNote = COMBINE_REVIEW.ran
+  ? `
+THE COMBINE REVIEW merged rows: ${COMBINE_REVIEW.rowsBefore} rows still to build became ${COMBINE_REVIEW.rowsAfter}, from ${COMBINE_REVIEW.candidates} candidate pair(s).
+Say "${COMBINE_REVIEW.rowsBefore} rows became ${COMBINE_REVIEW.rowsAfter}" in the summary.
+MERGED:
+${COMBINE_REVIEW.merged.map((line) => `- ${line}`).join('\n') || '- none'}
+KEPT APART, each with the reason it stands alone:
+${COMBINE_REVIEW.keptApart.map((line) => `- ${line}`).join('\n') || '- none'}`
+  : `
+THE COMBINE REVIEW found nothing to combine: ${COMBINE_REVIEW.rowsBefore} rows still to build stay ${COMBINE_REVIEW.rowsAfter}. Say so in the summary.`
+
 const reportPrompt = (attempt) => `You are the REPORT step of the DISTIL workflow for the workarea ${WORKAREA}. Draft the report and return it as text.
 ${RAILS}
 Write no file at all: return the report as your structured output. The main session saves it to ${REPORT_PATH}.
@@ -2221,7 +2399,7 @@ rules. Follow it section by section, then run its checks before you return. Grou
 blocked by what each waits on, with row-to-row order only: never number waves.
 READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json, ${WORKAREA_ABS}/distil/conflicts.json and ${BACKLOG_ABS}.
 The report is for the programme's readers, never for whoever maintains this pipeline. Anything wrong with a file
-or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}${splitOffReportNote}
+or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}${combineReviewNote}${splitOffReportNote}
 THE COUNTS PER SOURCE, from tim distil working-set and tim distil coverage (claims = held + refuted; missed claims
 were added; cited = the working-set claims a requirement or conflict cites):
 ${sourceCountsTable}
@@ -2267,8 +2445,10 @@ return {
   decisions: {
     areas: AREA_PLAN.decisions,
     reconcile: RECONCILE_DECISIONS,
-    consolidate: CONSOLIDATE_DECISIONS
+    consolidate: CONSOLIDATE_DECISIONS,
+    combine: COMBINE_REVIEW.decisions
   },
+  combineReview: COMBINE_REVIEW,
   goalConflicts: GOAL_CONFLICTS,
   reconcileProblems: OPEN_RECONCILE_PROBLEMS,
   report: REPORT_TEXT,

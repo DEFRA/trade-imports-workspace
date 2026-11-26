@@ -8,6 +8,7 @@ import {
   makeDistilWorkspace,
   splitExtractIntoParts
 } from '../../test-support/distil-workspace.js'
+import { row } from '../../backlog/__fixtures__/backlog-rows.js'
 import {
   reconciledFor,
   writeDemoAreas
@@ -680,8 +681,49 @@ describe('tim distil backlog-snapshot', () => {
       tag: 'before',
       removed: ['inc-002'],
       changed: [],
-      splitOffChanged: []
+      splitOffChanged: [],
+      added: [],
+      mergedAway: []
     })
+  })
+
+  test('says in plain words what was added and which rows merged away, against a saved snapshot', async () => {
+    workspace = makeDistilWorkspace()
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      increments: [
+        row({ id: 'inc-001' }),
+        row({ id: 'inc-002' }),
+        row({ id: 'inc-003' })
+      ]
+    }))
+    await runTim(['backlog-snapshot', DEMO_WORKAREA, '--save', 'before'])
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      increments: [
+        row({ id: 'inc-001' }),
+        row({
+          id: 'inc-002',
+          status: 'merged-into',
+          notes: ['Folded into inc-001.']
+        }),
+        row({
+          id: 'inc-003',
+          status: 'merged-into',
+          notes: ['Folded away.']
+        }),
+        row({ id: 'inc-004' })
+      ]
+    }))
+
+    const run = await runTim(
+      ['backlog-snapshot', DEMO_WORKAREA, '--compare-to', 'before'],
+      { json: false }
+    )
+
+    expect(run.stdout.trim().split('\n').at(-1)).toBe(
+      'Since before: removed none; changed none; split-off pointers changed none; added inc-004; merged away inc-002 into inc-001, inc-003 (its notes name no single row still to build).'
+    )
   })
 
   test('refuses a tag with a folder in it', async () => {

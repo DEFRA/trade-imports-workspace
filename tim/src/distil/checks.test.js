@@ -91,8 +91,15 @@ describe('sourcesProblems', () => {
     sources.sources[0].kind = 'podcast'
 
     expect(sourcesProblems(sources, workspace.schemas.sources)).toEqual([
-      'sources.json sources[ruling:sam-2026-09-29c].kind is "podcast". Use one of: repo, confluence, web, document, trace, ruling, image.'
+      'sources.json sources[ruling:sam-2026-09-29c].kind is "podcast". Use one of: repo, confluence, web, document, trace, ruling, image, ticket.'
     ])
+  })
+
+  test('accepts a source of the ticket kind', () => {
+    const sources = demoSources()
+    sources.sources[0].kind = 'ticket'
+
+    expect(sourcesProblems(sources, workspace.schemas.sources)).toEqual([])
   })
 
   test('holds precedence to exactly the sources', () => {

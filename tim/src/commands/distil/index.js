@@ -22,6 +22,7 @@ import { stampScopeHash } from '../../distil/stamp.js'
 import { adoptSource } from '../../distil/adopt.js'
 import { snapshotBacklog } from '../../distil/backlog-snapshot.js'
 import { runTrace } from '../../distil/trace.js'
+import { countOf } from '../../utils/count-of.js'
 import { makeBacklogAction, parseOptions } from '../backlog/shared.js'
 
 const sourceIdSchema = z
@@ -162,9 +163,6 @@ const renderStatus = (result) =>
         ]
       : [])
   ].join('\n')
-
-const countOf = (count, word, plural = `${word}s`) =>
-  `${count} ${count === 1 ? word : plural}`
 
 const renderPartition = (source) =>
   [
@@ -371,6 +369,11 @@ const renderAdopt = (result) =>
     `${result.source} is now ${result.state}.`
   ].join('\n')
 
+const describeMergedAway = ({ id, into }) =>
+  into
+    ? `${id} into ${into}`
+    : `${id} (its notes name no single row still to build)`
+
 const renderSnapshot = (result) =>
   [
     `${countOf(result.rows, 'row')}, ${result.frozen.length} built or set aside: ${result.frozen.join(', ') || 'none'}.`,
@@ -382,7 +385,7 @@ const renderSnapshot = (result) =>
       : []),
     ...(result.compared
       ? [
-          `Since ${result.compared.tag}: removed ${result.compared.removed.join(', ') || 'none'}; changed ${result.compared.changed.join(', ') || 'none'}; split-off pointers changed ${result.compared.splitOffChanged.join(', ') || 'none'}.`
+          `Since ${result.compared.tag}: removed ${result.compared.removed.join(', ') || 'none'}; changed ${result.compared.changed.join(', ') || 'none'}; split-off pointers changed ${result.compared.splitOffChanged.join(', ') || 'none'}; added ${result.compared.added.join(', ') || 'none'}; merged away ${result.compared.mergedAway.map(describeMergedAway).join(', ') || 'none'}.`
         ]
       : [])
   ].join('\n')

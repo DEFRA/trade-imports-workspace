@@ -337,6 +337,17 @@ describe('runGate — unit and FIT rungs', () => {
     })
   })
 
+  test('is green with no rungs for a phase the repos have no rungs in', async () => {
+    const env = workspaceWith(unitOnly())
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    expect({ green: outcome.green, rungs: outcome.rungs }).toEqual({
+      green: true,
+      rungs: []
+    })
+  })
+
   test('fails a repo that gates.json has no rungs for', async () => {
     const env = workspaceWith({
       ...unitOnly(),

@@ -2,7 +2,12 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { run } from '../exec/exec.js'
 import { TimError } from '../errors.js'
-import { readEnvelopeRepos } from './envelope-repos.js'
+import {
+  branchAndTicketOf,
+  readEnvelope,
+  repoEntryOf,
+  reposOf
+} from './envelope-repos.js'
 
 const FALLBACK_DEFAULT = 'main'
 
@@ -13,14 +18,11 @@ const succeeds = async (dir, args) => (await git(dir, args)).exitCode === 0
 const nonEmptyLines = (text) =>
   text.split('\n').filter((line) => line.trim().length > 0)
 
-// `git status --porcelain` prints two status letters and a space before
-// each path.
-const PORCELAIN_PREFIX_LENGTH = 3
-
 const uncommittedFiles = async (dir) => {
+  const statusLettersAndSpaceLength = 3
   const { stdout } = await git(dir, ['status', '--porcelain'])
   return nonEmptyLines(stdout).map((line) =>
-    line.slice(PORCELAIN_PREFIX_LENGTH)
+    line.slice(statusLettersAndSpaceLength)
   )
 }
 
@@ -64,9 +66,6 @@ const inspect = async ({ key, folder, path, workspace = false }, branch) => {
   }
 }
 
-// The workspace repo always carries uncommitted programme state (the backlog
-// itself, plans, logs), so its uncommitted files travel with it; git still
-// refuses a switch that would overwrite one of them.
 const wouldLoseWork = ({ workspace, current, dirty = [] }, branch) =>
   !workspace && current !== branch && dirty.length > 0
 
@@ -80,15 +79,17 @@ const problemsWith = (inspection, branch) => {
   ].filter(Boolean)
 }
 
-const startPointFor = async (path, branch, defaultName) => {
-  if (await hasRef(path, `refs/remotes/origin/${branch}`)) {
-    return `origin/${branch}`
-  }
+const defaultStartPoint = async (path, defaultName) => {
   if (await hasRef(path, `refs/remotes/origin/${defaultName}`)) {
     return `origin/${defaultName}`
   }
   return (await hasRef(path, `refs/heads/${defaultName}`)) ? defaultName : null
 }
+
+const startPointFor = async (path, branch, defaultName) =>
+  (await hasRef(path, `refs/remotes/origin/${branch}`))
+    ? `origin/${branch}`
+    : defaultStartPoint(path, defaultName)
 
 const checkoutFailed = (result, message) => ({
   ...result,
@@ -162,6 +163,95 @@ const applyTo = async (inspection, branch) => {
   return failure ? checkoutFailed(result, failure) : result
 }
 
+const withWorkspaceRepo = (repos, workspaceRoot) =>
+  repos.some(({ workspace }) => workspace)
+    ? repos
+    : [...repos, repoEntryOf(workspaceRoot, 'workspace', { path: '.' })]
+
+const countCommitsSince = (path, startPoint) =>
+  git(path, ['rev-list', '--count', `${startPoint}..HEAD`])
+
+const commitEmpty = async (path, message) => {
+  const commit = await git(path, [
+    'commit',
+    '--only',
+    '--allow-empty',
+    '--quiet',
+    '-m',
+    message
+  ])
+  return commit.exitCode === 0
+    ? { sha: await headOf(path), failure: null }
+    : { sha: null, failure: commit.stderr.trim() || commit.stdout.trim() }
+}
+
+const addOpeningCommitIfNone = async (
+  { path, defaultName },
+  { branch, scope }
+) => {
+  const startPoint = await defaultStartPoint(path, defaultName)
+  if (!startPoint) {
+    return {
+      sha: null,
+      failure: `Can't find ${defaultName} to count the commits on ${branch}.`
+    }
+  }
+  const counted = await countCommitsSince(path, startPoint)
+  if (counted.exitCode !== 0) {
+    return { sha: null, failure: counted.stderr.trim() }
+  }
+  if (Number(counted.stdout) > 0) return { sha: null, failure: null }
+  return commitEmpty(path, `chore(${scope}): open ${branch}`)
+}
+
+const readOrigin = async (path, branch, head) => {
+  const { exitCode, stdout, stderr } = await git(path, [
+    'ls-remote',
+    '--heads',
+    'origin',
+    `refs/heads/${branch}`
+  ])
+  if (exitCode !== 0) {
+    return { onOrigin: null, pushNeeded: null, originError: stderr.trim() }
+  }
+  const originHead = stdout.split('\t')[0].trim() || null
+  return {
+    onOrigin: originHead !== null,
+    pushNeeded: originHead !== head,
+    originError: null
+  }
+}
+
+const openRepo = async (inspection, result, opening) => {
+  if (!result.ok) return result
+  const { sha, failure } = await addOpeningCommitIfNone(inspection, opening)
+  if (failure) {
+    return {
+      ...result,
+      ok: false,
+      errorCode: 'OPENING_COMMIT_FAILED',
+      error: failure
+    }
+  }
+  const head = sha ?? result.head
+  return {
+    ...result,
+    head,
+    openingCommit: sha,
+    ...(await readOrigin(inspection.path, opening.branch, head))
+  }
+}
+
+const refusalFor = (inspections, problems, branch) => {
+  const dirty = inspections.some((inspection) =>
+    wouldLoseWork(inspection, branch)
+  )
+  return new TimError(
+    dirty ? 'DIRTY_TREE' : 'USAGE',
+    ['Nothing changed.', ...problems].join('\n')
+  )
+}
+
 /**
  * Put every repo a backlog builds on one branch. A repo already on it is left
  * alone; one that has it locally switches to it; otherwise the branch is cut
@@ -170,32 +260,68 @@ const applyTo = async (inspection, branch) => {
  * uncommitted work or is not cloned. The workspace repo itself is the
  * exception: its uncommitted files travel with it.
  *
+ * With `open`, the branch defaults to the envelope's `branch`, the workspace
+ * repo joins the backlog's repos (last, unless the envelope maps it) and each
+ * repo with no commits of its own on the branch, counted from its default
+ * branch, gets one empty opening commit, made by git's own commit so the
+ * repo's hooks run and nothing staged goes into it. Each repo's result then
+ * also holds `openingCommit` (the new sha, or null), `onOrigin`, `pushNeeded`
+ * and `originError`, read with `git ls-remote origin`; `onOrigin` and
+ * `pushNeeded` are null, and `originError` holds git's reason, when origin
+ * cannot be read. It never pushes and never calls GitHub.
+ * A repo whose opening commit fails has `ok` false and `errorCode`
+ * OPENING_COMMIT_FAILED.
+ *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
- * @param {string} args.branch
+ * @param {string} [args.branch] - Required unless `open` is set and the envelope names one
+ * @param {boolean} [args.open] - Open the branch in every repo and the workspace
  * @returns {Promise<{workarea: string, branch: string, repos: object[]}>}
  * @throws {TimError} DIRTY_TREE or USAGE, before any repo changes
  */
-export const runBuildBranch = async ({ workspaceRoot, workarea, branch }) => {
-  const repos = readEnvelopeRepos(workspaceRoot, workarea)
-  const inspections = await Promise.all(
-    repos.map((repo) => inspect(repo, branch))
-  )
-  const problems = inspections.flatMap((inspection) =>
-    problemsWith(inspection, branch)
-  )
-  if (problems.length > 0) {
-    const dirty = inspections.some((inspection) =>
-      wouldLoseWork(inspection, branch)
-    )
+export const runBuildBranch = async ({
+  workspaceRoot,
+  workarea,
+  branch,
+  open: opensBranch = false
+}) => {
+  const { envelope, backlogPath } = readEnvelope(workspaceRoot, workarea)
+  const named = opensBranch
+    ? branchAndTicketOf(envelope)
+    : { branch: null, ticket: null }
+  const targetBranch = branch ?? named.branch
+  if (!targetBranch) {
     throw new TimError(
-      dirty ? 'DIRTY_TREE' : 'USAGE',
-      ['Nothing changed.', ...problems].join('\n')
+      'USAGE',
+      `Name a branch, or give the backlog at ${workarea} a branch and use open mode.`
     )
   }
-  const results = await Promise.all(
-    inspections.map((inspection) => applyTo(inspection, branch))
+  const envelopeRepos = reposOf(envelope, backlogPath, workspaceRoot)
+  const repos = opensBranch
+    ? withWorkspaceRepo(envelopeRepos, workspaceRoot)
+    : envelopeRepos
+  const inspections = await Promise.all(
+    repos.map((repo) => inspect(repo, targetBranch))
   )
-  return { workarea, branch, repos: results }
+  const problems = inspections.flatMap((inspection) =>
+    problemsWith(inspection, targetBranch)
+  )
+  if (problems.length > 0) {
+    throw refusalFor(inspections, problems, targetBranch)
+  }
+  const results = await Promise.all(
+    inspections.map((inspection) => applyTo(inspection, targetBranch))
+  )
+  const reported = opensBranch
+    ? await Promise.all(
+        inspections.map((inspection, index) =>
+          openRepo(inspection, results[index], {
+            branch: targetBranch,
+            scope: named.ticket ?? targetBranch
+          })
+        )
+      )
+    : results
+  return { workarea, branch: targetBranch, repos: reported }
 }

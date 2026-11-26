@@ -12,15 +12,30 @@ export const evidenceRowSchema = z.object({
   hitsBefore: hitCount,
   hitsAfter: hitCount,
   outcome: z.enum(EVIDENCE_OUTCOMES),
-  reason: z.string()
+  reason: z.string(),
+  acceptedBy: z.string().min(1).nullish(),
+  acceptedOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'must be a date as YYYY-MM-DD')
+    .nullish()
 })
 
 export const hitsPhrase = (count) => (count === 1 ? '1 hit' : `${count} hits`)
 
 const NOT_COUNTED = 'The pattern has not been counted since the change.'
 
-const appliedProblem = ({ pattern, hitsAfter }) => {
-  if (!pattern) return 'An applied row needs a pattern to search for.'
+const acceptedProblem = ({ acceptedBy, acceptedOn, reason }) => {
+  if (!acceptedBy || !acceptedOn) {
+    return 'An applied row needs a pattern to search for, or who accepted it with no code change and when.'
+  }
+  if (reason.trim() === '') {
+    return 'An applied row a person accepted needs a reason: what they accepted.'
+  }
+  return null
+}
+
+const appliedProblem = ({ pattern, hitsAfter, ...row }) => {
+  if (!pattern) return acceptedProblem(row)
   if (hitsAfter == null) return NOT_COUNTED
   if (hitsAfter > 0) return `The pattern still has ${hitsPhrase(hitsAfter)}.`
   return null
@@ -44,11 +59,12 @@ const problemOf = (row) => {
 
 /**
  * Whether an evidence row is clean. An applied row is clean when its
- * pattern has no hits after the change; a not-applicable row when it has a
- * reason and its pattern, if any, still has no hits. A row that needs a
- * person is never clean.
+ * pattern has no hits after the change, or, with no pattern, when it names
+ * who accepted it, when, and what they accepted as its reason. A
+ * not-applicable row is clean when it has a reason and its pattern, if any,
+ * still has no hits. A row that needs a person is never clean.
  *
- * @param {{outcome: string, pattern?: string|null, hitsAfter?: number|null, reason: string}} row
+ * @param {{outcome: string, pattern?: string|null, hitsAfter?: number|null, reason: string, acceptedBy?: string|null, acceptedOn?: string|null}} row
  * @returns {{clean: boolean, problem: string|null}} `problem` says why a row is not clean
  */
 export const evidenceRowVerdict = (row) => {

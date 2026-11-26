@@ -1046,8 +1046,8 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
   leave it as it is.
 - Run each gate command in the FOREGROUND, then wait for it as below. The wait prints the gate's one JSON line:
   \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
-  It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
-  it is neither green nor red, so say so and go on. A gate command or wait that errors before running any rung
+  It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for these repos:
+  tim reports it green, so say so and go on. A gate command or wait that errors before running any rung
   (\`ok\` false with an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
 - ${GATE_WAIT_RULE}
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
@@ -4230,6 +4230,7 @@ const startReport = (answer) => {
   if (!envelope) {
     return {
       failedStep: 'derive',
+      unparsed: true,
       reason: `tim build start printed no JSON (exit ${answer.exitCode}): ${String(answer.stdout ?? '').slice(0, 500)}`
     }
   }
@@ -4983,7 +4984,7 @@ const SIGNED_OFF_CHECK_PROPERTIES = {
 
 const SIGNED_OFF_GATE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'held', 'summary'],
+  required: ['ok', 'held', 'changes', 'summary'],
   properties: {
     ok: {
       type: 'boolean',
@@ -5090,7 +5091,8 @@ STEP 1 — IS THE ROW HELD? One Bash call:
 \`jq -c '[.increments[] | select(.id=="${id}") | .prs[]? | select(.signedOffHold == true) | .url]' ${BACKLOG_TILDE}\`
 - It prints a list with any url in it → held:true. For EACH pull request above, one Bash call:
   \`gh pr view <url> --json url,state,isDraft\`, and put its {url, state, isDraft} in prs[]. Run nothing else: a
-  person rules on a held row, not tim. ok:true when every read worked, with a summary naming each draft. Stop here.
+  person rules on a held row, not tim. ok:true when every read worked, changes 0, with a summary naming each draft.
+  Stop here.
 - \`[]\` → held:false. Go on.
 STEP 2 — EVERY REPO ON THE ROW'S BRANCH, so tim compares the row's work. One Bash call each:
 ${branchCheckLines(checkedPaths, { base: BASE_BRANCH, branch: workBranch })}
@@ -6083,6 +6085,10 @@ while (stopped === null) {
   if (!PLAN_ONLY && !IS_BRANCH) {
     phase('Start')
     started = startReport(await startIncrement(id, lastId))
+    if (started.unparsed) {
+      log(`${WORKAREA_REL}: the start agent's copy of tim's output did not parse — starting again`)
+      started = startReport(await startIncrement(id, lastId))
+    }
     if (started.failedStep === 'derive') {
       stopped = { reason: 'derive-failed', detail: started.reason }
       log(`${WORKAREA_REL}: COULD NOT DERIVE THE NEXT INCREMENT — ${started.reason}`)

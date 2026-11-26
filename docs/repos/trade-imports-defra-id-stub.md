@@ -10,14 +10,15 @@ Stub of the Defra Identity (Defra ID, Azure B2C style OIDC) sign-in service for 
 
 **Owns**
 - OIDC provider behaviour for the `b2c_1a_cui_cpdev_signupsigninsfi` policy: well-known configuration, authorise, token (authorisation code and refresh token), JWKS keys and sign-out.
-- CRN and password login (password from `AUTH_PASSWORD`, default in the compose file `Password123`), and the organisation picker (`/organisations`).
+- CRN and password login (password from `AUTH_PASSWORD`; the workspace stack sets `Password123`), and the organisation picker (`GET` and `POST /organisations`). `AUTH_MODE` is `basic` (the default: any 10-digit CRN) or `mock` (only the CRNs in `src/data/mock.json`). `LOGIN_DISABLED` refuses every sign-in, and `ALLOW_LOGIN_QUERY_PARAMS` (default `true`) lets a test pass the CRN and password in the query string.
 - Signed JWT generation consistent with the policy (access token lifetime 24 hours) and short-lived SSO sessions (README: one hour, extended on re-authentication).
 - The test identities: `src/data/mock.json` people and organisations, or an override via `AUTH_OVERRIDE` / `AUTH_OVERRIDE_FILE` (`example.data.json` shows the format).
+- Latency profiles and fault injection for its server-to-server paths (OIDC discovery, token and signing keys), for the performance tests. `STUB_LATENCY_PROFILE` or `STUB_LATENCY_DEFRA_ID_PROFILE` picks `zero-delay` (the default) or `sla`. `GET /latency-profiles` and `DELETE /latency-profiles/answered` follow the same contract as `trade-imports-stub`, and so do `GET /faults`, `PUT` and `DELETE /faults/{integration}` and `DELETE /faults`. The browser-facing pages are never slowed or faulted.
 
 **Does not own**
 - Real user, organisation or relationship data; nothing here is authoritative.
 - Authorisation decisions in consuming services, which validate the token themselves.
-- Fidelity to the real service: organisation selection is marked "TODO" in the README (a picker route exists in code, so treat the extent as unclear).
+- Fidelity to the real service. The README still lists organisation selection as "TODO", although the `/organisations` picker exists in code.
 
 **Also present:** optional Entra ID protection (`ENTRA_ENABLED`, default false) guarding an `/s3` admin UI for the data files kept in S3 (`AWS_S3_ENABLED`). This supports editing the stub's data; deployment use is unclear from code.
 
@@ -25,14 +26,15 @@ Stub of the Defra Identity (Defra ID, Azure B2C style OIDC) sign-in service for 
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-animals-frontend, trade-imports-animals-admin, trade-imports-ins-frontend, trade-imports-plants-frontend, trade-imports-routing-proxy | OIDC (browser redirects plus server-side token and JWKS calls) | Sign-in. Each has `DEFRA_ID_*` config; the frontend default is `http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration`. Per-service usage beyond config was not checked for admin, ins and plants. |
+| Inbound | trade-imports-animals-frontend, trade-imports-animals-admin, trade-imports-ins-frontend, trade-imports-plants-frontend, trade-imports-routing-proxy | OIDC (browser redirects plus server-side token and JWKS calls) | Sign-in. In the workspace stack (`docker/stack/frontend.compose.yml`) each one's `DEFRA_ID_OIDC_CONFIGURATION_URL` is `http://host.docker.internal:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration`. |
+| Inbound | trade-imports-performance-tests | HTTP: sign-in through the journeys, and `/latency-profiles` and `/faults` | Signs in its sessions, and slows or breaks the identity provider for resilience runs. Its `compose.yml` also runs its own copy (`defra-id-stub-ceiling`) to measure the stub's ceiling. |
 | Outbound | Redis | ioredis (catbox) | Session cache when `REDIS_HOST` is set; otherwise not used (default host is null). Single-instance fallback is implied by `USE_SINGLE_INSTANCE_CACHE`. |
 | Outbound (optional) | AWS S3 (Floci locally) | AWS SDK v3 | Dataset files for the `/s3` admin routes, when `AWS_S3_ENABLED`. |
 | Outbound (optional) | Microsoft Entra ID | OIDC (Bell) | Only when `ENTRA_ENABLED`; protects the `/s3` routes. |
 
 ## Stack
 
-- **Runtime:** Node.js (>= 24.12)
+- **Runtime:** Node.js 24.22.3 (`.nvmrc`; `engines` `>=24.22.1`). The other Node repos are on 26.13.1.
 - **Framework:** Hapi 21 (`@hapi/jwt`, `cookie`, `bell`, `yar`), Nunjucks and govuk-frontend views
 - **Build tool:** npm, webpack (front-end assets)
 - **Config:** convict

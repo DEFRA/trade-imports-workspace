@@ -264,8 +264,9 @@ A Node service:
 - replaces its old `external-call-metrics.js` (table above) with the
   helpers `NODE.md` names, which publish the new names and measure the
   calls it missed;
-- makes each call that throws on a refusal name its operation in the
-  error, `<dependency> refused to <action>: <status> <status text>` (`NODE.md`,
+- makes each call that throws on a refusal throw a `RefusedCallError`
+  whose message names the dependency and the action in words,
+  `<dependency> refused to <action>: <status> <status text>` (`NODE.md`,
   below its dependency table).
 
 The CloudWatch metrics then change name, so regenerate its dashboard

@@ -25,17 +25,17 @@ after the operation,
 
 This table is the one list of the line's fields, for both languages:
 
-| Field                       | Value                                                                           | Written by                        | Example                             |
-| --------------------------- | ------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------- |
-| `event.category`            | Always `external-call`                                                          | Every service                     | `external-call`                     |
-| `event.action`              | `<dependency>/<operation>`                                                      | Every service                     | `mdm/get-countries`                 |
-| `event.outcome`             | `success` or `failure`                                                          | Every service                     | `success`                           |
-| `event.duration`            | Nanoseconds                                                                     | Every service                     | `2882625`                           |
-| `http.response.status_code` | The HTTP status the dependency answered with, when it answered                  | Node, on every answered HTTP call | `503`                               |
-| `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node) | Every service                     | `com.mongodb.MongoCommandException` |
-| `error.message`             | A failure with a cause only: the cause's message                                | Every service                     | —                                   |
-| `error.code`                | A failure only: the cause's `cause.code`, when it has one                       | Node                              | `ECONNREFUSED`                      |
-| `trace.id`                  | Set by the request filter or the logger's mixin, not by this code               | Every service                     | —                                   |
+| Field                       | Value                                                                                                                                         | Written by                        | Example                             |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------- |
+| `event.category`            | Always `external-call`                                                                                                                        | Every service                     | `external-call`                     |
+| `event.action`              | `<dependency>/<operation>`                                                                                                                    | Every service                     | `mdm/get-countries`                 |
+| `event.outcome`             | `success` or `failure`                                                                                                                        | Every service                     | `success`                           |
+| `event.duration`            | Nanoseconds                                                                                                                                   | Every service                     | `2882625`                           |
+| `http.response.status_code` | The HTTP status the dependency answered with, when it answered                                                                                | Node, on every answered HTTP call | `503`                               |
+| `error.type`                | A failure with a cause only: the cause's class name (Java) or its `name` (Node)                                                               | Every service                     | `com.mongodb.MongoCommandException` |
+| `error.message`             | A failure with a cause only: the cause's message                                                                                              | Every service                     | —                                   |
+| `error.code`                | A failure only: a code the failure names itself, the refusal's code from the answer's body or the cause's `cause.code`; never the HTTP status | Node                              | `ECONNREFUSED`                      |
+| `trace.id`                  | Set by the request filter or the logger's mixin, not by this code                                                                             | Every service                     | —                                   |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
 field that is not on the list is dropped.
@@ -65,20 +65,14 @@ allows no other top-level field):
 
 Never give these lines `event.category`, `event.action` or
 `event.outcome`. Those make a line an external-call line, and the
-"Slowest dependency calls" panel and alert rule 3 count one per call.
+"Slowest dependency calls" panel and the OpenSearch check in
+`ALERTS.md` ("Check the calls happened") count one per call.
 Never a field of its own such as `operation`, `status`, `journeyId` or
 `url`: CDP drops it.
 
 This list covers only the lines about a call. A service's other lines
 are not yet held to CDP's schema, and many of them write fields of
 their own. EUDPA-847 brings every deployed line onto it.
-
-The HTTP status is never `error.code`, on this line or the
-external-call line. The external-call line carries it as
-`http.response.status_code`, and any other line in `error.message`.
-`error.code` holds only a code the failure names itself: the refusal's
-own code from the answer's body, such as `STALE_CONCURRENCY_TOKEN`, or
-the cause's code, such as `ECONNREFUSED`.
 
 `[UNPROVEN]` that `event.reference` reaches dev OpenSearch. Check a
 refusal line there by its journey id before relying on it.

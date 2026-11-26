@@ -298,11 +298,18 @@ with `plants-backend` as its backend dependency. What differed:
 - It has no cdp-uploader and no document uploads, so its backend
   operations are the nine notification ones and its reference-data
   operations `get-countries` and `get-ports-of-entry`.
+- It has no transporters, so its address-book operations are
+  `list-addresses` and `get-address`.
+- Its entry guard is
+  `src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js`,
+  tested beside it in `entry-guard.test.js`.
 - Its records stub does not check concurrency tokens, so
   `records.test.js` proves the conflict count by configuring an adapter
   that refuses with a stale-token `BackendRequestError`
   (`staleConcurrencyRefusal` in `src/server/app/engine/test-support.js`).
 - Its submit takes no concurrency token: `records.submit(journeyId, actor)`.
+- Its `recordEcsLogLines()` returns every reader above but
+  `linesAtLevel(level)`.
 - Its route table, booted in stub mode: 49 routes (29 GET, 19 POST, 1
   DELETE), 37 under `/high-risk-plants/notifications/{journeyId}/`, 26
   areas, of which 22 are page areas, and 41 method and area pairs.

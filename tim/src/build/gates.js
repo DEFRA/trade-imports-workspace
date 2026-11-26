@@ -191,7 +191,12 @@ const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
 const scopeRunsOf = (rung, repo, folders, workspaceRoot, e2eScope) => {
   if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
-  if (e2eScope) return changedScopeRuns(e2eScope)
+  if (e2eScope) {
+    return changedScopeRuns({
+      specs: e2eScope.specsByRepo?.[repo.folder] ?? e2eScope.specs,
+      coveredSpecs: e2eScope.coveredSpecs
+    })
+  }
   const services = folders.filter((folder) => folder !== repo.folder)
   return prScopeRuns(loadPrScope(workspaceRoot), services)
 }

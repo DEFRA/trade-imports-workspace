@@ -752,3 +752,44 @@ describe('planRungs with e2eScope', () => {
     ])
   })
 })
+
+describe('planRungs e2eScope per repo', () => {
+  const twoRepoGates = () =>
+    parseGates(
+      gatesWith({
+        'plants-frontend': { rungs: [unitRung('unit', 'test')] },
+        tests: {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'pr-scope',
+              forRepos: ['plants-frontend']
+            }
+          ]
+        }
+      })
+    )
+
+  test('gives a rung its own repo’s changed specs, not another repo’s', () => {
+    const plan = planRungs({
+      gates: twoRepoGates(),
+      repos: [repo('plants-frontend'), repo('tests')],
+      phase: 'e2e',
+      e2eScope: {
+        specsByRepo: {
+          'plants-frontend': ['fit/origin.fit.spec.js'],
+          tests: ['tests/plants/origin.spec.ts']
+        }
+      }
+    })
+
+    expect(plan.filter(({ phase }) => phase === 'e2e')).toEqual([
+      expect.objectContaining({
+        repo: 'tests',
+        scope: ['tests/plants/origin.spec.ts', '--pass-with-no-tests']
+      })
+    ])
+  })
+})

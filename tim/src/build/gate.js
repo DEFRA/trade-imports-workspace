@@ -47,14 +47,18 @@ const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 const DEFAULT_CHANGE_BASE = 'origin/main'
 
-// A spec path is relative to the repo it sits in, and the E2E rung runs in the
-// tests repo, so only that repo's own changed specs can be given to Playwright.
-const changedSpecsAcross = async (repos, base) => {
-  const perRepo = await Promise.all(
-    repos.map(({ path }) => changedSpecPaths(path, base))
+// A spec path is relative to the repo it sits in, so a rung is given its own
+// repo's changed specs and no other's. A frontend's FIT specs would otherwise
+// reach the tests repo's Playwright run, which has no such files.
+const changedSpecsByRepo = async (repos, base) =>
+  Object.fromEntries(
+    await Promise.all(
+      repos.map(async ({ folder, path }) => [
+        folder,
+        await changedSpecPaths(path, base)
+      ])
+    )
   )
-  return [...new Set(perRepo.flat())]
-}
 
 const TARGETED_E2E = {
   where: 'targeted',
@@ -724,7 +728,7 @@ export const runGate = async ({
   const e2eWhere = e2e ?? machine?.e2e
   const e2eScope =
     e2eWhere === 'targeted'
-      ? { specs: await changedSpecsAcross(repos, base), coveredSpecs }
+      ? { specsByRepo: await changedSpecsByRepo(repos, base), coveredSpecs }
       : undefined
   const wholePlan = withMachineWorkers(
     planRungs({ gates, repos, phase, workspaceRoot, e2eScope }),

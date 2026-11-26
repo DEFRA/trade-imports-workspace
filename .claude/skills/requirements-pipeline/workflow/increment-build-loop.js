@@ -1527,6 +1527,11 @@ and so on), so a check that starts a frontend on its default port cannot run. A 
 gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
 \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`. Write no worker count into
 a plan: whoever runs the check adds this machine's \`--workers\` from GUARD RAILS.
+An END-TO-END check names its spec files too:
+\`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file>\`. Never the bare
+script, a folder (\`tests/animals/\`) or a \`--grep\` over a tag: each of those runs hundreds of specs this row did not
+change, takes tens of minutes, and competes with the stack for this machine. The whole suite is the pull request's
+job, never a plan check's.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1549,6 +1554,8 @@ ${workerCountLines.join('\n')}
   So: \`npm --prefix ${TILDE}/repos/<repo> run test:fit:ci -- <spec file> --workers=<n>\` for FIT, and
   \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file> --workers=<n>\` for E2E. A repo not listed keeps its
   script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
+  ALWAYS name the spec files. Never run one of these scripts bare, over a folder, or with a \`--grep\` over a tag:
+  that is hundreds of specs, tens of minutes, and the whole suite is the pull request's job.
 `
 
 const WATCH_LOOP_EXCEPTION = `The ONE exception to the single-command and no-sleep rules is the \`for try in ...; done\` checks watch loop that a
@@ -4856,8 +4863,9 @@ ${SONAR_GATE_RULE}
    never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
 4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-5. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
-   read once.
+5. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+   script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
+   everything else; re-running it here proves nothing it has not and costs tens of minutes.
 6. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
    ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
 7. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
@@ -7568,8 +7576,9 @@ ${SONAR_GATE_RULE}
 2. ${CI_FIXER_STALE_RULE}
 3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-4. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
-   read once.
+4. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+   script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
+   everything else; re-running it here proves nothing it has not and costs tens of minutes.
 5. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
    The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
    declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.

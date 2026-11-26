@@ -13,6 +13,7 @@ import {
   recordFolderFiles,
   stageBashWorkspace
 } from '../../test-support/bash-golden-harness.js'
+import { branchRefsOnly } from '../../test-support/git-fixtures.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 
 const timCliPath = fileURLToPath(new URL('../../cli.js', import.meta.url))
@@ -758,12 +759,14 @@ export const observeGit = async (staged, branch) => {
     const result = await execa('git', args, { cwd: staged.root, reject: false })
     return result.exitCode === 0 ? result.stdout : ''
   }
-  const branches = linesOf(
-    await out(
-      'for-each-ref',
-      '--format=%(refname)',
-      'refs/heads',
-      'refs/remotes'
+  const branches = branchRefsOnly(
+    linesOf(
+      await out(
+        'for-each-ref',
+        '--format=%(refname)',
+        'refs/heads',
+        'refs/remotes'
+      )
     )
   )
   const local = await out('rev-parse', `refs/heads/${branch}`)

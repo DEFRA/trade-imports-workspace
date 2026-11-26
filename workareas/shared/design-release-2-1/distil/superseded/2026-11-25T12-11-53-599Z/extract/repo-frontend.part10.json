@@ -1,0 +1,699 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 10, CPH number and contact. Read in full: features/cph-number/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, cph-number.fit.spec.js, plus controller.test.js and validate.test.js in the same folder), features/contact/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, contact.fit.spec.js, plus controller.test.js and validate.test.js), and features/addresses/parties.js (claimed only for CONTACT_PARTY). For context only, shared/kit.js (nextTarget, hubExitTarget, base caption rule), shared/save-actions.njk and the shared copy keys the two pages render (save actions, address handshake). Two pages are covered: /cph-number (addresses section, three-box CPH entry with collapsed help, per-part and whole-value validation, stored-value split and re-check, return=addresses branch, primary-only ending) and /consignment/contact/select (address-book radio picker with a current-contact card, INS add-address handshake link and errors, membership validation, three-control ending). Every test in both fit specs is claimed, and the unit tests are used as further evidence of behaviour. All paths in ref are relative to src/server/app/sets/live-animals/journeys/linear/features/ unless they start with src/.",
+  "claims": [
+    {
+      "id": "repo-frontend-p10-001",
+      "statement": "The CPH number page is served at the journey path /cph-number under a notification.",
+      "kind": "behaviour",
+      "ref": "cph-number/page.js:1",
+      "quote": "export const cphNumberPage = { id: 'cphNumber', slug: 'cph-number' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-002",
+      "statement": "The CPH number page collects one answer, countyParishHoldingCph, which fulfils the cph obligation.",
+      "kind": "data",
+      "ref": "cph-number/evaluation.js:7-9; cph-number/controller.js:17-21",
+      "quote": "scalar({ field: 'countyParishHoldingCph', obligation: cph })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-003",
+      "statement": "The CPH question applies only when at least one commodity line's selected commodity is on the CPH commodity list.",
+      "kind": "rule",
+      "ref": "cph-number/controller.js:28-31",
+      "quote": "export const isCphApplicable = (answers) =>\n  asArray(answers.commodityLines).some((line) =>\n    commodities.cphCommodities().includes(line?.commoditySelection)\n  )",
+      "confidence": "verbatim",
+      "note": "The list itself (every commodity whose code is not on design release 1's CPH-exempt list) lives in services/commodities, another part's slice. The addresses controller imports this predicate."
+    },
+    {
+      "id": "repo-frontend-p10-004",
+      "statement": "The CPH number page heading (h1, large) reads 'Add the county parish holding number (CPH)' and is also the page title.",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.en.js:2; cph-number/template.njk:14; cph-number/controller.js:46",
+      "quote": "title: 'Add the county parish holding number (CPH)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-005",
+      "statement": "The CPH number page shows a section caption directly above its heading, naming the journey section the page belongs to.",
+      "kind": "behaviour",
+      "ref": "cph-number/template.njk:13; cph-number/controller.js:46-51; src/server/app/shared/kit.js:127-129; cph-number.fit.spec.js:75-77",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "verbatim",
+      "note": "The caption text comes from the section config, outside this part."
+    },
+    {
+      "id": "repo-frontend-p10-006",
+      "statement": "The CPH number page has exactly one h1; the question's legend 'CPH number' is not a heading.",
+      "kind": "behaviour",
+      "ref": "cph-number.fit.spec.js:71-89 'renders the CPH copy'",
+      "quote": "await expect(\n      page.getByRole('heading', { name: copy.cph.legend })\n    ).toHaveCount(0)\n    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-007",
+      "statement": "A collapsed details component sits above the form with the summary text 'What is a CPH number?'.",
+      "kind": "copy",
+      "ref": "cph-number/template.njk:23-26; cph-number/copy/copy.en.js:11",
+      "quote": "summary: 'What is a CPH number?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-008",
+      "statement": "Opening the CPH help shows the definition 'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.en.js:12-13; cph-number/template.njk:19",
+      "quote": "'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-009",
+      "statement": "Opening the CPH help shows where to find the number: 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.en.js:14-15; cph-number/template.njk:20",
+      "quote": "'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-010",
+      "statement": "The CPH help is collapsed by default, sits before the CPH inputs, and reveals its two paragraphs when the summary is clicked.",
+      "kind": "behaviour",
+      "ref": "cph-number.fit.spec.js:141-163 'keeps the CPH help collapsed above the field until it is opened'",
+      "quote": "await expect(page.getByText(copy.help.definition)).toBeHidden()\n...\n    await expect(page.locator('details ~ form #cphCounty')).toHaveCount(1)\n\n    await summary.click()\n\n    await expect(page.getByText(copy.help.definition)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-011",
+      "statement": "The CPH number is asked as one question: a fieldset with role group and a small legend reading 'CPH number'.",
+      "kind": "copy",
+      "ref": "cph-number/template.njk:92-99; cph-number/copy/copy.en.js:4",
+      "quote": "legend: 'CPH number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-012",
+      "statement": "The CPH question's hint reads 'For example, 12/345/6789.' and describes the whole group rather than any one box.",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.en.js:5; cph-number/template.njk:38-41,95; cph-number.fit.spec.js:130-139",
+      "quote": "hint: 'For example, 12/345/6789.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-013",
+      "statement": "The CPH page never shows the example '123/456/789', a grouping no CPH number uses.",
+      "kind": "copy",
+      "ref": "cph-number.fit.spec.js:130-139 'describes the whole number once, in the real 2/3/4 grouping'",
+      "quote": "await expect(page.getByText('123/456/789')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-014",
+      "statement": "The first CPH box is labelled 'County', is two characters wide and accepts at most 2 characters.",
+      "kind": "data",
+      "ref": "cph-number/template.njk:52-61; cph-number/copy/copy.en.js:6",
+      "quote": "label: { text: copy.cph.county, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-2\"",
+      "confidence": "verbatim",
+      "note": "maxlength: \"2\" at template.njk:59."
+    },
+    {
+      "id": "repo-frontend-p10-015",
+      "statement": "The second CPH box is labelled 'Parish', is three characters wide and accepts at most 3 characters.",
+      "kind": "data",
+      "ref": "cph-number/template.njk:65-74; cph-number/copy/copy.en.js:7",
+      "quote": "label: { text: copy.cph.parish, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-3\"",
+      "confidence": "verbatim",
+      "note": "maxlength: \"3\" at template.njk:72."
+    },
+    {
+      "id": "repo-frontend-p10-016",
+      "statement": "The third CPH box is labelled 'Holding number', is four characters wide and accepts at most 4 characters.",
+      "kind": "data",
+      "ref": "cph-number/template.njk:78-87; cph-number/copy/copy.en.js:8",
+      "quote": "label: { text: copy.cph.holding, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-4\"",
+      "confidence": "verbatim",
+      "note": "maxlength: \"4\" at template.njk:85."
+    },
+    {
+      "id": "repo-frontend-p10-017",
+      "statement": "Each CPH box asks for a numeric keyboard and has spellcheck turned off.",
+      "kind": "behaviour",
+      "ref": "cph-number/template.njk:57-58,70-71,83-84; cph-number.fit.spec.js:105-107",
+      "quote": "inputmode: \"numeric\",\n            spellcheck: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-018",
+      "statement": "The three CPH boxes sit side by side in a row using the date-input layout, though nothing in them is a date.",
+      "kind": "constraint",
+      "ref": "cph-number/template.njk:32-36,50",
+      "quote": "The\n       govuk-date-input layout classes are the Design System's only shipped way\n       to sit inputs side by side; nothing here is a date.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-019",
+      "statement": "Each CPH box's label is visible on screen, not visually hidden, departing on purpose from design release 1, which clips the per-part labels out of sight.",
+      "kind": "rule",
+      "ref": "cph-number.fit.spec.js:109-127 'takes the number in three boxes sized to its parts'",
+      "quote": "Design release 1 clips its per-part labels out of sight with its own\n    // stylesheet. The service takes DR1's labels, not its picture: three\n    // unlabelled boxes under one legend would be worse than the single field\n    // they replace, so the labels have to be on screen, not just announced.",
+      "confidence": "verbatim",
+      "note": "An existing ruling recorded in the test comment; relevant where design release 2.1 differs."
+    },
+    {
+      "id": "repo-frontend-p10-020",
+      "statement": "The fit spec proves the box widths and maxlengths 2, 3 and 4 and the numeric inputmode on all three CPH boxes.",
+      "kind": "behaviour",
+      "ref": "cph-number.fit.spec.js:91-107 'takes the number in three boxes sized to its parts'",
+      "quote": "await expect(boxes.county).toHaveClass(/govuk-input--width-2/)\n    await expect(boxes.county).toHaveAttribute('maxlength', '2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-021",
+      "statement": "Each CPH part is trimmed of surrounding spaces before it is validated and saved.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:87-90; cph-number/controller.test.js 'Should trim each part before joining it'",
+      "quote": "PART_ORDER.map(([part]) => [part, String(payload[part] ?? '').trim()])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-022",
+      "statement": "Submitting the CPH page with all three boxes empty shows the single error 'Enter a CPH number', linked to the County box, rather than three part errors.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:72-76; cph-number/copy/copy.en.js:18",
+      "quote": "cphRequired: 'Enter a CPH number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-023",
+      "statement": "When some CPH boxes are filled and the County box is empty, the error is 'Enter the county'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:54-58; cph-number/copy/copy.en.js:19",
+      "quote": "countyRequired: 'Enter the county',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-024",
+      "statement": "A County part that is not exactly 2 characters shows 'County must be 2 digits'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:16,54-58; cph-number/copy/copy.en.js:20",
+      "quote": "countyLength: 'County must be 2 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-025",
+      "statement": "A County part containing anything but digits shows 'County must only contain numbers'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:54-58; cph-number/copy/copy.en.js:21",
+      "quote": "countyDigitsOnly: 'County must only contain numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-026",
+      "statement": "When some CPH boxes are filled and the Parish box is empty, the error is 'Enter the parish'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:59-63; cph-number/copy/copy.en.js:22",
+      "quote": "parishRequired: 'Enter the parish',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-027",
+      "statement": "A Parish part that is not exactly 3 characters shows 'Parish must be 3 digits'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:17,59-63; cph-number/copy/copy.en.js:23",
+      "quote": "parishLength: 'Parish must be 3 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-028",
+      "statement": "A Parish part containing anything but digits shows 'Parish must only contain numbers'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:59-63; cph-number/copy/copy.en.js:24",
+      "quote": "parishDigitsOnly: 'Parish must only contain numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-029",
+      "statement": "When some CPH boxes are filled and the Holding number box is empty, the error is 'Enter the holding number'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:64-68; cph-number/copy/copy.en.js:25",
+      "quote": "holdingRequired: 'Enter the holding number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-030",
+      "statement": "A Holding number part that is not exactly 4 characters shows 'Holding number must be 4 digits'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:18,64-68; cph-number/copy/copy.en.js:26",
+      "quote": "holdingLength: 'Holding number must be 4 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-031",
+      "statement": "A Holding number part containing anything but digits shows 'Holding number must only contain numbers'.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:64-68; cph-number/copy/copy.en.js:27",
+      "quote": "holdingDigitsOnly: 'Holding number must only contain numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-032",
+      "statement": "Every wrong CPH part is reported at once, and the error summary lists them in the order the boxes appear: county, parish, holding.",
+      "kind": "rule",
+      "ref": "cph-number/controller.test.js 'Should hold each part to its own length'; cph-number.fit.spec.js:278-294 'every wrong part is named at once'",
+      "quote": "expect(\n      result.view.context.errorSummary.errorList.map(({ href }) => href)\n    ).toEqual(['#cphCounty', '#cphParish', '#cphHolding'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-033",
+      "statement": "Typing the whole slashed number into one CPH box is rejected: the parts stay separate, so '12/345/6789' in County gives 'County must be 2 digits' plus the missing-part errors for Parish and Holding number.",
+      "kind": "rule",
+      "ref": "cph-number/controller.test.js 'Should reject slashes typed into a part, so the parts stay the parts'",
+      "quote": "payload: { cphCounty: '12/345/6789', cphParish: '', cphHolding: '' }\n    })\n    expect(result.view.context.errors).toEqual({\n      cphCounty: 'County must be 2 digits',\n      cphParish: 'Enter the parish',\n      cphHolding: 'Enter the holding number'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-034",
+      "statement": "A CPH validation failure re-renders the page with status 400, keeps every value the trader typed in its box, and saves nothing.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.js:68-73; cph-number.fit.spec.js:228-245,261-276; cph-number/controller.test.js 'Should reject non-digits in a part, echoing what the trader typed'",
+      "quote": "if (hasErrors(errors)) {\n    const { journey } = await state.get(request, h)\n    return render(request, h, journey, values, { errors }).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-035",
+      "statement": "CPH errors are shown as one error message for the whole question (all messages joined, one per line) above the row of boxes, with one error border on the question, not a message inside each box.",
+      "kind": "behaviour",
+      "ref": "cph-number/template.njk:43-48,92; cph-number.fit.spec.js:296-317 'the error marks the whole question, not the individual boxes'",
+      "quote": "{{ govukErrorMessage({ id: \"cph-error\", html: errorSummary.errorList | join(\"<br>\", \"text\") }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-036",
+      "statement": "Each CPH box that has an error gets the red error border, and the group's accessible description includes the error text.",
+      "kind": "behaviour",
+      "ref": "cph-number/template.njk:56,69,82,95; cph-number.fit.spec.js:309-316",
+      "quote": "classes: \"govuk-input--width-2\" + (\" govuk-input--error\" if errors.cphCounty else \"\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-037",
+      "statement": "Each error-summary link on the CPH page moves focus to the box it names; the untouched-page error focuses the County box.",
+      "kind": "behaviour",
+      "ref": "cph-number.fit.spec.js:212-259",
+      "quote": "await requiredError.click()\n\n    const boxes = partBoxes(page)\n    await expect(boxes.county).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-038",
+      "statement": "A valid CPH is saved as nine bare digits, the three parts joined with no separators (12, 345, 6789 saves as 123456789).",
+      "kind": "data",
+      "ref": "cph-number/validate.js:40,92; cph-number/controller.test.js 'Should join the county, parish and holding parts into nine bare digits'",
+      "quote": "toAnswers: (values) => ({ countyParishHoldingCph: joinParts(values) }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-039",
+      "statement": "On return to the CPH page the stored number is split back into its boxes 2/3/4, ignoring any non-digits, so a stored value with legacy slashes still splits correctly.",
+      "kind": "behaviour",
+      "ref": "cph-number/validate.js:26-38,91; cph-number/controller.test.js 'Should split a stored value that still carries slashes'; cph-number.fit.spec.js:194-198",
+      "quote": "fromAnswers: (answers) => splitStored(answers.countyParishHoldingCph),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-040",
+      "statement": "With nothing stored, the CPH page shows three empty boxes and no error.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.test.js 'Should show three empty boxes when nothing is stored'; cph-number/validate.test.js 'Should return no errors when no CPH has been stored'",
+      "quote": "expect(result.view.context.values).toEqual({\n      cphCounty: '',\n      cphParish: '',\n      cphHolding: ''\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-041",
+      "statement": "A stored CPH that is not nine digits is flagged on the page with 'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.', linked to the County box, instead of the per-part messages.",
+      "kind": "rule",
+      "ref": "cph-number/validate.js:46-52,77-80; cph-number/copy/copy.en.js:28-29",
+      "quote": "cphNoLongerValid:\n      'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.'",
+      "confidence": "verbatim",
+      "note": "Keyed to county because that is where the review-page card link lands (validate.js:77)."
+    },
+    {
+      "id": "repo-frontend-p10-042",
+      "statement": "When a stored CPH is rejected, all three boxes are shown empty rather than re-showing stray digits.",
+      "kind": "behaviour",
+      "ref": "cph-number/validate.js:93-95; cph-number/validate.test.js 'Should blank every part when a stored value has been rejected'",
+      "quote": "blanks: () => [COUNTY_FIELD, PARISH_FIELD, HOLDING_FIELD]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-043",
+      "statement": "Reached from the addresses page's CPH row (query return=addresses), the CPH page's back link goes to the addresses page; otherwise it goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.js:33-36,47; cph-number/controller.test.js 'addresses-hub entry (?return=addresses)'; cph-number.fit.spec.js:171-177",
+      "quote": "request.query.return === 'addresses'\n    ? pagePath(request.params.journeyId, 'addresses')\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-044",
+      "statement": "Saving the CPH page goes to the hub when the trader chose to exit to the hub, else back to the addresses page when entered with return=addresses, else to the next page of the journey flow.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.js:88-93",
+      "quote": "return h.redirect(\n    kit.hubExitTarget(request) ??\n      hubEntryReturn(request) ??\n      (await kit.nextTarget(request, page, scope))\n  )",
+      "confidence": "verbatim",
+      "note": "The page renders no 'Save and return to overview' button, so the hub-exit branch is reachable only by a crafted request. nextTarget itself sends a change-context visit to check answers."
+    },
+    {
+      "id": "repo-frontend-p10-045",
+      "statement": "For a notification created in the same session, saving a valid CPH continues the opening run to the consignment contact page (/consignment/contact/select).",
+      "kind": "behaviour",
+      "ref": "cph-number.fit.spec.js:179-199 'joins the parts, saves the nine digits, continues the run and comes back split'",
+      "quote": "await expect(page).toHaveURL(\n      /\\/notifications\\/[^/]+\\/consignment\\/contact\\/select$/\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-046",
+      "statement": "Outside the opening run and without return context, saving a valid CPH goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.test.js 'Should keep the sequential exit to the main hub when entered without return context'",
+      "quote": "expect(result.response).toEqual({\n        redirect: hubPath(result.journeyId)\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-047",
+      "statement": "The CPH page ends with the primary 'Save and continue' button alone, with no 'Save and return to overview' or 'Cancel and return to overview', because it is reached from the addresses page rather than the hub.",
+      "kind": "rule",
+      "ref": "cph-number/template.njk:101-103; src/server/app/shared/save-actions.njk; cph-number.fit.spec.js:165-169",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-048",
+      "statement": "If saving the CPH fails, the page re-renders with status 500, the recoverable-error banner and the trader's values kept.",
+      "kind": "behaviour",
+      "ref": "cph-number/controller.js:75-87",
+      "quote": "return render(request, h, journey, values, {\n        recoverableError: true\n      }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-049",
+      "statement": "The CPH page has no serious or critical WCAG 2 A/AA axe violations, both on first load and in its error state.",
+      "kind": "non-functional",
+      "ref": "cph-number.fit.spec.js:201-203,319-326",
+      "quote": "await expectNoSeriousAxeViolations(page, 'CPH number in its error state')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-050",
+      "statement": "The CPH page's Welsh copy is a machine draft not reviewed by a translator and must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "cph-number/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-051",
+      "statement": "The CPH page's Welsh heading is 'Ychwanegu rhif daliad plwyf sirol (CPH)', with legend 'Rhif CPH', hint 'Er enghraifft, 12/345/6789.' and box labels 'Sir', 'Plwyf' and 'Rhif daliad'.",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.cy.js:3-10",
+      "quote": "title: 'Ychwanegu rhif daliad plwyf sirol (CPH)',\n  cph: {\n    legend: 'Rhif CPH',\n    hint: 'Er enghraifft, 12/345/6789.',\n    county: 'Sir',\n    parish: 'Plwyf',\n    holding: 'Rhif daliad'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-052",
+      "statement": "The CPH page's Welsh help reads 'Beth yw rhif CPH?' with its definition and where-to-find paragraphs.",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.cy.js:11-17",
+      "quote": "summary: 'Beth yw rhif CPH?',\n    definition:\n      'Mae rhif daliad plwyf sirol (CPH) yn rhif 9 digid unigryw a ddefnyddir i adnabod tir ac adeiladau lle mae da byw yn cael eu cadw, eu symud neu eu trin.',\n    whereToFind:\n      \"Gallwch ddod o hyd i'ch rhif CPH ar ddogfennau gan yr Asiantaeth Iechyd Anifeiliaid a Phlanhigion (APHA).\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-053",
+      "statement": "The CPH page has a Welsh version of every error message, matching the English keys one for one.",
+      "kind": "copy",
+      "ref": "cph-number/copy/copy.cy.js:18-31",
+      "quote": "cphRequired: 'Nodwch rif CPH',\n    countyRequired: 'Nodwch y sir',\n    countyLength: \"Rhaid i'r sir fod yn 2 ddigid\",\n    countyDigitsOnly: \"Rhaid i'r sir gynnwys rhifau yn unig\",\n    parishRequired: 'Nodwch y plwyf',\n    parishLength: \"Rhaid i'r plwyf fod yn 3 digid\",\n    parishDigitsOnly: \"Rhaid i'r plwyf gynnwys rhifau yn unig\",\n    holdingRequired: 'Nodwch y rhif daliad',\n    holdingLength: \"Rhaid i'r rhif daliad fod yn 4 digid\",\n    holdingDigitsOnly: \"Rhaid i'r rhif daliad gynnwys rhifau yn unig\",\n    cphNoLongerValid:\n      \"Nid yw'r rhif CPH a arbedwyd yn ddilys mwyach. Rhowch y sir, plwyf a rhif daliad eto.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-054",
+      "statement": "The consignment contact page is served at the journey path /consignment/contact/select under a notification.",
+      "kind": "behaviour",
+      "ref": "contact/page.js:1-4",
+      "quote": "export const consignmentContactSelectPage = {\n  id: 'consignment-contact-select',\n  slug: 'consignment/contact/select'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-055",
+      "statement": "The consignment contact page collects one answer, contactAddress, which fulfils the contactAddress obligation.",
+      "kind": "data",
+      "ref": "contact/evaluation.js:7-9; contact/controller.js:30",
+      "quote": "scalar({ field: 'contactAddress', obligation: contactAddress })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-056",
+      "statement": "The consignment contact is picked from the same organisation address book as the consignment parties, under the address-book role 'contact', but it is deliberately not one of the addresses-page parties.",
+      "kind": "rule",
+      "ref": "addresses/parties.js:60-71",
+      "quote": "/** Contact picks from the same address book, but it is deliberately not a\n * consignment-address hub spoke and therefore does not belong in PARTIES. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-057",
+      "statement": "The contact's details are edited in place on /consignment/contact/edit, which returns to the contact select page.",
+      "kind": "behaviour",
+      "ref": "addresses/parties.js:66-67",
+      "quote": "editSlug: 'consignment/contact/edit',\n  returnSlug: consignmentContactSelectPage.slug,",
+      "confidence": "verbatim",
+      "note": "The edit page itself belongs to part 9 (party pickers / party edit)."
+    },
+    {
+      "id": "repo-frontend-p10-058",
+      "statement": "The consignment contact page's heading is the radios legend 'Contact address for consignment', shown as a large page heading; the page title is the same text.",
+      "kind": "copy",
+      "ref": "contact/copy/copy.en.js:2-3; contact/template.njk:19-27",
+      "quote": "legend: 'Contact address for consignment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-059",
+      "statement": "The consignment contact page shows no section caption above its heading, because the controller does not pass the page identity to the shared chrome.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:81-85; contact/template.njk; src/server/app/shared/kit.js:127-129",
+      "quote": "...kit.base(copy.title, {\n      backLink: hubPath(journey.journeyId),\n      journey,\n      recoverableError\n    }),",
+      "confidence": "inferred",
+      "note": "kit.base only adds the caption when `page` is supplied; the contact controller omits it and the template has no sectionCaption call, unlike the CPH page."
+    },
+    {
+      "id": "repo-frontend-p10-060",
+      "statement": "The contact radios have the hint 'Selecting a contact copies their name and address into this notification.'",
+      "kind": "copy",
+      "ref": "contact/copy/copy.en.js:4; contact/template.njk:28",
+      "quote": "hint: 'Selecting a contact copies their name and address into this notification.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-061",
+      "statement": "The contact page offers one radio per entry in the signed-in organisation's address book, in book order, labelled with the entry's name.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:102-103,92-97; contact.fit.spec.js:43-58 'renders the address-book contacts and feature copy'",
+      "quote": "const orgId = organisationIdOf(request)\n  const options = [...(await addressBook.all(orgId))]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-062",
+      "statement": "Each contact radio has a hint giving the entry's address lines and country, joined with commas.",
+      "kind": "copy",
+      "ref": "contact/controller.js:47-48,95",
+      "quote": "const addressSummary = (address) =>\n  [addressText(address), address.country].filter(Boolean).join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-063",
+      "statement": "On return, the contact radio is pre-selected only when the stored contact was picked from an entry still in the book; if that entry is gone, or the contact was edited in place, no radio is selected and no error shows.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:107,117-119; contact/controller.test.js 'Should select nothing when the record the contact was picked from is gone', 'Should select nothing for a contact whose details were edited here'",
+      "quote": "selectedId: options.some((option) => option.id === pickedFromId)\n        ? pickedFromId\n        : ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-064",
+      "statement": "When a contact is held, a summary card titled 'Current contact address' appears below the radios showing the contact's name and address.",
+      "kind": "behaviour",
+      "ref": "contact/template.njk:33-56; contact/copy/copy.en.js:6; contact/controller.js:50-61",
+      "quote": "title: 'Current contact address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-065",
+      "statement": "The current-contact card has an 'Edit details' link (with hidden text 'current contact address') to the contact edit page, carrying return=consignment/contact/select and any change context.",
+      "kind": "behaviour",
+      "ref": "contact/template.njk:44-51; contact/copy/copy.en.js:7; contact/controller.js:56-58; contact/controller.test.js 'Should carry the change context onto the current contact edit link'",
+      "quote": "editDetails: 'Edit details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-066",
+      "statement": "With no contact picked, the contact page shows no current-contact card.",
+      "kind": "behaviour",
+      "ref": "contact/template.njk:34; contact/controller.test.js 'Should show no current contact when none has been picked'",
+      "quote": "{% if currentContact %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-067",
+      "statement": "Outside stub mode, the contact page shows an 'Add a new address' link above the form, leading to the INS frontend's address-book add page with the journey type gbn-ag, the notification id and a fulfilment id.",
+      "kind": "integration",
+      "ref": "contact/controller.js:63-65; contact/template.njk:9-13; src/server/app/shared/copy.en.js:75; contact/controller.test.js 'Should offer an INS add-address link when not in stub mode'",
+      "quote": "expect(result.view.context.addAddressHref).toContain(\n      'http://localhost:3002/address-book/add'\n    )\n    expect(result.view.context.addAddressHref).toContain('journey-type=gbn-ag')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-068",
+      "statement": "In stub mode the contact page offers no way to add an address.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:64; contact.fit.spec.js:60-64 'offers no way to add an address'",
+      "quote": "await expect(page.getByRole('link', { name: /add.*address/i })).toHaveCount(\n      0\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-069",
+      "statement": "Coming back from the INS add-address handshake with a not-found error, the contact page shows 'The address could not be found in your address book. Select another address or try adding it again.' in the error summary, linked to the radios.",
+      "kind": "rule",
+      "ref": "contact/controller.js:36-45,108-111; src/server/app/shared/copy.en.js:77-78",
+      "quote": "notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-070",
+      "statement": "Coming back from the INS add-address handshake with an unavailable error, the contact page shows 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.' and the recoverable-error state.",
+      "kind": "rule",
+      "ref": "contact/controller.js:108-112; src/server/app/shared/copy.en.js:79-80",
+      "quote": "unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-071",
+      "statement": "Submitting a contact id that is not in the organisation's address book shows 'Select a contact address', answers 400, selects no radio and saves nothing.",
+      "kind": "rule",
+      "ref": "contact/validate.js:14-23; contact/copy/copy.en.js:10; contact/controller.js:140-160; contact.fit.spec.js:66-87",
+      "quote": "contactRequired: 'Select a contact address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-072",
+      "statement": "The 'Select a contact address' error links to and focuses the first contact radio.",
+      "kind": "behaviour",
+      "ref": "contact.fit.spec.js:78-83",
+      "quote": "await contactError.click()\n    await expect(page.locator(CONTACT_ADDRESS_INPUT).first()).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-073",
+      "statement": "Submitting the contact page with no radio selected is not an error: nothing is saved, any contact already held is kept, and the trader moves on.",
+      "kind": "rule",
+      "ref": "contact/controller.js:162-173; contact/validate.test.js 'Should raise no error on a submission with no selection'; contact/controller.test.js 'Should keep the copy already held when saved with nothing selected', 'Should leave the page without committing when no contact is selected'",
+      "quote": "committed = chosen\n        ? await state.commit(request, h, {\n            contactAddress: answerFor(CONTACT_PARTY, chosen)\n          })\n        : await state.get(request, h)",
+      "confidence": "verbatim",
+      "note": "The only error message is worded 'Select a contact address' yet it fires only for an id not in the book, never for a blank submit. Whether the contact is mandatory is decided by the contactAddress obligation, outside this part."
+    },
+    {
+      "id": "repo-frontend-p10-074",
+      "statement": "Picking a contact saves a copy of that address-book entry's name and address into the notification, remembering which entry it was picked from.",
+      "kind": "data",
+      "ref": "contact/controller.js:162-171; contact/controller.test.js 'Should commit a copy of the picked address, then show it as the current contact and still selected'",
+      "quote": "expect(postResult.after.contactAddress).toMatchObject({\n      pickedFromId: CONTACT.id,\n      name: CONTACT.name\n    })\n    expect(postResult.after.contactAddress.address).toBeDefined()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-075",
+      "statement": "A held contact copy is never flagged invalid on return, whether or not the address book is checked.",
+      "kind": "rule",
+      "ref": "contact/validate.js:25-31; contact/validate.test.js 'Should raise no error for a stored copy, with or without a book in hand'",
+      "quote": "fromAnswers: () => ({ contactAddress: '' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-076",
+      "statement": "After saving, the contact page goes to the hub if the trader chose 'Save and return to overview', to check answers in a change visit, and otherwise to the next page of the journey flow.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:197-198; src/server/app/shared/kit.js:96-120",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-077",
+      "statement": "The fit spec proves that selecting a valid contact and saving leaves the page, and on return the contact shows in the 'Current contact address' card with an 'Edit details' link and its radio still selected.",
+      "kind": "behaviour",
+      "ref": "contact.fit.spec.js:89-108 'selects a valid contact, redirects and shows it as the current contact, still selected, on return'",
+      "quote": "const current = page.getByRole('region', { name: copy.current.title })\n    await expect(current).toContainText(selected.name)",
+      "confidence": "verbatim",
+      "note": "The URL assertion is urlUnderBase('/notifications/[^/]+'), which reads as the hub but is a pattern match."
+    },
+    {
+      "id": "repo-frontend-p10-078",
+      "statement": "If saving the contact fails, the page re-renders with status 500, the recoverable-error banner, the chosen radio kept and the current-contact card still shown.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:174-192; contact/controller.test.js 'POST contact — recoverable save failure'",
+      "quote": "recoverableError: true,\n          currentContact: await currentContactOf(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-079",
+      "statement": "A validation failure on the contact page keeps the current-contact card on the re-rendered page.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:143-159; contact/controller.test.js 'Should keep the current contact card on a 400 re-render'",
+      "quote": "expect(result.view.context.currentContact).toMatchObject({\n      name: HELD_CONTACT.name,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-080",
+      "statement": "The contact page's back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js:82; contact.fit.spec.js:117-123",
+      "quote": "backLink: hubPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-081",
+      "statement": "The contact page ends with all three controls: 'Save and continue', 'Save and return to overview' and the 'Cancel and return to overview' link, as a page the hub links to directly.",
+      "kind": "copy",
+      "ref": "contact/template.njk:58; src/server/app/shared/save-actions.njk; src/server/app/shared/copy.en.js:64-66",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-082",
+      "statement": "The contact page has no serious or critical WCAG 2 A/AA axe violations.",
+      "kind": "non-functional",
+      "ref": "contact.fit.spec.js:125-137",
+      "quote": "`Contact has serious/critical accessibility violations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-083",
+      "statement": "The contact page's Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "contact/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-084",
+      "statement": "The contact page's Welsh copy gives heading 'Cyfeiriad cyswllt ar gyfer y llwyth', its hint, the card title 'Cyfeiriad cyswllt presennol', the link 'Golygu manylion' and the error 'Dewiswch gyfeiriad cyswllt'.",
+      "kind": "copy",
+      "ref": "contact/copy/copy.cy.js:3-12",
+      "quote": "title: 'Cyfeiriad cyswllt ar gyfer y llwyth',\n  legend: 'Cyfeiriad cyswllt ar gyfer y llwyth',\n  hint: \"Mae dewis cyswllt yn copïo eu henw a'u cyfeiriad i'r hysbysiad hwn.\",\n  current: {\n    title: 'Cyfeiriad cyswllt presennol',\n    editDetails: 'Golygu manylion'\n  },\n  errors: {\n    contactRequired: 'Dewiswch gyfeiriad cyswllt'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-085",
+      "statement": "Neither page in this part says how the consignment contact page is reached from the hub or the addresses page, beyond the CPH page's opening run; the hub row that links to it is not in this slice.",
+      "kind": "behaviour",
+      "ref": "contact/controller.js; contact/template.njk; addresses/parties.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in every file of this part. The hub/task list entry for the contact belongs to another part."
+    }
+  ]
+}

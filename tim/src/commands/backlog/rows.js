@@ -72,6 +72,7 @@ const setOptsSchemaFor = (statuses) =>
         .optional(),
       pr: z.string().optional(),
       merge: z.array(z.string()).optional(),
+      repos: z.string().optional(),
       dependsOn: z.string().optional(),
       attempt: z.string().optional(),
       rigour: z.string().optional()
@@ -80,7 +81,7 @@ const setOptsSchemaFor = (statuses) =>
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
       }
     )
 
@@ -169,6 +170,29 @@ const parseDependsOn = (raw) => {
   return ids
 }
 
+const REPO_KEY = /^[a-z][a-z0-9-]*$/
+
+const parseRepos = (raw) => {
+  const keys = raw
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
+  if (!keys.length) {
+    throw new TimError(
+      'USAGE',
+      '--repos must name at least one repo key, such as frontend,tests. A row with no repos builds nothing.'
+    )
+  }
+  const invalid = keys.filter((key) => !REPO_KEY.test(key))
+  if (invalid.length) {
+    throw new TimError(
+      'USAGE',
+      `--repos must be repo keys separated by commas, such as frontend,plantsfrontend,tests. "${invalid.join('", "')}" is not a repo key.`
+    )
+  }
+  return [...new Set(keys)]
+}
+
 const collect = (value, previous = []) => [...previous, value]
 
 /**
@@ -191,6 +215,7 @@ export const parseSetOpts = (opts, statuses, rigours) => {
     removeOpenQuestion: opts.removeOpenQuestion,
     pr: opts.pr,
     merge: opts.merge,
+    repos: opts.repos,
     dependsOn: opts.dependsOn,
     attempt: opts.attempt,
     rigour: opts.rigour
@@ -200,6 +225,7 @@ export const parseSetOpts = (opts, statuses, rigours) => {
       ...parsed,
       pr: parsed.pr === undefined ? undefined : parsePr(parsed.pr),
       merge: parsed.merge === undefined ? undefined : parseMerge(parsed.merge),
+      repos: parsed.repos === undefined ? undefined : parseRepos(parsed.repos),
       dependsOn:
         parsed.dependsOn === undefined
           ? undefined
@@ -362,6 +388,7 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --status dropped --note "Not needed any more" --json\n' +
         '  tim backlog set shared/my-programme inc-004 --remove-open-question 1 --json\n' +
         '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --repos frontend,plantsfrontend,tests --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on "" --json\n' +
         '  tim backlog set shared/my-programme inc-004 --attempt \'{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}\' --json\n' +
@@ -392,6 +419,10 @@ export const register = (backlog, { timVersion }) => {
       '--merge <repoKey=ref>',
       "A ref the branch lifecycle merges into that repo before it builds the increment, such as tests=origin/main. The repo must be in the increment's repos. Repeat for more than one repo",
       collect
+    )
+    .option(
+      '--repos <keys>',
+      "Replace the repos the increment builds, separated by commas, such as frontend,plantsfrontend,tests. Every key must be one the backlog's envelope declares, and a repo the increment merges a ref into cannot be taken away"
     )
     .option(
       '--depends-on <ids>',

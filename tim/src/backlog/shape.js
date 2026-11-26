@@ -407,6 +407,38 @@ const mergeRefsFor = (row, refs) => {
   return { ...(row.merge ?? {}), ...refs }
 }
 
+/**
+ * The repos a row builds, replaced. Every key must be one the envelope
+ * declares, and a repo the row merges a ref into cannot be taken away, or the
+ * merge would name a repo the row no longer builds.
+ *
+ * @param {object} row - The increment before the change
+ * @param {string[]} keys - The repo keys to set
+ * @param {object} backlog - The backlog, read for its envelope `repos`
+ * @returns {string[]} The repo keys to write
+ * @throws {TimError} USAGE
+ */
+const reposFor = (row, keys, backlog) => {
+  const declared = Object.keys(backlog.repos ?? {})
+  const unknown = keys.filter((key) => !declared.includes(key))
+  if (unknown.length) {
+    throw new TimError(
+      'USAGE',
+      `The backlog declares no ${unknown.join(', ')}, so ${row.id} can't build it. Its repos are: ${declared.join(', ') || 'none'}.`
+    )
+  }
+  const dropped = Object.keys(row.merge ?? {}).filter(
+    (repoKey) => !keys.includes(repoKey)
+  )
+  if (dropped.length) {
+    throw new TimError(
+      'USAGE',
+      `${row.id} merges a ref into ${dropped.join(', ')}, so that repo can't be taken off its repos. Clear the merge ref first.`
+    )
+  }
+  return keys
+}
+
 const dependenciesFor = (row, ids, backlog) => {
   const known = new Set(backlog.increments.map((candidate) => candidate.id))
   const unknown = ids.filter((id) => !known.has(id))
@@ -468,6 +500,9 @@ export const setRowFields = ({ backlog, id, changes }) => {
   if (changes.pr !== undefined) after.prs = upsertPr(before.prs, changes.pr)
   if (changes.merge !== undefined) {
     after.merge = mergeRefsFor(before, changes.merge)
+  }
+  if (changes.repos !== undefined) {
+    after.repos = reposFor(before, changes.repos, backlog)
   }
   if (changes.dependsOn !== undefined) {
     after.dependsOn = dependenciesFor(before, changes.dependsOn, backlog)

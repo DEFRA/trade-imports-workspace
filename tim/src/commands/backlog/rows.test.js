@@ -18,9 +18,9 @@ import {
   statement
 } from '../../backlog/__fixtures__/intake-record.js'
 import {
-  makeTicketWorkspace,
+  makeWorkareaWorkspace,
   ticketBacklogRepos
-} from '../../backlog/__fixtures__/ticket-workareas.js'
+} from '../../backlog/__fixtures__/workarea-workspace.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -31,7 +31,7 @@ let held
 
 const openWorkspace = (contents = {}) => {
   held?.remove()
-  held = makeTicketWorkspace({ backlogSchemas: true, ...contents })
+  held = makeWorkareaWorkspace({ backlogSchemas: true, ...contents })
 }
 
 const backlogPath = () => backlogPathIn(held.root, WORKAREA)

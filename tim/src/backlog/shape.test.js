@@ -13,6 +13,7 @@ import {
   nextBuildable,
   setRowFields
 } from './shape.js'
+import { backlogOf, row } from './__fixtures__/backlog-rows.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -22,23 +23,8 @@ const schema = loadBacklogSchema(workspaceRoot)
 
 const checkBacklog = (backlog) => checkAgainst(backlog, schema)
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
-
 const rowWithout = (field) =>
   Object.fromEntries(Object.entries(row()).filter(([key]) => key !== field))
-
-const backlogOf = (...rows) => ({ programme: 'demo', increments: rows })
 
 const attempt = {
   stage: 'ladder',

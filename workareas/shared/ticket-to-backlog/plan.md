@@ -2,8 +2,6 @@
 
 A design for making "one Jira ticket, into a backlog, built by the loop on one branch" a first-class mode of the `requirements-pipeline` skill.
 
-Plan only. No skill, tim or workflow code has changed. Nothing is committed.
-
 The draft backlog that builds this change is [`backlog.json`](backlog.json) beside this file. It passes `tim backlog check`.
 
 ## Summary

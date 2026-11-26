@@ -2,10 +2,13 @@ import { describe, test, expect } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  commitWorkspaceFile,
+  createNightlyRepo,
   createNightlyWorkspace,
   nightlyJob,
   writeNightlyJobs,
-  writeStopFile
+  writeStopFile,
+  writeWorkspaceFile
 } from '../test-support/nightly-workspace.js'
 import { checkNightlyReadiness, readStopFile } from './readiness.js'
 
@@ -160,6 +163,58 @@ describe('#checkNightlyReadiness', () => {
       name: 'clean-checkouts',
       ok: false,
       detail: 'Uncommitted changes in: workspace'
+    })
+  })
+
+  test('Should pass the clean-checkouts check with an untracked folder under workareas/shared/', async () => {
+    const root = await createNightlyWorkspace()
+    writeWorkspaceFile(root, 'workareas/shared/handover/notes.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: true,
+      detail:
+        'The workspace, outside workareas/, and every cloned repo are clean'
+    })
+  })
+
+  test('Should pass the clean-checkouts check with a tracked file under workareas/shared/ modified', async () => {
+    const root = await createNightlyWorkspace()
+    await commitWorkspaceFile(root, 'workareas/shared/plan.md', 'plan\n')
+    writeWorkspaceFile(root, 'workareas/shared/plan.md', 'plan, edited\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts').ok).toBe(true)
+  })
+
+  test('Should name the workspace when it has a change outside workareas/ as well as one inside', async () => {
+    const root = await createNightlyWorkspace()
+    writeWorkspaceFile(root, 'workareas/shared/notes.md', 'draft\n')
+    writeWorkspaceFile(root, 'docs/workareas.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: false,
+      detail: 'Uncommitted changes in: workspace'
+    })
+  })
+
+  test('Should name a cloned repo with an untracked file in its own workareas/ folder', async () => {
+    const root = await createNightlyWorkspace()
+    const repo = await createNightlyRepo(root, 'trade-imports-stub')
+    writeWorkspaceFile(repo, 'workareas/notes.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: false,
+      detail: 'Uncommitted changes in: trade-imports-stub'
     })
   })
 

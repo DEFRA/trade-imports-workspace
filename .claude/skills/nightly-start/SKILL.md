@@ -57,7 +57,7 @@ then checks:
 | `detached-session` | neither `TMUX` nor `STY` is set, so the session is not inside tmux or screen and ends when the SSH connection closes |
 | `stop-file` | `workareas/nightly/STOP` exists |
 | `jobs-config` | `config/nightly-jobs.json` is missing or invalid |
-| `clean-checkouts` | the workspace or a cloned repo has uncommitted changes |
+| `clean-checkouts` | the workspace or a cloned repo has uncommitted changes. Changes under the workspace's `workareas/`, tracked or untracked, do not count |
 | `fetch` | fetching origin failed in the workspace or a repo |
 
 If `result.ready` is false, print each check whose `ok` is false, with its

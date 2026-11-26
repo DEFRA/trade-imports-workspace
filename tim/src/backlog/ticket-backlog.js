@@ -200,6 +200,14 @@ const repoKeyProblems = ({ backlog, record }) => {
   ]
 }
 
+const workspaceRepoProblems = ({ backlog }) =>
+  Object.entries(backlog.repos ?? {})
+    .filter(([, repo]) => repo?.path === '.')
+    .map(
+      ([key]) =>
+        `The backlog builds in the workspace repo as ${key}. Ticket mode builds under the branch lifecycle, which never takes the workspace as a repo: remove ${key} from the backlog's repos, every row's repos and intake.json.`
+    )
+
 const repeatedIdsOf = (entries) => [
   ...new Set(
     entries
@@ -220,6 +228,7 @@ const duplicateIdProblems = ({ record }) => [
 const recordRuleProblems = ({ backlog, record }) => [
   ...recordKeyProblems({ backlog, record }),
   ...repoKeyProblems({ backlog, record }),
+  ...workspaceRepoProblems({ backlog }),
   ...duplicateIdProblems({ record }),
   ...coverProblems({ backlog, record }),
   ...citationProblems({ backlog, record }),

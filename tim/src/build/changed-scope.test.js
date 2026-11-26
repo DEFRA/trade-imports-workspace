@@ -1,14 +1,28 @@
-import { describe, test, expect, afterEach } from 'vitest'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import {
-  git,
-  writeFiles,
-  commitAll,
-  createRepoOnBranchFromMain
-} from '../test-support/branched-repo.js'
-import { changedScopeRuns, changedSpecPaths } from './changed-scope.js'
+import { describe, test, expect } from 'vitest'
+import { changedScopeRuns, isSpecFile } from './changed-scope.js'
+
+describe('isSpecFile', () => {
+  test.each([
+    'tests/animals/e2e/features/amend.spec.ts',
+    'tests/plants/a.spec.js',
+    'fit/origin.fit.spec.js',
+    'a.spec.mjs',
+    'a.spec.tsx'
+  ])('collects %s', (path) => {
+    expect(isSpecFile(path)).toBe(true)
+  })
+
+  test.each([
+    'page-objects/animals/amend-page.ts',
+    'fixtures/ui.ts',
+    'docs/notes.md',
+    'src/k6/journeys.js',
+    'tests/animals/spec.ts',
+    'tests/animals/amend.spec.ts.snap'
+  ])('leaves %s out', (path) => {
+    expect(isSpecFile(path)).toBe(false)
+  })
+})
 
 describe('changedScopeRuns', () => {
   test('runs the spec files the branch changed', () => {
@@ -51,83 +65,22 @@ describe('changedScopeRuns', () => {
     expect(changedScopeRuns({})).toEqual([])
   })
 
+  test('runs a covered spec when the branch changed none of its own', () => {
+    const [run] = changedScopeRuns({
+      coveredSpecs: ['tests/animals/covered.spec.ts']
+    })
+
+    expect(run.args).toEqual([
+      'tests/animals/covered.spec.ts',
+      '--pass-with-no-tests'
+    ])
+  })
+
   test('lets a covered spec that no longer exists pass rather than fail the rung', () => {
     const [run] = changedScopeRuns({
       coveredSpecs: ['tests/animals/gone.spec.ts']
     })
 
-    expect(run.args).toEqual([
-      'tests/animals/gone.spec.ts',
-      '--pass-with-no-tests'
-    ])
-  })
-})
-
-describe('changedSpecPaths', () => {
-  let root = null
-
-  afterEach(() => {
-    if (root) rmSync(root, { recursive: true, force: true })
-    root = null
-  })
-
-  const repoWith = async (files) => {
-    root = mkdtempSync(join(tmpdir(), 'changed-scope-'))
-    await createRepoOnBranchFromMain(root, files)
-    return root
-  }
-
-  test('lists the spec files the branch changed, and nothing else', async () => {
-    const dir = await repoWith({ 'tests/animals/base.spec.ts': 'base\n' })
-    writeFiles(dir, {
-      'tests/animals/amend.spec.ts': 'new\n',
-      'page-objects/animals/amend-page.ts': 'page\n',
-      'docs/notes.md': 'notes\n'
-    })
-    await commitAll(dir, 'change')
-
-    expect(await changedSpecPaths(dir, 'origin/main')).toEqual([
-      'tests/animals/amend.spec.ts'
-    ])
-  })
-
-  test('lists a spec the row has written but not committed', async () => {
-    const dir = await repoWith({ 'tests/animals/base.spec.ts': 'base\n' })
-    writeFiles(dir, { 'tests/animals/new.spec.ts': 'new\n' })
-
-    expect(await changedSpecPaths(dir, 'origin/main')).toEqual([
-      'tests/animals/new.spec.ts'
-    ])
-  })
-
-  test('lists a spec the row has edited but not staged', async () => {
-    const dir = await repoWith({ 'tests/animals/base.spec.ts': 'base\n' })
-    writeFiles(dir, { 'tests/animals/base.spec.ts': 'edited\n' })
-
-    expect(await changedSpecPaths(dir, 'origin/main')).toEqual([
-      'tests/animals/base.spec.ts'
-    ])
-  })
-
-  test('leaves out a spec the row deleted, which Playwright could not run', async () => {
-    const dir = await repoWith({ 'tests/animals/base.spec.ts': 'base\n' })
-    await git(dir, 'rm', '--quiet', 'tests/animals/base.spec.ts')
-
-    expect(await changedSpecPaths(dir, 'origin/main')).toEqual([])
-  })
-
-  test('gives nothing when the branch changed no spec', async () => {
-    const dir = await repoWith({ 'page-objects/a.ts': 'a\n' })
-    writeFiles(dir, { 'page-objects/a.ts': 'edited\n' })
-
-    expect(await changedSpecPaths(dir, 'origin/main')).toEqual([])
-  })
-
-  test('refuses a base the repo does not have, rather than reporting no specs', async () => {
-    const dir = await repoWith({ 'tests/animals/base.spec.ts': 'base\n' })
-
-    await expect(changedSpecPaths(dir, 'origin/nope')).rejects.toMatchObject({
-      code: 'NOT_FOUND'
-    })
+    expect(run.args).toContain('--pass-with-no-tests')
   })
 })

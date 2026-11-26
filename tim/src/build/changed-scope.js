@@ -1,8 +1,4 @@
-import {
-  DEFAULT_BASE,
-  assertBaseExists,
-  changedFilesSince
-} from './duplication.js'
+import { DEFAULT_BASE } from './duplication.js'
 
 const PASS_WITH_NO_TESTS = '--pass-with-no-tests'
 
@@ -11,26 +7,14 @@ const SPEC_FILE = /(^|\/)[^/]+\.spec\.[cm]?[jt]sx?$/
 export { DEFAULT_BASE }
 
 /**
- * @param {string} path
- * @returns {boolean} Whether Playwright would collect this path as a spec
- */
-export const isSpecFile = (path) => SPEC_FILE.test(path)
-
-/**
- * The spec files a repo has changed since it left the base, its uncommitted
- * work included. Imports are never followed, so a changed page object, fixture
- * or flow yields no spec: see "Choosing e2e" in
+ * Whether Playwright would collect this path as a spec. Imports are never
+ * followed, so a page object, fixture or flow is not one: see "Choosing e2e" in
  * .claude/skills/requirements-pipeline/references/BUILD.md.
  *
- * @param {string} repoPath Absolute path to the repo
- * @param {string} base The ref the branch left, such as origin/main
- * @returns {Promise<string[]>} Repo-relative spec paths, sorted, deletions left out
- * @throws {TimError} NOT_FOUND when the base is not in the repo
+ * @param {string} path Repo-relative
+ * @returns {boolean}
  */
-export const changedSpecPaths = async (repoPath, base = DEFAULT_BASE) => {
-  await assertBaseExists(repoPath, base)
-  return (await changedFilesSince(repoPath, base)).filter(isSpecFile)
-}
+export const isSpecFile = (path) => SPEC_FILE.test(path)
 
 /**
  * The Playwright run that covers a change, rather than its repos' whole suites.

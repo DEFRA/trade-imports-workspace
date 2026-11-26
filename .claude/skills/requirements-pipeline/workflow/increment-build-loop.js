@@ -6045,6 +6045,16 @@ const watchThemeFixes = async (id, repoKeys) => {
   const prList = found.prs.map((pr) => `${pr.repo}: ${pr.url}`).join('\n')
   const ci = await agent(branchWatchPrompt(id, prList), light({ label: `${id} theme ci watch`, phase: THEME_REVIEW_PHASE, schema: BRANCH_CI_SCHEMA }))
   if (ci?.green) return {}
+  // The theme's own fix commit is the only thing this watch is judging, so a
+  // check the base branch fails the same way is no more the review's than it
+  // was the row's. It reads onlyNotOurs exactly as a row's watch does.
+  if (onlyNotOurs(ci)) {
+    const lines = notOursLines(ci)
+    log(`${id}: theme review CI red only where the base branch is red too — ${lines.join(' | ')}`)
+    await noteNotOursOnPrs(id, found.prs, lines)
+    notOursAcrossRun.push({ id, prs: found.prs.map((pr) => pr.url), notOurs: ci.notOurs, at: 'theme review' })
+    return {}
+  }
   const evidence = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ') || ci.summary : 'the theme ci watch agent died'
   return themeReviewStop(id, { reason: 'ci-red', why: 'CI went red on its commit', evidence: `${evidence}. PRs untouched: ${found.prs.map((pr) => pr.url).join(' ')}`, preserve: false })
 }

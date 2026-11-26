@@ -147,6 +147,15 @@ run the tests that cover the change, push, and let CI run everything. The two
 other values are there for the cases below, and `local` in particular is a
 deliberate choice to pay for a full local proof.
 
+**What `targeted` does depends on the lifecycle, and only one half of it is
+lifecycle-bound.** The narrowed ladder rung applies to both. The pull-request
+baseline applies to the **branch lifecycle only**: a full-lifecycle run cuts a
+fresh branch per increment and raises its pull requests after the build, so at
+baseline time there is nothing to read, and that run keeps its local baseline
+gate — narrowed by the same `--e2e`. The loop derives this itself
+(`BASELINE_FROM_PULL_REQUESTS`), so `targeted` is safe to pass either way; this
+is what it means in each.
+
 **Why `targeted`'s baseline reads the pull requests instead of running rungs.**
 Under the branch lifecycle every repo already has an open pull request — the run
 refuses to start without one — and at baseline time the branch holds only what
@@ -190,10 +199,15 @@ same scope and runs it the same way: the suites whole in its `e2e` rung, then th
 tagged specs from every domain in an `e2e-tagged` rung.
 
 Under `targeted` the gate runs its E2E rung narrowed to the branch's own change:
-the specs Playwright's import graph reaches from what changed against
-`origin/main`, so a changed page object fans its specs in automatically, plus any
-spec passed as `--covered-spec`. Both runs carry `--pass-with-no-tests`, so a row
-that touches no spec does not fail the rung by matching nothing. The whole suite
+**the spec files the branch has changed since `--base`, and nothing else**, plus
+any spec passed as `--covered-spec`. Imports are never followed. `tim/src/build/changed-scope.js`
+is the contract, and says why: Playwright's `--only-changed` cannot narrow this
+suite, because every spec imports the `@fixtures` barrel and that imports the
+`@page-objects` barrel, so one changed page object selects 871 tests in 173 files.
+**So a change to a page object, a fixture or a journey flow selects no spec of
+its own here, and the pull request's whole-suite run is its only proof.** A row
+that touches no spec plans no E2E rung at all — no rung, and no stack lease for
+one. The whole suite
 still runs on the pull request, and the loop still stops at `ci-red`.
 
 The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
@@ -836,6 +850,11 @@ did not stop it.
 branch is red for everyone, or because this run has taken `main` into some of the branch's repos and not others. The
 watcher decides which, for every red thing, before a fixer spends an attempt — and it checks the half-taken base
 first, because that one is the run's own doing and the likeliest cause of a failure nobody recognises.
+
+**Branch lifecycle only.** A full-lifecycle row merges when it goes green, so a check the base branch fails the same
+way still has to block that merge — its watcher sets `blocked` instead, and the run stops at once rather than
+spending every fix attempt on a fixer told to change nothing. The loop keys this on the lifecycle
+(`CARRY_ON_PAST_BASE_RED`), not on `e2e`.
 
 A row whose **every** remaining red thing fails the same way on the base branch **does not stop the run**. No commit
 on the branch can clear it, so spending fix attempts on it would burn up to `ciWatchMinutes` each to reach the same

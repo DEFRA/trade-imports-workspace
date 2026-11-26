@@ -2079,32 +2079,13 @@ describe('increment-build-loop', () => {
       expect(prompt).not.toContain(CI_E2E_EVIDENCE_HEADING)
     })
 
-    test('runs no gate at all when the baseline comes from the pull requests', async () => {
+    test('keeps the full lifecycle a local baseline gate under targeted, because its rows have no pull request yet', async () => {
       const prompt = await baselinePromptWithE2e('targeted')
 
-      expect({
-        anyGateCommand: prompt.includes('tim build gate shared/'),
-        wholeGate: prompt.includes('--phase all'),
-        unit: prompt.includes('--phase unit')
-      }).toEqual({ anyGateCommand: false, wholeGate: false, unit: false })
-    })
-
-    test('waits on every check of every repo’s pull request when the baseline comes from them', async () => {
-      const prompt = await baselinePromptWithE2e('targeted')
-
-      expect(prompt).toContain(
-        '`gh pr checks <number> --repo <github> --watch --fail-fast --interval 30`'
-      )
-      expect(prompt).toContain(
-        '`gh pr checks <number> --repo <github> --json name,bucket,link`'
-      )
-    })
-
-    test('calls a pull request with no checks not green, rather than green by default', async () => {
-      const prompt = await baselinePromptWithE2e('targeted')
-
-      expect(prompt).toContain(
-        'A pull request with no checks at all is not green'
+      expect(prompt).toContain('--phase all')
+      expect(prompt).toContain('--e2e targeted')
+      expect(prompt).not.toContain(
+        'THE BASELINE IS EACH REPO’S OPEN PULL REQUEST'
       )
     })
 
@@ -7731,6 +7712,46 @@ describe('increment-build-loop', () => {
 
         expect(promptOf(run, 'inc-900 baseline')).not.toContain(
           'THE E2E EVIDENCE IS'
+        )
+      })
+
+      test('runs no gate at all when the baseline comes from the pull requests', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect({
+          anyGateCommand: prompt.includes('tim build gate shared/'),
+          wholeGate: prompt.includes('--phase all'),
+          unit: prompt.includes('--phase unit')
+        }).toEqual({ anyGateCommand: false, wholeGate: false, unit: false })
+      })
+
+      test('gives the pull-request baseline the watcher’s own check reading, not a shorter copy', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('WAIT ON ITS CHECKS, then read their verdict')
+        expect(prompt).toContain('A STALE ROLLUP IS NOT A FAILURE')
+        expect(prompt).toContain('no checks reported')
+      })
+
+      test('does not redden the next row’s baseline for a failure an earlier row recorded as the base’s', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('WHOSE FAILURE IS IT?')
+        expect(prompt).toContain(
+          'an earlier row of this very run may\n   already have left it red for exactly that reason'
+        )
+      })
+
+      test('asks the pull-request baseline only for the repos the row builds', async () => {
+        const run = await runBranch({ e2e: 'targeted' }, MERGE_ROW)
+        const prompt = promptOf(run, 'inc-900 baseline')
+
+        expect(prompt).toContain('tests (DEFRA/trade-imports-ins-tests)')
+        expect(prompt).not.toContain(
+          'frontend (DEFRA/trade-imports-animals-frontend)'
         )
       })
 

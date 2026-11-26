@@ -124,7 +124,6 @@ if (!E2E_LOCATIONS.includes(E2E)) {
 // an E2E rung, under the run's own lease. Only the baseline and the width of
 // that rung differ, and the gate decides the width from the same `--e2e` value.
 const E2E_IS_LOCAL = E2E !== 'ci'
-const BASELINE_FROM_PULL_REQUESTS = E2E === 'targeted'
 
 const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
 const RESUME_FROM_VALUES = ['build', ...ATTEMPT_STAGES]
@@ -184,6 +183,20 @@ if (!LIFECYCLES.includes(LIFECYCLE)) {
   )
 }
 const IS_BRANCH = LIFECYCLE === 'branch'
+
+// The baseline can only read a pull request where one already exists for the
+// branch the row is built on, which is the branch lifecycle: it refuses to start
+// without one per repo. The full lifecycle cuts a fresh branch per increment and
+// raises its pull requests after the build, so at baseline time there is nothing
+// to read and the row keeps its local gate, narrowed by the same `--e2e` value.
+const BASELINE_FROM_PULL_REQUESTS = E2E === 'targeted' && IS_BRANCH
+
+// Carrying a row on past a check the base branch fails the same way is a branch
+// lifecycle answer only. The full lifecycle MERGES each row, so a red check
+// there must keep blocking the merge however it got red: the run stops instead,
+// at once rather than after spending every fix attempt on a fixer that has been
+// told to change nothing.
+const CARRY_ON_PAST_BASE_RED = IS_BRANCH
 
 const UNUSED_ON_BRANCH_KEYS = [
   'jiraProject',
@@ -1102,13 +1115,17 @@ const CODEX_NO_GATE = 'none'
 const codexGateBinding = (id, stage, phases, repoKeys) =>
   phases.includes('unit') ? codexGateUnit(id, stage, repoKeys) : CODEX_NO_GATE
 
+// A rung is a gate phase, or `ci` for a pull request's own check, which is what
+// the pull-request baseline reports in place of a gate it did not run.
+const RUNG_PHASES = [...GATE_PHASES, 'ci']
+
 const GATE_RUNG_SCHEMA = {
   type: 'object',
   required: ['repo', 'name', 'phase', 'ok'],
   properties: {
     repo: { type: 'string' },
     name: { type: 'string' },
-    phase: { type: 'string', enum: GATE_PHASES },
+    phase: { type: 'string', enum: RUNG_PHASES },
     ok: { type: 'boolean' },
     log: { type: 'string' },
     reason: { type: 'string' }
@@ -1250,10 +1267,14 @@ order does not, keep the row's order in repos and say so under risks, naming the
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
 // The pull requests are red, and every red thing left fails the same way on the
-// base branch, so no commit on this branch can clear it. The theme carries on
-// unmerged, and the person merging it rules on the base's own failure.
-const onlyNotOurs = (r) =>
+// base branch, so no commit on this branch can clear it. Under the branch
+// lifecycle the theme carries on unmerged, and the person merging it rules on
+// the base's own failure. The full lifecycle merges each row, so there it stops
+// the run instead — at once, rather than after spending every fix attempt.
+const baseRedOnly = (r) =>
   Boolean(r && !r.green && r.onlyNotOurs && (r.notOurs ?? []).length > 0)
+
+const onlyNotOurs = (r) => CARRY_ON_PAST_BASE_RED && baseRedOnly(r)
 
 const notOursLines = (r) =>
   (r?.notOurs ?? []).map(({ repo, spec, evidence }) => `${repo} ${spec} — ${evidence}`)
@@ -1869,7 +1890,7 @@ ${restoreWorkStep(id, branch, attempt.work ?? {})}
    \`git -C ${TILDE}/<repoPath> diff --name-only\`
    ${attempt.work?.kind === 'wip' ? `Both print nothing for this attempt: its work is committed and pushed, so the tree is clean and \`origin/${branch}\`\n   already holds it. What the attempt changed is its branch against the base:\n   \`git -C ${TILDE}/<repoPath> diff --name-only origin/${BASE_BRANCH}...HEAD\`\n   ` : ''}Report every path once in changedFiles, each written \`<repoKey>:<repo-relative path>\` with the repo keys
    ${REPO_KEYS.join(', ')}. The review stages are grouped from this list, so a path left out is a file nobody reads.
-${baselineGateStep(phases, gateLogs(id, 'resume'))}
+${localGateStep(phases, gateLogs(id, 'resume'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. restored:true only when step 1 put every piece back.
    green:true only when every phase that had rungs came back green, and false whenever restored is false, whatever
@@ -4525,7 +4546,7 @@ This row changes no backlog repo: the whole change is in the workspace repo, lef
 
 const NO_GATE_STEP = "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
 
-const prBaselineStep = (repoKeys) => {
+const prBaselineStep = (id, repoKeys) => {
   const named = (repoKeys ?? REPO_KEYS).map((key) => `${key} (${REPOS[key].github})`).join(', ')
   return `3. THE BASELINE IS EACH REPO'S OPEN PULL REQUEST, not a local gate. Run NO gate and no repo's own test, lint or
    build script: before this row edits anything, the branch holds only what is already on the pull request, and that
@@ -4533,15 +4554,20 @@ const prBaselineStep = (repoKeys) => {
    the same thing more slowly, and a suite racing the workspace stack for this machine's memory fails in ways CI
    does not.
    For each of ${named}: find the open pull request on \`${BASE_BRANCH}\`
-   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`), then WAIT for its checks with ONE
-   foreground Bash call, \`timeout\` 600000:
-   \`gh pr checks <number> --repo <github> --watch --fail-fast --interval 30\`
-   then read the verdict: \`gh pr checks <number> --repo <github> --json name,bucket,link\`
-   Never use run_in_background, a trailing \`&\` or \`sleep\`: the watch returns by itself.
+   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`). A repo whose pull request cannot
+   be found is ok:false — this lifecycle never raises one.
+   Then, for EACH pull request:
+   ${prChecksWaitStep(id)}
+   ${STALE_ROLLUP_STEP}
+   \`SUMMARY: pending\` → wait again from the top of that step, at most ${CI_WATCH_WINDOWS} times per pull request in
+   all. Still pending after that → ok:false naming the repo: an absence of evidence is not a green baseline.
+   NO CHECKS at all, after the retry loop → ok:false naming the repo, for the same reason.
+   ${WHOSE_FAILURE_RULE}
    Put EVERY check in rungs[], one each, with \`repo\` the repo key, \`name\` the check's name, \`phase\` "ci",
-   \`ok\` true only when its bucket is pass, \`log\` its link and \`reason\` its bucket. green:true only when every check
-   of every repo passed. A pull request with no checks at all is not green: report it ok:false, naming the repo.
-   A repo whose pull request cannot be found is ok:false too — this lifecycle never raises one.`
+   \`ok\` true only when its bucket is pass, \`log\` its link and \`reason\` its bucket.
+   green:true when every check of every repo passed, AND when the only ones that did not are in notOurs[] — a check
+   the base branch fails the same way is not this branch's to answer for, and an earlier row of this very run may
+   already have left it red for exactly that reason. Say which in your summary either way.`
 }
 
 const baselineReportStep = () =>
@@ -4552,8 +4578,10 @@ const baselineReportStep = () =>
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.`
 
-const baselineGateStep = (phases, logs) => {
-  if (BASELINE_FROM_PULL_REQUESTS) return prBaselineStep()
+// The gate a stage runs itself, whatever `--e2e` is. The restore stage uses this
+// directly: it has just put unpushed work back, so no pull request has seen it
+// and only a local run says whether it stands.
+const localGateStep = (phases, logs) => {
   if (phases.length === 0) return `3. THE GATE, for the phases this row owes.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `3. THE GATE, for the phases this row owes — every one, so it is ONE command, which runs unit, FIT and E2E
@@ -4565,6 +4593,11 @@ ${gateCommandList([WHOLE_GATE], logs)}
 ${gateCommandList(phases, logs)}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
 }
+
+const baselineGateStep = (phases, logs, { id, repoKeys } = {}) =>
+  BASELINE_FROM_PULL_REQUESTS
+    ? prBaselineStep(id, repoKeys)
+    : localGateStep(phases, logs)
 
 const ciE2eEvidenceStep = (repoKeys) => {
   if (E2E_IS_LOCAL) return ''
@@ -4731,7 +4764,7 @@ TASK:
    must print nothing. If any is dirty or mid-merge, stop and report ok:false.
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
-${baselineGateStep(phases, gateLogs(id, 'baseline'))}
+${baselineGateStep(phases, gateLogs(id, 'baseline'), { id, repoKeys: REPO_KEYS })}
 ${ciE2eEvidenceStep()}
 ${baselineReportStep()}
 Return the structured output only.`
@@ -6603,7 +6636,7 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 ${specBaselineLine()}
-${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'))}
+${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'), { id, repoKeys: repos })}
 ${ciE2eEvidenceStep(repos)}
 ${baselineReportStep()}
 Return the structured output only.`,
@@ -7646,9 +7679,15 @@ Then, for EACH pr, in the order listed:
    failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
    and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
    Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
+5. ${WHOSE_FAILURE_RULE}
+   This increment MERGES to \`${BASE_BRANCH}\` when it goes green, so a check the base branch fails the same way still
+   has to block that merge: there is no carrying on past it here. When onlyNotOurs is true, set \`blocked\` to one line
+   naming the spec and the base run as well, so the run stops at once instead of spending every fix attempt on a
+   fixer that has been told to change nothing.
 
 \`blocked\` is ONLY for something a code fix cannot address — a conflict with the base, no checks configured, \`gh\`
-refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
+refused, the PR is gone, or every red thing left being red on the base branch too. Setting it stops the run outright.
+A failing test this increment caused is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
         light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })

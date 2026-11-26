@@ -436,15 +436,15 @@ const registerGate = (build, timVersion) =>
     )
     .option(
       '--e2e <where>',
-      'Where the E2E rungs run: local, the whole suite against the workspace stack; targeted, only the specs this change reaches, with the whole suite left to the pull request; or ci, every E2E rung left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+      'Where the E2E rungs run: local, the whole suite against the workspace stack; targeted, only the spec files the branch has changed since --base, with the whole suite left to the pull request; or ci, every E2E rung left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
     )
     .option(
       '--base <ref>',
-      'The ref --e2e targeted compares the branch against to find the specs the change reaches (default: origin/main)'
+      'The ref --e2e targeted diffs the branch against to find the spec files it has changed. Imports are never followed, so a changed page object selects no spec of its own (default: origin/main)'
     )
     .option(
       '--covered-spec <path>',
-      'A spec --e2e targeted runs whatever the change reaches, such as one the Behaviour Spec links to a scenario this change touches. Repeat for more than one',
+      'A spec --e2e targeted runs whether or not the branch changed it, such as one the Behaviour Spec links to a scenario this change touches. Repeat for more than one',
       (path, paths = []) => [...paths, path]
     )
     .option(

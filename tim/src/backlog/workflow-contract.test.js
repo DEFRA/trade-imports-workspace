@@ -938,11 +938,19 @@ describe('increment-build-loop', () => {
       })
 
       expect(run.error.message).toContain(
-        'config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it)'
+        'config.e2e must be "local" (the whole suite against the local stack), "targeted" (the specs this change reaches against the local stack, the whole suite on the pull requests) or "ci" (let the pull requests prove all of it)'
       )
       expect(run.agents).toEqual([])
     }
   )
+
+  test('accepts e2e targeted', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, e2e: 'targeted' }
+    })
+
+    expect(run.error?.message ?? '').not.toContain('config.e2e must be')
+  })
 
   test('stops before any agent when resumeFrom is missing', async () => {
     const run = await runLoop(scriptPath, {
@@ -2067,6 +2075,35 @@ describe('increment-build-loop', () => {
 
       expect(prompt).toContain('--phase all')
       expect(prompt).not.toContain(CI_E2E_EVIDENCE_HEADING)
+    })
+
+    test('runs no gate at all when the baseline comes from the pull requests', async () => {
+      const prompt = await baselinePromptWithE2e('targeted')
+
+      expect({
+        anyGateCommand: prompt.includes('tim build gate shared/'),
+        wholeGate: prompt.includes('--phase all'),
+        unit: prompt.includes('--phase unit')
+      }).toEqual({ anyGateCommand: false, wholeGate: false, unit: false })
+    })
+
+    test('waits on every check of every repo’s pull request when the baseline comes from them', async () => {
+      const prompt = await baselinePromptWithE2e('targeted')
+
+      expect(prompt).toContain(
+        '`gh pr checks <number> --repo <github> --watch --fail-fast --interval 30`'
+      )
+      expect(prompt).toContain(
+        '`gh pr checks <number> --repo <github> --json name,bucket,link`'
+      )
+    })
+
+    test('calls a pull request with no checks not green, rather than green by default', async () => {
+      const prompt = await baselinePromptWithE2e('targeted')
+
+      expect(prompt).toContain(
+        'A pull request with no checks at all is not green'
+      )
     })
 
     test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {

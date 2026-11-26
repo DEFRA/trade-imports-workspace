@@ -97,12 +97,16 @@ models        {} for the recommended split, pass that unless the user asks
               included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
-e2e           where a row's end-to-end proof comes from: local (the gate's e2e
-              phase against the workspace stack) or ci (no local e2e, no stack
-              lease, no images built; the baseline reads each repo's open pull
-              request with `gh pr checks`). Settle it at the launch from what
-              this machine can do, and say which evidence decided it — see
-              "Choosing e2e" below
+e2e           where a row's end-to-end proof comes from: targeted (the
+              recommended default: the baseline reads every check on each
+              repo's open pull request instead of running rungs, and the
+              ladder's e2e rung runs only the specs the change reaches),
+              local (the whole suite in the gate's e2e phase against the
+              workspace stack, and a baseline that runs every rung locally)
+              or ci (no local e2e at all, no stack lease, no images built;
+              the baseline runs unit and FIT locally and reads each repo's
+              open pull request for its e2e evidence). Pass targeted unless
+              the user asks otherwise — see "Choosing e2e" below
 resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
               take it from the row's own attempt record, or build to ignore
               that record and rebuild the row from the top. Set build when a
@@ -138,19 +142,45 @@ launch would silently rebuild rows that had nothing wrong with them.
 
 ### Choosing e2e
 
-This is the one parameter to work out from the machine rather than the backlog.
-Run each, one call per command:
+**Pass `targeted` unless the user asks otherwise.** It is what a developer does:
+run the tests that cover the change, push, and let CI run everything. The two
+other values are there for the cases below, and `local` in particular is a
+deliberate choice to pay for a full local proof.
 
-```
-docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
-ls config/machine.json
-tim docker lease status --json
-```
+**Why `targeted`'s baseline reads the pull requests instead of running rungs.**
+Under the branch lifecycle every repo already has an open pull request — the run
+refuses to start without one — and at baseline time the branch holds only what
+that pull request has already run every check against, on CI's own machines. So
+the baseline's question is already answered, for free. It costs nothing extra in
+time either: the run is going to block on the pull request's slowest check
+anyway, and every other check on the same pull request arrives inside that same
+wait. Running them again locally adds tens of minutes and adds failures CI does
+not have — a suite racing a 22-service stack for one laptop's memory times out
+in ways an unloaded CI runner never does.
 
-Recommend `ci` when Docker holds under half the machine's memory, or when
-`config/machine.json` is absent so `tim build tune --write` has never run here,
-and say which of the two decided it. Recommend `local` otherwise. Give the
-recommendation and its evidence rather than asking cold.
+Two real stops on Design Release 2.1's manage-notifications theme, both before
+the theme had built anything, were of exactly that kind: five `@visual`
+screenshots whose macOS baselines were stale while CI's Linux ones were current,
+and a 5-second socket timeout in a metrics test under a full stack. Neither was
+the row's doing and neither reproduced on CI.
+
+Reach for the others when:
+
+- **`local`** — there is no CI to lean on (no pull request yet, a GitHub
+  outage), or you are debugging the stack itself and want every rung run here.
+  Work out whether this machine can take it, one call per command:
+
+  ```
+  docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
+  ls config/machine.json
+  tim docker lease status --json
+  ```
+
+  Docker holding under half the machine's memory, or no `config/machine.json`
+  because `tim build tune --write` has never run here, both say this machine
+  cannot take a full local run. Say which of the two decided it.
+- **`ci`** — this machine has no stack at all, or no capacity to run one.
+  Nothing runs here.
 
 A `ci` run leaves the end-to-end proof to the pull requests, which run each
 repo's own domain plus the specs elsewhere carrying its service tag
@@ -159,8 +189,15 @@ after deployment. The loop still stops at `ci-red`. A `local` run's gate takes t
 same scope and runs it the same way: the suites whole in its `e2e` rung, then the
 tagged specs from every domain in an `e2e-tagged` rung.
 
+Under `targeted` the gate runs its E2E rung narrowed to the branch's own change:
+the specs Playwright's import graph reaches from what changed against
+`origin/main`, so a changed page object fans its specs in automatically, plus any
+spec passed as `--covered-spec`. Both runs carry `--pass-with-no-tests`, so a row
+that touches no spec does not fail the rung by matching nothing. The whole suite
+still runs on the pull request, and the loop still stops at `ci-red`.
+
 The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
-<local or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
+<local, targeted or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
 starts no stack; it lists the rungs it left out in its result's
 `e2e.leftToCi`, and the loop's wait for the pull requests' checks gates the
 merge. A clone with no stack at all can also set `"e2e": "ci"` in its own
@@ -721,7 +758,7 @@ Build the args object with every key below:
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
   stopAfter: '<a positive number, or "all">',
-  e2e: '<local or ci>', // where a row's end-to-end proof comes from — see "Choosing e2e"
+  e2e: 'targeted', // targeted, local or ci — pass targeted unless the user asks otherwise; see "Choosing e2e"
   resumeFrom: null, // null takes each row's own attempt record; 'build' rebuilds the first row from the top
   rigour: 'standard' // full, standard or fast — see "Choosing rigour". A row's own wins for that row
 }
@@ -1482,7 +1519,7 @@ board        <board>
 repos        <the repos table, one JSON object>
 models       {}, the recommended split (think opus, code sonnet, light haiku)
 stopAfter    <a number, or all>
-e2e          <local or ci>
+e2e          <targeted, local or ci>
 resumeFrom   null
 rigour       <full, standard or fast>, and any row that sets its own
 

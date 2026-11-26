@@ -113,14 +113,18 @@ const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
 const STOP_AFTER = CFG.stopAfter
 
-const E2E_LOCATIONS = ['local', 'ci']
+const E2E_LOCATIONS = ['local', 'targeted', 'ci']
 const E2E = CFG.e2e
 if (!E2E_LOCATIONS.includes(E2E)) {
   throw new Error(
-    `${WORKFLOW_NAME}: config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it) — got ${JSON.stringify(E2E)}`
+    `${WORKFLOW_NAME}: config.e2e must be "local" (the whole suite against the local stack), "targeted" (the specs this change reaches against the local stack, the whole suite on the pull requests) or "ci" (let the pull requests prove all of it) — got ${JSON.stringify(E2E)}`
   )
 }
-const E2E_IS_LOCAL = E2E === 'local'
+// Every stage that needs a running stack treats targeted as local: it still runs
+// an E2E rung, under the run's own lease. Only the baseline and the width of
+// that rung differ, and the gate decides the width from the same `--e2e` value.
+const E2E_IS_LOCAL = E2E !== 'ci'
+const BASELINE_FROM_PULL_REQUESTS = E2E === 'targeted'
 
 const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
 const RESUME_FROM_VALUES = ['build', ...ATTEMPT_STAGES]
@@ -4449,7 +4453,35 @@ This row changes no backlog repo: the whole change is in the workspace repo, lef
 
 const NO_GATE_STEP = "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
 
+const prBaselineStep = (repoKeys) => {
+  const named = (repoKeys ?? REPO_KEYS).map((key) => `${key} (${REPOS[key].github})`).join(', ')
+  return `3. THE BASELINE IS EACH REPO'S OPEN PULL REQUEST, not a local gate. Run NO gate and no repo's own test, lint or
+   build script: before this row edits anything, the branch holds only what is already on the pull request, and that
+   pull request has already run every check against it — on CI's own machines, unloaded. Repeating them here proves
+   the same thing more slowly, and a suite racing the workspace stack for this machine's memory fails in ways CI
+   does not.
+   For each of ${named}: find the open pull request on \`${BASE_BRANCH}\`
+   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`), then WAIT for its checks with ONE
+   foreground Bash call, \`timeout\` 600000:
+   \`gh pr checks <number> --repo <github> --watch --fail-fast --interval 30\`
+   then read the verdict: \`gh pr checks <number> --repo <github> --json name,bucket,link\`
+   Never use run_in_background, a trailing \`&\` or \`sleep\`: the watch returns by itself.
+   Put EVERY check in rungs[], one each, with \`repo\` the repo key, \`name\` the check's name, \`phase\` "ci",
+   \`ok\` true only when its bucket is pass, \`log\` its link and \`reason\` its bucket. green:true only when every check
+   of every repo passed. A pull request with no checks at all is not green: report it ok:false, naming the repo.
+   A repo whose pull request cannot be found is ok:false too — this lifecycle never raises one.`
+}
+
+const baselineReportStep = () =>
+  BASELINE_FROM_PULL_REQUESTS
+    ? `4. REPORT what \`gh\` printed, not your reading of it. green:true only if every check of every repo passed.
+   ok:true only if steps 1 and 2 passed. Put each failed check's name, repo and link in your summary.`
+    : `4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
+   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
+   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.`
+
 const baselineGateStep = (phases, logs) => {
+  if (BASELINE_FROM_PULL_REQUESTS) return prBaselineStep()
   if (phases.length === 0) return `3. THE GATE, for the phases this row owes.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `3. THE GATE, for the phases this row owes — every one, so it is ONE command, which runs unit, FIT and E2E
@@ -4629,9 +4661,7 @@ TASK:
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 ${baselineGateStep(phases, gateLogs(id, 'baseline'))}
 ${ciE2eEvidenceStep()}
-4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
-   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
-   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
+${baselineReportStep()}
 Return the structured output only.`
 
 const PUSH_BLOCKED_KINDS = ['quality-gate', 'non-fast-forward', 'other']
@@ -6473,9 +6503,7 @@ TASK:
 ${specBaselineLine()}
 ${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'))}
 ${ciE2eEvidenceStep(repos)}
-4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
-   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
-   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
+${baselineReportStep()}
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
   ))

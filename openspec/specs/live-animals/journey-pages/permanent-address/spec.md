@@ -258,3 +258,15 @@ When at least one commodity line needs a permanent address and no line that need
 - **WHEN** the user presses the save control
 - **THEN** the notification is unchanged
 - **AND** the user returns to the consignment addresses page
+
+#### Scenario: One counted line that needs a permanent address is enough for the identify-an-animal message
+**ID**: SCN-PERM-ADDR-016-D
+- **GIVEN** a notification with two lines that need a permanent address, one with a number of animals and one without, and no animal identified on either
+- **WHEN** the user opens the permanent address page
+- **THEN** "Identify an animal on identification details before you can continue." is shown, with "identification details" linking to the identification details page
+
+#### Scenario: A number of animals on a line that needs no permanent address does not change the message
+**ID**: SCN-PERM-ADDR-016-E
+- **GIVEN** a notification with a line that needs no permanent address and has a number of animals, and a line that needs a permanent address with no number of animals and no animal identified
+- **WHEN** the user opens the permanent address page
+- **THEN** "Add the number of animals on consignment details before you can continue." is shown, with "consignment details" linking to the consignment details page

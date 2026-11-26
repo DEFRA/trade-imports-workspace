@@ -12,10 +12,7 @@ import {
 } from '../test-support/nightly-workspace.js'
 import { checkNightlyReadiness, readStopFile } from './readiness.js'
 
-const readyEnv = {
-  SONAR_TOKEN: 'sonar-test-token',
-  TMUX: '/private/tmp/tmux-501/default,1234,0'
-}
+const readyEnv = { SONAR_TOKEN: 'sonar-test-token' }
 
 const checkNamed = (readiness, name) =>
   readiness.checks.find((check) => check.name === name)
@@ -30,7 +27,6 @@ describe('#checkNightlyReadiness', () => {
     expect(readiness.checks.map(({ name, ok }) => ({ name, ok }))).toEqual([
       { name: 'sonar-token', ok: true },
       { name: 'no-anthropic-api-key', ok: true },
-      { name: 'detached-session', ok: true },
       { name: 'stop-file', ok: true },
       { name: 'jobs-config', ok: true },
       { name: 'clean-checkouts', ok: true }
@@ -91,36 +87,6 @@ describe('#checkNightlyReadiness', () => {
 
     expect(readiness.ready).toBe(false)
     expect(checkNamed(readiness, 'no-anthropic-api-key').ok).toBe(false)
-  })
-
-  test('Should pass the detached-session check inside screen', async () => {
-    const root = await createNightlyWorkspace()
-
-    const readiness = await checkNightlyReadiness(root, {
-      env: { SONAR_TOKEN: 'sonar-test-token', STY: '1234.nightly' }
-    })
-
-    expect(checkNamed(readiness, 'detached-session')).toEqual({
-      name: 'detached-session',
-      ok: true,
-      detail: 'Running inside screen'
-    })
-  })
-
-  test('Should fail the detached-session check when neither TMUX nor STY is set', async () => {
-    const root = await createNightlyWorkspace()
-
-    const readiness = await checkNightlyReadiness(root, {
-      env: { SONAR_TOKEN: 'sonar-test-token', TMUX: '', STY: ' ' }
-    })
-
-    expect(readiness.ready).toBe(false)
-    expect(checkNamed(readiness, 'detached-session')).toEqual({
-      name: 'detached-session',
-      ok: false,
-      detail:
-        'This session is not running inside tmux or screen, so it ends when the SSH connection closes. Start claude inside tmux new -s nightly or screen -S nightly.'
-    })
   })
 
   test('Should fail and give the reason when the stop file exists', async () => {

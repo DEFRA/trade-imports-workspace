@@ -2430,9 +2430,8 @@ tim nightly check --fetch --json  # is this session ready to run the jobs unatte
 tim nightly stopped --json        # is the kill switch on
 ```
 
-`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not, the
-session runs inside tmux or screen (`TMUX` or `STY` is set, so the session
-outlives the SSH connection that started it), `workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
+`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not,
+`workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
 workspace and every cloned repo are clean. Changes under the workspace's
 `workareas/`, tracked or untracked, do not count. `--fetch` fetches origin in each
 first. It lists every job with the `cronPrompt` to register, which starts

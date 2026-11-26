@@ -1,4 +1,5 @@
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { ERROR, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { isTimError } from '../../errors.js'
@@ -66,6 +67,7 @@ const registerStart = (themeTicket, { timVersion }) =>
 const deriveAndWrite = async (parsed) => {
   const derived = await deriveTheme(parsed)
   if (parsed.out) {
+    mkdirSync(dirname(parsed.out), { recursive: true })
     writeFileSync(parsed.out, `${JSON.stringify(derived, null, 2)}\n`)
   }
   return { derived, out: parsed.out }
@@ -89,7 +91,7 @@ const registerDerive = (themeTicket, { timVersion }) =>
     )
     .option(
       '--out <file>',
-      'Write the JSON to this file and print "Wrote <file>"'
+      'Write the JSON to this file, making its folder if it is missing, and print "Wrote <file>"'
     )
     .addHelpText(
       'after',

@@ -535,12 +535,12 @@ private MethodArgumentNotValidException createValidationException(FieldError... 
 | `GlobalExceptionHandlerTest` | 9 | Validation → 400, NotFoundException → 404, ConflictException → 409, generic Exception → 500, traceId from MDC, null traceId handling |
 | `TraceIdPropagationInterceptorTest` | 6 | Header set when MDC populated, not set when null/blank/empty, overwrites existing header, body passed through unchanged |
 | `MetricsConfigTest` | 9 | TimedAspect and CountedAspect beans, `EmfMeterRegistry` created or left out by `aws.emf.enabled`, the not-publishing log |
-| `EmfMeterRegistryTest` | 11 | EMF publishing from the meter registry |
+| `EmfMeterRegistryTest` | 13 | EMF publishing from the meter registry |
 | `ExternalCallRecorderTest` | 5 | `external.call.duration` and `external.call.failure` recording |
 | `AwsCallRecorderTest` | 5 | AWS SDK call timing through the execution interceptor, which the SNS client uses |
 | `MongoCallRecorderTest` | 6 | MongoDB command timing through the driver's `CommandListener`, and which replies count as failures |
 | `MongoAvailabilityTest`, `DependencyAvailabilityMetricsTest` | 16, 6 | `external.dependency.available` for MongoDB, S3 and SNS |
-| `EcsEventEncoderTest` | 9 | `event.*` key-value pairs written as the nested event object |
+| `EcsEventEncoderTest` | 8 | `event.*` key-value pairs written as the nested event object |
 | `CertificateLoaderTest` | ~5 | null/empty/valid/invalid certificate paths |
 | `CacheConfigTest` | ~3 | Caffeine spec construction, CacheManager bean |
 | `ApplicationTest` | 0 | Placeholder only — no assertions |

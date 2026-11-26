@@ -24,6 +24,7 @@ import {
   TIM_DUPLICATION,
   TIM_RUNGS
 } from './gates.js'
+import { changedSpecPaths } from './changed-scope.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 import {
   defaultMachineConfigPath,
@@ -45,6 +46,15 @@ const e2eLeftToCi = (rungs) => ({
 const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
 const DEFAULT_CHANGE_BASE = 'origin/main'
+
+// A spec path is relative to the repo it sits in, and the E2E rung runs in the
+// tests repo, so only that repo's own changed specs can be given to Playwright.
+const changedSpecsAcross = async (repos, base) => {
+  const perRepo = await Promise.all(
+    repos.map(({ path }) => changedSpecPaths(path, base))
+  )
+  return [...new Set(perRepo.flat())]
+}
 
 const TARGETED_E2E = {
   where: 'targeted',
@@ -712,15 +722,12 @@ export const runGate = async ({
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
   const e2eWhere = e2e ?? machine?.e2e
+  const e2eScope =
+    e2eWhere === 'targeted'
+      ? { specs: await changedSpecsAcross(repos, base), coveredSpecs }
+      : undefined
   const wholePlan = withMachineWorkers(
-    planRungs({
-      gates,
-      repos,
-      phase,
-      workspaceRoot,
-      e2eScope:
-        e2eWhere === 'targeted' ? { base, specs: coveredSpecs } : undefined
-    }),
+    planRungs({ gates, repos, phase, workspaceRoot, e2eScope }),
     machine
   )
   const e2eInCi = e2eWhere === 'ci'

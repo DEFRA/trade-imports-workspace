@@ -1,33 +1,46 @@
+import { gitLines } from './git-files.js'
+
 const PASS_WITH_NO_TESTS = '--pass-with-no-tests'
-const COVERED_SUFFIX = '-covered'
+
+const SPEC_FILE = /\.spec\.[cm]?[jt]sx?$/
 
 /**
- * The Playwright runs that cover a branch's own change, rather than its repos'
- * whole suites: the specs the change reaches through the import graph, then the
- * specs the Behaviour Spec links to the scenarios the change touches.
+ * The spec files a branch has changed since it left the base.
  *
- * Playwright intersects a path filter with `--only-changed`, so a covered spec
- * that the import graph does not reach would be filtered out of a single run.
- * They are therefore two runs, as a pr-scope suite run and tag run are, and a
- * run's `suffix` is added to the rung's name.
+ * Playwright's own `--only-changed` is not used, and cannot be: every spec in
+ * the tests repo imports the `@fixtures` barrel, which imports the
+ * `@page-objects` barrel and every domain's journey flows, so one page-object
+ * edit makes every spec a dependent. Measured on 26 November 2026: one changed
+ * animals page object selected 871 tests in 173 files, plants visual specs
+ * included. The dependency graph says everything depends on everything, which
+ * is true and useless.
  *
- * Both runs pass with no tests. A row that changes no spec and no page object
- * has nothing for the import graph to reach, and a rung that fails because the
- * change was narrow would say the opposite of what it means.
+ * @param {string} repoPath Absolute path to the repo
+ * @param {string} base The ref the branch left, such as origin/main
+ * @returns {Promise<string[]>} Repo-relative spec paths, in git's order
+ */
+export const changedSpecPaths = async (repoPath, base) =>
+  (await gitLines(repoPath, ['diff', '--name-only', `${base}...HEAD`])).filter(
+    (path) => SPEC_FILE.test(path)
+  )
+
+/**
+ * The Playwright run that covers a change, rather than its repos' whole suites:
+ * the spec files the branch changed, plus the specs the Behaviour Spec links to
+ * the scenarios it touches.
+ *
+ * It passes with no tests, so a named spec that the change deleted does not
+ * fail the rung. No specs at all plans no run: a change that touches no spec
+ * has nothing to prove against the stack, and the pull request runs the whole
+ * suite either way.
  *
  * @param {object} args
- * @param {string} args.base The ref the branch is compared against, such as origin/main
- * @param {string[]} [args.specs] Spec paths the change's scenarios are proved by
- * @returns {{suffix: string, args: string[]}[]} A changed run, then a covered run where there are specs
+ * @param {string[]} [args.specs] Spec paths the branch changed
+ * @param {string[]} [args.coveredSpecs] Spec paths its scenarios are proved by
+ * @returns {{suffix: string, args: string[]}[]} One run, or none
  */
-export const changedScopeRuns = ({ base, specs = [] }) => {
-  const changed = {
-    suffix: '',
-    args: [`--only-changed=${base}`, PASS_WITH_NO_TESTS]
-  }
-  if (specs.length === 0) return [changed]
-  return [
-    changed,
-    { suffix: COVERED_SUFFIX, args: [...specs, PASS_WITH_NO_TESTS] }
-  ]
+export const changedScopeRuns = ({ specs = [], coveredSpecs = [] }) => {
+  const everySpec = [...new Set([...specs, ...coveredSpecs])]
+  if (everySpec.length === 0) return []
+  return [{ suffix: '', args: [...everySpec, PASS_WITH_NO_TESTS] }]
 }

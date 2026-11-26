@@ -711,32 +711,32 @@ describe('planRungs with e2eScope', () => {
 
   const e2eRungs = (plan) => plan.filter(({ phase }) => phase === 'e2e')
 
-  test('narrows a scopeFrom rung to the specs the change reaches', () => {
+  test('narrows a scopeFrom rung to the spec files the change touched', () => {
     const plan = planRungs({
       gates: scopeFromGates(),
       repos: [repo('plants-frontend'), repo('tests')],
       phase: 'e2e',
-      e2eScope: { base: 'origin/main' }
+      e2eScope: { specs: ['tests/plants/a.spec.ts'] }
     })
 
     expect(e2eRungs(plan)).toEqual([
       expect.objectContaining({
         repo: 'tests',
         name: 'e2e',
-        scope: ['--only-changed=origin/main', '--pass-with-no-tests']
+        scope: ['tests/plants/a.spec.ts', '--pass-with-no-tests']
       })
     ])
   })
 
-  test('adds a covered run for the specs the change’s scenarios are proved by', () => {
+  test('plans no e2e rung when the change touched no spec', () => {
     const plan = planRungs({
       gates: scopeFromGates(),
       repos: [repo('plants-frontend'), repo('tests')],
       phase: 'e2e',
-      e2eScope: { base: 'origin/main', specs: ['tests/plants/a.spec.ts'] }
+      e2eScope: { specs: [] }
     })
 
-    expect(namesOf(e2eRungs(plan))).toEqual(['tests:e2e', 'tests:e2e-covered'])
+    expect(e2eRungs(plan)).toEqual([])
   })
 
   test('leaves a rung that names its own scope alone', () => {

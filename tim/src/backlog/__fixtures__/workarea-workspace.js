@@ -53,7 +53,7 @@ const writeJsonBesideBacklog = ({ root, workarea, fileName, value }) => {
  * @param {boolean} [contents.backlogSchemas] - Also hold the backlog schema and the intake schema, so `tim backlog check` can run
  * @returns {{root: string, remove: () => void}}
  */
-export const makeTicketWorkspace = ({
+export const makeWorkareaWorkspace = ({
   folders = [],
   files = {},
   backlogs = {},
@@ -61,7 +61,7 @@ export const makeTicketWorkspace = ({
   distilSchemas = false,
   backlogSchemas = false
 } = {}) => {
-  const root = realpathSync(createCliWorkspace('tim-from-ticket-'))
+  const root = realpathSync(createCliWorkspace('tim-workareas-'))
   if (distilSchemas) copyDistilSchemas(root)
   if (backlogSchemas) copyBacklogSchemas(root)
   const sharedDir = join(root, 'workareas', 'shared')

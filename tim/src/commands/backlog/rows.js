@@ -62,6 +62,14 @@ const setOptsSchemaFor = (statuses) =>
       branch: z.string().trim().min(1).optional(),
       note: z.string().trim().min(1).optional(),
       openQuestion: z.string().trim().min(1).optional(),
+      removeOpenQuestion: z
+        .string()
+        .regex(/^[1-9]\d*$/, {
+          message:
+            '--remove-open-question must be the number of an open question, counting from 1.'
+        })
+        .transform(Number)
+        .optional(),
       pr: z.string().optional(),
       merge: z.array(z.string()).optional(),
       repos: z.string().optional(),
@@ -73,7 +81,7 @@ const setOptsSchemaFor = (statuses) =>
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
       }
     )
 
@@ -204,6 +212,7 @@ export const parseSetOpts = (opts, statuses, rigours) => {
     branch: opts.branch,
     note: opts.note,
     openQuestion: opts.openQuestion,
+    removeOpenQuestion: opts.removeOpenQuestion,
     pr: opts.pr,
     merge: opts.merge,
     repos: opts.repos,
@@ -368,7 +377,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket, branch, dependencies, the last failed attempt and rigour are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
+      'Record build state on one increment: status, commit, ticket, branch, dependencies, the last failed attempt and rigour are replaced; a note, an open question or a pull request is added; an open question is removed by its number; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
@@ -377,6 +386,7 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --pr \'{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9","number":9}\' --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status done --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status dropped --note "Not needed any more" --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --remove-open-question 1 --json\n' +
         '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json\n' +
         '  tim backlog set shared/my-programme inc-004 --repos frontend,plantsfrontend,tests --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
@@ -396,6 +406,10 @@ export const register = (backlog, { timVersion }) => {
     .option(
       '--open-question <text>',
       'An open question to add to the increment'
+    )
+    .option(
+      '--remove-open-question <number>',
+      'Remove the open question with this number, counting from 1. tim backlog notes <workarea> <id> --open-questions lists them numbered'
     )
     .option(
       '--pr <json>',

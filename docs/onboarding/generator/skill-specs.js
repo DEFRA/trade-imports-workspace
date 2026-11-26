@@ -13,7 +13,7 @@ module.exports = [
       ["A plan you can argue with", "decisions surfaced as text before code, not buried in a diff"],
       ["Green all the way", "baseline checked, tests re-run each step, CI driven to green"],
     ],
-    triggers: '"plan EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"',
+    triggers: '"plan EUDPA-1234" · "how should I implement EUDPA-1234" · "implement EUDPA-1234 by hand" · "refactor" / "tidy up"',
     demo: [
       ["Plan", "\"plan EUDPA-1234\" — it reads the ticket, comments and Confluence refs, works out the affected repos and their stacks, and bakes in the matching best-practice guides."],
       ["Read & challenge", "plan.md lays out a summary, a repos/stack table, numbered steps, the testing strategy and risks — with [ASSUMPTION] and [NEEDS VERIFICATION] flags for you to settle."],
@@ -31,10 +31,10 @@ module.exports = [
     usage: [
       ["Reach for it when", "you're picking up a refined EUDPA ticket and about to start the work"],
       ["Where you decide", "you resolve the plan's open questions, and review the diff and PR — it never merges for you"],
-      ["How it fits", "it hands off to review and code-style once the PR is up"],
+      ["How it fits", "it hands off to review and code-style once the PR is up. \"implement EUDPA-1234\" or \"build EUDPA-1234\" goes to requirements-pipeline ticket mode instead"],
     ],
     liveView: [
-      ["plan / implement / refactor EUDPA-X", "how you launch each phase"],
+      ["plan / implement by hand / refactor EUDPA-X", "how you launch each phase"],
       [".claude/skills/ticket/SKILL.md", "what it does — straight from source"],
       ["workareas/ticket-planning/EUDPA-X/", "where the plan and context land"],
     ],

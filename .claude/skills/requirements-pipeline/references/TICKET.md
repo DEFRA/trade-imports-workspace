@@ -16,8 +16,9 @@ check calls READY. Anything bigger [escalates](#4-escalation).
 | The user | Answers the questions that hold the launch, and gives the go to merge |
 
 This file says how a request reaches ticket mode: "build EUDPA-X", "implement EUDPA-X", "backlog EUDPA-X",
-"get EUDPA-X into a backlog" and "build EUDPA-X on a branch". Planning a ticket, following a plan and implementing
-by hand belong to the `ticket` skill.
+"get EUDPA-X into a backlog" and "build EUDPA-X on a branch". Planning a ticket ("plan EUDPA-X", "how should I
+implement EUDPA-X"), following a plan ("follow the plan") and implementing by hand ("implement EUDPA-X by hand")
+belong to the `ticket` skill.
 
 Ticket mode never rewrites a person's ticket. It posts one comment, edits that comment on a rerun, and moves the
 status. The `ticket` skill's rule that writing needs the user's go does not reach this mode: the comment and the

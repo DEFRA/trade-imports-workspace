@@ -1,0 +1,850 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 14 of 16, 'ins e2e: the INS front door, dashboard and notification type'. Read in full, at HEAD c293b056f39efb206c6c4f2df54c38e5febd8485: the five flat specs under tests/ins/e2e/features (notification-dashboard-navigation.spec.ts, organisation-scoped-dashboard.spec.ts, aggregated-notification.spec.ts, page-titles.spec.ts, cross-service-sessions.spec.ts) and tests/ins/e2e/features/notification-type/notification-type.spec.ts; the page objects page-objects/ins/dashboard-page.ts, page-objects/ins/notification-type-page.ts, page-objects/ins/index.ts, page-objects/shared/base-page.ts, page-objects/shared/dashboard-copy.ts, page-objects/shared/sets.ts, page-objects/shared/layout-checks.ts, page-objects/shared/opens-at-expected-url.ts, page-objects/shared/auth/sign-in-page.ts, page-objects/shared/auth/organisation-picker-page.ts and page-objects/animals/dashboard-page.ts; the domain files domain/ins/constants/notification-types.ts, domain/ins/constants/dashboard-sort-values.ts and domain/ins/models/db/aggregated-notification-document.ts; flows/ins/journey.ts and flows/shared/journey-context.ts; fixtures/ui.ts and fixtures/auth-state.ts; config/service-base-urls.ts and config/users.ts. For accuracy on what the specs drive, three out-of-slice files were also consulted and are cited only where a claim rests on them: adapters/http/ins-notification-api-client.ts, adapters/http/organisation.ts and the four INS hand-over methods in flows/animals/journey.ts (lines 179-200), plus the two date formatters in utils/date-utils.ts (lines 157-179).\n\nThe slice is laid out as six specs in four describe-blocked areas. The INS home and dashboard: one spec proves a submitted notification reaches the INS dashboard and its View link opens the notification in the owning journey frontend; one proves the dashboard list is organisation-scoped through the INS backend's own notification list; one (compose and Mongo only) proves the aggregated notification document the dashboard reads is created at draft and updated in place on submit. The notification-type question: one spec, in three describe blocks, covering the question's own content and validation, the hand-over to the animals and plants services for each of the four options, the Create new button on the INS home, and the round trip back to the question from a started animals draft. Page titles: one spec of nine titles across the INS home, the address book pages and a missing page. Cross-service sessions: one spec proving one browser holds the animals, INS and plants sessions at once.\n\nTest declarations actually present at this commit: notification-type.spec.ts 12 declarations (14 tests at run time, because one is generated in a loop over the three plants options), page-titles.spec.ts 9, and 1 each in aggregated-notification.spec.ts, cross-service-sessions.spec.ts, notification-dashboard-navigation.spec.ts and organisation-scoped-dashboard.spec.ts: 25 declarations, 27 tests at run time. The partition's 'covers' counts (23, 10, 4, 4, 3 and 3) do not match the files as they stand; every test present is claimed here, by its title. Covered as gaps: the dashboard sort control and its four sort labels, the dashboard results label and empty state, the aggregated read model's sort order, signing out of one service, and the absence of a germinal products option. The address book's own behaviour (parts 12 and 13), the transporter, a11y and security specs (part 15) are out of this slice; the address book page titles are claimed here because the page-titles spec is in this slice.",
+  "claims": [
+    {
+      "id": "repo-tests-p14-001",
+      "statement": "The Import notification service front door is the INS frontend's root path, and its first heading is 'Dashboard'.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:6-10",
+      "quote": "readonly expectedUrl = '/';\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true });",
+      "confidence": "verbatim",
+      "note": "Asserted by every spec in this slice that opens insPages.dashboard, which waits for this heading."
+    },
+    {
+      "id": "repo-tests-p14-002",
+      "statement": "The INS home page is titled 'Dashboard - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:5-9, test 'the home is titled Dashboard - Import notification service - GOV.UK'",
+      "quote": "await expect(pages.page).toHaveTitle('Dashboard - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-003",
+      "statement": "Every INS page's title ends with ' - Import notification service - GOV.UK' after the page's own name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:4-83, describe 'INS page titles'",
+      "quote": "await expect(pages.page).toHaveTitle(`${name} - Import notification service - GOV.UK`);",
+      "confidence": "inferred",
+      "note": "Follows because all nine titles the spec asserts carry that suffix, including one built from a record's own name."
+    },
+    {
+      "id": "repo-tests-p14-004",
+      "statement": "A page showing an error summary opens its title with 'Error: ' before the page's own name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:54-70, tests 'the address type page showing its error opens its title with Error:' and 'the add address form showing errors opens its title with Error:'",
+      "quote": "await expect(pages.page).toHaveTitle('Error: Choose an address type - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-005",
+      "statement": "The address book list page is titled 'Address book - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:11-16, test 'the address book is titled Address book - Import notification service - GOV.UK'",
+      "quote": "await expect(pages.page).toHaveTitle('Address book - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-006",
+      "statement": "An address's own page is titled with that address's name.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:18-25, test \"an address's own page is titled with its name\"",
+      "quote": "const name = `View Title Farm ${Date.now()}`;\n    const created = await addressBookApi.createAddress(traderAddress(name));\n\n    await insPages.addressBookView.open(created.id);\n\n    await expect(pages.page).toHaveTitle(`${name} - Import notification service - GOV.UK`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-007",
+      "statement": "The address delete page is titled 'Delete this address? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:27-33, test 'the delete page is titled Delete this address?'",
+      "quote": "await expect(pages.page).toHaveTitle('Delete this address? - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-008",
+      "statement": "The address edit page is titled 'Edit address and contact details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:35-41, test 'the edit page is titled Edit address and contact details'",
+      "quote": "await expect(pages.page).toHaveTitle('Edit address and contact details - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-009",
+      "statement": "The address type question is titled 'Choose an address type - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:43-52, test 'the address type page is titled Choose an address type - Import notification service - GOV.UK'",
+      "quote": "await expect(pages.page).toHaveTitle('Choose an address type - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-010",
+      "statement": "The add address form is titled 'Add address and contact details' before the service suffix, and its error state is proven through that title.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:63-70, test 'the add address form showing errors opens its title with Error:'",
+      "quote": "await expect(pages.page).toHaveTitle('Error: Add address and contact details - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-011",
+      "statement": "A path the INS frontend does not serve answers with a page titled 'Page not found - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:72-82, test 'a missing page is titled Page not found - Import notification service - GOV.UK'",
+      "quote": "await insPages.dashboard.navigateToInsFrontend('/no-such-page');\n\n      await expect(pages.page).toHaveTitle('Page not found - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-012",
+      "statement": "The INS page-title checks are held to be duplicated by the INS frontend's own tests, and two of them (the home title and the missing page) are also run cross-browser.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/page-titles.spec.ts:4, 5 and 74",
+      "quote": "test.describe('INS page titles', { tag: '@duplicated-in-frontend' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-013",
+      "statement": "The INS home lets a user search for a notification by its reference, through a field labelled 'Search by notification reference' and a 'Search' button.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:12-18 and 48-51, used by tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:28",
+      "quote": "get inputReferenceSearch(): Locator {\n    return this.page.getByLabel('Search by notification reference');\n  }\n\n  get btnSearch(): Locator {\n    return this.page.getByRole('button', { name: 'Search', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-014",
+      "statement": "The INS home lists notifications as table rows, one row per notification, each row carrying its reference number.",
+      "kind": "data",
+      "ref": "page-objects/ins/dashboard-page.ts:40-42, asserted at tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:35",
+      "quote": "row(referenceNumber: string): Locator {\n    return this.page.getByRole('row', { name: new RegExp(referenceNumber) });",
+      "confidence": "verbatim",
+      "note": "The animals frontend's own dashboard lists notifications as summary cards instead (page-objects/animals/dashboard-page.ts:58-60), so the INS list is a table where the animals list is cards."
+    },
+    {
+      "id": "repo-tests-p14-015",
+      "statement": "A notification's row on the INS home shows its arrival date as a day, short month name and year, such as '10 Sep 2026'.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:34-35, with utils/date-utils.ts:174-179",
+      "quote": "const arrivalDisplayDate = toShortDisplayDate(parseAppDateText(MANDATORY_ANSWERS.arrivalDate));\n    await expect(insPages.dashboard.row(referenceNumber).getByRole('cell', { name: arrivalDisplayDate, exact: true })).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The format comes from the suite's own formatter, quoted as `Formats a DateInput as `d MMM yyyy`, e.g. `10 Sep 2026``."
+    },
+    {
+      "id": "repo-tests-p14-016",
+      "statement": "Each notification row on the INS home carries a 'View' link named for that notification's reference.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:44-46, asserted at tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:29",
+      "quote": "viewLink(referenceNumber: string): Locator {\n    return this.page.getByRole('link', { name: new RegExp(`View.*${referenceNumber}`, 's') });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-017",
+      "statement": "The View link on the INS home points at a '/notification-view' address, not at a page inside the INS frontend.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:25-33, test 'the INS dashboard shows a submitted notification with the arrival day entered, and its View link opens it in the owning journey frontend'",
+      "quote": ".poll(\n        async () => {\n          await insPages.dashboard.searchForReference(referenceNumber);\n          return insPages.dashboard.viewLink(referenceNumber).getAttribute('href');\n        },\n        { timeout: timeouts.long },\n      )\n      .toContain('/notification-view');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-018",
+      "statement": "A submitted notification reaches the INS home only after a wait, so the INS list is not updated in the same request that submits the notification.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:25-33",
+      "quote": "await expect\n      .poll(\n        async () => {\n          await insPages.dashboard.searchForReference(referenceNumber);\n          return insPages.dashboard.viewLink(referenceNumber).getAttribute('href');\n        },\n        { timeout: timeouts.long },\n      )",
+      "confidence": "inferred",
+      "note": "Follows because the test re-searches in a poll with the suite's long timeout rather than asserting once."
+    },
+    {
+      "id": "repo-tests-p14-019",
+      "statement": "Following the View link on the INS home opens the notification in the service that owns it, at '/live-animals/notifications/<reference>/notification-view' for a live animals notification.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:36-38",
+      "quote": "await insPages.dashboard.viewLink(referenceNumber).click();\n\n    await expect(pages.page).toHaveURL(new RegExp(`${SET_BASES.liveAnimals}/notifications/${referenceNumber}/notification-view$`));",
+      "confidence": "verbatim",
+      "note": "SET_BASES.liveAnimals is '/live-animals' (page-objects/shared/sets.ts:2)."
+    },
+    {
+      "id": "repo-tests-p14-020",
+      "statement": "The notification opened from the INS home shows the same reference the INS home listed, and a status of 'Submitted'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:39-40",
+      "quote": "await expect(animalsPages.notificationView.viewHeader.reference).toHaveText(referenceNumber);\n    await expect(animalsPages.notificationView.viewHeader.statusTag).toHaveText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-021",
+      "statement": "A user confirms and continues on the declaration page and is shown 'Import notification submitted' before the notification appears on the INS home.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:18-22",
+      "quote": "await animalsPages.declaration.confirmation.check();\n    await animalsPages.declaration.continueButton.click();\n    await pages.page.getByRole('heading', { name: 'Import notification submitted' }).waitFor();",
+      "confidence": "verbatim",
+      "note": "The declaration page itself belongs to the animals journey parts; recorded here because this spec drives it."
+    },
+    {
+      "id": "repo-tests-p14-022",
+      "statement": "The INS notification list answers a search by reference with a count of matching notifications for the asking organisation.",
+      "kind": "integration",
+      "ref": "adapters/http/ins-notification-api-client.ts:21-25, driven by tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts:21-27",
+      "quote": "const path = `/notifications?referenceNumber=${encodeURIComponent(referenceNumber)}&page=1`;\n    const page = await this.rest.get<AggregatedNotificationPage>(path, organisationHeaders(this.organisationId));\n    return page.totalElements;",
+      "confidence": "verbatim",
+      "note": "The client's own words call it 'Direct HTTP access to one organisation's INS dashboard notification list.'"
+    },
+    {
+      "id": "repo-tests-p14-023",
+      "statement": "A submitted notification is returned to its own organisation's INS list exactly once.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts:21-25, test 'the INS notification list returns none of this notification to another organisation searching by its reference'",
+      "quote": "await expect\n        .poll(() => insNotificationApi.countByReference(referenceNumber), {\n          timeout: timeouts.long,\n        })\n        .toBe(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-024",
+      "statement": "A user of another organisation searching the INS list by a notification's exact reference is returned none of it.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts:27",
+      "quote": "expect(await otherOrganisationInsNotificationApi.countByReference(referenceNumber)).toBe(0);",
+      "confidence": "verbatim",
+      "note": "Organisation scoping of the INS list is proven at the service boundary rather than through the dashboard page. The other organisation is identified by a header, not by signing in as another user."
+    },
+    {
+      "id": "repo-tests-p14-025",
+      "statement": "The organisation asking for the INS list is carried in a 'Trade-Imports-Organisation-Id' request header.",
+      "kind": "integration",
+      "ref": "adapters/http/organisation.ts:5 and 13-15",
+      "quote": "export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-026",
+      "statement": "The organisation the suite's notifications belong to is 5900001, and the organisation proven to see none of them is 9999999.",
+      "kind": "data",
+      "ref": "adapters/http/organisation.ts:3-4 with config/users.ts:5-11",
+      "quote": "export const E2E_ORGANISATION_ID = defaultUser.organisationId;\nexport const OTHER_ORGANISATION_ID = '9999999';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-027",
+      "statement": "The INS dashboard reads one aggregated notification document per notification, identified as 'Imports.Notification.GBN-AG.<reference number>'.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:12 and 41-56",
+      "quote": "const aggregateIdFor = (referenceNumber: string): string => `Imports.Notification.GBN-AG.${referenceNumber}`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-028",
+      "statement": "The aggregated notification documents are held in the 'notifications' collection of the 'trade-imports-ins-backend' database.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:35",
+      "quote": "const collection = client.collection<AggregatedNotificationDocument>('trade-imports-ins-backend', 'notifications');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-029",
+      "statement": "An aggregated notification carries its reference number, status, origin country, commodity, arrival date, organisation, last-updated time and an aggregate version.",
+      "kind": "data",
+      "ref": "domain/ins/models/db/aggregated-notification-document.ts:1-11",
+      "quote": "export type AggregatedNotificationDocument = {\n  _id: string;\n  aggregateVersion: number;\n  organisationId?: string;\n  referenceNumber?: string;\n  status?: string;\n  originCountry?: string;\n  commodity?: string;\n  arrivalDate?: string;\n  lastUpdated?: Date;\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-030",
+      "statement": "A notification that has not been submitted is aggregated with the status 'DRAFT' as soon as its answers are saved.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:38-58, test 'creates and updates aggregated notification document through the submission lifecycle'",
+      "quote": "draftDoc = await collection.findOne({\n              _id: aggregateId,\n              status: 'DRAFT',\n              referenceNumber: referenceNumber,\n              originCountry: MANDATORY_ANSWERS.countryCode.value,\n              arrivalDate: { $exists: true },\n            });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-031",
+      "statement": "An aggregated notification records the origin country as its code, the same value the user chose on the origin page.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:59 and 82",
+      "quote": "expect(draftDoc.originCountry).toBe(MANDATORY_ANSWERS.countryCode.value);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-032",
+      "statement": "An aggregated live animals notification records its commodity as the label 'Live bovine animals'.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:14, 60 and 83",
+      "quote": "const INS_DASHBOARD_COMMODITY_LABEL = 'Live bovine animals';",
+      "confidence": "verbatim",
+      "note": "The constant's name says this label is what the INS dashboard shows for the commodity."
+    },
+    {
+      "id": "repo-tests-p14-033",
+      "statement": "An aggregated notification records the arrival date as a year-month-day date, converted from the day/month/year the user typed.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:30, 61 and 84, with utils/date-utils.ts:157-171",
+      "quote": "const arrivalIsoDate = toIsoDate(parseAppDateText(MANDATORY_ANSWERS.arrivalDate));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-034",
+      "statement": "An aggregated notification records the organisation that owns it.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:64 and 87",
+      "quote": "expect(draftDoc.organisationId).toBe(E2E_ORGANISATION_ID);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-035",
+      "statement": "An aggregated notification records when it was last updated, as a timestamp.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:62 and 85",
+      "quote": "expect(draftDoc.lastUpdated).toBeInstanceOf(Date);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-036",
+      "statement": "Submitting a notification changes its aggregated status to submitted and leaves exactly one aggregated document for it: no second document is added.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:68-81",
+      "quote": "await expect\n        .poll(() => collection.findOne({ _id: aggregateId, status: notificationStatuses.submitted }), {\n          timeout: timeouts.long,\n        })\n        .not.toBeNull();\n\n      expect(await collection.countDocuments({ _id: aggregateId })).toBe(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-037",
+      "statement": "Each change to a notification raises its aggregate version, so the submitted version is higher than the draft version.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:63, 66 and 86",
+      "quote": "expect(submittedDoc.aggregateVersion).toBeGreaterThan(draftVersion);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-038",
+      "statement": "The reference number, origin country, commodity and arrival date of an aggregated notification are unchanged by submission: only its status and version move.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:56-64 compared with 79-87",
+      "quote": "expect(submittedDoc.referenceNumber).toBe(referenceNumber);\n      expect(submittedDoc.status).toBe(notificationStatuses.submitted);\n      expect(submittedDoc.originCountry).toBe(MANDATORY_ANSWERS.countryCode.value);\n      expect(submittedDoc.commodity).toBe(INS_DASHBOARD_COMMODITY_LABEL);\n      expect(submittedDoc.arrivalDate).toBe(arrivalIsoDate);",
+      "confidence": "inferred",
+      "note": "Follows because the same five values are asserted, with the same expected values, before and after submission."
+    },
+    {
+      "id": "repo-tests-p14-039",
+      "statement": "The aggregated notification store is only proven directly on the local compose stack, because only that stack exposes its database.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:16-19",
+      "quote": "skipUnlessComposeEnvironment('aggregated notification assertions read Mongo directly, which only the compose stack exposes');",
+      "confidence": "verbatim",
+      "note": "The spec is tagged '@compose', '@mongodb', '@animals-backend'."
+    },
+    {
+      "id": "repo-tests-p14-040",
+      "statement": "A notification is started on the INS frontend at '/notification-type' with the question 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/notification-type-page.ts:6-10, asserted at tests/ins/e2e/features/notification-type/notification-type.spec.ts:159-160",
+      "quote": "readonly expectedUrl = '/notification-type';\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: /What are you importing\\?/ });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-041",
+      "statement": "The notification-type question is captioned 'About the consignment' above its heading.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:66, test 'the question offers four unselected options under the caption, one Continue button and the alpha banner'",
+      "quote": "await expect(notificationTypePage.caption).toHaveText('About the consignment');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-042",
+      "statement": "The notification-type question is titled 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:21 and 65",
+      "quote": "const QUESTION_TITLE = 'What are you importing? - Import notification service - GOV.UK';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-043",
+      "statement": "The notification-type question offers exactly four radio options, in the order Live animals, Plants for planting, Potatoes (seed and ware), Wood products.",
+      "kind": "data",
+      "ref": "domain/ins/constants/notification-types.ts:1-6, asserted at tests/ins/e2e/features/notification-type/notification-type.spec.ts:26-34 and 67",
+      "quote": "export const LIVE_ANIMALS = { value: 'live-animals', label: 'Live animals', service: 'animals' } as const;\nexport const PLANTS_FOR_PLANTING = { value: 'plants-for-planting', label: 'Plants for planting', service: 'plants' } as const;\nexport const POTATOES = { value: 'potatoes', label: 'Potatoes (seed and ware)', service: 'plants' } as const;\nexport const WOOD_PRODUCTS = { value: 'wood-products', label: 'Wood products', service: 'plants' } as const;\n\nexport const NOTIFICATION_TYPE_OPTIONS = [LIVE_ANIMALS, PLANTS_FOR_PLANTING, POTATOES, WOOD_PRODUCTS] as const;",
+      "confidence": "verbatim",
+      "note": "The count and the order are both asserted: the options' values are compared, in order, with this list (notification-type.spec.ts:26-30)."
+    },
+    {
+      "id": "repo-tests-p14-044",
+      "statement": "Live animals is the only option handled by the animals service; Plants for planting, Potatoes (seed and ware) and Wood products are all handled by the plants service.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/notification-types.ts:1-10",
+      "quote": "export const PLANTS_OPTIONS = [PLANTS_FOR_PLANTING, POTATOES, WOOD_PRODUCTS] as const;",
+      "confidence": "verbatim",
+      "note": "Each option carries a `service` of 'animals' or 'plants', and the spec loops the three plants options through one shared expectation."
+    },
+    {
+      "id": "repo-tests-p14-045",
+      "statement": "The four options are submitted as the values live-animals, plants-for-planting, potatoes and wood-products, in that order.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:27-30",
+      "quote": "expect(await notificationTypePage.options.evaluateAll((radios) => radios.map((radio) => radio.getAttribute('value')))).toEqual(\n    NOTIFICATION_TYPE_OPTIONS.map(({ value }) => value),\n  );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-046",
+      "statement": "No option on the notification-type question carries a hint.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:68, with page-objects/ins/notification-type-page.ts:44-46",
+      "quote": "await expect(notificationTypePage.hints).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-047",
+      "statement": "The notification-type question offers one button, 'Continue', and no links in its main content.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:69-71",
+      "quote": "await expect(notificationTypePage.buttons).toHaveCount(1);\n    await expect(notificationTypePage.links).toHaveCount(0);\n    await expect(notificationTypePage.btnContinue).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-048",
+      "statement": "The notification-type question shows no journey strip, so no notification reference or status is shown before a type is chosen.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:72, with page-objects/shared/base-page.ts:142-152",
+      "quote": "await expect(notificationTypePage.journeyStrip).toHaveCount(0);",
+      "confidence": "verbatim",
+      "note": "The journey strip is where the suite reads a notification's status tag and reference (base-page.ts:146-152)."
+    },
+    {
+      "id": "repo-tests-p14-049",
+      "statement": "The INS frontend carries an alpha phase banner reading 'This is a new service. Help us improve it and give your feedback by email.', whose link is a mailto address.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:73-76, with page-objects/ins/notification-type-page.ts:48-50",
+      "quote": "await expect(notificationTypePage.phaseBanner).toContainText(\n      'This is a new service. Help us improve it and give your feedback by email.',\n    );\n    await expect(notificationTypePage.phaseBanner.getByRole('link')).toHaveAttribute('href', /^mailto:/);",
+      "confidence": "verbatim",
+      "note": "The banner locator filters for the text 'Alpha', so the phase shown is Alpha."
+    },
+    {
+      "id": "repo-tests-p14-050",
+      "statement": "Continuing on the notification-type question without choosing an option refuses to move on and shows an error summary titled 'There is a problem'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:79-89, test 'continuing with nothing chosen shows the error summary, the inline error and an Error: title'",
+      "quote": "await notificationTypePage.btnContinue.click();\n\n    await expect(notificationTypePage.errorSummary).toContainText('There is a problem');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-051",
+      "statement": "The error when no notification type is chosen reads 'Select what you are importing'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/notification-types.ts:12, asserted at tests/ins/e2e/features/notification-type/notification-type.spec.ts:86-87",
+      "quote": "export const NOTIFICATION_TYPE_REQUIRED_ERROR = 'Select what you are importing';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-052",
+      "statement": "The 'Select what you are importing' message appears both in the error summary, linked to the options at '#notificationType', and beside the options themselves.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:86-87",
+      "quote": "await expect(notificationTypePage.errorSummaryLink(NOTIFICATION_TYPE_REQUIRED_ERROR)).toHaveAttribute('href', '#notificationType');\n    await expect(notificationTypePage.optionsError).toContainText(NOTIFICATION_TYPE_REQUIRED_ERROR);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-053",
+      "statement": "The notification-type question in its error state is titled 'Error: What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:88",
+      "quote": "await expect(pages.page).toHaveTitle(`Error: ${QUESTION_TITLE}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-054",
+      "statement": "The notification-type question marks the service navigation's 'Dashboard' link as the page the user is currently on.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:48, with page-objects/shared/base-page.ts:73-75",
+      "quote": "await expect(notificationTypePage.linkDashboard).toHaveAttribute('aria-current', 'true');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-055",
+      "statement": "The 'Back' link on the notification-type question returns the user to the INS home, and visits neither the animals nor the plants frontend on the way.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:42-55, test 'Back from the question returns to the INS home and neither journey frontend is visited'",
+      "quote": "await notificationTypePage.linkBack.click();\n\n    await expect(insPages.dashboard.heading).toBeVisible();\n    await expect(pages.page).toHaveURL((url) => url.pathname === insPages.dashboard.expectedUrl);\n    expect(animalsNavigations).toEqual([]);\n    expect(plantsNavigations).toEqual([]);",
+      "confidence": "verbatim",
+      "note": "The spec records every main-frame navigation to each journey frontend's origin, so an empty list proves no hand-over happened."
+    },
+    {
+      "id": "repo-tests-p14-056",
+      "statement": "The INS home's 'Create new' button links to the notification-type question on the INS frontend's own origin, and opens it with every option unselected.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:149-162, test 'Create new on the INS home links to the question on the INS origin and shows every option unselected'",
+      "quote": "await expect(insPages.dashboard.btnCreateNew).toHaveAttribute('href', notificationTypePage.expectedUrl);\n    await insPages.dashboard.btnCreateNew.click();\n\n    await expect(pages.page).toHaveURL(`${originOf('TRADE_IMPORTS_INS_FRONTEND_BASE_URL')}${notificationTypePage.expectedUrl}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-057",
+      "statement": "Choosing Live animals and continuing signs the user in to the animals service and opens a brand-new draft at the 'Origin of the import' page.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:91-112, test 'choosing Live animals signs the user in to the animals service and opens a new draft at Origin of the import, whose Save and continue opens What are you importing?'",
+      "quote": "expect(animalsNavigations).toEqual([\n      `${SET_BASES.liveAnimals}/start`,\n      SIGN_IN_PATH,\n      SIGN_IN_CALLBACK_PATH,\n      `${SET_BASES.liveAnimals}/start`,\n      `${SET_BASES.liveAnimals}/notifications/${reference}/origin`,\n    ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-058",
+      "statement": "The hand-over into a journey service goes through that service's '/start' path, then its sign-in at '/auth/sign-in' and the callback at '/auth/sign-in-oidc', then '/start' again, and only then the new notification's first page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:23-24, 106-112 and 136-142",
+      "quote": "const SIGN_IN_PATH = '/auth/sign-in';\nconst SIGN_IN_CALLBACK_PATH = '/auth/sign-in-oidc';",
+      "confidence": "verbatim",
+      "note": "The same five-hop sequence is asserted for the animals service and for each plants option, with only the set base changing."
+    },
+    {
+      "id": "repo-tests-p14-059",
+      "statement": "A live animals notification started from the INS question gets a reference in the animals service's own reference format.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:2 and 103",
+      "quote": "expect(reference).toMatch(ANIMALS_REFERENCE);",
+      "confidence": "verbatim",
+      "note": "ANIMALS_REFERENCE is the animals domain's WHOLE_REFERENCE_NUMBER_PATTERN; the pattern itself belongs to an animals part."
+    },
+    {
+      "id": "repo-tests-p14-060",
+      "statement": "A notification started from the INS question opens with the status 'Draft' and its reference shown on the page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:104-105 and 196-197",
+      "quote": "await expect(animalsPages.originOfImport.statusTag).toHaveText('Draft');\n    await expect(animalsPages.originOfImport.notificationReference).toContainText(reference);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-061",
+      "statement": "Choosing Live animals never visits the plants frontend.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:113",
+      "quote": "expect(plantsNavigations).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-062",
+      "statement": "Saving the origin answers on the new animals draft opens the animals service's own 'What are you importing?' commodity page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:115-119",
+      "quote": "await animalsJourney.fillOriginOfImport();\n    await animalsJourney.saveOriginOfImport();\n\n    await expect(animalsPages.commoditySelection.heading).toBeVisible();\n    await expect(pages.page).toHaveURL(animalsPages.commoditySelection.expectedUrlPattern(reference));",
+      "confidence": "verbatim",
+      "note": "The INS question and the animals commodity page share the heading 'What are you importing?'."
+    },
+    {
+      "id": "repo-tests-p14-063",
+      "statement": "Choosing Plants for planting signs the user in to the plants service and opens a new plants draft at its commodity type page, '/high-risk-plants/notifications/<reference>/commodity-type'.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:122-145, test 'choosing Plants for planting signs the user in to the plants service and opens a new plants draft at its first page'",
+      "quote": "expect(plantsNavigations).toEqual([\n        `${SET_BASES.highRiskPlants}/start`,\n        SIGN_IN_PATH,\n        SIGN_IN_CALLBACK_PATH,\n        `${SET_BASES.highRiskPlants}/start`,\n        `${SET_BASES.highRiskPlants}/notifications/${reference}/commodity-type`,\n      ]);",
+      "confidence": "verbatim",
+      "note": "One of three tests generated by the loop over PLANTS_OPTIONS; SET_BASES.highRiskPlants is '/high-risk-plants'."
+    },
+    {
+      "id": "repo-tests-p14-064",
+      "statement": "Choosing Potatoes (seed and ware) signs the user in to the plants service and opens a new plants draft at its commodity type page.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:122-145, test 'choosing Potatoes (seed and ware) signs the user in to the plants service and opens a new plants draft at its first page'",
+      "quote": "for (const plantsOption of PLANTS_OPTIONS) {\n    test(`choosing ${plantsOption.label} signs the user in to the plants service and opens a new plants draft at its first page`, async ({",
+      "confidence": "verbatim",
+      "note": "Generated by the same loop as repo-tests-p14-063; the three plants options are proven to land on the same first page, so no plants option has a page of its own yet."
+    },
+    {
+      "id": "repo-tests-p14-065",
+      "statement": "Choosing Wood products signs the user in to the plants service and opens a new plants draft at its commodity type page.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:122-145, test 'choosing Wood products signs the user in to the plants service and opens a new plants draft at its first page'",
+      "quote": "await expect(plantsPages.commodityType.heading).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The third test the loop over PLANTS_OPTIONS generates."
+    },
+    {
+      "id": "repo-tests-p14-066",
+      "statement": "A notification started on a plants option gets a reference in the plants service's own reference format, different from the animals one.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:3 and 135",
+      "quote": "expect(reference).toMatch(PLANTS_REFERENCE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-067",
+      "statement": "Choosing a plants option never visits the animals frontend.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:143",
+      "quote": "expect(animalsNavigations).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-068",
+      "statement": "Following 'Back' from a started notification's first page returns the user to the INS notification-type question with their chosen type, and only that type, still selected.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:166-176, test 'Back from origin opens the INS question with Live animals chosen alone'",
+      "quote": "await expect(insPages.notificationType.checkedOptions).toHaveCount(1);\n    await expect(insPages.notificationType.option(LIVE_ANIMALS.label)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-069",
+      "statement": "Continuing from the question with the same type still chosen returns to the notification already started, in one hop with no further sign-in, and starts no second draft.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:178-199, test 'keeping Live animals returns to the same notification and adds no second draft'",
+      "quote": "expect(animalsNavigations).toEqual([animalsPages.originOfImport.expectedUrl(reference)]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-070",
+      "statement": "Changing the chosen type after starting a notification hands the user to the other service and leaves the first notification as it was: it keeps its reference, its Draft status and every answer already given.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:201-230, test 'choosing Plants for planting instead leaves the live animals notification with its reference, Draft status and answers'",
+      "quote": "await expect(animalsPages.dashboard.notificationCard(reference)).toBeVisible();\n    await expect(animalsPages.dashboard.cardStatusTag(reference)).toHaveText('Draft');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-071",
+      "statement": "An abandoned animals draft still shows its completed tasks as 'Complete' on its overview: 'Where is this consignment coming from?' and 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:208-223",
+      "quote": "const ORIGIN_TASK = 'Where is this consignment coming from?';\n    const COMMODITY_TASK = 'What are you importing?';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-072",
+      "statement": "An abandoned animals draft keeps the country answered on its origin page and the species chosen on its commodity page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:224-229",
+      "quote": "await expect(animalsPages.originOfImport.country.field).toHaveValue(MANDATORY_ANSWERS.countryCode.display);\n    await animalsPages.commoditySelection.open(reference);\n    for (const species of SELECTED_SPECIES) {\n      await expect(animalsPages.commoditySelection.selectedSummary).toContainText(species.latinName);\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-073",
+      "statement": "A type already chosen for a started notification is not pre-selected when the user presses 'Create new' on the INS home again: the question opens with every option unselected.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:232-241, test 'Create new on the INS home after the round trip shows every option unselected'",
+      "quote": "await insPages.dashboard.btnCreateNew.click();\n\n    await expect(insPages.notificationType.heading).toBeVisible();\n    await expectOptionsListedInOrderAndUnselected(insPages.notificationType);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-074",
+      "statement": "A user whose INS session has gone while they were in a journey service is signed in again on the way back and still lands on the question with their chosen type selected.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:243-264, test 'signing in to the INS again on the way back still lands on the question with Live animals chosen'",
+      "quote": "expect(insNavigations).toEqual([\n      insPages.notificationType.expectedUrl,\n      SIGN_IN_PATH,\n      SIGN_IN_CALLBACK_PATH,\n      insPages.notificationType.expectedUrl,\n    ]);",
+      "confidence": "verbatim",
+      "note": "The test simulates the lost session by clearing the INS auth cookie."
+    },
+    {
+      "id": "repo-tests-p14-075",
+      "statement": "A user whose journey-service session has gone is signed in again when they continue from the question, and still lands on the same notification's first page.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:266-287, test 'signing in to the animals service again on the way back still lands on the same notification origin page'",
+      "quote": "expect(animalsNavigations).toEqual([\n      animalsPages.originOfImport.expectedUrl(reference),\n      SIGN_IN_PATH,\n      SIGN_IN_CALLBACK_PATH,\n      animalsPages.originOfImport.expectedUrl(reference),\n    ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-076",
+      "statement": "The notification-type question's hand-overs need both the animals and the plants frontends running.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:41 and 165",
+      "quote": "test.describe('INS notification type question', { tag: ['@animals-frontend', '@plants-frontend'] }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-077",
+      "statement": "A notification is returned to the user's own trail: the animals origin page can be opened carrying 'ins' as where the user came from.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:213, with page-objects/shared/base-page.ts:29 and 33-35",
+      "quote": "await animalsPages.originOfImport.openOnTrail(reference, ['ins']);",
+      "confidence": "verbatim",
+      "note": "mechanism: the trail is a `?from=` query listing the places the trader came by, newest last (base-page.ts:32-35); 'ins' is one of three recognised starts, with 'overview' and 'dashboard'."
+    },
+    {
+      "id": "repo-tests-p14-078",
+      "statement": "One browser can hold signed-in sessions for the animals, INS and plants services at the same time, and reopening each service's home needs no further sign-in.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:9-53, test 'signing in to animals, then ins, then plants in one browser keeps all three sessions'",
+      "quote": "await animalsPages.dashboard.open({ attemptSignIn: false });\n    await expect(pages.page).toHaveURL(\n      (url) => url.origin === originOf('TRADE_IMPORTS_ANIMALS_FRONTEND_BASE_URL') && url.pathname === SET_BASES.liveAnimals,\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-079",
+      "statement": "Each service keeps its own session cookie, so a sign-in to one service is not a sign-in to the others: on the local stack the animals cookie is 'sid', the INS one 'ins-sid' and the plants one 'plants-sid'.",
+      "kind": "constraint",
+      "ref": "fixtures/auth-state.ts:21-41, asserted at tests/ins/e2e/features/cross-service-sessions.spec.ts:45-52",
+      "quote": "const COMPOSE_AUTH_COOKIE_NAMES: Record<string, string> = { ins: 'ins-sid', plants: 'plants-sid' };",
+      "confidence": "verbatim",
+      "note": "The suite's own words: 'The services share the localhost cookie domain but keep separate session-store prefixes, so a sid minted against one is a cache miss against the others.' (auth-state.ts:76-77)"
+    },
+    {
+      "id": "repo-tests-p14-080",
+      "statement": "The three services' homes sit at different paths: the animals service at '/live-animals', the INS at '/', and the plants service at '/high-risk-plants'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:28-43, with page-objects/shared/sets.ts:1-5 and page-objects/ins/dashboard-page.ts:6",
+      "quote": "export const SET_BASES = {\n  liveAnimals: '/live-animals',\n  highRiskPlants: '/high-risk-plants',\n  germinalProducts: '/germinal-products',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-081",
+      "statement": "The cross-service session rule is proven from a browser with no cookies at all, on the local compose stack only.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:6-8, with fixtures/auth-state.ts:52-55",
+      "quote": "test.use({ storageState: COLD_START });\n\ntest.describe('Sessions across services', { tag: '@compose' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-082",
+      "statement": "A user signs in to any of the services through Government Gateway, giving a user ID and a password on a page headed 'Sign in using Government Gateway'.",
+      "kind": "integration",
+      "ref": "page-objects/shared/auth/sign-in-page.ts:6-26",
+      "quote": "readonly headingName = 'Sign in using Government Gateway';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p14-083",
+      "statement": "A signed-in identity belonging to more than one organisation is asked 'Choose your organisation' and picks one by its SBI before reaching the service.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/auth/organisation-picker-page.ts:3-26, with page-objects/shared/base-page.ts:239-249",
+      "quote": "defra-id-stub's \"Choose your organisation\" screen, shown after sign-in only\n * for identities with more than one organisation (POST /organisations, radio\n * value keyed by sbi).",
+      "confidence": "verbatim",
+      "note": "No test in this slice drives the picker; the INS specs here all run as the default single-organisation identity."
+    },
+    {
+      "id": "repo-tests-p14-084",
+      "statement": "A failed sign-in shows a page offering a 'try again' link, and the suite treats a second failure as unrecoverable.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:191-202",
+      "quote": "throw new Error(`Sign-in failed twice: \"${new SignInErrorPage(this.page).headingName}\" was shown again after trying again.`);",
+      "confidence": "verbatim",
+      "note": "mechanism: the suite's own sign-in retry, over the sign-in error page's 'try again' link."
+    },
+    {
+      "id": "repo-tests-p14-085",
+      "statement": "The identity the INS specs sign in as is the trader Andrew Farmer, user ID 2100010101, email test.user11@defra.gov.uk, of organisation 5900001.",
+      "kind": "data",
+      "ref": "config/users.ts:5-25",
+      "quote": "andrew: {\n    crn: '2100010101',\n    displayName: 'Andrew Farmer',\n    email: 'test.user11@defra.gov.uk',\n    organisationId: '5900001',\n  },",
+      "confidence": "verbatim",
+      "note": "The file's own words: 'Defra ID stub identities used by the suite. CRNs and organisations mirror trade-imports-defra-id-stub mock data.' The sign-in password is held in an environment variable with a local default [REDACTED]."
+    },
+    {
+      "id": "repo-tests-p14-086",
+      "statement": "A signed-in INS session is proven by landing on the address book, not on the dashboard: the address book list is the INS service's checked landing page.",
+      "kind": "behaviour",
+      "ref": "fixtures/auth-state.ts:64-72",
+      "quote": "ins: {\n    landingPath: '/address-book',\n    landingHeading: (page) => new InsAddressBookListPage(page).heading,\n  },",
+      "confidence": "verbatim",
+      "note": "mechanism: the worker's saved sign-in state, minted once per domain per worker and reused. The animals and plants services both land on '/'."
+    },
+    {
+      "id": "repo-tests-p14-087",
+      "statement": "Only the session cookie is carried between a worker's tests: the journey state cookie is dropped, so each test starts with a signed-in user and no part-answered notification.",
+      "kind": "rule",
+      "ref": "fixtures/auth-state.ts:153-160",
+      "quote": "/** The yar `session` cookie carries per-user journey state that would bleed across a worker's tests. */",
+      "confidence": "verbatim",
+      "note": "mechanism: the suite's own session reuse, not service behaviour."
+    },
+    {
+      "id": "repo-tests-p14-088",
+      "statement": "Every INS page carries the same service navigation: Home, About, Address book and Dashboard links, the signed-in user's email, and a 'Log out' link.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:53-75",
+      "quote": "get linkSignOut(): Locator {\n    return this.page.getByRole('link', { name: 'Log out', exact: true });\n  }\n\n  get linkAddressBook(): Locator {\n    return this.page.getByRole('link', { name: 'Address book', exact: true });\n  }\n\n  get linkDashboard(): Locator {\n    return this.page.getByRole('link', { name: 'Dashboard', exact: true });\n  }",
+      "confidence": "inferred",
+      "note": "Follows because the shared base page every INS page extends exposes these as page-wide controls; of them, only the Dashboard link is asserted by a test in this slice (repo-tests-p14-054)."
+    },
+    {
+      "id": "repo-tests-p14-089",
+      "statement": "The INS home offers a 'Sort by' choice applied with an 'Update sort' button.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:28-34 and 53-56",
+      "quote": "get dropdownSort(): Locator {\n    return this.page.getByLabel('Sort by');\n  }\n\n  get btnUpdateSort(): Locator {\n    return this.page.getByRole('button', { name: 'Update sort' });",
+      "confidence": "inferred",
+      "note": "Follows from the INS dashboard page object; no test in this slice selects a sort. See the gap repo-tests-p14-092."
+    },
+    {
+      "id": "repo-tests-p14-090",
+      "statement": "The INS home's sort choices are 'Arrival date (newest first)', 'Arrival date (oldest first)', 'Last updated (newest first)' and 'Last updated (oldest first)'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/dashboard-sort-values.ts:1-6",
+      "quote": "export const dashboardSortValues = {\n  arrivalNewestFirst: 'Arrival date (newest first)',\n  arrivalOldestFirst: 'Arrival date (oldest first)',\n  updatedNewestFirst: 'Last updated (newest first)',\n  updatedOldestFirst: 'Last updated (oldest first)',\n} as const;",
+      "confidence": "verbatim",
+      "note": "These are the labels the suite's sortBy helper selects by; no test in this slice uses any of them."
+    },
+    {
+      "id": "repo-tests-p14-091",
+      "statement": "The INS home shows a count or range label for its results, and a separate message when a search finds nothing.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:24-26 and 36-38",
+      "quote": "get noSearchResults(): Locator {\n    return this.page.getByTestId('dashboard-no-results');\n  }",
+      "confidence": "inferred",
+      "note": "Follows from the two locators the INS dashboard page object exposes ('dashboard-no-results' and 'dashboard-results-label'); neither the wording of the label nor the empty-state message is asserted anywhere in this slice. See the gap repo-tests-p14-092."
+    },
+    {
+      "id": "repo-tests-p14-092",
+      "statement": "No test proves the INS home's sort order, its results count label or its empty state, so the suite holds the service to nothing about any of them.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/*.spec.ts against page-objects/ins/dashboard-page.ts:24-38 and domain/ins/constants/dashboard-sort-values.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in all five flat specs under tests/ins/e2e/features and in the notification-type spec: none references dropdownSort, sortBy, btnUpdateSort, resultsLabel or noSearchResults, and dashboardSortValues is imported only as a type by the dashboard page object."
+    },
+    {
+      "id": "repo-tests-p14-093",
+      "statement": "No test proves the order the INS home lists notifications in, nor how it orders the aggregated notifications it reads.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts and tests/ins/e2e/features/notification-dashboard-navigation.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Both specs work with one notification, found by searching for its own reference; neither creates two and compares their order. The aggregated document carries both an arrival date and a last-updated time, which the sort labels in repo-tests-p14-090 name, but nothing asserts an ordering."
+    },
+    {
+      "id": "repo-tests-p14-094",
+      "statement": "No test proves what signing out of one service does to the user's sessions with the others.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts, against page-objects/shared/base-page.ts:65-67",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The cross-service spec proves only that three sessions can be held at once; it never uses the 'Log out' link the shared base page exposes. Looked in all six specs of this slice for linkSignOut and for 'Log out': no match."
+    },
+    {
+      "id": "repo-tests-p14-095",
+      "statement": "The notification-type question offers no germinal products choice, although the services' set bases name a '/germinal-products' set.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/notification-types.ts:6 against page-objects/shared/sets.ts:4",
+      "quote": "export const NOTIFICATION_TYPE_OPTIONS = [LIVE_ANIMALS, PLANTS_FOR_PLANTING, POTATOES, WOOD_PRODUCTS] as const;",
+      "confidence": "inferred",
+      "note": "Follows because the question's options are asserted to be exactly these four (notification-type.spec.ts:27), while the suite's set bases list germinalProducts: '/germinal-products' as a third set. The suite therefore holds the question to having no germinal products option today."
+    },
+    {
+      "id": "repo-tests-p14-096",
+      "statement": "A journey that crosses from the INS into a service and back takes longer than an ordinary page assertion, and is run with a raised time budget.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/notification-type/notification-type.spec.ts:97, 129, 184, 207, 233, 248, 272; cross-service-sessions.spec.ts:15; notification-dashboard-navigation.spec.ts:16; organisation-scoped-dashboard.spec.ts:17; aggregated-notification.spec.ts:25",
+      "quote": "test.slow();",
+      "confidence": "verbatim",
+      "note": "Every test in this slice that signs in to more than one service, or waits for the aggregated read model, is marked slow; the question's own content and validation tests are not."
+    },
+    {
+      "id": "repo-tests-p14-097",
+      "statement": "A test records the reference numbers of every notification it creates, and they are reported with the test's own result.",
+      "kind": "non-functional",
+      "ref": "flows/shared/journey-context.ts:1-17, with fixtures/ui.ts:131-137",
+      "quote": "for (const referenceNumber of journeyContext.referenceNumbers) {\n      testInfo.annotations.push({ type: 'Reference number', description: referenceNumber });\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: the suite's own diagnostics over the notifications a test created; `journeyContext.referenceNumber` is the most recent one, which the dashboard and organisation-scoping specs read."
+    },
+    {
+      "id": "repo-tests-p14-098",
+      "statement": "The INS address book journey reaches the address type question, the add form and the transporter forms without searching the pages for a route: a type is chosen, then the page it leads to opens.",
+      "kind": "behaviour",
+      "ref": "flows/ins/journey.ts:49-59",
+      "quote": "/** Chooses a type on the address type page and lands on the page it leads to: the add form for the\n   * three types that group roles, or the transporter type question for Transporter. */",
+      "confidence": "verbatim",
+      "note": "Read as context for the page-titles spec, which uses toAddressType and toAddressForm. The address book's own behaviour belongs to parts 12, 13 and 15."
+    },
+    {
+      "id": "repo-tests-p14-099",
+      "statement": "Each service the suite drives is addressed by its own base URL, given to the run rather than built into it, and a missing one stops the run with a message naming the setting.",
+      "kind": "constraint",
+      "ref": "page-objects/shared/base-page.ts:11-23 and config/service-base-urls.ts:3-9",
+      "quote": "throw new Error(`${envVar} is not set. Ensure Playwright config applies project base URLs before running tests.`);",
+      "confidence": "verbatim",
+      "note": "The four front ends named are the animals frontend, the animals admin, the INS frontend and the plants frontend; the INS backend, address book, reference data, Mongo and SQS are addressed the same way."
+    },
+    {
+      "id": "repo-tests-p14-100",
+      "statement": "A notification opened from the INS home is identified only by its reference number: that is the one value that carries from the INS list into the owning service.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:19, 28-29 and 38-39",
+      "quote": "const referenceNumber = journeyContext.referenceNumber;",
+      "confidence": "inferred",
+      "note": "Follows because the reference is what the test searches by, what the View link's name and target carry, and what the notification's own page shows back."
+    }
+  ]
+}

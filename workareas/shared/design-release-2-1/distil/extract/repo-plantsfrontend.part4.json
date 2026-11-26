@@ -1,1216 +1,1218 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 4 of repo:plantsfrontend: the commodity section of the high-risk plants linear journey, read in full. Paths below are under src/server/app/sets/high-risk-plants/. (1) journeys/linear/features/commodity-type/: page.js, controller.js, template.njk, evaluation.js, copy/copy.en.js, copy/copy.cy.js and commodity-type.fit.spec.js (15 tests), which cover the commodity type page, the journey's entry question at /notifications/{journeyId}/commodity-type. The *.test.js unit tests were left out, as the partition says. (2) journeys/linear/features/commodities/: page.js (two pages, the list 'commodities' and the entry sub-page 'commodities/details'), links.js (hrefs that carry index, removed and change=1), entry-index.js (index guarding), fields.js (answer names), line-form.js (per-field widgets, widths, limits and validation rules), evaluation.js (obligation bindings), list/list.controller.js and list.njk (the list page: table, change and remove, removal banner, the at-least-one floor), details/details.controller.js and details.njk (the category-first entry page that reveals per-category fields), copy/copy.en.js and copy.cy.js (one bundle for both pages), and fit/list.fit.spec.js (12 tests), fit/details.fit.spec.js (17 tests) and fit/axe.js (shared axe helper). (3) services/commodities/index.js: the set-owned, hard-coded commodity vocabulary (3 types, 9 categories, 15 genera, category-to-field map, origin constraints). (4) obligations/sections/commodity.js: the commodityType, commodityLines (floor of one), category and quantity obligations, and 7 per-line fields gated on category. I looked up two constants outside the slice so the hints could be stated in full: timing-windows.js (2 days and 4 days). I also looked up the shared save-action labels (shared/copy.en.js) and the caption 'About the consignment' (flow/section-captions). Claims run in this order: the commodity type page, then the list page, then the details page, then the service data, then the obligations. Every fit test is cited in the ref of at least one claim.",
+  "structure": "Part 4 read the whole commodities feature folder of the high-risk plants set (src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/): page.js, fields.js, entry-index.js, evaluation.js, links.js, line-form.js; list/list.controller.js, list/list.njk, list/_cells.njk, list/table-rows.js and their unit tests (list.controller.test.js, table-rows.test.js); details/details.controller.js, details/details.njk and details.controller.test.js; copy/copy.en.js, copy/copy.cy.js and copy/copy.test.js; and fit/list.fit.spec.js (12 tests in two describes) and fit/details.fit.spec.js (18 tests in two describes). For context only it read the set-owned vocabulary service (services/commodities/index.js, claimed by part 3), the commodity obligation section (obligations/sections/commodity.js, claimed by part 12) and src/server/app/shared/kit.js (claimed by part 13), plus the few shared helpers the two pages render through: shared/save-actions.njk, shared/copy.en.js's saveActions block, shared/paths.js's route builders, lib/validate/validators.js's requiredMaxText and requiredIntegerInRange, flow/section-captions/copy/copy.en.js for the caption wording and fit/set-base.js and fit/high-risk-plants-journey.js for the two URL and helper constants its fit specs use. It covers the repeatable commodity collection as a user meets it: the commodities list page (slug 'commodities') with its route, caption, heading, table columns, per-row Change and Remove controls, Add another button, empty state, removal banner, save controls and collection floor; the commodities/details sub-page with its route for adding and for editing, its category question and every per-line field with label, hint, widget, width, cap, condition and error message in English and machine-draft Welsh; every validation rule and redirect on either page; the floor obligation and the absence of a ceiling; the four reshaping modules (entry-index.js, links.js, line-form.js, list/table-rows.js) as mechanism claims; and what each of the 30 fit tests proves. It stops at the commodity-type question itself and at the vocabulary service, which part 3 claims, and at the obligation manifest, which part 12 claims.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p4-001",
-      "statement": "The commodity type page lives at /notifications/{journeyId}/commodity-type.",
+      "statement": "The commodities list page is served at /notifications/{journeyId}/commodities, for both GET and POST.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/page.js:1-4; commodity-type.fit.spec.js PAGE_URL",
-      "quote": "export const commodityTypePage = {\n  id: 'commodity-type',\n  slug: 'commodity-type'\n}",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:1-5 with list/list.controller.js:135 and src/server/app/shared/paths.js:5",
+      "quote": "export const commoditiesPage = {\n  id: 'commodities',\n  slug: 'commodities',\n  maturity: 'exploring'\n}",
+      "confidence": "verbatim",
+      "note": "The route path comes from kit.pageRoutes(page, { get, post }) over pageRoutePath(slug) = `/notifications/{journeyId}/${slug}`."
     },
     {
       "id": "repo-plantsfrontend-p4-002",
-      "statement": "Starting a new notification from the dashboard's start button takes the trader straight to the commodity type page, which is the journey's entry question.",
+      "statement": "The commodity details page is a sub-page served at /notifications/{journeyId}/commodities/details, for both GET and POST.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:45-49 startAtCommodityType; copy/copy.en.js:6 doc comment",
-      "quote": "await page.getByRole('button', { name: dashboardCopy.startButton }).click()\n  await expect(page).toHaveURL(PAGE_URL)",
-      "confidence": "verbatim",
-      "note": "The copy file's doc comment calls it \"the notification's entry question\"."
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:7-12 with details/details.controller.js:232",
+      "quote": "export const commodityDetailsPage = {\n  id: 'commodity-details',\n  slug: 'commodities/details',\n  subPage: true,\n  maturity: 'exploring'\n}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-003",
-      "statement": "The commodity type page can also be reached from the overview's commodities task row.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:90-99 'is also reachable from the overview commodities task row'",
-      "quote": "await page\n      .getByRole('link', { name: hubCopy.rows.commodities.title })\n      .click()\n\n    await expect(page).toHaveURL(PAGE_URL)",
-      "confidence": "verbatim"
+      "statement": "Neither the commodities list page nor the commodity details page has agreed behaviour: both are at maturity 'exploring'.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:4 and :11",
+      "quote": "maturity: 'exploring'",
+      "confidence": "verbatim",
+      "note": "Nothing on either page is signed off, so Design Release 2.1 can change either freely."
     },
     {
       "id": "repo-plantsfrontend-p4-004",
-      "statement": "When a session that never created the notification deep-links to the notification's overview, it is sent to the commodity type page. Saving from there carries on through the commodity section to the commodity details page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:289-319 'bounces a deep link from a session that never created the notification, and saving carries on through the section'",
-      "quote": "await deepLinkPage.goto(notificationHubPath)\n\n      await expect(deepLinkPage).toHaveURL(PAGE_URL)",
-      "confidence": "verbatim"
+      "statement": "The list page is the page that owns the commodityLines collection; the details sub-page collects nothing of its own.",
+      "kind": "data",
+      "ref": "list/list.controller.js:17 and details/details.controller.js:30, pinned by details.controller.test.js:51-59",
+      "quote": "export const meta = { ...page, collects: [LINES] }",
+      "confidence": "verbatim",
+      "note": "details.controller.test.js: \"Should collect nothing — the list page owns the group\"."
     },
     {
       "id": "repo-plantsfrontend-p4-005",
-      "statement": "The commodity type page's title is 'What are you importing?'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:14",
-      "quote": "title: 'What are you importing?',",
+      "statement": "The collection a commodity line is stored in is called commodityLines, and each line holds a category plus the per-line fields that category asks for.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fields.js:10-14 with line-form.js:116-119",
+      "quote": "export const LINES = 'commodityLines'\nexport const CATEGORY = 'category'\nexport const GENUS = 'genus'\nexport const QUANTITY = 'quantity'\nexport const POTATO_VARIETY = 'potatoVariety'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-006",
-      "statement": "The radios' legend, 'What are you importing?', is the page heading: an h1 styled as a large legend.",
+      "statement": "The list page's title and heading are both 'Commodities in the consignment', shown as a level-1 heading.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:22-30; copy/copy.en.js:15; commodity-type.fit.spec.js:73-88 'renders the caption, the legend as the page heading and the hint'",
-      "quote": "legend: {\n          text: copy.legend,\n          isPageHeading: true,\n          classes: \"govuk-fieldset__legend--l\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-007",
-      "statement": "The commodity type page shows the section caption 'About the consignment' above the question.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:10; commodity-type.fit.spec.js:76-80; flow/section-captions/copy/copy.en.js:14",
-      "quote": "aboutTheConsignment: 'About the consignment',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-008",
-      "statement": "The commodity type question has the hint 'Select the type of goods this notification is for. Notify potatoes, plants for planting and wood in separate notifications.'",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:16; template.njk:31",
-      "quote": "hint: 'Select the type of goods this notification is for. Notify potatoes, plants for planting and wood in separate notifications.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-009",
-      "statement": "The commodity type question offers three radio options, in this order: potatoes, plants for planting, and wood and cut trees.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:11-15; commodity-type/controller.js:55-61; commodity-type.fit.spec.js:101-119 'offers the three service commodity types, each with its timing hint'",
-      "quote": "const COMMODITY_TYPES = Object.freeze([\n  'potatoes',\n  'plants-for-planting',\n  'wood-and-cut-trees'\n])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-010",
-      "statement": "The potatoes option is labelled 'Potatoes (seed or ware)'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:21",
-      "quote": "potatoes: 'Potatoes (seed or ware)',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-011",
-      "statement": "The plants-for-planting option is labelled 'Plants for planting'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:22",
-      "quote": "'plants-for-planting': 'Plants for planting',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-012",
-      "statement": "The wood option is labelled 'Wood and cut trees'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:23",
-      "quote": "'wood-and-cut-trees': 'Wood and cut trees'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-013",
-      "statement": "The potatoes option's hint reads 'You must notify at least 2 days before the expected date of arrival.' The number of days comes from a constant, POTATO_DAYS_BEFORE_ARRIVAL = 2.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:26-27; controller.js:40-44; features/timing-windows.js:10",
-      "quote": "potatoes: (days) =>\n      `You must notify at least ${days} days before the expected date of arrival.`,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-014",
-      "statement": "The plants-for-planting option's hint reads 'You must notify before arrival, or no later than 4 days after the date of arrival.' The number of days comes from a constant, PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:28-29; controller.js:40-44; features/timing-windows.js:12",
-      "quote": "'plants-for-planting': (days) =>\n      `You must notify before arrival, or no later than ${days} days after the date of arrival.`,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-015",
-      "statement": "The wood option's hint uses the same sentence as plants for planting: 'You must notify before arrival, or no later than 4 days after the date of arrival.'",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:30-31; controller.js:43",
-      "quote": "'wood-and-cut-trees': (days) =>\n      `You must notify before arrival, or no later than ${days} days after the date of arrival.`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-016",
-      "statement": "The commodity type question is required. Continuing with nothing chosen re-shows the page with the error 'Select what you are importing', both inline and in the error summary.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:46-53; copy/copy.en.js:33-35; commodity-type.fit.spec.js:206-223 'continuing with nothing chosen shows the error and focuses the first radio'",
-      "quote": "commodityType: 'Select what you are importing'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-017",
-      "statement": "The commodity type error-summary link moves focus to the first radio.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:221-222",
-      "quote": "await summaryLink.click()\n    await expect(page.locator(TYPE_INPUT_SELECTOR).first()).toBeFocused()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-018",
-      "statement": "A submitted commodity type that the service does not offer, such as a forged 'bulbs', is rejected with the same error, and no radio is checked on the re-shown page.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:48-52 requiredOneOf; commodity-type.fit.spec.js:225-243 'rejects a value the service does not offer and checks nothing'",
-      "quote": "requiredOneOf(\n      'commodityType',\n      commodities.commodityTypes(),\n      copy.errors.commodityType\n    )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-019",
-      "statement": "A rejected commodity type submission answers with HTTP status 400.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:119-121",
-      "quote": "return render(h, current, values, { errors }).code(HTTP_STATUS_BAD_REQUEST)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-020",
-      "statement": "After an error, choosing a type and continuing again moves on to the commodity details page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:245-257 'recovers from the error once a choice is made'",
-      "quote": "await radioFor(page, 'potatoes').check()\n    await saveAndContinue(page).click()\n\n    await expect(page).toHaveURL(COMMODITY_DETAILS_URL)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-021",
-      "statement": "Once the notification already holds commodity lines, the commodity type page shows the warning 'Changing your answer will remove the commodities you have already added.' above the question.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:15-20; copy/copy.en.js:17-18; controller.js:103; list.fit.spec.js:221-228 'warns before a change that would remove saved lines'",
-      "quote": "linesWarning:\n    'Changing your answer will remove the commodities you have already added.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-022",
-      "statement": "The lines warning uses the GOV.UK warning text component, with the icon fallback text 'Warning'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:16-19; copy/copy.en.js:19",
-      "quote": "linesWarningIcon: 'Warning',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-023",
-      "statement": "The lines warning does not show on a notification that has no commodity lines.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:87",
-      "quote": "await expect(page.getByText(copy.linesWarning)).toBeHidden()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-024",
-      "statement": "The commodity type page ends with the three shared save controls: 'Save and continue', 'Save and return to overview' and the link 'Cancel and return to overview'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:36; shared/copy.en.js:60-64; commodity-type.fit.spec.js:121-133 'offers the three save controls'",
-      "quote": "saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-025",
-      "statement": "Until the notification has a committed answer, the commodity type page's Back link goes to the dashboard.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:63-69; commodity-type.fit.spec.js:135-139 'sends Back to the dashboard while the notification has no answer'",
-      "quote": "hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-026",
-      "statement": "Once an answer is saved, the commodity type page's Back link goes to the notification overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:66-69; commodity-type.fit.spec.js:155-168 'sends Back to the overview once an answer is saved'",
-      "quote": "await expect(backLink(page)).toHaveAttribute('href', hubPath)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-027",
-      "statement": "Saving the commodity type stores the answer commodityType, and the saved choice is checked when the trader comes back to the page.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:32, 107-112, 130-132; commodity-type.fit.spec.js:141-153 'saves a choice, goes on to the commodities and shows it again on return'",
-      "quote": "committed = await state.commit(request, h, {\n        commodityType: value.commodityType\n      })",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-028",
-      "statement": "Save and continue on the commodity type page goes on to the commodities list. A consignment with no line then goes straight on to the commodity details page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:151; commodity-type.fit.spec.js:23-27, 141-153",
-      "quote": "// The opening run goes on to the commodities list, and a consignment with no\n// line goes straight on to the entry sub-page.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-029",
-      "statement": "'Save and return to overview' on the commodity type page saves the choice and goes to the notification overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:170-186 'Save and return to overview saves the choice and reaches the overview'",
-      "quote": "await expect(page).toHaveURL(HUB_URL)\n\n    await page.goto(pageUrl)\n    await expect(radioFor(page, 'wood-and-cut-trees')).toBeChecked()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-030",
-      "statement": "'Cancel and return to overview' on the commodity type page goes to the overview without saving the choice.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:188-204 'Cancel and return to overview reaches the overview without saving'",
-      "quote": "await expect(page.locator(`${TYPE_INPUT_SELECTOR}:checked`)).toHaveCount(0)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-031",
-      "statement": "Changing the commodity type removes every saved commodity line whose category does not belong to the new type. Because categories partition by type, a real change of type removes every line.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:74-82, 133-135",
-      "quote": "// The categories partition by commodity type, so a line survives a change of\n// type only when its category belongs to the type now chosen — in practice,\n// only when the type has not really changed.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-032",
-      "statement": "When lines are kept after the commodity type is saved again, they are matched by category, genus and potato variety, not by position, so a kept line keeps the rest of its answers.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:84-87",
-      "quote": "// Lines are reconciled by what identifies one to a trader, not by position: a\n// line they can still see keeps the rest of its answers.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-033",
-      "statement": "When a commodity type change removed lines, the page goes to the commodities list with ?removed=<count>, whichever save control was pressed, so the trader sees what was removed before moving on.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:146-150; list.fit.spec.js REMOVED_URL",
-      "quote": "// A change that dropped lines says so on the list page, whichever control\n  // was pressed — the trader has to see what went before they move on.\n  if (removed > 0) {\n    return h.redirect(listHref(request, { removed }))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-034",
-      "statement": "If saving the commodity type fails, the page re-renders with the shared recoverable-error state and HTTP status 500.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:128-141",
-      "quote": "render(h, current, values, { recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-035",
-      "statement": "The commodity type page's English copy is provisional: it is the journey spec's wording and has not been through a content review.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.en.js:1-3",
-      "quote": "// AWAITING THE COPY PASS — the strings below are the journey spec's verbatim\n// wording and have not been through a content review\n// (journey-spec.json pages[commodity-type].provisionalCopy).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-036",
-      "statement": "The commodity type page has Welsh copy. Its title and legend are 'Beth ydych chi’n ei fewnforio?', taken from live-animals. The rest is a machine draft that no translator has reviewed.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/copy/copy.cy.js:1-10",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-037",
-      "statement": "The commodity type page is tested for no serious or critical axe violations (WCAG 2.0, 2.1 and 2.2 A/AA tags), both on first render and in the error state.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js:259-286 'has no serious or critical axe violations on the initial render' and '... in the error state'",
-      "quote": ".withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-038",
-      "statement": "The commodity type page's form posts with novalidate and carries hidden crumb and concurrencyToken fields.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/template.njk:11-13",
-      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-039",
-      "statement": "The commodities list page lives at /notifications/{journeyId}/commodities.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:1; fit/list.fit.spec.js LIST_URL",
-      "quote": "export const commoditiesPage = { id: 'commodities', slug: 'commodities' }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-040",
-      "statement": "The commodities list page's title and h1 are 'Commodities in the consignment'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:59-60; list/list.njk:19; fit/list.fit.spec.js:118-137 'renders the caption, the heading and every saved line'",
+      "ref": "copy/copy.en.js:44-45 with list/list.njk:19",
       "quote": "title: 'Commodities in the consignment',\n    heading: 'Commodities in the consignment',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-041",
-      "statement": "The commodities list page shows the section caption 'About the consignment'.",
+      "id": "repo-plantsfrontend-p4-007",
+      "statement": "The list page shows the section caption 'About the consignment' above its heading.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:18; fit/list.fit.spec.js:124-126",
-      "quote": "{{ sectionCaption(caption) }}",
+      "ref": "list/list.njk:18 with fit/list.fit.spec.js:126-128 and flow/section-captions/copy/copy.en.js:9",
+      "quote": "await expect(\n      page.getByText(captionsCopy.sections.aboutTheConsignment, { exact: true })\n    ).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "The caption value 'aboutTheConsignment: About the consignment' lives in the flow's section-captions copy, which another part claims."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-008",
+      "statement": "The list page uses the full-width content column rather than the two-thirds column every question page uses.",
+      "kind": "constraint",
+      "ref": "list/list.controller.js:57 with src/server/app/shared/kit.js:38-50",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim",
+      "note": "kit's 'display' surface is govuk-grid-column-full; kit itself is part 13's."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-009",
+      "statement": "The saved commodities are listed in a GOV.UK table whose caption, 'Commodities you have added', is visually hidden.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:48-49 with list/list.njk:26-28",
+      "quote": "caption: copy.table.caption,\n        captionClasses: \"govuk-visually-hidden\",",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-042",
-      "statement": "Opening the commodities list with no lines, and no removal to report, sends the trader straight to the commodity details page, because an empty list is not worth showing.",
+      "id": "repo-plantsfrontend-p4-010",
+      "statement": "The commodities table has four columns in this order: Category, Genus or variety, Quantity, and a fourth whose heading 'Actions' is visually hidden.",
+      "kind": "copy",
+      "ref": "list/list.njk:29-34 with copy/copy.en.js:50-53",
+      "quote": "head: [\n          { text: copy.table.category },\n          { text: copy.table.genusOrVariety },\n          { text: copy.table.quantity },\n          { html: '<span class=\"govuk-visually-hidden\">' + copy.table.actionsHidden + '</span>' }\n        ],",
+      "confidence": "verbatim",
+      "note": "The four words are category: 'Category', genusOrVariety: 'Genus or variety', quantity: 'Quantity', actionsHidden: 'Actions'."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-011",
+      "statement": "Each table row shows the line's category label, its genus label or potato variety, and its quantity, as read back from the saved line.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:95-101; fit/list.fit.spec.js:108-116 'sends a consignment with no line straight to the entry page'",
+      "ref": "list/list.controller.js:36-45 with list/table-rows.js:8-13, pinned by list.controller.test.js:73-100",
+      "quote": "lines.map(({ index, entry }) => ({\n    index,\n    position: index + 1,\n    category: bundle.categoryLabels[entry[CATEGORY]] ?? '',\n    genusOrVariety: genusOrVariety(entry),\n    quantity: entry[QUANTITY] ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-012",
+      "statement": "The Genus or variety cell shows the genus's own label where the line has a genus, and the typed potato variety otherwise.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:31-34, pinned by list.controller.test.js:102-111",
+      "quote": "const genusOrVariety = (entry) => {\n  const genus = entry[GENUS]\n  return genus ? bundle.genusLabels[genus] : (entry[POTATO_VARIETY] ?? '')\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: picks one of two per-line answers (genus, potatoVariety) for one shared table column, and maps a genus code to its label."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-013",
+      "statement": "A line whose category asks for neither a genus nor a potato variety — conifer wood with bark, conifer wood without bark and cut coniferous trees — shows an empty Genus or variety cell.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:31-34 with services/commodities/index.js:174-193",
+      "quote": "return genus ? bundle.genusLabels[genus] : (entry[POTATO_VARIETY] ?? '')",
+      "confidence": "inferred",
+      "note": "It follows because genus applies only to plants-for-planting, trees-for-planting, hardwood-round-surface and hardwood-chips, and potatoVariety only to the two potato categories, so the three remaining wood categories answer neither and the cell falls through to the empty string. No test covers the empty cell."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-014",
+      "statement": "Each row offers a 'Change' link to the details page for that line, with the visually hidden words 'commodity 1', 'commodity 2' and so on naming which.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:55-56 with list/_cells.njk:5 and list/list.controller.js:43",
+      "quote": "<a class=\"govuk-link\" href=\"{{ row.changeHref }}\">{{ copy.change }}<span class=\"govuk-visually-hidden\"> {{ copy.changeHidden(row.position) }}</span></a>",
+      "confidence": "verbatim",
+      "note": "change: 'Change', changeHidden: (position) => `commodity ${position}`; the href is the details page with ?index=<the line's index>."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-015",
+      "statement": "Each row offers a 'Remove' secondary button, with the visually hidden words 'commodity N' naming which, submitted as the form field action with the value remove:<index>.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:57-58 with list/_cells.njk:6-12 and list/list.controller.js:44",
+      "quote": "{{ govukButton({\n      html: removeHtml,\n      classes: \"govuk-button--secondary govuk-!-margin-bottom-0\",\n      name: \"action\",\n      value: row.removeAction\n    }) }}",
+      "confidence": "verbatim",
+      "note": "remove: 'Remove', removeHidden: (position) => `commodity ${position}`; removeAction is `remove:${index}`."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-016",
+      "statement": "Removing a commodity happens on the press of the Remove button, with no confirmation page or dialogue in between.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:96-118 with list/_cells.njk:7-12",
+      "quote": "const { failure } = await kit.recoverableSave(\n    request,\n    async () => state.removeEntryAt(request, h, [LINES], index),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-017",
+      "statement": "The list page offers an 'Add another commodity' secondary button, which is a link to the details page with no index and carries the id commodityLines.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:47 with list/list.njk:41-46 and list/list.controller.js:63",
+      "quote": "{{ govukButton({\n      text: copy.addAnother,\n      href: addAnotherHref,\n      classes: \"govuk-button--secondary\",\n      attributes: { id: \"commodityLines\" }\n    }) }}",
+      "confidence": "verbatim",
+      "note": "Because it is given an href it renders as a link styled as a button, so it navigates rather than posting the form. Its id is the anchor the collection-floor error summary links to."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-018",
+      "statement": "The 'Add another commodity' button keeps the same wording when the list is empty — it is never 'Add a commodity'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:47 with fit/list.fit.spec.js:238-242",
+      "quote": "addAnother: 'Add another commodity',",
+      "confidence": "verbatim",
+      "note": "The fit test 'reports what a change of type removed, and offers a fresh start' asserts that same button is visible on an emptied list."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-019",
+      "statement": "With no commodity added, the list page shows the paragraph 'You have not added any commodities yet.' in place of the table.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:46 with list/list.njk:37-39",
+      "quote": "<p class=\"govuk-body\">{{ copy.empty }}</p>",
+      "confidence": "verbatim",
+      "note": "empty: 'You have not added any commodities yet.'"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-020",
+      "statement": "The list page ends with 'Save and continue' alone: it offers neither 'Save and return to overview' nor the 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "list/list.njk:48 with src/server/app/shared/save-actions.njk:13-35, proven by fit/list.fit.spec.js:193-203",
+      "quote": "{{ saveActions({ hubHref: hubHref, copy: sharedCopy.saveActions, showReturnControls: false }) }}",
+      "confidence": "verbatim",
+      "note": "The shared save-actions wording is 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'; part 13 claims the shared macro and its copy."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-021",
+      "statement": "The list page's form posts without JavaScript: it is a plain POST form marked novalidate, carrying a hidden crumb and a hidden concurrencyToken.",
+      "kind": "non-functional",
+      "ref": "list/list.njk:21-23",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-022",
+      "statement": "The list page's Back link goes to the page the trader came from, carrying the rest of the trail — the commodity-type question on a straight walk through the journey.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:79 and :52, pinned by list.controller.test.js:137-153",
+      "quote": "backLink: kit.trailBackLink(request),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-023",
+      "statement": "Opening the list page for a consignment that holds no commodity line sends the trader straight on to the details page instead of showing an empty list.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:88-94, pinned by list.controller.test.js:63-71",
       "quote": "if (current.removedCount === null && current.lines.length === 0) {\n    return h.redirect(detailsHref(request))\n  }",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-043",
-      "statement": "The commodities list shows the saved lines in a GOV.UK table with a visually hidden caption, 'Commodities you have added'.",
+      "id": "repo-plantsfrontend-p4-024",
+      "statement": "When a change of commodity type has just removed lines, the list page stays put even with nothing left to show, and reports the removal in a notification banner titled 'Commodities removed'.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:64-71 and :90, with list/list.njk:11-16 and copy/copy.en.js:59-65",
+      "quote": "{{ govukNotificationBanner({\n      titleText: copy.removed.title,\n      text: removedMessage\n    }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-025",
+      "statement": "The removal banner says 'We removed 1 commodity that is not <type>' for one line and 'We removed N commodities that are not <type>' for more, naming the newly chosen commodity type.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:48-50; copy/copy.en.js:64",
-      "quote": "caption: 'Commodities you have added',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-044",
-      "statement": "The commodities table has four column headings: 'Category', 'Genus or variety', 'Quantity' and a visually hidden 'Actions'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:51-56; copy/copy.en.js:65-68",
-      "quote": "category: 'Category',\n      genusOrVariety: 'Genus or variety',\n      quantity: 'Quantity',\n      actionsHidden: 'Actions'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-045",
-      "statement": "Each table row shows the line's category by its label.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:49; fit/list.fit.spec.js:133",
-      "quote": "category: bundle.categoryLabels[entry[CATEGORY]] ?? '',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-046",
-      "statement": "The 'Genus or variety' column shows the genus label when the line has a genus. Otherwise it shows the potato variety the trader typed.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:40-43; fit/list.fit.spec.js:134, 136",
-      "quote": "return genus ? bundle.genusLabels[genus] : (entry[POTATO_VARIETY] ?? '')",
+      "ref": "copy/copy.en.js:59-65, pinned by copy/copy.test.js:121-128",
+      "quote": "removed: {\n      title: 'Commodities removed',\n      body: (count, typeLabel) =>\n        count === 1\n          ? `We removed 1 commodity that is not ${typeLabel}`\n          : `We removed ${count} commodities that are not ${typeLabel}`\n    },",
       "confidence": "verbatim",
-      "note": "A wood line with no genus, such as a conifer category, shows an empty cell."
+      "note": "The type labels it can name are 'Potatoes (seed or ware)', 'Plants for planting' and 'Wood and cut trees'."
     },
     {
-      "id": "repo-plantsfrontend-p4-047",
-      "statement": "The 'Quantity' column shows the line's quantity.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:51; fit/list.fit.spec.js:135",
-      "quote": "quantity: entry[QUANTITY] ?? '',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-048",
-      "statement": "Each row has a 'Change' link, with visually hidden text 'commodity <n>', that opens the commodity details page for that line (?index=<i>) with its saved values filled in.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:30; list.controller.js:52; copy/copy.en.js:70-71; fit/list.fit.spec.js:139-150 'sends Change to the entry page for that line'",
-      "quote": "change: 'Change',\n    changeHidden: (position) => `commodity ${position}`,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-049",
-      "statement": "Each row has a secondary 'Remove' button, with visually hidden text 'commodity <n>'. It removes that line immediately, with no confirmation page, and reloads the list.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:31-37; list.controller.js:103-119; copy/copy.en.js:72-73; fit/list.fit.spec.js:152-165 'removes the line the Remove button names'",
-      "quote": "remove: 'Remove',\n    removeHidden: (position) => `commodity ${position}`,",
+      "id": "repo-plantsfrontend-p4-026",
+      "statement": "A removal count in the page's address that is not a whole number above zero is ignored, and no banner is shown.",
+      "kind": "rule",
+      "ref": "list/list.controller.js:26-29, pinned by list.controller.test.js:125-135",
+      "quote": "const removedCountOf = (raw) => {\n  const count = Number(raw)\n  return Number.isInteger(count) && count > 0 ? count : null\n}",
       "confidence": "verbatim",
-      "note": "The No-confirmation reading is inferred: the remove POST goes straight to removeEntryAt and then redirects to the list."
+      "note": "mechanism: filters the `removed` query parameter before it reaches the banner. The test refuses 'lots', '0', '-3', '1.5' and ''."
     },
     {
-      "id": "repo-plantsfrontend-p4-050",
-      "statement": "Removing the last line sends the trader to the commodity details page, because the reloaded list is empty.",
+      "id": "repo-plantsfrontend-p4-027",
+      "statement": "Continuing from the list page once at least one commodity is saved goes on to the next page that applies — the origin page on a straight walk — and commits nothing of its own.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js:167-179 'sends a trader who removed the last line back to the entry page'",
+      "ref": "list/list.controller.js:132, pinned by list.controller.test.js:199-234",
+      "quote": "return h.redirect(kit.nextTarget(request, page, current.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-028",
+      "statement": "Continuing from the list page with no commodity saved is refused with the error 'Add at least one commodity', and the page is answered again at 400.",
+      "kind": "rule",
+      "ref": "list/list.controller.js:126-131 with copy/copy.en.js:66-68, pinned by list.controller.test.js:212-225",
+      "quote": "if (current.lines.length === 0) {\n    const errors = { [LINES]: copy.errors.commodityLines }\n    return buildView(request, h, { ...current, errors }).code(\n      HTTP_STATUS_BAD_REQUEST\n    )\n  }",
+      "confidence": "verbatim",
+      "note": "errors: { commodityLines: 'Add at least one commodity' }."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-029",
+      "statement": "The collection-floor error's summary link moves the caret to the 'Add another commodity' button, because that button carries the id commodityLines the summary anchors to.",
+      "kind": "behaviour",
+      "ref": "list/list.njk:45 with list.controller.test.js:221-223 and fit/list.fit.spec.js:253-257",
+      "quote": "await summaryLink.click()\n    await expect(page.locator('#commodityLines')).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-030",
+      "statement": "Pressing Remove on a row takes that line out of the collection and returns the trader to the list page.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:96-118, pinned by list.controller.test.js:159-167 and fit/list.fit.spec.js:154-167",
+      "quote": "return failure ?? h.redirect(listHref(request))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-031",
+      "statement": "A Remove naming a line the collection does not hold is refused at 400 with nothing removed, and the refusal is logged once with the reason remove-index-out-of-range and the action that was posted.",
+      "kind": "rule",
+      "ref": "list/list.controller.js:101-107, pinned by list.controller.test.js:169-183",
+      "quote": "kit.logRefusal(request, {\n      reason: 'remove-index-out-of-range',\n      removeAction: action\n    })\n    return buildView(request, h, current).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-032",
+      "statement": "A malformed Remove value such as remove:NaN is refused at 400 rather than removing the first line.",
+      "kind": "rule",
+      "ref": "entry-index.js:22-28 with list/list.controller.js:97-107, pinned by list.controller.test.js:185-193",
+      "quote": "A forged or stale index is refused rather than acted on: the engine's own\n * `isValidIndex` stops `splice(NaN, 1)` destroying the first entry, and this\n * keeps a bad index from reaching a render or a write in the first place.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-033",
+      "statement": "Removing the last commodity leaves the collection empty, so the list page the trader lands on sends them straight back to the details page to add one.",
+      "kind": "behaviour",
+      "ref": "list/list.controller.js:88-94 with fit/list.fit.spec.js:169-181",
       "quote": "await expect(page).toHaveURL(DETAILS_URL)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-051",
-      "statement": "A remove request that names a line the list does not hold is refused: the list re-renders with HTTP status 400 and nothing is removed.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:104-110; entry-index.js:10-28",
-      "quote": "if (index === null) {\n    return buildView(request, h, current).code(HTTP_STATUS_BAD_REQUEST)\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-052",
-      "statement": "If removing a line fails to save, the list re-renders with the recoverable-error state and HTTP status 500.",
+      "id": "repo-plantsfrontend-p4-034",
+      "statement": "A backend that cannot take the removal leaves the trader on the list page at 500 with the recoverable-error banner, and the failure is logged once naming the action remove-line and the line's index.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:111-118",
-      "quote": "buildView(request, h, { ...current, recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "ref": "list/list.controller.js:108-116, pinned by list.controller.test.js:240-257",
+      "quote": "{ action: 'remove-line', index }",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-053",
-      "statement": "The commodities list has an 'Add another commodity' secondary button. It is a link to a blank commodity details page.",
+      "id": "repo-plantsfrontend-p4-035",
+      "statement": "A programming error during a removal is not caught by the page: it escapes to the service-wide catch-all.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:63-68; list.controller.js:72; copy/copy.en.js:62",
-      "quote": "addAnother: 'Add another commodity',",
+      "ref": "list/list.controller.js:108-117, pinned by list.controller.test.js:259-267",
+      "quote": ").rejects.toThrow(new TypeError('programming failure'))",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-054",
-      "statement": "When the list has no lines (reached by a removal report), it shows the text 'You have not added any commodities yet.' in place of the table.",
+      "id": "repo-plantsfrontend-p4-036",
+      "statement": "Removing a line keeps the trader on the list page whether they arrived from Overview, from a Change link on the review page or while amending a submitted notification, and the return marker from a Change link is kept.",
+      "kind": "behaviour",
+      "ref": "list.controller.test.js:270-287",
+      "quote": "expect(result.response.redirect).toBe(\n      `${pagePath(result.journeyId, LIST_SLUG)}${start.query ? '?from=notification-view' : ''}`\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-037",
+      "statement": "Continuing from the list page after arriving from a Change link carries the review page in the trail, so the trader can be returned to it.",
+      "kind": "behaviour",
+      "ref": "list.controller.test.js:289-302",
+      "quote": "withTrail(pagePath(result.journeyId, originPage.slug), [\n        ...(start.query ? [CYA_SLUG] : []),\n        LIST_SLUG\n      ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-038",
+      "statement": "The commodity details page's title and heading are both 'Commodity details', shown as a level-1 heading under the 'About the consignment' caption.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:59-61; copy/copy.en.js:61; fit/list.fit.spec.js:240",
-      "quote": "empty: 'You have not added any commodities yet.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-055",
-      "statement": "After a commodity type change removed lines, the list shows a notification banner titled 'Commodities removed'. Its body reads 'We removed 1 commodity that is not <type label>' or 'We removed <n> commodities that are not <type label>'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:11-16; list.controller.js:73-80; copy/copy.en.js:74-80; fit/list.fit.spec.js:230-244 'reports what a change of type removed, and offers a fresh start'",
-      "quote": "title: 'Commodities removed',\n      body: (count, typeLabel) =>\n        count === 1\n          ? `We removed 1 commodity that is not ${typeLabel}`\n          : `We removed ${count} commodities that are not ${typeLabel}`",
-      "confidence": "verbatim",
-      "note": "The type label is the new commodity type's label. The body has no full stop."
-    },
-    {
-      "id": "repo-plantsfrontend-p4-056",
-      "statement": "The commodities list holds the consignment to at least one line. Save and continue with no lines re-shows the list with the error 'Add at least one commodity' and HTTP status 400.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:121-135; copy/copy.en.js:81-83; fit/list.fit.spec.js:246-262 'holds an emptied consignment at the collection floor'",
-      "quote": "commodityLines: 'Add at least one commodity'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-057",
-      "statement": "The 'Add at least one commodity' error-summary link moves focus to the 'Add another commodity' button (id commodityLines).",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:67; fit/list.fit.spec.js:260-261",
-      "quote": "attributes: { id: \"commodityLines\" }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-058",
-      "statement": "Save and continue on a commodities list that has lines leaves the commodity section for the origin page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:136; fit/list.fit.spec.js:181-189 'leaves the section for the origin page on Save and continue'",
-      "quote": "await expect(page).toHaveURL(ORIGIN_URL)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-059",
-      "statement": "The commodities list ends with the primary 'Save and continue' control only. It offers neither 'Save and return to overview' nor 'Cancel and return to overview'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk:70; fit/list.fit.spec.js:191-205 'ends with the primary control alone'",
-      "quote": "{{ saveActions(hubHref, null, sharedCopy.saveActions, false) }}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-060",
-      "statement": "The commodities list's Back link goes to the notification overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:60",
-      "quote": "backLink: hubPath(model.journey.journeyId),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-061",
-      "statement": "The commodities list uses the full-width display content column, so the longest category label stays on one line.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js:65-67",
-      "quote": "// A table of saved lines is a display surface, not a form field: the\n    // longest category label needs the full width to stay on one line.\n    contentColumnClass: kit.surfaceClass('display'),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-062",
-      "statement": "Links between the commodity pages keep the Check your answers change context: a change=1 query parameter is carried alongside index or removed.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/links.js:6-23",
-      "quote": "if (kit.changeContext(request)) {\n    query.set('change', '1')\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-063",
-      "statement": "The commodities list is tested for no serious or critical axe violations, both reading lines back and reporting a removal.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js:207-213 'has no serious or critical axe violations reading the lines back', 264-275 '... reporting a removal'; fit/axe.js:7-34",
-      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-064",
-      "statement": "The commodity details page lives at /notifications/{journeyId}/commodities/details for a new line, and at /commodities/details?index=<i> to edit a saved line.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js:3-6; links.js:41-55; fit/details.fit.spec.js DETAILS_URL, DETAILS_EDIT_URL",
-      "quote": "export const commodityDetailsPage = {\n  id: 'commodity-details',\n  slug: 'commodities/details'\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-065",
-      "statement": "The commodity details page's title and h1 are 'Commodity details'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:86-87; details/details.njk:13; fit/details.fit.spec.js:81-95 'renders the caption, the heading and the category question'",
+      "ref": "copy/copy.en.js:71-72 with details/details.njk:12-13",
       "quote": "title: 'Commodity details',\n    heading: 'Commodity details',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-066",
-      "statement": "The commodity details page shows the section caption 'About the consignment'.",
+      "id": "repo-plantsfrontend-p4-039",
+      "statement": "The details page asks one question of every line first: 'What category of goods is this?', as a set of radios with a medium legend.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:12; fit/details.fit.spec.js:86-88",
-      "quote": "{{ sectionCaption(caption) }}",
-      "confidence": "verbatim"
+      "ref": "copy/copy.en.js:73 with details/details.njk:22-33",
+      "quote": "legend: {\n          text: copy.categoryLegend,\n          classes: \"govuk-fieldset__legend--m\"\n        }",
+      "confidence": "verbatim",
+      "note": "categoryLegend: 'What category of goods is this?'"
     },
     {
-      "id": "repo-plantsfrontend-p4-067",
-      "statement": "The commodity details page first asks 'What category of goods is this?' as radios with a medium legend, which is not the page heading.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:22-33; copy/copy.en.js:88",
-      "quote": "categoryLegend: 'What category of goods is this?',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-068",
-      "statement": "The category radios offer only the categories of the notification's commodity type: potatoes offers 2, plants for planting offers 2 and wood and cut trees offers 5.",
+      "id": "repo-plantsfrontend-p4-040",
+      "statement": "The category radios offer only the categories the notification's commodity type allows: two for potatoes, two for plants for planting and five for wood and cut trees.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:117-126; details/details.controller.js:60-66; fit/details.fit.spec.js:97-105 'offers only the categories the chosen commodity type allows', 107-116 'offers the five wood categories with the preservative guidance'",
-      "quote": "potatoes: Object.freeze([SEED_POTATOES, WARE_POTATOES]),\n  'plants-for-planting': Object.freeze([\n    PLANTS_FOR_PLANTING,\n    TREES_FOR_PLANTING\n  ]),\n  'wood-and-cut-trees': WOOD_CATEGORIES",
-      "confidence": "verbatim"
+      "ref": "details/details.controller.js:48-54 with services/commodities/index.js:119-126, pinned by details.controller.test.js:65-73 and fit/details.fit.spec.js:88-107",
+      "quote": "const categoryItems = (commodityType, selected) =>\n  commodities.categoriesFor(commodityType).map((value) => ({",
+      "confidence": "verbatim",
+      "note": "potatoes offers seed-potatoes and ware-potatoes; plants-for-planting offers plants-for-planting and trees-for-planting; wood-and-cut-trees offers conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees, hardwood-round-surface and hardwood-chips. The vocabulary itself is part 3's."
     },
     {
-      "id": "repo-plantsfrontend-p4-069",
-      "statement": "The seed potatoes category is labelled 'Seed potatoes'.",
+      "id": "repo-plantsfrontend-p4-041",
+      "statement": "The nine category options are labelled 'Seed potatoes', 'Ware potatoes', 'Plants for planting', 'Trees for planting', 'Conifer wood with bark, or isolated bark of conifer', 'Conifer wood without bark (from Italy, France, Portugal or Spain)', 'Cut coniferous trees more than 3 metres high', 'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface' and 'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:27",
-      "quote": "'seed-potatoes': 'Seed potatoes',",
+      "ref": "copy/copy.en.js:11-25",
+      "quote": "categoryLabels: {\n    'seed-potatoes': 'Seed potatoes',\n    'ware-potatoes': 'Ware potatoes',\n    'plants-for-planting': 'Plants for planting',\n    'trees-for-planting': 'Trees for planting',\n    'conifer-wood-with-bark':\n      'Conifer wood with bark, or isolated bark of conifer',\n    'conifer-wood-without-bark':\n      'Conifer wood without bark (from Italy, France, Portugal or Spain)',\n    'cut-coniferous-trees': 'Cut coniferous trees more than 3 metres high',\n    'hardwood-round-surface':\n      'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface',\n    'hardwood-chips':\n      'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'\n  },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-070",
-      "statement": "The ware potatoes category is labelled 'Ware potatoes'.",
+      "id": "repo-plantsfrontend-p4-042",
+      "statement": "Two of the nine categories carry a hint of their own: plants for planting ('Shrubs, young plants, cuttings and other plants for planting that are not trees.') and trees for planting ('Trees for planting of any size, including saplings and whips. You will be asked their height.'). The other seven carry none.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:28",
-      "quote": "'ware-potatoes': 'Ware potatoes',",
+      "ref": "copy/copy.en.js:74-79, pinned by copy/copy.test.js:74-79 and fit/details.fit.spec.js:109-119",
+      "quote": "categoryHints: {\n      'plants-for-planting':\n        'Shrubs, young plants, cuttings and other plants for planting that are not trees.',\n      'trees-for-planting':\n        'Trees for planting of any size, including saplings and whips. You will be asked their height.'\n    },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-071",
-      "statement": "The plants-for-planting category is labelled 'Plants for planting', with the hint 'Shrubs, young plants, cuttings and other plants for planting that are not trees.'",
+      "id": "repo-plantsfrontend-p4-043",
+      "statement": "On a wood and cut trees notification the category question carries the hint 'Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.'; no other commodity type shows a hint on the question.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:29, 90-91; fit/details.fit.spec.js:118-128 'hints the two plants categories that need explaining'",
-      "quote": "'plants-for-planting':\n        'Shrubs, young plants, cuttings and other plants for planting that are not trees.',",
+      "ref": "copy/copy.en.js:80-83 with details/details.controller.js:94 and details/details.njk:30, pinned by details.controller.test.js:84-94",
+      "quote": "categoryHintByCommodityType: {\n      'wood-and-cut-trees':\n        'Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.'\n    },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-072",
-      "statement": "The trees-for-planting category is labelled 'Trees for planting', with the hint 'Trees for planting of any size, including saplings and whips. You will be asked their height.'",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:30, 92-93; fit/details.fit.spec.js:118-128",
-      "quote": "'trees-for-planting':\n        'Trees for planting of any size, including saplings and whips. You will be asked their height.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-073",
-      "statement": "The conifer-wood-with-bark category is labelled 'Conifer wood with bark, or isolated bark of conifer'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:31-32",
-      "quote": "'Conifer wood with bark, or isolated bark of conifer',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-074",
-      "statement": "The conifer-wood-without-bark category is labelled 'Conifer wood without bark (from Italy, France, Portugal or Spain)'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:33-34",
-      "quote": "'Conifer wood without bark (from Italy, France, Portugal or Spain)',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-075",
-      "statement": "The cut-coniferous-trees category is labelled 'Cut coniferous trees more than 3 metres high'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:35",
-      "quote": "'cut-coniferous-trees': 'Cut coniferous trees more than 3 metres high',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-076",
-      "statement": "The hardwood-round-surface category is labelled 'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:36-37",
-      "quote": "'Wood of sweet chestnut, ash or plane that keeps all or part of its natural round surface',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-077",
-      "statement": "The hardwood-chips category is labelled 'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:38-39",
-      "quote": "'Wood of sweet chestnut, ash or plane in chips not processed into pellets or briquettes'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-078",
-      "statement": "For a wood and cut trees notification, the category question carries the hint 'Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.' The other two types have no question-level hint.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:95-98; details/details.controller.js:106; details.njk:30; fit/details.fit.spec.js:107-116",
-      "quote": "'wood-and-cut-trees':\n        'Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-079",
-      "statement": "The category is required. Continuing with none chosen shows 'Select the category of goods', and a category outside the notification's commodity type is refused with the same message.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:51-56, 240-247; copy/copy.en.js:142; fit/details.fit.spec.js:141-157 'continuing with no category shows the error and focuses the first radio'",
-      "quote": "category: 'Select the category of goods',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-080",
-      "statement": "The category error-summary link moves focus to the first category radio.",
+      "id": "repo-plantsfrontend-p4-044",
+      "statement": "Until a category is chosen the details page shows no per-line field and offers one button, 'Continue'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js:152-156",
-      "quote": "await summaryLink.click()\n    await expect(page.locator(CATEGORY_RADIOS).first()).toBeFocused()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-081",
-      "statement": "Until a category is chosen, the commodity details page shows no per-line fields and offers a single 'Continue' button.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:74-90; copy/copy.en.js:139; fit/details.fit.spec.js:130-139 'shows no per-line field until a category is chosen'",
+      "ref": "details/details.njk:74-90 with copy/copy.en.js:124, pinned by details.controller.test.js:75-82 and fit/details.fit.spec.js:121-130",
       "quote": "{# An entry page ends with its write actions rather than the shared three\n       controls: it is reached from the list page, not the hub, and it has two\n       ways to save. Until a category is chosen there is nothing to save yet,\n       so the page offers Continue alone. #}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-082",
-      "statement": "Choosing a category and pressing Continue creates the line holding only its category. The page then returns as ?index=<i> and asks for that category's fields, below the category radios, on the same page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:30-40, 185-194, 248-258; fit/details.fit.spec.js:64-68 chooseCategory",
-      "quote": "A line is created as soon as its\n * category is chosen, because which fields a line is asked for is decided by\n * that category and the model can only scope them once the instance exists.",
+      "id": "repo-plantsfrontend-p4-045",
+      "statement": "Once a category is chosen the details page offers two save controls: the primary 'Save and continue' and the secondary 'Save and add another', posted as the form field action with the value add.",
+      "kind": "copy",
+      "ref": "details/details.njk:78-90 with copy/copy.en.js:125 and src/server/app/shared/copy.en.js:61-65",
+      "quote": "{{ govukButton({ text: sharedCopy.saveActions.saveAndContinue }) }}\n        {{ govukButton({\n          text: copy.saveAndAddAnother,\n          classes: \"govuk-button--secondary\",\n          name: \"action\",\n          value: \"add\"\n        }) }}",
       "confidence": "verbatim",
-      "note": "This is a two-step, server-side reveal that works without JavaScript. No conditional reveal is used."
+      "note": "saveAndAddAnother: 'Save and add another'."
     },
     {
-      "id": "repo-plantsfrontend-p4-083",
-      "statement": "Once a category's fields show, the page offers 'Save and continue' as the primary button and 'Save and add another' as a secondary button.",
+      "id": "repo-plantsfrontend-p4-046",
+      "statement": "The details page offers neither 'Save and return to overview' nor 'Cancel and return to overview': it carries only its own write controls.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:79-86; copy/copy.en.js:140",
-      "quote": "saveAndAddAnother: 'Save and add another',",
+      "ref": "details/details.njk:74-90",
+      "quote": "An entry page ends with its write actions rather than the shared three\n       controls: it is reached from the list page, not the hub",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-084",
-      "statement": "The commodity details page never offers 'Save and return to overview' or 'Cancel and return to overview'.",
+      "id": "repo-plantsfrontend-p4-047",
+      "statement": "When the details page is editing a saved line it carries the line's index in a hidden form field, so the save writes back to that line.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:74-90",
-      "quote": "An entry page ends with its write actions rather than the shared three\n       controls",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-085",
-      "statement": "'Save and continue' on a valid line saves it and returns to the commodities list, where the line shows in the table.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:218-229; fit/details.fit.spec.js:239-248 'saves a line and shows it on the list'",
-      "quote": "return payload.action === ADD_ANOTHER\n      ? detailsHref(request)\n      : listHref(request)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-086",
-      "statement": "'Save and add another' on a valid line saves it and opens a blank commodity details page with no category checked.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:226-228; fit/details.fit.spec.js:250-263 'comes back for another line on Save and add another'",
-      "quote": "await expect(page).toHaveURL(DETAILS_URL)\n    await expect(page.locator(`${CATEGORY_RADIOS}:checked`)).toHaveCount(0)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-087",
-      "statement": "Changing a saved line's category to a different one rewrites the line as just the new category. Values that belonged to the old category's fields are wiped, and the page comes back asking the new category's fields.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:196-206, 259-262; fit/details.fit.spec.js:314-326 're-asks with the new fields when a saved line changes category'",
-      "quote": "// Changing a saved line's category changes which fields it is asked for, and\n// the values on the page belong to the old set. The line is rewritten as the\n// bare new category — the engine wipes whatever left scope — and the page\n// returns with the new fields.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-088",
-      "statement": "When the category submitted for a saved line is refused, the page keeps showing the fields of the category the line already had.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:133-136, 244-247",
-      "quote": "a rejected category leaves the page\n * showing the fields the line already had.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-089",
-      "statement": "On a validation error the commodity details page re-shows exactly what the trader typed in every field and answers with HTTP status 400.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:93-104; details/details.controller.js:173-174; fit/details.fit.spec.js:265-280 'keeps what was typed when a required field is left blank'",
-      "quote": "The raw submitted value of every field a line of this category is asked\n * for, so an error render shows back exactly what was typed.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-090",
-      "statement": "A commodity details error-summary link moves focus to the field it names.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js:282-295 'moves focus to the field an error-summary link names'",
-      "quote": "await expect(fieldNamed(page, 'quantity')).toBeFocused()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-091",
-      "statement": "The commodity details page's Back link goes to the commodities list once the consignment holds a line. Before that, it goes to the commodity type page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:94; links.js:57-66",
-      "quote": "backLink: model.hasLines ? listHref(request) : commodityTypeHref(request),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-092",
-      "statement": "If the notification's commodity type offers no category, for example when no type has been answered, the commodity details page sends the trader to the commodity type page on both GET and POST.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:153-163, 235-237",
-      "quote": "// A commodity type that offers no category leaves the page with nothing to ask\n// and nothing it could accept, so the trader is sent back to the question that\n// decides the categories.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-093",
-      "statement": "An index in the commodity details URL that names no saved line (forged, stale or not a whole number) sends the trader to the commodities list. It is never rendered or written.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:164-168; entry-index.js:10-28",
-      "quote": "if (hasEntryIndex(raw) && index === null) {\n    return h.redirect(listHref(request))\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-094",
-      "statement": "When editing a saved line, the commodity details form carries the line's index in a hidden 'index' field.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:18-20",
+      "ref": "details/details.njk:18-20 with details/details.controller.js:91-92",
       "quote": "{% if hasIndex %}\n      <input type=\"hidden\" name=\"index\" value=\"{{ index }}\" />\n    {% endif %}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-095",
-      "statement": "A saved line stores its category plus the cleaned value of each field that category asks for, and nothing else.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:106-119; details/details.controller.js:219-225",
-      "quote": "The entry to store: the category plus the cleaned value of every field that\n * category asks for, and nothing else. Helper form fields never reach the\n * answers tree.",
+      "id": "repo-plantsfrontend-p4-048",
+      "statement": "The details page's form posts without JavaScript: a plain POST form marked novalidate carrying a hidden crumb and concurrencyToken.",
+      "kind": "non-functional",
+      "ref": "details/details.njk:15-17",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-096",
-      "statement": "Commodity lines are saved in the commodityLines collection. Each line's answers are named category, genus, species, commodityCode, quantity, potatoVariety, potatoIntendedUse, eppoCode, sizeOfTree and phytosanitaryTreatments.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fields.js:10-14; evaluation.js:19-39",
-      "quote": "export const LINES = 'commodityLines'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-097",
-      "statement": "If saving a line, adding a line or changing a line's category fails to save, the commodity details page re-renders with the recoverable-error state and HTTP status 500.",
+      "id": "repo-plantsfrontend-p4-049",
+      "statement": "A line is asked for its fields in one fixed order whichever category it is: genus, species, commodity code, variety, quantity, intended use, EPPO code, size of the trees, phytosanitary treatments.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js:176-183",
-      "quote": "buildView(request, h, { ...model, recoverableError: true }).code(\n      HTTP_STATUS_INTERNAL_SERVER_ERROR\n    )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-098",
-      "statement": "A line's fields are asked in this fixed order, showing only those its category needs: genus, species, commodity code, variety, quantity, intended use, EPPO code, size of the trees, phytosanitary treatments.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:164-195, 283-290",
-      "quote": "Which categories ask for each per-line field, and the order a line's fields\n * are asked in.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-099",
-      "statement": "Genus is asked for plants for planting, trees for planting, hardwood with round surface and hardwood chips lines.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:175-180",
-      "quote": "genus: Object.freeze([\n    PLANTS_FOR_PLANTING,\n    TREES_FOR_PLANTING,\n    HARDWOOD_ROUND_SURFACE,\n    HARDWOOD_CHIPS\n  ]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-100",
-      "statement": "Species is asked for plants for planting and trees for planting lines only.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:181",
-      "quote": "species: Object.freeze([PLANTS_FOR_PLANTING, TREES_FOR_PLANTING]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-101",
-      "statement": "Commodity code is asked for plants for planting, trees for planting and all five wood categories. Potato lines are not asked for it.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:182-186; fit/details.fit.spec.js:187-198 'asks a potato line for its variety, quantity and intended use'",
-      "quote": "commodityCode: Object.freeze([\n    PLANTS_FOR_PLANTING,\n    TREES_FOR_PLANTING,\n    ...WOOD_CATEGORIES\n  ]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-102",
-      "statement": "Variety is asked for seed potatoes and ware potatoes lines only.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:187; fit/details.fit.spec.js:187-198",
-      "quote": "potatoVariety: Object.freeze([SEED_POTATOES, WARE_POTATOES]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-103",
-      "statement": "Quantity is asked for every line, whatever its category.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:188",
-      "quote": "quantity: CATEGORIES,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-104",
-      "statement": "Intended use is asked for seed potatoes and ware potatoes lines only.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:189; fit/details.fit.spec.js:187-198",
-      "quote": "potatoIntendedUse: Object.freeze([SEED_POTATOES, WARE_POTATOES]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-105",
-      "statement": "EPPO code is asked for plants for planting and trees for planting lines only.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:190; fit/details.fit.spec.js:200-209 'asks a trees-for-planting line for its size as well'",
-      "quote": "eppoCode: Object.freeze([PLANTS_FOR_PLANTING, TREES_FOR_PLANTING]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-106",
-      "statement": "Size of the trees is asked for trees for planting and cut coniferous trees lines only.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:191; fit/details.fit.spec.js:200-209",
-      "quote": "sizeOfTree: Object.freeze([TREES_FOR_PLANTING, CUT_CONIFEROUS_TREES]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-107",
-      "statement": "Phytosanitary treatments are asked for all five wood categories only. A conifer wood line is asked for treatments and not for a genus.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:192; fit/details.fit.spec.js:211-219 'asks a conifer wood line for treatments and no genus'",
-      "quote": "phytosanitaryTreatments: WOOD_CATEGORIES",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-108",
-      "statement": "The genus field is labelled 'Genus' with the hint 'Start typing to search for a genus.'",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:102-105",
-      "quote": "label: 'Genus',\n        hint: 'Start typing to search for a genus.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-109",
-      "statement": "The genus field is the accessible autocomplete enhancing a native select. It shows all values on focus, has the empty first option 'Select a genus' and shows 'No genera found' when nothing matches.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:36-49; details.controller.js:68-75; line-form.js:25-28; copy/copy.en.js:99-100",
-      "quote": "genusPlaceholder: 'Select a genus',\n    genusNoResults: 'No genera found',",
+      "ref": "details/details.controller.js:117 with services/commodities/index.js:174-195 and :289-290",
+      "quote": "const fields = commodities.lineFieldsFor(fieldsFor)",
       "confidence": "verbatim",
-      "note": "Without JavaScript the native select still submits the value (details.fit.spec.js:28-30)."
+      "note": "lineFieldsFor filters one frozen field list in its own order, so the page order is the service's key order. The service is part 3's."
     },
     {
-      "id": "repo-plantsfrontend-p4-110",
-      "statement": "Genus is required and must be one of the genera offered for the line's category. Otherwise the error is 'Select the genus'.",
+      "id": "repo-plantsfrontend-p4-050",
+      "statement": "A line's genus is asked for with the label 'Genus' and the hint 'Start typing to search for a genus.', on plants for planting, trees for planting and the two hardwood categories only, and it is required.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:87-90 with services/commodities/index.js:175-180 and line-form.js:74-79",
+      "quote": "genus: {\n        label: 'Genus',\n        hint: 'Start typing to search for a genus.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-051",
+      "statement": "The genus question is a native select enhanced into a type-ahead, whose first option reads 'Select a genus' and which says 'No genera found' when a search matches nothing.",
+      "kind": "behaviour",
+      "ref": "line-form.js:25-28, details/details.controller.js:56-63 and details/details.njk:36-49, with copy/copy.en.js:84-85",
+      "quote": "{{ appAccessibleAutocomplete({\n          id: field.name,\n          name: field.name,\n          ...\n          autocomplete: {\n            showAllValues: true,\n            noResults: copy.genusNoResults\n          }\n        }) }}",
+      "confidence": "verbatim",
+      "note": "genusSelectText: 'Select a genus', genusNoResults: 'No genera found'. The quote elides the macro's middle arguments, shown in full at details/details.njk:37-49."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-052",
+      "statement": "The genus list is narrowed to the line's own category: plants for planting and trees for planting offer all fifteen genera, and the two hardwood categories offer only Castanea, Fraxinus and Platanus.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:74-80; copy/copy.en.js:143",
+      "ref": "details/details.controller.js:56-63 with services/commodities/index.js:152-162, pinned by details.controller.test.js:138-156 and fit/details.fit.spec.js:208-224",
+      "quote": "const genusItems = (category, selected) => [\n  { value: '', text: copy.genusSelectText },\n  ...commodities.generaFor(category).map((value) => ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-053",
+      "statement": "The fifteen genus options are labelled with their botanical name and a common name in brackets: 'Castanea (sweet chestnut)', 'Cedrus (cedar)', 'Coffea (coffee)', 'Fraxinus (ash)', 'Lavandula (lavender)', 'Nerium oleander (oleander)', 'Olea europaea (olive)', 'Picea (spruce)', 'Pinus (pine)', 'Platanus (plane)', 'Polygala myrtifolia (myrtle-leaf milkwort)', 'Prunus (plums, cherry etc)', 'Quercus (oak)', 'Salvia rosmarinus (rosemary)' and 'Ulmus (elm)'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:26-42",
+      "quote": "genusLabels: {\n    Castanea: 'Castanea (sweet chestnut)',\n    Cedrus: 'Cedrus (cedar)',\n    Coffea: 'Coffea (coffee)',\n    Fraxinus: 'Fraxinus (ash)',\n    Lavandula: 'Lavandula (lavender)',\n    'Nerium oleander': 'Nerium oleander (oleander)',\n    'Olea europaea': 'Olea europaea (olive)',\n    Picea: 'Picea (spruce)',\n    Pinus: 'Pinus (pine)',\n    Platanus: 'Platanus (plane)',\n    'Polygala myrtifolia': 'Polygala myrtifolia (myrtle-leaf milkwort)',\n    Prunus: 'Prunus (plums, cherry etc)',\n    Quercus: 'Quercus (oak)',\n    'Salvia rosmarinus': 'Salvia rosmarinus (rosemary)',\n    Ulmus: 'Ulmus (elm)'\n  },",
+      "confidence": "verbatim",
+      "note": "The same labels are used on the list page's Genus or variety column."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-054",
+      "statement": "A line's species is asked for with the label 'Species' and the hint 'For example, Quercus robur. Enter the species name as it appears on the plant passport.', on plants for planting and trees for planting only, as a two-thirds-width text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:91-94 with line-form.js:9-41 and services/commodities/index.js:181",
+      "quote": "species: {\n        label: 'Species',\n        hint: 'For example, Quercus robur. Enter the species name as it appears on the plant passport.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-055",
+      "statement": "A line's commodity code is asked for with the label 'Commodity code' and the hint 'The commodity code for these goods from the UK Trade Tariff. For example, 0602 20 20.', on plants for planting, trees for planting and all five wood categories, as a ten-character-wide text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:95-98 with line-form.js:15-41 and services/commodities/index.js:182-186",
+      "quote": "commodityCode: {\n        label: 'Commodity code',\n        hint: 'The commodity code for these goods from the UK Trade Tariff. For example, 0602 20 20.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-056",
+      "statement": "A line's variety is asked for with the label 'Variety' and the hint 'For example, Maris Piper.', on seed potatoes and ware potatoes only, as a half-width text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:99-102 with line-form.js:15-41 and services/commodities/index.js:187",
+      "quote": "potatoVariety: {\n        label: 'Variety',\n        hint: 'For example, Maris Piper.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-057",
+      "statement": "Every line, whatever its category, is asked for its quantity, with the label 'Quantity' and the hint 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.', as a ten-character-wide numeric-keypad text input.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:103-106 with line-form.js:30-45 and services/commodities/index.js:188",
+      "quote": "quantity: {\n        label: 'Quantity',\n        hint: 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.'\n      },",
+      "confidence": "verbatim",
+      "note": "inputmode numeric is set for quantity alone, so the field is still a text input."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-058",
+      "statement": "A line's intended use is asked for with the label 'Intended use' and the hint 'For example, planting, processing or fresh sale.', on seed potatoes and ware potatoes only, as a two-thirds-width text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:107-110 with line-form.js:15-41 and services/commodities/index.js:189",
+      "quote": "potatoIntendedUse: {\n        label: 'Intended use',\n        hint: 'For example, planting, processing or fresh sale.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-059",
+      "statement": "A line's EPPO code is asked for with the label 'EPPO code' and the hint 'The EPPO code for the plant. For example, QUERO for Quercus robur.', on plants for planting and trees for planting only, as a ten-character-wide text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:111-114 with line-form.js:15-41 and services/commodities/index.js:190",
+      "quote": "eppoCode: {\n        label: 'EPPO code',\n        hint: 'The EPPO code for the plant. For example, QUERO for Quercus robur.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-060",
+      "statement": "A line's tree size is asked for with the label 'Size of the trees' and the hint 'Give the height in metres. For example, 3.5.', on trees for planting and cut coniferous trees only, as a ten-character-wide text input capped at 58 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:115-118 with line-form.js:15-41 and services/commodities/index.js:191",
+      "quote": "sizeOfTree: {\n        label: 'Size of the trees',\n        hint: 'Give the height in metres. For example, 3.5.'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-061",
+      "statement": "A line's phytosanitary treatments are asked for with the label 'Phytosanitary treatments applied' and the hint 'Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).', on all five wood categories only, as a three-row textarea capped at 400 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:119-122 with line-form.js:10-28, details/details.njk:50-59 and services/commodities/index.js:192",
+      "quote": "phytosanitaryTreatments: {\n        label: 'Phytosanitary treatments applied',\n        hint: 'Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).'\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-062",
+      "statement": "Every field a line is asked for is required: none of the nine per-line fields may be left blank, and nor may the category.",
+      "kind": "rule",
+      "ref": "line-form.js:55-91 with obligations/sections/commodity.js:25-40 and :58-69",
+      "quote": "export const ruleFor = (field, category, copy) => {\n  if (field === GENUS) {\n    return requiredOneOf(",
+      "confidence": "verbatim",
+      "note": "Every rule the page composes is a required one, and every commodity obligation carries status: 'mandatory'. The obligation manifest is part 12's."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-063",
+      "statement": "Leaving the category blank is refused with 'Select the category of goods', and so is a category that belongs to another commodity type.",
+      "kind": "rule",
+      "ref": "copy/copy.en.js:127 with details/details.controller.js:39-44, pinned by details.controller.test.js:245-269",
+      "quote": "category: 'Select the category of goods',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-064",
+      "statement": "Leaving the genus blank, or naming one the line's category does not offer, is refused with 'Select the genus'.",
+      "kind": "rule",
+      "ref": "copy/copy.en.js:128 with line-form.js:74-80, pinned by details.controller.test.js:383-402",
       "quote": "genus: 'Select the genus',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-111",
-      "statement": "Plants for planting and trees for planting lines are offered all 15 genera. Hardwood round-surface and hardwood chips lines are offered only Castanea, Fraxinus and Platanus.",
+      "id": "repo-plantsfrontend-p4-065",
+      "statement": "A blank quantity is refused with 'Enter the quantity', and anything that is not a whole number above zero with 'Enter a whole number greater than 0'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:152-162; fit/details.fit.spec.js:221-237 'narrows the genus type-ahead to the hardwood genera'",
-      "quote": "// Hardwood lines are narrowed to the three genera the wood scope names. Every\n// other category that asks for a genus offers all fifteen, so the page never\n// offers fifteen and then rejects twelve.",
-      "confidence": "verbatim"
+      "ref": "copy/copy.en.js:137-140 with line-form.js:11 and :81-89, pinned by details.controller.test.js:342-381",
+      "quote": "quantity: {\n        required: 'Enter the quantity',\n        invalid: 'Enter a whole number greater than 0'\n      },",
+      "confidence": "verbatim",
+      "note": "MIN_QUANTITY is 1 and the rule is requiredIntegerInRange with min alone."
     },
     {
-      "id": "repo-plantsfrontend-p4-112",
-      "statement": "The genus list holds the 15 entries of reg 26(1)(a), in its order: Castanea, Cedrus, Coffea, Fraxinus, Lavandula, Nerium oleander, Olea europaea, Picea, Pinus, Platanus, Polygala myrtifolia, Prunus, Quercus, Salvia rosmarinus, Ulmus. Four of them are species rather than genera.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:132-150",
-      "quote": "// The fifteen entries of reg 26(1)(a). Four are species rather than genera;\n// the regulation lists them that way and so does this list.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-113",
-      "statement": "Each genus is shown with its common name in brackets, for example 'Castanea (sweet chestnut)', 'Prunus (plums, cherry etc)' and 'Polygala myrtifolia (myrtle-leaf milkwort)'.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:41-57",
-      "quote": "Castanea: 'Castanea (sweet chestnut)',\n    Cedrus: 'Cedrus (cedar)',\n    Coffea: 'Coffea (coffee)',\n    Fraxinus: 'Fraxinus (ash)',\n    Lavandula: 'Lavandula (lavender)',\n    'Nerium oleander': 'Nerium oleander (oleander)',\n    'Olea europaea': 'Olea europaea (olive)',\n    Picea: 'Picea (spruce)',\n    Pinus: 'Pinus (pine)',\n    Platanus: 'Platanus (plane)',\n    'Polygala myrtifolia': 'Polygala myrtifolia (myrtle-leaf milkwort)',\n    Prunus: 'Prunus (plums, cherry etc)',\n    Quercus: 'Quercus (oak)',\n    'Salvia rosmarinus': 'Salvia rosmarinus (rosemary)',\n    Ulmus: 'Ulmus (elm)'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-114",
-      "statement": "The species field is labelled 'Species' with the hint 'For example, Quercus robur. Enter the species name as it appears on the plant passport.' It is a two-thirds-width text input.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:106-109; line-form.js:34",
-      "quote": "label: 'Species',\n        hint: 'For example, Quercus robur. Enter the species name as it appears on the plant passport.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-115",
-      "statement": "Species is required and at most 58 characters. The errors are 'Enter the species' and 'Species must be 58 characters or less'.",
+      "id": "repo-plantsfrontend-p4-066",
+      "statement": "A quantity has no upper limit: any whole number of one or more is accepted.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:9, 15-23, 55-61; copy/copy.en.js:144-147",
+      "ref": "line-form.js:81-89 with lib/validate/validators.js:229-243",
+      "quote": "return requiredIntegerInRange(QUANTITY, {\n      min: MIN_QUANTITY,",
+      "confidence": "inferred",
+      "note": "It follows because the rule passes min alone, and the validator's range check only fires when a max is given, so no ceiling is ever applied."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-067",
+      "statement": "A blank species is refused with 'Enter the species', and one over the cap with 'Species must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "copy/copy.en.js:129-132 with line-form.js:9 and :55-61, pinned by copy/copy.test.js:104-113",
       "quote": "species: {\n        required: 'Enter the species',\n        maxLength: (max) => `Species must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-116",
-      "statement": "The commodity code field is labelled 'Commodity code' with the hint 'The commodity code for these goods from the UK Trade Tariff. For example, 0602 20 20.' It is a width-10 text input.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:110-113; line-form.js:35",
-      "quote": "label: 'Commodity code',\n        hint: 'The commodity code for these goods from the UK Trade Tariff. For example, 0602 20 20.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-117",
-      "statement": "Commodity code is required free text of at most 58 characters, not checked against the tariff. The errors are 'Enter the commodity code' and 'Commodity code must be 58 characters or less'.",
+      "id": "repo-plantsfrontend-p4-068",
+      "statement": "A blank commodity code is refused with 'Enter the commodity code', and one over the cap with 'Commodity code must be 58 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:15-23, 55-61, 90; copy/copy.en.js:148-151",
+      "ref": "copy/copy.en.js:133-136 with line-form.js:9-23",
       "quote": "commodityCode: {\n        required: 'Enter the commodity code',\n        maxLength: (max) => `Commodity code must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-118",
-      "statement": "The variety field is labelled 'Variety' with the hint 'For example, Maris Piper.' It is a half-width text input.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:114-117; line-form.js:37",
-      "quote": "label: 'Variety',\n        hint: 'For example, Maris Piper.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-119",
-      "statement": "Variety is required free text of at most 58 characters. The errors are 'Enter the variety' and 'Variety must be 58 characters or less'.",
+      "id": "repo-plantsfrontend-p4-069",
+      "statement": "A blank variety is refused with 'Enter the variety', and one over the cap with 'Variety must be 58 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:18; copy/copy.en.js:156-159",
+      "ref": "copy/copy.en.js:141-144 with line-form.js:9-23",
       "quote": "potatoVariety: {\n        required: 'Enter the variety',\n        maxLength: (max) => `Variety must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-120",
-      "statement": "The quantity field is labelled 'Quantity' with the hint 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.' It is a width-10 input with a numeric inputmode.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:118-121; line-form.js:36, 43-45",
-      "quote": "label: 'Quantity',\n        hint: 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-121",
-      "statement": "Quantity is required. Left blank, the error is 'Enter the quantity'.",
+      "id": "repo-plantsfrontend-p4-070",
+      "statement": "A blank intended use is refused with 'Enter the intended use', and one over the cap with 'Intended use must be 58 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:81-89; copy/copy.en.js:152-154; fit/details.fit.spec.js:265-295",
-      "quote": "required: 'Enter the quantity',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-122",
-      "statement": "Quantity must be a whole number of at least 1. Anything else, such as 0, gives 'Enter a whole number greater than 0'. There is no upper limit.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:11, 81-89; copy/copy.en.js:154; fit/details.fit.spec.js:297-312 'refuses a quantity that is not a whole number above zero'",
-      "quote": "invalid: 'Enter a whole number greater than 0'",
-      "confidence": "verbatim",
-      "note": "The no-upper-limit reading is inferred: requiredIntegerInRange is given only min: MIN_QUANTITY."
-    },
-    {
-      "id": "repo-plantsfrontend-p4-123",
-      "statement": "The intended use field is labelled 'Intended use' with the hint 'For example, planting, processing or fresh sale.' It is a free-text, two-thirds-width input, not a choice.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:122-125; line-form.js:38",
-      "quote": "label: 'Intended use',\n        hint: 'For example, planting, processing or fresh sale.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-124",
-      "statement": "Intended use is required free text of at most 58 characters. The errors are 'Enter the intended use' and 'Intended use must be 58 characters or less'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:19; copy/copy.en.js:160-163",
+      "ref": "copy/copy.en.js:145-148 with line-form.js:9-23",
       "quote": "potatoIntendedUse: {\n        required: 'Enter the intended use',\n        maxLength: (max) => `Intended use must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-125",
-      "statement": "The EPPO code field is labelled 'EPPO code' with the hint 'The EPPO code for the plant. For example, QUERO for Quercus robur.' It is a width-10 text input.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:126-129; line-form.js:39",
-      "quote": "label: 'EPPO code',\n        hint: 'The EPPO code for the plant. For example, QUERO for Quercus robur.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-126",
-      "statement": "EPPO code is required free text of at most 58 characters. The errors are 'Enter the EPPO code' and 'EPPO code must be 58 characters or less'.",
+      "id": "repo-plantsfrontend-p4-071",
+      "statement": "A blank EPPO code is refused with 'Enter the EPPO code', and one over the cap with 'EPPO code must be 58 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:20; copy/copy.en.js:164-167",
+      "ref": "copy/copy.en.js:149-152 with line-form.js:9-23",
       "quote": "eppoCode: {\n        required: 'Enter the EPPO code',\n        maxLength: (max) => `EPPO code must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-127",
-      "statement": "The size field is labelled 'Size of the trees' with the hint 'Give the height in metres. For example, 3.5.' It is a width-10 free-text input.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:130-133; line-form.js:40",
-      "quote": "label: 'Size of the trees',\n        hint: 'Give the height in metres. For example, 3.5.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-128",
-      "statement": "Size of the trees is required free text of at most 58 characters. It is not checked as a number. The errors are 'Enter the size of the trees' and 'Size of the trees must be 58 characters or less'.",
+      "id": "repo-plantsfrontend-p4-072",
+      "statement": "A blank tree size is refused with 'Enter the size of the trees', and one over the cap with 'Size of the trees must be 58 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:21, 90; copy/copy.en.js:168-172",
+      "ref": "copy/copy.en.js:153-157 with line-form.js:9-23",
       "quote": "sizeOfTree: {\n        required: 'Enter the size of the trees',\n        maxLength: (max) =>\n          `Size of the trees must be ${max} characters or less`\n      },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-129",
-      "statement": "The treatments field is labelled 'Phytosanitary treatments applied' with the hint 'Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).' It is a 3-row textarea.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:134-137; line-form.js:25-28; details/details.njk:50-59",
-      "quote": "label: 'Phytosanitary treatments applied',\n        hint: 'Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-130",
-      "statement": "Phytosanitary treatments are required free text of at most 400 characters. The errors are 'Enter the phytosanitary treatments applied' and 'Phytosanitary treatments must be 400 characters or less'.",
+      "id": "repo-plantsfrontend-p4-073",
+      "statement": "A blank phytosanitary treatments answer is refused with 'Enter the phytosanitary treatments applied', and one over the cap with 'Phytosanitary treatments must be 400 characters or less'.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js:10, 22; copy/copy.en.js:173-177",
+      "ref": "copy/copy.en.js:158-162 with line-form.js:10 and :22, pinned by copy/copy.test.js:108-112",
       "quote": "phytosanitaryTreatments: {\n        required: 'Enter the phytosanitary treatments applied',\n        maxLength: (max) =>\n          `Phytosanitary treatments must be ${max} characters or less`\n      }",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-131",
-      "statement": "Every per-line field label is a small label (govuk-label--s).",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:40, 55, 66",
-      "quote": "label: { text: field.label, classes: \"govuk-label--s\" },",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-132",
-      "statement": "Every per-line field the category asks for is mandatory. No line field is optional.",
+      "id": "repo-plantsfrontend-p4-074",
+      "statement": "A tree size is accepted as free text up to 58 characters, so '3.5' passes but so does any other text the trader types — nothing checks it is a number of metres.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:25-40, 58-69; line-form.js:63-91",
-      "quote": "status: 'mandatory',",
-      "confidence": "verbatim"
+      "ref": "line-form.js:21 and :90 with copy/copy.en.js:117",
+      "quote": "return textRule(field, copy)",
+      "confidence": "inferred",
+      "note": "It follows because sizeOfTree is in MAX_LENGTH_BY_FIELD and ruleFor only special-cases genus and quantity, so every other field — tree size included — falls through to the capped free-text rule, although its hint asks for a height in metres."
     },
     {
-      "id": "repo-plantsfrontend-p4-133",
-      "statement": "The commodity pages' English copy is provisional. The per-field hints and examples were invented, as ruled at d-049, and are awaiting a content pass.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:1-4",
-      "quote": "// AWAITING THE COPY PASS — the strings below are the journey spec's verbatim\n// wording, and the per-field hints and examples are invented\n// (journey-spec.json pages[commodities].provisionalCopy,\n// pages[commodity-details].provisionalCopy, ruled at d-049).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-134",
-      "statement": "The commodity list and details pages have Welsh copy. Only the details title, 'Manylion y nwyddau', and the type labels come from existing service strings. Every other string is a machine draft that no translator has reviewed.",
+      "id": "repo-plantsfrontend-p4-075",
+      "statement": "Every length error names the cap the page is enforcing rather than a number typed into the sentence, so a changed cap changes the message.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.cy.js:1-7, 75",
+      "ref": "line-form.js:13-23 and :55-61, pinned by copy/copy.test.js:90-113",
+      "quote": "// The cap each free-text field validates against. The number reaches the error\n// sentence as an argument, so it is written here and nowhere else.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-076",
+      "statement": "A refused answer on either page is answered at 400 with the page shown again, carrying an error summary above the heading and the message beside each field, and nothing is logged as a refusal.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:146-147 and :90, with details/details.njk:10, pinned by details.controller.test.js:245-255 and :342-362",
+      "quote": "const renderRejected = (request, h, model, errors) =>\n  buildView(request, h, { ...model, errors }).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-077",
+      "statement": "A refused save shows back exactly what the trader typed in every field of the line, not the last saved values.",
+      "kind": "behaviour",
+      "ref": "line-form.js:93-104 with details/details.controller.js:179, pinned by details.controller.test.js:342-362",
+      "quote": "/**\n * The raw submitted value of every field a line of this category is asked\n * for, so an error render shows back exactly what was typed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-078",
+      "statement": "Saved values are trimmed of leading and trailing spaces before they are stored.",
+      "kind": "rule",
+      "ref": "details/details.controller.js:187-194 with lib/validate/validators.js:78-90, pinned by details.controller.test.js:308-322",
+      "quote": "potatoVariety: `  ${MARIS_PIPER}  `,",
+      "confidence": "verbatim",
+      "note": "The test posts a padded variety and expects the stored line to hold 'Maris Piper'."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-079",
+      "statement": "Choosing a category for a new commodity creates the line holding only that category and comes straight back to the details page for that line, now asking its fields.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:161-167 and :217-223, pinned by details.controller.test.js:233-243",
+      "quote": "const index = await state.appendEntryAt(request, h, [LINES], {\n      [CATEGORY]: category\n    })\n    return index === null ? listHref(request) : detailsHref(request, { index })",
+      "confidence": "verbatim",
+      "note": "So adding one commodity takes two posts: the category, then its fields."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-080",
+      "statement": "Changing a saved line's category rewrites that line to the new category alone, dropping the answers the old category asked for, and asks the new category's fields.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:169-175 and :225-228, pinned by details.controller.test.js:437-447 and fit/details.fit.spec.js:294-306",
+      "quote": "const recategoriseLine = (request, h, model, index, category) =>\n  commitAndRedirect(request, h, model, async () => {\n    await state.updateEntryAt(request, h, [LINES], index, {\n      [CATEGORY]: category\n    })",
+      "confidence": "verbatim",
+      "note": "Nothing warns the trader that the other answers on that line are about to be lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-081",
+      "statement": "Saving a line stores the category and only the fields that category asks for; the form's own helper fields (the crumb, the index and the action) never reach the saved notification.",
+      "kind": "behaviour",
+      "ref": "line-form.js:106-119 with details/details.controller.js:187-194, pinned by details.controller.test.js:404-435",
+      "quote": "/**\n * The entry to store: the category plus the cleaned value of every field that\n * category asks for, and nothing else. Helper form fields never reach the\n * answers tree.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-082",
+      "statement": "Save and continue on a line returns the trader to the commodities list; Save and add another returns them to an empty details page with no category chosen.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:195-198, pinned by details.controller.test.js:324-340 and fit/details.fit.spec.js:237-250",
+      "quote": "return payload.action === ADD_ANOTHER\n      ? detailsHref(request)\n      : listHref(request)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-083",
+      "statement": "A posted line index the collection no longer holds is treated as a new line and appended, rather than written over an existing line.",
+      "kind": "rule",
+      "ref": "details/details.controller.js:207-223, pinned by details.controller.test.js:480-490",
+      "quote": "expect(result.after.commodityLines).toEqual([\n      POTATO_LINE,\n      { category: WARE_POTATOES }\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-084",
+      "statement": "Opening the details page with an index the collection does not hold, or a malformed one, sends the trader to the commodities list rather than acting on it.",
+      "kind": "rule",
+      "ref": "details/details.controller.js:137-141, pinned by details.controller.test.js:158-174",
+      "quote": "if (hasEntryIndex(raw) && index === null) {\n    return h.redirect(listHref(request))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-085",
+      "statement": "A notification whose commodity type offers no category at all — one where the type has not been answered — is sent back to the commodity-type question from the details page, on opening it and on posting to it.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:129-136 and :204-206, pinned by details.controller.test.js:208-227 and :285-295",
+      "quote": "const offersNoCategory = (current) =>\n  commodities.categoriesFor(current.commodityType).length === 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-086",
+      "statement": "The details page's Back link goes to the commodities list once the collection holds a line; before the first line it goes to the page the trader came from, and to the notification's overview when nothing says where that was.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:82 and :122, pinned by details.controller.test.js:176-206",
+      "quote": "backLink: model.hasLines ? listHref(request) : kit.trailBackLink(request),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-087",
+      "statement": "A refused save keeps the fields and the genus list of the category the line is saved as, with the genus the trader chose still selected, rather than emptying them because the posted category was blank.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:213-215 with :114-127, pinned by details.controller.test.js:449-478",
+      "quote": "const model = modelFor(current, index, payload, stored[CATEGORY])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-088",
+      "statement": "A posted category that names a property of the object prototype, such as 'constructor', is refused with 'Select the category of goods' rather than throwing.",
+      "kind": "rule",
+      "ref": "details/details.controller.js:39-44 with services/commodities/index.js:239-242, pinned by details.controller.test.js:271-283",
+      "quote": "Object.hasOwn(CATEGORIES_BY_COMMODITY_TYPE, commodityType)",
+      "confidence": "verbatim",
+      "note": "Recorded as a hardening claim: the lookups are own-property checks, so a crafted category name cannot reach the allow-list. No detail of an exploit is given."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-089",
+      "statement": "A backend that cannot take a line's save leaves the trader on the details page at 500 with the recoverable-error banner and no field revealed.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:149-159, pinned by details.controller.test.js:508-521",
+      "quote": "buildView(request, h, { ...model, recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-090",
+      "statement": "A programming error while saving a line is not caught by the details page: it escapes to the service-wide catch-all.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:149-159, pinned by details.controller.test.js:523-531",
+      "quote": ").rejects.toThrow(new TypeError('programming failure'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-091",
+      "statement": "A line saved from a Change link on the review page, or while amending a submitted notification, returns to the commodities list, keeping the return marker in the Change-link case.",
+      "kind": "behaviour",
+      "ref": "details.controller.test.js:534-567",
+      "quote": "['an amendment', { amend: true }, '']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-092",
+      "statement": "Every redirect out of the details page carries the trail and the return marker it arrived with, so a trader who came from the review page is still taken back there in the end.",
+      "kind": "behaviour",
+      "ref": "links.js:12-13 and :43-48, pinned by details.controller.test.js:492-502",
+      "quote": "expect(result.response.redirect).toMatch(\n      /\\/commodities\\/details\\?index=0&from=notification-view$/\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-093",
+      "statement": "A notification must hold at least one commodity line to be complete: the floor is one, reported as the error code obligation.commodityLines.atLeastOne.",
+      "kind": "rule",
+      "ref": "obligations/sections/commodity.js:14-21",
+      "quote": "export const commodityLine = {\n  id: 'a3d6c1f0-5b27-4e93-9a41-0c8b6e2d7f15',\n  name: 'commodityLines',\n  requires: {\n    minEntries: 1,\n    errorCode: 'obligation.commodityLines.atLeastOne'\n  }\n}",
+      "confidence": "verbatim",
+      "note": "Context only — part 12 claims the obligation manifest. Recorded here because the list page's 'Add at least one commodity' error is the page's own wording for this floor."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-094",
+      "statement": "There is no ceiling on the number of commodities a notification may hold: no page, rule or obligation caps the collection, and no message tells a trader they have added too many.",
+      "kind": "rule",
+      "ref": "list/list.controller.js:120-133, copy/copy.en.js:66-68 and obligations/sections/commodity.js:14-21",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the list controller's post handler (which only checks for an empty collection), the list and details copy bundles (whose only collection error is commodityLines: 'Add at least one commodity'), line-form.js and the commodity obligation section (whose requires block carries minEntries alone)."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-095",
+      "statement": "The commodities list is shown whole, with no paging, filtering or sorting controls however many lines it holds.",
+      "kind": "behaviour",
+      "ref": "list/list.njk:25-39 with list/table-rows.js:6-14",
+      "quote": "rows: tableRows",
+      "confidence": "inferred",
+      "note": "It follows because the template renders one govukTable from every row the collection view returns, and neither the controller nor the template reads a page number, a sort key or a filter."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-096",
+      "statement": "The commodities table shows no visible numbering of the lines: a line's position reaches the trader only in the visually hidden words of its Change link and Remove button.",
+      "kind": "behaviour",
+      "ref": "list/_cells.njk:5-6 with list/list.controller.js:39 and list/list.njk:29-34",
+      "quote": "position: index + 1,",
+      "confidence": "inferred",
+      "note": "It follows because position is used only inside the two visually hidden spans, and the table's four columns are category, genus or variety, quantity and the hidden actions column."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-097",
+      "statement": "The commodity pages are offered in Welsh as well as English, with a Welsh string behind every English one.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:8-169, pinned by copy/copy.test.js:24",
+      "quote": "itHoldsCopyAtEveryLeaf(copy, cy)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-098",
+      "statement": "The Welsh commodity copy is machine-drafted and has not been reviewed by a translator, so it must not be shown to a user before Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "copy/copy.cy.js:1",
       "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p4-135",
-      "statement": "The commodity bundle holds its own copy of the three commodity type labels, kept identical to the commodity type page's by a copy test rather than by importing them.",
+      "id": "repo-plantsfrontend-p4-099",
+      "statement": "The English wording of both commodity pages is provisional and still waiting for the copy pass, except the details page title and the three commodity-type labels, which are borrowed from pages whose English is already settled.",
       "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js:10-14, 21-25",
-      "quote": "They are deliberately the same\n * three strings the commodity-type feature holds: a feature owns the words it\n * renders, and the two are held together by `copy.test.js` checking both\n * against the service's value list rather than by one importing the other.",
+      "ref": "copy/copy.cy.js:2-7",
+      "quote": "// AWAITING THE COPY PASS — the English behind these strings is provisional\n// (journey-spec.json pages[commodities].provisionalCopy,\n// pages[commodity-details].provisionalCopy). `details.title` is the\n// live-animals string for the identical English page title; the type labels\n// are the commodity-type bundle's, for the identical English sentences. Every\n// other string is machine-draft.",
+      "confidence": "verbatim",
+      "note": "The journey-spec entries this cites are another part's to claim."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-100",
+      "statement": "The Welsh list page reads 'Nwyddau yn y llwyth' as title and heading, 'Nid ydych wedi ychwanegu unrhyw nwyddau eto.' as its empty state, 'Ychwanegu nwydd arall' on its add button, 'Newid' and 'Tynnu' on its row controls, and 'Ychwanegwch o leiaf un nwydd' as its collection-floor error.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:47-73",
+      "quote": "list: {\n    title: 'Nwyddau yn y llwyth',\n    heading: 'Nwyddau yn y llwyth',\n    empty: 'Nid ydych wedi ychwanegu unrhyw nwyddau eto.',\n    addAnother: 'Ychwanegu nwydd arall',\n    table: {\n      caption: 'Y nwyddau rydych wedi’u hychwanegu',\n      category: 'Categori',\n      genusOrVariety: 'Genws neu fathogyn',\n      quantity: 'Nifer',\n      actionsHidden: 'Camau gweithredu'\n    },\n    change: 'Newid',\n    changeHidden: (position) => `nwydd ${position}`,\n    remove: 'Tynnu',\n    removeHidden: (position) => `nwydd ${position}`,\n    removed: {\n      title: 'Nwyddau wedi’u tynnu',\n      body: (count, typeLabel) =>\n        count === 1\n          ? `Gwnaethom dynnu 1 nwydd nad yw’n ${typeLabel}`\n          : `Gwnaethom dynnu ${count} o nwyddau nad ydynt yn ${typeLabel}`\n    },\n    errors: {\n      commodityLines: 'Ychwanegwch o leiaf un nwydd'\n    }\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-101",
+      "statement": "The Welsh details page reads 'Manylion y nwyddau' as title and heading, 'Pa gategori o nwyddau yw hwn?' as its category question, 'Dewiswch genws' and 'Ni ddaethpwyd o hyd i unrhyw genws' on the genus type-ahead, and 'Parhau' and 'Cadw ac ychwanegu un arall' on its buttons.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:74-89 and :128-129",
+      "quote": "details: {\n    title: 'Manylion y nwyddau',\n    heading: 'Manylion y nwyddau',\n    categoryLegend: 'Pa gategori o nwyddau yw hwn?',",
+      "confidence": "verbatim",
+      "note": "genusSelectText: 'Dewiswch genws', genusNoResults: 'Ni ddaethpwyd o hyd i unrhyw genws', continue: 'Parhau', saveAndAddAnother: 'Cadw ac ychwanegu un arall'."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-102",
+      "statement": "The Welsh per-line field labels are 'Genws', 'Rhywogaeth', 'Cod nwyddau', 'Mathogyn', 'Nifer', 'Y defnydd arfaethedig', 'Cod EPPO', 'Maint y coed' and 'Triniaethau ffytoiechydol a roddwyd', each with its own Welsh hint.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:90-127",
+      "quote": "fields: {\n      genus: {\n        label: 'Genws',\n        hint: 'Dechreuwch deipio i chwilio am genws.'\n      },\n      species: {\n        label: 'Rhywogaeth',\n        hint: 'Er enghraifft, Quercus robur. Rhowch enw’r rhywogaeth fel y mae’n ymddangos ar y pasbort planhigion.'\n      },",
+      "confidence": "verbatim",
+      "note": "The quote shows the first two of the nine; the rest sit at copy.cy.js:99-126 in the same shape."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-103",
+      "statement": "The Welsh error messages are 'Dewiswch gategori’r nwyddau' for the category, 'Dewiswch y genws' for the genus, 'Rhowch y nifer' and 'Rhowch rif cyfan sy’n fwy na 0' for the quantity, and a required and a length sentence for each of the other six fields.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:130-167",
+      "quote": "errors: {\n      category: 'Dewiswch gategori’r nwyddau',\n      genus: 'Dewiswch y genws',\n      species: {\n        required: 'Rhowch y rhywogaeth',\n        maxLength: (max) => `Rhaid i’r rhywogaeth fod yn ${max} nod neu lai`\n      },",
+      "confidence": "verbatim",
+      "note": "The quote shows the first three of the ten error entries; the rest sit at copy.cy.js:137-166 in the same shape."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-104",
+      "statement": "The Welsh category and genus labels are translated too, so the Welsh list page and category question show Welsh words for every one of the nine categories and fifteen genera.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:14-46",
+      "quote": "categoryLabels: {\n    'seed-potatoes': 'Tatws hadyd',\n    'ware-potatoes': 'Tatws bwyd',\n    'plants-for-planting': 'Planhigion i’w plannu',\n    'trees-for-planting': 'Coed i’w plannu',",
+      "confidence": "verbatim",
+      "note": "The genus labels keep the botanical name and translate the common name in brackets, as in 'Castanea (castanwydden bêr)'."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-105",
+      "statement": "The three commodity-type names the removal banner can report are 'Potatoes (seed or ware)', 'Plants for planting' and 'Wood and cut trees', and they are the same words the commodity-type question itself uses.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:6-10, pinned by copy/copy.test.js:42-58",
+      "quote": "typeLabels: {\n    potatoes: 'Potatoes (seed or ware)',\n    'plants-for-planting': 'Plants for planting',\n    'wood-and-cut-trees': 'Wood and cut trees'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-106",
+      "statement": "The commodity pages are held to labelling every value the service offers and no other: a category, genus, commodity type or per-line field with no label, hint or error in either language fails the build.",
+      "kind": "constraint",
+      "ref": "copy/copy.test.js:26-72",
+      "quote": "it.each(LOCALES)(\n    'Should give every %s per-line field a label, a hint and an error',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-107",
+      "statement": "A line index asked for in a link or posted in a form is acted on only when it is a whole number the collection actually holds; anything else is treated as naming no line.",
+      "kind": "rule",
+      "ref": "entry-index.js:7-28",
+      "quote": "export const entryIndexOf = (raw, count) => {\n  if (!hasEntryIndex(raw)) {\n    return null\n  }\n  const index = Number(raw)\n  return Number.isInteger(index) && index >= 0 && index < count ? index : null\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: validates the `index` query parameter or form field of a commodity line before a render or a write sees it."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-108",
+      "statement": "Every link and redirect between the list page, the details page and the commodity-type question keeps the trail of pages the trader walked, so Back and the eventual return always point at the page they actually came from.",
+      "kind": "behaviour",
+      "ref": "links.js:6-64",
+      "quote": "const hrefWith = (request, slug, entries) =>\n  kit.carryTrail(request, pathWith(request.params.journeyId, slug, entries))",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the commodity pages' own hrefs — the list, the details page with or without an index, and the commodity-type question with the newest place dropped — from the journey id and the request's trail."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-109",
+      "statement": "After a change of commodity type has dropped lines, the trader is sent to the list page with the number dropped in the address and the commodity-type question added to the trail.",
+      "kind": "behaviour",
+      "ref": "links.js:17-32",
+      "quote": "export const listHrefAfterTypeChange = (request, removed) =>\n  kit.pushTrail(\n    request,\n    pathWith(request.params.journeyId, commoditiesPage.slug, [\n      ['removed', String(removed)]\n    ]),\n    commodityTypePage.slug\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: turns a count of dropped commodity lines into the list page's `removed` query parameter. The commodity-type page that calls it is part 3's."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-110",
+      "statement": "Each per-line field is rendered as the kind and width of control its own name decides: the genus as a select, phytosanitary treatments as a textarea, and everything else as a text input, with set widths and a numeric keypad for the quantity.",
+      "kind": "behaviour",
+      "ref": "line-form.js:25-53",
+      "quote": "const WIDGET_BY_FIELD = {\n  [GENUS]: 'select',\n  phytosanitaryTreatments: 'textarea'\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a commodity-line field name to its widget, GOV.UK width class, inputmode and character cap, read by the details page's view model."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-111",
+      "statement": "The commodities table a trader sees is built row by row from the saved lines, each row's fourth cell holding the Change link and Remove button for that line.",
+      "kind": "behaviour",
+      "ref": "list/table-rows.js:6-14, pinned by list/table-rows.test.js:10-47",
+      "quote": "return rows.map((row) => [\n    { text: row.category },\n    { text: row.genusOrVariety },\n    { text: row.quantity },\n    { html: cells.commodityActionsCell(row, copy) }\n  ])",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the controller's commodity rows into GOV.UK table cells, rendering the actions cell through the feature's own Nunjucks macro. With no line it returns no rows."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-112",
+      "statement": "Which per-line answers count towards a notification being complete is decided per line and per category: each field is in scope only on the categories that ask for it, and the quantity on every line.",
+      "kind": "rule",
+      "ref": "evaluation.js:19-39 with obligations/sections/commodity.js:35-40 and :58-69",
+      "quote": "const lineLeaf = (field, obligation) =>\n  grouped({ field, obligation, groups: [line] })",
+      "confidence": "verbatim",
+      "note": "mechanism: binds the ten per-line answer names (category, genus, species, commodityCode, quantity, potatoVariety, potatoIntendedUse, eppoCode, sizeOfTree, phytosanitaryTreatments) to their obligations within the commodityLines group. The manifest and the engine are other parts'."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-113",
+      "statement": "The details page reveals exactly the fields the notification's own model holds in scope for that line — the page never asks for an answer the model would ignore, nor leaves one out.",
+      "kind": "constraint",
+      "ref": "details.controller.test.js:111-136",
+      "quote": "it('Should reveal exactly the fields the model holds in scope for the line', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-114",
+      "statement": "End to end, a trader who has answered the commodity type and opens the list page with no commodity saved is taken to the entry page.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:110-118, 'sends a consignment with no line straight to the entry page'",
+      "quote": "await page.goto(listUrlOf(page))\n\n    await expect(page).toHaveURL(DETAILS_URL_WITHOUT_TRAIL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-115",
+      "statement": "End to end, the list page shows the 'About the consignment' caption, the 'Commodities in the consignment' heading and one table row per saved line, each carrying its category label, its variety and its quantity.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:120-139, 'renders the caption, the heading and every saved line'",
+      "quote": "const rows = page.getByRole('row')\n    await expect(rows).toHaveCount(3)\n    await expect(rows.nth(1)).toContainText(copy.categoryLabels[SEED_POTATOES])",
+      "confidence": "verbatim",
+      "note": "Three rows for two lines, the first being the header row."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-116",
+      "statement": "End to end, the Change link on a row opens the entry page for that line with its answers filled in.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:141-152, 'sends Change to the entry page for that line'",
+      "quote": "await expect(page).toHaveURL(DETAILS_EDIT_URL)\n    await expect(fieldNamed(page, 'potatoVariety')).toHaveValue(MARIS_PIPER)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-117",
+      "statement": "End to end, pressing Remove on the first of two rows takes that line off the list and leaves the other.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:154-167, 'removes the line the Remove button names'",
+      "quote": "await expect(page.getByRole('table')).not.toContainText(MARIS_PIPER)\n    await expect(page.getByRole('table')).toContainText(KING_EDWARD)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-118",
+      "statement": "End to end, a trader who removes the only commodity is taken back to the entry page rather than left on an empty list.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:169-181, 'sends a trader who removed the last line back to the entry page'",
+      "quote": "await expect(page).toHaveURL(DETAILS_URL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-119",
+      "statement": "End to end, Save and continue on the list page leaves the About the consignment section for the origin page.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:183-191, 'leaves the section for the origin page on Save and continue'",
+      "quote": "await expect(page).toHaveURL(ORIGIN_URL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-120",
+      "statement": "End to end, the list page shows Save and continue and neither of the two return controls.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:193-203, 'ends with the primary control alone'",
+      "quote": "await expect(saveAndContinue(page)).toBeVisible()\n    await expect(saveAndReturnToHub(page)).toBeHidden()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-121",
+      "statement": "The list page reading saved lines back has no serious or critical accessibility violation.",
+      "kind": "non-functional",
+      "ref": "fit/list.fit.spec.js:205-211, 'has no serious or critical axe violations reading the lines back'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Commodities list')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-122",
+      "statement": "End to end, a trader who returns to the commodity-type question with a line already saved is warned before making a change that would remove it.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:219-226, 'warns before a change that would remove saved lines'",
+      "quote": "await expect(page.getByText(typeCopy.linesWarning)).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "The warning's own wording lives in the commodity-type feature's copy, which part 3 claims."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-123",
+      "statement": "End to end, changing the commodity type reports how many commodities were removed in a banner, shows the empty state and offers the Add another commodity button for a fresh start.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:228-242, 'reports what a change of type removed, and offers a fresh start'",
+      "quote": "await expect(\n      page.getByRole('region', { name: copy.list.removed.title })\n    ).toContainText(copy.list.removed.body(1, typeCopy.typeLabels[WOOD]))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-124",
+      "statement": "End to end, a consignment emptied by a change of commodity type is held at the list page when the trader presses Save and continue, with the 'Add at least one commodity' summary link moving the caret to the add button.",
+      "kind": "behaviour",
+      "ref": "fit/list.fit.spec.js:244-258, 'holds an emptied consignment at the collection floor'",
+      "quote": "const summaryLink = errorSummaryLinks(page, copy.list.errors.commodityLines)\n    await expect(summaryLink).toBeVisible()\n\n    await summaryLink.click()\n    await expect(page.locator('#commodityLines')).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-125",
+      "statement": "The list page reporting a removal has no serious or critical accessibility violation.",
+      "kind": "non-functional",
+      "ref": "fit/list.fit.spec.js:260-271, 'has no serious or critical axe violations reporting a removal'",
+      "quote": "await expectNoSeriousOrCriticalViolations(\n      page,\n      'Commodities list, removal reported'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-126",
+      "statement": "End to end, the entry page shows the 'About the consignment' caption, the 'Commodity details' heading and the category question as a grouped set of radios.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:72-86, 'renders the caption, the heading and the category question'",
+      "quote": "await expect(\n      page.getByRole('group', { name: copy.details.categoryLegend })\n    ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-127",
+      "statement": "End to end, a potatoes notification is offered exactly two category radios, seed potatoes and ware potatoes.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:88-96, 'offers only the categories the chosen commodity type allows'",
+      "quote": "await expect(page.locator(CATEGORY_RADIOS)).toHaveCount(2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-128",
+      "statement": "End to end, a wood and cut trees notification is offered five category radios and the preservative-treated wood guidance on the question.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:98-107, 'offers the five wood categories with the preservative guidance'",
+      "quote": "await expect(page.locator(CATEGORY_RADIOS)).toHaveCount(5)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-129",
+      "statement": "End to end, a plants for planting notification shows both category hints — the one explaining plants that are not trees and the one explaining trees of any size.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:109-119, 'hints the two plants categories that need explaining'",
+      "quote": "await expect(group).toContainText(copy.details.categoryHints[PLANTS])\n    await expect(group).toContainText(copy.details.categoryHints[TREES])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-130",
+      "statement": "End to end, no per-line field is on the entry page before a category is chosen, and the page offers the Continue button.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:121-130, 'shows no per-line field until a category is chosen'",
+      "quote": "await expect(fieldNamed(page, 'quantity')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-131",
+      "statement": "End to end, continuing with no category chosen shows 'Select the category of goods' on the question and in the error summary, whose link moves the caret to the first radio.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:132-146, 'continuing with no category shows the error and focuses the first radio'",
+      "quote": "await summaryLink.click()\n    await expect(page.locator(CATEGORY_RADIOS).first()).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-132",
+      "statement": "The entry page's category question has no serious or critical accessibility violation, before or after the category error.",
+      "kind": "non-functional",
+      "ref": "fit/details.fit.spec.js:148-166, 'has no serious or critical axe violations before or after the error'",
+      "quote": "await expectNoSeriousOrCriticalViolations(\n      page,\n      'Commodity details, category error state'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-133",
+      "statement": "End to end, a seed potatoes line is asked for its variety, quantity and intended use, and for neither a genus nor a commodity code.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:174-185, 'asks a potato line for its variety, quantity and intended use'",
+      "quote": "await expect(fieldNamed(page, 'genus')).toHaveCount(0)\n    await expect(fieldNamed(page, 'commodityCode')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-134",
+      "statement": "End to end, a trees for planting line is asked for its species, its EPPO code and the size of the trees.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:187-196, 'asks a trees-for-planting line for its size as well'",
+      "quote": "await expect(fieldNamed(page, 'sizeOfTree')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-135",
+      "statement": "End to end, a conifer wood with bark line is asked for its phytosanitary treatments and no genus.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:198-206, 'asks a conifer wood line for treatments and no genus'",
+      "quote": "await expect(fieldNamed(page, 'phytosanitaryTreatments')).toBeVisible()\n    await expect(fieldNamed(page, 'genus')).toHaveCount(0)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-136",
-      "statement": "The commodity details page is tested for no serious or critical axe violations: on the category question, in the category error state, with fields revealed, and in the field error state.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js:159-179 'has no serious or critical axe violations before or after the error', 328-346 '... with the fields revealed'",
-      "quote": "await expectNoSeriousOrCriticalViolations(\n      page,\n      'Commodity details, fields revealed'\n    )",
-      "confidence": "verbatim"
+      "statement": "End to end, the genus type-ahead on a hardwood chips line offers Castanea and not Picea, so the search is narrowed to the three hardwood genera.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:208-224, 'narrows the genus type-ahead to the hardwood genera'",
+      "quote": "await expect(\n      page.getByRole('option', { name: copy.genusLabels.Picea })\n    ).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The type-ahead is the accessible-autocomplete enhancement of the native select: 'the visible combobox input keeps the original id, and the hidden select still submits the value'."
     },
     {
       "id": "repo-plantsfrontend-p4-137",
-      "statement": "The commodity data (types, categories, genera and which fields each category asks) is a hard-coded vocabulary held in the plants frontend. It is not fetched from MDM, reference data or any other service.",
-      "kind": "integration",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:1-8",
-      "quote": "The set-owned commodity vocabulary.\n *\n * The service holds values, never the words a page shows for them: a label or\n * a hint is a copy leaf in the feature that renders it.",
-      "confidence": "inferred",
-      "note": "Inferred because the module holds only frozen literal arrays and does no IO, which the obligation file confirms: 'an obligation module does no IO and reads no reference data'."
+      "statement": "End to end, a saved line appears on the commodities list.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:226-235, 'saves a line and shows it on the list'",
+      "quote": "await expect(page).toHaveURL(LIST_URL)\n    await expect(page.getByRole('table')).toContainText(MARIS_PIPER)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-138",
-      "statement": "The plants commodity pages have no commodity catalogue search. Categories are radios filtered by commodity type, the genus is a type-ahead over a fixed list of 15, and species, commodity code and EPPO code are free text with no lookup.",
+      "statement": "End to end, Save and add another returns the trader to a fresh entry page with no category chosen.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js; journeys/linear/features/commodities/details/details.njk; line-form.js",
-      "quote": "",
-      "confidence": "gap",
-      "note": "I looked at services/commodities/index.js, the details controller and template, and line-form.js. None of them offers a search or lookup of a commodity catalogue or of tariff, EPPO or species codes."
+      "ref": "fit/details.fit.spec.js:237-250, 'comes back for another line on Save and add another'",
+      "quote": "await expect(page.locator(`${CATEGORY_RADIOS}:checked`)).toHaveCount(0)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-139",
-      "statement": "Each origin constraint ties categories to the countries they may come from. Ware potatoes may only come from Poland, Portugal, Romania or Spain.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:93-97",
-      "quote": "id: WARE_POTATOES,\n    categories: Object.freeze([WARE_POTATOES]),\n    countries: Object.freeze(['PL', 'PT', 'RO', 'ES'])",
-      "confidence": "verbatim",
-      "note": "The origin page (another part) applies these. They are recorded here because this part reads the service that holds them."
+      "statement": "End to end, saving a line with a required field left blank shows the field's error in the summary and keeps what the trader had already typed.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:252-265, 'keeps what was typed when a required field is left blank'",
+      "quote": "await expect(fieldNamed(page, 'potatoVariety')).toHaveValue(MARIS_PIPER)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-140",
-      "statement": "Conifer wood without bark may only come from Italy, France, Portugal or Spain.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:98-102",
-      "quote": "id: CONIFER_WOOD_WITHOUT_BARK,\n    categories: Object.freeze([CONIFER_WOOD_WITHOUT_BARK]),\n    countries: Object.freeze(['IT', 'FR', 'PT', 'ES'])",
+      "statement": "End to end, an error-summary link on the entry page moves the caret to the field it names.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:267-277, 'moves focus to the field an error-summary link names'",
+      "quote": "await expect(fieldNamed(page, 'quantity')).toBeFocused()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-141",
-      "statement": "Plants for planting, trees for planting, conifer wood with bark, cut coniferous trees and both hardwood categories may only come from the 27 EU member states.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:47-79, 103-114",
-      "quote": "// The 27 member States of the European Union, as ISO 3166-1 alpha-2 codes —\n// the origin block minus Iceland, Liechtenstein, Norway and Switzerland.",
+      "statement": "End to end, a quantity of 0 is refused with 'Enter a whole number greater than 0'.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:279-292, 'refuses a quantity that is not a whole number above zero'",
+      "quote": "await expect(\n      errorSummaryLinks(page, copy.details.errors.quantity.invalid)\n    ).toBeVisible()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-142",
-      "statement": "Seed potatoes have no origin narrowing: every country the origin block offers is acceptable, because reg 24A(1)(a) scopes them to the whole Common SPS Area.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:81-91",
-      "quote": "A category the list never names — seed potatoes,\n * scoped by reg 24A(1)(a) to the whole Common SPS Area — narrows nothing, so\n * every country the origin block offers stays acceptable for it.",
+      "statement": "End to end, changing a saved line's category from plants for planting to trees for planting re-asks the line and now shows the size of the trees.",
+      "kind": "behaviour",
+      "ref": "fit/details.fit.spec.js:294-306, 're-asks with the new fields when a saved line changes category'",
+      "quote": "await expect(page).toHaveURL(DETAILS_EDIT_URL)\n    await expect(fieldNamed(page, 'sizeOfTree')).toBeVisible()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-143",
-      "statement": "The origin constraints are ordered narrowest first. When a consignment breaks more than one, the origin page reports the narrowest.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:89-91",
-      "quote": "The order is the order the origin page reports a failure in: a consignment\n * that breaks more than one constraint is told about the narrowest.",
+      "statement": "The entry page with its per-line fields revealed has no serious or critical accessibility violation, before or after a field error.",
+      "kind": "non-functional",
+      "ref": "fit/details.fit.spec.js:308-326, 'has no serious or critical axe violations with the fields revealed'",
+      "quote": "await expectNoSeriousOrCriticalViolations(\n      page,\n      'Commodity details, field error state'\n    )",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p4-144",
-      "statement": "The commodityType answer is a mandatory obligation.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:4-8; journeys/linear/features/commodity-type/evaluation.js:7-9",
-      "quote": "export const commodityType = {\n  id: '9f2c4b71-3e58-4a6d-9c02-71d8f5a3e6b4',\n  name: 'commodityType',\n  status: 'mandatory'\n}",
-      "confidence": "verbatim"
+      "statement": "Nothing on either commodity page offers a Welsh or English language switch, or says how a trader reaches the Welsh wording the bundles hold.",
+      "kind": "behaviour",
+      "ref": "list/list.njk:1-50 and details/details.njk:1-92 with list/list.controller.js:21 and details/details.controller.js:34",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both templates, both controllers (which resolve a bundle through the shared copyFor by the request's language) and the feature's copy folder. The chrome that would carry such a control is in the shared layout, which part 13 claims."
     },
     {
       "id": "repo-plantsfrontend-p4-145",
-      "statement": "The commodityLines obligation requires at least one line, with error code obligation.commodityLines.atLeastOne. It is a structural group that is always in scope.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:10-21",
-      "quote": "requires: {\n    minEntries: 1,\n    errorCode: 'obligation.commodityLines.atLeastOne'\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-146",
-      "statement": "Each line's category is a mandatory obligation within commodityLines. It is the gate that every other per-line field reads.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:23-30",
-      "quote": "// The per-line gate. Every other field on a line reads it at the same identity\n// level, so each gate is a same-frame `allowListed` with a null projection.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-147",
-      "statement": "Each line's quantity is a mandatory obligation with no gate, because every line carries a quantity.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:32-40",
-      "quote": "// Every line carries a quantity, whichever category it is, so this one field\n// needs no gate.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-148",
-      "statement": "Genus, species, commodity code, variety, intended use, EPPO code, size of the trees and phytosanitary treatments are each mandatory obligations within commodityLines. Each applies only on lines whose category the commodity service lists for that field, with the reason code obligation.<field>.applicable.becauseCategory.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js:42-109",
-      "quote": "applyTo: allowListed(\n    category,\n    () => categoriesRequiring(name),\n    null,\n    appliesBecauseCategory(name)\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-149",
-      "statement": "The page that reveals a line's fields and the obligation that scopes them read the same category-to-field list, so the page asks exactly the fields the model requires.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/services/commodities/index.js:164-173",
-      "quote": "One list per field, read twice: the obligation's `applyTo` gate scopes the\n * field to these categories, and the entry page renders exactly the fields\n * whose list holds the chosen category.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p4-150",
-      "statement": "The commodity details page and its forms post with novalidate and carry hidden crumb and concurrencyToken fields, as does the list page's form.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk:15-17; list/list.njk:21-23",
-      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
-      "confidence": "verbatim"
+      "statement": "The commodity pages hold no character-count countdown, no 'you have N characters remaining' message and no other JavaScript enhancement beyond the genus type-ahead.",
+      "kind": "behaviour",
+      "ref": "details/details.njk:1-92",
+      "quote": "{% from \"accessible-autocomplete/macro.njk\" import appAccessibleAutocomplete %}",
+      "confidence": "inferred",
+      "note": "It follows because the only enhanced control either template imports is the accessible-autocomplete macro: the 400-character treatments answer uses govukTextarea with no maxlength or character count, and every other field is a plain govukInput."
     }
   ]
 }

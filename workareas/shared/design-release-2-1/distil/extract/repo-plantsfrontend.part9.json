@@ -1,1250 +1,830 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 9, Decisions ledger. Read in full: src/server/app/sets/high-risk-plants/spec/decisions.json (schema_version 1, one object with a decisions array of 84 entries d-001 to d-084; every entry has id, subject {kind conflict|behaviour, id}, ruling resolve|adopt|park, status, resolution, rationale, decidedBy panel|sam, decidedAt, dissent, supersedes, supersededBy, escalate) and src/server/app/sets/high-risk-plants/spec/panel/README.md (how the ledger works, the standing rulings of 2026-09-06, how to change a ruling). The ledger tallies: 40 resolve, 21 adopt, 23 park; 75 decided by panel, 9 by sam; every entry decidedAt 2026-09-06, status current, supersedes and supersededBy null, escalate false. Decisions fall into the panel's dockets: arrival and timing (d-001 to d-011), contact, consignor, origin error copy and declaration (d-012 to d-016), commodity model (d-017 to d-031), sources and who notifies (d-032 to d-040), out-of-scope internal and platform behaviours (d-041 to d-048), formats, labels and origin lists (d-049 to d-059), reference, status and post-submission actions (d-060 to d-066), chrome, dashboard, hub and guidance (d-067 to d-073), non-functional requirements and MI (d-074 to d-083) and the copy tripwires (d-084). Claims below take each decision in ledger order: what it rules, quoted by id and words, with who decided where it was Sam and the losing dissent where one is recorded. The panel's evidence files (rulings.json, critic.json) are out of scope and were not read.",
+  "structure": "Part 9, the address book picker shell. Read in full every file of src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/ (22 files, 2,395 lines): the page shell template.njk; the results macro results.njk; the row-cell macros _cells.njk; the held-address card held-copy.njk; the renderer render.js; the view model view-model.js; the table rows table-rows.js; the address formatting address-lines.js; the paging pagination.js; the results link builder results-href.js; the GET/POST routes picker-routes.js; the save rule save-selection.js; the copy pair copy/copy.en.js and copy/copy.cy.js; and the unit tests results.test.js, table-rows.test.js, address-lines.test.js, save-selection.test.js and copy/copy.test.js, plus the three shared test-support modules test-support.js, controller-test-support.js and paging-test-support.js, which pin down the behaviour every picker page shares. Read src/server/app/shared/paging.js and src/server/app/shared/kit.js for context only (part 13 claims them), and src/server/common/components/submitted-search/macro.njk for context on how the search box renders. This part covers the shell all three party pickers (consignor, place of destination, contact address) share: the page furniture above the form, the submitted search box, the held-address summary card, the results heading and count, the five-column results table with a radio a row and a details cell, the error wiring, eight-addresses-a-page GOV.UK pagination with ellipses, the links that carry the search, the selection and the trail, the inset that names the chosen address, the GET and POST routes with the query they read, the save rule and every refusal it makes, and every copy key in both languages. It stops at the picker pages themselves, their headings, descriptions and their own error messages, which parts 7 and 8 claim.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p9-001",
-      "statement": "The plants set keeps one rulings ledger, spec/decisions.json, with one entry per ruling stamped onto its subject (a conflict's resolution and decision, or a behaviour's status and decision); it is the only place a ruling lives, and conflicts and behaviours carry only a pointer to it.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:3-6",
-      "quote": "`../decisions.json` is the ledger: one entry per ruling, stamped onto its subject (a conflict's `resolution` and `decision`, or a behaviour's `status` and `decision`). It is the only place a ruling lives; conflicts.json and the behaviours carry a pointer to it, never their own answer.",
+      "statement": "Every address book picker page lays out, in order: the error summary, the journey section caption, a large heading, a paragraph of descriptive text, the card naming the party the notification already holds, then one form holding the search box, the chosen-address inset, the results and the save controls.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:8-46",
+      "quote": "{% include \"shared/error-summary.njk\" %}\n\n  {{ sectionCaption(caption) }}\n  <h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ description }}</p>\n\n  {% include \"high-risk-plants/journeys/linear/features/address-book-picker/held-copy.njk\" %}\n\n  <form method=\"post\" novalidate>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-002",
-      "statement": "The ledger's rulings came from a judges panel: eight dockets, three judges and a chair each, with one ruling per item decided by the panel, or by Sam where a standing product-owner ruling settled it.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:11-15",
-      "quote": "eight dockets, three judges and a chair each, one ruling per item with rationale, spec changes, dissent and who decided it (`panel`, or `sam` where a standing product-owner ruling settled it).",
-      "confidence": "verbatim"
+      "statement": "A picker page's heading and the paragraph under it are supplied by the page, not by the shared shell, so each of the three pickers asks its question in its own words.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:62-63",
+      "quote": " * @param {string} binding.heading - the question, as this page asks it.\n * @param {string} binding.description - the text under the question.",
+      "confidence": "verbatim",
+      "note": "The wording of each heading and description belongs to parts 7 and 8."
     },
     {
       "id": "repo-plantsfrontend-p9-003",
-      "statement": "Standing ruling for the first pass (2026-09-06): users, sign-in models, agents, delegation of authority, plant-operator registration and 'who notifies' are out of phase, parked rather than rejected.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:19-22",
-      "quote": "Standing rulings for the first pass (2026-09-06): users, sign-in models, agents, delegation of authority, plant-operator registration and \"who notifies\" are out of phase; bulk upload is out of phase. Both are parked, not rejected.",
+      "statement": "The picker's form posts back to the same page path, with browser validation turned off.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:17",
+      "quote": "<form method=\"post\" novalidate>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-004",
-      "statement": "Standing ruling for the first pass (2026-09-06): bulk upload is out of phase, parked rather than rejected.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:21-22",
-      "quote": "bulk upload is out of phase. Both are parked, not rejected.",
+      "statement": "The picker's form carries the cross-site request token and the notification's concurrency token as hidden fields, so a post is rejected when the notification has changed since the page was shown.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:18-19",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-005",
-      "statement": "A ruling is never changed by editing the ledger or evidence files: a new decision is added with tools/journey-builder/spec-add-decision.sh naming the decision it supersedes, which marks the earlier entry superseded and re-stamps the subject.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:24-32",
-      "quote": "To change a ruling, do not edit any of these files. From the workspace: ... tools/journey-builder/spec-add-decision.sh EUDPA-409 --subject conflict:c-012 ... --supersedes d-0NN ... The earlier entry is marked superseded and the subject is re-stamped.",
+      "statement": "The picker's form carries the page of results being shown as a hidden field, so a search or a save knows which page the trader was on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:20",
+      "quote": "<input type=\"hidden\" name=\"page\" value=\"{{ picker.page }}\" />",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-006",
-      "statement": "All 84 ledger decisions are current, all were decided on 2026-09-06, none supersedes or is superseded by another and none is escalated; 75 were decided by the panel and 9 by Sam (d-033, d-034, d-035, d-036, d-039, d-040, d-077, d-083, d-084).",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/spec/decisions.json (every entry: status, decidedAt, supersedes, supersededBy, escalate, decidedBy)",
-      "quote": "\"status\": \"current\" ... \"decidedAt\": \"2026-09-06\" ... \"supersedes\": null ... \"supersededBy\": null ... \"escalate\": false",
-      "confidence": "verbatim",
-      "note": "Counted with jq over the whole decisions array: 40 resolve, 21 adopt, 23 park."
+      "statement": "When the picker already holds a chosen address, its id is carried in a hidden field named selected, so a save works even when no radio is posted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:21-23",
+      "quote": "{% if picker.selected %}\n      <input type=\"hidden\" name=\"selected\" value=\"{{ picker.selected.id }}\" />\n    {% endif %}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-007",
-      "statement": "d-001 (conflict c-001): 'Great Britain', never England, appears in every notifier-facing string (arrival-status heading and legend, arrival date labels, place-of-landing hint, confirmation body).",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-001 resolution",
-      "quote": "d-001: 'Great Britain' wins in every notifier-facing string (arrival-status heading and legend, arrivalDate labels by state, proposedPlaceOfLanding hint, confirmation body; the dashboard intro names no territory today — guidance-before-you-start)",
-      "confidence": "verbatim"
+      "statement": "A picker page is rendered on the full-width surface rather than the two-thirds form surface used by the journey's question pages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:107",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim",
+      "note": "kit.SURFACES.display is 'govuk-grid-column-full' (src/server/app/shared/kit.js:38-41, claimed by part 13). Proven by controller-test-support.js:96-100, 'Should render the results table on the full-width surface'."
     },
     {
       "id": "repo-plantsfrontend-p9-008",
-      "statement": "d-001: the service applies no nation or territory check to the place-of-destination address, so a Scottish or Welsh destination is notified through this service; the SI's England-only drafting is a legal note, not rendered and not built.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-001 resolution",
-      "quote": "d-001: the service applies no nation or territory check to the placeOfDestination address, so a Scottish or Welsh destination is notified through this service. The SI's England-only drafting is recorded as a legal note on the england-vs-great-britain behaviour, not rendered and not built.",
-      "confidence": "verbatim"
+      "statement": "A picker page ends with the shared save controls: a primary Save and continue button posting action=save, and a link back to the notification's task-list hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:41-45",
+      "quote": "{{ saveActions({\n      hubHref: hubHref,\n      primary: { text: saveActionsCopy.saveAndContinue, name: \"action\", value: \"save\" },\n      copy: saveActionsCopy\n    }) }}",
+      "confidence": "verbatim",
+      "note": "The shared save-actions wording lives in src/server/app/shared, claimed by part 13; a picker page may override it with its own words (render.js:64)."
     },
     {
       "id": "repo-plantsfrontend-p9-009",
-      "statement": "d-002 (c-002): one arrival date is collected for every commodity type; arrival time only for potatoes; arrival status only for plants for planting and wood and cut trees.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-002 resolution",
-      "quote": "d-002: Collect exactly the statutory matters: one arrivalDate for every commodity type; arrivalTime only when commodityType = potatoes; arrivalStatus only for plants-for-planting and wood-and-cut-trees.",
+      "statement": "A picker page may replace the shared wording of its save-and-return and cancel controls with its own, and otherwise uses the shared wording.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:113",
+      "quote": "saveActionsCopy: { ...kit.sharedCopy.saveActions, ...saveActionsCopy },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-010",
-      "statement": "d-002: a potato notification is always pre-arrival ('Expected date of arrival'); a past date is accepted and flagged late, never rejected; no actual-arrival date or time is added for potatoes, and the arrival-status page is hidden for potatoes by the derived gate (no authored gate).",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-002 resolution",
-      "quote": "d-002: A potato notification is always framed as pre-arrival ('Expected date of arrival'), a past date is accepted and flagged late by lateNotificationIndicator, never rejected, and no actual-arrival date or time is added for potatoes; the arrival-status page needs no authored gate because the derived gate hides it for potatoes.",
-      "confidence": "verbatim"
+      "statement": "The picker's search box is labelled Search, in Welsh Chwilio.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:4 and copy/copy.cy.js:5",
+      "quote": "label: 'Search'",
+      "confidence": "verbatim",
+      "note": "Welsh: \"label: 'Chwilio'\"."
     },
     {
       "id": "repo-plantsfrontend-p9-011",
-      "statement": "d-002 rationale: the label 'Expected date of arrival' shown for potatoes that have already arrived is resolved by a hint line rather than a new question.",
+      "statement": "The hint under the picker's search box reads \"Name, address or country\", in Welsh \"Enw, cyfeiriad neu wlad\".",
       "kind": "copy",
-      "ref": "spec/decisions.json d-002 rationale",
-      "quote": "d-002: The one service-design gap is the label 'Expected date of arrival' shown to somebody whose potatoes arrived yesterday: a hint line resolves it without a new matter.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:5 and copy/copy.cy.js:6",
+      "quote": "hint: 'Name, address or country'",
+      "confidence": "verbatim",
+      "note": "Welsh: \"hint: 'Enw, cyfeiriad neu wlad'\"."
     },
     {
       "id": "repo-plantsfrontend-p9-012",
-      "statement": "d-003 (c-006) and d-008: the importer selects arrival status on its own single-question radios page (plants and wood only, Yes first), placed before arrival details and place of destination; the service never derives the status from the date.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-003 resolution; d-008 resolution",
-      "quote": "d-003: The importer selects arrivalStatus on its own single-question page (plants and wood only, radios Yes first) before arrival-details and place-of-destination; the service never derives it from the date.",
-      "confidence": "verbatim"
+      "statement": "The picker's search button is named Search, in Welsh Chwilio, and its name is read out rather than shown: the button is an icon whose only text is visually hidden.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:6; src/server/common/components/submitted-search/macro.njk:28-37",
+      "quote": "button: 'Search'",
+      "confidence": "verbatim",
+      "note": "The shared submitted-search component renders the text as \"<span class=\\\"govuk-visually-hidden\\\">{{ params.button.text }}</span>\" inside a button carrying moj-search__button--icon. Welsh: \"button: 'Chwilio'\"."
     },
     {
       "id": "repo-plantsfrontend-p9-013",
-      "statement": "d-003: the place-of-destination page's already-arrived copy tells a notifier whose consignment has landed but not yet reached its destination to give the intended destination.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-003 resolution",
-      "quote": "d-003: the destination page's already-arrived copy tells a notifier whose consignment has landed but not reached its destination to give the intended destination, so one binary status serves both clauses.",
+      "statement": "The picker's search box is the field named q, shown half the width of the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:25-33",
+      "quote": "{{ appSubmittedSearch({\n      id: \"q\",\n      name: \"q\",\n      value: picker.query,\n      label: { text: pickerCopy.search.label },\n      hint: { text: pickerCopy.search.hint },\n      button: { text: pickerCopy.search.button },\n      wrapperClasses: \"govuk-!-width-one-half\"\n    }) }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-014",
-      "statement": "d-004 (c-029) and d-010: the arrival date validates as a real calendar date with no sanity window and no animals-style bounds.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-004 resolution",
-      "quote": "d-004: arrivalDate validates as a real calendar date (dateText) with no sanity window and no animals-style bounds",
-      "confidence": "verbatim"
+      "statement": "Pressing the search button submits the picker's own form with action=search, so searching needs no JavaScript.",
+      "kind": "behaviour",
+      "ref": "src/server/common/components/submitted-search/macro.njk:1-3, 31-37",
+      "quote": "appSubmittedSearch — a text box with a joined blue icon button that submits\n  the page's form with action=search.",
+      "confidence": "verbatim",
+      "note": "The picker's POST reads this as a search: \"const SEARCH_ACTION = 'search'\" and \"const isSearch = (payload) => payload.action === SEARCH_ACTION\" (picker-routes.js:13-15)."
     },
     {
       "id": "repo-plantsfrontend-p9-015",
-      "statement": "d-004: when arrival status is already-arrived the arrival date may not be after today in Europe/London (max only), and the date picker carries a max date only in that state and never a min date.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-004 resolution",
-      "quote": "d-004: when arrivalStatus = already-arrived the date may not be after today in Europe/London (dateTextInRange, max only) because it is 'the date on which it first arrived' — and the picker carries data-max-date only in that state and no data-min-date in any state.",
+      "statement": "A search re-renders the page with the narrowed results and commits nothing, raising no error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:220-226",
+      "quote": "it('Should re-render the narrowed results without committing anything', async () => {\n      const result = await savedWith({ action: 'search', q: DENMARK })\n\n      expect(rowIds(result)).toEqual(denmarkMatches)\n      expect(result.after[fieldName]).toBeUndefined()\n      expect(result.view.context.errorSummary).toBeNull()\n    })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-016",
-      "statement": "d-004: expected dates (potatoes, not yet arrived) accept any past or future date; lateness is computed, never validated; a typo sanity window is parked. The GDS judge's one-year-each-way window lost.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-004 resolution and dissent",
-      "quote": "d-004: Expected dates (potatoes, not-yet-arrived) accept any past or future date; lateness is computed, never validated; a typo sanity window is parked, not built.",
+      "statement": "A search always opens the first page of results, whatever page the trader was on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:168-174",
+      "quote": "if (isSearch(payload)) {\n    return renderPickerPage(picker, request, h, current, {\n      query: payload.q ?? '',\n      resultsPage: FIRST_PAGE,\n      selectedId\n    })\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-017",
-      "statement": "d-005 (c-031): plants and wood may be notified before arrival or no later than four days after the date of arrival; potatoes only before, at least two days before the expected date.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-005 resolution",
-      "quote": "d-005: The SI wording wins: plants and wood may be notified before arrival or no later than four days after the date of arrival; potatoes only before, at least two days before the expected date.",
+      "statement": "An empty search keeps the search box empty, lists the whole address book again and saves nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:228-233",
+      "quote": "it('Should keep the search text in the box and save nothing', async () => {\n      const result = await savedWith({ action: 'search', q: '' })\n\n      expect(result.view.context.picker.query).toBe('')\n      expect(result.after[fieldName]).toBeUndefined()\n    })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-018",
-      "statement": "d-005: lateness is calendar-day arithmetic in Europe/London ignoring arrival time: potatoes are late when notified after arrival date minus 2 days, plants and wood when after arrival date plus 4 days; notifying on the boundary day is on time; a future date can be late for potatoes but never for plants and wood.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-005 resolution",
-      "quote": "d-005: Lateness is calendar-day arithmetic in Europe/London and ignores arrivalTime — potatoes are late when the notification day is after arrivalDate minus 2 days, plants and wood when it is after arrivalDate plus 4 days (notifying on arrivalDate minus 2, or on arrivalDate plus 4, is on time); a future date can still be late for potatoes but never for plants and wood",
+      "statement": "A search keeps a row the trader has already ticked ticked, even as the results around it change.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:235-244",
+      "quote": "it('Should keep a row already ticked while the results change', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-019",
-      "statement": "d-005: the timing windows are shown up front as option hints on the commodity-type page and per state on the arrival-status page.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-005 resolution",
-      "quote": "d-005: the windows are shown up front as option hints on commodity-type and per state on arrival-status.",
-      "confidence": "verbatim"
+      "statement": "The search term the trader types is passed straight to the address book service, which decides what a search matches; the picker itself does no matching.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:84",
+      "quote": "const found = await addressBook.addresses(orgId, { query, role })",
+      "confidence": "verbatim",
+      "note": "mechanism: passes the raw query string and the picker's role to the organisation-scoped address book client. The hint tells the trader it matches on name, address or country (claim repo-plantsfrontend-p9-011); the matching rule itself lives in src/server/app/services/address-book, which this source's scope leaves out."
     },
     {
       "id": "repo-plantsfrontend-p9-020",
-      "statement": "d-006 (c-035): after submission a late notification is highlighted by a notification banner naming the rule breached on the confirmation page and on the submitted read-only check-your-answers view, and by a Late tag beside the status on the dashboard card.",
+      "statement": "A search that matches nothing lists no rows.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-006 resolution",
-      "quote": "d-006: After submission the late highlight is shown in three places — a govukNotificationBanner naming the rule breached on the confirmation page and on the SUBMITTED read-only check-your-answers view, and a Late tag beside the status on the dashboard card",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:140-147",
+      "quote": "it('Should list no rows when nothing matches', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-021",
-      "statement": "d-006: before submission the draft check-your-answers page shows warning text when the entered date would make the notification late if submitted today, and says it can still be submitted; lateness never blocks and there is no separate late page.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-006 resolution",
-      "quote": "d-006: before submission the DRAFT check-your-answers page shows govukWarningText when the entered date would make the notification late if submitted today, computed by the same helper with the request clock, and says it can still be submitted. It never blocks and there is no separate late page.",
+      "statement": "When a search matches nothing the picker shows \"No addresses match your search.\" where the results count would go, and renders neither the fieldset nor the table.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:62-63; results.test.js:129-138",
+      "quote": "<p class=\"govuk-body\">{{ pickerCopy.noMatches }}</p>",
       "confidence": "verbatim",
-      "note": "The policy judge's dissent to park the pre-submission warning lost 2-1."
+      "note": "English \"No addresses match your search.\" (copy.en.js:12); Welsh \"Nid oes unrhyw gyfeiriadau’n cyfateb i’ch chwiliad.\" (copy.cy.js:14). The test asserts \"expect(document.querySelector('fieldset')).toBeNull()\" and \"expect(document.querySelector('table')).toBeNull()\"."
     },
     {
       "id": "repo-plantsfrontend-p9-022",
-      "statement": "d-006 and d-007: lateNotificationIndicator is a system-populated obligation computed by one pure helper from (clock, commodityType, arrivalDate) and stored at the declaration POST immediately before submit only when the journey is DRAFT; confirmation, the submitted check-your-answers view and the dashboard Late tag read the stored value and never recompute.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-006 resolution; d-007 resolution",
-      "quote": "d-006: lateNotificationIndicator is a manifest obligation with system: true, listed in SYSTEM_POPULATED ... whose result is committed as a system value in fulfilment immediately before submitJourney only when the journey is DRAFT (c-030); confirmation, the submitted check-your-answers view and the dashboard Late tag read the stored value and never recompute from submittedAt.",
-      "confidence": "verbatim"
+      "statement": "When the picker holds a chosen address, an inset above the results names it: \"Selected address: <name>\", in Welsh \"Cyfeiriad a ddewiswyd: <name>\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:35-37; copy/copy.en.js:8",
+      "quote": "{% if picker.selected %}\n      {{ govukInsetText({ text: pickerCopy.selectedAddress(picker.selected.name) }) }}\n    {% endif %}",
+      "confidence": "verbatim",
+      "note": "English \"selectedAddress: (name) => `Selected address: ${name}`\"; Welsh \"selectedAddress: (name) => `Cyfeiriad a ddewiswyd: ${name}`\". Proven in both languages by copy.test.js:28-35."
     },
     {
       "id": "repo-plantsfrontend-p9-023",
-      "statement": "d-007 (behaviour timing-window-enforcement-and-late-highlight, adopted): the late flag is built in the first pass with no finalise hook, no backend field and no engine change; a re-submit from AMEND leaves it untouched.",
+      "statement": "The chosen-address inset appears only when the id the picker holds still resolves to a live address book record carrying the picker's role; otherwise no inset shows and no row is ticked.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-007 resolution",
-      "quote": "d-007: Build it in the first pass as a stored system value ... leaving it untouched on a re-submit from AMEND (c-030) ... No finalise hook, no backend field, no engine change.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:97-98; save-selection.js:6-14",
+      "quote": "const selected = await chosenFor(orgId, selectedId, role)\n  const effectiveSelectedId = selected ? selectedId : ''",
+      "confidence": "verbatim",
+      "note": "chosenFor resolves an id to undefined \"when the id is empty, missing, soft-deleted or does not carry the given role\"."
     },
     {
       "id": "repo-plantsfrontend-p9-024",
-      "statement": "d-007: projecting the late flag into the backend NotificationDto for the regulator side is parked; the backend receives it inside the opaque fulfilments payload.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-007 rationale",
-      "quote": "d-007: Residual parked: projecting the flag into the backend NotificationDto for the regulator side (Mapper A has no field); the backend receives the opaque fulfilments carrying the stored flag and can project it later.",
+      "statement": "When the notification already holds a copy of this party, a summary card sits above the search box, titled with the party's current-value title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/held-copy.njk:3-8",
+      "quote": "{% if heldCopy %}\n  {{ govukSummaryList({\n    card: {\n      title: { text: heldCopy.title },\n      attributes: { role: \"region\", \"aria-label\": heldCopy.title }\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-025",
-      "statement": "d-008 (behaviour consignment-status-selected-or-derived, adopted): potatoes have no arrival status and skip the arrival-status page; the page uses the legend as heading with caption Arrival.",
+      "statement": "The held-party card's one row is keyed by the held party's name and valued by its address written on one line, with the country last.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-008 resolution and rationale",
-      "quote": "d-008: potatoes have no status and skip the page by the derived gate. The service never derives the status from the date, in this run or later. ... The arrival-status page already exists in the spec with the right pattern (legend as heading, caption Arrival).",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/held-copy.njk:9-12; render.js:26-33",
+      "quote": "rows: [\n      {\n        key: { text: heldCopy.name },\n        value: { text: heldCopy.summary },",
+      "confidence": "verbatim",
+      "note": "mechanism: render.js builds the summary from the held party's display values as \"summary: [addressText(partyDisplayValues.address), partyDisplayValues.address.country].filter(Boolean).join(', ')\" — the address parts in reading order, then the country."
     },
     {
       "id": "repo-plantsfrontend-p9-026",
-      "statement": "d-009 (behaviour england-vs-great-britain, adopted): built with Great Britain in every string and no nation check; whether the SI is widened to GB, or a Scottish or Welsh destination routes elsewhere, is parked as a policy question that changes no page.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-009 resolution",
-      "quote": "d-009: The residual legal question — whether the draft SI is widened to GB or Scottish and Welsh instruments mirror it, and whether a Scottish or Welsh destination ever routes elsewhere — is recorded as PARKED (policy) inside this behaviour and changes no page.",
-      "confidence": "verbatim"
+      "statement": "The held-party card offers one action, \"Edit details\", whose accessible name adds the card's title in lower case, and it opens the party-edit page carrying the trail so Back returns to the picker.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/held-copy.njk:13-21; render.js:34-40",
+      "quote": "actions: {\n          items: [\n            {\n              href: heldCopy.editHref,\n              text: heldCopy.editDetails,\n              visuallyHiddenText: heldCopy.title | lower\n            }\n          ]\n        }",
+      "confidence": "verbatim",
+      "note": "English \"editDetails: 'Edit details'\" (copy.en.js:2), Welsh \"Golygu manylion\" (copy.cy.js:3), both pinned by copy.test.js:10-13."
     },
     {
       "id": "repo-plantsfrontend-p9-027",
-      "statement": "d-010 (behaviour arrival-date-window, adopted): a past expected date for potatoes does not trigger an already-arrived question; it is accepted, the potato hint says what to enter, and it surfaces as late. Storage is the animals shape ({day, month, year}) with a different policy.",
+      "statement": "The held-party card shows nothing when the notification holds no copy of the party yet.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-010 resolution and rationale",
-      "quote": "d-010: A past expected date for potatoes does not trigger an arrived question — potatoes have no arrived state — it is accepted, the potato hint says what to enter, and it surfaces as late; the typo sanity window is parked.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:19-23",
+      "quote": "const partyDisplayValues = await toDisplayParty(current.answers[fieldName])\n  if (!partyDisplayValues) {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: resolves the stored party answer to its display values before building the card."
     },
     {
       "id": "repo-plantsfrontend-p9-028",
-      "statement": "d-011 (behaviour competent-authority-routing, parked): the journey never asks which authority applies and shows no 'sent to X' copy; the confirmation keeps a generic sentence that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check.",
+      "statement": "The three parties a picker can be bound to are named Consignor, Place of destination and Contact address, and their held-value cards are titled Current consignor, Current place of destination and Current contact address.",
       "kind": "copy",
-      "ref": "spec/decisions.json d-011 resolution",
-      "quote": "d-011: Parked — no frontend increment. The notifier journey already collects what routing needs (commodityType and placeOfDestination), never asks the notifier which authority applies, shows no 'sent to X' copy, and keeps the confirmation's generic sentence that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:27-40",
+      "quote": "parties: {\n    consignor: {\n      title: 'Consignor',\n      current: 'Current consignor'\n    },\n    placeOfDestination: {\n      title: 'Place of destination',\n      current: 'Current place of destination'\n    },\n    contactAddress: {\n      title: 'Contact address',\n      current: 'Current contact address'\n    }\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-029",
-      "statement": "d-011: routing, access parity and region derivation from the address are revisited only when the plants backend has typed fields or an outbox.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-011 resolution",
-      "quote": "d-011: routing, access parity and region derivation from the address are revisited when the plants backend has typed fields or an outbox.",
+      "statement": "In Welsh the three parties are Anfonwr, Man cyrchfan and Cyfeiriad cyswllt, and their held-value cards are Anfonwr presennol, Man cyrchfan presennol and Cyfeiriad cyswllt presennol.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.cy.js:29-42",
+      "quote": "parties: {\n    consignor: {\n      title: 'Anfonwr',\n      current: 'Anfonwr presennol'\n    },\n    placeOfDestination: {\n      title: 'Man cyrchfan',\n      current: 'Man cyrchfan presennol'\n    },\n    contactAddress: {\n      title: 'Cyfeiriad cyswllt',\n      current: 'Cyfeiriad cyswllt presennol'\n    }\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-030",
-      "statement": "d-012 (c-003): the Common Data contact is required and is satisfied by one same-as-animals contact address pick from the address book, whose record carries name, address, telephone and email, so nothing is asked twice.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-012 resolution",
-      "quote": "d-012: The Common Data contact is required and is satisfied by the one same-as-animals contactAddress pick: the picked address-book record carries name, address, telephone number and email address ... so 'Name of person making entry', 'Contact number', 'Contact address' and 'Contact email' are all collected by that single answer and nothing is asked twice.",
+      "statement": "The picker names exactly three parties, in the order consignor, place of destination, contact address, in both languages.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.test.js:67-75",
+      "quote": "expect(Object.keys(copy.parties)).toEqual([\n      'consignor',\n      'placeOfDestination',\n      'contactAddress'\n    ])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-031",
-      "statement": "d-012: Consignment Number is an optional free-text notifier reference on the identification-numbers page, with the animals internal reference input contract; its definition (issuer, format, potato applicability, whether it becomes mandatory) is parked, and its label and hint are provisional copy.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-012 resolution and rationale",
-      "quote": "d-012: Consignment Number stays an optional free-text notifier reference on identification-numbers with the animals internalReferenceNumber input contract; its definition (issuer, format, potato applicability, whether it ever becomes mandatory) is parked as an open question, not built.",
-      "confidence": "verbatim"
+      "statement": "The results block is headed \"Select an address\" as a medium heading, in Welsh \"Dewiswch gyfeiriad\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:30; copy/copy.en.js:9",
+      "quote": "<h2 class=\"govuk-heading-m\">{{ pickerCopy.resultsHeading }}</h2>",
+      "confidence": "verbatim",
+      "note": "English \"resultsHeading: 'Select an address'\"; Welsh \"resultsHeading: 'Dewiswch gyfeiriad'\" (copy.cy.js:10)."
     },
     {
       "id": "repo-plantsfrontend-p9-032",
-      "statement": "d-012: reading 'Name of person making entry' as the signed-in user is parked under standing ruling 2 (decided by Sam); in this pass the picked record's name is the nominated contact.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-012 resolution",
-      "quote": "d-012: Reading 'Name of person making entry' as the signed-in user is parked under standing ruling 2; in this pass the picked record's name is the nominated contact. The sub-park of 'Name of person making entry' as the signed-in user is decidedBy sam (standing ruling 2).",
-      "confidence": "verbatim"
+      "statement": "Straight under the results heading, and outside the table, a paragraph counts the addresses on this page against every address found: \"Showing <shown> out of <total> results\", in Welsh \"Yn dangos <shown> allan o <total> canlyniad\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:32-33; copy/copy.en.js:10; results.test.js:70-80",
+      "quote": "resultsCount: (shown, total) => `Showing ${shown} out of ${total} results`",
+      "confidence": "verbatim",
+      "note": "Proven by copy.test.js:45-46, \"expect(copy.resultsCount(5, 13)).toBe('Showing 5 out of 13 results')\" and the Welsh \"Yn dangos 5 allan o 13 canlyniad\"."
     },
     {
       "id": "repo-plantsfrontend-p9-033",
-      "statement": "d-013 (c-025): the contact section is the animals contactAddress picker alone (flat radios over the organisation's address book, inline copy of the record); the contactNumber and contactEmail obligations and the contact-details page are deleted, and the contact task row completes on the pick.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-013 resolution",
-      "quote": "d-013: The animals shape wins outright. contactAddress (same-as-animals: flat radios over the organisation's address book, inline copy { addressId, name, address }) is the whole contact section ... Delete the contactNumber and contactEmail obligations and the contact-details page; the contact task row completes on the pick alone",
-      "confidence": "verbatim"
+      "statement": "The results table sits inside one fieldset whose legend, visually hidden, reads the results heading, so the radios are announced as one group.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:51-57",
+      "quote": "{{ govukFieldset({\n        legend: { text: pickerCopy.resultsHeading, classes: \"govuk-visually-hidden\" },\n        describedBy: errorId if picker.error,\n        html: fieldsetContent\n      }) }}",
+      "confidence": "verbatim",
+      "note": "Proven by results.test.js:82-93: the legend is the fieldset's first child and the table's first child is its THEAD."
     },
     {
       "id": "repo-plantsfrontend-p9-034",
-      "statement": "d-013: the opening run ends at the consignment-contact-select page (run step 9) before landing on the hub.",
+      "statement": "A refused selection is shown as a GOV.UK error message inside the fieldset, prefixed by a visually hidden \"Error:\", in Welsh \"Gwall:\", and the message's id is the field name followed by -error.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-013 resolution",
-      "quote": "d-013: the opening run ends at consignment-contact-select (runStep 9 after c-034's renumbering) before landing on the hub.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:21-28",
+      "quote": "{% macro pickerError(errorId, picker, pickerCopy) %}\n  <p id=\"{{ errorId }}\" class=\"govuk-error-message\">\n    <span class=\"govuk-visually-hidden\">{{ pickerCopy.errorPrefix }}</span> {{ picker.error }}\n  </p>\n{% endmacro %}",
+      "confidence": "verbatim",
+      "note": "English \"errorPrefix: 'Error:'\" (copy.en.js:11), Welsh \"errorPrefix: 'Gwall:'\" (copy.cy.js:13)."
     },
     {
       "id": "repo-plantsfrontend-p9-035",
-      "statement": "d-013: the plants Check your answers Contact card adds Telephone number and Email address rows read from the inline copy, a plants-only addition to animals' name-and-address card.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-013 resolution",
-      "quote": "d-013: The plants Check your answers Contact card adds Telephone number and Email address rows read from the inline copy so the trader can see what will be submitted — animals' card shows name and address lines only, so this is a plants-only addition",
-      "confidence": "verbatim"
+      "statement": "When a selection is refused the form group around the results gains the GOV.UK error state and the fieldset is described by the error message; with no error the fieldset carries no description.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:51-56; results.test.js:95-116",
+      "quote": "<div class=\"govuk-form-group{{ ' govuk-form-group--error' if picker.error }}\">",
+      "confidence": "verbatim",
+      "note": "results.test.js asserts the fieldset's aria-describedby is \"placeOfDestination-error\" with an error and absent without one."
     },
     {
       "id": "repo-plantsfrontend-p9-036",
-      "statement": "d-013: an address-book record edited or deleted in INS after the pick does not reach the inline copy on the notification, the same as animals.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-013 rationale",
-      "quote": "d-013: A record edited or deleted in the INS address book after the pick does not reach the inline copy — same as animals, declared in the storage note.",
+      "statement": "When a selection is refused and nothing matched the search, the error message is shown on its own in an error-state form group, with no fieldset and no table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:64-68",
+      "quote": "{% if picker.error %}\n      <div class=\"govuk-form-group govuk-form-group--error\">\n        {{ pickerError(errorId, picker, pickerCopy) }}\n      </div>\n    {% endif %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-037",
-      "statement": "d-013: the contactEmail hint 'We will use this to tell the contact about any inspection' is removed with the contact-details page.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-013 rationale",
-      "quote": "d-013: The contactEmail hint 'We will use this to tell the contact about any inspection' asserted a service behaviour no source gives and sat badly with checks-without-prior-notice (section:legal-basis/para:3/item:4); it goes with the page.",
-      "confidence": "verbatim"
+      "statement": "The error summary at the top of a refused picker page links to the first results row when the search found addresses, and to the search box when it found none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:115-117",
+      "quote": "errorSummary: kit.errorSummary(error ? { [fieldName]: error } : undefined, {\n      href: () => (found.length > 0 ? `#${fieldName}` : '#q')\n    }),",
+      "confidence": "verbatim",
+      "note": "Proven by controller-test-support.js:398-408, 'Should point the refusal at the search box when the search found nothing'."
     },
     {
       "id": "repo-plantsfrontend-p9-038",
-      "statement": "d-014 (c-026): the consignor is required for plants for planting and for wood and cut trees only and never asked for potatoes; consignor-select is skipped by the opening run and its hub row hidden for potatoes.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-014 resolution",
-      "quote": "d-014: The SI wins on scope: the consignor is required for plants for planting and for wood and cut trees only and is never asked for potatoes — the potato list traces the crop through producer and crop identification numbers instead.",
+      "statement": "The picker raises no error summary when the page is opened fresh from the task-list overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:102-106",
+      "quote": "it('Should raise no error summary when the page is opened from the overview', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-039",
-      "statement": "d-014: the consignor is an address-book picker storing a reference {addressId} resolved on read, gated on commodity type with wipe on exit.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-014 resolution",
-      "quote": "d-014: The shape stays the variant-of-animals address-book picker with fieldGroupRef address and reference storage { addressId } resolved on read, gated same-frame on commodityType (activatedBy includes [plants-for-planting, wood-and-cut-trees], wipeOnExit true",
+      "statement": "The results table has five columns: an unnamed selection column read out as Select, then Name, Address, Country, and an unnamed last column read out as Actions.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:39-48",
+      "quote": "head: [\n          { html: '<span class=\"govuk-visually-hidden\">' + pickerCopy.table.selectHidden + '</span>' },\n          { text: pickerCopy.table.name },\n          { text: pickerCopy.table.address },\n          { text: pickerCopy.table.country },\n          { html: '<span class=\"govuk-visually-hidden\">' + pickerCopy.table.actionsHidden + '</span>' }\n        ],",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-040",
-      "statement": "d-014: a typed name-and-address fallback for an EU consignor not in the address book is parked; the trader adds the consignor in the INS address book first. The address book demands a phone and email the SI does not require.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-014 resolution and rationale",
-      "quote": "d-014: A typed name-and-address fallback for an EU consignor not yet in the address book is parked, not built: the trader adds it in the INS address book first, as animals traders do.",
-      "confidence": "verbatim"
+      "statement": "The table's column names are Select, Name, Address, Country and Actions in English, and Dewis, Enw, Cyfeiriad, Gwlad and Camau gweithredu in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:17-23 and copy/copy.cy.js:19-25",
+      "quote": "table: {\n    selectHidden: 'Select',\n    name: 'Name',\n    address: 'Address',\n    country: 'Country',\n    actionsHidden: 'Actions'\n  }",
+      "confidence": "verbatim",
+      "note": "Welsh: \"selectHidden: 'Dewis', name: 'Enw', address: 'Cyfeiriad', country: 'Gwlad', actionsHidden: 'Camau gweithredu'\", pinned by copy.test.js:49-65."
     },
     {
       "id": "repo-plantsfrontend-p9-041",
-      "statement": "d-015 (c-027): the country-of-origin page keeps the animals id, widget, validation, label, hint and Welsh label and hint verbatim, and changes only the error to 'Select the country where the consignment originates from'.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-015 resolution",
-      "quote": "d-015: Keep the animals id, page, widget, validation, label, hint and Welsh label and hint verbatim; change only the error sentence to 'Select the country where the consignment originates from'",
-      "confidence": "verbatim"
+      "statement": "Each address in the results gets one small radio in the first column, named after the field the page collects and valued with the address's id, whose label is read out as \"Select <the address's name>\" and is otherwise invisible.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/_cells.njk:3-15",
+      "quote": "{% macro pickerSelectCell(fieldName, row, pickerCopy) %}\n  {% set selectLabel %}<span class=\"govuk-visually-hidden\">{{ pickerCopy.selectRowPrefix }} {{ row.name }}</span>{% endset %}\n  {{ govukRadios({\n    idPrefix: row.idPrefix,\n    name: fieldName,\n    classes: \"govuk-radios--small\",\n    items: [{\n      value: row.id,\n      html: selectLabel,\n      checked: row.checked\n    }]\n  }) }}\n{% endmacro %}",
+      "confidence": "verbatim",
+      "note": "English \"selectRowPrefix: 'Select'\" (copy.en.js:24), Welsh 'Dewis' (copy.cy.js:26)."
     },
     {
       "id": "repo-plantsfrontend-p9-042",
-      "statement": "d-015: the copied Welsh origin error is dropped (a machine-draft Welsh leaf is carried for parity), the obligation is tagged variant-of-animals and the error sentence is provisional copy. Alternatives 'Select the country of origin' and a three-commodity sentence lost.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-015 resolution and dissent",
-      "quote": "d-015: drop the copied Welsh error rather than ship one that names an animal ... tag the obligation variant-of-animals ... and flag the error sentence provisional copy.",
-      "confidence": "verbatim"
+      "statement": "Only the row the picker holds as chosen is ticked, and only one row can be ticked at a time because every radio shares the field's name.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:16; test-support.js:102-107",
+      "quote": "checked: record.id === selectedId",
+      "confidence": "verbatim",
+      "note": "Proven by test-support.js 'Should tick the row the selection names, and only that one'."
     },
     {
       "id": "repo-plantsfrontend-p9-043",
-      "statement": "d-016 (c-028): the declaration page keeps the animals machinery: a single checkbox with its confirmation sentence, error copy, date line, Continue, flow-only key and submit gate.",
+      "statement": "The first row on every page of results carries the bare field name as its radio id, and later rows are numbered from two, so the error summary link focuses the first row whichever page is shown.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-016 resolution",
-      "quote": "d-016: Keep the declaration page and its machinery exactly as animals has them — the single checkbox, its confirmation sentence in English and Welsh, the error copy, the date line, Continue, the flow-only key and submit gate.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:6-7; test-support.js:88-99, 205-216",
+      "quote": "const idPrefixFor = (fieldName) => (index) =>\n  index === 0 ? fieldName : `${fieldName}-${index + 1}`",
+      "confidence": "verbatim",
+      "note": "mechanism: numbers the radio ids of the addresses on the page being shown."
     },
     {
       "id": "repo-plantsfrontend-p9-044",
-      "statement": "d-016: none of the five animals declaration statements survives; the plants declaration carries three provisional statements: the submission is the written notification under the Plant Health National Notification Scheme; the relevant authority (APHA, the Forestry Commission or Scottish Government) may spot-check without prior notice at the destination or where the consignment is currently held; failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-016 resolution",
-      "quote": "d-016: Replace the five animals statements wholesale: none survives. The first pass carries three short plants statements grounded in the policy paper — (1) this submission is the written notification to the competent authority under the Plant Health National Notification Scheme; (2) the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may spot-check the consignment without prior notice at its place of destination or where it is currently held; (3) failing to notify, notifying late or giving incorrect details may be treated as a non-compliance — flagged provisional copy for policy and content-design sign-off, with no Welsh invented.",
+      "statement": "A row's address column shows each street line on its own line and the town or city, county and postcode together on one line below, with a line break between them.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/_cells.njk:17-21; address-lines.test.js:44-66",
+      "quote": "{% macro pickerAddressCell(row) %}\n  {%- for line in row.addressLines -%}\n    {{ line }}{% if not loop.last %}<br>{% endif %}\n  {%- endfor -%}\n{% endmacro %}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-045",
-      "statement": "d-016: third-party and agent-authority declaration clauses are parked with agent-acting-on-behalf (decided by Sam, standing ruling 2) and not written.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-016 resolution",
-      "quote": "d-016: The third-party / agent-authority clauses are parked with agent-acting-on-behalf under standing ruling 2, not written ... The sub-park of the third-party and agent-authority clauses is decidedBy sam (standing ruling 2).",
-      "confidence": "verbatim"
+      "statement": "A row's country is shown in its own column and left out of the address lines.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:13-14; test-support.js:117-129",
+      "quote": "addressLines: pickerAddressLines(record.address),\n  country: record.address?.country,",
+      "confidence": "verbatim",
+      "note": "Proven by test-support.js 'Should carry the country as its own column and leave it out of the address lines'."
     },
     {
       "id": "repo-plantsfrontend-p9-046",
-      "statement": "d-017 (c-004): seed potatoes are potatoes: commodity type potatoes, per-line category seed-potatoes or ware-potatoes, with the potato matters and the two-day pre-arrival window; 'Seed potatoes' is never a genus value.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-017 resolution",
-      "quote": "d-017: Seed potatoes are potatoes: commodityType = potatoes, the per-line category offers seed-potatoes and ware-potatoes, and a seed-potato line takes the reg 24A matters (variety, quantity, intended use, producer and crop ids, time of arrival, place of landing) and the two-day pre-arrival window. ... 'Seed potatoes' is never a genus value.",
-      "confidence": "verbatim"
+      "statement": "A row's last column holds a collapsed \"View details\" disclosure, read out as \"View details for <the address's name>\", which opens a list of the record's contact lines.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/_cells.njk:23-36",
+      "quote": "<summary class=\"govuk-details__summary\">\n      <span class=\"govuk-details__summary-text\">{{ pickerCopy.viewDetails }}<span class=\"govuk-visually-hidden\"> {{ pickerCopy.viewDetailsFor }} {{ row.name }}</span></span>\n    </summary>",
+      "confidence": "verbatim",
+      "note": "English \"viewDetails: 'View details'\" and \"viewDetailsFor: 'for'\" (copy.en.js:25-26); Welsh 'Gweld manylion' and 'ar gyfer' (copy.cy.js:27-28)."
     },
     {
       "id": "repo-plantsfrontend-p9-047",
-      "statement": "d-018 (c-005): the category value is conifer-wood-with-bark, labelled 'Conifer wood with bark, or isolated bark of conifer'; the label is provisional and needs Welsh.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-018 resolution and rationale",
-      "quote": "d-018: The SI wording wins: the category value is conifer-wood-with-bark, labelled 'Conifer wood with bark, or isolated bark of conifer'. The mural table's 'with mark' is a transcription typo and carries no meaning.",
-      "confidence": "verbatim"
+      "statement": "The contact lines a row's View details reveals are the record's telephone number then its email address, and nothing else.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:18-19; address-lines.test.js:69-77",
+      "quote": "export const contactLines = (address = {}) =>\n  [address.phone, address.email].filter(Boolean)",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the telephone number and email address off an address book record, dropping either when absent."
     },
     {
       "id": "repo-plantsfrontend-p9-048",
-      "statement": "d-019 (c-007): the four wood caveats are scope conditions carried in the five wood category labels and guidance; the only extra wood data collected is size of tree and phytosanitary treatments, gated on category; no question is asked about preservative treatment, bark condition or the 3-metre threshold.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-019 resolution",
-      "quote": "d-019: The four wood caveats are scope conditions, not data elements: they become the five wood category values (with the bark, origin, height and form conditions in the value labels) and guidance copy; the only extra wood data collected is the two SI matters, size of tree and phytosanitary treatments, gated same-frame on category. No question is asked about preservative treatment, bark condition or the 3-metre threshold.",
-      "confidence": "verbatim"
+      "statement": "A stored address name or address line holding markup characters is shown as text, never rendered as markup.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/table-rows.test.js:60-72; results.test.js:118-127",
+      "quote": "it('Should escape markup in a stored address line', () => {",
+      "confidence": "verbatim",
+      "note": "controller-test-support.js:193-209 proves the same through the real page, with a name holding a link: \"expect(html).toContain('&lt;a href=')\" and \"expect(html).not.toContain(MARKUP_LINK)\"."
     },
     {
       "id": "repo-plantsfrontend-p9-049",
-      "statement": "d-019: the preservative exclusion moves from the treatments hint to a single hint on the category question for wood notifications, stating the cut-coniferous-trees exception; per-option hints are not added.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-019 resolution and rationale",
-      "quote": "d-019: The preservative exclusion moves from the treatments hint to a hint on the category question shown for wood notifications, worded with its cut-coniferous-trees exception.",
-      "confidence": "verbatim"
+      "statement": "A picker shows eight addresses on a page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:6",
+      "quote": "export const ADDRESSES_A_PAGE = 8",
+      "confidence": "verbatim",
+      "note": "Proven end to end by paging-test-support.js:62-69, 'Should open on the first eight of the addresses it offers, counted against every one of them'."
     },
     {
       "id": "repo-plantsfrontend-p9-050",
-      "statement": "d-020 (c-008): genus is asked for plants-for-planting, trees-for-planting, hardwood-round-surface and hardwood-chips lines; species only for plants-for-planting and trees-for-planting; the three conifer categories ask neither in the first pass, and a conifer genus is a parked policy check.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-020 resolution",
-      "quote": "d-020: '(for plants for planting)' qualifies species only. Genus is asked for plants-for-planting, trees-for-planting, hardwood-round-surface and hardwood-chips lines; species only for plants-for-planting and trees-for-planting; the three conifer lines (conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees) ask neither in the first pass.",
-      "confidence": "verbatim"
+      "statement": "GOV.UK pagination sits under the results, and only when more than one page of addresses was found; one page of results shows no paging at all.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:59-61; results.test.js:40-68",
+      "quote": "{% if picker.pagination %}\n      {{ govukPagination(picker.pagination) }}\n    {% endif %}",
+      "confidence": "verbatim",
+      "note": "The shared paging helper returns nothing below two pages: \"const minimumPagesToPaginate = 2; if (totalPages < minimumPagesToPaginate) { return null }\" (src/server/app/shared/paging.js:14-17, claimed by part 13). Proven again by paging-test-support.js:87-92, 'Should offer no paging once a search narrows the addresses found onto one page'."
     },
     {
       "id": "repo-plantsfrontend-p9-051",
-      "statement": "d-021 (c-009): the hardwood genus list is Castanea, Fraxinus and Platanus only; Juglans and Pterocarya are not offered anywhere.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-021 resolution",
-      "quote": "d-021: The hardwood genus constraint is Castanea, Fraxinus and Platanus only. Juglans and Pterocarya are not offered anywhere in the service",
-      "confidence": "verbatim"
+      "statement": "The paging links name the first page, the page either side of the current one, the current page and the last page, standing an ellipsis in wherever the numbers skip a page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:19-36",
+      "quote": "const numbersToShow = (page, totalPages) => {\n  const eitherSideOfCurrent = 1\n  const shown = [\n    FIRST_PAGE,\n    page - eitherSideOfCurrent,\n    page,\n    page + eitherSideOfCurrent,\n    totalPages\n  ].filter((number) => number >= FIRST_PAGE && number <= totalPages)\n  return [...new Set(shown)].sort((left, right) => left - right)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the count of addresses found into the page numbers shown. test-support.js:282-312 records that this matches the address book list's own paging: 'Should stand an ellipsis in for the pages its numbers skip, as the address book list does'."
     },
     {
       "id": "repo-plantsfrontend-p9-052",
-      "statement": "d-022 (c-012): a notification carries one or many commodity lines (at least one, error 'Add at least one commodity'), built as a list page plus a Commodity details entry sub-page, a variant of animals' commodity lines without catalogue search.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-022 resolution",
-      "quote": "d-022: A notification carries one or many commodity lines: commodityLines is a collection with minEntries 1 (error 'Add at least one commodity'), built as the two-page batch (list page plus Commodity details entry sub-page) as a variant of animals' commodityLines without its catalogue search.",
-      "confidence": "verbatim"
+      "statement": "A Previous link shows on every page after the first and a Next link on every page before the last, labelled Previous and Next, in Welsh Blaenorol and Nesaf.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.en.js:13-16; src/server/app/shared/paging.js:18-27",
+      "quote": "pagination: {\n    previous: 'Previous',\n    next: 'Next'\n  }",
+      "confidence": "verbatim",
+      "note": "Welsh \"previous: 'Blaenorol', next: 'Nesaf'\" (copy.cy.js:15-18), pinned by copy.test.js:37-40. The shared helper omits Previous on the first page and Next on the last (part 13 claims paging.js)."
     },
     {
       "id": "repo-plantsfrontend-p9-053",
-      "statement": "d-022: all lines share the one commodity type chosen first; a consignment mixing potatoes with plants or wood is two notifications.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-022 resolution",
-      "quote": "d-022: All lines share the one commodityType chosen first; a consignment mixing potatoes with plants or wood is two notifications.",
+      "statement": "Every paging link, Previous and Next included, carries the search term and the ticked address, so paging keeps the trader's search and their choice.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/test-support.js:226-243",
+      "quote": "for (const link of everyPagingLink(picker)) {\n            expect(link.href).toContain('q=record')\n            expect(link.href).toContain('selected=record-3')\n          }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-054",
-      "statement": "d-023 (c-013): out-of-scope answers are wiped on every gated plants obligation and never retained.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-023 resolution",
-      "quote": "d-023: Wipe wins: wipeOnExit = true stays on every gated plants obligation and no answer is retained out of scope.",
+      "statement": "Every paging link carries the trail of pages the trader arrived by, so Back still returns to where they came from after they page through the results.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/test-support.js:244-260; results-href.js:22",
+      "quote": "title:\n          'Should carry the page the trader arrived on through every paging link, so Back still answers it',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-055",
-      "statement": "d-023 and d-029: changing commodity type after lines exist warns first; the commodity-type POST drops lines whose category is not in the new type, then redirects to the commodities list with ?removed=<n>, where a notification banner says what was removed and the zero-lines redirect is suppressed; the list page never writes on GET.",
+      "statement": "A results link carries the search term as q, the page number only when it is past the first, and the chosen address as selected, so a link to the first page with no search and no choice carries nothing but the trail.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-023 resolution; d-029 resolution",
-      "quote": "d-023: the page warns before the change when lines exist, the POST commits the type and then drops the lines whose category is not in the new type's set via reconcileEntriesAt, and redirects to the commodities list with ?removed=<n> where a notification banner names what was removed; the list page suppresses its zero-lines redirect for that load and never writes on GET.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results-href.js:10-22",
+      "quote": "const params = new URLSearchParams()\n  if (query) {\n    params.set('q', query)\n  }\n  if (page > FIRST_PAGE) {\n    params.set('page', String(page))\n  }\n  if (selectedId) {\n    params.set('selected', selectedId)\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the picker's own links from the search term, page, chosen id and trail. Proven by test-support.js:262-277, 'Should carry no empty query on a link to the first page, which holds neither a search nor a choice'."
     },
     {
       "id": "repo-plantsfrontend-p9-056",
-      "statement": "d-023: the commodities list page redirects to the entry sub-page whenever it has zero lines (copied from animals).",
+      "statement": "The results count counts the rows on the page being shown against every address found, not against the page size.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-023 rationale",
-      "quote": "d-023: the commodities list page redirects to the entry sub-page whenever it has zero lines (page shape, copied from animals emptyRedirect inverted), so a ?removed load must render rather than redirect or the banner is never seen.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:54; test-support.js:158-193",
+      "quote": "resultsCount: pickerCopy.resultsCount(rows.length, found.length),",
+      "confidence": "verbatim",
+      "note": "mechanism: counts the addresses sliced onto this page against the whole list the address book returned."
     },
     {
       "id": "repo-plantsfrontend-p9-057",
-      "statement": "d-024 (c-017): the genus list for plants-for-planting and trees-for-planting lines is the fifteen entries of reg 26(1)(a) with the SI's spelling and bracketed English names; hardwood lines get Castanea, Fraxinus and Platanus only.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-024 resolution",
-      "quote": "d-024: The genus list for plants-for-planting and trees-for-planting lines is the fifteen entries of reg 26(1)(a) with the SI's spelling and bracketed English names; the four species-level entries are offered as they stand; 'Seed potatoes' is not a genus; hardwood lines get the same control rendered with Castanea, Fraxinus and Platanus only.",
-      "confidence": "verbatim"
+      "statement": "Asking for a page past the last one serves the last page instead, logged once at info as \"Address picker page is past the last page, serving the last page\" with the notification reference, the field, the page asked for and the page served.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:85-96",
+      "quote": "if (servedPage !== resultsPage) {\n    request.logger.info(\n      {\n        journeyId: current.journey.journeyId,\n        fieldName,\n        requestedPage: resultsPage,\n        servedPage\n      },\n      'Address picker page is past the last page, serving the last page'\n    )\n  }",
+      "confidence": "verbatim",
+      "note": "Proven by paging-test-support.js:117-136."
     },
     {
       "id": "repo-plantsfrontend-p9-058",
-      "statement": "d-024: the genus list is set-owned reference data, and the details page offers only the entries allowed for the line's category, never all fifteen with some rejected.",
+      "statement": "Asking for a page that is not a whole number of one or more — nonsense text, a decimal, exponent notation, zero or a negative — serves the first page instead, logged once at info as \"Address picker page is not a page number, serving the first page\".",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-024 resolution",
-      "quote": "d-024: The list is set-owned reference data, not a hard-coded enum, and the details page offers only the entries allowed for the line's category — never fifteen with twelve rejected.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:17-34; paging-test-support.js:138-159",
+      "quote": "it.each(['nonsense', '3abc', '2.9', '1e3', '0', '-1'])(\n      'Should serve the first page, logged once, when the page asked for is %s',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-059",
-      "statement": "d-025 (c-018): commodity type has three values (potatoes, plants-for-planting, wood-and-cut-trees) and the per-line category nine (seed-potatoes, ware-potatoes, plants-for-planting, trees-for-planting, conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees, hardwood-round-surface, hardwood-chips).",
-      "kind": "data",
-      "ref": "spec/decisions.json d-025 resolution",
-      "quote": "d-025: commodityType has three values (potatoes / plants-for-planting / wood-and-cut-trees) and the per-line category has nine (seed-potatoes, ware-potatoes, plants-for-planting, trees-for-planting, conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees, hardwood-round-surface, hardwood-chips)",
-      "confidence": "verbatim"
+      "statement": "A picker page registers two routes on its own path, a GET that shows the page and a POST that handles both searching and saving, both behind the signed-in session.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:193-199",
+      "quote": "export const pickerRoutes = ({ inScope = () => true, ...settings }) => {\n  const picker = { ...settings, inScope }\n  return kit.pageRoutes(picker.page, {\n    get: (request, h) => getPicker(picker, request, h),\n    post: (request, h) => postPicker(picker, request, h)\n  })\n}",
+      "confidence": "verbatim",
+      "note": "kit.pageRoutes builds the GET and POST on the page's slug under session auth (src/server/app/shared/kit.js:342-355, claimed by part 13); the slugs themselves belong to parts 7 and 8."
     },
     {
       "id": "repo-plantsfrontend-p9-060",
-      "statement": "d-025: the commodity-details page offers only the categories of the chosen type and its POST rejects any other.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-025 resolution",
-      "quote": "d-025: the commodity-details page offers only the categories of the chosen type and POST rejects any other. The mural's five coarse labels are not a value list.",
+      "statement": "Opening a picker reads the search term from q, the page from page and the chosen address from selected in the query string, and falls back to the address the stored answer was picked from when the query string names none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:125-134",
+      "quote": "return renderPickerPage(picker, request, h, current, {\n    query: request.query.q ?? '',\n    resultsPage: resultsPageToOpen(\n      request,\n      picker.fieldName,\n      request.query.page\n    ),\n    selectedId:\n      request.query.selected ?? current.answers[picker.fieldName]?.pickedFromId\n  })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-061",
-      "statement": "d-026 (c-019): 'trees for planting' is a per-line category beside 'plants for planting' so the notifier declares trees; size of tree is asked for trees-for-planting and cut-coniferous-trees lines.",
+      "statement": "A selection named in the query string wins over the one the notification has stored.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-026 resolution",
-      "quote": "d-026: Keep 'trees for planting' as a per-line category value beside 'plants for planting' so the notifier declares that the plants are trees and sizeOfTree gates same-frame on category in [trees-for-planting, cut-coniferous-trees].",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:175-182",
+      "quote": "it('Should carry a selection the query string names over the stored one', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-062",
-      "statement": "d-026: both plants and trees options carry a neutral self-classification hint (invented, provisional copy); the genus list is not narrowed for trees; which lines legally count as trees is a parked policy question.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-026 resolution and rationale",
-      "quote": "d-026: Both options get a neutral hint that lets the trader self-classify without policy knowledge; the genus list is not narrowed for trees for planting. Which plants-for-planting lines legally count as trees is a parked policy question, and the genus-derived alternative is not built.",
+      "statement": "The ticked row on opening is the address the stored copy was picked from, and the inset names that record.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:166-173",
+      "quote": "it('Should tick the record the copy was picked from', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-063",
-      "statement": "d-027 (c-036): genus is a controlled list from the set-owned commodities service; species is required free text (max 58 characters, no format check) on plants-for-planting and trees-for-planting lines; the four species-level entries are offered as genus values.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-027 resolution",
-      "quote": "d-027: Genus is a controlled list from the set-owned commodities service; species is required free text (requiredMaxText 58, no format check) on plants-for-planting and trees-for-planting lines until a species catalogue exists; the four species-level scope entries (Olea europaea, Nerium oleander, Polygala myrtifolia, Salvia rosmarinus) are offered as genus values exactly as the SI spells them.",
-      "confidence": "verbatim"
+      "statement": "A picker page that does not apply to the notification redirects to its task-list hub on both opening and saving, logging a refusal naming the field as out of scope.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:36-37, 57-60",
+      "quote": "const logOutOfScope = (request, fieldName) =>\n  kit.logRefusal(request, { reason: `${fieldName}-out-of-scope` })",
+      "confidence": "verbatim",
+      "note": "picker-routes.js:190 documents it: 'tells from the journey state whether the page applies; out of scope it redirects to the overview'."
     },
     {
       "id": "repo-plantsfrontend-p9-064",
-      "statement": "d-028 (c-037): two conifer categories: conifer-wood-with-bark (any member State) and conifer-wood-without-bark ('Conifer wood without bark', Italy, France, Portugal and Spain only), with the four-country origin constraint on the second alone.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-028 resolution",
-      "quote": "d-028: The SI's two items win: conifer-wood-with-bark ('Conifer wood with bark, or isolated bark of conifer', any member State) and conifer-wood-without-bark ('Conifer wood without bark', Italy, France, Portugal and Spain only), with the four-country origin constraint on the second value alone.",
-      "confidence": "verbatim"
+      "statement": "A save takes the address from the radio the trader ticked, or from the hidden selected field when no radio was posted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:167",
+      "quote": "const selectedId = payload[picker.fieldName] || payload.selected || ''",
+      "confidence": "verbatim",
+      "note": "Proven by controller-test-support.js:472-476, 'Should accept the row carried in the hidden field when no radio is posted'."
     },
     {
       "id": "repo-plantsfrontend-p9-065",
-      "statement": "d-029 (behaviour commodity-type-change-reconciles-lines, adopted): the on-load reconcile, three typed collections and retain-and-flag alternatives are not built.",
+      "statement": "A save with no address chosen commits nothing, raises no error and moves the trader on as a valid save would, logged once at info as \"Address picker saved with no address chosen, nothing committed\".",
       "kind": "rule",
-      "ref": "spec/decisions.json d-029 resolution",
-      "quote": "d-029: The on-load reconcile, three typed collections and retain-and-flag alternatives are not built; a model-owned projection helper is recorded as a candidate extension.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/save-selection.js:44-50; picker-routes.js:151-153",
+      "quote": "if (!selectedId) {\n    request.logger.info(\n      { journeyId, fieldName },\n      'Address picker saved with no address chosen, nothing committed'\n    )\n    return { outcome: SELECTION.nothingChosen }\n  }",
+      "confidence": "verbatim",
+      "note": "Proven by save-selection.test.js:39-48 and controller-test-support.js:255-266, which covers both Save and continue and the save-and-return control."
     },
     {
       "id": "repo-plantsfrontend-p9-066",
-      "statement": "d-030 (behaviour wood-scope-caveats-as-guidance, adopted): no pre-scope question and no 'you do not need to notify' page; fuller scope text belongs with guidance outside the journey; scope questions that end the journey are parked.",
+      "statement": "A save with no address chosen leaves a copy the notification already holds untouched, including one the trader has edited since picking it.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-030 resolution",
-      "quote": "d-030: no pre-scope question and no 'you do not need to notify' page. Fuller scope text belongs with guidance-before-you-start, outside the journey pages. Explicit scope questions that end the journey are parked pending a policy answer, not built.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:268-285",
+      "quote": "it('Should keep a copy already held, edited since it was picked', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-067",
-      "statement": "d-031 (behaviour potato-scope-guidance, adopted): the ware-potato origin scope and the Balearic Islands exclusion are one inset text on the origin page, shown only when a ware-potatoes line exists.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-031 resolution",
-      "quote": "d-031: the ware-potato origin scope and the Balearic Islands exclusion are one govukInsetText on the origin page, rendered page-side only when a ware-potatoes line exists, so countryOfOrigin's label, hint and widget stay verbatim animals",
-      "confidence": "verbatim"
+      "statement": "A save naming an address the organisation's address book does not hold is refused: the page is shown again with status 400 and the page's own error message, nothing is committed, and a refusal is logged with the reason not-in-address-book and the id posted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/save-selection.js:52-60; picker-routes.js:62-74",
+      "quote": "const record = await chosenFor(organisationIdOf(request), selectedId, role)\n  if (!record) {\n    kit.logRefusal(request, {\n      fieldErrors: { [fieldName]: notInBookMessage },\n      reason: 'not-in-address-book',\n      addressId: selectedId\n    })\n    return { outcome: SELECTION.notInBook }\n  }",
+      "confidence": "verbatim",
+      "note": "The refusal is logged with the field's key, never its message (kit.logRefusal). Proven by save-selection.test.js:50-60 and controller-test-support.js:297-326."
     },
     {
       "id": "repo-plantsfrontend-p9-068",
-      "statement": "d-031: 'suspected of having been grown' is not asked; a Spain region option and the mural's off-board footnote are parked.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-031 resolution",
-      "quote": "d-031: 'Suspected of having been grown' is not asked; a Spain region option and the mural's off-board footnote are parked.",
-      "confidence": "verbatim"
+      "statement": "The wording shown for a refused selection is the picker page's own error message, taken from the page's copy under the field's name; the shared picker shell holds no wording for it.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:71, 148",
+      "quote": "error: picker.copy.errors[picker.fieldName]",
+      "confidence": "verbatim",
+      "note": "The message's words belong to parts 7 and 8. The test fixtures illustrate the shape: 'Select a consignor from the address book' (save-selection.test.js:22) and 'Select a place of destination from the list' (results.test.js:11), both test constants rather than the pages' own copy."
     },
     {
       "id": "repo-plantsfrontend-p9-069",
-      "statement": "d-032 (c-010): the spec proceeds on the two Confluence pages (requirements v5, user needs v11); the SharePoint requirements workbook is not a source, is not chased and nothing waits on it.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-032 resolution",
-      "quote": "d-032: Proceed on the two Confluence pages exactly as extracted (requirements v5 2026-07-02, user needs v11 2026-06-30). The SharePoint workbook 'EU Reset Delivery Programme_Requirements Template.xlsx' is not a source in this run, is not chased, and nothing in the spec waits on it",
+      "statement": "A refused save clears the ticked row so the trader must choose again.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:69-72",
+      "quote": "postedPickerState(request, picker.fieldName, payload, {\n        selectedId: '',\n        error: picker.copy.errors[picker.fieldName]\n      })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-070",
-      "statement": "d-033 (c-038, decided by Sam): the notifier is the signed-in Defra ID organisation; the journey collects no importer, agent or notifier party, and the consignor is the only party obligation.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-033 resolution",
-      "quote": "d-033: The SI wins: the notifier is the professional operator bringing the goods into England, and in this service that is the signed-in Defra ID organisation. The journey collects no importer, agent or notifier party; the consignor (reg 26(2)(f)) is the only party obligation.",
+      "statement": "A refused save keeps the trader's search term in the box and its results on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:384-396",
+      "quote": "'Should keep the search term and its results when %s is refused',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-071",
-      "statement": "d-033: the declaration carries no third-party, standing, authority or agent sentence; its statements are the three ruled at c-028; agent identification, authorisation and linking stay parked.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-033 resolution",
-      "quote": "d-033: The declaration carries no third-party, standing, authority or agent sentence — both animals third-party statements are parked with agent-acting-on-behalf under standing ruling 2 (c-028) — and its statement bullets are the three plants statements ruled at c-028.",
-      "confidence": "verbatim"
+      "statement": "An address the organisation has deleted is treated as not in the book: it cannot be saved, and a stored answer picked from it shows no selection.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/save-selection.js:10-13; controller-test-support.js:424-444",
+      "quote": "const record = await addressBook.party(orgId, selectedId)\n  return record && !record.deleted && addressBook.offeredForRole(record, role)\n    ? record\n    : undefined",
+      "confidence": "verbatim",
+      "note": "Proven against the real address book client by save-selection.test.js:86-98 and controller-test-support.js:412-446."
     },
     {
       "id": "repo-plantsfrontend-p9-072",
-      "statement": "d-034 (c-039, decided by Sam): Defra ID sign-in (real mode /auth/sign-in, /auth/sign-in-oidc, /auth/organisation; stub mode /auth/stub-sign-in) is the only precondition to notifying; there is no plant-operator registration page or check, and the dashboard is reachable by any authenticated organisation.",
+      "statement": "An address held for another picker's role is treated as not in the book: saving it is refused with the page's error and a logged refusal, and a stored answer picked from it shows no selection.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-034 resolution",
-      "quote": "d-034: Defra ID sign-in (real mode /auth/sign-in, /auth/sign-in-oidc, /auth/organisation; stub mode /auth/stub-sign-in) is the only precondition to notifying built in this run. No plant-operator registration page, registration check before the dashboard or onboarding step; the dashboard is reachable by any authenticated organisation.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:341-375",
+      "quote": "it(\"Should refuse a save naming a record that does not carry this picker's role, committing nothing\", async () => {",
+      "confidence": "verbatim",
+      "note": "save-selection.js:35 documents the rule: 'the address-book role the picker offers; a record not carrying it is treated as not in the book'."
     },
     {
       "id": "repo-plantsfrontend-p9-073",
-      "statement": "d-034: sign-in is enforced on every route, even in stub mode.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-034 rationale",
-      "quote": "d-034: The engine already enforces sign-in on every route (skeleton authSignIn, servedToday yes, src/server/auth/index.js:8-15; 'auth is still enforced' even in STUB_MODE)",
-      "confidence": "verbatim"
+      "statement": "A picker offers the organisation's address book records that carry its own role together with those carrying no role, and no others.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/paging-test-support.js:46, 71-78",
+      "quote": "@param {number} picker.wholeCount - how many stub records this picker offers: those carrying its role, together with those carrying none",
+      "confidence": "verbatim",
+      "note": "Proven by 'Should offer, across its pages, every address it offers and no other', which compares the ids paged through with those the address book client's offeredForRole accepts. The offeredForRole rule itself lives in src/server/app/services/address-book, outside this source's scope."
     },
     {
       "id": "repo-plantsfrontend-p9-074",
-      "statement": "d-035 (c-040, decided by Sam): the many-lines reading of NNS-UN-005 is met by the commodity-lines collection (one or many lines, at least one, no maximum); bulk upload, import from documents and reuse of a previous consignment are not built, and nothing in the form is shaped around a future file route.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-035 resolution",
-      "quote": "d-035: The many-lines reading of NNS-UN-005 is met by the commodityLines collection: one notification, one or many lines, at least one, no maximum (c-012). Bulk upload of many notifications at once, import from existing documents and reuse of a previous consignment are not built and each stays its own parked behaviour; no file page, upload route or format enters the start section, and nothing in the form is shaped around a future file route.",
+      "statement": "A stored answer whose source record the address book no longer holds shows no selection and no ticked row, rather than an error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:184-191",
+      "quote": "it('Should show no selection for a record the book no longer holds', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-075",
-      "statement": "d-036 (behaviour bulk-upload, parked by Sam): no file, template or upload page; bulk upload is a later alternative entry route that must produce the same fulfilment and pass the same validation as the form once policy gives a format.",
+      "statement": "A save naming an address the book still holds commits a copy of that record under the field the page collects, and moves on to the next page of the journey that applies, carrying the trail.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-036 resolution",
-      "quote": "d-036: Not built in this phase. No file, template or upload page appears in the spec. Recorded as a later alternative entry route in the start section that must produce the same canonical fulfilment and pass the same validation as the form, once policy supplies the format, scope and unit of upload.",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:105-117",
+      "quote": "committed = await state.commit(request, h, {\n        [picker.fieldName]: answerForPickedParty(chosen)\n      })",
+      "confidence": "verbatim",
+      "note": "Proven by controller-test-support.js:456-470, 'Should commit a copy of the chosen record and move on to the next page that applies'. The picked-party copy rule itself lives in journeys/linear/parties, claimed by another part."
     },
     {
       "id": "repo-plantsfrontend-p9-076",
-      "statement": "d-037 (behaviour import-from-existing-documents, parked): importing consignment information from existing documents is not built; it needs the document-upload exclusion lifted and a source naming the documents and format.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-037 resolution",
-      "quote": "d-037: Not built in this phase. NNS-UN-042 stays a parked convenience need. If picked up it is an upload-and-extract route feeding the same obligations, which first needs the epic's document-upload exclusion lifted and a plants source to name the documents and their machine-readable format.",
+      "statement": "Saving with the save-and-return control commits the chosen address and returns the trader to the notification's task-list hub rather than the next page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:478-486",
+      "quote": "expect(result.response).toEqual({ redirect: hubPath(result.journeyId) })\n      expect(result.after[fieldName]).toEqual(copied(primaryId))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-077",
-      "statement": "d-038 (behaviour reuse-previous-consignment, parked): reuse maps onto animals' Copy as new, which is out of the first pass; unparking is one increment copying the animals copy action; the prototype's templates pattern is not adopted.",
+      "statement": "Choosing a different address replaces the copy the notification already held rather than keeping both.",
       "kind": "rule",
-      "ref": "spec/decisions.json d-038 resolution",
-      "quote": "d-038: NNS-UN-041 maps onto animals' Copy as new (POST copy on the reserved /copy slug, new DRAFT opened at the hub, ?copied=1 banner), which notification-actions-after-submission (c-030) ruled out of the first pass, so this stays parked with no increment; unparking later is one increment copying the animals copy action. The prototype's templates pattern (manageTemplates) is not adopted.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:488-495",
+      "quote": "it('Should replace a copy already held rather than keeping both', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-078",
-      "statement": "d-039 (behaviour agent-acting-on-behalf, parked by Sam): no agent party, agent sign-in, authorisation or importer-agent link is collected; revisit when policy says how an agent is identified, authorised and linked.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-039 resolution",
-      "quote": "d-039: Not built in this phase. The signed-in Defra ID organisation is the notifier; no agent party, agent sign-in model, authorisation or importer-agent link is collected. The declaration carries no third-party authority clause (c-028).",
+      "statement": "Re-opening a picker after a save ticks the address the committed copy was taken from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:497-506",
+      "quote": "it('Should tick the committed copy on the next GET', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-079",
-      "statement": "d-040 (behaviour plant-operator-registration, parked by Sam): no registration step; if ruled in later it sits outside the notification journey and the obligations engine.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-040 resolution",
-      "quote": "d-040: Not built in this phase. Defra ID sign-in is the only precondition (c-039). If ruled in later it is an onboarding step or a registration check before the dashboard, outside the notification journey and outside the obligations engine.",
+      "statement": "When the backend cannot be reached to save, the picker is shown again with status 500, the recoverable-error banner and the trader's choice still ticked, and the failure is logged once as a fallback.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/picker-routes.js:76-95; controller-test-support.js:517-532",
+      "quote": "postedPickerState(request, picker.fieldName, payload, {\n        selectedId: chosen.id,\n        recoverableError: true\n      })\n  ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-080",
-      "statement": "d-041 (behaviour regulator-views, parked): no regulator screen, filter or report in this frontend; no region is captured, because the address block has no region member.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-041 resolution",
-      "quote": "d-041: No regulator screen, filter or report in this frontend. ... One correction: the detail must not claim a region is captured — the address block carries no region member and region derivation from the address is an open backend question under competent-authority-routing.",
+      "statement": "A programming failure during a save is raised rather than shown to the trader as the page again.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:534-541",
+      "quote": "it('Should rethrow a programming error rather than re-rendering the page', async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-081",
-      "statement": "d-041: the address field group members are name or organisation name, address line 1, address line 2, town or city, county, postal or zip code, country, telephone number and email address.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-041 rationale",
-      "quote": "d-041: The spec's address fieldGroup members are nameOrOrganisationName, addressLine1, addressLine2, townOrCity, county, postalOrZipCode, country, telephoneNumber, emailAddress — no region",
-      "confidence": "verbatim"
+      "statement": "A picker page's Back link returns the trader to the page they came from rather than to a fixed previous page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:102; controller-test-support.js:108-111",
+      "quote": "backLink: kit.trailBackLink(request),",
+      "confidence": "verbatim",
+      "note": "controller-test-support.js declares the shared case itSendsBackToWhereTheTraderCameFrom for every picker."
     },
     {
       "id": "repo-plantsfrontend-p9-082",
-      "statement": "d-042 (behaviour inspector-recording, parked): no inspector-side capture in this frontend: no outcome recording, no non-notified consignment record, no risk level.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-042 resolution",
-      "quote": "d-042: No inspector-side capture in this frontend: no outcome recording, no non-notified-consignment record, no risk level.",
-      "confidence": "verbatim"
+      "statement": "The whole picker works without JavaScript: the search is a form submit, the results are a table of radios in that same form, and paging is ordinary links.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:17-46; results.njk:59-61; results-href.js:5-23",
+      "quote": "appSubmittedSearch — a text box with a joined blue icon button that submits\n  the page's form with action=search.",
+      "confidence": "inferred",
+      "note": "Follows because every control in the shell is a form submit or an href: the search button posts action=search, the radios post with the form, and each paging link is a URL carrying q, page, selected and the trail. No client-side script is referenced anywhere in the feature folder."
     },
     {
       "id": "repo-plantsfrontend-p9-083",
-      "statement": "d-043 (behaviour analyst-export, parked): no export or download feature; the journey stores structured coded values and extraction is backend and datalake work.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-043 resolution",
-      "quote": "d-043: No export or download feature in this frontend. The journey's duty to analysts is discharged by storing structured, coded values (ISO country, coded commodityType, category and genus, dates, arrivalStatus, notificationStatus); extraction is backend and datalake work.",
-      "confidence": "verbatim"
+      "statement": "The picker is built from GOV.UK Frontend components — inset text, fieldset, table, radios, details, summary card and pagination — with the search box the one house component, itself a GOV.UK input and button wearing Ministry of Justice search classes.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.njk:17-19; _cells.njk:1, 24; held-copy.njk:1; template.njk:1-2; src/server/common/components/submitted-search/macro.njk:24-37",
+      "quote": "{% from \"govuk/components/table/macro.njk\" import govukTable %}\n{% from \"govuk/components/fieldset/macro.njk\" import govukFieldset %}\n{% from \"govuk/components/pagination/macro.njk\" import govukPagination %}",
+      "confidence": "verbatim",
+      "note": "The search button carries \"moj-search__button moj-search__button--icon app-submitted-search__button\"."
     },
     {
       "id": "repo-plantsfrontend-p9-084",
-      "statement": "d-044 (behaviour risk-classification-and-list-maintenance, parked): no admin or list-maintenance surface; spot-check percentages and risk classifications are not in the notifier journey; the commodity type, category, genus and origin allow-lists live in the set-owned commodities service, pinned by a whitelists test, so a list change is a data change.",
+      "statement": "Every address book picker page is served to one organisation only: the addresses offered and the record a save resolves are both scoped to the organisation the signed-in user belongs to.",
       "kind": "constraint",
-      "ref": "spec/decisions.json d-044 resolution",
-      "quote": "d-044: No admin or list-maintenance surface in this frontend, and spot-check percentages and risk classifications are not represented in the notifier journey. ... the commodityType, category, genus and origin allow-lists live in the set-owned commodities service behind a configure* seam in routes.js, pinned by obligations/whitelists.test.js, never hard-coded in obligations or copy — so a policy list change is a data change.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:83-84; save-selection.js:52",
+      "quote": "const orgId = organisationIdOf(request)\n  const found = await addressBook.addresses(orgId, { query, role })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-085",
-      "statement": "d-045 (behaviour spot-check-scheduling, parked): no scheduling, appointment, 'check booked' step or notice to the trader in the frontend.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-045 resolution",
-      "quote": "d-045: No scheduling, appointment, 'check booked' step or notice to the trader in this frontend; the hand-off to scheduling systems is backend work.",
+      "statement": "The picker's Welsh copy is a machine draft that has not been reviewed by a translator, and is marked as not to be shown to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-086",
-      "statement": "d-045: the place-of-destination hint varies by state: 'This is where a plant health inspector may carry out a spot check.' for potatoes and not-yet-arrived, 'A plant health inspector may carry out a spot check here.' for already-arrived; the confirmation says a spot check may happen at the destination without prior notice.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-045 resolution",
-      "quote": "d-045: the confirmation page's 'may carry out a spot check at the place of destination without prior notice' and the placeOfDestination hint, which since c-006 is input.hintByState and keeps the spot-check sentence in every state ('This is where a plant health inspector may carry out a spot check.' for potatoes and not-yet-arrived; 'A plant health inspector may carry out a spot check here.' for already-arrived).",
+      "statement": "Every word the picker shell shows exists in both English and Welsh, with no leaf left untranslated.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/copy/copy.test.js:8",
+      "quote": "itHoldsCopyAtEveryLeaf(copy, cy)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-087",
-      "statement": "d-046 (behaviour document-uploads-out-of-scope, parked): no documents collection, upload page, uploader route, virus-scan polling or document reference; if a source ever names a document, animals' documents collection (0 to 10 uploads) is the shape to copy.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-046 resolution",
-      "quote": "d-046: No documents collection, upload page, cdp-uploader route, virus-scan polling or document reference in this run. ... if a plants source ever names a document, animals' documents collection (0..10 uploads, cdp-uploader, virus-scan polling) is the shape to copy as a new collection increment.",
-      "confidence": "verbatim"
+      "statement": "An address written on one line for the held-party card reads addressLine1, addressLine2, town or city, county and postcode separated by commas, leaving out any part the record does not carry and leaving out the country.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:1-8; address-lines.test.js:19-42",
+      "quote": "const STREET_PARTS = ['addressLine1', 'addressLine2']\nconst LOCALITY_PARTS = ['townOrCity', 'county', 'postcode']\nconst ADDRESS_PARTS = [...STREET_PARTS, ...LOCALITY_PARTS]",
+      "confidence": "verbatim",
+      "note": "mechanism: flattens an address book record's address fields into one comma-separated line. A record with no address at all reads as an empty line."
     },
     {
       "id": "repo-plantsfrontend-p9-088",
-      "statement": "d-047 (behaviour outbox-and-gbnag-publishing-out-of-scope, parked): no outbox, GBN-AG or other event publishing and no PIMS routing; submission is a synchronous persist of the whole fulfilment snapshot, and the confirmation makes no promise about where the notification has gone.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-047 resolution",
-      "quote": "d-047: No outbox, no GBN-AG or other event publishing, no PIMS routing in this run. The journey's only submission obligation is a synchronous submitJourney that persists the whole fulfilment snapshot through the records port; the confirmation page makes no promise about where the notification has gone.",
-      "confidence": "verbatim"
+      "statement": "A record whose street lines or locality parts are blank shows no blank line in the results: each missing part is dropped before the lines are built.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:10-16; address-lines.test.js:58-66",
+      "quote": "export const pickerAddressLines = (address = {}) =>\n  [\n    ...STREET_PARTS.map((part) => address[part]),\n    LOCALITY_PARTS.map((part) => address[part])\n      .filter(Boolean)\n      .join(', ')\n  ].filter(Boolean)",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the address lines a results row shows from an address book record's address fields."
     },
     {
       "id": "repo-plantsfrontend-p9-089",
-      "statement": "d-047: the backend mapper today projects referenceNumber and nothing else; when publishing lands, the mapper must carry every SI matter.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-047 resolution and rationale",
-      "quote": "d-047: when it lands the mapper must carry every SI matter so the regulator receives the statutory record intact. ... the real records adapter derives a NotificationDto that projects referenceNumber and nothing else",
-      "confidence": "verbatim"
+      "statement": "The addresses on a page are the slice of the whole list the address book returned that the page number names, eight at a time.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:14-17",
+      "quote": "export const addressesOnPage = (addresses, page) => {\n  const from = (page - FIRST_PAGE) * ADDRESSES_A_PAGE\n  return addresses.slice(from, from + ADDRESSES_A_PAGE)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: pages the list of address book records the service returned; the service is asked for the whole matching list, not for one page of it."
     },
     {
       "id": "repo-plantsfrontend-p9-090",
-      "statement": "d-048 (behaviour combined-ins-list-out-of-scope, parked): the plants dashboard lists plants notifications only; there is no 'By type' filter, no 'Plants' card label and no combined list; a trader importing both animals and plants uses two dashboards in this phase.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-048 resolution",
-      "quote": "d-048: No cross-journey 'By type' filter, no 'Plants' card label, no combined list; the INS front door owns any cross-journey list later. A trader who imports both animals and plants uses two dashboards in this phase, and that cost is recorded rather than papered over.",
-      "confidence": "verbatim"
+      "statement": "The number of pages is the count of addresses found divided by eight and rounded up, and never fewer than one, so an empty result still counts as one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:8-12",
+      "quote": "export const pageCountOf = (addressesFoundCount) =>\n  Math.max(FIRST_PAGE, Math.ceil(addressesFoundCount / ADDRESSES_A_PAGE))",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the count of address book records found into a page count and clamps the page asked for to it."
     },
     {
       "id": "repo-plantsfrontend-p9-091",
-      "statement": "d-049 (c-011): every element with no sourced format, unit or list is free text, required or optional per the SI, with animals' max lengths (58; 400 for the treatments textarea) and no format check.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-049 resolution",
-      "quote": "d-049: every element no source gives a format, unit or list for is a free-text input, required or optional as the SI mandate says, with animals' max lengths (58; 400 for the treatments textarea) and no format check.",
-      "confidence": "verbatim"
+      "statement": "Each row of the results table is built as five cells in a fixed order — the radio, the name as plain text, the address lines, the country as plain text, and the contact details disclosure.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/table-rows.js:6-15",
+      "quote": "return rows.map((row) => [\n    { html: cells.pickerSelectCell(fieldName, row, pickerCopy) },\n    { text: row.name },\n    { html: cells.pickerAddressCell(row) },\n    { text: row.country },\n    { html: cells.pickerDetailsCell(row, pickerCopy) }\n  ])",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the picker's address rows into GOV.UK table cells."
     },
     {
       "id": "repo-plantsfrontend-p9-092",
-      "statement": "d-049: arrival time gets an HH:MM 24-hour rule (the one new validation factory).",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-049 resolution",
-      "quote": "d-049: arrivalTime gets a HH:MM 24-hour rule (the one new factory)",
-      "confidence": "verbatim"
+      "statement": "Each results row carries the address book record's id, name, address lines, country and contact lines, and whether it is the chosen one.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:9-17",
+      "quote": "const resultRow = (idPrefix, selectedId) => (record, index) => ({\n  id: record.id,\n  idPrefix: idPrefix(index),\n  name: record.name,\n  addressLines: pickerAddressLines(record.address),\n  country: record.address?.country,\n  contactLines: contactLines(record.address),\n  checked: record.id === selectedId\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes one address book record into the row the results table shows."
     },
     {
       "id": "repo-plantsfrontend-p9-093",
-      "statement": "d-049: quantity is a whole number of 1 or more (error 'Enter a whole number greater than 0'), and its hint is corrected so it no longer promises weight or volume.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-049 resolution and rationale",
-      "quote": "d-049: quantity stays a whole number of 1 or more with its hint corrected so it stops promising weight or volume ... the quantity hint 'or the weight or volume of wood' invites 12.5 while validationRaw is requiredIntegerInRange min 1 with error 'Enter a whole number greater than 0'",
+      "statement": "A results row's address lines and contact lines come straight from the record the row lists, with nothing added.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/controller-test-support.js:113-128",
+      "quote": "it(\"Should carry each row's address lines and contact lines from the record it lists\", async () => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-094",
-      "statement": "d-049: no commodity-code, EPPO, identification-number or consignment-number format is built (parked); invented hint examples are provisional copy; EPPO codes must not be assumed letter-only.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-049 resolution and rationale",
-      "quote": "d-049: No commodity-code, EPPO, identification-number or consignment-number format is built; those are parked under nfr-data-validation. The invented hint examples ship flagged provisionalCopy.",
+      "statement": "The picker shell is bound to the one answer its page collects, so the radios, the error id, the error summary link and the committed answer all share that one name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:29-30; results.njk:8-9, 28",
+      "quote": "fieldName  (string)  the answer name: the radios' name, and the prefix of the\n                         error message's id",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p9-095",
-      "statement": "d-050 (c-014): potato intended use is required free text per potato line; the optional 'Use' for plants and wood lines is not collected (parked until policy adds it).",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-050 resolution",
-      "quote": "d-050: The policy paper wins: potatoIntendedUse stays a required free-text per-line element for potato lines, and the optional 'Use' for plants and wood lines is not collected in the first pass",
-      "confidence": "verbatim"
+      "statement": "The picker shell offers no way to add an address that is not already in the organisation's address book: its only outward links are the held party's Edit details and the paging links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:8-46; held-copy.njk:13-21",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every file of the feature folder for an add-address or manual-entry control and for an address lookup: template.njk, results.njk, _cells.njk and held-copy.njk render none, and picker-routes.js registers only the page's own GET and POST. Any add-an-address page sits outside this part."
     },
     {
       "id": "repo-plantsfrontend-p9-096",
-      "statement": "d-051 (c-015): one obligation per concept (quantity per line; country of origin, place of destination and arrival date per notification) with labels, hints and check-your-answers row labels switching on commodity type and arrival status; potato-only extras stay separate gated obligations.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-051 resolution",
-      "quote": "d-051: One obligation per concept — quantity per line; countryOfOrigin, placeOfDestination and arrivalDate per notification — with the label, hint and CYA row label chosen page-side from the feature's copy keyed on commodityType and arrivalStatus (labelByState / headingByState) ... the potato-only extras (arrivalTime, proposedPlaceOfLanding, producer and crop ids) stay separate gated obligations.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-097",
-      "statement": "d-051: Check your answers, the hub and the dashboard render the state-specific label, never the generic one.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-051 resolution",
-      "quote": "d-051: Check your answers, the hub and the dashboard must render the state label, never the generic one.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-098",
-      "statement": "d-052 (c-016): the potato producer field is producerIdentificationNumber, labelled 'Identification number of the producer of the potatoes'; its Seed Potato Classification Scheme hint is provisional.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-052 resolution and rationale",
-      "quote": "d-052: the obligation is producerIdentificationNumber, labelled 'Identification number of the producer of the potatoes', exactly as the spec already has it.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-099",
-      "statement": "d-053 (c-020): the proposed place of landing is asked only for potatoes, as the animals port-of-entry autocomplete over the ports service backed by reference-data GET /ports-of-entry, which is built.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-053 resolution",
-      "quote": "d-053: proposedPlaceOfLanding is asked only when commodityType = potatoes — plants and wood notifications collect no landing place — as the animals portOfEntry autocomplete over the ports service backed by reference-data GET /ports-of-entry, which is built, not 'expected'.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-100",
-      "statement": "d-053: the ports list holds 77 MDM entries including the Channel and North Sea ro-ro ports; a closed list must let every in-scope notifier name their true landing place, which is a go-live check.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-053 rationale",
-      "quote": "d-053: the captured fixture services/_capture/fixtures/ports-of-entry.json holds 77 real MDM entries including Port of Dover (Eastern/Western), Folkestone ... The legal point survives as a go-live check, not a blocker: a closed list against a statutory matter must let every in-scope notifier name their true landing place.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-101",
-      "statement": "d-054 (c-021): the ware-potato origin list is Poland, Portugal, Romania and Spain (PL, PT, RO, ES); Spain is stored as ES and no region option is built.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-054 resolution",
-      "quote": "d-054: The SI wins: the ware-potato origin list is Poland, Portugal, Romania and Spain (ISO PL, PT, RO, ES); the mural's 'Spain & Poland' loses. Spain is stored as the plain code ES ... no region option is built and a region-level value is parked.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-102",
-      "statement": "d-055 (c-022): country of origin stays one autocomplete on the animals widget and countries service over the GBNAG_SPS_EX block (EU-27 plus Iceland, Liechtenstein, Norway and Switzerland).",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-055 resolution",
-      "quote": "d-055: Build the first pass on the existing GBNAG_SPS_EX block: its captured membership is exactly the EU-27 plus Iceland, Liechtenstein, Norway and Switzerland ... countryOfOrigin stays on the animals widget and service (one always-in-scope autocomplete over services/countries)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-103",
-      "statement": "d-055: origin is validated in the origin POST against the intersection of allow-lists for the categories present: ware potatoes PL/PT/RO/ES; conifer wood without bark IT/FR/PT/ES; plants, trees and other wood the EU-27; seed potatoes any primed country; an out-of-scope origin is rejected with an error naming the allowed countries.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-055 resolution",
-      "quote": "d-055: The per-category narrowing is data in the set-owned commodities service applied as validation inside the origin POST over the intersection of the lists for the categories present in commodityLines — ware potatoes PL/PT/RO/ES; conifer wood without bark IT/FR/PT/ES; plants for planting, trees for planting and the other wood categories the EU-27 member-State list (block minus IS, LI, NO, CH); seed potatoes any primed country — with an out-of-scope origin rejected by an error naming the allowed countries, and Check your answers re-runs the same check.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-104",
-      "statement": "d-055 and d-056: Check your answers re-runs the origin check and refuses POST with an error linking to the origin page, as animals does for unresolved party rows.",
+      "statement": "The results table offers no sorting, no filters beyond the one search box, no tabs and no control over how many addresses a page shows: eight a page is fixed in code.",
       "kind": "behaviour",
-      "ref": "spec/decisions.json d-055 rationale; d-056 resolution",
-      "quote": "d-056: Check your answers re-checks the same rule and refuses POST with a Change link to origin.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-105",
-      "statement": "d-056 (behaviour origin-value-list-by-commodity, adopted): warn-or-accept, a Spanish region option, a plants-specific country block and grown-in versus originate-from wording are parked; whether IS/LI/NO/CH count as the Common SPS Area for seed potatoes is an inference.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-056 resolution and rationale",
-      "quote": "d-056: The warn-or-accept alternative, a Spanish region option, a plants-specific block and the grown-in versus originate-from wording are parked.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-106",
-      "statement": "d-057 (behaviour country-block-and-ports-endpoint, adopted): nothing blocks the origin or arrival-details pages; the country-block-decision extra sits at the end of the backlog as a confirmation with Sam (chore, gate sam), gating no page.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-057 resolution",
-      "quote": "d-057: Nothing blocks the origin or arrival-details pages ... the country-block-decision extra stays at the end of the backlog as a confirmation with Sam (type chore, gate sam), gating no page.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-107",
-      "statement": "d-058 (behaviour nfr-standardise-information, adopted): every element a source gives a list for is stored as a code from a set-owned or platform service (commodity type, category, genus, ISO country, port code, arrival status, notification status); everything else is free text with a max length; controlled lists for intended use, treatments, variety, EPPO, species and commodity code are parked.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-058 resolution",
-      "quote": "d-058: every element a source gives a list for is a coded value — commodityType, category, genus, countryOfOrigin (ISO alpha-2), proposedPlaceOfLanding (port code), arrivalStatus, notificationStatus — stored as codes ... every other element is free text with a max length. Controlled lists for intended use, treatment codes, a variety register, an EPPO lookup, a species catalogue and the commodity-code scheme are parked until policy names them",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-108",
-      "statement": "d-059 (behaviour nfr-data-validation, adopted): validation is required-ness per the SI, membership for coded values, a real date, HH:MM time, whole-number quantity, the animals pattern for consignment number, animals' max lengths, and HTTP 400 with a GOV.UK error summary on every failure; formats for commodity code, EPPO and the identification numbers are parked.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-059 resolution",
-      "quote": "d-059: required-ness per the SI mandate; membership for every coded value including the per-category origin narrowing and its Check-your-answers re-check; a real calendar date for arrivalDate; a new HH:MM factory for arrivalTime; a whole number of 1 or more for quantity; the animals pattern for consignmentNumber; animals' max lengths for all other text; HTTP 400 with a GOV.UK error summary on every failure.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-109",
-      "statement": "d-060 (c-023): the notification reference keeps the animals shape and display places (journey strip, dashboard card title, confirmation panel, read-only CYA) and prints exactly what the backend or stub mints, today {YY}-{XXXXXX} with no prefix; the frontend invents, parses and validates nothing.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-060 resolution",
-      "quote": "d-060: The reference keeps the animals shape, minting point and display places (journey strip, dashboard card title, confirmation panel, CYA read-only view) and the frontend prints exactly what the backend or stub mints — today {YY}-{XXXXXX} with no prefix — inventing, parsing and validating nothing.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-110",
-      "statement": "d-060 and d-063: the type-code prefix is a parked backend-plus-stub decision; the Sam-gated backend-reference-prefix extra moves to the end of the backlog. The reference is minted at record creation on the dashboard Start POST.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-060 resolution and rationale; d-063 resolution",
-      "quote": "d-060: The type-code prefix is a parked backend-plus-stub decision: the backend-reference-prefix extra keeps its Sam gate but moves from before the confirmation page to the end of the backlog so the review section and every E2E behind it can ship.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-111",
-      "statement": "d-061 (c-024) and d-064: notification status is the engine lifecycle DRAFT / SUBMITTED / AMEND / DELETED shown as the animals tags Draft / Submitted / Amending / Deleted (blue / green / yellow / grey) on the journey strip, dashboard card and confirmation page; the confirmation prints the tag label, never the raw constant.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-061 resolution; d-064 resolution",
-      "quote": "d-064: Adopt the engine lifecycle DRAFT / SUBMITTED / AMEND / DELETED with the animals tags Draft / Submitted / Amending / Deleted (blue / green / yellow / grey) on the journey strip, dashboard card and confirmation page as the notification status the importer sees",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-112",
-      "statement": "d-061: lateness is never folded into the status; a richer importer-facing vocabulary (late, selected for check, checked, non-compliant) is parked; Welsh tag strings are machine-draft and provisional.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-061 resolution and rationale",
-      "quote": "d-061: lateness is the separate lateNotificationIndicator (Late tag beside the status on the dashboard card, banner on confirmation and CYA read-only) and is never folded into the status. ... Any richer importer-facing vocabulary (late, selected for check, checked, non-compliant) is parked pending a policy vocabulary",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-113",
-      "statement": "d-061: the confirmation page carries no journey strip.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-061 rationale",
-      "quote": "d-061: kit.base renders journeyStrip only when a journey object is passed and the animals confirmation passes { journeyId } alone, so the confirmation carries no strip.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-114",
-      "statement": "d-062 (c-030) and d-065: the dashboard shows per-status actions: SUBMITTED View | Amend | Delete; DRAFT Resume | Delete; AMEND Resume | Cancel amendment | Delete.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-062 resolution; d-065 resolution",
-      "quote": "d-062: The animals post-submission action set is in scope minus Copy as new: dashboard SUBMITTED shows View | Amend | Delete; DRAFT shows Resume | Delete; AMEND shows Resume | Cancel amendment | Delete",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-115",
-      "statement": "d-062: the read-only check-your-answers view offers Delete when SUBMITTED and a Cancel amendment link when AMEND; the confirmation page restores the animals 'How to view or amend this notification' block.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-062 resolution",
-      "quote": "d-062: the CYA read-only view offers Delete when SUBMITTED and the Cancel amendment link when AMEND; the confirmation page restores the animals 'How to view or amend this notification' block.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-116",
-      "statement": "d-062 and d-065: the delete-notification and cancel-amend confirmation pages are copied from animals as chore extras (one-question pages, a warning button on delete, Welsh copied from animals machine drafts); delete is a soft delete that keeps the record.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-062 resolution and rationale; d-065 rationale",
-      "quote": "d-062: The delete-notification and cancel-amend confirmation pages are copied from animals as chore extras (they are action-slug controllers, not dispatch pages), the delete page before the start-section E2E and the cancel-amend page before the review-section E2E.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-117",
-      "statement": "d-062: Copy as new and the Notification copied banner stay parked; the late flag is computed once at first submission from DRAFT and left untouched on re-submit from AMEND; dateOfNotification is the latest submittedAt.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-062 resolution",
-      "quote": "d-062: Copy as new and the Notification copied banner stay parked with reuse-previous-consignment (NNS-UN-041). The late flag is computed once, at the first submission from DRAFT, and left untouched on a re-submit from AMEND; dateOfNotification stays the record envelope's submittedAt (the latest submission, as animals shows Date submitted).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-118",
-      "statement": "d-062 and d-065: whether an amended arrival date re-runs the timing test, whether the backend keeps a first-submission timestamp, and whether a submitted notification the regulator acted on may still be amended or withdrawn are parked policy questions, not blockers.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-062 resolution; d-065 resolution",
-      "quote": "d-062: Whether an amended arrival date should re-run the reg 24A / reg 26 test, and whether the backend should keep a first-submission timestamp, are recorded as parked policy questions, not blockers.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-119",
-      "statement": "d-063 (behaviour reference-number-prefix, parked): the plants type-code prefix is still open on EUDPA-407; the first pass shows the unprefixed reference verbatim everywhere.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-063 resolution",
-      "quote": "d-063: Parked: the plants type-code prefix is a policy answer nobody has (still an open question on epic EUDPA-407 as of this ruling). The first pass builds on the unprefixed {YY}-{XXXXXX} the backend and stub mint, shown verbatim in every display place",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-120",
-      "statement": "d-064: check outcomes never change the importer-facing status in this run.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-064 resolution",
-      "quote": "d-064: A richer importer-facing vocabulary is parked pending a policy vocabulary, and check outcomes never change the importer-facing status in this run.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-121",
-      "statement": "d-066 (behaviour live-access-synchronous-submission, adopted): submission is synchronous; the confirmation renders only once the record is SUBMITTED with dateOfNotification stamped server-side; no queue, batch or optimistic confirmation may sit between submit and the persisted record.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-066 resolution",
-      "quote": "d-066: submission is synchronous — the declaration POST commits the flow-only answer, submitJourney awaits records.finalise ... and the confirmation page renders only once the record is SUBMITTED with dateOfNotification stamped server-side at that moment. ... No queue, batch or optimistic confirmation may be introduced between the notifier's submit and the persisted record.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-122",
-      "statement": "d-066: a failed finalise re-renders the declaration with the recoverable-error message ('Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'); a not-ready submit returns to Check your answers; the confirmation is GET-only and redirects a non-submitted journey to the hub.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-066 resolution and rationale",
-      "quote": "d-066: A finalise that throws re-renders the declaration with the recoverable-error message and never an optimistic confirmation; a not-ready submit returns to Check your answers. ... sharedCopy.recoverableError ('Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.') ... the confirmation is GET-only and redirects a non-SUBMITTED journey to the hub",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-123",
-      "statement": "d-067 (c-032): the shared chrome ships verbatim: service name 'Import notification service' (service navigation, page-title suffix, dashboard h1), the Alpha phase banner with the APHA service-desk feedback mailto, and Address book / Manage account links at '#'.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-067 resolution",
-      "quote": "d-067: The shared chrome ships verbatim in the first pass: service name 'Import notification service' (service navigation, page-title suffix, dashboard h1 and titleCy), the Alpha phase banner with the existing APHA service-desk feedback mailto, and Address book / Manage account at '#'.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-124",
-      "statement": "d-067: the confirmation help block says only to contact the relevant plant health authority (APHA, the Forestry Commission or Scottish Government), with no email, telephone or opening hours, and is provisional copy.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-067 resolution",
-      "quote": "d-067: The confirmation help block says only 'contact the relevant plant health authority — APHA, the Forestry Commission or Scottish Government' with no email, telephone or opening-hours lines, and the page is flagged provisionalCopy.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-125",
-      "statement": "d-067 and d-070: the Sam-gated extra chrome-placeholders-and-service-name holds six open decisions: service name, feedback address, helpdesk contact lines, homes of the two navigation links, and the footer accessibility-statement and privacy-notice URLs; the unauthorised-view copy move, compose.yml and stack-check wiring build now ungated.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-067 resolution; d-070 resolution",
-      "quote": "d-067: The Sam-gated extra chrome-placeholders-and-service-name is narrowed to the decisions nobody can make today — six after D7: service name, feedback address, helpdesk contact lines, the homes of the two links, and the footer accessibility-statement and privacy-notice URLs (nfr-accessible-wcag-2-2-aa, nfr-gdpr); the unauthorised-view copy move, the untouched compose.yml and the check-workspace-stack wiring come off that gate and build now as an ungated chore.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-126",
-      "statement": "d-068 (c-033): the plants dashboard is a same-as-animals, set-owned page at '/' listing only plants notifications known to this session's highRiskPlantsKnownJourneys cookie, scoped to the session organisation, excluding DELETED, one summary card each with the Status tag and Late tag.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-068 resolution",
-      "quote": "d-068: The plants dashboard is a same-as-animals, set-owned page at '/' that lists only the plants notifications this session's highRiskPlantsKnownJourneys cookie knows, scoped to the session organisation and excluding DELETED, one summary card per notification with the Status tag and the Late tag.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-127",
-      "statement": "d-068: no 'By type' filter, no cross-journey rows and no journey-type label on the dashboard cards; the session-only listing (a new session sees an empty list) is a user-model matter parked by Sam.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-068 resolution",
-      "quote": "d-068: No 'By type' filter, no cross-journey rows and no journey-type label on the cards. ... The sub-park of the session-only listing as a user-model matter is decidedBy sam (standing ruling 2).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-128",
-      "statement": "d-068: the dashboard empty state reads 'You have not started any notifications in this session.'",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-068 rationale",
-      "quote": "d-068: the empty-state copy is honest about it ('You have not started any notifications in this session.')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-129",
-      "statement": "d-069 (c-034): plants mirrors animals with an opening run in section order landing on the hub, a four-group task-list hub with the five animals statuses, section captions, and a flow-only declaration page as the submit gate.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-069 resolution",
-      "quote": "d-069: Plants has all four, mirroring animals: an opening run over the spec's section order landing on the hub, a four-group govukTaskList hub with the five animals statuses, section captions from a captionSections map, and a flow-only declaration page as the submit gate.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-130",
-      "statement": "d-069: the commodity-details entry sub-page is not a run step; its Continue returns to the commodities list, whose Continue advances the run.",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-069 resolution",
-      "quote": "d-069: the commodity-details entry sub-page is not a run step (its Continue returns to the commodities list page, whose Continue advances the run), so its runStep is removed and the later steps renumbered",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-131",
-      "statement": "d-069: the hub carries provisional copy because one of its Welsh group names ('Cyrraedd a chyrchfan') is invented; the declaration may assert only what a plants source supports.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-069 resolution and rationale",
-      "quote": "d-069: The hub carries provisionalCopy because one of its Welsh group names is invented, and the declaration's statements may assert only what a plants source supports — no undertaking the SI does not impose.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-132",
-      "statement": "d-070 (behaviour service-name-feedback-and-support, parked): the plants service name, feedback address, helpdesk lines and the homes of the Address book and Manage account links stay open; the link homes are parked by Sam under standing ruling 2.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-070 resolution",
-      "quote": "d-070: To close it the service owner must name the service and supply the feedback and helpdesk route the mural leaves TBC, and the INS front door must own the two links ... The sub-park of the Address book and Manage account link homes is decidedBy sam (standing ruling 2).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-133",
-      "statement": "d-071 (behaviour guidance-before-you-start, parked): no eligibility checker or before-you-start page; the dashboard intro names the scheme and the three commodity groups and links to GOV.UK guidance only when a real URL exists (never a '#' link).",
-      "kind": "behaviour",
-      "ref": "spec/decisions.json d-071 resolution",
-      "quote": "d-071: No eligibility checker or before-you-start page in this run. NNS-UN-001, 002 and 008 are met inside the journey by a dashboard intro that names the scheme and the three commodity groups and links to GOV.UK guidance only when a real URL exists (a copy leaf, never a '#' link)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-134",
-      "statement": "d-071: commodity-type option hints quote the SI's timing windows in its own words ('before or no later than four days after'); the windows are kept out of the dashboard intro; the intro is provisional copy.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-071 resolution and rationale",
-      "quote": "d-071: the commodity-type option hints quote reg 24A(1) and reg 26(1) rather than the Policy section's shortened form. The windows are kept out of the dashboard intro so the day counts are written in one journey-copy place",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-135",
-      "statement": "d-071: an in-service 'Is my consignment high-risk?' checker is recorded as a later start-section page, not rejected.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-071 resolution",
-      "quote": "d-071: An in-service 'Is my consignment high-risk?' checker driven by the set-owned commodities service is recorded as a later start-section page, not rejected.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-136",
-      "statement": "d-072 (behaviour previous-scheme-and-ni-roi-precedents, parked): the pre-2021 scheme and NI/RoI services can only refine copy, potato intended-use options and identifier formats later; no first-pass change.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-072 resolution",
-      "quote": "d-072: Parked as a copy and value-list input only, with no first-pass change. ... A precedent-driven change lands later as a copy-pair or lib/validate edit, never a model change.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-137",
-      "statement": "d-073 (behaviour day-one-critical-and-list-volatility, adopted): every commodity-type, category, genus and origin list is data behind the set-owned commodities service, never an obligation or copy literal.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-073 resolution",
-      "quote": "d-073: Adopted as a standing build constraint on every increment: (1) every commodity-type, category, genus and origin list is data behind the set-owned commodities service, never an obligation or copy literal",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-138",
-      "statement": "d-073: the two timing windows are single named constants, POTATO_DAYS_BEFORE_ARRIVAL = 2 and PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4, exported from one module beside arrival details and read by the lateness logic and every hint naming a window.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-073 resolution",
-      "quote": "d-073: (2) the two statutory timing windows are single named constants — POTATO_DAYS_BEFORE_ARRIVAL = 2 (reg 24A(1)) and PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4 (reg 26(1)) — exported from one module beside the arrival-details feature and read by the lateness derivation and by any hint that names a window, so no other copy of the number exists",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-139",
-      "statement": "d-073: the England / Great Britain wording and the authority names are copy leaves, so a reissued policy paper is a data or copy change.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-073 resolution",
-      "quote": "d-073: (3) the England / Great Britain wording and the authority names are copy leaves. A reissued policy paper is then a data or copy change, never a model change.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-140",
-      "statement": "d-074 (behaviour nfr-accessible-wcag-2-2-aa, adopted): every plants page ships an axe check on its initial and error states plus the Lighthouse accessibility floor, with axe tags widened to wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-074 resolution",
-      "quote": "d-074: every plants page ships the fit-spec axe check on its initial and validation-error states plus the Lighthouse accessibility floor, and the axe tag list is widened from the two WCAG 2.0 tags to ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'] so the machine-checkable 2.1 and 2.2 rules actually run.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-141",
-      "statement": "d-074: the manual WCAG 2.2 audit and the service's accessibility statement are parked; the footer accessibility link (today the generic GOV.UK statement) is routed through the gated chrome extra.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-074 resolution and rationale",
-      "quote": "d-074: The manual WCAG 2.2 audit and this service's own accessibility statement are parked, not built, and the footer's accessibility link is routed through the gated chrome extra.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-142",
-      "statement": "d-075 (behaviour nfr-gds-standards, adopted): GDS standards are met by govuk-frontend 6.x components only, one thing per page, error summary, task-list hub, check your answers, confirmation panel and the Alpha phase banner; a plain-English sweep of same-as-animals strings for animal nouns is added.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-075 resolution",
-      "quote": "d-075: govuk-frontend 6.x components only, one thing per page, error summary, task-list hub, check your answers, confirmation panel and the Alpha phase banner matching the mural's confirmed phase. ... A plain-English sweep of every same-as-animals string for animal nouns is added as a rider",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-143",
-      "statement": "d-076 (behaviour nfr-gdpr, parked): lawful basis, privacy notice and retention are parked; the first pass collects only the Annex 5 matters plus Common Data, scopes every record to the Defra ID organisation and keeps the footer Privacy link (today the generic GOV.UK notice). Production retention is undefined.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-076 resolution and rationale",
-      "quote": "d-076: Park the governance items — lawful basis, privacy notice content and URL, retention of drafts and submitted notifications — because the policy paper supplies none of them ... scopes every record to the Defra ID organisation, takes no document upload, and keeps the footer Privacy link, whose destination resolves under the gated chrome extra.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-144",
-      "statement": "d-077 (behaviour nfr-secure-internal-login, parked by Sam): internal-user login is not served by this frontend; the notifier keeps Defra ID OIDC sign-in, the stub session with auth enforced and organisation-scoped records.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-077 resolution",
-      "quote": "d-077: Annex 6 item 4 speaks only of internal users, who this frontend does not serve; the notifier keeps the Defra ID OIDC sign-in, stub session with auth enforced, and organisation-scoped records exactly as already adopted, and nothing more is built.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-145",
-      "statement": "d-078 (behaviour nfr-available-24x7-and-load, adopted): the journey keeps answers through save-and-return, recoverable-save and stale-action banners, submits synchronously, computes lateness in Europe/London, and never gates submission by time of day; peak-load targets and a plants k6 suite are parked.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-078 resolution",
-      "quote": "d-078: Nothing in the journey may gate submission by time of day. Peak-load targets and a plants k6 suite are parked as infrastructure follow-ons; platform availability is the CDP SLA.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-146",
-      "statement": "d-079 (behaviour nfr-english-and-welsh, parked): the first release is English-only with html lang en; every plants string lands in both locale files; no Welsh is invented; no runtime locale switch is built.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-079 resolution",
-      "quote": "d-079: Park the live Welsh service: the first release ships English-only with html lang en, the copy seam stays exactly as adopted so every plants string lands in both locale files at once, no Welsh is invented, and the runtime locale switch is not built",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-147",
-      "statement": "d-080 (behaviour nfr-minimise-trader-effort, adopted): every question must trace to the SI or the Common Data list; out-of-scope questions are hidden; any optional question carries '(optional)' and never gates readiness.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-080 resolution",
-      "quote": "d-080: Article 9(7) OCR makes this a ceiling as well as a goal — every question must trace to the SI or the Common Data list and no increment may add one that does not; any future optional question carries '(optional)' and never gates readiness.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-148",
-      "statement": "d-080: consignment number is the one optional obligation, labelled 'Consignment number (optional)', with hub row Optional for wood.",
-      "kind": "copy",
-      "ref": "spec/decisions.json d-080 rationale",
-      "quote": "d-080: consignmentNumber is the one optional obligation (c-003 — labelled 'Consignment number (optional)', hub row Optional for wood, never gates readiness)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-149",
-      "statement": "d-081 (behaviour nfr-sustainable, parked): no reading of 'Sustainable' is adopted; policy is to be asked what was meant.",
-      "kind": "non-functional",
-      "ref": "spec/decisions.json d-081 resolution",
-      "quote": "d-081: Park. 'Sustainable' is a single unqualified word in the only source that uses it, nothing in the journey depends on it, and the panel adopts no reading",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-150",
-      "statement": "d-082 (behaviour mi-metrics-eight, adopted): the journey supplies coded values and createdAt/submittedAt for MI and adds no question for MI; 'time taken per notification' is parked with created-to-submitted as the interim reading.",
-      "kind": "data",
-      "ref": "spec/decisions.json d-082 resolution",
-      "quote": "d-082: the journey measures nothing and adds no question for MI. The definition of 'time taken per notification' stays a parked policy question with created-to-submitted as the interim reading.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-151",
-      "statement": "d-082: the plants backend list projection has no submittedAt, so the dashboard's Date submitted row is empty in real mode; a new extra fixes it across the plants backend and frontend on one branch name.",
-      "kind": "integration",
-      "ref": "spec/decisions.json d-082 resolution and rationale",
-      "quote": "d-082: One verified gap is fixed by a new extra: the plants backend's list projection carries no submittedAt, so the dashboard's Date submitted row is empty in real mode and metric 6 cannot be read from the list.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-152",
-      "statement": "d-083 (behaviour equal-access-defra-policy-sg-fc, parked by Sam): equal internal access for Defra Policy, Scottish Government and the Forestry Commission is outside the notifier frontend; its one touchpoint is the confirmation naming all three authorities without preferring one.",
-      "kind": "rule",
-      "ref": "spec/decisions.json d-083 resolution",
-      "quote": "d-083: Parity of internal access for Defra Policy, Scottish Government and the Forestry Commission is a multi-organisation user model for the regulator product, wholly outside the notifier frontend; ... its one touchpoint — the confirmation naming all three competent authorities without preferring one — is already in the spec.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-153",
-      "statement": "d-084 (behaviour copy-tripwires-restore, adopted, decided by Sam): the dashboard increment rewrites the copy-convention and copy-parity tests in the same commit as the first feature folder; the two restore extras are withdrawn.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-084 resolution",
-      "quote": "d-084: The dashboard increment rewrites copy-convention.test.js and copy-parity.test.js in the same commit as the first feature folder; the two restore extras (restore-copy-convention-tripwire, restore-copy-parity-tripwire) are withdrawn and their detail folds into the dashboard increment's plan.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p9-154",
-      "statement": "d-084 is marked decidedBy sam but its rationale says the orchestrator applied it and Sam had not yet confirmed it.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json d-084 rationale",
-      "quote": "d-084: the orchestrator applied it on 2026-09-06 and Sam has not yet confirmed — supersede this decision to reverse it.",
-      "confidence": "inferred",
-      "note": "The decidedBy field and the rationale disagree on whether Sam made this ruling; recorded, not resolved."
-    },
-    {
-      "id": "repo-plantsfrontend-p9-155",
-      "statement": "The ledger records no ruling dated after 2026-09-06, so no design release 2.1 parity question is ruled in it; any DR2.1 change to a plants page or behaviour has no ledger entry yet.",
-      "kind": "constraint",
-      "ref": "spec/decisions.json (all 84 entries decidedAt 2026-09-06)",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:6; results.njk:27-69",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked across every entry's decidedAt and subject; the only prototype references (d-038 templates, d-048 and d-068 DR2/DR2.1 dashboard filter) treat the prototype as tier-3 evidence."
+      "note": "Looked in template.njk, results.njk and picker-routes.js: the only query parameters the shell reads are q, page and selected, and ADDRESSES_A_PAGE is a constant with no override."
     }
   ]
 }

@@ -1,20 +1,13 @@
 import { describe, test, expect } from 'vitest'
 import { indexWithRowsMovedBack, planMoveRowsBack } from './move-rows-back.js'
+import { row as backlogRow } from './__fixtures__/backlog-rows.js'
 
 const HOME = 'shared/hrp/themes/origin'
 const AWAY = 'shared/hrp/themes/origin-b'
 const OTHER = 'shared/hrp/themes/commodity'
 
-const row = (id, fields = {}) => ({
-  id,
-  title: `Row ${id}`,
-  detail: 'What and why.',
-  acceptanceCriteria: ['Something a user sees.'],
-  dependsOn: [],
-  status: 'todo',
-  repos: ['frontend'],
-  ...fields
-})
+const row = (id, fields = {}) =>
+  backlogRow({ id, repos: ['frontend'], ...fields })
 
 const envelope = (theme, increments, extra = {}) => ({
   programme: `hrp-${theme}`,

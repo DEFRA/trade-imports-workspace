@@ -1,0 +1,1266 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 15, the address picker and editing an address, read every non-unit-test file under src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/ (party-picker.controller.js, party-picker.njk, _address-picker.njk, _cells.njk, selection.js, request-params.js, test-support.js, and view-model/index.js, pagination.js, table-rows.js, address-lines.js, error-summary.js, results-href.js) and party-edit/ (party-edit.controller.js, party-edit.njk, address-rules.js, edit-href.js, copy/copy.en.js, copy/copy.cy.js), plus the feature's parties.js and copy/copy.en.js and copy/copy.cy.js, and the two fit specs fit/hub-picker.fit.spec.js (907 lines, 9 describe blocks: addresses hub, the same-as shortcut, the hub without JavaScript, who is asked for a CPH number, the permanent address section, party picker per role, party picker layout, party picker save, party picker search, party picker search without JavaScript, party picker details) and fit/party-edit.fit.spec.js (5 tests). It covered the five party picker pages (place-of-origin/select, consignors/select, consignees/select, importers/select, destinations/select) and the six party edit pages (the same five plus consignment/contact/edit): their routes, caption, heading, hints, search box, results heading and count, no-matches state, table columns and cells, the radio select control, the View link into the INS address book, paging at eight a page with its fallbacks, the 'Selected address' inset restatement, the Add a new address handshake button, the handshake error and success banner, every refusal message, the edit form's nine fields with labels, hints, widths, autocomplete, required-or-optional status and length caps, its error messages, its Save changes and Cancel buttons and its return rules. Supporting files outside the slice were read only for the verbatim strings and helpers these pages use: shared/copy.en.js (addressHandshake, saveActions), shared/paging.js, shared/paths.js, shared/trail.js, shared/kit.js, common/helpers/ins-address-book-urls.js, services/address-book/index.js and features/addresses/page.js and ins-handshake.js. Welsh copy was read for key parity only. The addresses hub page itself, the same-as shortcut, the CPH and permanent-address sections and the address-return hand-off belong to part 14; where fit/hub-picker.fit.spec.js proves something about them it is claimed here, because part 14 does not read that spec, and each such claim says so in its note.",
+  "claims": [
+    {
+      "id": "repo-frontend-p15-001",
+      "statement": "A trader picks an address for a party on its own picker page at /notifications/<journeyId>/<party>/select, reached by GET, with the same path answering a POST when the form is submitted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:234-247, src/server/app/shared/paths.js:5",
+      "quote": "export const routes = PARTIES.flatMap((party) => [\n  {\n    method: 'GET',\n    path: pageRoutePath(party.slug),\n    options: pageRouteOptions(addressesPage),\n    handler: get(party)\n  },\n  {\n    method: 'POST',\n    path: pageRoutePath(party.slug),\n    options: pageRouteOptions(addressesPage),\n    handler: post(party)\n  }\n])",
+      "confidence": "verbatim",
+      "note": "pageRoutePath(slug) is `/notifications/{journeyId}/${slug}`."
+    },
+    {
+      "id": "repo-frontend-p15-002",
+      "statement": "There are five party picker pages in the live animals journey, at the paths place-of-origin/select, consignors/select, consignees/select, importers/select and destinations/select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:11-52",
+      "quote": "slug: 'place-of-origin/select',\n...\n    slug: 'consignors/select',\n...\n    slug: 'consignees/select',\n...\n    slug: 'importers/select',\n...\n    slug: 'destinations/select',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-003",
+      "statement": "A sixth party, the consignment contact address, has its own select page at the consignment contact select page's slug and its own edit page at consignment/contact/edit, and it reads the address book's BRANCH_ADDRESS role.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:54-62",
+      "quote": "export const CONTACT_PARTY = {\n  id: 'contactAddress',\n  addressBookRole: 'BRANCH_ADDRESS',\n  slug: consignmentContactSelectPage.slug,\n  editSlug: 'consignment/contact/edit',\n  returnSlug: consignmentContactSelectPage.slug,\n  title: contactCopy.title,\n  error: contactCopy.errors.contactRequired\n}",
+      "confidence": "verbatim",
+      "note": "The contact picker page itself is served by the contact feature, not by party-picker.controller.js, whose routes come from PARTIES alone; only the contact edit page is served from this slice."
+    },
+    {
+      "id": "repo-frontend-p15-004",
+      "statement": "Each party reads the address book under its own role: place of origin PLACE_OF_ORIGIN, consignor CONSIGNOR, consignee CONSIGNEE, importer IMPORTER and place of destination PLACE_OF_DESTINATION.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:11-52",
+      "quote": "addressBookRole: 'PLACE_OF_ORIGIN',\n...\n    addressBookRole: 'CONSIGNOR',\n...\n    addressBookRole: 'CONSIGNEE',\n...\n    addressBookRole: 'IMPORTER',\n...\n    addressBookRole: 'PLACE_OF_DESTINATION',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-005",
+      "statement": "The picker lists only the organisation's addresses that hold the party's role or hold no role at all, and the search term narrows the name and every line of the address, case-insensitively and with the term trimmed.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/index.js:11-15, :47-55",
+      "quote": "export const offeredForRole = (record, role) =>\n  !role || record.roles.length === 0 || record.roles.includes(role)\n...\n/** The organisation's live addresses matching an optional search term,\n * narrowed to an optional role: a record holding that role, or holding no\n * role at all, matches; with no role given, every matching record does. */",
+      "confidence": "verbatim",
+      "note": "mechanism: filters the address book records the picker lists, by role and by search term."
+    },
+    {
+      "id": "repo-frontend-p15-006",
+      "statement": "A trader reaches a party's picker from the consignment addresses page, by the party's own add link when nothing is chosen or by its Change link when an address is already chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:110-113, :588-591",
+      "quote": "const openPartyPicker = async (page, party) => {\n  await page.getByRole('link', { name: party.add, exact: true }).click()\n  await expect(page.getByRole('heading', { name: party.title })).toBeVisible()\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-007",
+      "statement": "The picker page shows the caption 'Addresses' above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:63-64, party-picker/party-picker.njk:10",
+      "quote": "picker: {\n    caption: 'Addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-008",
+      "statement": "The picker's H1 is the party's title, so the five pages read 'Place of origin', 'Consignor', 'Consignee', 'Importer' and 'Place of destination'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:32-61, party-picker/party-picker.njk:11",
+      "quote": "title: 'Place of origin',\n...\n      title: 'Consignor',\n...\n      title: 'Consignee',\n...\n      title: 'Importer',\n...\n      title: 'Place of destination',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-009",
+      "statement": "The picker's browser page title is the party's title, so the consignor picker is titled 'Consignor' followed by the service name and the GOV.UK suffix.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:99, fit/hub-picker.fit.spec.js:251-253",
+      "quote": "await expect(page).toHaveTitle(\n      `Consignor - ${sharedCopy.layout.serviceName} - ${sharedCopy.layout.govukSuffix}`\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-010",
+      "statement": "Below the heading the picker shows the party's hint as a paragraph: for the place of origin 'The address where the animals begin their journey to Great Britain'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:34, party-picker/party-picker.njk:23",
+      "quote": "hint: 'The address where the animals begin their journey to Great Britain',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-011",
+      "statement": "The consignor picker's hint reads 'This is the sender of the consignment.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:40",
+      "quote": "hint: 'This is the sender of the consignment.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-012",
+      "statement": "The consignee picker's hint reads 'This is the receiver or buyer of the consignment being shipped or transported.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:46",
+      "quote": "hint: 'This is the receiver or buyer of the consignment being shipped or transported.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-013",
+      "statement": "The importer picker's hint reads 'This is usually the same as the consignee. You can select a different person if needed.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:52",
+      "quote": "hint: 'This is usually the same as the consignee. You can select a different person if needed.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-014",
+      "statement": "The place of destination picker's hint reads 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:58",
+      "quote": "hint: 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-015",
+      "statement": "The picker's back link returns to the consignment addresses page, carrying the trail the trader arrived on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:100-104",
+      "quote": "backLink: kit.carryTrail(\n        request,\n        pagePath(journey.journeyId, 'addresses')\n      ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-016",
+      "statement": "The picker renders on the full-width content column rather than the two-thirds form column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:107, fit/hub-picker.fit.spec.js:836",
+      "quote": "surface: 'display'",
+      "confidence": "verbatim",
+      "note": "The fit spec proves it: await expect(withinFullWidthColumn(journeyFormOf(page))).toHaveCount(1)."
+    },
+    {
+      "id": "repo-frontend-p15-017",
+      "statement": "The picker shows a search box labelled 'Search' with the hint 'Name, address or country' and a button labelled 'Search'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:65-69",
+      "quote": "search: {\n      label: 'Search',\n      hint: 'Name, address or country',\n      button: 'Search'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-018",
+      "statement": "The search box sits in a wrapper half the column wide and is joined flush to its single search button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:71-79, fit/hub-picker.fit.spec.js:766-775",
+      "quote": "{{ appSubmittedSearch({\n      id: \"q\",\n      name: \"q\",\n      value: picker.query,\n      label: { text: copy.search.label },\n      hint: { text: copy.search.hint },\n      button: { text: copy.search.button },\n      wrapperClasses: \"govuk-!-width-one-half\"\n    }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-019",
+      "statement": "Searching posts the picker form back to the same page and opens the first page of results, keeping the term in the search box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:191-199, party-picker/request-params.js:1",
+      "quote": "if (isSearchAction(payload)) {\n    const { journey } = await state.get(request, h)\n    return render(request, h, orgId, journey, party, {\n      query,\n      page: FIRST_PAGE,\n      selectedId,\n      addAddressHref: issueAddAddressLink(request, h, journey, party)\n    })\n  }",
+      "confidence": "verbatim",
+      "note": "isSearchAction reads payload.action === 'search'."
+    },
+    {
+      "id": "repo-frontend-p15-020",
+      "statement": "The picker's search works without JavaScript: pressing Enter in the search box narrows the list on the server.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:800-821",
+      "quote": "test('pressing Enter in the search box narrows the address book on the server', async ({\n    page\n  }) => {\n    await searchByPressingEnter(page, {\n      search: copy.picker.search,\n      term: 'Denmark'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-021",
+      "statement": "The results are headed by a level-two heading reading 'Select an address', which also names the radio group as a visually hidden fieldset legend.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:73, party-picker/_address-picker.njk:15, :43",
+      "quote": "resultsHeading: 'Select an address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-022",
+      "statement": "Under the results heading the picker states how many addresses it is showing, reading 'Showing <shown> out of <total> results'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:74",
+      "quote": "resultsCount: (shown, total) => `Showing ${shown} out of ${total} results`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-023",
+      "statement": "When a search matches nothing the picker shows 'No addresses match your search.' in place of the count, and renders no table, no radios and no pagination.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:71, party-picker/_address-picker.njk:52-59",
+      "quote": "noMatches: 'No addresses match your search.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-024",
+      "statement": "The search box sits directly above the results heading, with the results heading below the box and the count straight under the heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:130-134, :606-618",
+      "quote": "const expectSearchBoxDirectlyAboveResultsHeading = async (page) => {\n  await expect(elementBeforeResultsHeading(page)).toHaveClass(\n    /govuk-form-group/\n  )\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-025",
+      "statement": "The results table has four columns: a visually hidden 'Select' column, then 'Name', 'Address' and 'Country'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:79-85, party-picker/_address-picker.njk:24-29",
+      "quote": "table: {\n      selectHidden: 'Select',\n      name: 'Name',\n      address: 'Address',\n      country: 'Country',\n      actionsHidden: 'Actions'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-026",
+      "statement": "A fifth column headed by the visually hidden word 'Actions' is added only when the picker offers View links into the INS address book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:30-34",
+      "quote": "{% if picker.withViewLinks %}\n        {% set head = head.concat([\n          { html: '<span class=\"govuk-visually-hidden\">' + copy.table.actionsHidden + '</span>' }\n        ]) %}\n      {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-027",
+      "statement": "A row's address cell shows address line 1, address line 2 and address line 3 each on their own line, then one line joining town or city, county and postcode with a comma and a space.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.js:3-19, party-picker/_cells.njk:19-23",
+      "quote": "const STREET_PARTS = ['addressLine1', 'addressLine2', 'addressLine3']\nconst LOCALITY_PARTS = ['townOrCity', 'county', 'postcode']\nconst streetLinesThenLocalityLine = (address, localityLineParts) =>\n  [\n    ...STREET_PARTS.map((part) => address[part]),\n    localityLineParts.filter(Boolean).join(', ')\n  ].filter(Boolean)",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes an address record's parts into the display lines of a picker row."
+    },
+    {
+      "id": "repo-frontend-p15-028",
+      "statement": "A blank part of an address is left out of the picker's address cell, so no empty line and no stray comma is shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.js:5-9",
+      "quote": "localityLineParts.filter(Boolean).join(', ')\n  ].filter(Boolean)",
+      "confidence": "verbatim",
+      "note": "mechanism: drops blank parts of an address before the lines are shown."
+    },
+    {
+      "id": "repo-frontend-p15-029",
+      "statement": "A Danish consignor row's address cell reads 'Havnegade 21' then 'Copenhagen, 1058' on the line below, and the row's last cell reads 'Denmark'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:839-849",
+      "quote": "await expect\n      .poll(() => addressCell.evaluate((cell) => cell.innerText))\n      .toBe('Havnegade 21\\nCopenhagen, 1058')",
+      "confidence": "verbatim",
+      "note": "The names and addresses come from the frontend's stub address book, which the fit suite runs against."
+    },
+    {
+      "id": "repo-frontend-p15-030",
+      "statement": "The country column shows the address record's country name, not its code.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/index.js:13, view-model/table-rows.js:16",
+      "quote": "country: record.address.country,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-031",
+      "statement": "Each row's select control is a small GOV.UK radio named 'party' whose value is the address book record's id, labelled by the visually hidden words 'Select' followed by the address's name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_cells.njk:3-17, copy/copy.en.js:86",
+      "quote": "{% macro pickerSelectCell(row, copy) %}\n  {% set selectLabel %}\n    <span class=\"govuk-visually-hidden\">{{ copy.selectRowPrefix }} {{ row.name }}</span>\n  {% endset %}\n  {{ govukRadios({\n    idPrefix: row.idPrefix,\n    name: \"party\",\n    classes: \"govuk-radios--small\",",
+      "confidence": "verbatim",
+      "note": "selectRowPrefix is 'Select'."
+    },
+    {
+      "id": "repo-frontend-p15-032",
+      "statement": "The first row's radio takes the id 'party' and later rows take 'party-2', 'party-3' and on, so an error summary link can reach the first radio.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/index.js:10",
+      "quote": "idPrefix: index === 0 ? 'party' : `party-${index + 1}`,",
+      "confidence": "verbatim",
+      "note": "mechanism: numbers the radio ids of a page of picker rows."
+    },
+    {
+      "id": "repo-frontend-p15-033",
+      "statement": "Only one address can be chosen on the picker, because every row's control is a radio sharing the name 'party'.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_cells.njk:8-16",
+      "quote": "name: \"party\",",
+      "confidence": "inferred",
+      "note": "It follows from the control being a radio group: radios sharing a name allow one choice."
+    },
+    {
+      "id": "repo-frontend-p15-034",
+      "statement": "Each row offers a link labelled 'View', followed by the address's name for a screen reader, that opens that address's page in the INS address book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_cells.njk:25-27, copy/copy.en.js:87",
+      "quote": "{% macro pickerViewCell(row, copy) %}\n  <a class=\"govuk-link\" href=\"{{ row.viewHref }}\">{{ copy.view }}<span class=\"govuk-visually-hidden\"> {{ row.name }}</span></a>\n{% endmacro %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-035",
+      "statement": "A View link goes to the INS front end at /address-book/<address id> with a return query naming the picker page the trader came from, including its search term and page number.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/index.js:14-16, :33, src/server/common/helpers/ins-address-book-urls.js:28-31",
+      "quote": "export const insViewAddressUrl = (addressId, returnPath) =>\n  buildInsFrontendUrl(\n    `${ADDRESS_BOOK_PATH}/${encodeURIComponent(addressId)}?${new URLSearchParams({ return: returnPath })}`\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-036",
+      "statement": "The View links and the add-address control are offered only when the service is not in stub mode, so a picker running against the stub address book shows neither.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:37, :125, :132-134",
+      "quote": "const linksToInsAddressBook = () => !isStubMode()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-037",
+      "statement": "In stub mode each picker row ends at its country column, with no View link and no fifth column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:843-849",
+      "quote": "await expect(page.getByRole('columnheader')).toHaveText([\n      copy.picker.table.selectHidden,\n      copy.picker.table.name,\n      copy.picker.table.address,\n      copy.picker.table.country\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-038",
+      "statement": "The picker shows eight addresses a page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:6",
+      "quote": "export const ADDRESSES_A_PAGE = 8",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-039",
+      "statement": "The page a trader is on shows the slice of the found addresses that starts eight rows into the list for every page before it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:14-17",
+      "quote": "export const addressesOnPage = (addresses, page) => {\n  const from = (page - FIRST_PAGE) * ADDRESSES_A_PAGE\n  return addresses.slice(from, from + ADDRESSES_A_PAGE)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: cuts a page out of the list of found addresses."
+    },
+    {
+      "id": "repo-frontend-p15-040",
+      "statement": "The picker's pagination offers links labelled 'Previous' and 'Next'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:75-78",
+      "quote": "pagination: {\n      previous: 'Previous',\n      next: 'Next'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-041",
+      "statement": "Previous is shown only when the trader is past the first page, and Next only when there is a page after the current one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paging.js:18-27",
+      "quote": "previous:\n      page > FIRST_PAGE\n        ? { href: hrefFor(page - 1), text: labels.previous }\n        : undefined,\n    next:\n      page < totalPages\n        ? { href: hrefFor(page + 1), text: labels.next }\n        : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-042",
+      "statement": "The numbered pagination shows the first page, the page either side of the current page, the current page and the last page, with an ellipsis wherever those numbers skip a page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:19-36",
+      "quote": "const numbersToShow = (page, totalPages) => {\n  const eitherSideOfCurrent = 1\n  const shown = [\n    FIRST_PAGE,\n    page - eitherSideOfCurrent,\n    page,\n    page + eitherSideOfCurrent,\n    totalPages\n  ].filter((number) => number >= FIRST_PAGE && number <= totalPages)",
+      "confidence": "verbatim",
+      "note": "mechanism: works out which page numbers and ellipses the pagination shows."
+    },
+    {
+      "id": "repo-frontend-p15-043",
+      "statement": "The current page's number is marked as the current page in the pagination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:33, fit/hub-picker.fit.spec.js:627",
+      "quote": "await expect(pageLink(page, 1)).toHaveAttribute('aria-current', 'page')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-044",
+      "statement": "No pagination is rendered when the party's addresses fit on one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paging.js:13-17, fit/hub-picker.fit.spec.js:636-648",
+      "quote": "const minimumPagesToPaginate = 2\n  if (totalPages < minimumPagesToPaginate) {\n    return null\n  }",
+      "confidence": "verbatim",
+      "note": "The consignee picker proves it: every consignee address is a radio and the Pagination navigation has count 0."
+    },
+    {
+      "id": "repo-frontend-p15-045",
+      "statement": "A picker always offers at least one page, even when the search found no addresses at all.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:8-9",
+      "quote": "export const pageCountOf = (addressesFoundCount) =>\n  Math.max(FIRST_PAGE, Math.ceil(addressesFoundCount / ADDRESSES_A_PAGE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-046",
+      "statement": "A page number in the query that is not a whole number of one or more is ignored and the first page is shown instead, and the service logs that it served the first page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:39-56, src/server/app/shared/paging.js:5-11",
+      "quote": "'Address picker page is not a page number, serving the first page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-047",
+      "statement": "A page number past the last page shows the last page instead, and the service logs that it served the last page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:78-89, party-picker/view-model/pagination.js:11-12",
+      "quote": "'Address picker page is past the last page, serving the last page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-048",
+      "statement": "A pagination link carries the search term as q, the page number as page when it is past the first page, and the chosen address as selected, leaving each out when it is empty or the first page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/results-href.js:5-23",
+      "quote": "const params = new URLSearchParams()\n  if (query) {\n    params.set('q', query)\n  }\n  if (page > FIRST_PAGE) {\n    params.set('page', String(page))\n  }\n  if (selectedId) {\n    params.set('selected', selectedId)\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the href of a picker results page."
+    },
+    {
+      "id": "repo-frontend-p15-049",
+      "statement": "A pagination link carries the trail the trader arrived on, so paging does not lose where they came from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/results-href.js:20-22",
+      "quote": "return withTrail(search ? `${path}?${search}` : path, trail)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-050",
+      "statement": "When an address is chosen the picker restates it above the results in an inset text reading 'Selected address: <name>'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:72, party-picker/_address-picker.njk:81-83",
+      "quote": "selectedAddress: (name) => `Selected address: ${name}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-051",
+      "statement": "Reopening a party's picker ticks the address already chosen for that party and names it above the results.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:146, fit/hub-picker.fit.spec.js:880-897",
+      "quote": "selectedId: request.query.selected ?? answers[party.id]?.pickedFromId ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-052",
+      "statement": "Paging away from the page holding the chosen address keeps it named above the results even though its radio is no longer on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:893-896",
+      "quote": "await pageLink(page, 2).click()\n\n    await expectChosenAddressNamedAboveResults(page, chosenName)\n    await expect(page.getByRole('radio', { name: chosenName })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-053",
+      "statement": "The chosen address's id is carried in a hidden field named 'selected' as well as in the paging links, so a save made from another page of results still saves it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:67-69, party-picker.controller.js:188",
+      "quote": "{% if picker.selected %}\n      <input type=\"hidden\" name=\"selected\" value=\"{{ picker.selected.id }}\" />\n    {% endif %}",
+      "confidence": "verbatim",
+      "note": "The handler reads `payload.party || payload.selected || ''`, so a ticked radio wins over the carried selection."
+    },
+    {
+      "id": "repo-frontend-p15-054",
+      "statement": "The page number a trader is on is carried in a hidden field named 'page', so a refused save re-renders the page of results they were on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:66, party-picker.controller.js:220",
+      "quote": "<input type=\"hidden\" name=\"page\" value=\"{{ picker.page }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-055",
+      "statement": "An address that is chosen but has since been removed from the book, soft-deleted, or no longer offers the party's role is treated as no selection at all, so the picker opens with nothing ticked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/selection.js:4-14",
+      "quote": "/** A picker selection, looked up in the book. A missing, soft-deleted or\n * wrong-role record is treated as no selection (UCD — never entered). */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-056",
+      "statement": "The picker offers a secondary button labelled 'Add a new address', beside the heading at the right of the page.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:88, party-picker/party-picker.njk:13-21, src/server/app/shared/copy.en.js:74",
+      "quote": "addNewAddress: 'Add a new address',",
+      "confidence": "verbatim",
+      "note": "The picker's copy takes the string from shared copy's addressHandshake."
+    },
+    {
+      "id": "repo-frontend-p15-057",
+      "statement": "Add a new address sends the trader to the INS address book's add page, carrying the journey type gbn-ag, the notification id, the fulfilment id of the party being filled and a one-off handshake token.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js:77-92, party-picker.controller.js:132-134",
+      "quote": "return insAddAddressUrl({\n    'journey-type': JOURNEY_TYPE,\n    'notification-id': notificationId,\n    'fulfilment-id': fulfilmentId,\n    'handshake-token': token\n  })",
+      "confidence": "verbatim",
+      "note": "ins-handshake.js belongs to part 14's read; claimed here because the picker is where the control is offered."
+    },
+    {
+      "id": "repo-frontend-p15-058",
+      "statement": "When a trader comes back from adding an address the picker shows a success banner titled 'Success' reading '<name> address added to your address book', and the banner is shown once only.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:150, ins-handshake.js:64-75, src/server/app/shared/copy.en.js:75-78",
+      "quote": "addedBanner: {\n      title: 'Success',\n      text: (name) => `${name} address added to your address book`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-059",
+      "statement": "When the address book hand-off fails the picker opens with the message 'The address could not be found in your address book. Select another address or try adding it again.' for a not-found address.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:138-141, src/server/app/shared/copy.en.js:80-81",
+      "quote": "notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-060",
+      "statement": "When the address book could not be reached the picker opens with the message 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.' and the page is marked as holding a recoverable error.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:142, src/server/app/shared/copy.en.js:82-83",
+      "quote": "unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-061",
+      "statement": "The picker ends with a Save and continue button alone and offers no Save and return to overview control.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:87-92, fit/hub-picker.fit.spec.js:658-662",
+      "quote": "{{ saveActions({\n      hubHref: hubHref,\n      primary: { text: saveActionsCopy.saveAndContinue, name: \"action\", value: \"save\" },\n      copy: saveActionsCopy,\n      showReturnControls: false\n    }) }}",
+      "confidence": "verbatim",
+      "note": "The shared copy's saveAndContinue reads 'Save and continue'."
+    },
+    {
+      "id": "repo-frontend-p15-062",
+      "statement": "Saving the picker with an address ticked records it on the notification and returns the trader to the consignment addresses page, carrying the trail.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:154-183",
+      "quote": "const savedTarget = (request) =>\n  kit.carryTrail(request, pagePath(request.params.journeyId, 'addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-063",
+      "statement": "A chosen address is copied onto the notification's own answer for that party rather than held as a reference, keeping the id it was picked from.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/selection.js:16",
+      "quote": "export const answerFor = (_party, chosen) => answerForInlineParty(chosen)",
+      "confidence": "verbatim",
+      "note": "mechanism: turns an address book record into the party answer stored on the notification. party-inline.js is part 14's read; the pickedFromId it sets is what claim repo-frontend-p15-051 reads back."
+    },
+    {
+      "id": "repo-frontend-p15-064",
+      "statement": "Saving the picker with nothing ticked commits nothing and returns the trader to the consignment addresses page, where the party's section still offers only its add link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:201-207, fit/hub-picker.fit.spec.js:672-678",
+      "quote": "if (!selectedId) {\n    request.logger.info(\n      { journeyId: request.params.journeyId, partyId: party.id },\n      'Address picker saved with no address chosen, nothing committed'\n    )\n    return h.redirect(savedTarget(request))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-065",
+      "statement": "Choosing nothing on the picker shows the trader no error message and no prompt: the page is left silently without an answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:201-207",
+      "quote": "'Address picker saved with no address chosen, nothing committed'",
+      "confidence": "verbatim",
+      "note": "The party's own error message is used only when a chosen id cannot be found in the book, never when nothing is chosen."
+    },
+    {
+      "id": "repo-frontend-p15-066",
+      "statement": "Saving an address that is not in the organisation's book, or does not offer the party's role, is refused with a 400 and the party's own error message, the radio left unticked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:209-226",
+      "quote": "const chosen = await chosenPartyFor(orgId, selectedId, party.addressBookRole)\n  if (!chosen) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-067",
+      "statement": "The place of origin picker's refusal message reads 'Select a place of origin from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:36",
+      "quote": "error: 'Select a place of origin from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-068",
+      "statement": "The consignor picker's refusal message reads 'Select a consignor from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42",
+      "quote": "error: 'Select a consignor from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-069",
+      "statement": "The consignee picker's refusal message reads 'Select a consignee from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:48",
+      "quote": "error: 'Select a consignee from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-070",
+      "statement": "The importer picker's refusal message reads 'Select an importer from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:54",
+      "quote": "error: 'Select an importer from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-071",
+      "statement": "The place of destination picker's refusal message reads 'Select a place of destination from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:60",
+      "quote": "error: 'Select a place of destination from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-072",
+      "statement": "A refusal is shown in an error summary whose link goes to the first radio when addresses are listed, and to the search box when the search found nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/error-summary.js:1-7",
+      "quote": "export const errorSummary = (error, hasRows, sharedCopy) =>\n  error\n    ? {\n        titleText: sharedCopy.errorSummary.title,\n        errorList: [{ text: error, href: hasRows ? '#party' : '#q' }]\n      }\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-073",
+      "statement": "A refusal also shows the message above the table, prefixed for a screen reader by the visually hidden word 'Error:'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:70, party-picker/_address-picker.njk:8-12",
+      "quote": "errorPrefix: 'Error:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-074",
+      "statement": "A refused picker marks the whole results group as in error and points the radio group's description at the error message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:41-47",
+      "quote": "<div class=\"govuk-form-group{{ ' govuk-form-group--error' if picker.error }}\">\n      {{ govukFieldset({\n        legend: { text: copy.resultsHeading, classes: \"govuk-visually-hidden\" },\n        describedBy: \"party-error\" if picker.error,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-075",
+      "statement": "A refusal keeps the trader's search term in the search box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:689-714",
+      "quote": "await expect(page.getByLabel(copy.picker.search.label)).toHaveValue(\n      'Denmark'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-076",
+      "statement": "A save the service cannot persist re-renders the picker with the chosen address still ticked, marked as a recoverable error, and answers with a 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:157-183",
+      "quote": ").code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-077",
+      "statement": "The picker's maturity banner is the addresses feature's, which is set to 'detailing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/page.js:1-5, party-picker.controller.js:238",
+      "quote": "export const addressesPage = {\n  id: 'addresses',\n  slug: 'addresses',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim",
+      "note": "So neither the picker nor the edit page is a signed-off page."
+    },
+    {
+      "id": "repo-frontend-p15-078",
+      "statement": "Every party picker page in the live animals journey lists only its own role's addresses plus the role-less address, and never an address held for another role alone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:508-563",
+      "quote": "test(`${party.title} picker lists only its own role's addresses and the role-less address, with its role-specific copy`, async ({",
+      "confidence": "verbatim",
+      "note": "Proved for all five parties, walking every page of the role's addresses."
+    },
+    {
+      "id": "repo-frontend-p15-079",
+      "statement": "A picker's listed addresses come back in the address book's own order, which the paging preserves across pages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:561-562",
+      "quote": "expect(idsSeen).toEqual(listed.map((record) => record.id))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-080",
+      "statement": "Choosing an address on any of the five pickers saves it and shows it in that party's section on the addresses page, and reopening the picker from the section's Change link finds it ticked and named above the results.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:578-595",
+      "quote": "test(`${party.title} selection saves and persists`, async ({ page }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-081",
+      "statement": "A picker search on 'Denmark' narrows the consignor list to two addresses, showing 'Showing 2 out of 2 results' and keeping the term in the box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:724-737",
+      "quote": "await searchAddresses(page, 'Denmark')\n    await expect(resultsSummary(page)).toHaveText(\n      copy.picker.resultsCount(2, 2)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-082",
+      "statement": "Clearing the search box and searching again opens the whole list of the party's addresses from its first page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:739-754",
+      "quote": "test('clearing the search and searching with nothing entered opens the whole consignor list again, from its first page', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-083",
+      "statement": "The picker's first page of a role with more than eight addresses holds exactly eight radios, and the page after it holds the rest, ending at the role's last address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:852-878",
+      "quote": "test('picker lists a page of consignor addresses, and the page after it holds the rest', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-084",
+      "statement": "The picker's radios are one group named by the results heading, and the pagination numbers every page of the role's addresses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:620-634",
+      "quote": "test('picker offers a page of consignor addresses as one group named by the results heading, numbering every page of the role', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-085",
+      "statement": "The picker has no serious or critical accessibility violations when empty, after a search, with no matches, and once an address not in the book has been refused.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:777-797, :899-906",
+      "quote": "test('picker has no serious or critical axe violations empty, searched and with no matches', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-086",
+      "statement": "An address copied onto the consignor from the place of origin is left out of the consignor picker's list, while the consignor section on the addresses page still shows it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:359-374",
+      "quote": "test('excludes the copied place-of-origin record from the consignor picker, with the Consignor section still showing it', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-087",
+      "statement": "The consignment addresses page shows its intro, a fraud warning and one headed section per party with the party's hint and a named add link, ending with Save and continue.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:179-197",
+      "quote": "test('renders the intro, the warning and a headed section per party with its hint and named add link', async ({",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read fit/hub-picker.fit.spec.js."
+    },
+    {
+      "id": "repo-frontend-p15-088",
+      "statement": "The consignment addresses page's back link returns to the Overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:199-202",
+      "quote": "test('hub back link returns to the overview', async ({ page }) => {\n    await backLink(page).click()\n    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()\n  })",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read this spec."
+    },
+    {
+      "id": "repo-frontend-p15-089",
+      "statement": "Choosing an address for every party marks the addresses task Complete on the overview, for a consignment that is asked for no CPH number and no permanent address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:204-216",
+      "quote": "test('completing every party marks the hub task Complete for a consignment asked for no CPH number or permanent address', async ({",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read this spec."
+    },
+    {
+      "id": "repo-frontend-p15-090",
+      "statement": "A chosen party shows on the addresses page as the bold name, the address lines and the country, with a Change link and an Edit details link each naming the party.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:218-241",
+      "quote": "test('shows each chosen party in its section as the bold name, its address lines and the country, with Change and Edit details naming the party', async ({",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read this spec. The Edit details link is what opens the edit form in this part."
+    },
+    {
+      "id": "repo-frontend-p15-091",
+      "statement": "The addresses page offers a same-as button in the Consignor, Importer and Place of destination sections, each naming the section it fills, and none in the Place of origin or Consignee sections; pressing one fills its section, shows no success banner and removes the pressed button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:284-357",
+      "quote": "test('shows a same-as button naming its source in the Consignor, Importer and Place of destination sections, with the two consignee buttons each naming the section they fill, and none in the Place of origin or Consignee sections', async ({",
+      "confidence": "verbatim",
+      "note": "The same-as shortcut is part 14's slice; claimed here because part 14 does not read this spec."
+    },
+    {
+      "id": "repo-frontend-p15-092",
+      "statement": "The addresses page renders its sections, opens a party picker from an add link and fills the consignor from the place of origin with its same-as button, all with JavaScript turned off.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:391-416",
+      "quote": "test.describe('addresses hub without JavaScript', () => {\n  test.use({ javaScriptEnabled: false })",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read this spec."
+    },
+    {
+      "id": "repo-frontend-p15-093",
+      "statement": "A consignment of poultry is asked for a county parish holding number on the addresses page, with the section's hint and add link, and a saved number is shown in its slashed form 12/345/6789 with only a Change link; a consignment of horses or of ostriches is not asked for one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:418-467",
+      "quote": "test('asks a consignment of poultry for a CPH number', async ({ page }) => {",
+      "confidence": "verbatim",
+      "note": "The CPH section is part 14's slice; claimed here because part 14 does not read this spec. Which commodities are asked for a CPH number is V4's to settle, not this repo's."
+    },
+    {
+      "id": "repo-frontend-p15-094",
+      "statement": "The addresses page shows a permanent address section with its heading, lead-in, bullets and add link for a cat consignment, and no such section for a cattle consignment.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:469-500",
+      "quote": "test('shows its heading, lead-in, bullets and add link for a cat consignment', async ({",
+      "confidence": "verbatim",
+      "note": "The permanent address section is part 14's slice; claimed here because part 14 does not read this spec. Which commodities need a permanent address is V4's to settle."
+    },
+    {
+      "id": "repo-frontend-p15-095",
+      "statement": "The addresses page has no serious or critical accessibility violations empty, complete and with the same-as buttons showing, at both desktop and phone width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:256-274, :376-388",
+      "quote": "test('hub page has no serious or critical axe violations empty and complete, at desktop and phone width', async ({",
+      "confidence": "verbatim",
+      "note": "The addresses page is part 14's slice; claimed here because part 14 does not read this spec."
+    },
+    {
+      "id": "repo-frontend-p15-096",
+      "statement": "A trader edits the address copied onto a party at /notifications/<journeyId>/<party>/edit, which answers a GET and a POST, for the five parties and the consignment contact.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:27, :127-132, parties.js:16-61",
+      "quote": "const EDITABLE_PARTIES = [...PARTIES, CONTACT_PARTY]\n...\nexport const routes = EDITABLE_PARTIES.flatMap((party) =>\n  kit.pageRoutes(\n    { slug: party.editSlug, maturity: addressesPage.maturity },\n    { get: get(party), post: post(party) }\n  )\n)",
+      "confidence": "verbatim",
+      "note": "The six edit slugs are place-of-origin/edit, consignors/edit, consignees/edit, importers/edit, destinations/edit and consignment/contact/edit."
+    },
+    {
+      "id": "repo-frontend-p15-097",
+      "statement": "A trader reaches the edit form from the party's Edit details link on the consignment addresses page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:33-38, copy/copy.en.js:9",
+      "quote": "await addressesSection(page, CONSIGNOR.title)\n    .getByRole('link', { name: copy.hub.editDetails })\n    .click()",
+      "confidence": "verbatim",
+      "note": "The Edit details label is 'Edit details'."
+    },
+    {
+      "id": "repo-frontend-p15-098",
+      "statement": "The edit form's H1 reads 'Edit address details', captioned above by the party's title.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:3, party-edit/party-edit.njk:9-10",
+      "quote": "title: 'Edit address details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-099",
+      "statement": "Below the heading the edit form says 'Changes apply to this notification only. Your address book is not changed.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:4, party-edit/party-edit.njk:12",
+      "quote": "hint: 'Changes apply to this notification only. Your address book is not changed.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-100",
+      "statement": "The edit form asks nine questions in this order: name, address line 1, address line 2, town or city, county, postcode, country, phone number and email address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.njk:18-108, party-edit/address-rules.js:13-25",
+      "quote": "export const FIELD_RULES = {\n  name: { maxLength: 255, required: true },\n  addressLine1: { maxLength: 255, required: true },\n  addressLine2: { maxLength: 255, required: false },\n  townOrCity: { maxLength: 100, required: true },\n  county: { maxLength: 100, required: false },\n  postcode: { maxLength: 12, required: true },\n  countryCode: { required: true },\n  phone: { maxLength: 20, required: true },\n  email: { maxLength: 254, required: true, email: true }\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-101",
+      "statement": "The edit form's field labels read 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Phone number' and 'Email address'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:5-15",
+      "quote": "fields: {\n    name: 'Name or organisation name',\n    addressLine1: 'Address line 1',\n    addressLine2: 'Address line 2 (optional)',\n    townOrCity: 'Town or city',\n    county: 'County (optional)',\n    postcode: 'Postcode or Zip code',\n    countryCode: 'Country',\n    phone: 'Phone number',\n    email: 'Email address'\n  },",
+      "confidence": "verbatim",
+      "note": "Address line 2 and County carry '(optional)' in the label rather than as a hint; no other field is marked optional."
+    },
+    {
+      "id": "repo-frontend-p15-102",
+      "statement": "The phone number field carries the hint 'For international numbers include the country code'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:16, party-edit/party-edit.njk:94",
+      "quote": "phoneHint: 'For international numbers include the country code',",
+      "confidence": "verbatim",
+      "note": "It is the only hint on the form; no other field has one."
+    },
+    {
+      "id": "repo-frontend-p15-103",
+      "statement": "The country question is a plain GOV.UK select whose first option reads 'Select a country', followed by the address book's countries by name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:41-44, party-edit/copy/copy.en.js:17, party-edit/party-edit.njk:77-84",
+      "quote": "const countryItemsOf = (countries) => [\n  { value: '', text: copy.countrySelectText },\n  ...countries.map(({ code, name }) => ({ value: code, text: name }))\n]",
+      "confidence": "verbatim",
+      "note": "countrySelectText is 'Select a country'. The country list comes from the countries service, not from this feature."
+    },
+    {
+      "id": "repo-frontend-p15-104",
+      "statement": "The name, address lines, town or city, county, phone and email fields are two thirds of the column wide, and the postcode field is ten characters wide.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:37-48, party-edit/party-edit.njk:23, :72",
+      "quote": "export const FIELD_CLASSES = {\n  name: TWO_THIRDS_WIDTH,\n  addressLine1: TWO_THIRDS_WIDTH,\n  addressLine2: TWO_THIRDS_WIDTH,\n  townOrCity: TWO_THIRDS_WIDTH,\n  county: TWO_THIRDS_WIDTH,\n  postcode: 'govuk-input--width-10',\n  phone: TWO_THIRDS_WIDTH,\n  email: TWO_THIRDS_WIDTH\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-105",
+      "statement": "The edit form's fields offer browser autofill: organization for the name, address-line1 and address-line2 for the address lines, address-level2 for the town or city, postal-code for the postcode, tel for the phone and email for the email address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:27-35, party-edit/party-edit.njk:24, :33, :44, :54, :73, :91, :105",
+      "quote": "export const AUTOCOMPLETE_TOKENS = {\n  name: 'organization',\n  addressLine1: 'address-line1',\n  addressLine2: 'address-line2',\n  townOrCity: 'address-level2',\n  postcode: 'postal-code',\n  phone: 'tel',\n  email: 'email'\n}",
+      "confidence": "verbatim",
+      "note": "The county field and the country select carry no autocomplete token."
+    },
+    {
+      "id": "repo-frontend-p15-106",
+      "statement": "The phone field is typed as a telephone input, and the email field as an email input with spellcheck turned off.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.njk:86-108",
+      "quote": "type: \"tel\",\n...\n      type: \"email\",\n...\n      spellcheck: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-107",
+      "statement": "Seven of the nine fields must be filled in to save an edit: name, address line 1, town or city, postcode, country, phone number and email address; address line 2 and county may be left blank.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:92-107",
+      "quote": "export const addressRules = (countryCodes) =>\n  compose(\n    requiredTextRule('name'),\n    requiredTextRule('addressLine1'),\n    optionalTextRule('addressLine2'),\n    requiredTextRule('townOrCity'),\n    optionalTextRule('county'),\n    requiredTextRule('postcode'),\n    requiredOneOf('countryCode', countryCodes, errors.countryCode.required),\n    requiredTextRule('phone'),\n    requiredEmail('email', maxLengthOf('email'), {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-108",
+      "statement": "The edit form caps the name, address line 1 and address line 2 at 255 characters, the town or city and county at 100, the postcode at 12, the phone number at 20 and the email address at 254.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:13-23",
+      "quote": "name: { maxLength: 255, required: true },\n  addressLine1: { maxLength: 255, required: true },\n  addressLine2: { maxLength: 255, required: false },\n  townOrCity: { maxLength: 100, required: true },\n  county: { maxLength: 100, required: false },\n  postcode: { maxLength: 12, required: true },\n  countryCode: { required: true },\n  phone: { maxLength: 20, required: true },\n  email: { maxLength: 254, required: true, email: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-109",
+      "statement": "The country must be one of the address book countries the select offered; a code that is not one of them is refused.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:96-100, party-edit/address-rules.js:100",
+      "quote": "requiredOneOf('countryCode', countryCodes, errors.countryCode.required),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-110",
+      "statement": "A blank name is refused with 'Enter a name', and a name over the cap with 'Name must be 255 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:21-24",
+      "quote": "name: {\n      required: 'Enter a name',\n      maxLength: (max) => `Name must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-111",
+      "statement": "A blank address line 1 is refused with 'Enter address line 1', and one over the cap with 'Address line 1 must be 255 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:25-28",
+      "quote": "addressLine1: {\n      required: 'Enter address line 1',\n      maxLength: (max) => `Address line 1 must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-112",
+      "statement": "An address line 2 over the cap is refused with 'Address line 2 must be 255 characters or fewer', and it has no required message because it may be left blank.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:29-31",
+      "quote": "addressLine2: {\n      maxLength: (max) => `Address line 2 must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-113",
+      "statement": "A blank town or city is refused with 'Enter a town or city', and one over the cap with 'Town or city must be 100 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:32-35",
+      "quote": "townOrCity: {\n      required: 'Enter a town or city',\n      maxLength: (max) => `Town or city must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-114",
+      "statement": "A county over the cap is refused with 'County must be 100 characters or fewer', and it has no required message because it may be left blank.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:36-38",
+      "quote": "county: {\n      maxLength: (max) => `County must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-115",
+      "statement": "A blank postcode is refused with 'Enter a postcode', and one over the cap with 'Postcode must be 12 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:39-42",
+      "quote": "postcode: {\n      required: 'Enter a postcode',\n      maxLength: (max) => `Postcode must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim",
+      "note": "The label reads 'Postcode or Zip code' while the messages say only 'Postcode'."
+    },
+    {
+      "id": "repo-frontend-p15-116",
+      "statement": "No country chosen is refused with 'Enter a country'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:43-45",
+      "quote": "countryCode: {\n      required: 'Enter a country'\n    },",
+      "confidence": "verbatim",
+      "note": "The control is a select, so the message says 'Enter' where the GOV.UK pattern for a choice is 'Select'."
+    },
+    {
+      "id": "repo-frontend-p15-117",
+      "statement": "A blank phone number is refused with 'Enter a telephone number', and one over the cap with 'Telephone number must be 20 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:46-49",
+      "quote": "phone: {\n      required: 'Enter a telephone number',\n      maxLength: (max) => `Telephone number must be ${max} characters or fewer`\n    },",
+      "confidence": "verbatim",
+      "note": "The label reads 'Phone number' while the messages say 'telephone number'."
+    },
+    {
+      "id": "repo-frontend-p15-118",
+      "statement": "A blank email address is refused with 'Enter an email address', one in the wrong shape with 'Enter an email address in the correct format', and one over the cap with 'Email address must be 254 characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:50-54",
+      "quote": "email: {\n      required: 'Enter an email address',\n      format: 'Enter an email address in the correct format',\n      maxLength: (max) => `Email address must be ${max} characters or fewer`\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-119",
+      "statement": "The edit form's labels and error messages are the same as the INS address book's own.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:1",
+      "quote": "// Labels and errors match the INS address book's (features/address-book/copy).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-120",
+      "statement": "The edit form's buttons are 'Save changes' as the primary and 'Cancel' as a secondary beside it.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.en.js:18-19, party-edit/party-edit.njk:110-118",
+      "quote": "save: 'Save changes',\n  cancel: 'Cancel',",
+      "confidence": "verbatim",
+      "note": "The edit form offers neither Save and continue nor Save and return to overview."
+    },
+    {
+      "id": "repo-frontend-p15-121",
+      "statement": "The edit form opens pre-filled from the copy already on the notification: the name, phone and email from the party itself and the rest from its address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:109-117, party-edit/party-edit.controller.js:77-79",
+      "quote": "const PARTY_LEVEL_FIELDS = new Set(['name', 'phone', 'email'])\n\nexport const formValuesOf = (party = {}) =>\n  Object.fromEntries(\n    FIELDS.map((field) => {\n      const source = PARTY_LEVEL_FIELDS.has(field) ? party : party.address\n      return [field, source?.[field] ?? '']\n    })\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the stored party answer into the edit form's values."
+    },
+    {
+      "id": "repo-frontend-p15-122",
+      "statement": "Saving an edit writes the name, phone and email on the party and the address lines, town or city, county, postcode and country code on its address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:121-133",
+      "quote": "export const partyFrom = (values) => ({\n  name: values.name,\n  phone: values.phone,\n  email: values.email,\n  address: {\n    addressLine1: values.addressLine1,\n    addressLine2: values.addressLine2,\n    townOrCity: values.townOrCity,\n    county: values.county,\n    postcode: values.postcode,\n    countryCode: values.countryCode\n  }\n})",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the edit form's values into the party answer stored on the notification. The form captures no address line 3, although the picker's address cell shows one."
+    },
+    {
+      "id": "repo-frontend-p15-123",
+      "statement": "Saving an edit drops the record the address was picked from, so the picker no longer shows the edited copy as its chosen address.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:119-121",
+      "quote": "/** Leaves out `pickedFromId`: an edited copy no longer matches the record it\n * was picked from, so the picker should not pre-select it. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-124",
+      "statement": "An edit changes only this notification: the organisation's address book record is not changed.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:107-119, party-edit/copy/copy.en.js:4",
+      "quote": "await state.commit(request, h, { [party.id]: partyFrom(value) })",
+      "confidence": "verbatim",
+      "note": "The commit writes only the notification's own answers; the copy says so to the trader."
+    },
+    {
+      "id": "repo-frontend-p15-125",
+      "statement": "A valid save returns the trader to the page the edit was opened from, carrying the trail.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:29-39, :124",
+      "quote": "return h.redirect(returnHref(request, party))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-126",
+      "statement": "The edit form returns to the page a 'return' marker names, but only when that marker names the consignment addresses page, the notification view or the consignment contact select page; any other marker is ignored and the party's own return page is used.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:29-39, src/server/app/shared/trail.js:95-112",
+      "quote": "const { honouredSlug } = kit.readReturnMarker(request, [\n    'addresses',\n    kit.CYA_SLUG,\n    CONTACT_PARTY.slug\n  ])",
+      "confidence": "verbatim",
+      "note": "kit.CYA_SLUG is 'notification-view'. A marker that is not one of the three is logged once per request as 'Return marker not recognised, marker dropped'."
+    },
+    {
+      "id": "repo-frontend-p15-127",
+      "statement": "Without a return marker the five parties' edit forms return to the consignment addresses page, and the consignment contact's edit form returns to the contact select page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:17, :59, party-edit/party-edit.controller.js:37",
+      "quote": "returnSlug: 'addresses',\n...\n  returnSlug: consignmentContactSelectPage.slug,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-128",
+      "statement": "The edit form's back link goes to the same page its save returns to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:54-58",
+      "quote": "backLink: returnHref(request, party),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-129",
+      "statement": "Cancel leaves the copy as it was and returns the trader to the page the edit was opened from, without saving anything.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:82-86",
+      "quote": "const payload = request.payload ?? {}\n  if (payload.cancel) {\n    return h.redirect(returnHref(request, party))\n  }",
+      "confidence": "verbatim",
+      "note": "Cancel is checked before the answers are read, so nothing is validated and nothing is written."
+    },
+    {
+      "id": "repo-frontend-p15-130",
+      "statement": "A refused edit re-renders the form with the trader's own answers kept, an error summary above the heading and each field's message beside it, and answers with a 400.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:101-105, party-edit/party-edit.njk:7, :25",
+      "quote": "if (errors) {\n    return (await render(request, h, journey, party, { values, errors })).code(\n      HTTP_STATUS_BAD_REQUEST\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-131",
+      "statement": "Opening a party's edit form when nothing has been chosen for that party sends the trader to that party's picker instead, carrying the trail.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:70-80, :88-93",
+      "quote": "if (!answers[party.id]) {\n    return h.redirect(\n      kit.carryTrail(request, pagePath(journey.journeyId, party.slug))\n    )\n  }",
+      "confidence": "verbatim",
+      "note": "The same guard runs on the POST, so a save against a party with no answer is redirected too."
+    },
+    {
+      "id": "repo-frontend-p15-132",
+      "statement": "An edit the service cannot persist re-renders the form with the trader's answers, marked as a recoverable error, and answers with a 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:107-122",
+      "quote": "await render(request, h, journey, party, {\n          values,\n          recoverableError: true\n        })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-133",
+      "statement": "An unanswered field posts as an empty string rather than being left out, so every field is validated on every save.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.js:67-68, :95",
+      "quote": "const valuesFrom = (payload = {}) =>\n  Object.fromEntries(FIELDS.map((field) => [field, payload[field] ?? '']))",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the posted form into the nine known fields and ignores anything else posted."
+    },
+    {
+      "id": "repo-frontend-p15-134",
+      "statement": "The same address rules are used to judge whether a party's stored copy is complete, so a party whose copy breaks any of them is not treated as answered.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:135-136",
+      "quote": "export const isValidParty = (party, countryCodes) =>\n  validate(addressRules(countryCodes), formValuesOf(party)).errors === null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-135",
+      "statement": "A link into a party's edit form can carry both a return marker naming where to come back to and the trail of pages the trader walked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/edit-href.js:4-8",
+      "quote": "export const partyEditHref = (journeyId, party, returnSlug, trail) =>\n  withTrail(\n    withReturnMarker(pagePath(journeyId, party.editSlug), returnSlug),\n    trail\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-136",
+      "statement": "The edit form opens pre-filled with the chosen address's name and shows the County field, captioned with the party's role.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:47-58",
+      "quote": "test('opens pre-filled from the copy, captioned with the role', async ({",
+      "confidence": "verbatim",
+      "note": "The County assertion is the only field assertion in the spec beyond the name."
+    },
+    {
+      "id": "repo-frontend-p15-137",
+      "statement": "Changing the name and pressing Save changes returns the trader to the consignment addresses page, where the party's section shows the edited name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:60-72",
+      "quote": "test('saves the edit to this notification and returns to the hub', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-138",
+      "statement": "Clearing the postcode and saving refuses the edit with 'Enter a postcode' in an error summary whose link focuses the postcode field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:74-85",
+      "quote": "await followErrorLinkToField(\n      page,\n      editCopy.errors.postcode.required,\n      page.getByLabel(editCopy.fields.postcode)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-139",
+      "statement": "Changing the name and pressing Cancel returns the trader to the consignment addresses page with the party's section still showing the name it had before.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:87-97",
+      "quote": "test('cancel leaves the copy as it was', async ({ page }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-140",
+      "statement": "The edit form has no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:99-103",
+      "quote": "test('edit page has no serious or critical axe violations', async ({\n    page\n  }) => {\n    await expectNoSeriousOrCriticalViolations(page, 'Edit address details')\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p15-141",
+      "statement": "The addresses feature's Welsh copy carries the same keys as its English copy, including every key the picker uses, and is marked as a machine draft that has not been reviewed by a translator.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js:1-93",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim",
+      "note": "Read for key parity only, not string by string. Its picker keys mirror the English: caption, search label, hint and button, errorPrefix, noMatches, selectedAddress, resultsHeading, resultsCount, pagination, table, selectRowPrefix, view, addNewAddress and handshakeErrors."
+    },
+    {
+      "id": "repo-frontend-p15-142",
+      "statement": "The party edit form's Welsh copy carries the same keys as its English copy, title, hint, the nine field labels, the phone hint, the country select text, the two buttons and every error message, and is marked as a machine draft that has not been reviewed by a translator.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/copy/copy.cy.js:1-56",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim",
+      "note": "Read for key parity only, not string by string."
+    },
+    {
+      "id": "repo-frontend-p15-143",
+      "statement": "The picker offers no way to clear a chosen address once one is ticked: there is no 'none of these' option and no remove control on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:62-93, party-picker/_cells.njk:3-17",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in _address-picker.njk, _cells.njk, party-picker.njk and party-picker.controller.js. The radios cannot be unticked and the hidden 'selected' field carries the choice forward, so only the addresses page's own controls could clear it."
+    },
+    {
+      "id": "repo-frontend-p15-144",
+      "statement": "The picker offers no sort control and no choice of page size: the order is the address book's and the page size is fixed at eight.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination.js:6, party-picker/_address-picker.njk:14-60",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the picker template, its macros and the whole view-model folder."
+    },
+    {
+      "id": "repo-frontend-p15-145",
+      "statement": "The picker reads the whole list of the organisation's addresses for the role and then cuts a page out of it in the frontend, rather than asking the address book for one page.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:74-78, src/server/app/services/address-book/index.js:20-55",
+      "quote": "const found = await addressBook.addresses(orgId, {\n    query,\n    role: party.addressBookRole\n  })\n  const page = servedPageOf(requestedPage, found.length)",
+      "confidence": "verbatim",
+      "note": "mechanism: the address book client reads every page of the list API at the maximum page size, four pages at a time, before the picker pages the result for display."
+    },
+    {
+      "id": "repo-frontend-p15-146",
+      "statement": "The picker's View link into the INS address book is not proven end to end by the fit suite, because the suite runs in stub mode where the link is not offered.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js:565-576, :830-850",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both fit specs. hub-picker.fit.spec.js asserts the add-address control and the View column are absent in stub mode, so only the unit tests cover the link itself."
+    },
+    {
+      "id": "repo-frontend-p15-147",
+      "statement": "The party edit form's country select, its phone hint and every over-long message are not proven by its fit spec, which asserts only the name and County fields, the save, the postcode required message and Cancel.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js:41-104",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at all five tests in party-edit.fit.spec.js."
+    },
+    {
+      "id": "repo-frontend-p15-148",
+      "statement": "The picker's address cell can show an address line 3, but the edit form has no address line 3 field, so a third line cannot be entered or changed on a notification.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.js:3, party-edit/address-rules.js:13-25",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in address-rules.js's FIELD_RULES, party-edit.njk and party-edit/copy/copy.en.js. Which address fields a notification captures is V4's to settle."
+    },
+    {
+      "id": "repo-frontend-p15-149",
+      "statement": "Neither the picker nor the edit form offers an address search of a wider address lookup: the only search on the picker is over the organisation's own address book, and the edit form is manual entry.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:71-79, party-edit/party-edit.njk:14-119",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both templates and both controllers."
+    },
+    {
+      "id": "repo-frontend-p15-150",
+      "statement": "No rule on the edit form depends on which party is being edited or on which country is chosen: all six edit pages apply the same nine rules, and no field is required, optional or capped differently for a United Kingdom address than for an overseas one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.js:92-107, party-edit/party-edit.controller.js:96-100",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in address-rules.js, party-edit.controller.js, party-edit.njk and parties.js. The only per-party difference is the caption, the return page and which answer is written; the postcode is required and capped at 12 whatever the country."
+    }
+  ]
+}

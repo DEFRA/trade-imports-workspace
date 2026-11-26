@@ -1,0 +1,458 @@
+{
+  "programme": "ticket-to-backlog",
+  "generatedFrom": [
+    "document:ticket-to-backlog-plan",
+    "repo:workspace",
+    "ruling:sam-2026-11-25"
+  ],
+  "invariants": [
+    "The full distil workflow behaves exactly as it does today for every existing source kind: no switch makes it extract, verify or reconcile less deeply.",
+    "Every backlog written before this change still passes the backlog check, and the build loop reads it as it does today.",
+    "No new command wraps the GitHub CLI or the GitHub API: pull requests, checks and merges stay plain gh calls in the skill's steps.",
+    "Every new command has its own help text and tests, mocks only at the network boundary, and is dry run or read-only wherever it would change something outside workareas/.",
+    "A person's Jira ticket description is never overwritten by any step of ticket mode.",
+    "Nothing in ticket mode merges a pull request without the go the workspace merge rule requires.",
+    "Every stage that creates rows combines the ones that suit combining before it hands the backlog on: a row stands alone only with a reason in its notes."
+  ],
+  "repos": {
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
+    }
+  },
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "A Jira ticket is a source the full distil can extract",
+      "detail": "Today a ticket reaches the full distil only as a plain document, as the save and continue programme had to do, so its acceptance criteria, comments and attachments lose their structure. A ticket becomes a source kind of its own, with an extract method that reads the description, every acceptance criterion as its own claim, comments as context and each attachment in turn. This is also what lets ticket mode hand a ticket that turns out too big over to the full distil without losing anything.",
+      "acceptanceCriteria": [
+        "A sources file naming a source of the ticket kind, whose locator is a fetched ticket file, passes the distil status check, and one naming an unknown kind is still refused (document:ticket-to-backlog-plan §8)",
+        "The distil workflow extracts a ticket source into claims in which each acceptance criterion is its own claim, quoting the ticket's words and citing its criterion number (document:ticket-to-backlog-plan §2 When it escalates)",
+        "A comment on the ticket is extracted as context, and a comment that contradicts an acceptance criterion is claimed as such so the reconciler weighs it (document:ticket-to-backlog-plan §2)",
+        "Every other source kind extracts exactly as before (document:ticket-to-backlog-plan §7)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§2 When it escalates; §8 rows 1-3"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "workareas/shared/eudpa-774/sources.json: the ticket carried as a document source"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Plan section 8 names the files: the sources schema's kind enum, a new extract brief beside the other per-kind briefs, and tim distil's kind handling.",
+        "The workspace repo's gate is tim's own format, lint, duplication and unit rungs.",
+        "Merged into inc-008 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-002",
+      "title": "One command fetches a ticket into a new ticket workarea, with its branch named",
+      "detail": "Ticket mode starts from a Jira key and nothing else. One command reads the ticket, renders it the way the refinement check already does (description, comments and the Confluence pages it links to), adds the parent, linked tickets and subtasks, downloads image and PDF attachments, and writes the ticket file and a sources file with one ticket source into a new workarea. It names the workarea and branch from the ticket: fix for a bug, feat for a story, chore for a task, with a short slug from the summary. It reports what it can see is not ready without judgement: an open blocker link, no acceptance criteria, a closed ticket. Run again in check mode, it says whether the ticket has changed in Jira since, and writes nothing.",
+      "acceptanceCriteria": [
+        "Given a ticket key, the command writes the ticket's rendered description, comments, linked Confluence pages, parent, links and subtasks to a ticket file in a new workarea, and a sources file holding one ticket source that passes the distil status check (document:ticket-to-backlog-plan §1)",
+        "Image and PDF attachments are saved beside the ticket file, and the ticket file lists each one (document:ticket-to-backlog-plan §1)",
+        "The result names the workarea as shared/eudpa-<number>-<slug> and the branch as fix/, feat/ or chore/EUDPA-<number>-<slug> by the ticket's type, with a slug of at most five words from the summary (document:ticket-to-backlog-plan §1)",
+        "The result lists each blocker it can see: an open \"is blocked by\" link, no acceptance criteria heading, or a Done or Closed status (document:ticket-to-backlog-plan §1)",
+        "Check mode reports whether the ticket changed in Jira since the workarea was written, and changes no file (document:ticket-to-backlog-plan §10)",
+        "The command refuses a workarea whose backlog already has a built row, outside check mode (document:ticket-to-backlog-plan §1)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§1 Entry"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "tim/src/commands/refine/ticket-markdown.js (the renderer to reuse); tim/src/clients/jira-client.js (lists attachments, cannot download them)"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Plan section 1 proposes the name tim backlog from-ticket <KEY> [--check]. The renderer tim refine prepare uses is the one to extend, not copy.",
+        "Merged into inc-008 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-003",
+      "title": "The backlog check holds a ticket backlog to its ticket's acceptance criteria",
+      "detail": "A ticket backlog has no requirements file, so the distil coverage check cannot say whether every acceptance criterion is built. The backlog envelope gains the ticket key it builds, and may carry its branch as a split backlog does. A new intake record lists every statement of the ticket and the rows that cover it, or why it is not built. The backlog check then refuses a ticket backlog that leaves a criterion uncovered and unexplained, covers one with a row that does not exist or is set aside, cites a statement the record does not have, or carries themes or split-off pointers.",
+      "acceptanceCriteria": [
+        "A backlog whose envelope names a ticket and a branch passes the backlog check when every acceptance criterion in its intake record is covered by a todo, blocked or done row, or has a reason it is not built (document:ticket-to-backlog-plan §2 Ticket backlogs in the one shape)",
+        "The check refuses a ticket backlog with an acceptance criterion neither covered nor explained, and names the criterion in plain words (document:ticket-to-backlog-plan §2)",
+        "The check refuses a criterion covered only by a dropped, rejected or merged-into row, or by a row id the backlog does not have (document:ticket-to-backlog-plan §2)",
+        "The check refuses a row criterion whose provenance names a ticket statement the intake record does not have (document:ticket-to-backlog-plan §2 Provenance)",
+        "The check refuses themes, split-off pointers and moved-out pointers on a ticket backlog (document:ticket-to-backlog-plan §2)",
+        "Every existing backlog in workareas/shared passes or fails the check exactly as it did before (document:ticket-to-backlog-plan invariants)"
+      ],
+      "dependsOn": [],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§2 Ticket backlogs in the one shape; §8 rows 6-8"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "The new intake record schema sits beside the backlog schema. SKILL.md's coupling table must gain both in the same change, as its own rule says.",
+        "Merged into inc-009 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-004",
+      "title": "One command cuts a ticket's branch in every repo it builds and in the workspace, ready for draft pull requests",
+      "detail": "The branch lifecycle refuses to start until the branch exists with an open pull request in every repo, the workspace included, because the loop syncs main into the workspace and commits the behaviour spec there. Today the session makes these by hand, with an empty opening commit so GitHub will open a pull request. The existing branch command gains an open mode: it takes the branch from the backlog envelope, includes the workspace, adds one empty opening commit where the branch has none of its own, and reports which repos still need a push and a pull request. It never pushes and never calls GitHub, so the pre-push quality gate runs on the session's own push and pull requests stay plain gh calls.",
+      "acceptanceCriteria": [
+        "Given a ticket backlog, open mode leaves every repo the envelope names, and the workspace, on the envelope's branch, each with exactly one opening commit when it had none of its own (document:ticket-to-backlog-plan §3)",
+        "Run a second time, it adds no second opening commit and changes nothing (document:ticket-to-backlog-plan §3)",
+        "A repo with uncommitted work is refused before any repo changes, naming the repo; the workspace's own uncommitted files travel with it as today (document:ticket-to-backlog-plan §3)",
+        "The result says for each repo whether the branch is on origin yet, without pushing and without calling GitHub (document:ticket-to-backlog-plan §3)",
+        "Without open mode the command behaves exactly as today (document:ticket-to-backlog-plan invariants)"
+      ],
+      "dependsOn": [
+        "inc-003"
+      ],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§3 Branch and pull requests"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "BUILD.md Branch lifecycle and no-open-pr stop; DEFRA/trade-imports-animals-frontend#468 first commit"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Plan section 3 proposes tim build branch <workarea> [<branch>] --open. Tests use real git fixtures, not mocks of tim's own modules.",
+        "Merged into inc-010 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-005",
+      "title": "The intake workflow turns a fetched ticket into a refuted backlog, a readiness verdict and its questions",
+      "detail": "Between the fetched ticket and the build, one Opus agent reads the ticket in full and the code it touches, writes an investigation, the intake record and the rows in the one backlog shape, and gives the ticket a readiness verdict by the refinement check's own rules. A different Opus agent then tries to refute every row and statement, finds what was missed and challenges every question. The first agent fixes once from those verdicts. The backlog check runs after each write. The run returns the rows, the verdict, the questions with their defaults, any reason to escalate to the full distil, and the calls the reader made.",
+      "acceptanceCriteria": [
+        "Launched on a fetched ticket's workarea, the workflow leaves an investigation, an intake record and a backlog that passes the backlog check, every row criterion ending with its ticket or repo provenance (document:ticket-to-backlog-plan §2 The intake workflow)",
+        "The refuting agent is a different agent from the reader, and its verdict on every row and statement is applied or answered before the run returns (document:ticket-to-backlog-plan §2)",
+        "Every question returned carries a default and says whether it holds the launch; only security, access, data integrity or a contradiction with signed-off behaviour or a rulings ledger holds it (document:ticket-to-backlog-plan §4)",
+        "A ticket judged a spike, one needing more than three questions, one needing more than four rows, or one pointing at another requirement source with its own criteria returns an escalation reason and no rows to build (document:ticket-to-backlog-plan §2 When it escalates)",
+        "Run again with a ruling added, it rewrites only rows still to build and keeps every row id (document:ticket-to-backlog-plan §4)",
+        "A backlog still out of shape after one fix stops the run and names each problem (document:ticket-to-backlog-plan §2)"
+      ],
+      "dependsOn": [
+        "inc-002",
+        "inc-003"
+      ],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§2 The intake workflow; §4 Questions"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "workareas/shared/eudpa-718-amend-from-dashboard/investigation.md (the investigation's shape)"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "The workflow contract test that scans this skill's workflow folder must cover the new workflow's args and every relayed count.",
+        "The agents' guard rails match the distil workflow's: no subagents or forks, finish their own task if a user message is relayed mid-run.",
+        "Merged into inc-009 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-006",
+      "title": "The skill, its references and the workspace routing say how ticket mode works and when to use it",
+      "detail": "Ticket mode becomes a phase of the requirements pipeline: its own reference from entry to merge, the phase table, the description and triggers. The statement that there is no lighter path is reworded to say the full distil still has none, and that a single ready ticket goes through ticket mode instead, within its limits. The build reference names ticket backlogs as a branch-lifecycle use and reads the branch from the envelope. The workspace routing table and the ticket skill move \"build\" and \"implement\" a ticket to ticket mode, leaving planning, following an existing plan and refactoring with the ticket skill.",
+      "acceptanceCriteria": [
+        "A reader of the skill can take a ticket key from entry to a merged change using only the skill's own references, with each command and gh step named in order (document:ticket-to-backlog-plan How it feels to Sam)",
+        "The skill and its distil reference say the full distil has no lighter path, that ticket mode is the deliberate exception for one ready ticket, what it gives up, and when it escalates (document:ticket-to-backlog-plan §7)",
+        "The workspace routing table sends \"build\", \"implement\" and \"backlog\" a ticket to ticket mode, and \"plan\" a ticket, \"follow the plan\" and \"implement by hand\" to the ticket skill, with no trigger in both (document:ticket-to-backlog-plan §6)",
+        "The build reference says a ticket backlog builds under the branch lifecycle with the branch from its envelope, and how the session ends the run: descriptions, out of draft, checks watched, links and evidence, then the merge go (document:ticket-to-backlog-plan §5)",
+        "The worker reference catalogue lists the two intake briefs (document:ticket-to-backlog-plan §8)"
+      ],
+      "dependsOn": [
+        "inc-001",
+        "inc-002",
+        "inc-003",
+        "inc-004",
+        "inc-005"
+      ],
+      "status": "merged-into",
+      "kind": "docs",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§5, §6, §7, §8 rows 13-20"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Plan section 8 lists every file this row edits.",
+        "Merged into inc-010 under Sam's ruling of 25 November 2026: combine rows that suit combining. Its gate and open question moved with it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-007",
+      "title": "A ticket built in ticket mode gets a comment saying what shipped, and its description is never rewritten",
+      "detail": "The business ticket flow rewrites a theme's ticket from the behaviour spec and splits it by domain. In ticket mode the ticket is a person's own, already written, so that would destroy their words. For a ticket backlog the flow keeps its status moves (In Dev when the build starts, Deskcheck once merged) and, when the build drains, posts one comment listing what shipped by domain from the behaviour spec, with links that move to main once merged.",
+      "acceptanceCriteria": [
+        "For a ticket backlog, the business ticket flow at drain posts one comment listing the shipped scenarios by domain and leaves the description and summary unchanged (document:ticket-to-backlog-plan §5 The ticket itself)",
+        "Run again, it updates that comment rather than adding a second (document:ticket-to-backlog-plan §5)",
+        "After the merge, the comment's links point at main and the ticket's status is Deskcheck (document:ticket-to-backlog-plan §5)",
+        "A theme backlog is written and split exactly as before (document:ticket-to-backlog-plan invariants)"
+      ],
+      "dependsOn": [
+        "inc-006"
+      ],
+      "status": "merged-into",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§5 The ticket itself"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": ".claude/skills/theme-ticket/SKILL.md \"Where this runs in the theme's life\""
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Until this lands, a ticket-mode run skips the WRITE flow by hand; the canary does.",
+        "Merged into inc-010 under Sam's ruling of 25 November 2026: combine rows that suit combining."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-008",
+      "title": "A ticket can be fetched into a workarea and distilled, and distil combines the rows it drafts that suit combining",
+      "detail": "Ticket mode starts from a Jira key and nothing else. One command reads the ticket, renders it the way the refinement check already does (description, comments and the Confluence pages it links to), adds the parent, linked tickets and subtasks, downloads image and PDF attachments, and writes the ticket file and a sources file with one ticket source into a new workarea, naming the workarea and branch from the ticket. A ticket becomes a distil source kind of its own, so each acceptance criterion is its own claim and a ticket that turns out too big hands over to the full distil without losing anything. Distil also gains a combine review after its combiner: every row carries a fixed cost (ticket, branch, plan, reviews, ladder, pull request, CI), so rows that share their code area or only wait on each other are merged unless a written reason keeps them apart. A read-only command lists the candidates; an agent judges them. Ticket intake uses the same command.",
+      "acceptanceCriteria": [
+        "A sources file naming a source of the ticket kind, whose locator is a fetched ticket file, passes the distil status check, and one naming an unknown kind is still refused (document:ticket-to-backlog-plan §8)",
+        "The distil workflow extracts a ticket source into claims in which each acceptance criterion is its own claim, quoting the ticket's words and citing its criterion number, and a comment that contradicts a criterion is claimed as such so the reconciler weighs it (document:ticket-to-backlog-plan §2)",
+        "Given a ticket key, the command writes the ticket's rendered description, comments, linked Confluence pages, parent, links and subtasks to a ticket file in a new workarea, and a sources file holding one ticket source that passes the distil status check (document:ticket-to-backlog-plan §1)",
+        "Image and PDF attachments are saved beside the ticket file, and the ticket file lists each one (document:ticket-to-backlog-plan §1)",
+        "The result names the workarea as shared/eudpa-<number>-<slug> and the branch as fix/, feat/ or chore/EUDPA-<number>-<slug> by the ticket's type, with a slug of at most five words from the summary (document:ticket-to-backlog-plan §1)",
+        "The result lists each blocker it can see: an open \"is blocked by\" link, no acceptance criteria heading, or a Done or Closed status (document:ticket-to-backlog-plan §1)",
+        "Check mode reports whether the ticket changed in Jira since the workarea was written, and changes no file; outside check mode the command refuses a workarea whose backlog already has a built row (document:ticket-to-backlog-plan §1, §10)",
+        "A read-only command lists the rows still to build that share their repos and feature folders, or wait only on each other, as candidates to combine, and changes no file (ruling:sam-2026-11-25 combine review)",
+        "After the combiner, distil runs a combine review over every row still to build: each candidate is merged unless its notes give a reason to stand alone, namely an open question the other does not carry, a different code area, or too much for one plan (ruling:sam-2026-11-25 combine review)",
+        "A row merged away keeps its id with status merged-into and a note naming the row it went into, no id is reused, and the report says how many rows became how many (ruling:sam-2026-11-25 combine review)",
+        "Every other source kind extracts exactly as before, and a backlog with nothing to combine comes out of the combine review unchanged (document:ticket-to-backlog-plan §7)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§1 Entry; §2 When it escalates; §8 rows 1-5"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "tim/src/commands/refine/ticket-markdown.js (the renderer to reuse); tim/src/clients/jira-client.js (lists attachments, cannot download them); workflow/distil/briefs/consolidate.md pass 2 (today's combine, inside drafting only)"
+        },
+        {
+          "source": "ruling:sam-2026-11-25",
+          "ref": "combine rows that suit combining"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Combines inc-001 (ticket as a distil source) and inc-002 (the fetch command): both are the ticket getting in, and inc-001 cannot be proved without a fetched ticket file. Adds distil's combine review, which lives in the same distil code.",
+        "Plan section 1 proposes tim backlog from-ticket <KEY> [--check]. Extend the renderer tim refine prepare uses, do not copy it.",
+        "Today's combine is pass 2 of consolidate.md, done by each drafter and the combiner while they draft. The review is a separate look at the finished rows, which is what Sam asked for.",
+        "The workspace repo's gate is tim's own format, lint, duplication and unit rungs."
+      ],
+      "gate": null,
+      "ticket": "EUDPA-837",
+      "branch": "feat/EUDPA-837-a-ticket-can-be-fetched-into-a-workarea",
+      "commit": "7bdc5735",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/349",
+          "repo": "workspace",
+          "number": 349,
+          "merged": true,
+          "sha": "a5a48943d0d8cc27520e77321ed4af449b088a24"
+        }
+      ]
+    },
+    {
+      "id": "inc-009",
+      "title": "One launch turns a fetched ticket into a checked, combined backlog, a readiness verdict and its questions",
+      "detail": "Between the fetched ticket and the build, one Opus agent reads the ticket in full and the code it touches, writes an investigation, an intake record and the rows in the one backlog shape, and gives the ticket a readiness verdict by the refinement check's own rules. It combines its rows before handing on: one row is the default. A different Opus agent then tries to refute every row, every split and every statement, finds what was missed and challenges every question. The first agent fixes once. The backlog envelope gains the ticket key and may carry its branch; the backlog check holds a ticket backlog to its intake record, so no acceptance criterion goes unbuilt without a reason.",
+      "acceptanceCriteria": [
+        "A backlog whose envelope names a ticket and a branch passes the backlog check when every acceptance criterion in its intake record is covered by a todo, blocked or done row, or has a reason it is not built, and the check names in plain words any criterion neither covered nor explained (document:ticket-to-backlog-plan §2 Ticket backlogs in the one shape)",
+        "The check refuses a criterion covered only by a dropped, rejected or merged-into row or by a row id the backlog does not have, a row criterion citing a ticket statement the record does not have, and themes or split-off or moved-out pointers on a ticket backlog (document:ticket-to-backlog-plan §2 Provenance)",
+        "Launched on a fetched ticket's workarea, the workflow leaves an investigation, an intake record and a backlog that passes the backlog check, every row criterion ending with its ticket or repo provenance (document:ticket-to-backlog-plan §2 The intake workflow)",
+        "The intake combines its rows before the refute: one row is the default, every further row says in its notes why it cannot join another, and the refuting agent challenges every split as well as every row (ruling:sam-2026-11-25 combine review)",
+        "The refuting agent is a different agent from the reader, and its verdict on every row, split and statement is applied or answered before the run returns (document:ticket-to-backlog-plan §2)",
+        "Every question returned carries a default and says whether it holds the launch; only security, access, data integrity or a contradiction with signed-off behaviour or a rulings ledger holds it (document:ticket-to-backlog-plan §4)",
+        "A ticket judged a spike, one needing more than three questions, one still needing more than four rows after combining, or one pointing at another requirement source with its own criteria returns an escalation reason and no rows to build (document:ticket-to-backlog-plan §2 When it escalates)",
+        "Run again with a ruling added, it rewrites only rows still to build and keeps every row id (document:ticket-to-backlog-plan §4)",
+        "A backlog still out of shape after one fix stops the run and names each problem (document:ticket-to-backlog-plan §2)",
+        "Every existing backlog in workareas/shared passes or fails the check exactly as it did before (document:ticket-to-backlog-plan invariants)"
+      ],
+      "dependsOn": [
+        "inc-008"
+      ],
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§2 The intake workflow; §2 Ticket backlogs in the one shape; §4 Questions; §8 rows 6-12"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "workareas/shared/eudpa-718-amend-from-dashboard/investigation.md (the investigation's shape)"
+        },
+        {
+          "source": "ruling:sam-2026-11-25",
+          "ref": "combine rows that suit combining"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Combines inc-003 (the check learns ticket backlogs and the intake record) and inc-005 (the intake workflow): the workflow is the record's only writer and the check is its gate, so neither can be observed without the other.",
+        "The new intake record schema sits beside the backlog schema. SKILL.md's coupling table gains both in the same change, as its own rule says.",
+        "The workflow contract test that scans this skill's workflow folder must cover the new workflow's args and every relayed count.",
+        "The agents' guard rails match the distil workflow's: no subagents or forks, finish their own task if a user message is relayed mid-run."
+      ],
+      "gate": null,
+      "ticket": "EUDPA-838",
+      "branch": "feat/EUDPA-838-one-launch-turns-a-fetched-ticket-into-a",
+      "commit": "fbb2292a",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/350",
+          "repo": "workspace",
+          "number": 350,
+          "merged": true,
+          "sha": "b45413c14a2d882051c0abd22497581f199e3bba"
+        }
+      ]
+    },
+    {
+      "id": "inc-010",
+      "title": "A ticket's branch opens in every repo it builds, the run ends at green pull requests, and the ticket gets a comment saying what shipped",
+      "detail": "The branch lifecycle refuses to start until the branch exists with an open pull request in every repo, the workspace included. The existing branch command gains an open mode that cuts the envelope's branch in every repo and the workspace, with one empty opening commit where needed, and never pushes or calls GitHub, so the pre-push gate runs on the session's own push and pull requests stay plain gh calls. Ticket mode becomes a phase of the requirements pipeline, with its own reference from entry to merge, and the workspace routing sends \"build\" and \"implement\" a ticket to it. The docs say that combining is the default wherever rows are created. When the build drains, the ticket gets one comment listing what shipped, and a person's description is never rewritten.",
+      "acceptanceCriteria": [
+        "Given a ticket backlog, open mode leaves every repo the envelope names, and the workspace, on the envelope's branch, each with exactly one opening commit when it had none of its own, and a second run changes nothing (document:ticket-to-backlog-plan §3)",
+        "A repo with uncommitted work is refused before any repo changes, naming the repo; the workspace's own uncommitted files travel with it as today (document:ticket-to-backlog-plan §3)",
+        "The result says for each repo whether the branch is on origin yet, without pushing and without calling GitHub (document:ticket-to-backlog-plan §3)",
+        "A reader of the skill can take a ticket key from entry to a merged change using only the skill's own references, with each command and gh step named in order (document:ticket-to-backlog-plan How it feels to Sam)",
+        "The skill and its distil reference say the full distil has no lighter path, that ticket mode is the deliberate exception for one ready ticket, what it gives up, and when it escalates (document:ticket-to-backlog-plan §7)",
+        "The skill, its distil reference and SHAPE.md say combining is the default at every stage that creates rows, and why: each row carries a fixed cost (ruling:sam-2026-11-25 combine review)",
+        "The workspace routing table sends \"build\", \"implement\" and \"backlog\" a ticket to ticket mode, and \"plan\" a ticket, \"follow the plan\" and \"implement by hand\" to the ticket skill, with no trigger in both (document:ticket-to-backlog-plan §6)",
+        "The build reference says a ticket backlog builds under the branch lifecycle with the branch from its envelope, and how the session ends the run: descriptions, out of draft, checks watched, links and evidence, then the merge go; the worker reference catalogue lists the two intake briefs (document:ticket-to-backlog-plan §5, §8)",
+        "For a ticket backlog, the business ticket flow at drain posts one comment listing the shipped scenarios by domain, leaves the description and summary unchanged, and updates that comment rather than adding a second when run again (document:ticket-to-backlog-plan §5 The ticket itself)",
+        "After the merge, the comment's links point at main and the ticket's status is Deskcheck (document:ticket-to-backlog-plan §5)",
+        "Without open mode the branch command behaves exactly as today, and a theme backlog is written and split exactly as before (document:ticket-to-backlog-plan invariants)"
+      ],
+      "dependsOn": [
+        "inc-009"
+      ],
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-to-backlog-plan",
+          "ref": "§3 Branch and pull requests; §5; §6; §7; §8 rows 13-20"
+        },
+        {
+          "source": "repo:workspace",
+          "ref": "BUILD.md Branch lifecycle and no-open-pr stop; DEFRA/trade-imports-animals-frontend#468 first commit; .claude/skills/theme-ticket/SKILL.md \"Where this runs in the theme's life\""
+        },
+        {
+          "source": "ruling:sam-2026-11-25",
+          "ref": "combine rows that suit combining"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "Combines inc-004 (branch opener), inc-006 (docs and routing) and inc-007 (the what-shipped comment): together they are the run from launch to green pull requests, and the canary gate proves all three in one pass.",
+        "Plan section 3 proposes tim build branch <workarea> [<branch>] --open. Tests use real git fixtures, not mocks of tim's own modules.",
+        "Plan section 8 lists every file this row edits.",
+        "Settled by Sam on 25 November 2026: ticket mode raises its pull requests and stops at green for his go. It never merges them itself, so workspace rule 3 stands as written and needs no exemption. This settles the open question above."
+      ],
+      "gate": "Run ticket mode on the canary, EUDPA-832 (address search by country), from key to green draft pull requests, before the row merges. Fallback EUDPA-826.",
+      "ticket": "EUDPA-841",
+      "branch": "feat/EUDPA-841-a-ticket-s-branch-opens-in-every-repo-it",
+      "commit": "f1132029",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/351",
+          "repo": "workspace",
+          "number": 351,
+          "merged": true,
+          "sha": "d5493d7c88db3dc746b473a2938bca95bd97a36a"
+        }
+      ]
+    }
+  ]
+}

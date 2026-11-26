@@ -26,6 +26,20 @@ const timCliPath = join(realWorkspaceRoot, 'tim', 'src', 'cli.js')
 const ISO_TIMESTAMP =
   /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g
 
+const GIT_ADVICE_LINE = /^hint:.*(?:\n|$)/gm
+
+/**
+ * Output with git's advice lines taken out, so a recording holds the
+ * command's own output and its errors. git words its advice differently
+ * between versions, and names in it the config command for turning the
+ * advice off, which was itself renamed, so a recording that kept the
+ * advice would only match the git it was recorded on.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export const withoutGitAdvice = (text) => text.replace(GIT_ADVICE_LINE, '')
+
 /**
  * Whether a workspace script still exists, so a recording test can skip
  * once the script has been retired and only its golden remains.
@@ -153,8 +167,8 @@ export const recordBashRun = async (
   )
   const recording = {
     exitCode: result.exitCode,
-    stdout: normaliseRecordedText(result.stdout, staged.home),
-    stderr: normaliseRecordedText(result.stderr, staged.home)
+    stdout: withoutGitAdvice(normaliseRecordedText(result.stdout, staged.home)),
+    stderr: withoutGitAdvice(normaliseRecordedText(result.stderr, staged.home))
   }
   if (watch === undefined) return recording
   return {
@@ -189,8 +203,8 @@ export const recordTimRun = async (staged, args, { watch, env = {} } = {}) => {
   )
   const recording = {
     exitCode: result.exitCode,
-    stdout: normaliseRecordedText(result.stdout, staged.home),
-    stderr: normaliseRecordedText(result.stderr, staged.home)
+    stdout: withoutGitAdvice(normaliseRecordedText(result.stdout, staged.home)),
+    stderr: withoutGitAdvice(normaliseRecordedText(result.stderr, staged.home))
   }
   if (watch === undefined) return recording
   return {

@@ -384,7 +384,7 @@
     {
       "id": "REQ-ADDR-006",
       "name": "Choosing a role's address offers a search of the role's list, reporting how many matched",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ADDR-006-A",
@@ -392,8 +392,19 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches within the role, and the row ticked is the one that saves, named above the results on reopening and checked once its page is shown", "strength": "full", "notes": "asserts Showing 2 out of 2 results for a scoped search token" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a consignor list searched for part of an address lists only the address holding it", "strength": "partial", "notes": "asserts the real address book narrows to the record holding the address term" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should put the count in the paragraph straight after the results heading, outside the table", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-006-E",
+          "name": "Searching for a country's name lists the role's addresses in that country",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a consignor list searched for France lists the consignors in France", "strength": "partial", "notes": "asserts the real address book lists the record for the country name" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a place of origin list searched for United Kingdom lists the places of origin in the United Kingdom", "strength": "partial", "notes": "asserts the real address book lists the record for the country name" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/address-book/address-book.test.js", "test": "Should ask for the code of the country named, whatever the case or surrounding spaces, and still send the term as the text search", "strength": "partial", "notes": "proves the request, not what the page lists" }
           ]
         },
         {
@@ -480,7 +491,8 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search with no matches shows its empty state", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker shows the no-matches message in the place of the count after a search that finds nothing", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should put the no-matches message where the count goes when nothing matched", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.test.js", "test": "Should put the no-matches message where the count goes when nothing matched", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a consignor list searched for a term nothing holds shows no matches and keeps the term", "strength": "partial", "notes": "asserts the empty state and the kept term against the real address book" }
           ]
         }
       ]

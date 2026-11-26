@@ -18,9 +18,9 @@ import {
   statement
 } from '../../backlog/__fixtures__/intake-record.js'
 import {
-  makeTicketWorkspace,
+  makeWorkareaWorkspace,
   ticketBacklogRepos
-} from '../../backlog/__fixtures__/ticket-workareas.js'
+} from '../../backlog/__fixtures__/workarea-workspace.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -31,12 +31,21 @@ let held
 
 const openWorkspace = (contents = {}) => {
   held?.remove()
-  held = makeTicketWorkspace({ backlogSchemas: true, ...contents })
+  held = makeWorkareaWorkspace({ backlogSchemas: true, ...contents })
 }
 
 const backlogPath = () => backlogPathIn(held.root, WORKAREA)
 
-const writeBacklog = (rows) => writeBacklogRows(held.root, WORKAREA, rows)
+const writeBacklog = (rows, envelope) =>
+  writeBacklogRows(held.root, WORKAREA, rows, envelope)
+
+const DECLARED_REPOS = {
+  repos: {
+    frontend: 'repos/trade-imports-animals-frontend',
+    plantsfrontend: 'repos/trade-imports-plants-frontend',
+    tests: 'repos/trade-imports-ins-tests'
+  }
+}
 
 const readRows = () => readBacklogRows(held.root, WORKAREA)
 
@@ -310,6 +319,40 @@ describe('tim backlog set', () => {
     expect(updated.openQuestions).toEqual(['Who may see drafts?'])
   })
 
+  test('removes an open question by its number and keeps the rest', async () => {
+    writeBacklog([
+      row({ openQuestions: ['Who may see drafts?', 'Does it merge?'] })
+    ])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '2'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
+  })
+
+  test('refuses an open question number that is not a whole number from 1', async () => {
+    writeBacklog([row({ openQuestions: ['Who may see drafts?'] })])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '0'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--remove-open-question must be the number of an open question, counting from 1.'
+    )
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
+  })
+
   test('sets a merge ref per repo and keeps the refs already there', async () => {
     writeBacklog([
       row({
@@ -387,6 +430,101 @@ describe('tim backlog set', () => {
     )
   })
 
+  test('replaces the repos the increment builds', async () => {
+    writeBacklog([row({ repos: ['frontend', 'tests'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsfrontend,tests'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'plantsfrontend', 'tests'])
+  })
+
+  test('keeps one of a repo named twice', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,tests,frontend'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'tests'])
+  })
+
+  test('refuses a repo the backlog does not declare', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsbackend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "The backlog declares no plantsbackend, so inc-001 can't build it. Its repos are: frontend, plantsfrontend, tests."
+    )
+  })
+
+  test('refuses taking away a repo the increment merges a ref into', async () => {
+    writeBacklog(
+      [row({ repos: ['frontend', 'tests'], merge: { tests: 'origin/main' } })],
+      DECLARED_REPOS
+    )
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "inc-001 merges a ref into tests, so that repo can't be taken off its repos. Clear the merge ref first."
+    )
+  })
+
+  test('refuses --repos with no repo in it', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--repos', ' , '])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must name at least one repo key, such as frontend,tests. A row with no repos builds nothing.'
+    )
+  })
+
+  test('refuses a repo key that is not one', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'Plants Frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must be repo keys separated by commas, such as frontend,plantsfrontend,tests. "Plants Frontend" is not a repo key.'
+    )
+  })
+
   test('writes nothing when the values are already there', async () => {
     writeBacklog([row()])
     const before = readFileSync(backlogPath(), 'utf8')
@@ -431,7 +569,7 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
     )
   })
 

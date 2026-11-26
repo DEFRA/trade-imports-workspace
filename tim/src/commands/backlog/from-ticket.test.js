@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { ERROR, USAGE } from '../../constants/exitCodes.js'
 import { backlogOf, row } from '../../backlog/__fixtures__/backlog-rows.js'
-import { makeTicketWorkspace } from '../../backlog/__fixtures__/ticket-workareas.js'
+import { makeWorkareaWorkspace } from '../../backlog/__fixtures__/workarea-workspace.js'
 import { envelopeOf, runTimInWorkspace } from '../../test-support/tim-cli.js'
 import {
   attachmentBytes,
@@ -27,7 +27,7 @@ const fromTicket = (args) => fromTicketAsText([...args, '--json'])
 
 describe('tim backlog from-ticket', () => {
   test('Should name the workarea, branch and blocker, and write a sources file that distil status accepts', async () => {
-    workspace = makeTicketWorkspace({ distilSchemas: true })
+    workspace = makeWorkareaWorkspace({ distilSchemas: true })
 
     const run = await fromTicket(['eudpa-210'])
     const status = await runTimInWorkspace(workspace.root, [
@@ -55,7 +55,7 @@ describe('tim backlog from-ticket', () => {
   })
 
   test('Should say in plain words what it fetched and saved', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const run = await fromTicketAsText(['EUDPA-210'])
 
@@ -78,7 +78,7 @@ describe('tim backlog from-ticket', () => {
   })
 
   test('Should save the attachment bytes at the path the result gives, and list that path in the ticket file', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const run = await fromTicket(['EUDPA-210'])
 
@@ -95,7 +95,7 @@ describe('tim backlog from-ticket', () => {
   })
 
   test('Should keep a sources file already there, and say so', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
     await fromTicket(['EUDPA-210'])
     const sourcesPath = join(
       workspace.root,
@@ -115,7 +115,7 @@ describe('tim backlog from-ticket', () => {
 
   describe('--check', () => {
     test('Should report the ticket changed, with both updated times', async () => {
-      workspace = makeTicketWorkspace()
+      workspace = makeWorkareaWorkspace()
       await fromTicket(['EUDPA-210'])
       atlassian().changeTicket('EUDPA-210', {
         updated: '2026-11-25T09:00:00.000+0000'
@@ -134,7 +134,7 @@ describe('tim backlog from-ticket', () => {
     })
 
     test('Should say in plain words that the ticket has not changed', async () => {
-      workspace = makeTicketWorkspace()
+      workspace = makeWorkareaWorkspace()
       await fromTicket(['EUDPA-210'])
 
       const run = await fromTicketAsText(['EUDPA-210', '--check'])
@@ -145,7 +145,7 @@ describe('tim backlog from-ticket', () => {
     })
 
     test('Should say no workarea holds the ticket, before asking Jira anything', async () => {
-      workspace = makeTicketWorkspace()
+      workspace = makeWorkareaWorkspace()
 
       const run = await fromTicket(['EUDPA-210', '--check'])
 
@@ -161,7 +161,7 @@ describe('tim backlog from-ticket', () => {
 
   describe('a workarea that is already there', () => {
     test('Should refuse a workarea with a built row, naming it and the row, before asking Jira anything', async () => {
-      workspace = makeTicketWorkspace({
+      workspace = makeWorkareaWorkspace({
         backlogs: {
           'shared/eudpa-210-old': backlogOf(
             row({ id: 'inc-001', status: 'done' })
@@ -179,7 +179,7 @@ describe('tim backlog from-ticket', () => {
     })
 
     test('Should refuse two workareas that match the key, naming both and --workarea, before asking Jira anything', async () => {
-      workspace = makeTicketWorkspace({
+      workspace = makeWorkareaWorkspace({
         folders: ['eudpa-210-first', 'eudpa-210-second']
       })
 
@@ -193,7 +193,7 @@ describe('tim backlog from-ticket', () => {
     })
 
     test('Should write into the workarea it is told to when two match', async () => {
-      workspace = makeTicketWorkspace({
+      workspace = makeWorkareaWorkspace({
         folders: ['eudpa-210-first', 'eudpa-210-second']
       })
 
@@ -224,7 +224,7 @@ describe('tim backlog from-ticket', () => {
   })
 
   test('Should refuse a key that is not a Jira key before asking Jira anything', async () => {
-    workspace = makeTicketWorkspace()
+    workspace = makeWorkareaWorkspace()
 
     const run = await fromTicket(['not-a-key'])
 

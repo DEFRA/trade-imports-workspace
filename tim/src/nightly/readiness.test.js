@@ -2,17 +2,17 @@ import { describe, test, expect } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
+  commitWorkspaceFile,
+  createNightlyRepo,
   createNightlyWorkspace,
   nightlyJob,
   writeNightlyJobs,
-  writeStopFile
+  writeStopFile,
+  writeWorkspaceFile
 } from '../test-support/nightly-workspace.js'
 import { checkNightlyReadiness, readStopFile } from './readiness.js'
 
-const readyEnv = {
-  SONAR_TOKEN: 'sonar-test-token',
-  TMUX: '/private/tmp/tmux-501/default,1234,0'
-}
+const readyEnv = { SONAR_TOKEN: 'sonar-test-token' }
 
 const checkNamed = (readiness, name) =>
   readiness.checks.find((check) => check.name === name)
@@ -27,7 +27,6 @@ describe('#checkNightlyReadiness', () => {
     expect(readiness.checks.map(({ name, ok }) => ({ name, ok }))).toEqual([
       { name: 'sonar-token', ok: true },
       { name: 'no-anthropic-api-key', ok: true },
-      { name: 'detached-session', ok: true },
       { name: 'stop-file', ok: true },
       { name: 'jobs-config', ok: true },
       { name: 'clean-checkouts', ok: true }
@@ -90,36 +89,6 @@ describe('#checkNightlyReadiness', () => {
     expect(checkNamed(readiness, 'no-anthropic-api-key').ok).toBe(false)
   })
 
-  test('Should pass the detached-session check inside screen', async () => {
-    const root = await createNightlyWorkspace()
-
-    const readiness = await checkNightlyReadiness(root, {
-      env: { SONAR_TOKEN: 'sonar-test-token', STY: '1234.nightly' }
-    })
-
-    expect(checkNamed(readiness, 'detached-session')).toEqual({
-      name: 'detached-session',
-      ok: true,
-      detail: 'Running inside screen'
-    })
-  })
-
-  test('Should fail the detached-session check when neither TMUX nor STY is set', async () => {
-    const root = await createNightlyWorkspace()
-
-    const readiness = await checkNightlyReadiness(root, {
-      env: { SONAR_TOKEN: 'sonar-test-token', TMUX: '', STY: ' ' }
-    })
-
-    expect(readiness.ready).toBe(false)
-    expect(checkNamed(readiness, 'detached-session')).toEqual({
-      name: 'detached-session',
-      ok: false,
-      detail:
-        'This session is not running inside tmux or screen, so it ends when the SSH connection closes. Start claude inside tmux new -s nightly or screen -S nightly.'
-    })
-  })
-
   test('Should fail and give the reason when the stop file exists', async () => {
     const root = await createNightlyWorkspace()
     writeStopFile(root, 'Holding while main is red\n')
@@ -160,6 +129,58 @@ describe('#checkNightlyReadiness', () => {
       name: 'clean-checkouts',
       ok: false,
       detail: 'Uncommitted changes in: workspace'
+    })
+  })
+
+  test('Should pass the clean-checkouts check with an untracked folder under workareas/shared/', async () => {
+    const root = await createNightlyWorkspace()
+    writeWorkspaceFile(root, 'workareas/shared/handover/notes.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: true,
+      detail:
+        'The workspace, outside workareas/, and every cloned repo are clean'
+    })
+  })
+
+  test('Should pass the clean-checkouts check with a tracked file under workareas/shared/ modified', async () => {
+    const root = await createNightlyWorkspace()
+    await commitWorkspaceFile(root, 'workareas/shared/plan.md', 'plan\n')
+    writeWorkspaceFile(root, 'workareas/shared/plan.md', 'plan, edited\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts').ok).toBe(true)
+  })
+
+  test('Should name the workspace when it has a change outside workareas/ as well as one inside', async () => {
+    const root = await createNightlyWorkspace()
+    writeWorkspaceFile(root, 'workareas/shared/notes.md', 'draft\n')
+    writeWorkspaceFile(root, 'docs/workareas.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: false,
+      detail: 'Uncommitted changes in: workspace'
+    })
+  })
+
+  test('Should name a cloned repo with an untracked file in its own workareas/ folder', async () => {
+    const root = await createNightlyWorkspace()
+    const repo = await createNightlyRepo(root, 'trade-imports-stub')
+    writeWorkspaceFile(repo, 'workareas/notes.md', 'draft\n')
+
+    const readiness = await checkNightlyReadiness(root, { env: readyEnv })
+
+    expect(checkNamed(readiness, 'clean-checkouts')).toEqual({
+      name: 'clean-checkouts',
+      ok: false,
+      detail: 'Uncommitted changes in: trade-imports-stub'
     })
   })
 

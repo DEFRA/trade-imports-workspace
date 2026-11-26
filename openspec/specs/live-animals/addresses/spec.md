@@ -259,7 +259,7 @@ The system MUST refuse to continue past the review page, and refuse the submit, 
 
 ### Requirement: Choosing a role's address offers a search of the role's list, reporting how many matched
 **ID**: REQ-ADDR-006
-The system MUST let the user search the role's list when choosing an address for any consignment role, place of origin included, narrowing the list to the matching records. It MUST report under the heading "Select an address" how many were shown out of how many the role's list holds, and offer the addresses as one group with that name. The search box MUST be labelled "Search" with the hint "Name, address or country", and run on the server from the "Search" button or Enter.
+The system MUST let the user search the role's list when choosing an address for any consignment role, place of origin included, narrowing the list to the matching records. A record MUST match when its name, its address or its country's name contains the search term. It MUST report under the heading "Select an address" how many were shown out of how many the role's list holds, and offer the addresses as one group with that name. The search box MUST be labelled "Search" with the hint "Name, address or country", and run on the server from the "Search" button or Enter.
 
 #### Scenario: Searching narrows the list and reports the count
 **ID**: SCN-ADDR-006-A
@@ -267,6 +267,13 @@ The system MUST let the user search the role's list when choosing an address for
 - **WHEN** they search for a term matching two records in the book
 - **THEN** only the matching records are listed
 - **AND** under the heading "Select an address" the page reads "Showing 2 out of 2 results"
+
+#### Scenario: Searching for a country's name lists the role's addresses in that country
+**ID**: SCN-ADDR-006-E
+- **GIVEN** the user is choosing an address for a consignment role, place of origin included
+- **WHEN** they search for the name of a country, such as "France" or "United Kingdom"
+- **THEN** the list is narrowed to the role's addresses in that country, whether or not the name or address holds the country's name
+- **AND** the page reports how many were found
 
 #### Scenario: Clearing the search restores the role's whole list, from its first page
 **ID**: SCN-ADDR-006-B

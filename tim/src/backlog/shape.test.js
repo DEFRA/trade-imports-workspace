@@ -13,6 +13,7 @@ import {
   nextBuildable,
   setRowFields
 } from './shape.js'
+import { backlogOf, row } from './__fixtures__/backlog-rows.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -22,23 +23,8 @@ const schema = loadBacklogSchema(workspaceRoot)
 
 const checkBacklog = (backlog) => checkAgainst(backlog, schema)
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
-
 const rowWithout = (field) =>
   Object.fromEntries(Object.entries(row()).filter(([key]) => key !== field))
-
-const backlogOf = (...rows) => ({ programme: 'demo', increments: rows })
 
 const attempt = {
   stage: 'ladder',
@@ -720,6 +706,38 @@ describe('setRowFields', () => {
       changes: { openQuestion: 'two' }
     })
     expect(backlog.increments[0].openQuestions).toEqual(['one', 'two'])
+  })
+
+  test('removes the open question at a position, counting from 1, before adding one', () => {
+    const { backlog, changed } = setRowFields({
+      backlog: backlogOf(row({ openQuestions: ['one', 'two', 'three'] })),
+      id: 'inc-001',
+      changes: { removeOpenQuestion: 2, openQuestion: 'four' }
+    })
+
+    expect(backlog.increments[0].openQuestions).toEqual([
+      'one',
+      'three',
+      'four'
+    ])
+    expect(changed).toEqual({
+      openQuestions: {
+        before: ['one', 'two', 'three'],
+        after: ['one', 'three', 'four']
+      }
+    })
+  })
+
+  test('refuses to remove an open question the row does not have', () => {
+    expect(() =>
+      setRowFields({
+        backlog: backlogOf(row({ openQuestions: ['one'] })),
+        id: 'inc-001',
+        changes: { removeOpenQuestion: 2 }
+      })
+    ).toThrow(
+      'inc-001 has 1 open questions, so it has no open question 2. Open questions count from 1.'
+    )
   })
 
   test('adds a pull request, then merges into it by url', () => {

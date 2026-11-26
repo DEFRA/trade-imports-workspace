@@ -1,105 +1,55 @@
 {
   "area": "party-address-add-and-edit",
-  "rows": [
+  "rows": [],
+  "unobservable": [],
+  "splitOff": [
     {
-      "title": "A link from each party picker row to that saved address's record, and back to the picker",
-      "detail": "Each live animals party picker row offers a link to that saved address's own record in the Import Notification Service address book, carrying the picker it was followed from as a return parameter, so a trader who sees a wrong saved address can correct or delete the record and come straight back to the picker they left. Where a row keeps an in-place details disclosure, it stops repeating the name, address lines and country the row's own columns already show. The address book is the only place an address is written, so the record and its edit stay there; its record page already honours a return to the animals journey. High-risk plants pickers are not wired to the address book and are left alone.",
-      "acceptanceCriteria": [
-        "Each live animals party picker row offers a link to that saved address's own record in the address book, carrying the picker it was followed from as a return parameter for the same notification. (document:dr1-parity-backlog p7-037, p7-042; ruling:sam-2026-10-09-pm p3-064)",
-        "On the compose stack, following that link opens the address's own record page, with its Edit and Delete controls; its Back link, and the return after saving an edit, cancelling or deleting, bring the trader back to the same party picker of the same notification, with that notification's selection intact. (document:dr1-parity-backlog p7-040, p7-042)",
-        "Where a party picker row keeps an in-place details disclosure, it shows the telephone number and email address only, and the name, address lines and country appear in the row's own columns. (document:dr1-parity-backlog p7-036, p7-045)"
-      ],
-      "requirements": ["req-1960"],
-      "sources": [
-        { "source": "document:dr1-parity-backlog", "ref": "p7-036 to p7-047" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-048, p3-064" },
-        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_cells.njk, view-model/address-lines.js" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Pass 1 and pass 2 within this area: this is the area's only change to how a saved address is reached from a picker, so it stands alone. It is the same change as the consignment parties area's picker 'View' link (that area carries whether the in-place disclosure survives at all, and the address-line and page-width work), so the combiner keeps the existing row id inc-090 and merges the two drafts there, as the backlog already does. Verified on main 2 Nov: the picker row still renders the in-place pickerDetailsCell expander with no link out (party-picker/_cells.njk), so the change is still needed; the address book half is already on its own main (features/address-book/return-to.js honours a return on the animals frontend's origin and refuses anything else, and the record page carries it on Edit and Delete), so insfrontend is not in repos. Animals only: ruling:sam-2026-10-09-pm p3-064 says plants is not wired to the address book, so no plants criterion is drafted here and plantsfrontend is not in repos; the plants guard belongs to the consignment parties area's draft. Withdrawn claims avoided: c-106 overrules document-dr1-parity-backlog p7-001, p7-011 and p7-035, none of which this row cites. The builder should accept only a return inside the animals journey, as the add handshake already does, so the link is no open redirect; that is a safeguard rather than a source requirement, so it is left out of the criteria.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker",
-        "tests:page-objects/animals/party-picker-page.ts",
-        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy"
-      ],
-      "existingRow": "inc-090"
+      "requirement": "req-631",
+      "theme": "address-book",
+      "why": "It changes the journey's address-return route and the handshake token it checks, which live in frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return and frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js, and is proven by tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts. All three are touches of the address-book theme, which already holds the rest of the add handshake and return set (req-634 to req-640, req-643, req-646). The refusals it asks for (missing, reused or mismatched token, and an address id looked up outside the signed-in organisation's own book) cannot be built without changing that theme's code."
     },
     {
-      "title": "The address book takes adds from germinal products notifications and returns to them",
-      "detail": "A trader adding an address from a germinal products notification's party picker crosses to the address book by the same handshake and the same add page as from live animals, and gets the same address record with the same fields and checks. The address book's journey conventions gain a registered germinal products entry, so saving or cancelling sends the trader back to the germinal set's own address-return page for that notification rather than to a live animals one. The return address is built on the server from that registered entry, never taken from the handshake, so no caller can redirect the trader elsewhere. Observable in the address book's own fit suite and in the Import Notification Service Playwright project, as the redirect the address book sends.",
-      "acceptanceCriteria": [
-        "The address book's add page accepts a handshake naming the germinal products journey, as it accepts one naming live animals, and shows the same add page. (repo:frontend p9-134; ruling:sam-2026-10-09 p1-006, p1-061)",
-        "Saving or cancelling an add begun from a germinal products notification redirects to that notification's own address-return page under /germinal-products/notifications/{notification id}, carrying the fulfilment id, the saved address id and the handshake token, and never to a live animals notification. (repo:frontend p9-134, p9-139; trace:e2e p9-014, p9-070; ruling:sam-2026-10-09 p1-009, p1-011)",
-        "The redirect is built on the server from the registered germinal products entry, and a handshake that names a return address of its own is refused. (repo:frontend p9-139; ruling:sam-2026-10-09 p1-011)",
-        "An address saved from a germinal products notification is stored as the same record, with the same fields and the same checks, as one saved from a live animals notification. (ruling:sam-2026-10-09 p1-006)"
-      ],
-      "requirements": ["req-1831"],
-      "sources": [
-        { "source": "repo:frontend", "ref": "p9-134, p9-139" },
-        { "source": "trace:e2e", "ref": "p9-014, p9-070" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-006, p1-009, p1-011, p1-061" }
-      ],
-      "repos": ["insfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Kept apart from the picker link row: it is the only change this area makes to the address book's journey conventions, and it is proven in a different Playwright project. Verified on main 2 Nov: features/address-book/journey-registry.js registers only the gbn-ag entry pointing at the live animals set base, and the animals frontend has only the live-animals set, so the change is still needed. Every criterion is observed as the redirect the address book sends, which the fit suite and the Import Notification Service Playwright project can both assert without a germinal set existing yet; the germinal pages the redirect points at are another theme's, and ruling:sam-2026-10-09 p1-011 lets this land before them. Withdrawn claims avoided: c-106 overrules document-dr1-parity-backlog p7-001, p7-011 and p7-035, none cited here. The combiner keeps the existing row id inc-180 and its external dependency on the address book theme's return-contract row, and keeps the claims from other working sets that row already cites.",
-      "touches": [
-        "insfrontend:src/server/app/features/address-book/journey-registry.js",
-        "insfrontend:src/server/app/features/address-book/journey-registry.test.js",
-        "tests:tests/ins/e2e/features/germinal-handshake.spec.ts"
-      ],
-      "shared": [
-        "insfrontend:src/server/common/constants/journey-set-bases.js"
-      ],
-      "existingRow": "inc-180"
-    },
-    {
-      "title": "Waiting on design: the address search's search-only layout, its results as the trader types and its announcements",
-      "detail": "The design opens the add-address pages that have an address search on the search alone: the address fields, contact fields and the uses checkboxes appear once a result is picked or the trader chooses to enter the address by hand, the search box goes once a result is picked, matches list as the trader types with the typed text in bold, and screen readers hear how many results there are. All of it is JavaScript on top of a page that already works without it. It waits on two things at once: design must say whether the search keeps this search-only layout or uses the GOV.UK address pattern with the fields always visible, and the address lookup must become a real feature rather than a gated spike. If design keeps the layout, it is built as an enhancement, and with JavaScript off the page still shows its fields and searches on the server.",
-      "acceptanceCriteria": [
-        "With JavaScript, an add-address page that has an address search opens with the address fields, the contact fields and the 'What else should this address be used for?' checkboxes hidden; they are shown once the trader picks a search result or chooses to enter the address by hand, and they are shown again after a failed save when anything was picked or entered. (prototype:dr2-1-source p8-089, p8-091; trace:prototype-dr2-1 p7-042-m1, p7-048; prototype:dr2-1-specs p3-070)",
-        "Picking a search result hides the search box and leaves the picked name, address line 1, address line 2, town or city, postcode and country filled in and still editable, with the email address and phone number for the trader to enter. (prototype:dr2-1-source p8-089; trace:prototype-dr2-1 p7-048)",
-        "Below the address search, an 'Enter address manually' link-styled button shows the address and contact fields without a result being picked. (prototype:dr2-1-source p8-088; trace:prototype-dr2-1 p7-045)",
-        "With JavaScript, typing in the address search lists the matching addresses below it under 'Address search results', each as the lookup's one-line address with the typed text in bold. (prototype:dr2-1-source p8-086; trace:prototype-dr2-1 p7-046)",
-        "The number of address search results is announced to screen readers through a polite live region, such as '1 result available'. (trace:prototype-dr2-1 p7-047; ruling:sam-2026-10-09-pm p1-027)",
-        "Saving an add-address page that has an address search, with either save button, before anything is picked or entered shows, in order, 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', with no country error and no error on the search itself, and shows the address and contact fields so every error summary link moves to a visible field. (prototype:dr2-1-source p8-099; trace:prototype-dr2-1 p7-051; prototype:dr2-1-specs p3-071; ruling:sam-2026-10-26 p1-008, p1-013; conflicts:c-109)",
-        "With JavaScript off, the same page shows the address and contact fields from the start and its Search button searches on the server. (ruling:sam-2026-10-09-pm p1-086, p1-087)"
-      ],
-      "requirements": ["req-649", "req-652", "req-653", "req-654", "req-1957"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p8-086, p8-088, p8-089, p8-091, p8-099" },
-        { "source": "trace:prototype-dr2-1", "ref": "p7-042-m1, p7-045 to p7-048, p7-051" },
-        { "source": "prototype:dr2-1-specs", "ref": "p3-070, p3-071" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-027, p1-086, p1-087" },
-        { "source": "ruling:sam-2026-10-26", "ref": "p1-008, p1-013" }
-      ],
-      "repos": ["insfrontend", "tests"],
-      "kind": "feat",
-      "status": "blocked",
-      "gate": null,
-      "openQuestions": [
-        "Blocked on the design question about the address search's layout (ruling:sam-2026-10-09-pm p1-086): the design team must say whether the search keeps the search-only layout that hides the address fields behind a pick or an 'Enter address manually' button, or uses the GOV.UK address pattern with the fields always visible. If the pattern will do, this row is dropped at the next re-distil; otherwise design may keep or drop each behaviour, including whether matches list as the trader types and whether the custom result-count announcement stays (ruling:sam-2026-10-09-pm p1-027; conflicts:c-287).",
-        "Blocked on the address lookup becoming a real feature (ruling:sam-2026-10-09-pm p1-087; conflicts:c-217): the team building the front door's and the backend's address lookup must finish it, as only a gated spike exists today. Who: that team. This area is re-distilled once it lands."
-      ],
-      "notes": "Pass 2 merged five requirements into one row: they are all the same client-side enhancement of the same add-address pages, with the same two blockers, so building them apart would repeat the same set-up, review and ladder. Kept blocked rather than todo because there is no safe default to build: design may replace the whole layout with the GOV.UK address pattern, and the lookup the search needs does not exist yet. Verified on main 2 Nov: the front door has only features/address-lookup-spike/, no journey page uses a lookup, and there is no 'Enter address manually' control anywhere. Withdrawn claims avoided: c-109 overrules trace-prototype-dr2-1 p7-014 and p7-051-m1, so the error criterion cites p7-051 and the specs instead; the prototype's summary links pointing at hidden fields do not survive, which is why the criterion requires the fields to be shown. Provenance corrected on this draft: req-653, req-654 and req-1957 still carry ruling:sam-2026-10-09-pm claim references p1-017, p1-090, p1-091 and p1-092, which the renumbering moved onto the templates sort control and the germinal date fields; the design-question-10 claims are p1-086 and p1-087, and the JavaScript ruling is p1-027, so those are cited. The combiner keeps the existing row id inc-194 and its waiting-on-design theme, merging this draft with the address book add-and-edit and transporters area drafts there, as the backlog already does: the ruling calls the design question one increment. This row changes only the front door's client-side enhancement scripts and the enhancement specs, so it does not touch the address book theme's server-side add pages.",
-      "touches": [
-        "insfrontend:src/client/javascripts/address-search.js",
-        "insfrontend:src/client/javascripts/enhancements",
-        "tests:tests/ins/e2e/enhancements"
-      ],
-      "shared": [],
-      "existingRow": "inc-194"
+      "requirement": "req-682",
+      "theme": "consignment-parties",
+      "why": "The party edit page's heading, browser title and journey strip are already built; the only delta the requirement records is the consignor's caption, which comes from the shared party title copy in frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy and is proven by frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js. Both are touches of the consignment-parties theme, which owns the party roles and their titles. The plants party edit page already captions with the party's own title, so nothing is left in party-edit itself."
     }
   ],
-  "unobservable": [],
-  "splitOff": []
+  "alreadyCovered": [
+    {
+      "requirement": "req-649",
+      "existingRow": "inc-194",
+      "status": "deferred",
+      "theme": "waiting-on-design",
+      "why": "The existing deferred row for the parked address search already covers it. A deferred row covers its requirements, and a row built or set aside may not be rewritten, so no new row is drafted and it is not handed to a split-off branch."
+    },
+    {
+      "requirement": "req-652",
+      "existingRow": "inc-194",
+      "status": "deferred",
+      "theme": "waiting-on-design",
+      "why": "Covered by the same deferred address-search row."
+    },
+    {
+      "requirement": "req-653",
+      "existingRow": "inc-194",
+      "status": "deferred",
+      "theme": "waiting-on-design",
+      "why": "Covered by the same deferred address-search row."
+    },
+    {
+      "requirement": "req-654",
+      "existingRow": "inc-194",
+      "status": "deferred",
+      "theme": "waiting-on-design",
+      "why": "Covered by the same deferred address-search row."
+    },
+    {
+      "requirement": "req-1957",
+      "existingRow": "inc-194",
+      "status": "deferred",
+      "theme": "waiting-on-design",
+      "why": "Covered by the same deferred address-search row."
+    }
+  ],
+  "notes": "The area holds 79 requirements. Every one about the copied address a notification holds (copy semantics, the party edit page's fields, rules and messages, rule-breaking copies blocking submit, and the copy frozen after submission: req-679, req-681, req-683 to req-698) is adopted as already met, so none takes a row. req-629, req-1961 and req-1962 are out of scope. Thirteen adopted new or change requirements in the area are already held by themes split off early (req-643, req-646, req-647, req-648, req-650, req-651, req-660, req-664, req-670, req-678, req-1958 and req-2186 by address-book, req-680 by overview-and-review, req-1831 by consignment-parties), so they are left out of the area's work. What was left to build is the two requirements in splitOff, whose code a split-off theme owns, and the five the existing deferred address-search row already covers. The area therefore drafts no row."
 }

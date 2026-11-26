@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { readJsonFile } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 import { loadPrScope, prScopeRuns } from './pr-scope.js'
+import { changedScopeRuns } from './changed-scope.js'
 
 export const GATES_PATH = join(
   '.claude',
@@ -188,24 +189,27 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-const scopeRunsOf = (rung, repo, folders, workspaceRoot) => {
+const scopeRunsOf = (rung, repo, folders, workspaceRoot, e2eScope) => {
   if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
+  if (e2eScope) return changedScopeRuns(e2eScope)
   const services = folders.filter((folder) => folder !== repo.folder)
   return prScopeRuns(loadPrScope(workspaceRoot), services)
 }
 
-const planned = (repo, rung, folders, workspaceRoot) =>
-  scopeRunsOf(rung, repo, folders, workspaceRoot).map(({ suffix, args }) => ({
-    repo: repo.folder,
-    path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
-    name: `${rung.name}${suffix}`,
-    phase: rung.phase,
-    run: rung.run,
-    scope: args,
-    ports: rung.ports ?? [],
-    exclusive: rung.exclusive ?? false,
-    refusal: null
-  }))
+const planned = (repo, rung, folders, workspaceRoot, e2eScope) =>
+  scopeRunsOf(rung, repo, folders, workspaceRoot, e2eScope).map(
+    ({ suffix, args }) => ({
+      repo: repo.folder,
+      path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
+      name: `${rung.name}${suffix}`,
+      phase: rung.phase,
+      run: rung.run,
+      scope: args,
+      ports: rung.ports ?? [],
+      exclusive: rung.exclusive ?? false,
+      refusal: null
+    })
+  )
 
 const refused = (repo, name, phase, refusal) => ({
   repo,
@@ -222,7 +226,7 @@ const refused = (repo, name, phase, refusal) => ({
 const coversBuiltRepo = (rung, folders) =>
   rung.phase !== 'e2e' || rung.forRepos.some((repo) => folders.includes(repo))
 
-const repoPlan = (gates, repo, phase, folders, workspaceRoot) => {
+const repoPlan = (gates, repo, phase, folders, workspaceRoot, e2eScope) => {
   const inPhase = gates.repos[repo.folder].rungs.filter(
     (rung) => rung.phase === phase
   )
@@ -237,7 +241,9 @@ const repoPlan = (gates, repo, phase, folders, workspaceRoot) => {
       )
     ]
   }
-  return covering.flatMap((rung) => planned(repo, rung, folders, workspaceRoot))
+  return covering.flatMap((rung) =>
+    planned(repo, rung, folders, workspaceRoot, e2eScope)
+  )
 }
 
 const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
@@ -255,9 +261,18 @@ const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
  * @param {{folder: string, path: string}[]} args.repos - The backlog's repos, in order
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
  * @param {string} [args.workspaceRoot] - Needed only for a rung with scopeFrom
+ * @param {{base: string, specs?: string[]}} [args.e2eScope] - Narrows every
+ *   scopeFrom rung to the branch's own change instead of its repos' whole
+ *   suites. Without it a scopeFrom rung runs what the pull requests run.
  * @returns {object[]}
  */
-export const planRungs = ({ gates, repos, phase = 'all', workspaceRoot }) => {
+export const planRungs = ({
+  gates,
+  repos,
+  phase = 'all',
+  workspaceRoot,
+  e2eScope
+}) => {
   const folders = repos.map(({ folder }) => folder)
   const missing = repos
     .filter(({ folder }) => !gates.repos[folder])
@@ -272,7 +287,7 @@ export const planRungs = ({ gates, repos, phase = 'all', workspaceRoot }) => {
   const known = repos.filter(({ folder }) => gates.repos[folder])
   const rungs = selectedPhases(phase).flatMap((selected) =>
     known.flatMap((repo) =>
-      repoPlan(gates, repo, selected, folders, workspaceRoot)
+      repoPlan(gates, repo, selected, folders, workspaceRoot, e2eScope)
     )
   )
   const plan = [...missing, ...rungs]

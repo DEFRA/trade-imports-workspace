@@ -44,6 +44,15 @@ const e2eLeftToCi = (rungs) => ({
 
 const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
 
+const DEFAULT_CHANGE_BASE = 'origin/main'
+
+const TARGETED_E2E = {
+  where: 'targeted',
+  leftToCi: [],
+  evidence:
+    'Only the specs this change reaches ran here. The whole suite runs on the pull request.'
+}
+
 /**
  * Who the gate takes the stack lease as when no holder is given: this gate
  * run, by its workarea and process.
@@ -687,6 +696,8 @@ export const runGate = async ({
   repoKeys,
   serial = false,
   e2e,
+  base = DEFAULT_CHANGE_BASE,
+  coveredSpecs = [],
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
@@ -700,15 +711,27 @@ export const runGate = async ({
   )
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
+  const e2eWhere = e2e ?? machine?.e2e
   const wholePlan = withMachineWorkers(
-    planRungs({ gates, repos, phase, workspaceRoot }),
+    planRungs({
+      gates,
+      repos,
+      phase,
+      workspaceRoot,
+      e2eScope:
+        e2eWhere === 'targeted' ? { base, specs: coveredSpecs } : undefined
+    }),
     machine
   )
-  const e2eInCi = (e2e ?? machine?.e2e) === 'ci'
+  const e2eInCi = e2eWhere === 'ci'
   const planned = e2eInCi
     ? wholePlan.filter((rung) => rung.phase !== 'e2e')
     : wholePlan
-  const e2eReport = e2eInCi ? e2eLeftToCi(byPhase(wholePlan, 'e2e')) : LOCAL_E2E
+  const e2eReport = e2eInCi
+    ? e2eLeftToCi(byPhase(wholePlan, 'e2e'))
+    : e2eWhere === 'targeted'
+      ? TARGETED_E2E
+      : LOCAL_E2E
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {
     workspaceRoot,

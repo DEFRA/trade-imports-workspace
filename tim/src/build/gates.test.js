@@ -689,3 +689,66 @@ describe('loadGates', () => {
     rmSync(root, { recursive: true, force: true })
   })
 })
+
+describe('planRungs with e2eScope', () => {
+  const scopeFromGates = () =>
+    parseGates(
+      gatesWith({
+        'plants-frontend': { rungs: [unitRung('unit', 'test')] },
+        tests: {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'pr-scope',
+              forRepos: ['plants-frontend']
+            }
+          ]
+        }
+      })
+    )
+
+  const e2eRungs = (plan) => plan.filter(({ phase }) => phase === 'e2e')
+
+  test('narrows a scopeFrom rung to the specs the change reaches', () => {
+    const plan = planRungs({
+      gates: scopeFromGates(),
+      repos: [repo('plants-frontend'), repo('tests')],
+      phase: 'e2e',
+      e2eScope: { base: 'origin/main' }
+    })
+
+    expect(e2eRungs(plan)).toEqual([
+      expect.objectContaining({
+        repo: 'tests',
+        name: 'e2e',
+        scope: ['--only-changed=origin/main', '--pass-with-no-tests']
+      })
+    ])
+  })
+
+  test('adds a covered run for the specs the change’s scenarios are proved by', () => {
+    const plan = planRungs({
+      gates: scopeFromGates(),
+      repos: [repo('plants-frontend'), repo('tests')],
+      phase: 'e2e',
+      e2eScope: { base: 'origin/main', specs: ['tests/plants/a.spec.ts'] }
+    })
+
+    expect(namesOf(e2eRungs(plan))).toEqual(['tests:e2e', 'tests:e2e-covered'])
+  })
+
+  test('leaves a rung that names its own scope alone', () => {
+    const plan = planRungs({
+      gates: sampleGates(),
+      repos: [repo('plants-frontend'), repo('plants-backend'), repo('tests')],
+      phase: 'e2e',
+      e2eScope: { base: 'origin/main' }
+    })
+
+    expect(e2eRungs(plan)).toEqual([
+      expect.objectContaining({ name: 'e2e-plants', scope: ['tests/plants/'] })
+    ])
+  })
+})

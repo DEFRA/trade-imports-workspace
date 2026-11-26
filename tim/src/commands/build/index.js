@@ -81,6 +81,8 @@ const gateOptionsSchema = z.object({
       message: `--e2e must be one of: ${E2E_LOCATIONS.join(', ')}.`
     })
     .optional(),
+  base: z.string().trim().min(1).optional(),
+  coveredSpec: z.array(z.string().trim().min(1)).optional(),
   serial: z.boolean()
 })
 
@@ -434,7 +436,16 @@ const registerGate = (build, timVersion) =>
     )
     .option(
       '--e2e <where>',
-      'Where the E2E rungs run: local, against the workspace stack, or ci, left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+      'Where the E2E rungs run: local, the whole suite against the workspace stack; targeted, only the specs this change reaches, with the whole suite left to the pull request; or ci, every E2E rung left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+    )
+    .option(
+      '--base <ref>',
+      'The ref --e2e targeted compares the branch against to find the specs the change reaches (default: origin/main)'
+    )
+    .option(
+      '--covered-spec <path>',
+      'A spec --e2e targeted runs whatever the change reaches, such as one the Behaviour Spec links to a scenario this change touches. Repeat for more than one',
+      (path, paths = []) => [...paths, path]
     )
     .option(
       '--detach',
@@ -459,6 +470,8 @@ const registerGate = (build, timVersion) =>
           repo: opts.repo?.length ? opts.repo : undefined,
           holder: opts.holder,
           e2e: opts.e2e,
+          base: opts.base,
+          coveredSpec: opts.coveredSpec?.length ? opts.coveredSpec : undefined,
           serial: opts.serial === true
         })
         const workspaceRoot = resolveWorkspaceRoot({
@@ -490,6 +503,8 @@ const registerGate = (build, timVersion) =>
           serial: parsed.serial,
           logsDir,
           ...(parsed.e2e ? { e2e: parsed.e2e } : {}),
+          ...(parsed.base ? { base: parsed.base } : {}),
+          ...(parsed.coveredSpec ? { coveredSpecs: parsed.coveredSpec } : {}),
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         const envelope = gateEnvelope(outcome, timVersion)

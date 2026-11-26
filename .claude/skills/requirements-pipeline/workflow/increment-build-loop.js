@@ -113,14 +113,17 @@ const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
 const STOP_AFTER = CFG.stopAfter
 
-const E2E_LOCATIONS = ['local', 'ci']
+const E2E_LOCATIONS = ['local', 'targeted', 'ci']
 const E2E = CFG.e2e
 if (!E2E_LOCATIONS.includes(E2E)) {
   throw new Error(
-    `${WORKFLOW_NAME}: config.e2e must be "local" (prove it with the local stack) or "ci" (let the pull requests prove it) — got ${JSON.stringify(E2E)}`
+    `${WORKFLOW_NAME}: config.e2e must be "local" (the whole suite against the local stack), "targeted" (the specs this change reaches against the local stack, the whole suite on the pull requests) or "ci" (let the pull requests prove all of it) — got ${JSON.stringify(E2E)}`
   )
 }
-const E2E_IS_LOCAL = E2E === 'local'
+// Every stage that needs a running stack treats targeted as local: it still runs
+// an E2E rung, under the run's own lease. Only the baseline and the width of
+// that rung differ, and the gate decides the width from the same `--e2e` value.
+const E2E_IS_LOCAL = E2E !== 'ci'
 
 const ATTEMPT_STAGES = ['implement', 'review', 'ladder']
 const RESUME_FROM_VALUES = ['build', ...ATTEMPT_STAGES]
@@ -180,6 +183,20 @@ if (!LIFECYCLES.includes(LIFECYCLE)) {
   )
 }
 const IS_BRANCH = LIFECYCLE === 'branch'
+
+// The baseline can only read a pull request where one already exists for the
+// branch the row is built on, which is the branch lifecycle: it refuses to start
+// without one per repo. The full lifecycle cuts a fresh branch per increment and
+// raises its pull requests after the build, so at baseline time there is nothing
+// to read and the row keeps its local gate, narrowed by the same `--e2e` value.
+const BASELINE_FROM_PULL_REQUESTS = E2E === 'targeted' && IS_BRANCH
+
+// Carrying a row on past a check the base branch fails the same way is a branch
+// lifecycle answer only. The full lifecycle MERGES each row, so a red check
+// there must keep blocking the merge however it got red: the run stops instead,
+// at once rather than after spending every fix attempt on a fixer that has been
+// told to change nothing.
+const CARRY_ON_PAST_BASE_RED = IS_BRANCH
 
 const UNUSED_ON_BRANCH_KEYS = [
   'jiraProject',
@@ -1009,8 +1026,21 @@ const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).join('')
-const gateCommand = (phase, logs, repoKeys) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
+// What a row has changed, wherever that work sits, which differs by lifecycle
+// because a failed attempt is preserved differently in each.
+//
+// Branch lifecycle: every row shares one branch, and a preserved attempt is
+// patches re-applied to the working tree, so the row's change is what is not
+// committed — HEAD. origin/<branch> would also hold the rows that landed before
+// this one.
+//
+// Full lifecycle: the increment's branch is cut fresh off the base and holds
+// nothing but this row, and a preserved attempt is a pushed wip commit, so HEAD
+// would see none of a resumed row's work. The base branch is the row.
+const ROW_CHANGE_BASE = IS_BRANCH ? 'HEAD' : `origin/${BASE_BRANCH}`
+
+const gateCommand = (phase, logs, repoKeys, base = ROW_CHANGE_BASE) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1021,8 +1051,8 @@ const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--det
   gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
   copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
   not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
-const gateCommandList = (phases, logs, repoKeys) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys)}\``).join('\n')
+const gateCommandList = (phases, logs, repoKeys, base) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys, base)}\``).join('\n')
 
 const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
@@ -1098,13 +1128,42 @@ const CODEX_NO_GATE = 'none'
 const codexGateBinding = (id, stage, phases, repoKeys) =>
   phases.includes('unit') ? codexGateUnit(id, stage, repoKeys) : CODEX_NO_GATE
 
+// A rung is a gate phase, or `ci` for a pull request's own check, which is what
+// the pull-request baseline reports in place of a gate it did not run.
+const RUNG_PHASES = [...GATE_PHASES, 'ci']
+
+// Whose failure a red check is. Every prompt told to decide it answers in a
+// schema carrying these two, which is why they live here rather than inside one
+// of them: the baseline and all three CI watches share the question.
+const NOT_OURS_PROPERTY = {
+  type: 'array',
+  description:
+    'Every failing spec that fails the same way on the base branch itself, so this branch did not cause it. Leave empty when there are none',
+  items: {
+    type: 'object',
+    required: ['repo', 'spec', 'evidence'],
+    properties: {
+      repo: { type: 'string' },
+      spec: { type: 'string', description: 'The spec path, or the job name where the failure is not a spec' },
+      evidence: { type: 'string', description: 'The base branch run that fails the same way, as a URL, and its conclusion' }
+    },
+    additionalProperties: false
+  }
+}
+
+const ONLY_NOT_OURS_PROPERTY = {
+  type: 'boolean',
+  description:
+    "True when the checks are red and EVERY red thing left is in notOurs — nothing still failing is this branch's doing. False whenever any failure is this branch's, and when everything is green"
+}
+
 const GATE_RUNG_SCHEMA = {
   type: 'object',
   required: ['repo', 'name', 'phase', 'ok'],
   properties: {
     repo: { type: 'string' },
     name: { type: 'string' },
-    phase: { type: 'string', enum: GATE_PHASES },
+    phase: { type: 'string', enum: RUNG_PHASES },
     ok: { type: 'boolean' },
     log: { type: 'string' },
     reason: { type: 'string' }
@@ -1244,6 +1303,19 @@ service that calls it, and a tests or performance-tests repo after every service
 order does not, keep the row's order in repos and say so under risks, naming the order it should have${WORKSPACE_CONFIGURED ? `. Whatever the order, the workspace repo merges last, after every other` : ''}`
 
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
+
+// The pull requests are red, and every red thing left fails the same way on the
+// base branch, so no commit on this branch can clear it. Under the branch
+// lifecycle the theme carries on unmerged, and the person merging it rules on
+// the base's own failure. The full lifecycle merges each row, so there it stops
+// the run instead — at once, rather than after spending every fix attempt.
+const baseRedOnly = (r) =>
+  Boolean(r && !r.green && r.onlyNotOurs && (r.notOurs ?? []).length > 0)
+
+const onlyNotOurs = (r) => CARRY_ON_PAST_BASE_RED && baseRedOnly(r)
+
+const notOursLines = (r) =>
+  (r?.notOurs ?? []).map(({ repo, spec, evidence }) => `${repo} ${spec} — ${evidence}`)
 
 const describeStackHolder = (holder) =>
   holder ? `"${holder}"` : 'nobody: no lease names it, so somebody released this run\'s lease or started the stack by hand'
@@ -1523,6 +1595,11 @@ and so on), so a check that starts a frontend on its default port cannot run. A 
 gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
 \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`. Write no worker count into
 a plan: whoever runs the check adds this machine's \`--workers\` from GUARD RAILS.
+An END-TO-END check names its spec files too:
+\`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file>\`. Never the bare
+script, a folder (\`tests/animals/\`) or a \`--grep\` over a tag: each of those runs hundreds of specs this row did not
+change, takes tens of minutes, and competes with the stack for this machine. The whole suite is the pull request's
+job, never a plan check's.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1545,6 +1622,8 @@ ${workerCountLines.join('\n')}
   So: \`npm --prefix ${TILDE}/repos/<repo> run test:fit:ci -- <spec file> --workers=<n>\` for FIT, and
   \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file> --workers=<n>\` for E2E. A repo not listed keeps its
   script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
+  ALWAYS name the spec files. Never run one of these scripts bare, over a folder, or with a \`--grep\` over a tag:
+  that is hundreds of specs, tens of minutes, and the whole suite is the pull request's job.
 `
 
 const WATCH_LOOP_EXCEPTION = `The ONE exception to the single-command and no-sleep rules is the \`for try in ...; done\` checks watch loop that a
@@ -1849,7 +1928,7 @@ ${restoreWorkStep(id, branch, attempt.work ?? {})}
    \`git -C ${TILDE}/<repoPath> diff --name-only\`
    ${attempt.work?.kind === 'wip' ? `Both print nothing for this attempt: its work is committed and pushed, so the tree is clean and \`origin/${branch}\`\n   already holds it. What the attempt changed is its branch against the base:\n   \`git -C ${TILDE}/<repoPath> diff --name-only origin/${BASE_BRANCH}...HEAD\`\n   ` : ''}Report every path once in changedFiles, each written \`<repoKey>:<repo-relative path>\` with the repo keys
    ${REPO_KEYS.join(', ')}. The review stages are grouped from this list, so a path left out is a file nobody reads.
-${baselineGateStep(phases, gateLogs(id, 'resume'))}
+${localGateStep(phases, gateLogs(id, 'resume'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. restored:true only when step 1 put every piece back.
    green:true only when every phase that had rungs came back green, and false whenever restored is false, whatever
@@ -2675,6 +2754,8 @@ const BASELINE_SCHEMA = {
       items: GATE_RUNG_SCHEMA,
       description: 'Every rung from every gate phase, copied from the JSON tim printed'
     },
+    notOurs: NOT_OURS_PROPERTY,
+    onlyNotOurs: ONLY_NOT_OURS_PROPERTY,
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -2958,6 +3039,8 @@ const CI_SCHEMA = {
       }
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
+    notOurs: NOT_OURS_PROPERTY,
+    onlyNotOurs: ONLY_NOT_OURS_PROPERTY,
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
@@ -3033,6 +3116,42 @@ means unknown, never red:
 3. \`SUMMARY: stale\` still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
 \`SUMMARY: red\` with some lines marked stale is a real red: at least one failing check did run on this head. Put only
 the checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
+
+const WHOSE_FAILURE_RULE = `WHOSE FAILURE IS IT? Decide this for every red thing, before anyone changes a line, and report it in notOurs[]
+   and onlyNotOurs. A red check has three causes and they need opposite work.
+   FIRST, THE HALF-TAKEN BASE. This run brings \`main\` into each repo separately, so the branch can hold main's
+   changes for some services and not others, and an end-to-end run then drives a stack whose services disagree. It
+   is the likeliest cause of a failure nobody recognises, and it is this run's own doing, not a defect. For EVERY
+   repo the branch builds: \`git -C ${TILDE}/<repoPath> fetch origin\` then
+   \`git -C ${TILDE}/<repoPath> rev-list --count HEAD..origin/main\`. Any count above 0 in any repo → say so in
+   failures[], put NOTHING in notOurs[], and set onlyNotOurs false: the base has to come in before the failure means
+   anything.
+   SECOND, THE BASE ITSELF. With every repo level, read the same workflow's last run on main:
+   \`gh run list --repo <ghRepo> --branch main --workflow <the failing workflow file> --limit 1 --json databaseId,conclusion,url\`
+   and, when it did not succeed,
+   \`gh run view <databaseId> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/main-red-<repo>.log 2>&1\`, read once.
+   The same spec failing the same way there → this branch did not cause it. Put it in notOurs[] with that run's URL
+   and conclusion as its evidence.
+   THIRD, THIS BRANCH. Anything left is this increment's, and a fixer gets it.
+   Set onlyNotOurs true ONLY when the pull requests are red and every red thing left is in notOurs[]. A single
+   failure of this branch's makes it false, however many of main's sit beside it.`
+
+const CI_FIXER_MAIN_RED_RULE = `FIND OUT WHETHER THIS BRANCH BROKE IT, BEFORE YOU CHANGE A LINE. A check can be red because this increment
+   broke it, or because it is red on \`main\` for everyone. The two need opposite work, and guessing wrong spends an
+   attempt editing code that was never at fault.
+   For each failing spec, read the same workflow's last run on main:
+   \`gh run list --repo <ghRepo> --branch main --workflow <the failing workflow file> --limit 1 --json databaseId,conclusion\`
+   and, when that run did not succeed,
+   \`gh run view <databaseId> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/main-red-<repo>.log 2>&1\`, read once.
+   - The spec passes on main → this increment broke it. Fix it here, as the steps below say.
+   - The same spec fails on main too → this increment did not break it, and a commit on this branch is the wrong
+     place for the fix: it would hide a failure everyone else still has, and it would be reviewed as this row's work.
+     Change NO code. Report ok:false, with the spec, the main run's URL and both conclusions in your summary.
+   Say which of the two it is either way, even when every spec is this branch's doing.
+   THIS IS NOT A WAY TO CLOSE A FAILURE. "Pre-existing", "flaky", "unrelated" and "environmental" close nothing: the
+   run stops so a person lands the fix on main, where it fixes it for everybody, and this increment is built again
+   afterwards. Design Release 2.1's manage-notifications theme lost two runs to exactly this — five macOS visual
+   baselines and a timeout under load — neither of which the theme had touched, and both of which were fixed on main.`
 
 const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE. The watcher should have caught a stale rollup, but
    confirm it yourself, because changing correct code to match an old image is the most expensive thing you can do
@@ -4449,7 +4568,42 @@ This row changes no backlog repo: the whole change is in the workspace repo, lef
 
 const NO_GATE_STEP = "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
 
-const baselineGateStep = (phases, logs) => {
+const prBaselineStep = (id, repoKeys) => {
+  const named = (repoKeys ?? REPO_KEYS).map((key) => `${key} (${REPOS[key].github})`).join(', ')
+  return `3. THE BASELINE IS EACH REPO'S OPEN PULL REQUEST, not a local gate. Run NO gate and no repo's own test, lint or
+   build script: before this row edits anything, the branch holds only what is already on the pull request, and that
+   pull request has already run every check against it — on CI's own machines, unloaded. Repeating them here proves
+   the same thing more slowly, and a suite racing the workspace stack for this machine's memory fails in ways CI
+   does not.
+   For each of ${named}: find the open pull request on \`${BASE_BRANCH}\`
+   (\`gh pr list --repo <github> --head ${BASE_BRANCH} --state open --json number\`). A repo whose pull request cannot
+   be found is ok:false — this lifecycle never raises one.
+   Then, for EACH pull request:
+   ${prChecksWaitStep(id)}
+   ${STALE_ROLLUP_STEP}
+   \`SUMMARY: pending\` → wait again from the top of that step, at most ${CI_WATCH_WINDOWS} times per pull request in
+   all. Still pending after that → ok:false naming the repo: an absence of evidence is not a green baseline.
+   NO CHECKS at all, after the retry loop → ok:false naming the repo, for the same reason.
+   ${WHOSE_FAILURE_RULE}
+   Put EVERY check in rungs[], one each, with \`repo\` the repo key, \`name\` the check's name, \`phase\` "ci",
+   \`ok\` true only when its bucket is pass, \`log\` its link and \`reason\` its bucket.
+   green:true when every check of every repo passed, AND when the only ones that did not are in notOurs[] — a check
+   the base branch fails the same way is not this branch's to answer for, and an earlier row of this very run may
+   already have left it red for exactly that reason. Say which in your summary either way.`
+}
+
+const baselineReportStep = () =>
+  BASELINE_FROM_PULL_REQUESTS
+    ? `4. REPORT what \`gh\` printed, not your reading of it. green:true only if every check of every repo passed.
+   ok:true only if steps 1 and 2 passed. Put each failed check's name, repo and link in your summary.`
+    : `4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
+   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
+   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.`
+
+// The gate a stage runs itself, whatever `--e2e` is. The restore stage uses this
+// directly: it has just put unpushed work back, so no pull request has seen it
+// and only a local run says whether it stands.
+const localGateStep = (phases, logs) => {
   if (phases.length === 0) return `3. THE GATE, for the phases this row owes.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `3. THE GATE, for the phases this row owes — every one, so it is ONE command, which runs unit, FIT and E2E
@@ -4461,6 +4615,11 @@ ${gateCommandList([WHOLE_GATE], logs)}
 ${gateCommandList(phases, logs)}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
 }
+
+const baselineGateStep = (phases, logs, { id, repoKeys } = {}) =>
+  BASELINE_FROM_PULL_REQUESTS
+    ? prBaselineStep(id, repoKeys)
+    : localGateStep(phases, logs)
 
 const ciE2eEvidenceStep = (repoKeys) => {
   if (E2E_IS_LOCAL) return ''
@@ -4474,17 +4633,17 @@ const ciE2eEvidenceStep = (repoKeys) => {
    completed no end-to-end run yet is not red: say it is awaited. Add no rung for any of this — rungs[] is the gate's.`
 }
 
-const ladderGateStep = (phases, logs) => {
+const ladderGateStep = (phases, logs, base) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `1. THE GATE. ONE command — the same one the baseline ran, into its own folder — which runs unit, FIT and E2E
    side by side:
-${gateCommandList([WHOLE_GATE], logs)}
+${gateCommandList([WHOLE_GATE], logs, undefined, base)}
    Its \`result.rungs[]\` holds every rung of every phase, red or green: you have the whole picture before you repair
    anything.`
   }
   return `1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateCommandList(phases, logs)}
+${gateCommandList(phases, logs, undefined, base)}
    Run every one, even after a red one, so you have the whole picture before you repair anything.`
 }
 
@@ -4627,11 +4786,9 @@ TASK:
    must print nothing. If any is dirty or mid-merge, stop and report ok:false.
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
-${baselineGateStep(phases, gateLogs(id, 'baseline'))}
+${baselineGateStep(phases, gateLogs(id, 'baseline'), { id, repoKeys: REPO_KEYS })}
 ${ciE2eEvidenceStep()}
-4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
-   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
-   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
+${baselineReportStep()}
 Return the structured output only.`
 
 const PUSH_BLOCKED_KINDS = ['quality-gate', 'non-fast-forward', 'other']
@@ -4794,10 +4951,15 @@ Then, for EACH pr, in the order listed:
 3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
+   NAME THE FAILING SPEC FILES, one per failing spec, as the repo-relative paths Playwright printed in its own
+   failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
+   and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
+   Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
+4. ${WHOSE_FAILURE_RULE}
 
 \`blocked\` is ONLY for something a code fix in this row cannot address: a conflict with the base, no checks, \`gh\`
 refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a
-fixer gets it. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
+fixer gets it. A failure on main too is NOT blocked either: it goes in notOurs[], and the loop carries the theme on. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
 Return the structured output only.`
 
 const branchCiFixPrompt = (id, attempt, prList, seen, plan) => `You are the CI FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
@@ -4821,18 +4983,20 @@ TASK:
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
 2. ${CI_FIXER_STALE_RULE}
-3. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
+3. ${CI_FIXER_MAIN_RED_RULE}
+4. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
    push that republishes it does. A \`workflow_run\` job runs the copy of its workflow on the default branch (main),
    never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
-4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+5. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-5. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
-   read once.
-6. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
+6. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+   script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
+   everything else; re-running it here proves nothing it has not and costs tens of minutes.
+7. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
    ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
-7. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
+8. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
    the repo. Never open a pull request.
-8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+9. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`
 
@@ -4969,6 +5133,28 @@ It leaves \`branch\`, \`commit\` and \`prs\` in place: they are the record of ho
 Report ok:true only when tim exited 0 and its JSON reports ok:true.
 Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
+  )
+
+const noteNotOursOnPrs = (id, prs, lines) =>
+  agent(
+    `Increment ${id} is built and pushed to \`${BASE_BRANCH}\`, and its pull requests are red — but every red thing
+left fails the same way on the base branch itself, so this increment did not cause any of it. Leave a note on each
+pull request saying so, for whoever merges the theme. That is your whole job.
+${guardrails()}
+You NEVER merge, re-run, retitle, un-draft or close a pull request, and you change no code and no test. One comment
+per pull request, and nothing else.
+WHAT IS RED ON THE BASE BRANCH TOO:
+${lines.map((line) => `- ${line}`).join('\n')}
+THE PULL REQUESTS: ${prs.map(({ repo, url }) => `${repo} ${url}`).join(', ')}
+For EACH pull request, post this comment with
+\`gh pr comment <url> --body "<the text>"\`, written out in full with the lines above included:
+  "Increment ${id} is pushed. These checks are red here and red the same way on the base branch, so they are not
+  this increment's doing: <the lines above>. Nothing on this branch can clear them — the fix belongs on the base
+  branch. Whoever merges this theme decides whether to wait for that fix or merge past it."
+Report ok:true only when every pull request got its comment. A comment that failed to post goes in your summary with
+the repo and what \`gh\` said.
+Return the structured output only.`,
+    light({ label: `${id} not-ours note`, phase: 'CI', schema: incrementSchema })
   )
 
 const SIGNED_OFF_PHASE = 'Signed off'
@@ -5732,7 +5918,7 @@ ${GATE_RULE}
 Every rung was green at the ladder of ${id}, the theme's last row, just before this review, so a rung red now is these
 fixes' to repair.
 TASK:
-${ladderGateStep(phases, gateLogs(id, 'theme-ladder'))}
+${ladderGateStep(phases, gateLogs(id, 'theme-ladder'), `origin/${BASE_BRANCH}`)}
 - REPAIRS. You get at most 3. A repair fixes the code: never weaken, skip or delete a test to get green, and never mark a
   rung green that was not. A red format rung is repaired by running the repo's \`format\` script. After a repair, re-run
   the gate phase that was red, and the unit phase as well when the red phase was not unit.
@@ -5859,6 +6045,16 @@ const watchThemeFixes = async (id, repoKeys) => {
   const prList = found.prs.map((pr) => `${pr.repo}: ${pr.url}`).join('\n')
   const ci = await agent(branchWatchPrompt(id, prList), light({ label: `${id} theme ci watch`, phase: THEME_REVIEW_PHASE, schema: BRANCH_CI_SCHEMA }))
   if (ci?.green) return {}
+  // The theme's own fix commit is the only thing this watch is judging, so a
+  // check the base branch fails the same way is no more the review's than it
+  // was the row's. It reads onlyNotOurs exactly as a row's watch does.
+  if (onlyNotOurs(ci)) {
+    const lines = notOursLines(ci)
+    log(`${id}: theme review CI red only where the base branch is red too — ${lines.join(' | ')}`)
+    await noteNotOursOnPrs(id, found.prs, lines)
+    notOursAcrossRun.push({ id, prs: found.prs.map((pr) => pr.url), notOurs: ci.notOurs, at: 'theme review' })
+    return {}
+  }
   const evidence = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ') || ci.summary : 'the theme ci watch agent died'
   return themeReviewStop(id, { reason: 'ci-red', why: 'CI went red on its commit', evidence: `${evidence}. PRs untouched: ${found.prs.map((pr) => pr.url).join(' ')}`, preserve: false })
 }
@@ -6010,6 +6206,7 @@ const specChecks = []
 const reviewChecks = []
 const signedOffChecks = []
 const refutedFindings = []
+const notOursAcrossRun = []
 const rowsBuiltWithoutStyleReview = []
 let built = 0
 let heldForRuling = 0
@@ -6471,11 +6668,9 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 ${specBaselineLine()}
-${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'))}
+${baselineGateStep(rowGatePhases, gateLogs(id, 'baseline'), { id, repoKeys: repos })}
 ${ciE2eEvidenceStep(repos)}
-4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
-   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
-   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
+${baselineReportStep()}
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
   ))
@@ -6494,6 +6689,15 @@ Return the structured output only.`,
     results.push({ id, outcome: 'baseline-red', detail: baseline?.summary ?? 'agent failed' })
     stopped = { reason: 'baseline-red', detail: `${id}: ${baseline?.summary ?? 'agent failed'}` }
     break
+  }
+
+  // A pull-request baseline is green with the base branch's own failures still
+  // red. They are nobody's to fix here, but the run says which they were rather
+  // than letting the row read as proved against a wholly green base.
+  const baselineNotOurs = baseline.notOurs ?? []
+  if (baselineNotOurs.length > 0) {
+    log(`${id}: baseline green apart from ${baselineNotOurs.length} the base branch fails the same way: ${notOursLines(baseline).join(' | ')}`)
+    notOursAcrossRun.push({ id, prs: [], notOurs: baselineNotOurs, at: 'baseline' })
   }
 
   baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now
@@ -7337,7 +7541,7 @@ Return the structured output only.`,
             )
 
           ci = await watchOnBranch()
-          while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
+          while ((!ci || !ci.green) && !hardStop(ci) && !onlyNotOurs(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
             ciAttempt += 1
             log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
             const seen = ci
@@ -7358,7 +7562,14 @@ Return the structured output only.`,
             break
           }
 
-          if (!ci || !ci.green) {
+          if (onlyNotOurs(ci)) {
+            const lines = notOursLines(ci)
+            log(`${id}: red on the base branch too, so not this increment's — carrying the theme on. ${lines.join(' | ')}`)
+            await noteNotOursOnPrs(id, prs, lines)
+            notOursAcrossRun.push({ id, prs: prs.map((p) => p.url), notOurs: ci.notOurs })
+          }
+
+          if (!ci || (!ci.green && !onlyNotOurs(ci))) {
             const detail = ci
               ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ')
               : 'ci watcher agent died'
@@ -7391,6 +7602,9 @@ Return the structured output only.`,
       const ciOutcome = () => {
         if (repos.length === 0) return 'none: the row changes no backlog repo'
         if (!rowAwaitsCi) return 'not awaited: the row sets awaitCi false'
+        if (onlyNotOurs(ci)) {
+          return `red on the base branch too, so not this row's: ${notOursLines(ci).join('; ')}`
+        }
         return 'green'
       }
 
@@ -7502,9 +7716,19 @@ Then, for EACH pr, in the order listed:
 4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
+   NAME THE FAILING SPEC FILES, one per failing spec, as the repo-relative paths Playwright printed in its own
+   failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
+   and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
+   Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
+5. ${WHOSE_FAILURE_RULE}
+   This increment MERGES to \`${BASE_BRANCH}\` when it goes green, so a check the base branch fails the same way still
+   has to block that merge: there is no carrying on past it here. When onlyNotOurs is true, set \`blocked\` to one line
+   naming the spec and the base run as well, so the run stops at once instead of spending every fix attempt on a
+   fixer that has been told to change nothing.
 
 \`blocked\` is ONLY for something a code fix cannot address — a conflict with the base, no checks configured, \`gh\`
-refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
+refused, the PR is gone, or every red thing left being red on the base branch too. Setting it stops the run outright.
+A failing test this increment caused is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
         light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
@@ -7538,11 +7762,13 @@ TASK:
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
 2. ${CI_FIXER_STALE_RULE}
-3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+3. ${CI_FIXER_MAIN_RED_RULE}
+4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-4. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
-   read once.
-5. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
+5. Prove it locally by running THE FAILING SPEC FILES THEMSELVES, named after \`--\`, never a folder, a bare
+   script or a \`--grep\` over a tag, to a log under ${WORKAREA_TILDE}/logs/, read once. CI has already run
+   everything else; re-running it here proves nothing it has not and costs tens of minutes.
+6. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
    The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
    declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.
    Committing there and pushing is how this loop once put an unreviewed commit on the tests repo's main.
@@ -7555,10 +7781,10 @@ ${SONAR_GATE_RULE}
      - It does not → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
        \`--no-track\` is mandatory — see HOW TO PUSH above for what it prevents.
      Then re-run \`rev-parse --abbrev-ref HEAD\` and confirm it now prints \`${workBranch}\` before going on.
-6. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+7. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
    \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
    \`--force\`, and never the short \`push origin ${workBranch}\` form.
-7. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+8. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
    REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
    An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
    calls itself done, and silently leaves the other open — which has happened. Worse has happened: the same repo,
@@ -7581,7 +7807,7 @@ ${SONAR_GATE_RULE}
       Do this per repo, not once at the end.
    e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
-8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+9. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
         code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
@@ -7940,4 +8166,4 @@ if (workspaceLeftOn) {
 const heldNote = heldForRuling > 0 ? `, ${heldForRuling} more held before the merge awaiting a signed-off ruling` : ''
 log(`${WORKAREA_REL}: ${built} increment(s) landed${heldNote} — stopping: ${stopped.reason}. ${stopped.detail}`)
 
-return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped }
+return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, notOurs: notOursAcrossRun, ticketClaim, stopped }

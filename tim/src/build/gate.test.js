@@ -1719,3 +1719,214 @@ describe('runGate — e2e left to CI', () => {
     })
   })
 })
+
+describe('runGate — a narrowed e2e run', () => {
+  const gitIn = async (dir, args) => execa('git', args, { cwd: dir })
+
+  const commitBaseIn = async (folder) => {
+    const dir = join(root, 'repos', folder)
+    await gitIn(dir, ['init', '--initial-branch=main'])
+    await gitIn(dir, ['config', 'user.email', 'test@example.com'])
+    await gitIn(dir, ['config', 'user.name', 'Test'])
+    await gitIn(dir, ['add', '.'])
+    await gitIn(dir, ['commit', '-m', 'base'])
+    return dir
+  }
+
+  const specIn = (dir, path) => {
+    mkdirSync(dirname(join(dir, path)), { recursive: true })
+    writeFileSync(join(dir, path), 'test\n')
+  }
+
+  const narrowedGates = {
+    gates: {
+      frontend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] },
+      tests: {
+        rungs: [
+          {
+            name: 'e2e',
+            phase: 'e2e',
+            run: 'test:docker-compose',
+            scopeFrom: 'gate',
+            forRepos: ['frontend']
+          }
+        ]
+      }
+    },
+    repos: {
+      frontend: { test: 'echo unit' },
+      tests: { 'test:docker-compose': 'echo e2e' }
+    }
+  }
+
+  test('runs only the spec the tests repo changed, uncommitted work included', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/animals/amend.spec.ts')
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({
+      green: outcome.green,
+      rungs: outcome.rungs.map(({ repo, name }) => `${repo}:${name}`)
+    }).toEqual({ green: true, rungs: ['tests:e2e'] })
+    expect(readFileSync(outcome.rungs[0].log, 'utf8')).toContain(
+      'e2e tests/animals/amend.spec.ts --pass-with-no-tests'
+    )
+  })
+
+  test('plans no e2e rung, and says so, when the change touched no spec', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    await commitBaseIn('tests')
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({
+      green: outcome.green,
+      rungs: outcome.rungs.length,
+      evidence: outcome.e2e.evidence
+    }).toEqual({
+      green: true,
+      rungs: 0,
+      evidence:
+        'NO end-to-end test ran here: this change touched no spec file any e2e rung runs. Nothing below is end-to-end proof — the pull request’s whole-suite run is.'
+    })
+  })
+
+  test('refuses a base the repo does not have, rather than planning an empty run', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    await commitBaseIn('tests')
+
+    await expect(
+      gate(env, { phase: 'e2e', e2e: 'targeted', base: 'origin/nope' })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
+describe('runGate — what a narrowed run counts as the change', () => {
+  const gitIn = async (dir, args) => execa('git', args, { cwd: dir })
+
+  const narrowedGates = {
+    gates: {
+      frontend: { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] },
+      tests: {
+        rungs: [
+          {
+            name: 'e2e',
+            phase: 'e2e',
+            run: 'test:docker-compose',
+            scopeFrom: 'gate',
+            forRepos: ['frontend']
+          }
+        ]
+      }
+    },
+    repos: {
+      frontend: { test: 'echo unit' },
+      tests: { 'test:docker-compose': 'echo e2e' }
+    }
+  }
+
+  const committedBase = async (folder) => {
+    const dir = join(root, 'repos', folder)
+    await gitIn(dir, ['init', '--initial-branch=main'])
+    await gitIn(dir, ['config', 'user.email', 'test@example.com'])
+    await gitIn(dir, ['config', 'user.name', 'Test'])
+    mkdirSync(join(dir, 'tests/animals'), { recursive: true })
+    writeFileSync(join(dir, 'tests/animals/base.spec.ts'), 'base\n')
+    await gitIn(dir, ['add', '.'])
+    await gitIn(dir, ['commit', '-m', 'base'])
+    return dir
+  }
+
+  const ranIn = (outcome) =>
+    outcome.rungs.length === 0
+      ? null
+      : readFileSync(outcome.rungs[0].log, 'utf8')
+
+  test('counts a spec the row wrote but has not committed', async () => {
+    const env = workspaceWith(narrowedGates)
+    await committedBase('frontend')
+    const testsDir = await committedBase('tests')
+    writeFileSync(join(testsDir, 'tests/animals/new.spec.ts'), 'new\n')
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect(ranIn(outcome)).toContain('tests/animals/new.spec.ts')
+  })
+
+  test('counts a spec the row edited but has not staged', async () => {
+    const env = workspaceWith(narrowedGates)
+    await committedBase('frontend')
+    const testsDir = await committedBase('tests')
+    writeFileSync(join(testsDir, 'tests/animals/base.spec.ts'), 'edited\n')
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect(ranIn(outcome)).toContain('tests/animals/base.spec.ts')
+  })
+
+  test('leaves out a spec the row deleted, which Playwright could not run', async () => {
+    const env = workspaceWith(narrowedGates)
+    await committedBase('frontend')
+    const testsDir = await committedBase('tests')
+    await gitIn(testsDir, ['rm', '--quiet', 'tests/animals/base.spec.ts'])
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect(outcome.rungs).toEqual([])
+  })
+
+  test('refuses a --covered-spec that names no repo of the backlog', async () => {
+    const env = workspaceWith(narrowedGates)
+    await committedBase('frontend')
+    await committedBase('tests')
+
+    await expect(
+      gate(env, {
+        phase: 'e2e',
+        e2e: 'targeted',
+        base: 'HEAD',
+        coveredSpecs: ['nosuchrepo:tests/a.spec.ts']
+      })
+    ).rejects.toMatchObject({ code: 'USAGE' })
+  })
+
+  test('runs a covered spec for a repo the change never touched', async () => {
+    const env = workspaceWith(narrowedGates)
+    await committedBase('frontend')
+    await committedBase('tests')
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD',
+      coveredSpecs: ['tests:tests/animals/base.spec.ts']
+    })
+
+    expect(ranIn(outcome)).toContain('tests/animals/base.spec.ts')
+  })
+})

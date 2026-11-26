@@ -807,12 +807,13 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`:
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, notOurs, ticketClaim, stopped}`:
 one entry per increment it attempted, each with its `outcome`, one entry per theme whose spec it
 checked, the checks left for whoever reviews a finished theme, one entry per theme checked for
-signed-off changes (branch lifecycle), every review finding verification refuted, what claiming
-the run's ticket did, and one `stopped` saying which condition ended the run. Do not trust that
-report on its own.
+signed-off changes (branch lifecycle), every review finding verification refuted, every row that
+landed with a check the base branch fails the same way ([Red on the base branch
+too](#red-on-the-base-branch-too)), what claiming the run's ticket did, and one `stopped` saying
+which condition ended the run. Do not trust that report on its own.
 
 **The run's ticket.** Before any row the loop assigns the run's ticket to you and moves it onto
 the board: `epic` under the full lifecycle, or the Jira key in the branch name under the branch
@@ -830,6 +831,28 @@ already there before the row is the row's to fix, not to report as pre-existing.
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
 its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
 did not stop it.
+
+<a id="red-on-the-base-branch-too"></a>**Red on the base branch too.** A check can be red because the row broke it, because the base
+branch is red for everyone, or because this run has taken `main` into some of the branch's repos and not others. The
+watcher decides which, for every red thing, before a fixer spends an attempt — and it checks the half-taken base
+first, because that one is the run's own doing and the likeliest cause of a failure nobody recognises.
+
+A row whose **every** remaining red thing fails the same way on the base branch **does not stop the run**. No commit
+on the branch can clear it, so spending fix attempts on it would burn up to `ciWatchMinutes` each to reach the same
+place. Instead the row lands — built, reviewed, pushed, its PRs recorded — with its `ci` reading `red on the base
+branch too, so not this row's`, a comment on each pull request saying exactly that, and an entry in the run's
+`notOurs`. The loop carries on to the next row.
+
+That is deliberate for an unattended run: overnight you get the theme built and pushed rather than one row built and
+the rest untouched, and the person merging the theme rules on the base's own failure. It is also why the branch
+lifecycle merges nothing — the unproven specs cannot reach `main` behind anyone's back.
+
+A single failure of the row's own makes `onlyNotOurs` false, however many of the base's sit beside it: the fixer gets
+the row's, and only once those are green can the rest be read as the base's.
+
+**This is not a failure being closed.** "Pre-existing" closes nothing. Report every `notOurs` entry with its spec and
+the base run that fails the same way, and land the fix on the base branch — its own branch and PR, as the macOS
+visual baselines were on 26 November. The theme's pull requests go green on their own once it merges.
 
 <a id="the-signed-off-check"></a>**The signed-off check.** It stops a change to a signed-off scenario,
 or to a test linked to one, from reaching `main` before a person approves it. It never stops a
@@ -1216,7 +1239,7 @@ handover prompt.
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so. A fixer that found the same spec failing on `main` changes no code and refuses here, naming the spec and the main run: the fix belongs on `main`, so land it there (its own branch and PR, as the macOS visual baselines were on 26 November), then launch again. That is not the failure being closed — "pre-existing" closes nothing — it is the failure being moved to where fixing it fixes it for everyone |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`, and at least one red thing was this branch's doing. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so. A row whose every red thing is red on the base branch too does **not** stop here — see "Red on the base branch too" below |
 | `pr-conflict` | A PR conflicts with its base, so GitHub runs no checks on it. The CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches any checks, and stops on CONFLICTING or DIRTY, with `stopReason: "pr-conflict"` and no fix attempt spent. Nothing merged and every PR stays open. The detail names the PR: merge the base into the branch in that repo, push, then launch again. Both lifecycles |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call. With `stopReason: "base-branch-unverified"`, a workflow that `tim build push-workflows` says the merge commit starts has no run on `main`: check the repo's Actions page. A merge that starts no workflow at all (its files miss every push trigger's paths) is not a stop: it counts as green, and the run log names each workflow's reason. Nor is a run whose own status stays in progress after every job in it has passed, by `tim build run-jobs`: it counts as green, and the landed result lists it under `mainRunsGreenByJobs` |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
@@ -1530,6 +1553,7 @@ Held for a signed-off ruling: <none, or each id and its ticket; or each theme wh
 Owed to a human: <none, or each thing and who owes it>
 Review checks for the end of the theme: <none, or each gate's check, each theme's refuted findings, and each theme engineering review's commit and unreviewed repos>
 Refuted findings not yet reviewed: <none, or each id, file and reason from refutedFindings>
+Red on the base branch, not the rows': <none, or each spec and the base run that fails it, from notOurs — land these on the base branch>
 
 Read workareas/<workarea>/PROGRAMME-NOTES.md and deferred.md before the first increment.
 Raise Dynamic workflow size in /config first.

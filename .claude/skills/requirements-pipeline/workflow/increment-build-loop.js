@@ -1249,6 +1249,15 @@ order does not, keep the row's order in repos and say so under risks, naming the
 
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
+// The pull requests are red, and every red thing left fails the same way on the
+// base branch, so no commit on this branch can clear it. The theme carries on
+// unmerged, and the person merging it rules on the base's own failure.
+const onlyNotOurs = (r) =>
+  Boolean(r && !r.green && r.onlyNotOurs && (r.notOurs ?? []).length > 0)
+
+const notOursLines = (r) =>
+  (r?.notOurs ?? []).map(({ repo, spec, evidence }) => `${repo} ${spec} — ${evidence}`)
+
 const describeStackHolder = (holder) =>
   holder ? `"${holder}"` : 'nobody: no lease names it, so somebody released this run\'s lease or started the stack by hand'
 
@@ -2969,6 +2978,26 @@ const CI_SCHEMA = {
       }
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
+    notOurs: {
+      type: 'array',
+      description:
+        'Every failing spec that fails the same way on the base branch itself, so this branch did not cause it. Leave empty when there are none',
+      items: {
+        type: 'object',
+        required: ['repo', 'spec', 'evidence'],
+        properties: {
+          repo: { type: 'string' },
+          spec: { type: 'string', description: 'The spec path, or the job name where the failure is not a spec' },
+          evidence: { type: 'string', description: 'The base branch run that fails the same way, as a URL, and its conclusion' }
+        },
+        additionalProperties: false
+      }
+    },
+    onlyNotOurs: {
+      type: 'boolean',
+      description:
+        'True when the pull requests are red and EVERY red thing left is in notOurs — nothing still failing is this branch\'s doing. False whenever any failure is this branch\'s, and when everything is green'
+    },
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
@@ -3044,6 +3073,25 @@ means unknown, never red:
 3. \`SUMMARY: stale\` still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
 \`SUMMARY: red\` with some lines marked stale is a real red: at least one failing check did run on this head. Put only
 the checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
+
+const WHOSE_FAILURE_RULE = `WHOSE FAILURE IS IT? Decide this for every red thing, before anyone changes a line, and report it in notOurs[]
+   and onlyNotOurs. A red check has three causes and they need opposite work.
+   FIRST, THE HALF-TAKEN BASE. This run brings \`main\` into each repo separately, so the branch can hold main's
+   changes for some services and not others, and an end-to-end run then drives a stack whose services disagree. It
+   is the likeliest cause of a failure nobody recognises, and it is this run's own doing, not a defect. For EVERY
+   repo the branch builds: \`git -C ${TILDE}/<repoPath> fetch origin\` then
+   \`git -C ${TILDE}/<repoPath> rev-list --count HEAD..origin/main\`. Any count above 0 in any repo → say so in
+   failures[], put NOTHING in notOurs[], and set onlyNotOurs false: the base has to come in before the failure means
+   anything.
+   SECOND, THE BASE ITSELF. With every repo level, read the same workflow's last run on main:
+   \`gh run list --repo <ghRepo> --branch main --workflow <the failing workflow file> --limit 1 --json databaseId,conclusion,url\`
+   and, when it did not succeed,
+   \`gh run view <databaseId> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/main-red-<repo>.log 2>&1\`, read once.
+   The same spec failing the same way there → this branch did not cause it. Put it in notOurs[] with that run's URL
+   and conclusion as its evidence.
+   THIRD, THIS BRANCH. Anything left is this increment's, and a fixer gets it.
+   Set onlyNotOurs true ONLY when the pull requests are red and every red thing left is in notOurs[]. A single
+   failure of this branch's makes it false, however many of main's sit beside it.`
 
 const CI_FIXER_MAIN_RED_RULE = `FIND OUT WHETHER THIS BRANCH BROKE IT, BEFORE YOU CHANGE A LINE. A check can be red because this increment
    broke it, or because it is red on \`main\` for everyone. The two need opposite work, and guessing wrong spends an
@@ -4852,10 +4900,11 @@ Then, for EACH pr, in the order listed:
    failure list (\`tests/<domain>/e2e/features/<name>.spec.ts\`), in failures[]. The fixer runs exactly those files
    and nothing else, so a job name alone leaves it to guess, and a guess is a folder of specs and twenty minutes.
    Where a job failed before any spec ran — an install, a build, a lint — say that instead of naming a spec.
+4. ${WHOSE_FAILURE_RULE}
 
 \`blocked\` is ONLY for something a code fix in this row cannot address: a conflict with the base, no checks, \`gh\`
 refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a
-fixer gets it. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
+fixer gets it. A failure on main too is NOT blocked either: it goes in notOurs[], and the loop carries the theme on. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
 Return the structured output only.`
 
 const branchCiFixPrompt = (id, attempt, prList, seen, plan) => `You are the CI FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
@@ -5029,6 +5078,28 @@ It leaves \`branch\`, \`commit\` and \`prs\` in place: they are the record of ho
 Report ok:true only when tim exited 0 and its JSON reports ok:true.
 Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
+  )
+
+const noteNotOursOnPrs = (id, prs, lines) =>
+  agent(
+    `Increment ${id} is built and pushed to \`${BASE_BRANCH}\`, and its pull requests are red — but every red thing
+left fails the same way on the base branch itself, so this increment did not cause any of it. Leave a note on each
+pull request saying so, for whoever merges the theme. That is your whole job.
+${guardrails()}
+You NEVER merge, re-run, retitle, un-draft or close a pull request, and you change no code and no test. One comment
+per pull request, and nothing else.
+WHAT IS RED ON THE BASE BRANCH TOO:
+${lines.map((line) => `- ${line}`).join('\n')}
+THE PULL REQUESTS: ${prs.map(({ repo, url }) => `${repo} ${url}`).join(', ')}
+For EACH pull request, post this comment with
+\`gh pr comment <url> --body "<the text>"\`, written out in full with the lines above included:
+  "Increment ${id} is pushed. These checks are red here and red the same way on the base branch, so they are not
+  this increment's doing: <the lines above>. Nothing on this branch can clear them — the fix belongs on the base
+  branch. Whoever merges this theme decides whether to wait for that fix or merge past it."
+Report ok:true only when every pull request got its comment. A comment that failed to post goes in your summary with
+the repo and what \`gh\` said.
+Return the structured output only.`,
+    light({ label: `${id} not-ours note`, phase: 'CI', schema: incrementSchema })
   )
 
 const SIGNED_OFF_PHASE = 'Signed off'
@@ -6070,6 +6141,7 @@ const specChecks = []
 const reviewChecks = []
 const signedOffChecks = []
 const refutedFindings = []
+const notOursAcrossRun = []
 const rowsBuiltWithoutStyleReview = []
 let built = 0
 let heldForRuling = 0
@@ -7395,7 +7467,7 @@ Return the structured output only.`,
             )
 
           ci = await watchOnBranch()
-          while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
+          while ((!ci || !ci.green) && !hardStop(ci) && !onlyNotOurs(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
             ciAttempt += 1
             log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
             const seen = ci
@@ -7416,7 +7488,14 @@ Return the structured output only.`,
             break
           }
 
-          if (!ci || !ci.green) {
+          if (onlyNotOurs(ci)) {
+            const lines = notOursLines(ci)
+            log(`${id}: red on the base branch too, so not this increment's — carrying the theme on. ${lines.join(' | ')}`)
+            await noteNotOursOnPrs(id, prs, lines)
+            notOursAcrossRun.push({ id, prs: prs.map((p) => p.url), notOurs: ci.notOurs })
+          }
+
+          if (!ci || (!ci.green && !onlyNotOurs(ci))) {
             const detail = ci
               ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ')
               : 'ci watcher agent died'
@@ -7449,6 +7528,9 @@ Return the structured output only.`,
       const ciOutcome = () => {
         if (repos.length === 0) return 'none: the row changes no backlog repo'
         if (!rowAwaitsCi) return 'not awaited: the row sets awaitCi false'
+        if (onlyNotOurs(ci)) {
+          return `red on the base branch too, so not this row's: ${notOursLines(ci).join('; ')}`
+        }
         return 'green'
       }
 
@@ -8004,4 +8086,4 @@ if (workspaceLeftOn) {
 const heldNote = heldForRuling > 0 ? `, ${heldForRuling} more held before the merge awaiting a signed-off ruling` : ''
 log(`${WORKAREA_REL}: ${built} increment(s) landed${heldNote} — stopping: ${stopped.reason}. ${stopped.detail}`)
 
-return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped }
+return { increments: results, specChecks, reviewChecks, signedOffChecks, refutedFindings, notOurs: notOursAcrossRun, ticketClaim, stopped }

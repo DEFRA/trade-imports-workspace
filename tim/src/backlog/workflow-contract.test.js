@@ -1380,6 +1380,7 @@ describe('increment-build-loop', () => {
       signedOffChecks: [],
       specChecks: [],
       refutedFindings: [],
+      notOurs: [],
       ticketClaim: null,
       stopped: {
         reason: 'no-buildable',
@@ -1897,6 +1898,7 @@ describe('increment-build-loop', () => {
         signedOffChecks: [],
         specChecks: [],
         refutedFindings: [],
+        notOurs: [],
         ticketClaim: CLAIMED_RESULT,
         stopped: {
           reason: 'ticket-failed',
@@ -5065,6 +5067,7 @@ describe('increment-build-loop', () => {
               signedOffChecks: [],
               specChecks: [],
               refutedFindings: [],
+              notOurs: [],
               ticketClaim: null,
               stopped: {
                 reason: 'stack-held',
@@ -5431,6 +5434,7 @@ describe('increment-build-loop', () => {
             signedOffChecks: [],
             specChecks: [],
             refutedFindings: [],
+            notOurs: [],
             ticketClaim: CLAIMED_RESULT,
             stopped: {
               reason: 'no-buildable',
@@ -8139,6 +8143,76 @@ describe('increment-build-loop', () => {
           },
           stopped: 'pr-conflict',
           fixed: false
+        })
+      })
+
+      test('carries the theme on, and spends no fix attempt, when every red thing is red on the base branch too', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          {
+            green: false,
+            onlyNotOurs: true,
+            notOurs: [
+              {
+                repo: 'tests',
+                spec: 'tests/animals/e2e/visual/review.visual.spec.ts',
+                evidence: 'https://github.com/x/actions/runs/1 failure'
+              }
+            ],
+            failures: ['tests e2e: review.visual.spec.ts'],
+            blocked: 'none',
+            summary: 'red on main too'
+          },
+          null
+        )
+
+        expect({
+          stopped: run.result.stopped?.reason ?? null,
+          fixed: labelsOf(run).includes('inc-900 ci fix 1'),
+          noted: labelsOf(run).includes('inc-900 not-ours note'),
+          notOurs: run.result.notOurs
+        }).toMatchObject({
+          fixed: false,
+          noted: true,
+          notOurs: [
+            {
+              id: 'inc-900',
+              notOurs: [
+                expect.objectContaining({
+                  spec: 'tests/animals/e2e/visual/review.visual.spec.ts'
+                })
+              ]
+            }
+          ]
+        })
+        expect(run.result.stopped?.reason).not.toBe('ci-red')
+      })
+
+      test('records on the landed row that the red was the base branch’s, not the row’s', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          {
+            green: false,
+            onlyNotOurs: true,
+            notOurs: [
+              {
+                repo: 'tests',
+                spec: 'tests/animals/e2e/visual/review.visual.spec.ts',
+                evidence: 'https://github.com/x/actions/runs/1 failure'
+              }
+            ],
+            failures: ['tests e2e: review.visual.spec.ts'],
+            blocked: 'none',
+            summary: 'red on main too'
+          },
+          { ok: true, summary: 'noted on every pull request' },
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'landed',
+          ci: expect.stringContaining('red on the base branch too')
         })
       })
 

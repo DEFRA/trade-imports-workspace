@@ -1,0 +1,289 @@
+{
+  "source": "repo:frontend",
+  "structure": "repos/trade-imports-animals-frontend at main 4c2119da (tag 0.286.0); every path in `read` is relative to that repo root. The live-animals notification journey is one set, src/server/app/sets/live-animals, about 31,900 non-unit-test lines including src/server/app/shared. Its one journey style, journeys/linear, has 21 feature folders under journeys/linear/features (dashboard, hub, origin, commodities [search, consignment-details, animal-identification], import-reason, additional-details, documents, addresses [party-picker, party-edit, address-return], cph-number, transport [port-of-entry, transit-countries, transporters, transporter-add, transporters-select, commercial-transporter-details, private-transporter-details], contact, check-answers, declaration, confirmation, cancel-amend, notification-actions, delete-notification, system), each holding page.js, controller(s), Nunjucks templates, validate.js, view-model helpers, an English and a Welsh copy file and its *.fit.spec.js Playwright specs. The flow (journeys/linear/flow: ten sections start, origin, commodities, animalIdentification, consignment, documents, addresses, transport, contact, review) orders the pages; obligations/ (index.js and sections/*.js, about 1,000 lines) declares what each notification must hold, in scope and mandatory; services/commodities is the commodity reference service and its stub; docs/ holds the set's recipe and model docs. Shared layout and copy live in src/server/app/shared (layout.njk, kit.js, copy.en.js, copy.cy.js, save-actions, error summary, section caption, set-context). The set is mounted by src/server/app/routes-live-animals.js. The repo's decisions ledger is src/server/app/docs/decisions.md (56 lines, architecture decisions, not product rulings); no rulings ledger such as spec/decisions.json exists. One repo-level fit spec, fit/journey-smoke.fit.spec.js, walks the whole journey. Cut into 14 parts by what a user sees: shared layout and flow, the obligation model and ledger, then one part per page group in journey order, with the dashboard and its notification actions as one part. Left out: every *.test.js unit test; the generic platform under src/server/app (engine, model, bridge, flow, lib, analysis, services other than address-book) beyond what a part names; src/server/common, auth and health; the characterisation and reachability fixtures (journeys/linear/fixtures, flow/fixtures, flow/reachability-fixtures), which are test data; coverage/ and build output. Welsh copy files are read for existence and parity only: claims quote the English copy.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Shared layout, copy and journey flow",
+      "scope": "The page shell every live-animals page shares, the shared copy, how the set is mounted and the journey flow: section order, task rows, entry guards, section captions, page titles and service navigation. It stops at any one page's own content, which belongs to the page's part.",
+      "read": [
+        "src/server/app/shared/ (every non-test file: layout.njk, kit.js, copy.js, copy-leaves.js, copy.en.js, copy.cy.js, paths.js, set-context.js, save-actions.njk, error-summary.njk, error.njk, section-caption.njk)",
+        "src/server/app/routes-live-animals.js",
+        "src/server/app/routes.js",
+        "src/server/app/set-completeness.js",
+        "src/server/app/sets/live-animals/set.js",
+        "src/server/app/sets/live-animals/journeys/linear/config.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/index.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/system/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/stored-answers.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js",
+        "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/ (index.js, copy/copy.en.js, copy/copy.cy.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js",
+        "fit/journey-smoke.fit.spec.js",
+        "fit/live-animals-journey.js",
+        "fit/sign-in.js"
+      ],
+      "covers": [
+        "The layout: header, service name, service navigation items and links, phase banner, footer, sign-out, language toggle, skip link, page title pattern and error page copy",
+        "Every shared copy string in shared/copy.en.js (buttons such as save and continue, save and return, cancel; error summary title) and the Welsh counterpart's existence",
+        "The save-actions buttons and links, error summary and section caption components",
+        "The 10 flow sections in order with their pages, the review gate (readyForCheckYourAnswers), entry guards and where they redirect, task rows and their grouping, stored-answer rules, and every section caption string",
+        "The route mount: base path, auth on routes, the list of mounted route modules",
+        "The tests in section-caption, page-title and service-navigation fit specs and the journey-smoke fit spec: what each proves"
+      ],
+      "prefix": "repo-frontend-p1"
+    },
+    {
+      "part": 2,
+      "title": "Obligations, commodity service and the decisions ledger",
+      "scope": "What a live-animals notification must hold: every obligation, its scope condition, mandate, cardinality and invariant, the commodity reference service the journey reads, the set's docs and the repo's decisions ledger. It stops at page copy and controllers.",
+      "read": [
+        "src/server/app/sets/live-animals/obligations/index.js",
+        "src/server/app/sets/live-animals/obligations/sections/ (arrival.js, documents.js, import-reason.js, misc.js, origin.js, parties.js, system.js, transport.js, commodities/aggregates.js, commodities/identifiers.js, commodities/lines.js)",
+        "src/server/app/sets/live-animals/services/commodities/index.js",
+        "src/server/app/sets/live-animals/services/commodities/stub.js",
+        "src/server/app/sets/live-animals/docs/ (README.md, features.md, obligation-model.md, journey-flow-and-gates.md, limits.md, services.md, testing.md, lighthouse.md, add-a-field.md, add-a-page.md, add-a-section.md, add-a-collection.md)",
+        "src/server/app/docs/decisions.md",
+        "src/server/app/docs/limits.md",
+        "src/server/app/obligation-purity.js"
+      ],
+      "covers": [
+        "Every obligation in obligations/index.js and the 11 section files: its id, which section, when it applies (scope), whether mandatory or optional, cardinality and limits, and any invariant",
+        "Every commodity identifier rule in commodities/identifiers.js (which species need which identifiers) and the line and aggregate rules",
+        "The commodity service: what it returns, the codes and species in the stub, and how a search is answered",
+        "Every decision in src/server/app/docs/decisions.md and every limit in the two limits.md files, as an existing ruling",
+        "Any behaviour or rule the set's docs state (features.md, journey-flow-and-gates.md, obligation-model.md, services.md); the add-a-* recipe docs only where they state a rule of the live journey"
+      ],
+      "prefix": "repo-frontend-p2"
+    },
+    {
+      "part": 3,
+      "title": "Dashboard and notification actions",
+      "scope": "The notifications dashboard and every action reached from it: create, amend, copy, cancel an amendment and delete a notification. It stops at the hub, which belongs to part 4.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/dashboard/ (page.js, controller.js, template.njk, notification-helper.js, copy/copy.en.js, copy/copy.cy.js, view-model/sort-options.js, view-model/row/index.js, view-model/row/actions.js, dashboard.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/ (controller.js, notification-actions.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/ (controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, cancel-amend.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/ (controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, delete-notification.fit.spec.js)"
+      ],
+      "covers": [
+        "The dashboard page (route /, create and amend routes): heading, every column, status tag and its text, row actions and when each shows, sort options, filters, search, pagination, empty state and every link",
+        "The copy-a-notification action: route, what it copies and where it leads",
+        "The cancel-amend page: heading, copy, buttons and where each leads",
+        "The delete page: heading, warning copy, buttons, what is deleted, which statuses allow it and where it leads",
+        "Every test in dashboard, notification-actions, cancel-amend and delete-notification fit specs"
+      ],
+      "prefix": "repo-frontend-p3"
+    },
+    {
+      "part": 4,
+      "title": "Hub task list and origin page",
+      "scope": "The notification hub (task list) and the first journey page, origin. It stops at the commodities section.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/hub/ (controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, hub.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/origin/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, origin.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js"
+      ],
+      "covers": [
+        "The hub page: heading, caption, notification reference and status, every task row with its label, link and status tag (not started, in progress, completed, cannot start yet), the check-answers entry and when it is offered, and every link",
+        "The origin page: heading, every field (country of origin, region code, internal reference and any other), label, hint, options, required or optional, every validation rule with its error message verbatim, conditional branches and where save leads",
+        "Every test in hub.fit.spec.js and origin.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p4"
+    },
+    {
+      "part": 5,
+      "title": "Commodity search and consignment details",
+      "scope": "The commodities section's first two pages: choosing commodities and species, and entering their quantities. It stops at animal identification, part 6, which shares the commodities copy file.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/ (every file: search.controller.js, search.njk, matching.js, actions/commit-selection.js, selection/keys.js, selection/line-key.js, selection/selected-keys.js, view-model/selected-summary.js, view-model/legend.js, view-model/species-label.js, view-model/commodity-groups.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/ (every file: consignment-details.controller.js, consignment-details.njk, fields.js, lines.js, _selected-commodities-table.njk, _species-quantities.njk, remove/post-remove.js, remove/actions.js, view-model/selected-rows.js, view-model/groups.js, view-model/values.js, validation/count-drop.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/axe.js"
+      ],
+      "covers": [
+        "The commodities search page (/commodities): heading, search field, results grouping, species options, selection summary, every button and every error message verbatim",
+        "The consignment details page (/consignment-details): selected commodities table, every quantity field (number of animals, packages and any other) with label, hint and validation message, remove commodity action and its effect, count-drop rule and where save leads",
+        "The commodities copy strings that belong to these two pages",
+        "Every test in search.fit.spec.js and consignment-details.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p5"
+    },
+    {
+      "part": 6,
+      "title": "Animal identification",
+      "scope": "The animal identification page and its cards, identifiers and per-animal address fields. It stops at the commodity search and quantity pages, part 5.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/ (every file: animal-identification.controller.js, animal-identification.njk, _identification-card.njk, _selected-commodities-summary.njk, _saved-animals-table.njk, fields.js, form/forms.js, remove/post-remove.js, records/append.js, card/error-summary.js, card/view-model.js, identifier/fields.js, identifier/table.js, address/fields.js, summary/selected-commodities.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/axe.js"
+      ],
+      "covers": [
+        "The animal identification page (/commodities/identification): heading, selected commodities summary, every identification card per species, every identifier field (ear tag, passport, microchip and any other) with label, hint and when it is required, the address fields, add and remove animal actions, saved animals table, every validation message verbatim and where save leads",
+        "The commodities copy strings that belong to this page",
+        "Every test in identification.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p6"
+    },
+    {
+      "part": 7,
+      "title": "Import reason and additional details",
+      "scope": "The consignment section: the reason for import page and the additional details page.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/import-reason/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, import-reason.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/additional-details/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, additional-details.fit.spec.js)"
+      ],
+      "covers": [
+        "The import reason page (/import-reason): heading, every reason option and its conditional reveals (purpose, certification, internal market and any other), labels, hints, required or optional, every validation message verbatim and where save leads",
+        "The additional details page (/additional-details): heading, every field, options, hints, validation messages verbatim, conditional branches and where save leads",
+        "Every test in import-reason.fit.spec.js and additional-details.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p7"
+    },
+    {
+      "part": 8,
+      "title": "Accompanying documents",
+      "scope": "The documents section: the accompanying documents page, its upload, scan status, download and remove, and its client-side scripts.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/documents/ (every non-test file: page.js, evaluation.js, controller.js, template.njk, validate.js, upload-config.js, scan-poll.js, download-content-type.js, copy/, form/, contracts/, scan/, handlers/, view-model/, client/)",
+        "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/ (upload.fit.spec.js, scan-status.fit.spec.js, drop-zone.fit.spec.js, guidance.fit.spec.js, axe.js)"
+      ],
+      "covers": [
+        "The accompanying documents page (/accompanying-documents): heading, guidance copy, every field (document type options, reference, date of issue, file) with label, hint and validation message verbatim, the upload limit and allowed file types, the documents-added table, scan status values and their copy, remove and download actions, the status and file routes, and where save leads",
+        "The client-side behaviour: drop zone, oversize file validation and its error copy, scan status polling and announcements",
+        "Every test in upload, scan-status, drop-zone and guidance fit specs"
+      ],
+      "prefix": "repo-frontend-p8"
+    },
+    {
+      "part": 9,
+      "title": "Addresses and the address-book handshake",
+      "scope": "The addresses section's parties: the addresses page, the party pickers (place of origin, consignor, consignee, importer, destination), party edit, the return from the INS address book and the address-book service client. It stops at the CPH number page and the contact picker, part 10.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/ (page.js, evaluation.js, controller.js, template.njk, parties.js, frozen-parties.js, party-for-fulfilment-id.js, party-inline.js, assert-party-bindings.js, ins-handshake.js, copy/copy.en.js, copy/copy.cy.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/ (every file)",
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/ (every file)",
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/ (hub-picker.fit.spec.js, party-edit.fit.spec.js, axe.js)",
+        "src/server/app/services/address-book/ (client.js, index.js, to-wire-address.js)"
+      ],
+      "covers": [
+        "The addresses page (/addresses): heading, each party row, change and add links, and the CPH link",
+        "Each of the 5 party picker pages (place-of-origin, consignors, consignees, importers, destinations /select): heading, search, results, pagination, radio options, error message verbatim and where selection leads",
+        "The party edit page: every address field with label, hint, address rules and validation message verbatim, and the allowed return targets",
+        "The INS address-book handshake and address-return route: what is sent, what comes back, frozen parties",
+        "What the address-book client calls and how an address is mapped",
+        "Every test in hub-picker.fit.spec.js and party-edit.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p9"
+    },
+    {
+      "part": 10,
+      "title": "CPH number and contact",
+      "scope": "The CPH number page in the addresses section and the contact section's consignment contact picker. It stops at the party pickers themselves, part 9, whose shared files it reads only for the contact party.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/cph-number/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, cph-number.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/contact/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, contact.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js"
+      ],
+      "covers": [
+        "The CPH number page (/cph-number): heading, every field, format rule, hint, options, every validation message verbatim, the return=addresses branch and where save leads",
+        "The consignment contact page (/consignment/contact/select): heading, options, fields, validation messages verbatim and where save leads",
+        "Every test in cph-number.fit.spec.js and contact.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p10"
+    },
+    {
+      "part": 11,
+      "title": "Port of entry and transit countries",
+      "scope": "The transport section's arrival pages: port of entry with arrival date and time, and transit countries. It stops at the transporter pages, part 12, which share the transport copy file and page.js.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/ (port-of-entry.controller.js, port-of-entry.njk, arrival-window.js, validate.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/ (transit-countries.controller.js, transit-countries.njk, _added-countries-table.njk, rows.js, remove-action.js, validate.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/axe.js"
+      ],
+      "covers": [
+        "The port of entry page (/port-of-entry): heading, port field and options, arrival date and time fields, the arrival window rule, hints, every validation message verbatim and where save leads",
+        "The transit countries page (/transit-countries): heading, the yes/no question and its branch, country field, added countries table, remove action, limits, every validation message verbatim and where save leads",
+        "The transport copy strings that belong to these two pages",
+        "Every test in arrival-transit.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p11"
+    },
+    {
+      "part": 12,
+      "title": "Transporters",
+      "scope": "The transport section's transporter pages: the transporters list, add, select, commercial transporter details and private transporter details. It stops at port of entry and transit countries, part 11.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/ (transporters.controller.js, transporters.njk, rows.js, transporter-record.js, validate.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/ (transporter-add.controller.js, transporter-add.njk)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/ (transporters-select.controller.js, transporters-select.njk)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/ (commercial-transporter-details.controller.js, commercial-transporter-details.njk)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/ (private-transporter-details.controller.js, private-transporter-details.njk)",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js",
+        "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/axe.js"
+      ],
+      "covers": [
+        "The 5 transporter pages (/transporters, /transporters/add, /transporters/select, /transporters/add/commercial, /transporters/add/private): heading, every field, label, hint, option, required or optional, every validation message verbatim, conditional branches, the transporter table and its actions, and where each leads",
+        "The transport copy strings that belong to these pages",
+        "Every test in transporters.fit.spec.js and commercial-transporter-details.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p12"
+    },
+    {
+      "part": 13,
+      "title": "Check your answers",
+      "scope": "The notification view (check your answers) page: every summary card and row, change links, incomplete cards and the refusal to submit an incomplete notification. It stops at the declaration, part 14.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/check-answers/ (page.js, controller.js, refusal.js, template.njk, copy/copy.en.js, copy/copy.cy.js, check-answers.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/ (every file, including sections/, rows/, cards/movement/, cards/addresses/, cards/consignment/ and cards/consignment/species/)"
+      ],
+      "covers": [
+        "The notification view page (/notification-view): heading, every section and summary card with its title, every row label and value format, every change link and where it leads, species cards and identifier tables, incomplete card messages, invalid party messages, and the refusal copy and its conditions",
+        "Every test in check-answers.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p13"
+    },
+    {
+      "part": 14,
+      "title": "Declaration and confirmation",
+      "scope": "The end of the journey: the declaration page and the confirmation page after submit.",
+      "read": [
+        "src/server/app/sets/live-animals/journeys/linear/features/declaration/ (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, declaration.fit.spec.js)",
+        "src/server/app/sets/live-animals/journeys/linear/features/confirmation/ (page.js, controller.js, template.njk, outstanding.js, copy/copy.en.js, copy/copy.cy.js, confirmation.fit.spec.js)"
+      ],
+      "covers": [
+        "The declaration page (/declaration): heading, declaration text, checkbox or confirmation field, validation message verbatim, submit button and what submit does",
+        "The confirmation page (/confirmation): panel heading and reference, what happens next copy, outstanding items and their copy, every link",
+        "Every test in declaration.fit.spec.js and confirmation.fit.spec.js"
+      ],
+      "prefix": "repo-frontend-p14"
+    }
+  ]
+}

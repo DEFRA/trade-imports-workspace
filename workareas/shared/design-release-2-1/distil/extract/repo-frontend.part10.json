@@ -1,699 +1,1351 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 10, CPH number and contact. Read in full: features/cph-number/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, cph-number.fit.spec.js, plus controller.test.js and validate.test.js in the same folder), features/contact/ (page.js, evaluation.js, controller.js, template.njk, validate.js, copy/copy.en.js, copy/copy.cy.js, contact.fit.spec.js, plus controller.test.js and validate.test.js), and features/addresses/parties.js (claimed only for CONTACT_PARTY). For context only, shared/kit.js (nextTarget, hubExitTarget, base caption rule), shared/save-actions.njk and the shared copy keys the two pages render (save actions, address handshake). Two pages are covered: /cph-number (addresses section, three-box CPH entry with collapsed help, per-part and whole-value validation, stored-value split and re-check, return=addresses branch, primary-only ending) and /consignment/contact/select (address-book radio picker with a current-contact card, INS add-address handshake link and errors, membership validation, three-control ending). Every test in both fit specs is claimed, and the unit tests are used as further evidence of behaviour. All paths in ref are relative to src/server/app/sets/live-animals/journeys/linear/features/ unless they start with src/.",
+  "structure": "Part 10, Commodity lines and animal identification, read the two detail pages of the live-animals commodities feature in trade-imports-animals-frontend and everything they are built from, leaving the search and selection pages to part 9. Read in full: features/commodities/consignment-details/ (consignment-details.controller.js, fields.js, consignment-details.njk, _selected-commodities-table.njk, _species-quantities.njk, view-model/groups.js, view-model/selected-rows.js, view-model/values.js, validation/count-drop.js, remove/actions.js, remove/post-remove.js — skipping the three *.test.js unit tests); features/commodities/animal-identification/ (animal-identification.controller.js, animal-identification.njk, _identification-card.njk, _saved-animals-table.njk, _selected-commodities-summary.njk, animal-label.js, fields.js, line-cap.js, units-for-commodity-line.js, identified-animals.js, card/view-model.js, card/error-summary.js, identifier/fields.js, identifier/table.js, form/forms.js, records/append.js, remove/post-remove.js, summary/selected-commodities.js — skipping its two *.test.js files); the feature-level page.js, lines.js, species-label.js, commodity-label.js, action-prefix.js and copy/thousands-separators.js; copy/copy.en.js and copy/copy.cy.js; and the two fit specs fit/consignment-details.fit.spec.js (547 lines, 6 describes, 24 tests) and fit/identification.fit.spec.js (1,460 lines, 9 describes, 42 tests including a 10-case identifier-length loop and a no-JavaScript describe). Read for context but left to part 9: features/commodities/view-model/selected-commodity-rows.js and commodity-groups.js (which build both pages' tables), commodity-question-detour.js, and check-answers/view-model/applicability.js (packagesApply). Covered: the consignment details page (slug consignment-details) with its caption, H1, selected-commodities table and columns, per-code group and per-species sub-headings, number of animals and number of packages fields, every validation message including the count-drop rule, both removal controls and where they lead, its save actions and persistence; the animal identification page (slug commodities/identification) with its inset, selected-commodities summary and Change link, Add another commodity link, per-code sections, per-species summary cards, the counter, the identifier fields asked of each commodity and species, the saved-animals table and its remove control, the in-card save buttons, the line cap and its wording, every identifier validation message, the per-card error summary, and the no-JavaScript behaviour; the display formatters (species label, commodity label, thousands separators, animal row label, total animals); and the Welsh key parity.",
   "claims": [
     {
       "id": "repo-frontend-p10-001",
-      "statement": "The CPH number page is served at the journey path /cph-number under a notification.",
+      "statement": "The commodity details page is reached inside a notification journey at the slug consignment-details.",
       "kind": "behaviour",
-      "ref": "cph-number/page.js:1",
-      "quote": "export const cphNumberPage = { id: 'cphNumber', slug: 'cph-number' }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:7-11",
+      "quote": "export const consignmentDetailsPage = {\n  id: 'consignmentDetails',\n  slug: 'consignment-details',\n  maturity: 'agreed'\n}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-002",
-      "statement": "The CPH number page collects one answer, countyParishHoldingCph, which fulfils the cph obligation.",
-      "kind": "data",
-      "ref": "cph-number/evaluation.js:7-9; cph-number/controller.js:17-21",
-      "quote": "scalar({ field: 'countyParishHoldingCph', obligation: cph })",
-      "confidence": "verbatim"
+      "statement": "The commodity details page's behaviour is marked as agreed with a person.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:10",
+      "quote": "maturity: 'agreed'",
+      "confidence": "verbatim",
+      "note": "A signed-off page under .claude/rules/signed-off-pages.md: a change to its agreed behaviour needs a person."
     },
     {
       "id": "repo-frontend-p10-003",
-      "statement": "The CPH question applies only when at least one commodity line's selected commodity is on the CPH commodity list.",
-      "kind": "rule",
-      "ref": "cph-number/controller.js:28-31",
-      "quote": "export const isCphApplicable = (answers) =>\n  asArray(answers.commodityLines).some((line) =>\n    commodities.cphCommodities().includes(line?.commoditySelection)\n  )",
-      "confidence": "verbatim",
-      "note": "The list itself (every commodity whose code is not on design release 1's CPH-exempt list) lives in services/commodities, another part's slice. The addresses controller imports this predicate."
+      "statement": "The identification details page is reached inside a notification journey at the slug commodities/identification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:13-17",
+      "quote": "export const animalIdentificationPage = {\n  id: 'animalIdentification',\n  slug: 'commodities/identification',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-004",
-      "statement": "The CPH number page heading (h1, large) reads 'Add the county parish holding number (CPH)' and is also the page title.",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.en.js:2; cph-number/template.njk:14; cph-number/controller.js:46",
-      "quote": "title: 'Add the county parish holding number (CPH)',",
+      "statement": "The identification details page's behaviour is still being detailed rather than agreed with a person.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/page.js:16",
+      "quote": "maturity: 'detailing'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-005",
-      "statement": "The CPH number page shows a section caption directly above its heading, naming the journey section the page belongs to.",
-      "kind": "behaviour",
-      "ref": "cph-number/template.njk:13; cph-number/controller.js:46-51; src/server/app/shared/kit.js:127-129; cph-number.fit.spec.js:75-77",
-      "quote": "{{ sectionCaption(caption) }}",
-      "confidence": "verbatim",
-      "note": "The caption text comes from the section config, outside this part."
+      "statement": "The commodity details page's heading is \"Commodity details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:45",
+      "quote": "title: 'Commodity details'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-006",
-      "statement": "The CPH number page has exactly one h1; the question's legend 'CPH number' is not a heading.",
+      "statement": "The commodity details page shows a section caption above its heading.",
       "kind": "behaviour",
-      "ref": "cph-number.fit.spec.js:71-89 'renders the CPH copy'",
-      "quote": "await expect(\n      page.getByRole('heading', { name: copy.cph.legend })\n    ).toHaveCount(0)\n    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:10-11",
+      "quote": "{{ sectionCaption(caption) }}\n  <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-007",
-      "statement": "A collapsed details component sits above the form with the summary text 'What is a CPH number?'.",
+      "statement": "The caption above the commodity details heading names the description of the goods section.",
       "kind": "copy",
-      "ref": "cph-number/template.njk:23-26; cph-number/copy/copy.en.js:11",
-      "quote": "summary: 'What is a CPH number?',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:227-234",
+      "quote": "test('captions the page with the description-of-the-goods section', async ({\n    page\n  }) => {\n    await expectCaptionAboveHeading(page, {\n      captionText: sectionCaptionsCopy.sections.descriptionOfTheGoods,\n      headingName: copy.consignmentDetails.title\n    })\n  })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-008",
-      "statement": "Opening the CPH help shows the definition 'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.en.js:12-13; cph-number/template.njk:19",
-      "quote": "'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'",
+      "statement": "The commodity details page's back link returns the user to the overview the hub task came from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:180-185",
+      "quote": "test('back link returns to the overview the hub task came from', async ({\n    page\n  }) => {\n    await backLink(page).click()\n    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()\n  })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-009",
-      "statement": "Opening the CPH help shows where to find the number: 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'",
+      "statement": "The commodity details page opens with a table captioned \"Selected commodities\".",
       "kind": "copy",
-      "ref": "cph-number/copy/copy.en.js:14-15; cph-number/template.njk:20",
-      "quote": "'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:37-38",
+      "quote": "selectedCommodities: {\n    caption: 'Selected commodities',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-010",
-      "statement": "The CPH help is collapsed by default, sits before the CPH inputs, and reveals its two paragraphs when the summary is clicked.",
-      "kind": "behaviour",
-      "ref": "cph-number.fit.spec.js:141-163 'keeps the CPH help collapsed above the field until it is opened'",
-      "quote": "await expect(page.getByText(copy.help.definition)).toBeHidden()\n...\n    await expect(page.locator('details ~ form #cphCounty')).toHaveCount(1)\n\n    await summary.click()\n\n    await expect(page.getByText(copy.help.definition)).toBeVisible()",
+      "statement": "The selected commodities table on the commodity details page has three columns: Commodity code, Species and a visually hidden Actions column.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:126-131",
+      "quote": "await expect(table.getByRole('columnheader')).toHaveText([\n      copy.selectedCommodities.commodityCode,\n      copy.selectedCommodities.species,\n      copy.selectedCommodities.actionsHidden\n    ])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-011",
-      "statement": "The CPH number is asked as one question: a fieldset with role group and a small legend reading 'CPH number'.",
+      "statement": "The selected commodities column headings read \"Commodity code\", \"Species\" and \"Actions\".",
       "kind": "copy",
-      "ref": "cph-number/template.njk:92-99; cph-number/copy/copy.en.js:4",
-      "quote": "legend: 'CPH number',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:39-42",
+      "quote": "commodityCode: 'Commodity code',\n    species: 'Species',\n    numberOfAnimals: 'Number of animals',\n    actionsHidden: 'Actions'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-012",
-      "statement": "The CPH question's hint reads 'For example, 12/345/6789.' and describes the whole group rather than any one box.",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.en.js:5; cph-number/template.njk:38-41,95; cph-number.fit.spec.js:130-139",
-      "quote": "hint: 'For example, 12/345/6789.',",
-      "confidence": "verbatim"
+      "statement": "Where several species were chosen under one commodity code, the table's Species cell lists every one of their labels, separated by a comma and a line break.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:255-274",
+      "quote": "expect(await speciesCell.evaluate((el) => el.innerText)).toBe(\n      `${labelFor(BISON_BISON_ROW.speciesLatinName)},\\n${labelFor(BOS_TAURUS_ROW.speciesLatinName)}`\n    )",
+      "confidence": "verbatim",
+      "note": "The line break comes from the ',<br>' join in features/commodities/view-model/selected-commodity-rows.js:37, read for context and left to part 9."
     },
     {
       "id": "repo-frontend-p10-013",
-      "statement": "The CPH page never shows the example '123/456/789', a grouping no CPH number uses.",
-      "kind": "copy",
-      "ref": "cph-number.fit.spec.js:130-139 'describes the whole number once, in the real 2/3/4 grouping'",
-      "quote": "await expect(page.getByText('123/456/789')).toHaveCount(0)",
-      "confidence": "verbatim"
+      "statement": "A species is labelled with its Latin name and its common name in brackets, and with the Latin name alone when no common name is held.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:1-8",
+      "quote": "export const speciesLabel = (line) => {\n  if (!line.speciesLatinName) {\n    return ''\n  }\n  return line.speciesCommonName\n    ? `${line.speciesLatinName} (${line.speciesCommonName})`\n    : line.speciesLatinName\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: formats a stored commodity line's species names for every heading, table cell and message on both pages."
     },
     {
       "id": "repo-frontend-p10-014",
-      "statement": "The first CPH box is labelled 'County', is two characters wide and accepts at most 2 characters.",
+      "statement": "A species with no Latin name held shows no label at all.",
       "kind": "data",
-      "ref": "cph-number/template.njk:52-61; cph-number/copy/copy.en.js:6",
-      "quote": "label: { text: copy.cph.county, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-2\"",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:2-4",
+      "quote": "if (!line.speciesLatinName) {\n    return ''\n  }",
       "confidence": "verbatim",
-      "note": "maxlength: \"2\" at template.njk:59."
+      "note": "mechanism: works on the stored speciesLatinName of a commodity line."
     },
     {
       "id": "repo-frontend-p10-015",
-      "statement": "The second CPH box is labelled 'Parish', is three characters wide and accepts at most 3 characters.",
+      "statement": "A commodity is labelled with its reference-data name and its code in brackets, falling back to the bare code when the reference data holds no name for it.",
       "kind": "data",
-      "ref": "cph-number/template.njk:65-74; cph-number/copy/copy.en.js:7",
-      "quote": "label: { text: copy.cph.parish, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-3\"",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/commodity-label.js:3-6",
+      "quote": "export const commodityLabel = (commodityCode) => {\n  const name = commodityNameFor(commodityCode)\n  return name ? `${name} (${commodityCode})` : commodityCode\n}",
       "confidence": "verbatim",
-      "note": "maxlength: \"3\" at template.njk:72."
+      "note": "mechanism: works on a commodity code against the commodity reference data. The two detail pages head their groups with the bare code instead; only the search pages use this label."
     },
     {
       "id": "repo-frontend-p10-016",
-      "statement": "The third CPH box is labelled 'Holding number', is four characters wide and accepts at most 4 characters.",
-      "kind": "data",
-      "ref": "cph-number/template.njk:78-87; cph-number/copy/copy.en.js:8",
-      "quote": "label: { text: copy.cph.holding, classes: \"govuk-date-input__label\" },\n            classes: \"govuk-input--width-4\"",
-      "confidence": "verbatim",
-      "note": "maxlength: \"4\" at template.njk:85."
+      "statement": "Each row of the selected commodities table on the commodity details page carries a Remove button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:47-49",
+      "quote": "table: {\n      remove: 'Remove'\n    },",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-017",
-      "statement": "Each CPH box asks for a numeric keyboard and has spellcheck turned off.",
-      "kind": "behaviour",
-      "ref": "cph-number/template.njk:57-58,70-71,83-84; cph-number.fit.spec.js:105-107",
-      "quote": "inputmode: \"numeric\",\n            spellcheck: false,",
+      "statement": "The Remove button on a row names the entry it removes with hidden text of the commodity code and its species labels.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:46-47",
+      "quote": "const REMOVE_BOS_TAURUS = `Remove ${BOS_TAURUS_ROW.commodityCode} ${labelFor(BOS_TAURUS_ROW.speciesLatinName)}`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-018",
-      "statement": "The three CPH boxes sit side by side in a row using the date-input layout, though nothing in them is a date.",
-      "kind": "constraint",
-      "ref": "cph-number/template.njk:32-36,50",
-      "quote": "The\n       govuk-date-input layout classes are the Design System's only shipped way\n       to sit inputs side by side; nothing here is a date.",
+      "statement": "A commodity code that does not list its species individually gets one Remove control for the whole code, which removes every line of that code.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:165-178",
+      "quote": "await expect(\n      table.getByRole('button', { name: REMOVE_BOS_TAURUS })\n    ).toHaveAttribute('value', `remove:${BOS_TAURUS_ROW.commodityCode}`)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-019",
-      "statement": "Each CPH box's label is visible on screen, not visually hidden, departing on purpose from design release 1, which clips the per-part labels out of sight.",
-      "kind": "rule",
-      "ref": "cph-number.fit.spec.js:109-127 'takes the number in three boxes sized to its parts'",
-      "quote": "Design release 1 clips its per-part labels out of sight with its own\n    // stylesheet. The service takes DR1's labels, not its picture: three\n    // unlabelled boxes under one legend would be worse than the single field\n    // they replace, so the labels have to be on screen, not just announced.",
-      "confidence": "verbatim",
-      "note": "An existing ruling recorded in the test comment; relevant where design release 2.1 differs."
+      "statement": "A commodity code that lists its species individually gets one Remove control per species, which removes only that species' line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:172-177",
+      "quote": "await expect(\n      table.getByRole('button', { name: REMOVE_FELIS_CATUS })\n    ).toHaveAttribute(\n      'value',\n      `remove-species:${FELIS_CATUS_ROW.commodityCode}|${FELIS_CATUS_ROW.speciesLatinName}`\n    )",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-020",
-      "statement": "The fit spec proves the box widths and maxlengths 2, 3 and 4 and the numeric inputmode on all three CPH boxes.",
-      "kind": "behaviour",
-      "ref": "cph-number.fit.spec.js:91-107 'takes the number in three boxes sized to its parts'",
-      "quote": "await expect(boxes.county).toHaveClass(/govuk-input--width-2/)\n    await expect(boxes.county).toHaveAttribute('maxlength', '2')",
-      "confidence": "verbatim"
+      "statement": "Whether a row removes a whole code or one species is decided by whether the reference data lists that code's species individually.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js:5-15",
+      "quote": "const removeActionOf = ({ perSpecies, code, lines }) =>\n  perSpecies\n    ? removeSpeciesActionFor(lineKey(lines[0].entry))\n    : removeActionFor(code)",
+      "confidence": "verbatim",
+      "note": "mechanism: chooses a row's removal action from the selected-commodity rows the shared view model built."
     },
     {
       "id": "repo-frontend-p10-021",
-      "statement": "Each CPH part is trimmed of surrounding spaces before it is validated and saved.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:87-90; cph-number/controller.test.js 'Should trim each part before joining it'",
-      "quote": "PART_ORDER.map(([part]) => [part, String(payload[part] ?? '').trim()])",
-      "confidence": "verbatim"
+      "statement": "Removing a commodity or a species takes effect as soon as the control is pressed: the page asks for no confirmation first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:139-156",
+      "quote": "if (isRemoveSpeciesAction(action)) {\n    return postRemoveSpecies(\n      request,\n      h,\n      removeKeyOf(action),\n      lineKey,\n      renderSurvivors\n    )\n  }",
+      "confidence": "inferred",
+      "note": "It follows because the post handler removes the entry and re-renders the same page, with no interstitial page or confirmation step anywhere in the removal path."
     },
     {
       "id": "repo-frontend-p10-022",
-      "statement": "Submitting the CPH page with all three boxes empty shows the single error 'Enter a CPH number', linked to the County box, rather than three part errors.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:72-76; cph-number/copy/copy.en.js:18",
-      "quote": "cphRequired: 'Enter a CPH number',",
+      "statement": "After a removal the page is shown again with the surviving commodities.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:9-22",
+      "quote": "const afterRemoval = (request, h, kept, commodityCode, renderSurvivors) => {\n  if (kept.length === 0) {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-023",
-      "statement": "When some CPH boxes are filled and the County box is empty, the error is 'Enter the county'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:54-58; cph-number/copy/copy.en.js:19",
-      "quote": "countyRequired: 'Enter the county',",
+      "statement": "Removing the last commodity takes the user back to the commodity question \"What are you importing?\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:10-20",
+      "quote": "if (kept.length === 0) {\n    request.logger.info(\n      {\n        journeyId: request.params.journeyId,\n        reason: 'last-commodity-removed',\n        commodityCode\n      },\n      'Redirected to the commodity question'\n    )\n    return h.redirect(commodityQuestionPath(request))\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-024",
-      "statement": "A County part that is not exactly 2 characters shows 'County must be 2 digits'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:16,54-58; cph-number/copy/copy.en.js:20",
-      "quote": "countyLength: 'County must be 2 digits',",
+      "statement": "Opening the commodity details page when nothing is selected takes the user to the commodity question instead.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:88-97",
+      "quote": "if (lines.length === 0) {\n    request.logger.info(\n      {\n        journeyId: request.params.journeyId,\n        reason: 'no-commodities-on-load'\n      },\n      'Redirected to the commodity question'\n    )\n    return h.redirect(commodityQuestionPath(request))\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-025",
-      "statement": "A County part containing anything but digits shows 'County must only contain numbers'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:54-58; cph-number/copy/copy.en.js:21",
-      "quote": "countyDigitsOnly: 'County must only contain numbers',",
+      "statement": "Removing both commodities one after the other lands the user on the commodity question with its search box, and reopening the commodity details page then lands there too.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:453-468",
+      "quote": "test('removing the last commodity returns to the commodity question, as does reopening the page with nothing selected', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-026",
-      "statement": "When some CPH boxes are filled and the Parish box is empty, the error is 'Enter the parish'.",
+      "statement": "A removal that names a species under a commodity code whose species are not listed individually is refused as a bad request.",
       "kind": "rule",
-      "ref": "cph-number/validate.js:59-63; cph-number/copy/copy.en.js:22",
-      "quote": "parishRequired: 'Enter the parish',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:73-80",
+      "quote": "if (!commodities.listsSpeciesIndividually(line.commodityCode)) {\n    kit.logRefusal(request, {\n      reason: 'no-species-for-key',\n      key,\n      commodityCode: line.commodityCode\n    })\n    return Boom.badRequest()\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-027",
-      "statement": "A Parish part that is not exactly 3 characters shows 'Parish must be 3 digits'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:17,59-63; cph-number/copy/copy.en.js:23",
-      "quote": "parishLength: 'Parish must be 3 digits',",
+      "statement": "A removal that names an entry the selection no longer holds shows the page as it now stands rather than failing, and is logged as a warning.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:24-32",
+      "quote": "request.logger.warn(\n    { journeyId: request.params.journeyId, ...details },\n    'A removal named an entry the selection no longer holds: the page is shown as it now stands'\n  )",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-028",
-      "statement": "A Parish part containing anything but digits shows 'Parish must only contain numbers'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:59-63; cph-number/copy/copy.en.js:24",
-      "quote": "parishDigitsOnly: 'Parish must only contain numbers',",
+      "statement": "Numbers typed into a surviving commodity's fields but not yet saved are kept on the page after another commodity is removed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:430-440",
+      "quote": "test('keeps numbers typed but not yet saved in the remaining line after removing another commodity', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-029",
-      "statement": "When some CPH boxes are filled and the Holding number box is empty, the error is 'Enter the holding number'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:64-68; cph-number/copy/copy.en.js:25",
-      "quote": "holdingRequired: 'Enter the holding number',",
-      "confidence": "verbatim"
+      "statement": "When a removal post names no count for a surviving line, that line's stored value is shown instead, and the mismatch is logged as a warning.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:112-121",
+      "quote": "request.logger.warn(\n      {\n        journeyId: request.params.journeyId,\n        action,\n        lineKeys: missingCountKeys\n      },\n      'A removal post named no count the page renders for a surviving line: its stored value is shown'\n    )",
+      "confidence": "verbatim",
+      "note": "mechanism: re-indexes the posted quantity fields onto the surviving commodity lines (consignment-details/view-model/values.js:32-55)."
     },
     {
       "id": "repo-frontend-p10-030",
-      "statement": "A Holding number part that is not exactly 4 characters shows 'Holding number must be 4 digits'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:18,64-68; cph-number/copy/copy.en.js:26",
-      "quote": "holdingLength: 'Holding number must be 4 digits',",
+      "statement": "The commodity details page offers an \"Add another commodity\" link.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:46",
+      "quote": "addAnother: 'Add another commodity',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-031",
-      "statement": "A Holding number part containing anything but digits shows 'Holding number must only contain numbers'.",
-      "kind": "rule",
-      "ref": "cph-number/validate.js:64-68; cph-number/copy/copy.en.js:27",
-      "quote": "holdingDigitsOnly: 'Holding number must only contain numbers',",
+      "statement": "Add another commodity opens the commodity question and, once a further species is saved, returns the user to the commodity details page with the species already chosen still selected.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:470-498",
+      "quote": "await page\n      .getByRole('link', { name: copy.consignmentDetails.addAnother })\n      .click()\n    await expectSpeciesSelected(page, BOS_TAURUS_ROW)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-032",
-      "statement": "Every wrong CPH part is reported at once, and the error summary lists them in the order the boxes appear: county, parish, holding.",
-      "kind": "rule",
-      "ref": "cph-number/controller.test.js 'Should hold each part to its own length'; cph-number.fit.spec.js:278-294 'every wrong part is named at once'",
-      "quote": "expect(\n      result.view.context.errorSummary.errorList.map(({ href }) => href)\n    ).toEqual(['#cphCounty', '#cphParish', '#cphHolding'])",
+      "statement": "Adding a further species keeps the quantities already entered against the other species and leaves the new species' count empty.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:488-497",
+      "quote": "await expect(await numberOfAnimalsFor(page, BOS_TAURUS_ROW)).toHaveValue(\n      '25'\n    )\n    await expect(\n      await numberOfAnimalsFor(page, MUSTELA_PUTORIUS_FURO_ROW)\n    ).toHaveValue('')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-033",
-      "statement": "Typing the whole slashed number into one CPH box is rejected: the parts stay separate, so '12/345/6789' in County gives 'County must be 2 digits' plus the missing-part errors for Parish and Holding number.",
-      "kind": "rule",
-      "ref": "cph-number/controller.test.js 'Should reject slashes typed into a part, so the parts stay the parts'",
-      "quote": "payload: { cphCounty: '12/345/6789', cphParish: '', cphHolding: '' }\n    })\n    expect(result.view.context.errors).toEqual({\n      cphCounty: 'County must be 2 digits',\n      cphParish: 'Enter the parish',\n      cphHolding: 'Enter the holding number'\n    })",
-      "confidence": "verbatim"
+      "statement": "Below the table the commodity details page groups its questions by commodity code, with the bare code as the group heading.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:4",
+      "quote": "<h2 class=\"govuk-heading-l\">{{ group.heading }}</h2>",
+      "confidence": "verbatim",
+      "note": "The heading is the code itself (features/commodities/view-model/commodity-groups.js:7, 'heading: code', read for context)."
     },
     {
       "id": "repo-frontend-p10-034",
-      "statement": "A CPH validation failure re-renders the page with status 400, keeps every value the trader typed in its box, and saves nothing.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.js:68-73; cph-number.fit.spec.js:228-245,261-276; cph-number/controller.test.js 'Should reject non-digits in a part, echoing what the trader typed'",
-      "quote": "if (hasErrors(errors)) {\n    const { journey } = await state.get(request, h)\n    return render(request, h, journey, values, { errors }).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "statement": "Within a commodity code group each chosen species gets its own sub-heading showing the species label.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:5-6",
+      "quote": "{% for line in group.lines %}\n    <h3 class=\"govuk-heading-m\">{{ line.label }}</h3>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-035",
-      "statement": "CPH errors are shown as one error message for the whole question (all messages joined, one per line) above the row of boxes, with one error border on the question, not a message inside each box.",
-      "kind": "behaviour",
-      "ref": "cph-number/template.njk:43-48,92; cph-number.fit.spec.js:296-317 'the error marks the whole question, not the individual boxes'",
-      "quote": "{{ govukErrorMessage({ id: \"cph-error\", html: errorSummary.errorList | join(\"<br>\", \"text\") }) }}",
+      "statement": "The type steps down from the commodity code heading to the species heading to the quantity field labels.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:307-316",
+      "quote": "expect(commodityHeading).toBeGreaterThan(speciesHeading)\n    expect(speciesHeading).toBeGreaterThan(animalsLabel)\n    expect(speciesHeading).toBeGreaterThan(packagesLabel)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-036",
-      "statement": "Each CPH box that has an error gets the red error border, and the group's accessible description includes the error text.",
-      "kind": "behaviour",
-      "ref": "cph-number/template.njk:56,69,82,95; cph-number.fit.spec.js:309-316",
-      "quote": "classes: \"govuk-input--width-2\" + (\" govuk-input--error\" if errors.cphCounty else \"\"),",
+      "statement": "One visible section break separates each commodity code group from the next, and none sits above the save buttons.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:236-253",
+      "quote": "test('puts one rule between the two commodities and none above the save buttons', async ({\n    page\n  }) => {\n    const rules = page.getByRole('main').getByRole('separator')\n    await expect(rules).toHaveCount(1)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-037",
-      "statement": "Each error-summary link on the CPH page moves focus to the box it names; the untouched-page error focuses the County box.",
-      "kind": "behaviour",
-      "ref": "cph-number.fit.spec.js:212-259",
-      "quote": "await requiredError.click()\n\n    const boxes = partBoxes(page)\n    await expect(boxes.county).toBeFocused()",
+      "statement": "Every species line is asked for a number of animals, in a field labelled \"Number of animals\" with no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:50-52",
+      "quote": "animals: {\n      label: 'Number of animals'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-038",
-      "statement": "A valid CPH is saved as nine bare digits, the three parts joined with no separators (12, 345, 6789 saves as 123456789).",
-      "kind": "data",
-      "ref": "cph-number/validate.js:40,92; cph-number/controller.test.js 'Should join the county, parish and holding parts into nine bare digits'",
-      "quote": "toAnswers: (values) => ({ countyParishHoldingCph: joinParts(values) }),",
-      "confidence": "verbatim"
+      "statement": "The number of animals field is a narrow numeric input with no hint text read out to a screen reader.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:8-16",
+      "quote": "label: { text: copy.animals.label, classes: \"govuk-label--s\" },\n      classes: \"govuk-input--width-5\",\n      inputmode: \"numeric\",",
+      "confidence": "verbatim",
+      "note": "The fit spec asserts the field's accessible description is empty (fit/consignment-details.fit.spec.js:153-155)."
     },
     {
       "id": "repo-frontend-p10-039",
-      "statement": "On return to the CPH page the stored number is split back into its boxes 2/3/4, ignoring any non-digits, so a stored value with legacy slashes still splits correctly.",
-      "kind": "behaviour",
-      "ref": "cph-number/validate.js:26-38,91; cph-number/controller.test.js 'Should split a stored value that still carries slashes'; cph-number.fit.spec.js:194-198",
-      "quote": "fromAnswers: (answers) => splitStored(answers.countyParishHoldingCph),",
+      "statement": "A species line on a commodity code where packages apply is also asked for a number of packages, labelled \"Number of packages (when required)\" with the hint \"Such as crates, bags or boxes\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:53-56",
+      "quote": "packages: {\n      label: 'Number of packages (when required)',\n      hint: 'Such as crates, bags or boxes'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-040",
-      "statement": "With nothing stored, the CPH page shows three empty boxes and no error.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.test.js 'Should show three empty boxes when nothing is stored'; cph-number/validate.test.js 'Should return no errors when no CPH has been stored'",
-      "quote": "expect(result.view.context.values).toEqual({\n      cphCounty: '',\n      cphParish: '',\n      cphHolding: ''\n    })",
-      "confidence": "verbatim"
+      "statement": "The number of packages field is shown only for commodity codes the applicability rules say packages apply to, and a code they do not apply to is asked for the number of animals alone.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:17-22",
+      "quote": "buildCommodityGroups(lines).map((group) => ({\n    ...group,\n    showPackages: packagesApply(group.code),",
+      "confidence": "verbatim",
+      "note": "The fit spec proves it for a listed and an unlisted species (fit/consignment-details.fit.spec.js:354-370)."
     },
     {
       "id": "repo-frontend-p10-041",
-      "statement": "A stored CPH that is not nine digits is flagged on the page with 'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.', linked to the County box, instead of the per-part messages.",
+      "statement": "The number of animals is required for every species line.",
       "kind": "rule",
-      "ref": "cph-number/validate.js:46-52,77-80; cph-number/copy/copy.en.js:28-29",
-      "quote": "cphNoLongerValid:\n      'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.'",
-      "confidence": "verbatim",
-      "note": "Keyed to county because that is where the review-page card link lands (validate.js:77)."
-    },
-    {
-      "id": "repo-frontend-p10-042",
-      "statement": "When a stored CPH is rejected, all three boxes are shown empty rather than re-showing stray digits.",
-      "kind": "behaviour",
-      "ref": "cph-number/validate.js:93-95; cph-number/validate.test.js 'Should blank every part when a stored value has been rejected'",
-      "quote": "blanks: () => [COUNTY_FIELD, PARISH_FIELD, HOLDING_FIELD]",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-29",
+      "quote": "requiredIntegerInRange(animalsField(index), {\n      min: 1,\n      max: BACKEND_QUANTITY_MAX,",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-frontend-p10-042",
+      "statement": "The number of packages is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:31-43",
+      "quote": "integerInRange(packagesField(index), {\n        min: 1,\n        max: BACKEND_QUANTITY_MAX,\n        messages: {\n          invalid: copy.errors.packagesWholeNumber,",
+      "confidence": "verbatim",
+      "note": "It takes no required message, unlike the number of animals."
+    },
+    {
       "id": "repo-frontend-p10-043",
-      "statement": "Reached from the addresses page's CPH row (query return=addresses), the CPH page's back link goes to the addresses page; otherwise it goes to the notification hub.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.js:33-36,47; cph-number/controller.test.js 'addresses-hub entry (?return=addresses)'; cph-number.fit.spec.js:171-177",
-      "quote": "request.query.return === 'addresses'\n    ? pagePath(request.params.journeyId, 'addresses')\n    : null",
+      "statement": "A blank number of animals is refused with \"Enter the number of animals\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58",
+      "quote": "animalsRequired: 'Enter the number of animals',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-044",
-      "statement": "Saving the CPH page goes to the hub when the trader chose to exit to the hub, else back to the addresses page when entered with return=addresses, else to the next page of the journey flow.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.js:88-93",
-      "quote": "return h.redirect(\n    kit.hubExitTarget(request) ??\n      hubEntryReturn(request) ??\n      (await kit.nextTarget(request, page, scope))\n  )",
-      "confidence": "verbatim",
-      "note": "The page renders no 'Save and return to overview' button, so the hub-exit branch is reachable only by a crafted request. nextTarget itself sends a change-context visit to check answers."
+      "statement": "A number of animals that is not a whole number above zero is refused with \"Enter a whole number greater than 0\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:59",
+      "quote": "animalsWholeNumber: 'Enter a whole number greater than 0',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-045",
-      "statement": "For a notification created in the same session, saving a valid CPH continues the opening run to the consignment contact page (/consignment/contact/select).",
-      "kind": "behaviour",
-      "ref": "cph-number.fit.spec.js:179-199 'joins the parts, saves the nine digits, continues the run and comes back split'",
-      "quote": "await expect(page).toHaveURL(\n      /\\/notifications\\/[^/]+\\/consignment\\/contact\\/select$/\n    )",
+      "statement": "A number of animals above 2147483647 is refused with \"Number of animals must be 2,147,483,647 or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:60-61",
+      "quote": "animalsAboveMax: (max) =>\n        `Number of animals must be ${withThousandsSeparators(max)} or fewer`,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-046",
-      "statement": "Outside the opening run and without return context, saving a valid CPH goes to the notification hub.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.test.js 'Should keep the sequential exit to the main hub when entered without return context'",
-      "quote": "expect(result.response).toEqual({\n        redirect: hubPath(result.journeyId)\n      })",
+      "statement": "The largest number of animals or packages the service accepts is 2147483647, the largest whole number the service that stores it holds.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:16",
+      "quote": "const BACKEND_QUANTITY_MAX = 2147483647",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-047",
-      "statement": "The CPH page ends with the primary 'Save and continue' button alone, with no 'Save and return to overview' or 'Cancel and return to overview', because it is reached from the addresses page rather than the hub.",
-      "kind": "rule",
-      "ref": "cph-number/template.njk:101-103; src/server/app/shared/save-actions.njk; cph-number.fit.spec.js:165-169",
-      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}",
+      "statement": "A number of packages that is not a whole number is refused with \"Number of packages must be a whole number, like 5\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:62",
+      "quote": "packagesWholeNumber: 'Number of packages must be a whole number, like 5',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-048",
-      "statement": "If saving the CPH fails, the page re-renders with status 500, the recoverable-error banner and the trader's values kept.",
-      "kind": "behaviour",
-      "ref": "cph-number/controller.js:75-87",
-      "quote": "return render(request, h, journey, values, {\n        recoverableError: true\n      }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "statement": "A number of packages above 2147483647 is refused with \"Number of packages must be 2,147,483,647 or fewer\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:63-64",
+      "quote": "packagesAboveMax: (max) =>\n        `Number of packages must be ${withThousandsSeparators(max)} or fewer`,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-049",
-      "statement": "The CPH page has no serious or critical WCAG 2 A/AA axe violations, both on first load and in its error state.",
-      "kind": "non-functional",
-      "ref": "cph-number.fit.spec.js:201-203,319-326",
-      "quote": "await expectNoSeriousAxeViolations(page, 'CPH number in its error state')",
-      "confidence": "verbatim"
+      "statement": "A number in a message is written with thousands separators in the UK style, so 2147483647 reads as 2,147,483,647.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/thousands-separators.js:1",
+      "quote": "export const withThousandsSeparators = (value) => value.toLocaleString('en-GB')",
+      "confidence": "verbatim",
+      "note": "mechanism: formats the maximum quantity for the two above-maximum messages, in both English and Welsh copy."
     },
     {
       "id": "repo-frontend-p10-050",
-      "statement": "The CPH page's Welsh copy is a machine draft not reviewed by a translator and must not ship without Welsh Language Standards sign-off.",
-      "kind": "constraint",
-      "ref": "cph-number/copy/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "statement": "A refused commodity details page lists every number of animals error before any number of packages error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:276-289",
+      "quote": "await expect(errorSummaryLinks(page)).toHaveText([\n      copy.consignmentDetails.errors.animalsRequired,\n      copy.consignmentDetails.errors.animalsRequired,\n      copy.consignmentDetails.errors.packagesWholeNumber,\n      copy.consignmentDetails.errors.packagesWholeNumber\n    ])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-051",
-      "statement": "The CPH page's Welsh heading is 'Ychwanegu rhif daliad plwyf sirol (CPH)', with legend 'Rhif CPH', hint 'Er enghraifft, 12/345/6789.' and box labels 'Sir', 'Plwyf' and 'Rhif daliad'.",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.cy.js:3-10",
-      "quote": "title: 'Ychwanegu rhif daliad plwyf sirol (CPH)',\n  cph: {\n    legend: 'Rhif CPH',\n    hint: 'Er enghraifft, 12/345/6789.',\n    county: 'Sir',\n    parish: 'Plwyf',\n    holding: 'Rhif daliad'",
+      "statement": "A refused commodity details page names each species whose count is blank and leaves the counts already filled in untouched.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:291-305",
+      "quote": "test('validation: when one animal count is filled, only the blank species is named', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-052",
-      "statement": "The CPH page's Welsh help reads 'Beth yw rhif CPH?' with its definition and where-to-find paragraphs.",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.cy.js:11-17",
-      "quote": "summary: 'Beth yw rhif CPH?',\n    definition:\n      'Mae rhif daliad plwyf sirol (CPH) yn rhif 9 digid unigryw a ddefnyddir i adnabod tir ac adeiladau lle mae da byw yn cael eu cadw, eu symud neu eu trin.',\n    whereToFind:\n      \"Gallwch ddod o hyd i'ch rhif CPH ar ddogfennau gan yr Asiantaeth Iechyd Anifeiliaid a Phlanhigion (APHA).\"",
-      "confidence": "verbatim"
+      "statement": "An error summary link on the commodity details page moves focus to its own field, which still holds exactly what was typed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:187-201",
+      "quote": "await followErrorLinkToField(page, errorFor(field), field)\n      await expect(page.locator(`#${field}`)).toHaveValue(invalid)",
+      "confidence": "verbatim",
+      "note": "Proved for the animals and packages fields of two species, with the invalid values '2.5', 'boxes', '0' and '-1'."
     },
     {
       "id": "repo-frontend-p10-053",
-      "statement": "The CPH page has a Welsh version of every error message, matching the English keys one for one.",
-      "kind": "copy",
-      "ref": "cph-number/copy/copy.cy.js:18-31",
-      "quote": "cphRequired: 'Nodwch rif CPH',\n    countyRequired: 'Nodwch y sir',\n    countyLength: \"Rhaid i'r sir fod yn 2 ddigid\",\n    countyDigitsOnly: \"Rhaid i'r sir gynnwys rhifau yn unig\",\n    parishRequired: 'Nodwch y plwyf',\n    parishLength: \"Rhaid i'r plwyf fod yn 3 digid\",\n    parishDigitsOnly: \"Rhaid i'r plwyf gynnwys rhifau yn unig\",\n    holdingRequired: 'Nodwch y rhif daliad',\n    holdingLength: \"Rhaid i'r rhif daliad fod yn 4 digid\",\n    holdingDigitsOnly: \"Rhaid i'r rhif daliad gynnwys rhifau yn unig\",\n    cphNoLongerValid:\n      \"Nid yw'r rhif CPH a arbedwyd yn ddilys mwyach. Rhowch y sir, plwyf a rhif daliad eto.\"",
+      "statement": "A refused commodity details page is served with a bad-request status rather than a redirect.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:81-82",
+      "quote": "const renderRefusal = (renderOptions) =>\n  render(renderOptions).code(HTTP_STATUS_BAD_REQUEST)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-054",
-      "statement": "The consignment contact page is served at the journey path /consignment/contact/select under a notification.",
-      "kind": "behaviour",
-      "ref": "contact/page.js:1-4",
-      "quote": "export const consignmentContactSelectPage = {\n  id: 'consignment-contact-select',\n  slug: 'consignment/contact/select'\n}",
+      "statement": "Entering a number of animals lower than the identifier records already saved for that species holds the page with \"You have N identifier records for <species> but entered M animals. Remove identifier records or keep the higher count.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:65-66",
+      "quote": "countDrop: (records, species, entered) =>\n        `You have ${plural(records, 'identifier record')} for ${species} but entered ${plural(entered, 'animal')}. Remove identifier records or keep the higher count.`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-055",
-      "statement": "The consignment contact page collects one answer, contactAddress, which fulfils the contactAddress obligation.",
-      "kind": "data",
-      "ref": "contact/evaluation.js:7-9; contact/controller.js:30",
-      "quote": "scalar({ field: 'contactAddress', obligation: contactAddress })",
+      "statement": "The count-drop message singularises its counts, so one record reads \"1 identifier record\" and one animal reads \"1 animal\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:3",
+      "quote": "const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-056",
-      "statement": "The consignment contact is picked from the same organisation address book as the consignment parties, under the address-book role 'contact', but it is deliberately not one of the addresses-page parties.",
+      "statement": "The count-drop rule is applied only when the species has at least one saved identifier record, the entered count is a whole number and that count is lower than the number of records.",
       "kind": "rule",
-      "ref": "addresses/parties.js:60-71",
-      "quote": "/** Contact picks from the same address book, but it is deliberately not a\n * consignment-address hub spoke and therefore does not belong in PARTIES. */",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:14-22",
+      "quote": "const records = (entry.animalIdentifiers ?? []).length\n  const value = values[animalsField(index)]\n  if (records === 0 || value === '') {\n    return []\n  }\n  const entered = Number(value)\n  if (!Number.isInteger(entered) || entered >= records) {\n    return []\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-057",
-      "statement": "The contact's details are edited in place on /consignment/contact/edit, which returns to the contact select page.",
+      "statement": "A count-drop error links the user to that species' card on the identification details page rather than back to the field they typed in.",
       "kind": "behaviour",
-      "ref": "addresses/parties.js:66-67",
-      "quote": "editSlug: 'consignment/contact/edit',\n  returnSlug: consignmentContactSelectPage.slug,",
-      "confidence": "verbatim",
-      "note": "The edit page itself belongs to part 9 (party pickers / party edit)."
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:26-31",
+      "quote": "href: `${kit.carryTrail(\n        request,\n        pagePath(request.params.journeyId, animalIdentificationPage.slug)\n      )}#${identificationCardAnchor(index)}`",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-058",
-      "statement": "The consignment contact page's heading is the radios legend 'Contact address for consignment', shown as a large page heading; the page title is the same text.",
-      "kind": "copy",
-      "ref": "contact/copy/copy.en.js:2-3; contact/template.njk:19-27",
-      "quote": "legend: 'Contact address for consignment',",
+      "statement": "A count-drop error is checked only after every field-level check has passed, and its summary carries the service's standard error summary title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:157-179",
+      "quote": "const issues = countDropIssues(request, lines, values)\n  if (issues.length > 0) {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-059",
-      "statement": "The consignment contact page shows no section caption above its heading, because the controller does not pass the page identity to the shared chrome.",
+      "statement": "A user who drops a count below the records saved can follow the error to the card, remove a record, and the card then invites the next animal's details again.",
       "kind": "behaviour",
-      "ref": "contact/controller.js:81-85; contact/template.njk; src/server/app/shared/kit.js:127-129",
-      "quote": "...kit.base(copy.title, {\n      backLink: hubPath(journey.journeyId),\n      journey,\n      recoverableError\n    }),",
-      "confidence": "inferred",
-      "note": "kit.base only adds the caption when `page` is supplied; the contact controller omits it and the template has no sectionCaption call, unlike the CPH page."
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1131-1186",
+      "quote": "test('blocks a count drop below saved records and reopens after removal', async ({",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-060",
-      "statement": "The contact radios have the hint 'Selecting a contact copies their name and address into this notification.'",
-      "kind": "copy",
-      "ref": "contact/copy/copy.en.js:4; contact/template.njk:28",
-      "quote": "hint: 'Selecting a contact copies their name and address into this notification.',",
+      "statement": "Saving the commodity details page stores each species line's number of animals, and its number of packages where packages apply to that commodity.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:182-190",
+      "quote": "numberOfAnimalsQuantity: values[animalsField(index)],\n      ...(packagesApply(entry.commodityCode)\n        ? { numberOfPackages: values[packagesField(index)] }\n        : {})",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-061",
-      "statement": "The contact page offers one radio per entry in the signed-in organisation's address book, in book order, labelled with the entry's name.",
+      "statement": "Quantities typed with surrounding spaces are trimmed before they are checked and stored.",
       "kind": "behaviour",
-      "ref": "contact/controller.js:102-103,92-97; contact.fit.spec.js:43-58 'renders the address-book contacts and feature copy'",
-      "quote": "const orgId = organisationIdOf(request)\n  const options = [...(await addressBook.all(orgId))]",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/values.js:16-22",
+      "quote": "[animalsField(index), (payload[animalsField(index)] ?? '').trim()],",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the posted quantity fields for each commodity line."
     },
     {
       "id": "repo-frontend-p10-062",
-      "statement": "Each contact radio has a hint giving the entry's address lines and country, joined with commas.",
-      "kind": "copy",
-      "ref": "contact/controller.js:47-48,95",
-      "quote": "const addressSummary = (address) =>\n  [addressText(address), address.country].filter(Boolean).join(', ')",
+      "statement": "Reopening the commodity details page shows each species line's stored counts.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:379-389",
+      "quote": "test('saves and persists per-species counts', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-063",
-      "statement": "On return, the contact radio is pre-selected only when the stored contact was picked from an entry still in the book; if that entry is gone, or the contact was edited in place, no radio is selected and no error shows.",
+      "statement": "The commodity details page ends with Save and continue, Save and return to overview and Cancel and return to overview.",
       "kind": "behaviour",
-      "ref": "contact/controller.js:107,117-119; contact/controller.test.js 'Should select nothing when the record the contact was picked from is gone', 'Should select nothing for a contact whose details were edited here'",
-      "quote": "selectedId: options.some((option) => option.id === pickedFromId)\n        ? pickedFromId\n        : ''",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:500-504",
+      "quote": "test('ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview', async ({\n    page\n  }) => {\n    await expectThreeSaveControls(page)\n  })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-064",
-      "statement": "When a contact is held, a summary card titled 'Current contact address' appears below the radios showing the contact's name and address.",
+      "statement": "Save and return to overview on the commodity details page stores the counts entered.",
       "kind": "behaviour",
-      "ref": "contact/template.njk:33-56; contact/copy/copy.en.js:6; contact/controller.js:50-61",
-      "quote": "title: 'Current contact address',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:506-517",
+      "quote": "test('save and return to overview stores the counts', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-065",
-      "statement": "The current-contact card has an 'Edit details' link (with hidden text 'current contact address') to the contact edit page, carrying return=consignment/contact/select and any change context.",
+      "statement": "Pressing Enter in a quantity field saves the commodity details page and moves on to identification details, rather than triggering a Remove button.",
       "kind": "behaviour",
-      "ref": "contact/template.njk:44-51; contact/copy/copy.en.js:7; contact/controller.js:56-58; contact/controller.test.js 'Should carry the change context onto the current contact edit link'",
-      "quote": "editDetails: 'Edit details'",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:442-451",
+      "quote": "test('saves the page rather than removing a commodity when Enter is pressed in a quantity field', async ({",
+      "confidence": "verbatim",
+      "note": "The template puts a hidden implicit submit button for Save and continue before the removal buttons (consignment-details.njk:17)."
     },
     {
       "id": "repo-frontend-p10-066",
-      "statement": "With no contact picked, the contact page shows no current-contact card.",
+      "statement": "A saved commodity details page sends the user to the next page the journey puts after it.",
       "kind": "behaviour",
-      "ref": "contact/template.njk:34; contact/controller.test.js 'Should show no current contact when none has been picked'",
-      "quote": "{% if currentContact %}",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:191-192",
+      "quote": "const { scope } = await state.get(request, h)\n  return h.redirect(kit.nextTarget(request, page, scope))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-067",
-      "statement": "Outside stub mode, the contact page shows an 'Add a new address' link above the form, leading to the INS frontend's address-book add page with the journey type gbn-ag, the notification id and a fulfilment id.",
-      "kind": "integration",
-      "ref": "contact/controller.js:63-65; contact/template.njk:9-13; src/server/app/shared/copy.en.js:75; contact/controller.test.js 'Should offer an INS add-address link when not in stub mode'",
-      "quote": "expect(result.view.context.addAddressHref).toContain(\n      'http://localhost:3002/address-book/add'\n    )\n    expect(result.view.context.addAddressHref).toContain('journey-type=gbn-ag')",
+      "statement": "The commodity details page raises no serious or critical accessibility violations, with or without errors shown.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:519-528",
+      "quote": "test('has no serious or critical axe violations', async ({ page }) => {\n    await expectNoSeriousOrCriticalViolations(page, 'Commodity details')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-068",
-      "statement": "In stub mode the contact page offers no way to add an address.",
-      "kind": "behaviour",
-      "ref": "contact/controller.js:64; contact.fit.spec.js:60-64 'offers no way to add an address'",
-      "quote": "await expect(page.getByRole('link', { name: /add.*address/i })).toHaveCount(\n      0\n    )",
+      "statement": "On a phone the selected commodities table stays inside the screen width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:539-546",
+      "quote": "test('keeps the selected commodities table inside the screen width', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-069",
-      "statement": "Coming back from the INS add-address handshake with a not-found error, the contact page shows 'The address could not be found in your address book. Select another address or try adding it again.' in the error summary, linked to the radios.",
-      "kind": "rule",
-      "ref": "contact/controller.js:36-45,108-111; src/server/app/shared/copy.en.js:77-78",
-      "quote": "notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',",
+      "statement": "The identification details page's heading is \"Identification details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:70",
+      "quote": "title: 'Identification details',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-070",
-      "statement": "Coming back from the INS add-address handshake with an unavailable error, the contact page shows 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.' and the recoverable-error state.",
-      "kind": "rule",
-      "ref": "contact/controller.js:108-112; src/server/app/shared/copy.en.js:79-80",
-      "quote": "unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "statement": "The identification details page shows inset text reading \"You must add all animal identification details before the consignment arrives at the port of entry.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:71-72",
+      "quote": "inset:\n      'You must add all animal identification details before the consignment arrives at the port of entry.',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-071",
-      "statement": "Submitting a contact id that is not in the organisation's address book shows 'Select a contact address', answers 400, selects no radio and saves nothing.",
-      "kind": "rule",
-      "ref": "contact/validate.js:14-23; contact/copy/copy.en.js:10; contact/controller.js:140-160; contact.fit.spec.js:66-87",
-      "quote": "contactRequired: 'Select a contact address'",
+      "statement": "The identification details page shows a section caption above its heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:13-14",
+      "quote": "{{ sectionCaption(caption) }}\n      <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-072",
-      "statement": "The 'Select a contact address' error links to and focuses the first contact radio.",
-      "kind": "behaviour",
-      "ref": "contact.fit.spec.js:78-83",
-      "quote": "await contactError.click()\n    await expect(page.locator(CONTACT_ADDRESS_INPUT).first()).toBeFocused()",
-      "confidence": "verbatim"
+      "statement": "Which journey section the identification details page's caption names is not said anywhere in this part: the caption text is handed to the template by the journey, and neither the page's own files nor its fit spec names the section.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:13; fit/identification.fit.spec.js (no caption assertion)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The commodity details page's own fit spec does assert its caption; the identification page's does not. The section captions live in journeys/linear/flow/section-captions, outside this part."
     },
     {
       "id": "repo-frontend-p10-073",
-      "statement": "Submitting the contact page with no radio selected is not an error: nothing is saved, any contact already held is kept, and the trader moves on.",
-      "kind": "rule",
-      "ref": "contact/controller.js:162-173; contact/validate.test.js 'Should raise no error on a submission with no selection'; contact/controller.test.js 'Should keep the copy already held when saved with nothing selected', 'Should leave the page without committing when no contact is selected'",
-      "quote": "committed = chosen\n        ? await state.commit(request, h, {\n            contactAddress: answerFor(CONTACT_PARTY, chosen)\n          })\n        : await state.get(request, h)",
-      "confidence": "verbatim",
-      "note": "The only error message is worded 'Select a contact address' yet it fires only for an id not in the book, never for a blank submit. Whether the contact is mandatory is decided by the contactAddress obligation, outside this part."
+      "statement": "The identification details page's back link returns the user to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:352-357",
+      "quote": "test('back link returns to the overview', async ({ page }) => {\n    await openFelisCatusIdentification(page)\n    await backLink(page).click()",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-074",
-      "statement": "Picking a contact saves a copy of that address-book entry's name and address into the notification, remembering which entry it was picked from.",
+      "statement": "The identification details page shows a selected commodities summary table headed Commodity code, Species, Number of animals and a visually hidden Actions column.",
       "kind": "data",
-      "ref": "contact/controller.js:162-171; contact/controller.test.js 'Should commit a copy of the picked address, then show it as the current contact and still selected'",
-      "quote": "expect(postResult.after.contactAddress).toMatchObject({\n      pickedFromId: CONTACT.id,\n      name: CONTACT.name\n    })\n    expect(postResult.after.contactAddress.address).toBeDefined()",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:831-844",
+      "quote": "await expect(\n      selectedCommoditiesSummary(page).getByRole('columnheader')\n    ).toHaveText([\n      copy.selectedCommodities.commodityCode,\n      copy.selectedCommodities.species,\n      copy.selectedCommodities.numberOfAnimals,\n      copy.selectedCommodities.actionsHidden\n    ])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-075",
-      "statement": "A held contact copy is never flagged invalid on return, whether or not the address book is checked.",
-      "kind": "rule",
-      "ref": "contact/validate.js:25-31; contact/validate.test.js 'Should raise no error for a stored copy, with or without a book in hand'",
-      "quote": "fromAnswers: () => ({ contactAddress: '' })",
-      "confidence": "verbatim"
+      "statement": "A summary row's Number of animals is the total of the counts of every species line the row covers, so two species under one code show their sum.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js:4-13",
+      "quote": "const sumOfCounts = (lines) =>\n  lines.reduce(\n    (total, { entry }) => total + Number(entry.numberOfAnimalsQuantity),\n    0\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: totals the stored numberOfAnimalsQuantity of the lines behind one summary row. The fit spec proves 2 and 3 on one code show as 5 (fit/identification.fit.spec.js:846-872)."
     },
     {
       "id": "repo-frontend-p10-076",
-      "statement": "After saving, the contact page goes to the hub if the trader chose 'Save and return to overview', to check answers in a change visit, and otherwise to the next page of the journey flow.",
-      "kind": "behaviour",
-      "ref": "contact/controller.js:197-198; src/server/app/shared/kit.js:96-120",
-      "quote": "return h.redirect(await kit.nextTarget(request, page, scope))",
-      "confidence": "verbatim"
+      "statement": "A summary row whose species lines carry no count at all shows an empty Number of animals cell rather than a zero.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js:10-13",
+      "quote": "const totalAnimalsText = (lines) => {\n  const counted = lines.filter(hasAnimalCount)\n  return counted.length === 0 ? '' : String(sumOfCounts(counted))\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: a line counts towards the total only when its stored numberOfAnimalsQuantity is not blank (features/commodities/lines.js:9-10)."
     },
     {
       "id": "repo-frontend-p10-077",
-      "statement": "The fit spec proves that selecting a valid contact and saving leaves the page, and on return the contact shows in the 'Current contact address' card with an 'Edit details' link and its radio still selected.",
+      "statement": "Each summary row on the identification details page offers a \"Change\" link whose hidden text names the commodity code and species, and which opens the commodity question.",
       "kind": "behaviour",
-      "ref": "contact.fit.spec.js:89-108 'selects a valid contact, redirects and shows it as the current contact, still selected, on return'",
-      "quote": "const current = page.getByRole('region', { name: copy.current.title })\n    await expect(current).toContainText(selected.name)",
-      "confidence": "verbatim",
-      "note": "The URL assertion is urlUnderBase('/notifications/[^/]+'), which reads as the hub but is a pattern match."
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:874-885",
+      "quote": "await selectedCommoditiesSummary(page)\n      .getByRole('link', {\n        name: `${copy.identification.summary.change} ${BOS_TAURUS_ROW.commodityCode} ${labelFor(BOS_TAURUS_ROW.speciesLatinName)}`\n      })\n      .click()",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-078",
-      "statement": "If saving the contact fails, the page re-renders with status 500, the recoverable-error banner, the chosen radio kept and the current-contact card still shown.",
-      "kind": "behaviour",
-      "ref": "contact/controller.js:174-192; contact/controller.test.js 'POST contact — recoverable save failure'",
-      "quote": "recoverableError: true,\n          currentContact: await currentContactOf(",
+      "statement": "The summary row action on the identification details page is labelled \"Change\", where the same table on the commodity details page offers \"Remove\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:75-77",
+      "quote": "summary: {\n      change: 'Change'\n    },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-079",
-      "statement": "A validation failure on the contact page keeps the current-contact card on the re-rendered page.",
+      "statement": "The identification details page offers an \"Add another commodity\" link that opens the commodity question, and saving a further species returns the user to identification details.",
       "kind": "behaviour",
-      "ref": "contact/controller.js:143-159; contact/controller.test.js 'Should keep the current contact card on a 400 re-render'",
-      "quote": "expect(result.view.context.currentContact).toMatchObject({\n      name: HELD_CONTACT.name,",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:887-911",
+      "quote": "test('Add another commodity opens What are you importing?, and saving a further species returns to identification details', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-080",
-      "statement": "The contact page's back link goes to the notification hub.",
-      "kind": "behaviour",
-      "ref": "contact/controller.js:82; contact.fit.spec.js:117-123",
-      "quote": "backLink: hubPath(journey.journeyId),",
+      "statement": "The link to add a further commodity from the identification details page reads \"Add another commodity\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:73",
+      "quote": "addAnotherCommodity: 'Add another commodity',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-081",
-      "statement": "The contact page ends with all three controls: 'Save and continue', 'Save and return to overview' and the 'Cancel and return to overview' link, as a page the hub links to directly.",
-      "kind": "copy",
-      "ref": "contact/template.njk:58; src/server/app/shared/save-actions.njk; src/server/app/shared/copy.en.js:64-66",
-      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "statement": "The identification details page groups its cards into one section per commodity code, headed by the bare code.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:34-39",
+      "quote": "{% for section in sections %}\n      <h2 class=\"govuk-heading-l\">{{ section.heading }}</h2>\n      {% for card in section.cards %}\n        {{ identificationCard(card, copy) }}",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-082",
-      "statement": "The contact page has no serious or critical WCAG 2 A/AA axe violations.",
-      "kind": "non-functional",
-      "ref": "contact.fit.spec.js:125-137",
-      "quote": "`Contact has serious/critical accessibility violations.",
-      "confidence": "verbatim"
+      "statement": "Within a commodity code section each species line gets its own card, in the order the lines are stored.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1260-1287",
+      "quote": "test('groups a commodity code into a section headed by the code holding one card per species with Bison bison above Bos taurus', async ({",
+      "confidence": "inferred",
+      "note": "It follows because the cards come from the stored commodity lines grouped by code (animal-identification/card/view-model.js:118), and the fit spec's stored order puts Bison bison above Bos taurus even though Bos taurus was chosen first."
     },
     {
       "id": "repo-frontend-p10-083",
-      "statement": "The contact page's Welsh copy is a machine draft not reviewed by a translator.",
-      "kind": "constraint",
-      "ref": "contact/copy/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "statement": "Each species card is a summary card titled with the species label.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:6-8",
+      "quote": "<section id=\"{{ card.anchor }}\" class=\"govuk-summary-card\" aria-labelledby=\"{{ card.anchor }}-title\">\n    <div class=\"govuk-summary-card__title-wrapper\">\n      <h3 class=\"govuk-summary-card__title\" id=\"{{ card.anchor }}-title\">{{ card.title }}</h3>",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p10-084",
-      "statement": "The contact page's Welsh copy gives heading 'Cyfeiriad cyswllt ar gyfer y llwyth', its hint, the card title 'Cyfeiriad cyswllt presennol', the link 'Golygu manylion' and the error 'Dewiswch gyfeiriad cyswllt'.",
-      "kind": "copy",
-      "ref": "contact/copy/copy.cy.js:3-12",
-      "quote": "title: 'Cyfeiriad cyswllt ar gyfer y llwyth',\n  legend: 'Cyfeiriad cyswllt ar gyfer y llwyth',\n  hint: \"Mae dewis cyswllt yn copïo eu henw a'u cyfeiriad i'r hysbysiad hwn.\",\n  current: {\n    title: 'Cyfeiriad cyswllt presennol',\n    editDetails: 'Golygu manylion'\n  },\n  errors: {\n    contactRequired: 'Dewiswch gyfeiriad cyswllt'",
-      "confidence": "verbatim"
+      "statement": "Each species card carries a \"Change number of animals\" link whose hidden text names its species and which opens the commodity details page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:11",
+      "quote": "<a class=\"govuk-link\" href=\"{{ card.changeCountHref }}\">{{ copy.changeAnimalCount }}<span class=\"govuk-visually-hidden\"> {{ card.title }}</span></a>",
+      "confidence": "verbatim",
+      "note": "The fit spec proves one link per card, each naming its species, and that it lands on the commodity details page with the counts shown (fit/identification.fit.spec.js:359-394)."
     },
     {
       "id": "repo-frontend-p10-085",
-      "statement": "Neither page in this part says how the consignment contact page is reached from the hub or the addresses page, beyond the CPH page's opening run; the hub row that links to it is not in this slice.",
+      "statement": "The change-count link on a card reads \"Change number of animals\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:74",
+      "quote": "changeAnimalCount: 'Change number of animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-086",
+      "statement": "A card with animals still to identify is headed \"Enter details for <species> <next> of <cap>\", counting the next animal against the line's number of animals.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:91-92",
+      "quote": "counter: (species, next, cap) =>\n      `Enter details for ${species} ${next} of ${cap}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-087",
+      "statement": "The number of identifier records a species line accepts is that line's number of animals.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/line-cap.js:3-8",
+      "quote": "export const identifierCapOf = (answers, lineIndex) =>\n  state.collectionCapAt(answers, [\n    'commodityLines',\n    lineIndex,\n    'animalIdentifiers'\n  ])",
+      "confidence": "inferred",
+      "note": "It follows from the fit spec: a line of 2 animals counts \"1 of 2\" then \"2 of 2\", and a third record is refused once 2 are saved (fit/identification.fit.spec.js:749-777, 1112-1129)."
+    },
+    {
+      "id": "repo-frontend-p10-088",
+      "statement": "A species line whose number of animals is not yet known, or is zero, gets no card on the identification details page.",
       "kind": "behaviour",
-      "ref": "contact/controller.js; contact/template.njk; addresses/parties.js",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:40-43",
+      "quote": "const cardLines = (answers, evaluation) =>\n  linesOf(answers, evaluation).filter(({ index }) =>\n    capAllowsEntry(identifierCapOf(answers, index))\n  )",
+      "confidence": "verbatim",
+      "note": "capAllowsEntry is cap !== null && cap > 0 (animal-identification/line-cap.js:10)."
+    },
+    {
+      "id": "repo-frontend-p10-089",
+      "statement": "A card at its cap shows no counter, no identifier fields and no save button: only the animals already saved and their Remove controls.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:92-94",
+      "quote": "counter: atCap ? null : copy.counter(label, units.length + 1, cap),\n    overCountText: overCountTextFor(cap, label, units.length),\n    saveButtonText: atCap ? null : saveButtonTextFor(cap, units.length),",
+      "confidence": "verbatim",
+      "note": "The fit spec asserts a complete card holds only Remove buttons and no textboxes (fit/identification.fit.spec.js:137-146)."
+    },
+    {
+      "id": "repo-frontend-p10-090",
+      "statement": "Which identifier fields a card asks for is decided by the commodity code's declared identifiers, filtered by what applies to that species.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:13-21",
+      "quote": "return [\n    ...commodities.identifiersFor(commodityCode),\n    ...fallbackIdentifierFields\n  ]\n    .filter((id) => appliesForGateValue(id, commodityCode, speciesLatinName))\n    .map((id) => ({ id, label: copy.identifierLabels[id] }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-091",
+      "statement": "Identification details and Description are offered as fallback identifiers for any commodity, and are the only fields a commodity that declares no identifier is asked for.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:14-18",
+      "quote": "const fallbackIdentifierFields = ['identificationDetails', 'description']",
+      "confidence": "verbatim",
+      "note": "The fit spec shows a commodity declaring no identifier asked for exactly those two (fit/identification.fit.spec.js:601-617)."
+    },
+    {
+      "id": "repo-frontend-p10-092",
+      "statement": "The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:78-86",
+      "quote": "identifierLabels: {\n      animalIdentifierMicrochip: 'Microchip',\n      animalIdentifierPassport: 'Passport',\n      animalIdentifierTattoo: 'Tattoo',\n      animalIdentifierEarTag: 'Ear tag',\n      horseName: 'Horse name',\n      identificationDetails: 'Identification details',\n      description: 'Description'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-093",
+      "statement": "A cattle line is asked for an ear tag, then a passport, then a tattoo.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:300-306",
+      "quote": "await expect(page.locator('label[for$=\"-1\"]')).toHaveText(\n      entryLabelsOf([\n        'animalIdentifierEarTag',\n        'animalIdentifierPassport',\n        'animalIdentifierTattoo'\n      ])\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-094",
+      "statement": "A horse line is asked for a microchip, then a passport, then a horse name.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:293-299",
+      "quote": "await expect(page.locator(FIRST_LINE_ENTRY_LABEL_SELECTOR)).toHaveText(\n      entryLabelsOf([\n        'animalIdentifierMicrochip',\n        'animalIdentifierPassport',\n        'horseName'\n      ])\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-095",
+      "statement": "A donkey line on the same commodity code as a horse is asked for a microchip and a passport but not a horse name.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:554-593",
+      "quote": "test('asks the horse species on 0101 for a horse name and the donkey species on the same code for no horse name, while both are asked for a microchip and a passport', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-096",
+      "statement": "A pet line is asked for a microchip, a passport and a tattoo and nothing else.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:325-342",
+      "quote": "test('asks only for the three identifier fields a Felis catus line needs, ending with its save control', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-097",
+      "statement": "A pig line is asked for an ear tag and a tattoo, and not for a microchip, a passport or a horse name.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:437-459",
+      "quote": "test('asks a pig line for an ear tag and a tattoo, and heads its saved-animals table with Animal, Ear tag, Tattoo and a Remove action', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-098",
+      "statement": "A sheep line and a goat line are each asked for an ear tag and no other identifier.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:480-502",
+      "quote": "test('asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-099",
+      "statement": "Every identifier field is a text input twenty characters wide, labelled in regular weight, with no hint.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:22-29",
+      "quote": "label: { text: field.label },\n                classes: \"govuk-input--width-20\",",
+      "confidence": "verbatim",
+      "note": "The fit spec measures the label weight against a plain govuk-label and asserts an empty accessible description (fit/identification.fit.spec.js:1322-1346)."
+    },
+    {
+      "id": "repo-frontend-p10-100",
+      "statement": "Each identifier field keeps whatever was typed into it when the page is shown again after a refusal, and is blank on a fresh card.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:69-74",
+      "quote": "scopedFields(commodityCode, speciesLatinName).map((field) => ({\n        ...field,\n        id: fieldName(field.id, index),\n        value: values[field.id] ?? '',\n        error: errors[fieldName(field.id, index)]\n      }))",
+      "confidence": "verbatim",
+      "note": "mechanism: fills each card's fields from the posted form for that line, or blanks when none was posted."
+    },
+    {
+      "id": "repo-frontend-p10-101",
+      "statement": "A card with more than one animal still to identify offers a \"Save and add another\" button.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:99",
+      "quote": "saveAndAddAnother: 'Save and add another',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-102",
+      "statement": "A card on its last outstanding animal offers a \"Save and finish\" button instead.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:100",
+      "quote": "saveAndFinish: 'Save and finish',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-103",
+      "statement": "The card's save button changes from Save and add another to Save and finish exactly when one animal is left to identify.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:52-57",
+      "quote": "const saveButtonTextFor = (cap, records) => {\n  if (holdsOneAnimal(cap)) {\n    return null\n  }\n  return cap - records === 1 ? copy.saveAndFinish : copy.saveAndAddAnother\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-104",
+      "statement": "A species line of one animal gets no save button inside its card: its record is saved by the page's own Save and continue.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:779-809",
+      "quote": "test('offers no in-card button on a line of one animal and saves it on Save and continue', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-105",
+      "statement": "A card's save button is styled as a primary button.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1313-1320",
+      "quote": "test('shows the card button as a primary button', async ({ page }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-106",
+      "statement": "Inside a card the counter, the identifier fields and the save button come above the table of animals already saved.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1289-1311",
+      "quote": "test('puts the entry form and its button above the saved animals while animals remain', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-107",
+      "statement": "A card shows the animals already saved for its line in a table headed \"Animal\", then one column for each identifier the species is asked for, then a visually hidden \"Actions\" column.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:37-41",
+      "quote": "const savedAnimalsTableOf = (columns, unitRows) => ({\n  head: [\n    ...wrappingCells([copy.table.animalColumn, ...columns]),\n    hiddenActionsHeading(copy.table.actionsHidden)\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-108",
+      "statement": "The saved animals table's first column heading reads \"Animal\" and its action column heading reads \"Actions\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:87-90",
+      "quote": "table: {\n      animalColumn: 'Animal',\n      actionsHidden: 'Actions'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-109",
+      "statement": "The saved animals table carries a column for every identifier the species is asked for, not only the ones a saved record filled in, and an identifier left blank shows as an empty cell.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1031-1064",
+      "quote": "test('heads the table with every identifier asked of the species, not only the ones a saved record filled in', async ({",
+      "confidence": "verbatim",
+      "note": "A missing value reads as an empty string (animal-identification/identifier/table.js:9)."
+    },
+    {
+      "id": "repo-frontend-p10-110",
+      "statement": "Each saved animal row is labelled with its species label and its number within the line, such as \"Bos taurus (Cattle) 1\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:95-96",
+      "quote": "animalRow: (number) => `Animal ${number}`,\n    animalRowNamed: (species, number) => `${species} ${number}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-111",
+      "statement": "A saved animal row on a line with no species label falls back to \"Animal <number>\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-label.js:7-10",
+      "quote": "export const animalLabelOf = (speciesLabel, number) =>\n  speciesLabel\n    ? copy.animalRowNamed(speciesLabel, number)\n    : copy.animalRow(number)",
+      "confidence": "verbatim",
+      "note": "mechanism: labels a saved identifier record from the line's species label and the record's position."
+    },
+    {
+      "id": "repo-frontend-p10-112",
+      "statement": "Saved animals are numbered from one in the order they were saved.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:26-33",
+      "quote": "units.map((unit, unitIndex) => ({\n    key,\n    unitIndex,\n    label: animalLabelOf(label, unitIndex + 1),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-113",
+      "statement": "Each saved animal row carries a Remove button whose hidden text reads \"animal <number>\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:97-98",
+      "quote": "removeRow: 'Remove',\n    removeRowAria: (number) => `animal ${number}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-114",
+      "statement": "Removing a saved animal takes it out of that line and shows the identification details page again, with no confirmation step.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/remove/post-remove.js:43-51",
+      "quote": "await state.removeEntryAt(\n    request,\n    h,\n    ['commodityLines', lineIndex, 'animalIdentifiers'],\n    unit\n  )\n  return h.redirect(\n    kit.carryTrail(request, pagePath(request.params.journeyId, page.slug))\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-115",
+      "statement": "A removal that names a commodity line the notification no longer holds is refused as a bad request and logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/remove/post-remove.js:27-34",
+      "quote": "kit.logRefusal(request, {\n      reason: 'no-commodity-line-for-key',\n      key,\n      unitIndex: unit\n    })\n    return h.response().code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-116",
+      "statement": "A removal that names an animal record position the line does not hold is refused as a bad request and logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/remove/post-remove.js:35-42",
+      "quote": "kit.logRefusal(request, {\n      reason: 'no-animal-identifier-at-index',\n      lineIndex,\n      unitIndex: unit\n    })\n    return h.response().code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-117",
+      "statement": "A record saved on one card appears in that card's table alone, leaving another species' table unchanged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1194-1225",
+      "quote": "test('appends a new animal to the Bos taurus table when Enter is pressed in its field, leaving the Bison bison table unchanged', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-118",
+      "statement": "Pressing Enter in a card's identifier field saves that card's record and stays on the identification details page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1199-1224",
+      "quote": "const bosTaurusEarTag = earTagFieldOf(page, BOS_TAURUS_ROW)\n    await bosTaurusEarTag.fill('UK000000000003')\n    await bosTaurusEarTag.press('Enter')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-119",
+      "statement": "Tabbing forward from a card's last identifier field reaches that card's own save button, then its own first Remove button, never another card's controls.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1227-1252",
+      "quote": "test(\"lists its own save button then its own first Remove button as the only controls in an open panel, and reaches them by tabbing forward from its last identifier field, never the Bos taurus card's controls\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-120",
+      "statement": "A record is saved only when at least one of its identifier fields holds something.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:19-22",
+      "quote": "for (const [index, form] of forms) {\n    if (!form.holdsData) {\n      continue\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-121",
+      "statement": "Pressing a card's save button with every identifier on it blank is refused with \"Enter at least one identifier for this animal\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:112",
+      "quote": "atLeastOneIdentifier: 'Enter at least one identifier for this animal',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-122",
+      "statement": "The at-least-one-identifier error is shown against the first identifier field of the card whose save button was pressed, and focus moves there from the error summary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:110-115",
+      "quote": "const [first] = scopedFields(commodityCode, speciesLatinName)\n  return {\n    ...errors,\n    [fieldName(first.id, addIndex)]: copy.errors.atLeastOneIdentifier\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-123",
+      "statement": "A blank card is refused on its own save button even when a sibling card has been filled in, and neither card's record is saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:933-961",
+      "quote": "test('validation: a blank card is refused on its own Save and add another, beside a filled sibling card, saving neither', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-124",
+      "statement": "Save and return to overview with every identifier blank is accepted: no error is shown and the user reaches the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:963-971",
+      "quote": "test('validation: Save and return to overview with every identifier blank shows no error and goes to the overview', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-125",
+      "statement": "No identifier may be longer than 58 characters.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:23-34",
+      "quote": "const IDENTIFIER_MAX_LENGTH = 58\n  return compose(\n    ...scopedFields(commodityCode, speciesLatinName).map((field) =>\n      maxText(\n        fieldName(field.id, index),\n        IDENTIFIER_MAX_LENGTH,\n        IDENTIFIER_MAX_MESSAGES[field.id]\n      )\n    )\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-126",
+      "statement": "An over-long identifier is refused with a message naming that field: \"Microchip must be 58 characters or less\", \"Passport must be 58 characters or less\", \"Tattoo must be 58 characters or less\", \"Ear tag must be 58 characters or less\", \"Horse name must be 58 characters or less\", \"Identification details must be 58 characters or less\" or \"Description must be 58 characters or less\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:102-111",
+      "quote": "identifierMax: {\n        animalIdentifierMicrochip: 'Microchip must be 58 characters or less',\n        animalIdentifierPassport: 'Passport must be 58 characters or less',\n        animalIdentifierTattoo: 'Tattoo must be 58 characters or less',\n        animalIdentifierEarTag: 'Ear tag must be 58 characters or less',\n        horseName: 'Horse name must be 58 characters or less',\n        identificationDetails:\n          'Identification details must be 58 characters or less',\n        description: 'Description must be 58 characters or less'\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-127",
+      "statement": "An over-long identifier's error summary link moves focus to its own field, which still holds exactly what was typed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:973-989",
+      "quote": "await followErrorLinkToField(\n        page,\n        copy.identification.errors.identifierMax[field],\n        page.locator(`#${field}-0`)\n      )\n      await expect(page.locator(`#${field}-0`)).toHaveValue(invalid)",
+      "confidence": "verbatim",
+      "note": "Proved for ten field-and-species pairs: microchip and tattoo on a cat; passport, ear tag and tattoo on cattle; horse name on a horse; ear tag and tattoo on a pig; identification details and description on a commodity with no declared identifier."
+    },
+    {
+      "id": "repo-frontend-p10-128",
+      "statement": "An identifier of exactly 58 characters is accepted and read back in the saved animals table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:670-690",
+      "quote": "test('saves an identification details value of 58 characters', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-129",
+      "statement": "Identifier values are trimmed of surrounding spaces before they are checked and saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:42-47",
+      "quote": "scopedFields(commodityCode, speciesLatinName).map((field) => [\n      field.id,\n      (payload[fieldName(field.id, index)] ?? '').trim()\n    ])",
+      "confidence": "verbatim",
+      "note": "mechanism: reads one card's posted identifier fields into a record."
+    },
+    {
+      "id": "repo-frontend-p10-130",
+      "statement": "Adding a further record to a line that already holds its full number of animals is refused with \"You have already entered details for all <cap> animals — remove a record before adding another\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:113-114",
+      "quote": "capReached: (cap) =>\n        `You have already entered details for all ${cap} animals — remove a record before adding another`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-131",
+      "statement": "A cap-reached message is listed in the error summary against the card it belongs to, linking to that card rather than to a field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/error-summary.js:16-19",
+      "quote": "...cardErrors.map(({ index, text }) => ({\n      text,\n      href: `#${identificationCardAnchor(index)}`\n    }))",
+      "confidence": "verbatim",
+      "note": "The anchor is identification-card-<line index> (card/error-summary.js:7-8)."
+    },
+    {
+      "id": "repo-frontend-p10-132",
+      "statement": "A stale add posted after a line reached its cap is refused with the cap-reached message and the error link lands on that line's card.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1112-1129",
+      "quote": "test('rejects a stale add action after the animal-count cap is reached', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-133",
+      "statement": "A refused add on a line at its cap is logged as a warning naming the line and the cap.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:93-103",
+      "quote": "kit.logRefusal(request, {\n      reason: 'animal-identifier-cap-reached',\n      lineIndex: index,\n      cap,\n      level: 'warn'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-134",
+      "statement": "A refused identification details page is served with a bad-request status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:90-91",
+      "quote": "const renderRefused = (request, h, current, options) =>\n  render(request, h, current, options).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-135",
+      "statement": "A card holding more records than its line's number of animals says \"This commodity line lists <cap> <species> animals but you have entered details for <entered>. Remove <overBy> to continue.\"",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:93-94",
+      "quote": "overCount: (cap, species, entered, overBy) =>\n      `This commodity line lists ${cap} ${species} animals but you have entered details for ${entered}. Remove ${overBy} to continue.`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-136",
+      "statement": "The over-count message is shown only while the records saved outnumber the line's number of animals, and names how many to remove.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:21-24",
+      "quote": "const overCountTextFor = (cap, label, units) =>\n  cap !== null && units > cap\n    ? copy.overCount(cap, label, units, units - cap)\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-137",
+      "statement": "The error summary on the identification details page lists field errors first and card errors after them, under the service's standard error summary title.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/error-summary.js:10-23",
+      "quote": "const errorList = [\n    ...Object.entries(errors).map(([field, text]) => ({\n      text,\n      href: `#${field}`\n    })),\n    ...cardErrors.map(({ index, text }) => ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-138",
+      "statement": "Pressing a card's save button saves that card's record and shows the identification details page again rather than moving on.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:182-186",
+      "quote": "if (staysOnIdentification(action, forms, answers)) {\n    return h.redirect(\n      kit.carryTrail(request, pagePath(request.params.journeyId, page.slug))\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-139",
+      "statement": "Pressing Save and continue stays on the identification details page when any card with details typed into it belongs to a line of more than one animal, and otherwise moves on to the next page in the journey.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:26-31",
+      "quote": "export const staysOnIdentification = (action, forms, answers) =>\n  parseAddAction(action) !== null ||\n  (isImplicitSubmitAction(action) &&\n    [...forms].some(\n      ([index, form]) => form.holdsData && !lineHoldsOneAnimal(answers, index)\n    ))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-140",
+      "statement": "Pressing Enter anywhere in the identification details form behaves as Save and finish for the whole page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:32",
+      "quote": "{{ implicitSubmitButton({ text: copy.saveAndFinish, name: \"action\", value: \"implicit-submit\" }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-141",
+      "statement": "A press of one card's save button reads only that card's identifier fields, so another card's typed values are neither saved nor validated.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:59-67",
+      "quote": "const linesToReadFormsFor = (action, answers, lines) => {\n  if (isImplicitSubmitAction(action)) {\n    return lines\n  }\n  const addIndex = parseAddAction(action)\n  return addIndex === null\n    ? lines.filter(({ index }) => lineHoldsOneAnimal(answers, index))\n    : lines.filter(({ index }) => index === addIndex)\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-142",
+      "statement": "With JavaScript switched off, pressing one card's save button saves only that card's species and reloads the page with every identifier field empty, showing no error for another card's over-long value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1420-1459",
+      "quote": "test(\"saves only the pressed card's species and reloads with its form empty\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-143",
+      "statement": "Saving a record moves its card on to the line's next animal, and the saved value is read back after a reload.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1066-1093",
+      "quote": "test(\"saves a Mustela putorius furo identified only by its microchip, heads its table with the animal column, its three identifiers and the remove action, moves the card on to the line's second animal and reads the number back\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-144",
+      "statement": "An animal may be saved by one identifier alone, such as a tattoo on a cattle or pig line, or a description alone on a commodity with no declared identifier.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:524-552",
+      "quote": "test('saves an animal by its tattoo alone on a cattle line and on a pig line, and reads the tattoo back under the tattoo column', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-145",
+      "statement": "A notification holding no commodity line at all skips the identification details page and goes straight to the next page in the journey, which is logged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js:105-114",
+      "quote": "request.logger.info(\n    { journeyId: request.params.journeyId },\n    'Animal identification skipped: the notification holds no commodity line to identify'\n  )\n  return kit.nextTargetKeepingTrail(request, page, scope)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-146",
+      "statement": "A commodity that declares no identifier still gets its own identification card rather than being skipped past the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:412-429",
+      "quote": "test('reaches a consignment of a commodity that declares no identifier rather than skipping past the page', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-147",
+      "statement": "The identification details page ends with Save and continue, Save and return to overview and Cancel and return to overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:344-350",
+      "quote": "test('offers Save and continue, then Save and return to overview, then Cancel and return to overview', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-148",
+      "statement": "The identification details page lays its heading and inset text in a two-thirds column and its cards across the full width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1348-1364",
+      "quote": "test('lays out the intro in a two-thirds column and the cards in the full-width column', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-149",
+      "statement": "The identification details page raises no serious or critical accessibility violations with a fresh card, a saved animal, a complete card beside one mid-entry, a card on its last animal, the fallback identifier fields, a length error or a microchip error.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:396-410, 712-741, 811-823, 991-1006, 1101-1110, 1379-1392",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Animal identification')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-150",
+      "statement": "On a phone the selected commodities summary and a species card holding a saved animal stay inside the screen width.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js:1402-1417",
+      "quote": "test('keeps the summary and a Felis catus card with a saved animal inside the screen width', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-151",
+      "statement": "A commodity line counts as short of its identified animals when it is a commodity that is identified and the records holding at least one identifier are fewer than its number of animals.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identified-animals.js:17-25",
+      "quote": "const isShortOfIdentifiedAnimals = (answers, evaluation, line) =>\n  identifiedCommodityCodes().includes(line.entry.commodityCode) &&\n  countOfIdentifiedAnimals(answers, evaluation, line) <\n    Number(line.entry.numberOfAnimalsQuantity)",
+      "confidence": "verbatim",
+      "note": "mechanism: counts the identifier records of each commodity line. The confirmation feature reads it to say what is still outstanding."
+    },
+    {
+      "id": "repo-frontend-p10-152",
+      "statement": "An identifier record with every field blank does not count as an identified animal.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identified-animals.js:7-15",
+      "quote": "return unitsForCommodityLine(answers, evaluation, index).filter((unit) =>\n    identifierIds.some((id) => !isBlank(unit[id]))\n  ).length",
+      "confidence": "verbatim",
+      "note": "mechanism: counts identifier records against the fields that species is asked for."
+    },
+    {
+      "id": "repo-frontend-p10-153",
+      "statement": "Neither detail page collects an answer of its own: both read and write the commodity lines the commodity question created.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:37; animal-identification/animal-identification.controller.js:33",
+      "quote": "export const meta = { ...page, collects: [] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-154",
+      "statement": "Each species line's identifier records are stored under that line, so removing a line removes its animals with it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:23-28",
+      "quote": "const appended = await state.appendEntryAt(\n      request,\n      h,\n      ['commodityLines', index, 'animalIdentifiers'],\n      unitFromForm(form)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-155",
+      "statement": "A record the service refuses to store because the line is full is reported back on that line's card as the cap-reached message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js:11-15",
+      "quote": "const recordCapFailure = async (request, h, index) => {\n  const { answers: current } = await state.get(request, h)\n  const cap = identifierCapOf(current, index)\n  return { index, cap, text: copy.errors.capReached(cap) }\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: turns a refused append into a per-card error, reading the line's cap back from the stored answers."
+    },
+    {
+      "id": "repo-frontend-p10-156",
+      "statement": "Both detail pages carry a cross-site request token and a concurrency token in their forms.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:14-15",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim",
+      "note": "The identification details page carries the same two (animal-identification.njk:29-30)."
+    },
+    {
+      "id": "repo-frontend-p10-157",
+      "statement": "Both detail pages submit with the browser's own validation switched off, so every check is the service's.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:13",
+      "quote": "<form method=\"post\" novalidate>",
+      "confidence": "verbatim",
+      "note": "The identification details page does the same (animal-identification.njk:28)."
+    },
+    {
+      "id": "repo-frontend-p10-158",
+      "statement": "The Welsh copy file carries the same key tree as the English one, with Welsh wording for every label, hint, button and error message both detail pages use.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:47-120",
+      "quote": "consignmentDetails: {\n    title: 'Manylion y nwyddau',\n    addAnother: 'Ychwanegu nwydd arall',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-159",
+      "statement": "The Welsh wording is a machine draft no translator has reviewed, and is marked as not to be shown to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p10-160",
+      "statement": "The Welsh count-drop message does not singularise its counts the way the English one does: it reads \"cofnod dynodwr\" and \"anifail\" whatever the numbers are.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js:68-69",
+      "quote": "countDrop: (records, species, entered) =>\n        `Mae gennych ${records} cofnod dynodwr ar gyfer ${species} ond fe wnaethoch nodi ${entered} anifail. Tynnwch gofnodion dynodwr neu cadwch y cyfrif uwch.`",
+      "confidence": "verbatim",
+      "note": "Recorded as read; this part does not judge whether the Welsh form is right."
+    },
+    {
+      "id": "repo-frontend-p10-161",
+      "statement": "Nothing in these two pages limits how many commodity lines a notification may hold, or how many identifier records a line may hold beyond its own number of animals.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js; animal-identification/line-cap.js",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked in every file of this part. The hub/task list entry for the contact belongs to another part."
+      "note": "Looked in both pages' validation (consignment-details/fields.js, consignment-details/validation/count-drop.js, animal-identification/identifier/fields.js) and in line-cap.js: the only numeric limits are the per-field maximum of 2147483647 and the per-line animal count. Any overall limit would sit in the set's limits doc or obligations, outside this part."
+    },
+    {
+      "id": "repo-frontend-p10-162",
+      "statement": "Neither page says what happens to a line's saved identifier records when its number of animals is raised rather than dropped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The count-drop rule only refuses a count below the records saved. Raising the count is accepted with no message, and this part holds no test for what the cards then show, beyond the counter reading the new cap."
+    },
+    {
+      "id": "repo-frontend-p10-163",
+      "statement": "Removing one species row, or one whole commodity group, leaves the counts already saved against the commodities that remain exactly as they were.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js:391-428",
+      "quote": "test('removes one species row without changing another quantity', async ({",
+      "confidence": "verbatim",
+      "note": "The fit spec proves it for a per-species removal and for a code-level removal, each checking the surviving line's stored count."
     }
   ]
 }

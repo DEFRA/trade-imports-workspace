@@ -1,0 +1,915 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 14 read the whole repo-root `fit/` folder of repos/trade-imports-plants-frontend in full, which holds exactly five files (confirmed with `find fit -type f`): `journey-smoke.fit.spec.js` (225 lines), `high-risk-plants-journey.js` (1,596 lines), `set-base.js` (125 lines), `sign-in.js` (9 lines) and `seed-fields.js` (10 lines). `journey-smoke.fit.spec.js` holds four `test(...)` declarations, two of them in loops, giving nine test instances: one smoke test per shape of the flow's `happy-path.json` fixture (five shapes - warePotatoes, warePotatoesLate, seedPotatoes, plantsForPlanting, woodWithoutBark), each walking the whole journey from the dashboard to confirmation and asserting every step's URL and trail; one Back test per shape in `BACK_TARGETS_BY_PAGE_ON_FORWARD_WALK` (warePotatoes, woodWithoutBark); and two standalone Back tests on the seed-potato walk. The spec reads its answers from the fixture (another part's file; read here only to say what the walk enters and asserts) and every label, button and message from the features' own `copy/copy.en.js` and `shared/copy.en.js`. `high-risk-plants-journey.js` is the page-by-page harness every fit spec in the repo drives the journey with: walk constants (POTATO_WALK, the review URLs and the Change-link trail), save-control and Back locators, the whole dashboard-to-confirmation walk as composable helpers (startNotification, chooseCommodityType, addCommodityLine, saveOrigin, startPotatoNotification, startPotatoNotificationAtContact, completePotatoNotification, openDeclaration, submitDeclarationFromCheckAnswers, the wood variants and startNotificationAtOverview/startNotificationAtOrigin), the shared axe gate, the no-JavaScript reopener, the type-ahead chooser, and three shared test factories that declare whole suites for every address picker (describeAddressPicker, describeSubmittedSearchPicker) and every MOJ date picker (describeDatePickerLook). `set-base.js`, `sign-in.js` and `seed-fields.js` are the set-up mechanisms: the set's mount prefix and the trail-aware URL matchers, the stub sign-in, and the resolution of relative fixture dates. Covered: the four smoke tests and their nine instances; the journey walked page by page in order (commodity-type, commodities/details, commodities, origin, arrival-status, arrival-details, destinations/select, consignors/select, identification-numbers, consignment/contact/select, notification-view, declaration, confirmation) with the answers entered and the headings, labels and messages asserted; the commodity-type and arrival-status branches and the late branch; the shared picker, date-picker, save-control, axe and no-JavaScript suites the harness declares; and the three set-up files as mechanism claims. Amend and copy are a gap: the harness carries no helper for either.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p14-001",
+      "statement": "A signed-in trader can take a high-risk plants notification from the dashboard through to confirmation, and this is proven for five use cases: ware potatoes from Spain notified before arrival, ware potatoes from Portugal notified after arrival, seed potatoes from the Netherlands, spruce (Picea) from Germany with species and EPPO code, and conifer wood without bark from Italy with phytosanitary treatments.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:119-148, with the shapes in src/server/app/sets/high-risk-plants/journeys/linear/flow/fixtures/happy-path.json",
+      "quote": "for (const [name, shape] of Object.entries(happyPaths)) {\n  test(`${name}: ${shape.useCase} reaches confirmation`, async ({ page }) => {",
+      "confidence": "verbatim",
+      "note": "The five useCase strings are quoted verbatim from the fixture: \"Ware potatoes from Spain, notified before arrival\", \"Ware potatoes from Portugal, notified after arrival\", \"Seed potatoes from the Netherlands\", \"Spruce (Picea) from Germany, with species and EPPO code\", \"Conifer wood without bark from Italy, with phytosanitary treatments\". The fixture itself belongs to the flow part; it is read here only to say what the smoke walk enters and proves."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-002",
+      "statement": "Every journey page's address carries a trail of the places the trader has saved before it, and the smoke test asserts the exact trail on each step as it walks.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:108-112,122-131",
+      "quote": "const stepUrl = (reference, step, trail) =>\n  pageUrlWithTrail(\n    `/notifications/${reference}/${step.slug}${step.fields.index === undefined ? '' : `\\\\?index=${step.fields.index}`}`,\n    trail\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-003",
+      "statement": "The walk's first place is the dashboard, so a notification started from the dashboard carries 'dashboard' as the oldest place on its trail.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:123",
+      "quote": "const walked = [TRAIL_START.dashboard]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-004",
+      "statement": "Saving the commodity details page adds no place to the trail, while saving every other journey page adds its own slug.",
+      "kind": "rule",
+      "ref": "fit/journey-smoke.fit.spec.js:114-117",
+      "quote": "const PAGES_SAVED_WITHOUT_TRAIL_ENTRY = new Set(['commodities/details'])\n\nconst trailEntryAfterSaving = (step) =>\n  PAGES_SAVED_WITHOUT_TRAIL_ENTRY.has(step.slug) ? [] : [step.slug]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-005",
+      "statement": "The commodity details page for an existing line is addressed with an index query, and the trail is written after that query.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:108-112",
+      "quote": "`/notifications/${reference}/${step.slug}${step.fields.index === undefined ? '' : `\\\\?index=${step.fields.index}`}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-006",
+      "statement": "The commodity details page's category question is continued with a button reading \"Continue\", while every other page in the walk is saved with \"Save and continue\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:99-106",
+      "quote": "const button =\n    step.slug === 'commodities/details' && step.fields.index === undefined\n      ? commodityCopy.details.continue\n      : sharedCopy.saveActions.saveAndContinue",
+      "confidence": "verbatim",
+      "note": "commodityCopy.details.continue is 'Continue' (features/commodities/copy/copy.en.js:124); sharedCopy.saveActions.saveAndContinue is 'Save and continue' (shared/copy.en.js)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-007",
+      "statement": "Saving the last step of the journey lands the trader on the notification view at /notifications/{reference}/notification-view, carrying the whole walked trail.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:133-135",
+      "quote": "await expect(page).toHaveURL(\n      pageUrlWithTrail(`/notifications/${reference}/notification-view`, walked)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-008",
+      "statement": "A draft notification's review shows the notification's reference as the page's level-1 heading, a \"Draft\" status in the page's main region, and exactly two controls at its foot, reading \"Continue\" and \"Save and return to overview\".",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:656-693",
+      "quote": "export const expectDraftReview = async (page) => {\n  await expect(notificationReferenceHeading(page)).toBeVisible()\n  await expect(viewHeaderTag(page, sharedCopy.journeyStrip.draft)).toBeVisible()\n  await expectDraftReviewFoot(page)\n}",
+      "confidence": "verbatim",
+      "note": "sharedCopy.journeyStrip.draft is 'Draft'; checkAnswersCopy.continue is 'Continue'; sharedCopy.saveActions.saveAndReturnToHub is 'Save and return to overview'. The foot controls are read from the last form in main: `page.getByRole('main').locator('form').last().getByRole('button')`."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-009",
+      "statement": "After submitting, the trader reaches a confirmation page whose level-1 heading reads \"Notification submitted\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:138-140",
+      "quote": "page.getByRole('heading', { name: confirmationCopy.title, level: 1 })",
+      "confidence": "verbatim",
+      "note": "confirmationCopy.title is 'Notification submitted' (features/confirmation/copy/copy.en.js)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-010",
+      "statement": "The confirmation page shows the notification's reference beside the words \"Your notification reference\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:141-143",
+      "quote": "await expect(\n      page.getByText(confirmationCopy.reference, { exact: false })\n    ).toContainText(reference)",
+      "confidence": "verbatim",
+      "note": "confirmationCopy.reference is 'Your notification reference'."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-011",
+      "statement": "The confirmation page shows the heading \"Your notification was made outside the required timing\" only for a notification made outside its timing, and shows it on no other confirmation.",
+      "kind": "rule",
+      "ref": "fit/journey-smoke.fit.spec.js:144-146",
+      "quote": "await expect(\n      page.getByRole('heading', { name: confirmationCopy.late.heading })\n    ).toHaveCount(shape.late ? 1 : 0)",
+      "confidence": "verbatim",
+      "note": "confirmationCopy.late.heading is 'Your notification was made outside the required timing'. Only the warePotatoesLate shape sets late: true."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-012",
+      "statement": "Each use case's confirmation page is checked for accessibility and must have no serious or critical violation.",
+      "kind": "non-functional",
+      "ref": "fit/journey-smoke.fit.spec.js:147",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, `${name} confirmation`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-013",
+      "statement": "On the commodities list, the arrival details, the identification numbers and the consignment contact pages, Back opens the page the trader pressed Save and continue on, and this is proven for a ware-potato walk and a wood walk.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:166-200",
+      "quote": "test(`${name}: Back on the commodities list, arrival details, identification numbers and contact opens the step Save and continue came from`, async ({\n    page\n  }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-014",
+      "statement": "On a ware-potato notification, Back goes from the commodities list to commodity-type, from the arrival details to origin, from the identification numbers to the place of destination picker, and from the consignment contact to the identification numbers.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:152-157",
+      "quote": "warePotatoes: {\n    commodities: 'commodity-type',\n    'arrival-details': 'origin',\n    'identification-numbers': 'destinations/select',\n    'consignment/contact/select': 'identification-numbers'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-015",
+      "statement": "On a wood-without-bark notification, Back goes from the arrival details to the arrival status question and from the identification numbers to the consignor picker, where a potato notification goes to origin and to the place of destination picker, so Back follows the branch the commodity type opened.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:158-163",
+      "quote": "woodWithoutBark: {\n    commodities: 'commodity-type',\n    'arrival-details': 'arrival-status',\n    'identification-numbers': 'consignors/select',\n    'consignment/contact/select': 'identification-numbers'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-016",
+      "statement": "The page Back opens carries the trail without the place the trader came from, so the trail shortens by one as Back is followed.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:182-187",
+      "quote": "await expect(page).toHaveURL(\n            pageUrlWithTrail(\n              `/notifications/${reference}/${backTarget}`,\n              walked.slice(0, -1)\n            )\n          )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-017",
+      "statement": "Going back in the browser after following a page's Back link returns to the step the trader was on, with its trail unchanged.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:188-189",
+      "quote": "await page.goBack()\n          await expect(page).toHaveURL(stepUrl(reference, step, walked))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-018",
+      "statement": "Following Back from the arrival details to origin and then pressing Save and continue carries the trader on to the arrival details again rather than stopping at origin.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:202-213",
+      "quote": "test('following Back and choosing Save and continue carries on to the next step', async ({\n  page\n}) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-019",
+      "statement": "Following Back twice from the arrival details of a seed-potato notification reaches origin and then the commodities list.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:215-225",
+      "quote": "test('following Back from the arrival details reaches origin and then the commodities list', async ({\n  page\n}) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-020",
+      "statement": "An address is chosen on a picker page by ticking a radio whose name reads \"Select\" followed by the address's name, such as \"Select Tech Imports Ltd\".",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:33-36; fit/high-risk-plants-journey.js:879-884,1032-1036",
+      "quote": "const choosePickedAddress = (page, addressId) =>\n  chooseRadio(page, `Select ${stubNameById.get(addressId)}`)",
+      "confidence": "verbatim",
+      "note": "mechanism: maps a fixture's address id to the stub book's name for that record, so the walk can name the radio the page renders. pickerCopy.selectRowPrefix is 'Select'."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-021",
+      "statement": "The arrival date question is labelled \"Expected date of arrival\" when the notification also asks for an arrival time, and \"Expected date of landing in Great Britain\" when it does not.",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:58-62",
+      "quote": "const dateLabel = fields.arrivalTime\n    ? arrivalCopy.dateLabels.potatoes\n    : arrivalCopy.dateLabels['not-yet-arrived']",
+      "confidence": "verbatim",
+      "note": "arrivalCopy.dateLabels.potatoes is 'Expected date of arrival' and dateLabels['not-yet-arrived'] is 'Expected date of landing in Great Britain' (features/arrival-details/copy/copy.en.js:8-12)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-022",
+      "statement": "A notification that asks for an arrival time also asks for the proposed place of landing, answered by searching for \"Port of Dover - GB DVR\".",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:63-71",
+      "quote": "await chooseTypeAheadOption(page, {\n      label: arrivalCopy.placeOfLanding.label,\n      optionName: 'Port of Dover - GB DVR'\n    })",
+      "confidence": "verbatim",
+      "note": "arrivalCopy.placeOfLanding.label is 'Proposed place of landing'; arrivalCopy.time.label is 'Expected time of arrival'."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-023",
+      "statement": "The commodities list page asks no question: the walk enters nothing on it and only presses Save and continue.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:78",
+      "quote": "commodities: async () => {},",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-024",
+      "statement": "The commodity line's genus is chosen from a type-ahead whose options read as the genus label, such as \"Picea (spruce)\", while every other commodity line field is typed into a field found by its own label.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:43-55",
+      "quote": "if (field === 'genus') {\n      await chooseTypeAheadOption(page, {\n        label: commodityCopy.details.fields.genus.label,\n        optionName: commodityCopy.genusLabels[value]\n      })",
+      "confidence": "verbatim",
+      "note": "commodityCopy.details.fields.genus.label is 'Genus' and genusLabels.Picea is 'Picea (spruce)' (features/commodities/copy/copy.en.js:26-,88)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-025",
+      "statement": "The commodity category is chosen from radios labelled by the category, such as \"Ware potatoes\", \"Seed potatoes\", \"Plants for planting\" and \"Conifer wood without bark (from Italy, France, Portugal or Spain)\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:38-41",
+      "quote": "if (fields.index === undefined) {\n    await chooseRadio(page, commodityCopy.categoryLabels[fields.category])\n    return\n  }",
+      "confidence": "verbatim",
+      "note": "The labels are read from features/commodities/copy/copy.en.js:11-25; the walk uses ware-potatoes, seed-potatoes, plants-for-planting and conifer-wood-without-bark."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-026",
+      "statement": "The commodity type is chosen from radios reading \"Potatoes (seed or ware)\", \"Plants for planting\" and \"Wood and cut trees\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:75-76; fit/high-risk-plants-journey.js:730-736",
+      "quote": "'commodity-type': (page, fields) =>\n    chooseRadio(page, commodityCopy.typeLabels[fields.commodityType]),",
+      "confidence": "verbatim",
+      "note": "features/commodity-type/copy/copy.en.js:20-24 holds the three labels verbatim."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-027",
+      "statement": "The arrival status is chosen from radios reading \"Yes, it has already arrived\" and \"No, it has not arrived yet\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:81-82",
+      "quote": "'arrival-status': (page, fields) =>\n    chooseRadio(page, statusCopy.statusLabels[fields.arrivalStatus]),",
+      "confidence": "verbatim",
+      "note": "features/arrival-status/copy/copy.en.js:8-11 holds both labels verbatim."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-028",
+      "statement": "The country of origin is chosen from a type-ahead labelled \"Country of origin\", by the country's display name such as Spain, Portugal, \"Netherlands (the)\", Germany, Italy or France.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:600-604; fit/journey-smoke.fit.spec.js:79-80",
+      "quote": "export const chooseCountryOfOrigin = (page, country) =>\n  chooseTypeAheadOption(page, {\n    label: originCopy.country.label,\n    optionName: country\n  })",
+      "confidence": "verbatim",
+      "note": "originCopy.country.label is 'Country of origin' (features/origin/copy/copy.en.js:7-9). The display names come from each happy-path shape's countryName."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-029",
+      "statement": "The identification numbers page's fields are answered by their own labels, which read \"Identification number of the supplier of the plants\", \"Identification number of the producer of the potatoes\", \"Crop identification number\" and \"Consignment number (optional)\".",
+      "kind": "copy",
+      "ref": "fit/journey-smoke.fit.spec.js:88-94",
+      "quote": "'identification-numbers': async (page, fields) => {\n    for (const [field, value] of Object.entries(fields)) {\n      await page\n        .getByLabel(idsCopy.fields[field].label, { exact: true })\n        .fill(value)\n    }\n  },",
+      "confidence": "verbatim",
+      "note": "features/identification-numbers/copy/copy.en.js holds the four labels verbatim."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-030",
+      "statement": "The high-risk plants journey is served under the mount /high-risk-plants, and every URL assertion is anchored on the site's origin, that mount and the end of the address, so a dropped or doubled mount and an unexpected query all fail.",
+      "kind": "constraint",
+      "ref": "fit/set-base.js:7-20,53-69",
+      "quote": "const ORIGIN_AND_SET_BASE = `^[a-z]+://[^/]+${SET_BASE}`",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the URL matchers the fit specs assert with, from the set's own SET_BASE ('/high-risk-plants', src/server/app/sets/high-risk-plants/set.js:6-7) rather than a literal, so the specs and the server cannot disagree about the mount."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-031",
+      "statement": "A notification is started from the dashboard by pressing a button reading \"Start a new notification\", which opens the commodity type question of a new notification whose reference is the first segment of the address after the mount.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:649-654",
+      "quote": "export const startNotification = async (page) => {\n  await page.goto(BASE)\n  await page.getByRole('button', { name: dashboardCopy.startButton }).click()\n  await expect(page).toHaveURL(COMMODITY_TYPE_URL)\n  return journeyIdFromPage(page)\n}",
+      "confidence": "verbatim",
+      "note": "dashboardCopy.startButton is 'Start a new notification' (features/dashboard/copy/copy.en.js:11)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-032",
+      "statement": "A seed-potato notification's pages are walked in this order: commodity-type, commodities, origin, arrival-details, destinations/select, identification-numbers, consignment/contact/select.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:33-41",
+      "quote": "export const POTATO_WALK = [\n  'commodity-type',\n  'commodities',\n  'origin',\n  'arrival-details',\n  'destinations/select',\n  'identification-numbers',\n  'consignment/contact/select'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-033",
+      "statement": "Answering the commodity type for a notification with no commodity lines opens the commodity details page, not the commodities list.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:725-743",
+      "quote": "await expect(page).toHaveURL(\n    notificationPageWithTrail('commodities/details', [\n      ...trailBefore,\n      'commodity-type'\n    ])\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-034",
+      "statement": "The commodity details page asks for the line's category first and continues to the page that asks for that category's fields.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:770-780",
+      "quote": "export const chooseCommodityCategory = async (page, category) => {\n  await page\n    .getByRole('radio', {\n      name: commodityCopy.categoryLabels[category],\n      exact: true\n    })\n    .check()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-035",
+      "statement": "Saving a commodity line lands the trader on the commodities list, whose address carries the dashboard and the commodity type question as its trail.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:56-59,789-798",
+      "quote": "const COMMODITY_LIST_URL = notificationPageWithTrail('commodities', [\n  TRAIL_START.dashboard,\n  'commodity-type'\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-036",
+      "statement": "A seed-potato commodity line is described by a variety, a quantity and an intended use, such as Maris Piper, 250 and Planting.",
+      "kind": "data",
+      "ref": "fit/high-risk-plants-journey.js:893-901",
+      "quote": "await addCommodityLine(page, 'seed-potatoes', {\n    potatoVariety: POTATO_VARIETY,\n    quantity: '250',\n    potatoIntendedUse: 'Planting'\n  })",
+      "confidence": "verbatim",
+      "note": "POTATO_VARIETY is 'Maris Piper' (fit/high-risk-plants-journey.js:32). The labels are 'Variety', 'Quantity' and 'Intended use'. Test data, not a specification of the field set."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-037",
+      "statement": "A cut-coniferous-trees commodity line is described by a commodity code, a quantity, the size of the trees and the phytosanitary treatments applied, such as 06042020, 40, 3.5 and \"Heat treatment\".",
+      "kind": "data",
+      "ref": "fit/high-risk-plants-journey.js:831-836",
+      "quote": "export const WOOD_LINE_FIELDS = {\n  commodityCode: '06042020',\n  quantity: '40',\n  sizeOfTree: '3.5',\n  phytosanitaryTreatments: 'Heat treatment'\n}",
+      "confidence": "verbatim",
+      "note": "The labels are 'Commodity code', 'Quantity', 'Size of the trees' and 'Phytosanitary treatments applied'. Test data, not a specification of the field set."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-038",
+      "statement": "A potato notification goes straight from the origin page to the arrival details, with no question about whether the consignment has arrived.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:893-907",
+      "quote": "await chooseCountryOfOrigin(page, 'France')\n  await saveAndContinue(page).click()\n  await expect(page).toHaveURL(pageUrlOnWalk('arrival-details', POTATO_WALK))",
+      "confidence": "verbatim",
+      "note": "POTATO_WALK holds no arrival-status entry, and the smoke walk's potato shapes hold no arrival-status step, while the plants and wood shapes do."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-039",
+      "statement": "A wood-and-cut-trees notification asks whether the consignment has arrived before it asks for the arrival details, and a not-yet-arrived answer leads to a question for the expected date of landing.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:861-877",
+      "quote": "await page\n    .getByRole('radio', {\n      name: statusCopy.statusLabels['not-yet-arrived'],\n      exact: true\n    })\n    .check()\n  await saveAndContinue(page).click()\n  await page\n    .getByLabel(arrivalCopy.dateLabels['not-yet-arrived'], { exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-040",
+      "statement": "A potato notification's arrival details ask for the expected date of arrival, the expected time of arrival and the proposed place of landing, answered in the walk as a date, 14:30 and \"Port of Dover - GB DVR\".",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:922-935",
+      "quote": "await page.getByLabel(arrivalCopy.time.label, { exact: true }).fill('14:30')\n  await chooseTypeAheadOption(page, {\n    label: arrivalCopy.placeOfLanding.label,\n    optionName: 'Port of Dover - GB DVR'\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-041",
+      "statement": "A potato notification whose expected date of arrival is today is late, while one seven days ahead is on time.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:69,914-929",
+      "quote": "const arrival = new Date()\n  arrival.setDate(arrival.getDate() + (late ? 0 : DAYS_AHEAD_ON_TIME))",
+      "confidence": "verbatim",
+      "note": "DAYS_AHEAD_ON_TIME is 7 (line 69), and the helper's doc comment says `late` \"arrives today, inside the potato notice period, so the notification is late\"."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-042",
+      "statement": "The arrival details are followed by the place of destination picker, where the trader picks an address from the address book.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:935-939",
+      "quote": "await expect(page).toHaveURL(\n    pageUrlOnWalk('destinations/select', POTATO_WALK)\n  )\n  await pickAddressBookParty(page)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-043",
+      "statement": "A potato notification asks for the producer's identification number and the crop identification number after the place of destination, answered in the walk as P123 and C123.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:940-951",
+      "quote": "await page\n    .getByLabel(idsCopy.fields.producerIdentificationNumber.label, {\n      exact: true\n    })\n    .fill('P123')\n  await page\n    .getByLabel(idsCopy.fields.cropIdentificationNumber.label, { exact: true })\n    .fill('C123')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-044",
+      "statement": "A plants-for-planting notification asks for the supplier's identification number and a wood notification for a consignment number, where a potato notification asks for the producer and crop numbers, so the identification numbers page asks what the commodity type needs.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/fixtures/happy-path.json, the plantsForPlanting and woodWithoutBark identification-numbers steps, walked by fit/journey-smoke.fit.spec.js:88-94",
+      "quote": "\"slug\": \"identification-numbers\",\n        \"fields\": {\n          \"supplierIdentificationNumber\": \"DE-12345\"\n        }",
+      "confidence": "verbatim",
+      "note": "The woodWithoutBark shape's same step holds \"consignmentNumber\": \"WOOD_123\". Claimed here because the smoke spec enters these answers; the fixture file itself is the flow part's."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-045",
+      "statement": "A plants or wood notification asks for the consignor after the place of destination, where a potato notification does not.",
+      "kind": "behaviour",
+      "ref": "fit/journey-smoke.fit.spec.js:86-87, walking the plantsForPlanting and woodWithoutBark consignors/select steps",
+      "quote": "'consignors/select': (page, fields) =>\n    choosePickedAddress(page, fields.consignor),",
+      "confidence": "verbatim",
+      "note": "POTATO_WALK has no consignors/select entry, and the two potato shapes hold no such step."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-046",
+      "statement": "The last question of the journey is the consignment contact, picked from the address book.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:952-955,967-970",
+      "quote": "await expect(page).toHaveURL(\n    pageUrlOnWalk('consignment/contact/select', POTATO_WALK)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-047",
+      "statement": "A notification with every question answered shows, on its review, a level-2 heading reading \"Now submit your notification\" and the words \"Continue to the declaration to submit your notification.\"",
+      "kind": "copy",
+      "ref": "fit/high-risk-plants-journey.js:967-981",
+      "quote": "await expect(\n    page.getByRole('heading', {\n      name: checkAnswersCopy.submit.heading,\n      level: 2\n    })\n  ).toBeVisible()\n  await expect(\n    page.getByText(checkAnswersCopy.submit.body, { exact: true })\n  ).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "features/check-answers/copy/copy.en.js:43-45 holds both strings verbatim."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-048",
+      "statement": "Pressing \"Continue\" on the review opens the notification's declaration page at /notifications/{reference}/declaration.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:991-1000",
+      "quote": "await page\n    .getByRole('button', { name: checkAnswersCopy.continue, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/declaration$`)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-049",
+      "statement": "The declaration is confirmed by ticking a checkbox reading \"I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.\" and pressing \"Continue\", which submits the notification and opens its confirmation page.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1010-1024",
+      "quote": "await page\n    .getByRole('checkbox', { name: declarationCopy.declarationLabel })\n    .check()\n  await page\n    .getByRole('button', { name: declarationCopy.continueButton, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/confirmation$`)\n  )",
+      "confidence": "verbatim",
+      "note": "features/declaration/copy/copy.en.js:8-12 holds the label and the 'Continue' button verbatim."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-050",
+      "statement": "A notification's overview sits at /notifications/{reference} and can be opened once the commodity type has been saved.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:702-714",
+      "quote": "await page.goto(`${BASE}/notifications/${reference}`)\n  await expect(page).toHaveURL(setUrl('/notifications/[^/]+$'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-051",
+      "statement": "An existing notification's commodity type can be changed by opening /notifications/{reference}/commodity-type, choosing another type and saving.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:752-761",
+      "quote": "export const changeCommodityType = async (page, reference, commodityType) => {\n  await page.goto(`${BASE}/notifications/${reference}/commodity-type`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-052",
+      "statement": "A Change link on a potato notification's review carries the dashboard, every page of the potato walk and the review itself as its trail, so a page opened from the review knows the whole way back.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:49-53",
+      "quote": "export const POTATO_CHANGE_LINK_TRAIL = [\n  TRAIL_START.dashboard,\n  ...POTATO_WALK,\n  'notification-view'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-053",
+      "statement": "Saving a commodity line opened from a review Change link continues to the commodities list and then to the origin page, each carrying the Change link's trail with the pages walked since added to it.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1584-1596",
+      "quote": "await expect(page).toHaveURL(\n    notificationPageWithTrail('origin', [...changeLinkTrail, 'commodities'])\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-054",
+      "statement": "Removing a commodity line returns the trader to the commodities list with a removed query naming the line, carrying the commodity type question as its trail.",
+      "kind": "behaviour",
+      "ref": "fit/set-base.js:48-51",
+      "quote": "export const COMMODITY_REMOVED_URL = notificationPageWithTrail(\n  'commodities\\\\?removed=\\\\d+',\n  ['commodity-type']\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-055",
+      "statement": "A review page can be reached and asserted both with the potato walk's trail and with no trail at all, so the review is addressable from inside the journey and on its own.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:42-48",
+      "quote": "export const REVIEW_URL_FROM_POTATO_WALK = pageUrlOnWalk(\n  'notification-view',\n  POTATO_WALK\n)\nexport const REVIEW_URL_WITHOUT_TRAIL = setUrl(\n  '/notifications/[^/]+/notification-view'\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-056",
+      "statement": "Every journey page that collects answers offers three controls in one order: a \"Save and continue\" button, a save-and-return button and a cancel link, with the two buttons alone in one GOV.UK button group, the save-and-return button last of the form's buttons, and the cancel link below that group.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:530-570",
+      "quote": "await expect(saveControls).toHaveText([\n    sharedCopy.saveActions.saveAndContinue,\n    saveAndReturnToHubLabel,\n    cancelAndReturnToHubLabel\n  ])",
+      "confidence": "verbatim",
+      "note": "The default labels are 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview' (shared/copy.en.js saveActions); a page may give its own words for the two return controls."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-057",
+      "statement": "A searchable list field works as an enhanced search box where JavaScript runs and as a plain select where it does not, and both are reached by the same visible label.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:572-598",
+      "quote": "if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {\n    await field.selectOption({ label: optionName })\n    return\n  }\n  await field.click()\n  await field.fill(query)\n  await page.getByRole('option', { name: optionName, exact: true }).click()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-058",
+      "statement": "A page a fit spec checks for accessibility must have no serious or critical violation of WCAG 2.0 A and AA, WCAG 2.1 A and AA, or WCAG 2.2 AA, and the failure names every violation found.",
+      "kind": "non-functional",
+      "ref": "fit/high-risk-plants-journey.js:65-66,606-621",
+      "quote": "const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-059",
+      "statement": "A page can be reopened at the same address with JavaScript switched off while staying signed in, so a behaviour can be proven to work without JavaScript.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:340-359",
+      "quote": "const context = await browser.newContext({\n    javaScriptEnabled: false,\n    storageState: await page.context().storageState()\n  })",
+      "confidence": "verbatim",
+      "note": "mechanism: opens a second browser context carrying the signed-in session's storage state, for the no-JavaScript assertions."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-060",
+      "statement": "Every address picker's search box is described by the hint \"Name, address or country\", is half the width of the page's column, and is joined flush to exactly one button reading \"Search\".",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:279-300,374-395",
+      "quote": "test(`the ${pickerName} search box is hinted, half the column wide and joined flush to its one search button`, async ({",
+      "confidence": "verbatim",
+      "note": "pickerCopy.search holds label 'Search', hint 'Name, address or country' and button 'Search' (features/address-book-picker/copy/copy.en.js:3-7)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-061",
+      "statement": "Every address picker's search button is in the GOV.UK brand colour with inverse text, darkens on hover, and takes the GOV.UK focus colours when focused.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:225-255,397-407",
+      "quote": "test(`the ${pickerName} search button is in the GOV.UK brand colour, darkens on hover and takes the GOV.UK focus colours`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-062",
+      "statement": "Pressing Enter in an address picker's search box narrows the list on the server without JavaScript, keeping the term in the box and showing no error.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:302-308,431-446",
+      "quote": "test(`pressing Enter in the ${pickerName} search box narrows the list on the server without JavaScript`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-063",
+      "statement": "Every address picker is checked for accessibility in three states: empty, after a search that found matches, and after a search that found nothing.",
+      "kind": "non-functional",
+      "ref": "fit/high-risk-plants-journey.js:409-428",
+      "quote": "test(`the ${pickerName} picker has no serious or critical axe violations empty, searched and with no matches`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-064",
+      "statement": "A date question answered with the calendar has a button that opens it in the GOV.UK brand colour with an inverse-text icon, which darkens on hover and takes the GOV.UK focus colours.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:488-500",
+      "quote": "test(`the ${fieldName} button that opens the calendar is in the GOV.UK brand colour with an inverse-text icon, darkens on hover and takes the GOV.UK focus colours`, async ({",
+      "confidence": "verbatim",
+      "note": "The calendar is the MOJ date picker: the harness finds it by the `.moj-datepicker` class and its \"Choose date\" button (lines 207-218)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-065",
+      "statement": "An opened calendar ends above the next question on the page, so it hides nothing the trader still has to answer.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:449-460,502-510",
+      "quote": "test(`the ${fieldName} calendar ends above the next question`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-066",
+      "statement": "A calendar opened with the mouse puts focus on the day it opened on, and one opened with the keyboard shows the focused day and an outline round the calendar body in the GOV.UK focus colours.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:462-486,512-522",
+      "quote": "test(`the ${fieldName} calendar opened with the keyboard shows the focused day and an outline round the calendar body in the GOV.UK focus colours`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-067",
+      "statement": "An address picker opens on the first eight of the addresses it offers.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:15,1038-1039,1224-1233",
+      "quote": "test(\"opens on the first eight of the addresses it offers, counted against every one of them, and offers the role-less address on one of its pages and another role's on none\", async ({",
+      "confidence": "verbatim",
+      "note": "The figure comes from ADDRESSES_A_PAGE, which features/address-book-picker/pagination.js:6 sets to 8."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-068",
+      "statement": "An address picker says how many addresses it is showing out of how many there are, reading \"Showing X out of Y results\".",
+      "kind": "copy",
+      "ref": "fit/high-risk-plants-journey.js:1229-1233,1087-1088",
+      "quote": "pickerCopy.resultsCount(addressesOnFirstPage(wholeCount), wholeCount),",
+      "confidence": "verbatim",
+      "note": "pickerCopy.resultsCount is `(shown, total) => \\`Showing ${shown} out of ${total} results\\`` (features/address-book-picker/copy/copy.en.js:10)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-069",
+      "statement": "An address carrying no role is offered on every picker, exactly once across its pages, while an address carrying only another picker's role is offered on none of them.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1236-1247",
+      "quote": "expect(rolelessSeen.reduce((total, seen) => total + seen, 0)).toBe(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-070",
+      "statement": "Searching an address picker narrows its results to the term, dropping addresses that do not match.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1250-1257",
+      "quote": "test('narrows the results to the search term', async ({ page }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-071",
+      "statement": "A search that matches nothing says \"No addresses match your search.\" rather than showing an empty table.",
+      "kind": "copy",
+      "ref": "fit/high-risk-plants-journey.js:1259-1267",
+      "quote": "test('says so rather than showing an empty table when nothing matches', async ({",
+      "confidence": "verbatim",
+      "note": "pickerCopy.noMatches is 'No addresses match your search.' (features/address-book-picker/copy/copy.en.js:12)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-072",
+      "statement": "Clearing the search box and searching with nothing entered opens the picker's whole list again, from its first page.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1269-1284",
+      "quote": "test(\"clearing the search and searching with nothing entered opens the role's whole list again, from its first page\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-073",
+      "statement": "An address picker whose list runs past one page offers paging, and its last page holds what is left of the list.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1286-1301",
+      "quote": "test('offers paging, whose last page holds what is left of the list', async ({",
+      "confidence": "verbatim",
+      "note": "The pagination is found by the navigation named 'Pagination' and its page links read 'Page <number>' (lines 1041-1045)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-074",
+      "statement": "An address picker offers no paging once a search narrows its results onto one page.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1303-1312",
+      "quote": "test('offers no paging once a search narrows the results onto one page', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-075",
+      "statement": "A row the trader has ticked stays ticked when a search hides it and the search is then cleared.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1314-1325",
+      "quote": "test('keeps a ticked row checked while the search narrows the results', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-076",
+      "statement": "A listed address reads as its street line, then its town and postcode together on a second line, not as one joined line.",
+      "kind": "copy",
+      "ref": "fit/high-risk-plants-journey.js:1339-1351",
+      "quote": ".toBe(\n          `${address.addressLine1}\\n${address.townOrCity}, ${address.postcode}`\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-077",
+      "statement": "A listed address's \"View details\" opens in place without leaving the page, and shows exactly that address's telephone number and email address.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1353-1367",
+      "quote": "test('opens the row\\'s \"View details\" disclosure in place and shows exactly that address\\'s telephone number and email address', async ({",
+      "confidence": "verbatim",
+      "note": "pickerCopy.viewDetails is 'View details' (features/address-book-picker/copy/copy.en.js:27)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-078",
+      "statement": "Saving a chosen address continues to the next page, and returning to the picker shows that address ticked and named above the results as \"Selected address: <name>\".",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1375-1392",
+      "quote": "test('saves the chosen address, continues to the next page and shows it checked on return, named above the results', async ({",
+      "confidence": "verbatim",
+      "note": "pickerCopy.selectedAddress is `(name) => \\`Selected address: ${name}\\`` and sits immediately before the 'Select an address' heading (features/address-book-picker/copy/copy.en.js:8)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-079",
+      "statement": "Choosing a second address on a picker replaces the one already saved rather than keeping both.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1394-1408",
+      "quote": "test('replaces the address already saved rather than keeping both', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-080",
+      "statement": "Pressing the picker's save-and-return control saves the chosen address and reaches the notification's overview.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1410-1422",
+      "quote": "test(`${saveAndReturnToHubLabel} saves the address and reaches the overview`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-081",
+      "statement": "Pressing the picker's save-and-return control with no address chosen reaches the overview without an error and saves nothing.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1424-1436",
+      "quote": "test(`${saveAndReturnToHubLabel} with nothing chosen reaches the overview without an error`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-082",
+      "statement": "Following the picker's cancel link reaches the overview without saving the address the trader had ticked.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1438-1450",
+      "quote": "test(`${cancelAndReturnToHubLabel} reaches the overview without saving`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-083",
+      "statement": "Pressing Save and continue on a picker with no address chosen is not refused: the trader moves on to the next page, sees exactly the alerts that page shows, and the picker's row on the overview stays \"Not yet started\".",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1458-1469",
+      "quote": "test('continuing with nothing chosen refuses nothing, shows exactly the landing alerts and leaves the overview row not yet started', async ({",
+      "confidence": "verbatim",
+      "note": "hubCopy.statuses.notYetStarted is 'Not yet started' (features/hub/copy/copy.en.js:9)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-084",
+      "statement": "Pressing Save and continue after a search that found nothing also moves the trader on.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1471-1481",
+      "quote": "test('continuing with nothing chosen after a search that found nothing moves on', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-085",
+      "statement": "An address the book does not hold is refused: the picker page is shown again with an error summary link, the search term is kept, and following the link puts focus on the first listed address.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1483-1496",
+      "quote": "test('an address not in the book is refused, focusing the first row and keeping the search', async ({",
+      "confidence": "verbatim",
+      "note": "Reported in general terms: the refusal is the service rejecting an address identifier it does not hold."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-086",
+      "statement": "The picker's radios sit in a form group with the GOV.UK form-group border and spacing until an address the book does not hold is refused, when the group takes the GOV.UK error border.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1498-1527",
+      "quote": "test(\"the radios' form group has the GOV.UK form-group border and spacing until an address not in the book is refused, then the GOV.UK error border\", async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-087",
+      "statement": "An address the book does not hold is refused on the picker's save-and-return control too, keeping the trader on the page with the search term intact.",
+      "kind": "rule",
+      "ref": "fit/high-risk-plants-journey.js:1529-1545",
+      "quote": "test(`an address not in the book is refused on ${saveAndReturnToHubLabel}, staying on the page and keeping the search`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-088",
+      "statement": "When the refusal follows a search that found nothing, the error summary link puts focus on the search box, which still holds the term searched for.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1547-1559",
+      "quote": "test('an address not in the book after a search that found nothing is refused, focusing the search box, which keeps the term', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-089",
+      "statement": "Choosing a listed address after such a refusal moves the trader on to the next page.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1561-1572",
+      "quote": "test('choosing an address after that refusal moves on', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-090",
+      "statement": "An address picker shows a level-2 heading reading \"Select an address\" with the count straight under it, offers its radios as one group named by that heading whose legend is hidden from sight, renders only the rows of the page it is on, and puts nothing but a paragraph with no link or button between the page's heading and its form.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1076-1114",
+      "quote": "export const expectPickerResultsLayout = async (page, count, rowCount) => {\n  await expect(pickerResultsSummary(page)).toHaveText(count)",
+      "confidence": "verbatim",
+      "note": "pickerCopy.resultsHeading is 'Select an address' (features/address-book-picker/copy/copy.en.js:9)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-091",
+      "statement": "A journey page's Back control is a link reading \"Back\".",
+      "kind": "copy",
+      "ref": "fit/high-risk-plants-journey.js:318-324",
+      "quote": "export const backLink = (page) =>\n  page.getByRole('link', { name: sharedCopy.layout.back, exact: true })",
+      "confidence": "verbatim",
+      "note": "sharedCopy.layout.back is 'Back' (shared/copy.en.js)."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-092",
+      "statement": "A journey page posts its answers through one form that uses the POST method.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:267-275",
+      "quote": "export const JOURNEY_FORM_SELECTOR = 'form[method=\"post\"]'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-093",
+      "statement": "A page's errors are shown in one error summary that is announced as an alert, whose links name the fields at fault.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:107-124",
+      "quote": "export const errorSummary = (page) => page.getByRole('alert')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p14-094",
+      "statement": "A notification's status is shown both in a strip on the page and as a tag in the page's main region, with \"Draft\", \"Submitted\", \"Amend\", \"Cancel amend\" and \"Deleted\" as its words.",
+      "kind": "data",
+      "ref": "fit/high-risk-plants-journey.js:663-678",
+      "quote": "export const journeyStripStatus = (page, statusText) =>\n  journeyStrip(page).getByText(statusText, { exact: true })",
+      "confidence": "verbatim",
+      "note": "The five words are shared/copy.en.js's journeyStrip keys; the harness reads the strip by the `.app-journey-strip` class."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-095",
+      "statement": "A posting button on a notification's view belongs to a form named by the button's form attribute, so each button can post its own form.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:666-673",
+      "quote": "export const formSubmittedBy = async (button) => {\n  const formId = await button.getAttribute('form')",
+      "confidence": "verbatim",
+      "note": "mechanism: finds the form and the buttons that post it from a button's `form` attribute, for assertions about which button posts what."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-096",
+      "statement": "A trader signs in to the local fit run through a stub sign-in route at /auth/stub-sign-in, as the organisation stub-org-1 unless another is named, and the route answers only when the service runs in stub mode.",
+      "kind": "integration",
+      "ref": "fit/sign-in.js:1-9",
+      "quote": "/**\n * Signs in via the stub-auth route (see server/auth/stub-sign-in.js) - no\n * real Defra ID stub involved, only reachable when STUB_MODE=true.\n */\nexport async function signIn(page, { organisationId = 'stub-org-1' } = {}) {",
+      "confidence": "verbatim",
+      "note": "mechanism: signs the fit suite in without the Defra ID stub, by the organisation id the sign-in route takes."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-097",
+      "statement": "A fit walk's arrival dates are given as a number of days from today and turned into a day/month/year date when the answer is typed, so the same fixture stays valid on any day it runs.",
+      "kind": "constraint",
+      "ref": "fit/seed-fields.js:1-10",
+      "quote": "// Resolve relative dates at use time so the shared JSON remains valid tomorrow.\nexport const seedFields = (step, today = new Date()) => {",
+      "confidence": "verbatim",
+      "note": "mechanism: rewrites a step's `arrivalDate: { daysFromToday }` into `d/m/yyyy` for the date field. The warePotatoesLate shape uses -1 (yesterday) and the others 7."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-098",
+      "statement": "A journey page's trail is carried in the address as the application itself writes it, and a page that already has a query keeps it with the trail added after.",
+      "kind": "behaviour",
+      "ref": "fit/set-base.js:16-33",
+      "quote": "const trailSuffixSource = (pathSource, entries) => {\n  const queryBefore = pathSource.includes('\\\\?') ? '?' : ''\n  const trailQuery = withTrail(queryBefore, entries).slice(queryBefore.length)\n  return `${pathSource}${RegExp.escape(trailQuery)}`\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the trail part of a URL matcher from the application's own `withTrail`, so the matcher cannot disagree with how the service encodes the trail."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-099",
+      "statement": "A notification's reference is read from the first path segment after the journey's mount, so an address that lost or doubled the mount is rejected rather than yielding the wrong reference.",
+      "kind": "constraint",
+      "ref": "fit/set-base.js:93-106",
+      "quote": "export const journeyIdFromPage = (page) => {\n  const match = new URL(page.url()).pathname.match(JOURNEY_ID_IN_URL)\n  if (!match) {\n    throw new Error(`No journey id in URL: ${page.url()}`)\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: reads the reference out of the page's current URL for the fit assertions."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-100",
+      "statement": "A page reached by Save and continue from the dashboard carries the dashboard and the pages saved before it, and a page off that walk carries every page of the walk.",
+      "kind": "behaviour",
+      "ref": "fit/set-base.js:108-125",
+      "quote": "export const pageUrlOnWalk = (slug, walk) => {\n  const position = walk.indexOf(slug)\n  const savedBefore = position === -1 ? walk : walk.slice(0, position)\n  return notificationPageWithTrail(slug, [\n    TRAIL_START.dashboard,\n    ...savedBefore\n  ])\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: works out the trail a page is expected to carry from the walk the spec names."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-101",
+      "statement": "The addresses the fit suite picks and searches for come from a stub address book whose records are named Tech Imports Ltd (place of destination), Northgate Trading AG, Westbrook Supplies Ltd, Aarhus Trading ApS, Copenhagen Exports ApS and Import Co UK, with Denmark as the country the picker searches by.",
+      "kind": "data",
+      "ref": "fit/high-risk-plants-journey.js:310-316,879-884",
+      "quote": "export const DENMARK = 'Denmark'\nexport const COPENHAGEN = 'Copenhagen Exports ApS'\nexport const MATCHES_NOTHING = 'nothing matches this'\nexport const IMPORT_CO = 'Import Co UK'\nexport const NORTHGATE = 'Northgate Trading AG'\nexport const WESTBROOK = 'Westbrook Supplies Ltd'\nexport const AARHUS = 'Aarhus Trading ApS'",
+      "confidence": "verbatim",
+      "note": "mechanism: the names are stub-book test data (src/server/app/services/address-book/stub/index.js), used with STUB_MODE instead of the address-book service. TECH_IMPORTS_NAME is 'Tech Imports Ltd'."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-102",
+      "statement": "A picker can be posted with an address identifier the book does not hold, under the name of the first listed address's radio, which is how the refusal of an unknown address is proven.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:1116-1147",
+      "quote": "export const NOT_IN_THE_BOOK = 'no-such-address'",
+      "confidence": "verbatim",
+      "note": "mechanism: adds a hidden field to the page's form so the post carries an identifier no listed row offers. Stated in general terms only."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-103",
+      "statement": "The harness carries no step for amending or copying a notification: it walks a draft to confirmation and no further, and nothing in the repo-root fit folder opens the amend, cancel-amend, copy or delete pages.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js and fit/journey-smoke.fit.spec.js, searched for amend and copy",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched both files with `grep -n \"amend\\|copy as new\\|Copy as new\"`, which found nothing in the harness. The shared copy it imports does hold notificationActions.copy ('Copy as new') and .delete ('Delete'), and shared journeyStrip holds 'Amend' and 'Cancel amend', so those journeys exist but are driven from the feature-level fit specs (parts 1 to 12), not from this folder."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-104",
+      "statement": "Opening a journey page straight from a notification's overview is done by visiting the overview first and then the page, so the page is reached the way a trader reaches it.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:326-329",
+      "quote": "export const visitOverviewThenOpen = async (page, reference, path) => {\n  await page.goto(`${BASE}/notifications/${reference}`)\n  await page.goto(path)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: a two-step navigation so the page under test is opened with the overview as the previous place."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-105",
+      "statement": "A page's radios can be rewritten in the browser to post a value the page does not offer, which is how a posted value outside the page's options is proven to be refused.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:623-641",
+      "quote": "export const overwriteRadioInputs = async (\n  page,\n  { inputSelector, postedValue }\n) => {",
+      "confidence": "verbatim",
+      "note": "mechanism: unticks every radio and, when a value is given, puts it on the first one, so the post carries a value the rendered page does not offer."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-106",
+      "statement": "A field's label can be checked against the computed size and weight of a GOV.UK label of a named size, and a colour against a GOV.UK colour token, so the pages are held to the GOV.UK Frontend styles rather than to hard-coded values.",
+      "kind": "non-functional",
+      "ref": "fit/high-risk-plants-journey.js:138-205",
+      "quote": "export const expectGovukLabelSize = async (page, label, size) =>\n  expectStyle(\n    label,\n    await measureReferenceElement(page, {\n      tagName: 'label',\n      className: `govuk-label govuk-label--${size}`,\n      properties: ['font-size', 'font-weight']\n    })\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: makes a throwaway element carrying the GOV.UK class or token, reads its computed style and removes it, giving the expected value to compare against."
+    },
+    {
+      "id": "repo-plantsfrontend-p14-107",
+      "statement": "A journey page's trail is dropped and the journey falls back when the address names a place the journey does not have, and this is the behaviour the fit URL matchers are built on.",
+      "kind": "behaviour",
+      "ref": "fit/set-base.js:8,16-20 importing withTrail from src/server/app/shared/trail.js",
+      "quote": "import { TRAIL_START, withTrail } from '../src/server/app/shared/trail.js'",
+      "confidence": "inferred",
+      "note": "Follows from the fit folder reusing the application's own trail module rather than a copy; the rule itself is stated in shared/trail.js, which belongs to the shared-kit part. Recorded here only because this part's matchers rest on it."
+    }
+  ]
+}

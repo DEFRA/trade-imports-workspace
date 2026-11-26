@@ -1,0 +1,826 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 16 read the three remaining consignment-parties and contact-address feature folders of the live-animals set in repos/trade-imports-animals-frontend (on main), every file in each except the co-located *.test.js unit tests: cph-number/ (page.js, controller.js, template.njk, validate.js, shape.js, evaluation.js, copy/copy.en.js, copy/copy.cy.js, cph-number.fit.spec.js), permanent-address/ (page.js, controller.js, template.njk, validate.js, cards.js, answers.js, write.js, saved-addresses.js, summary.js, copy/copy.en.js, copy/copy.cy.js, permanent-address.fit.spec.js) and contact/ (page.js, controller.js, template.njk, validate.js, evaluation.js, test-support.js, copy/copy.en.js, copy/copy.cy.js, contact.fit.spec.js). It covers three pages. (1) The county parish holding number page, slug cph-number, a sub-page of the consignment addresses hub under the Addresses caption: three numeric boxes laid out as a GOV.UK date input, a collapsible help details, part-by-part validation, a whole-number paste split across the parts, and a skip when no commodity on the consignment needs a CPH. (2) The permanent address page, slug permanent-address, also a sub-page of that hub under the same caption: a fraud warning and one GOV.UK summary card per addressable animal, each card offering the place of destination or a hand-entered address revealed in the card, with the answers written onto the commodity lines' animal records; plus the skip when no line needs one and the no-animals-identified message. (3) The consignment contact page, slug consignment/contact/select, a linear page with no caption: an intro, a hidden-legend radio list of the organisation's branch address-book records hinted with their address, an INS add-address handshake link outside stub mode, and the full three save controls with its own 'hub' wording. For each page the part claims the route and how it is reached, the chrome and copy, every field with label and hint, every option, every validation rule with its message verbatim, the save and back controls, every branch and where it leads, what is written, what each fit spec proves, and Welsh key parity for the three copy.cy.js files. Shared files the three pages reach into (shared/save-actions.njk, shared/copy.en.js, shared/paths.js, lib/validate/validators.js, addresses/party-edit/address-rules.js and its copy, addresses/ins-handshake.js, addresses/parties.js, addresses/party-picker/selection.js, addresses/party-inline.js, commodities/animal-identification/animal-label.js, flow/section-captions and flow/flow.js) were read only as far as these three pages' observable behaviour needs; the consignment addresses hub, check your answers, the task rows and the obligations that consume these answers are other parts' slices and are claimed here only where these three pages' own fit specs render them.",
+  "claims": [
+    {
+      "id": "repo-frontend-p16-001",
+      "statement": "The county parish holding number page is served at /notifications/{journeyId}/cph-number under the live-animals set base, answering both GET and POST at that path.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/page.js:1-6 with controller.js:119 and src/server/app/shared/paths.js:5",
+      "quote": "export const cphNumberPage = {\n  id: 'cphNumber',\n  slug: 'cph-number',\n  subPage: true,\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim",
+      "note": "pageRoutePath is `/notifications/{journeyId}/${slug}` (shared/paths.js:5) and pagePath prefixes the current set base."
+    },
+    {
+      "id": "repo-frontend-p16-002",
+      "statement": "The CPH page is a sub-page rather than a step of the linear run, reached from an add link on the consignment addresses page, and its maturity is 'detailing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/page.js:4-5 with cph-number.fit.spec.js:73-77",
+      "quote": "  subPage: true,\n  maturity: 'detailing'",
+      "confidence": "verbatim",
+      "note": "The fit spec reaches it with `openAddresses(page, BOS_TAURUS_ROW)` then `openCphNumberFromAddLink(page)`."
+    },
+    {
+      "id": "repo-frontend-p16-003",
+      "statement": "The CPH page shows the caption 'Addresses' directly above its H1 'Add the county parish holding number (CPH)'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:2 and template.njk:13-14, asserted at cph-number.fit.spec.js:86-89",
+      "quote": "title: 'Add the county parish holding number (CPH)',",
+      "confidence": "verbatim",
+      "note": "The caption text comes from flow/section-captions/copy/copy.en.js:11 'addresses: \\'Addresses\\'', which section-captions/index.js:43 maps to this page."
+    },
+    {
+      "id": "repo-frontend-p16-004",
+      "statement": "The CPH page's H1 is the only level-1 heading and the question's legend 'CPH number' is not a heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:91-98",
+      "quote": "await expect(\n      page.getByRole('heading', { name: copy.cph.legend })\n    ).toHaveCount(0)\n    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-005",
+      "statement": "Above the question the CPH page offers a collapsed GOV.UK details titled 'What is a CPH number?' which, opened, explains that a county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:10-13 and template.njk:16-24",
+      "quote": "    summary: 'What is a CPH number?',\n    definition:\n      'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-006",
+      "statement": "The opened CPH help reads 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK.', the last words being a link to https://www.gov.uk/guidance/get-a-county-parish-holding-cph-number that opens in the same tab.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:14-18, template.njk:18, asserted at cph-number.fit.spec.js:186-192",
+      "quote": "    whereToFindPrefix:\n      'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by',\n    whereToFindLink: 'checking your holding details on GOV.UK',\n    whereToFindHref:\n      'https://www.gov.uk/guidance/get-a-county-parish-holding-cph-number'",
+      "confidence": "verbatim",
+      "note": "The fit spec asserts the link carries no target attribute, and that the details sits above the form holding #cphCounty."
+    },
+    {
+      "id": "repo-frontend-p16-007",
+      "statement": "The CPH number is asked as one fieldset group legended 'CPH number' and described by the hint 'For example 12/345/6789'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:3-5, template.njk:31-34 and :86-91, asserted at cph-number.fit.spec.js:146-150",
+      "quote": "  cph: {\n    legend: 'CPH number',\n    hint: 'For example 12/345/6789',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-008",
+      "statement": "The CPH number is taken in three boxes labelled 'County', 'Parish' and 'Holding number', two, three and four characters wide respectively, laid out with the GOV.UK date input's item classes.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:6-8 and template.njk:40-82, asserted at cph-number.fit.spec.js:101-144",
+      "quote": "    county: 'County',\n    parish: 'Parish',\n    holding: 'Holding number'",
+      "confidence": "verbatim",
+      "note": "Widths come from the classes govuk-input--width-2, --width-3 and --width-4 on a div.govuk-date-input of three div.govuk-date-input__item."
+    },
+    {
+      "id": "repo-frontend-p16-009",
+      "statement": "Each of the three CPH boxes is a numeric text input: inputmode numeric, pattern [0-9]*, autocomplete off and spellcheck off.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:42-52, asserted at cph-number.fit.spec.js:125-129",
+      "quote": "            inputmode: \"numeric\",\n            pattern: \"[0-9]*\",\n            autocomplete: \"off\",\n            spellcheck: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-010",
+      "statement": "The CPH page uses no JavaScript: nothing moves focus between the three boxes, and the page takes and saves the number with JavaScript disabled.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:152-161 and :247-265",
+      "quote": "test('keeps focus in an emptied box on Backspace, and every digit typed straight through the county box with focus in it'",
+      "confidence": "verbatim",
+      "note": "No file outside the feature's own template, validation and tests mentions cphCounty, cphParish or cphHolding, so no client script enhances the boxes."
+    },
+    {
+      "id": "repo-frontend-p16-011",
+      "statement": "A whole nine-digit CPH number typed or pasted into the County box alone, with or without slashes, is split across the county, parish and holding boxes when the page is saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.js:45-60 with shape.js:17-25, asserted at cph-number.fit.spec.js:62-71, :160-167 and :255-265",
+      "quote": "const isWholeNumberInCounty = (values) => {\n  const typed = separatorsStripped(values[COUNTY_FIELD])\n  return (\n    values[PARISH_FIELD] === '' &&\n    values[HOLDING_FIELD] === '' &&\n    DIGITS_ONLY.test(typed) &&\n    isWholeCphNumber(typed)\n  )\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: splits a whole CPH number typed into one box into its county, parish and holding parts. Spaces and slashes are stripped first, and the split only happens when the other two boxes are empty."
+    },
+    {
+      "id": "repo-frontend-p16-012",
+      "statement": "A blank County box refuses with 'Enter the county'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:21 with validate.js:67-71",
+      "quote": "    countyRequired: 'Enter the county',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-013",
+      "statement": "A County box that is not exactly two characters long refuses with 'County must be 2 digits'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:22 with validate.js:67-71 and shape.js:1",
+      "quote": "    countyLength: 'County must be 2 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-014",
+      "statement": "A County box holding anything but digits refuses with 'County must only contain numbers'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:23 with validate.js:67-71",
+      "quote": "    countyDigitsOnly: 'County must only contain numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-015",
+      "statement": "A blank Parish box refuses with 'Enter the parish'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:24 with validate.js:72-76",
+      "quote": "    parishRequired: 'Enter the parish',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-016",
+      "statement": "A Parish box that is not exactly three characters long refuses with 'Parish must be 3 digits'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:25 with validate.js:72-76 and shape.js:2",
+      "quote": "    parishLength: 'Parish must be 3 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-017",
+      "statement": "A Parish box holding anything but digits refuses with 'Parish must only contain numbers'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:26 with validate.js:72-76",
+      "quote": "    parishDigitsOnly: 'Parish must only contain numbers',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-018",
+      "statement": "A blank Holding number box refuses with 'Enter the holding number'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:27 with validate.js:77-81",
+      "quote": "    holdingRequired: 'Enter the holding number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-019",
+      "statement": "A Holding number box that is not exactly four characters long refuses with 'Holding number must be 4 digits'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:28 with validate.js:77-81 and shape.js:3",
+      "quote": "    holdingLength: 'Holding number must be 4 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-020",
+      "statement": "A Holding number box holding anything but digits refuses with 'Holding number must only contain numbers'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:29 with validate.js:77-81, asserted at cph-number.fit.spec.js:346-359",
+      "quote": "    holdingDigitsOnly: 'Holding number must only contain numbers'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-021",
+      "statement": "Saving the CPH page with all three boxes left empty is allowed: nothing is refused, no CPH number is saved and the trader lands back on the consignment addresses page, which still offers the add link.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.js:34 and :62-66, asserted at cph-number.fit.spec.js:305-318",
+      "quote": "const isBlank = (values) => PART_ORDER.every(([part]) => values[part] === '')",
+      "confidence": "verbatim",
+      "note": "The three part rules are only composed when the page is not blank, so a blank page passes validation."
+    },
+    {
+      "id": "repo-frontend-p16-022",
+      "statement": "A refused CPH page marks the whole question rather than the individual boxes: one form group carries the error class, one error message holds every refusal joined by line breaks, the group's accessible description names them, all three boxes take the error border, and no box carries its own error message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:36-38 and :85-92, asserted at cph-number.fit.spec.js:379-403",
+      "quote": "{{ govukErrorMessage({ id: \"cph-error\", html: errorSummary.errorList | join(\"<br>\", \"text\") }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-023",
+      "statement": "Every wrong part of the CPH number is named at once in the error summary, each summary link moves focus to the box it names, and the values already typed are kept, including a non-digit one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:320-377 and :267-284",
+      "quote": "test('CPH validation: every wrong part is named at once'",
+      "confidence": "verbatim",
+      "note": "With 1/34/678 the summary lists the county, parish and holding length messages together; with 1234 in the county box alone it lists the county length message and both other parts' required messages."
+    },
+    {
+      "id": "repo-frontend-p16-024",
+      "statement": "A refused CPH page's browser title is prefixed 'Error: ' before the page title, service name and GOV.UK suffix.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:400-402",
+      "quote": "await expect(page).toHaveTitle(\n      `${errorTitlePrefix}${copy.title} - ${serviceName} - ${govukSuffix}`\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-025",
+      "statement": "A CPH number already stored that is no longer nine digits is shown back with 'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.' against the county box.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.js:85-90 with copy/copy.en.js:30-31",
+      "quote": "const checks = (values, { stored } = {}) => {\n  if (stored && !isBlank(values) && !isWholeCphNumber(joinParts(values))) {\n    return { [COUNTY_FIELD]: copy.errors.cphNoLongerValid }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-026",
+      "statement": "Saving a valid CPH number stores the nine digits as one value and returns the trader to the consignment addresses page, and reopening the page shows them split back into county, parish and holding.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.js:96-97 with controller.js:20 and :115-116, asserted at cph-number.fit.spec.js:221-229",
+      "quote": "  fromAnswers: (answers) => splitIntoParts(answers.countyParishHoldingCph),\n  toAnswers: (values) => ({ countyParishHoldingCph: joinParts(values) }),",
+      "confidence": "verbatim",
+      "note": "The page collects the single answer `countyParishHoldingCph` (controller.js:20)."
+    },
+    {
+      "id": "repo-frontend-p16-027",
+      "statement": "A saved CPH number is shown in its slashed form, 12/345/6789, in the consignment addresses page's CPH section.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/shape.js:27-32, asserted at cph-number.fit.spec.js:286-296",
+      "quote": "export const displayedCphNumber = (value) => {\n  if (!value) {\n    return undefined\n  }\n  return isWholeCphNumber(value) ? partsOf(value).join('/') : value\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: formats the nine stored digits of a CPH number for display, slashing it only when it is nine digits and otherwise showing it as stored."
+    },
+    {
+      "id": "repo-frontend-p16-028",
+      "statement": "The CPH page offers 'Save and continue' alone: no 'Save and return to overview' button and no 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:94, asserted at cph-number.fit.spec.js:195-199",
+      "quote": "{{ saveActions({ hubHref: hubHref, copy: sharedCopy.saveActions, showReturnControls: false }) }}",
+      "confidence": "verbatim",
+      "note": "shared/save-actions.njk:44-60 hides both return controls when showReturnControls is false, so the page's only save check is the one Save and continue makes."
+    },
+    {
+      "id": "repo-frontend-p16-029",
+      "statement": "The CPH page's Back link returns to the consignment addresses page, carrying the trail when the trader arrived with one and going to the plain addresses URL when the page was opened by its own address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:27-31, asserted at cph-number.fit.spec.js:201-219",
+      "quote": "const addressesBackLink = (request) =>\n  kit.carryTrail(\n    request,\n    pagePath(request.params.journeyId, addressesPage.slug)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-030",
+      "statement": "When no commodity on the consignment needs a CPH number the page is never shown: both opening it and posting to it redirect onward, and the service logs the skip with the journey id and the consignment's commodity codes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:40-50, :74-77 and :84-87",
+      "quote": "    'County parish holding number skipped: no commodity on this consignment needs one'",
+      "confidence": "verbatim",
+      "note": "In scope is decided by whether the journey's scope holds countyParishHoldingCph (controller.js:40), which the set's commodities obligation puts in scope when any line's code is on the CPH-required allow-list (obligations/sections/commodities/aggregates.js:14-20, another part's slice)."
+    },
+    {
+      "id": "repo-frontend-p16-031",
+      "statement": "A horses-only consignment that opens the CPH page by its own address is shown the consignment addresses page instead.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:419-434",
+      "quote": "test('shows the consignment addresses page when opened by its own address for a horses-only consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-032",
+      "statement": "A CPH submission that fails validation is answered with HTTP 400 and the page again, and a CPH save the service cannot complete is answered with HTTP 500 and the page again in its recoverable-error state.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:94-110",
+      "quote": "    return render(request, h, invalidJourney, values, { errors }).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-033",
+      "statement": "The CPH page has no serious or critical accessibility violations as first opened, with the whole number typed into the county box, or in its error state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js:231-244 and :405-416",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'CPH number')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-034",
+      "statement": "The CPH page's Welsh copy carries exactly the same key tree as its English twin: title, the four cph keys, the five help keys and the ten error keys, with no key missing or extra.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js:2-34 against copy/copy.en.js:1-33",
+      "quote": "export const copy = {\n  title: 'Ychwanegu rhif daliad plwyf sirol (CPH)',",
+      "confidence": "verbatim",
+      "note": "The Welsh file keeps the English value for help.whereToFindHref, a GOV.UK URL, and heads itself 'MACHINE-DRAFT Welsh — not reviewed by a translator.'"
+    },
+    {
+      "id": "repo-frontend-p16-035",
+      "statement": "cph-number.fit.spec.js does not exercise the saved-CPH-no-longer-valid message, so no fit evidence shows how that refusal reads on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js (whole file, searched for copy.errors.cphNoLongerValid)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The message is defined in copy/copy.en.js:30-31 and raised by validate.js:85-90; only the co-located validate.test.js unit test, which the scope leaves out, could cover it."
+    },
+    {
+      "id": "repo-frontend-p16-036",
+      "statement": "The permanent address page is served at /notifications/{journeyId}/permanent-address under the live-animals set base, is a sub-page of the consignment addresses hub rather than a step of the linear run, and its maturity is 'detailing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/page.js:1-6 with controller.js:211",
+      "quote": "export const permanentAddressPage = {\n  id: 'permanentAddress',\n  slug: 'permanent-address',\n  subPage: true,\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-037",
+      "statement": "The permanent address page shows the caption 'Addresses' above its H1 'Permanent address', and its browser title reads 'Permanent address - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:2 and template.njk:12-13, asserted at permanent-address.fit.spec.js:117-122",
+      "quote": "  title: 'Permanent address',",
+      "confidence": "verbatim",
+      "note": "flow/section-captions/index.js:43 lists permanentAddressPage under the addresses caption."
+    },
+    {
+      "id": "repo-frontend-p16-038",
+      "statement": "Below the heading the permanent address page shows the GOV.UK warning text 'Providing a false address is an act of fraud'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:3 and template.njk:15, asserted at permanent-address.fit.spec.js:123",
+      "quote": "  warning: 'Providing a false address is an act of fraud',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-039",
+      "statement": "The permanent address page shows one GOV.UK summary card per identified animal on a commodity line that needs a permanent address, each card a landmark region titled with the animal's species and its number on the line, such as 'Felis catus 1'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/cards.js:44-55 and :126 with template.njk:21-26, asserted at permanent-address.fit.spec.js:112-138 and :379-396",
+      "quote": "    title: animalLabelOf(line.speciesLatinName, unitIndex + 1),",
+      "confidence": "verbatim",
+      "note": "animalLabelOf reads the commodities copy's animalRowNamed, `${species} ${number}`, and falls back to 'Animal <n>' when the species is unknown (commodities/animal-identification/animal-label.js:7-10). A cat line of two and a ferret line of one give three cards."
+    },
+    {
+      "id": "repo-frontend-p16-040",
+      "statement": "Each permanent address card shows the animal's identifiers in an inset, one line per identifier the animal has, reading '<identifier label>: <value>', such as 'Microchip: MICROCHIP-1'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:5 and cards.js:65-68 with template.njk:28-32, asserted at permanent-address.fit.spec.js:129-130",
+      "quote": "  identifierLine: (label, value) => `${label}: ${value}`,",
+      "confidence": "verbatim",
+      "note": "Only the identifier fields in scope for the line's commodity code and species, and only those the animal has a value for, are listed."
+    },
+    {
+      "id": "repo-frontend-p16-041",
+      "statement": "Each permanent address card asks one question legended 'Select an address' with exactly two options, 'Same as the place of destination (POD)' and 'Enter a new address', neither pre-selected until the trader has answered.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:4 and :6-11 with cards.js:130-144 and template.njk:61-68, asserted at permanent-address.fit.spec.js:131-137",
+      "quote": "  legend: 'Select an address',\n  options: {\n    placeOfDestination: 'Same as the place of destination (POD)',\n    newAddress: 'Enter a new address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-042",
+      "statement": "The place-of-destination option is hinted with that address on one line, the party name then its address lines joined by commas, such as 'Tech Imports Ltd, 18 Dockside Road, London, E14 9GE, United Kingdom', and carries no hint while the notification has no place of destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/cards.js:70-75, asserted at permanent-address.fit.spec.js:292-302",
+      "quote": "const placeOfDestinationHint = (placeOfDestination) =>\n  placeOfDestination\n    ? [placeOfDestination.name, ...insetAddressLines(placeOfDestination)].join(\n        ', '\n      )\n    : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-043",
+      "statement": "The 'Enter a new address' option is hinted 'This is where they will stay after spending 48 hours at the place of destination.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:9-10",
+      "quote": "    newAddressHint:\n      'This is where they will stay after spending 48 hours at the place of destination.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-044",
+      "statement": "Choosing 'Enter a new address' reveals, inside that card alone, eight address boxes in the order 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Email address' and 'Phone number'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:12-21 with cards.js:19-28 and template.njk:34-58, asserted at permanent-address.fit.spec.js:140-175",
+      "quote": "  address: {\n    nameOrOrganisationName: 'Name or organisation name',\n    addressLine1: 'Address line 1',\n    addressLine2: 'Address line 2 (optional)',\n    townOrCity: 'Town or city',\n    county: 'County (optional)',\n    postcode: 'Postcode or Zip code',\n    email: 'Email address',\n    phone: 'Phone number'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-045",
+      "statement": "The revealed phone box is hinted 'For international numbers include the country code', the email box is typed as email and the phone box as tel, and each box carries the browser autocomplete token and width class the journey's address fields use.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:22-24 with cards.js:87-103, asserted at permanent-address.fit.spec.js:164-168",
+      "quote": "  addressHints: {\n    phone: 'For international numbers include the country code'\n  },",
+      "confidence": "verbatim",
+      "note": "The tokens and classes come from addresses/party-edit/address-rules.js:27-48 (organization, address-line1, address-line2, address-level2, postal-code, tel, email; two-thirds width except a width-10 postcode)."
+    },
+    {
+      "id": "repo-frontend-p16-046",
+      "statement": "The permanent address page asks for no country: the revealed boxes hold no country control, and an address entered here is stored with the country code GB.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/answers.js:10-23, asserted at permanent-address.fit.spec.js:169",
+      "quote": "    countryCode: UNITED_KINGDOM_CODE,",
+      "confidence": "verbatim",
+      "note": "UNITED_KINGDOM_CODE is 'GB' (services/countries/index.js:51); the fit spec asserts the card holds no select element."
+    },
+    {
+      "id": "repo-frontend-p16-047",
+      "statement": "A new permanent address refuses a blank name with 'Enter a name or organisation name', a blank address line 1 with 'Enter address line 1', a blank town or city with 'Enter a town or city', a blank postcode with 'Enter a postcode or Zip code', a blank email with 'Enter an email address' and a blank phone with 'Enter a phone number'; address line 2 and county are optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:25-32 with validate.js:20-40, asserted at permanent-address.fit.spec.js:496-530",
+      "quote": "  errors: {\n    nameOrOrganisationName: 'Enter a name or organisation name',\n    addressLine1: 'Enter address line 1',\n    townOrCity: 'Enter a town or city',\n    postcode: 'Enter a postcode or Zip code',\n    email: 'Enter an email address',\n    phone: 'Enter a phone number',",
+      "confidence": "verbatim",
+      "note": "Three of these six differ from the same fields' messages on the journey's edit-address page, which read 'Enter a name', 'Enter a postcode' and 'Enter a telephone number' (addresses/party-edit/copy/copy.en.js:22, :40, :47)."
+    },
+    {
+      "id": "repo-frontend-p16-048",
+      "statement": "A new permanent address caps its boxes at the journey's address limits and refuses an over-long value with that field's own over-long message, such as 'Town or city must be 100 characters or fewer': 255 for the name, address line 1 and address line 2, 100 for town or city and county, 12 for the postcode, 20 for the phone and 254 for the email.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/validate.js:31-40 with addresses/party-edit/address-rules.js:13-23 and :52-55",
+      "quote": "  return REQUIRED_ADDRESS_FIELDS.has(field)\n    ? requiredTextRule(partyField, {\n        key: ruleKey,\n        required: copy.errors[field]\n      })\n    : optionalTextRule(partyField, { key: ruleKey })",
+      "confidence": "verbatim",
+      "note": "The over-long messages come from addresses/party-edit/copy/copy.en.js:20-55, not from this feature's own copy."
+    },
+    {
+      "id": "repo-frontend-p16-049",
+      "statement": "The permanent address page checks only that an email address is present and within its length: it does not check the email is in the correct format, unlike the journey's edit-address page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/validate.js:20-40 against addresses/party-edit/address-rules.js:102-106",
+      "quote": "const REQUIRED_ADDRESS_FIELDS = new Set([\n  'nameOrOrganisationName',\n  'addressLine1',\n  'townOrCity',\n  'postcode',\n  'email',\n  'phone'\n])",
+      "confidence": "inferred",
+      "note": "It follows because every required field, email included, is composed with requiredTextRule (required plus length) while addressRules uses requiredEmail for the email, which adds the message 'Enter an email address in the correct format'."
+    },
+    {
+      "id": "repo-frontend-p16-050",
+      "statement": "Choosing 'Same as the place of destination (POD)' before the notification has a place of destination refuses that card's question with 'Add a place of destination before you can continue', and the service logs the refusal at warn level.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:32-33 with validate.js:51-63 and controller.js:161-168, asserted at permanent-address.fit.spec.js:532-555",
+      "quote": "    placeOfDestinationUnknown:\n      'Add a place of destination before you can continue',",
+      "confidence": "verbatim",
+      "note": "The log carries reason 'permanent-address-place-of-destination-unknown' and the refused field keys."
+    },
+    {
+      "id": "repo-frontend-p16-051",
+      "statement": "A refused permanent address names the animal in the error summary, reading '<message> for <animal>', such as 'Enter a name or organisation name for Felis catus 1', while the box's own message beside the field stays plain, and a place-of-destination refusal is not animal-named.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:34 with summary.js:13-24, asserted at permanent-address.fit.spec.js:509-525",
+      "quote": "    forAnimal: (message, animal) => `${message} for ${animal}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-052",
+      "statement": "A refused permanent address page lists its refusals in card order and then each card's own field order, each summary link moving focus to the control it names, and prefixes the browser title with 'Error: '.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/summary.js:13-24, asserted at permanent-address.fit.spec.js:509-529 and :551-554",
+      "quote": "    cards.flatMap((card) => [\n      ...(card.optionError ? [[card.optionName, card.optionError]] : []),\n      ...card.addressFields\n        .filter((field) => field.error)",
+      "confidence": "verbatim",
+      "note": "A blank new address on one card produces exactly six summary links, in the order name, address line 1, town or city, postcode, email, phone."
+    },
+    {
+      "id": "repo-frontend-p16-053",
+      "statement": "A refusal on one permanent address card keeps every other card's chosen option checked and its entered values on the page, and the refused card keeps its reveal open, with JavaScript and without it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:62-78 and :169-180, asserted at permanent-address.fit.spec.js:557-581 and :595-618",
+      "quote": "test('keeps the other card answered and revealed after a refusal on the first'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-054",
+      "statement": "An animal left with neither permanent-address option chosen is saved as unanswered rather than refused: the other animals' answers are kept and the unanswered card reopens with neither option checked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/answers.js:28-43 and :58-69, asserted at permanent-address.fit.spec.js:318-345",
+      "quote": "  return null\n}",
+      "confidence": "verbatim",
+      "note": "answersFromPayload drops every unit whose card produced no answer, so nothing is written for it."
+    },
+    {
+      "id": "repo-frontend-p16-055",
+      "statement": "A saved permanent address is written onto the animal's own record on its commodity line, as the choice made and the address itself, one commit per line that holds an answered animal.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/write.js:6-23 and :37-49",
+      "quote": "            permanentAddressOrigin: answer.permanentAddressOrigin,\n            permanentAddress: answer.permanentAddress",
+      "confidence": "verbatim",
+      "note": "mechanism: writes each answered animal's permanent-address choice and address onto that animal's entry in the notification's commodityLines, grouping the answers by line so each line is committed once. The page itself collects no answer of its own (controller.js:27, collects: [])."
+    },
+    {
+      "id": "repo-frontend-p16-056",
+      "statement": "An animal saved against the place of destination stores a copy of that address, so the answer holds the address rather than a pointer to it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/answers.js:28-35",
+      "quote": "  if (chosen === PLACE_OF_DESTINATION) {\n    return {\n      permanentAddressOrigin: PLACE_OF_DESTINATION,\n      permanentAddress: placeOfDestination ?? null\n    }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-057",
+      "statement": "Reopening the permanent address page shows each animal's saved choice checked and, for a hand-entered address, its own values back in that card's boxes, including the optional county.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/cards.js:105-120, asserted at permanent-address.fit.spec.js:201-259",
+      "quote": "export const originOf = (unit) =>\n  unit.permanentAddressOrigin === PLACE_OF_DESTINATION ||\n  unit.permanentAddressOrigin === NEW_ADDRESS\n    ? unit.permanentAddressOrigin\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-058",
+      "statement": "Adding another animal to a line that already has a saved permanent address leaves the saved one untouched and offers the new animal an unanswered card, and removing that animal again leaves the first animal's address as it was with no card for the removed one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js:398-452",
+      "quote": "test(\"keeps the first cat's saved address unchanged after the line's second cat is saved, then removed, on Identification details\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-059",
+      "statement": "The consignment addresses page's permanent address section counts the animals that have one, such as 'added for 2 animals', shows one shared address once with a single Change link when several animals use the place of destination, and offers an add link only while a permanent address is still owed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js:228-239, :318-345 and :347-371",
+      "quote": "await expect(\n      permanentAddressSection.getByText(\n        addressesCopy.hub.permanentAddress.addedForAnimals(2)\n      )\n    ).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "The section's own copy lives in the addresses feature, another part's slice; this claim records only what this page's fit spec renders."
+    },
+    {
+      "id": "repo-frontend-p16-060",
+      "statement": "Each addressable animal's saved permanent address is offered to the pages that list it with the animal's label, the choice it was saved with and the address with its country name resolved, or with no address while that animal still owes one.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/saved-addresses.js:15-27",
+      "quote": "        label: animalLabelOf(line.speciesCommonName, unitIndex + 1),\n        permanentAddressOrigin: originOf(unit),\n        permanentAddress: await toDisplayParty(unit.permanentAddress)",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes each animal's stored permanent address for display, resolving the country code to a name. It labels the animal by the species' common name, where the page's own card titles use the latin name (cards.js:126), so the same animal can read differently on the page and in the lists the consignment addresses page and check your answers build from this."
+    },
+    {
+      "id": "repo-frontend-p16-061",
+      "statement": "A permanent address card carries no change or remove control of its own: the answer is changed by choosing another option or retyping the address in the card, and the only change control is the Change link in the consignment addresses page's permanent address section.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/template.njk:21-71, with permanent-address.fit.spec.js:237-239",
+      "quote": "        <section id=\"{{ card.key }}\" class=\"govuk-summary-card\" aria-labelledby=\"{{ card.key }}-title\">\n          <div class=\"govuk-summary-card__title-wrapper\">\n            <h2 class=\"govuk-summary-card__title\" id=\"{{ card.key }}-title\">{{ card.title }}</h2>\n          </div>",
+      "confidence": "verbatim",
+      "note": "The summary card's title wrapper holds no actions list, so the card has no Change or Remove row."
+    },
+    {
+      "id": "repo-frontend-p16-062",
+      "statement": "Nothing in the permanent address slice lets a trader remove a saved permanent address once it is saved, and nothing says what should happen if they want to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/ (template.njk, controller.js, answers.js, write.js, permanent-address.fit.spec.js)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "A saved answer can only be replaced by another choice; no control, route or test removes one. Removing the animal on Identification details drops its card and with it the address (fit spec :436-451)."
+    },
+    {
+      "id": "repo-frontend-p16-063",
+      "statement": "When no commodity line on the consignment needs a permanent address the page is never shown: opening it or posting to it redirects onward, the service logs the skip with the journey id and the commodity codes, and the consignment addresses page offers no permanent-address add link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:80-100 and :116-118, asserted at permanent-address.fit.spec.js:455-481",
+      "quote": "    'Permanent address skipped: no animal on this consignment needs a permanent address'",
+      "confidence": "verbatim",
+      "note": "Whether a line needs one is decided by the permanentAddress gate for the line's commodity code and species (cards.js:16-17). A cattle consignment needs none; cat and ferret lines do."
+    },
+    {
+      "id": "repo-frontend-p16-064",
+      "statement": "When a line needs a permanent address but no animal on it has been identified yet, the page shows no cards and instead reads 'Add the number of animals on consignment details before you can continue.', the middle words linking to the consignment details page, and the service logs that it was shown with no animal identified.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.en.js:36-40 with controller.js:83-85, :102-112 and :119-122 and template.njk:72-74, asserted at permanent-address.fit.spec.js:621-664",
+      "quote": "  noAnimalsIdentified: {\n    before: 'Add the number of animals on ',\n    linkText: 'consignment details',\n    after: ' before you can continue.'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-065",
+      "statement": "Saving the permanent address page while it shows the no-animals-identified message changes nothing and returns the trader to the consignment addresses page, and the message is still there when the page is reopened.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:139-142, asserted at permanent-address.fit.spec.js:652-664",
+      "quote": "  if (noAnimalIdentifiedOnALineThatNeedsOne(answers, evaluation)) {\n    logNoAnimalsIdentified(request, answers, evaluation)\n    return h.redirect(kit.nextTargetKeepingTrail(request, page, scope))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-066",
+      "statement": "The permanent address page offers 'Save and continue' alone, with no 'Save and return to overview' button and no 'Cancel and return to overview' link, and saving returns the trader to the consignment addresses page they came from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/template.njk:76 with controller.js:204-208, asserted at permanent-address.fit.spec.js:177-187",
+      "quote": "{{ saveActions({ hubHref: hubHref, copy: sharedCopy.saveActions, showReturnControls: false }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-067",
+      "statement": "The permanent address page's Back link returns to the consignment addresses page, taking the hub entry the trader came in by when there is one and otherwise the trail.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:32 and :43-45, asserted at permanent-address.fit.spec.js:189-199",
+      "quote": "      backLink:\n        kit.hubEntryReturn(request, ADDRESSES_HUB_SLUGS) ??\n        kit.trailBackLink(request),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-068",
+      "statement": "A refused permanent address submission is answered with HTTP 400 and the page again, and a permanent address save the service cannot complete is answered with HTTP 500 and the page again in its recoverable-error state, with the entered values shown back.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.js:169-199",
+      "quote": "    ).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-069",
+      "statement": "The permanent address page has no serious or critical accessibility violations as first opened, with a card's new-address reveal open, or in its refused state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js:261-275 and :583-592",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Permanent address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-070",
+      "statement": "The permanent address page's Welsh copy carries exactly the same key tree as its English twin: title, warning, legend, identifierLine, the three options keys, the eight address keys, addressHints.phone, the eight error keys and the three noAnimalsIdentified keys, with no key missing or extra.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/copy/copy.cy.js:2-41 against copy/copy.en.js:1-41",
+      "quote": "export const copy = {\n  title: 'Cyfeiriad parhaol',",
+      "confidence": "verbatim",
+      "note": "identifierLine and errors.forAnimal are functions in both locales, each taking the same arguments. The file heads itself 'MACHINE-DRAFT Welsh — not reviewed by a translator.'"
+    },
+    {
+      "id": "repo-frontend-p16-071",
+      "statement": "The consignment contact page is served at /notifications/{journeyId}/consignment/contact/select under the live-animals set base, is a step of the linear run rather than a sub-page, collects the notification's contact address and its maturity is 'detailing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/page.js:1-5 with controller.js:31 and :186",
+      "quote": "export const consignmentContactSelectPage = {\n  id: 'consignment-contact-select',\n  slug: 'consignment/contact/select',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim",
+      "note": "flow/flow.js:71 puts it alone in its journey section, and flow/task-rows.js:72 gives it the task row id 'contact'."
+    },
+    {
+      "id": "repo-frontend-p16-072",
+      "statement": "The consignment contact page is headed 'Contact address for consignment' with no section caption above it, unlike the other pages in this slice.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:2 and template.njk:1-8",
+      "quote": "  title: 'Contact address for consignment',",
+      "confidence": "verbatim",
+      "note": "The template imports no section-caption macro and flow/section-captions/index.js does not list this page, so the page shows only its H1."
+    },
+    {
+      "id": "repo-frontend-p16-073",
+      "statement": "Directly below its heading the contact page reads 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:3-4 and template.njk:10, asserted at contact.fit.spec.js:62",
+      "quote": "  intro:\n    'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-074",
+      "statement": "The contact page puts its choice under the sub-heading 'Select an address' and repeats that text as the radio group's legend, hidden visually but read to a screen reader, so the page has exactly two headings.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/template.njk:12 and :22-32 with controller.js:35-36, asserted at contact.fit.spec.js:55-71",
+      "quote": "      fieldset: {\n        legend: {\n          text: resultsHeading,\n          classes: \"govuk-visually-hidden\"\n        }\n      },",
+      "confidence": "verbatim",
+      "note": "resultsHeading is the addresses feature's picker copy, 'Select an address' (addresses/copy/copy.en.js:73)."
+    },
+    {
+      "id": "repo-frontend-p16-075",
+      "statement": "The contact page offers one radio per address-book record of the trader's organisation that can play the branch-address role, labelled with the record's name, and offers no record that cannot.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:89-90 with addresses/parties.js:54-62, asserted at contact.fit.spec.js:73-98",
+      "quote": "const offeredAddresses = (orgId) =>\n  addressBook.addresses(orgId, { role: CONTACT_PARTY.addressBookRole })",
+      "confidence": "verbatim",
+      "note": "CONTACT_PARTY's addressBookRole is 'BRANCH_ADDRESS'."
+    },
+    {
+      "id": "repo-frontend-p16-076",
+      "statement": "Each contact option is hinted with its address ending at the postcode, the address line, town or city and postcode joined by commas.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:81-86 with addresses/address-summary.js:20-21, asserted at contact.fit.spec.js:82-88",
+      "quote": "      hint: { text: addressSummaryEndingAtPostcode(option.address) },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-077",
+      "statement": "The contact page lists every branch-address record the organisation holds on one page, with no paging, no page size and no search box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:96 and :81-86 with template.njk:22-32",
+      "quote": "  const options = [...(await offeredAddresses(orgId))]",
+      "confidence": "inferred",
+      "note": "It follows because the controller maps the whole list the address-book client returns straight into the radio items, and the template renders them all with no pagination or filter control. addressBook.addresses itself reads every live page of the book (services/address-book/index.js:50-55)."
+    },
+    {
+      "id": "repo-frontend-p16-078",
+      "statement": "The contact page records no limit on how many contact addresses are shown at once, and nothing in the slice says what should happen when an organisation holds more than a page's worth.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/ (controller.js, template.njk, contact.fit.spec.js)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-frontend-p16-079",
+      "statement": "Saving the contact page with nothing chosen keeps the trader on the page, naming the choice as 'Select a contact address' in the error summary and against the options, with the browser title prefixed 'Error: '.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:10-12 with validate.js:13-26, asserted at contact.fit.spec.js:130-145",
+      "quote": "  errors: {\n    contactRequired: 'Select a contact address'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-080",
+      "statement": "A contact address submitted that the organisation's address book does not hold, holds as deleted or holds without the branch-address role is refused with the same 'Select a contact address' message, no option is left chosen on the refused page, and the summary link moves focus to the first radio.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:129-157 with addresses/party-picker/selection.js:6-14, asserted at contact.fit.spec.js:106-128",
+      "quote": "  const chosen = payload.contactAddress\n    ? await chosenPartyFor(\n        orgId,\n        payload.contactAddress,\n        CONTACT_PARTY.addressBookRole\n      )\n    : undefined",
+      "confidence": "verbatim",
+      "note": "The service logs this refusal with the party id and the address id submitted (controller.js:140-146)."
+    },
+    {
+      "id": "repo-frontend-p16-081",
+      "statement": "The contact page ends with 'Save and continue' and 'Save and return to hub' side by side and 'Cancel and return to hub' on its own line below them.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:13-16 with controller.js:37 and template.njk:34, asserted at contact.fit.spec.js:147-154",
+      "quote": "  saveActions: {\n    saveAndReturnToHub: 'Save and return to hub',\n    cancelAndReturnToHub: 'Cancel and return to hub'\n  }",
+      "confidence": "verbatim",
+      "note": "This page overrides the service-wide wording, which reads 'Save and return to overview' and 'Cancel and return to overview' (shared/copy.en.js:63-64), so the contact page is the one page that says 'hub' to the trader."
+    },
+    {
+      "id": "repo-frontend-p16-082",
+      "statement": "'Save and return to hub' on the contact page makes the same check as 'Save and continue': with nothing chosen, or with a value the address book does not hold, it refuses the page the same way and goes nowhere.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js:156-191",
+      "quote": "test('Save and return to hub with nothing chosen does the same and goes nowhere'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-083",
+      "statement": "Choosing a contact address and saving stores a copy of that record as the notification's contact address, keeping the id it was picked from, and sends the trader on to the notification view.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:159-183 with addresses/party-inline.js:3-9, asserted at contact.fit.spec.js:193-213",
+      "quote": "        contactAddress: answerFor(CONTACT_PARTY, chosen)",
+      "confidence": "verbatim",
+      "note": "answerForInlineParty stores pickedFromId, name, phone, email and the address; the fit spec asserts the redirect lands on /notifications/<id>/notification-view."
+    },
+    {
+      "id": "repo-frontend-p16-084",
+      "statement": "Reopening the contact page shows the saved contact checked, and leaves every option unchecked when the record it was picked from is no longer among those offered.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:101 and :108-113, asserted at contact.fit.spec.js:204-208",
+      "quote": "        selectedId: options.some((option) => option.id === pickedFromId)\n          ? pickedFromId\n          : ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-085",
+      "statement": "Outside stub mode the contact page offers 'If the correct address is not shown, add a new branch address, then return to this page.', the middle words linking into the INS address book's add-address page, and in stub mode it offers no way to add an address at all.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:5-9 with controller.js:50-52 and template.njk:14-16, asserted at contact.fit.spec.js:100-104",
+      "quote": "  addNewBranchAddress: {\n    before: 'If the correct address is not shown, ',\n    linkText: 'add a new branch address',\n    after: ', then return to this page.'\n  },",
+      "confidence": "verbatim",
+      "note": "The link is built with the journey type 'gbn-ag', the notification id, the contact party's fulfilment id and a freshly issued handshake token (addresses/ins-handshake.js:77-92). The fit specs run in stub mode, so they prove only the no-link case."
+    },
+    {
+      "id": "repo-frontend-p16-086",
+      "statement": "Returning to the contact page after adding an address in the INS address book shows a success banner reading '<name> address added to your address book', shown once.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:121 with addresses/ins-handshake.js:64-75 and shared/copy.en.js:75-78",
+      "quote": "      successBanner: takeAddedAddressBanner(request, h)",
+      "confidence": "verbatim",
+      "note": "The banner is taken from a cookie and the cookie cleared, so it shows on the next render only."
+    },
+    {
+      "id": "repo-frontend-p16-087",
+      "statement": "A failed hand-off to the INS address book is shown on the contact page as an error summary against the choice, reading 'The address could not be found in your address book. Select another address or try adding it again.' when the address was not found and 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.' when the book could not be reached.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:39-48 and :102-105 with shared/copy.en.js:79-84 and addresses/ins-handshake.js:23-31",
+      "quote": "      notFound:\n        'The address could not be found in your address book. Select another address or try adding it again.',\n      unavailable:\n        'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim",
+      "note": "The unreachable case also puts the page into its recoverable-error state (controller.js:105)."
+    },
+    {
+      "id": "repo-frontend-p16-088",
+      "statement": "A refused contact submission is answered with HTTP 400 and the page again, and a contact save the service cannot complete is answered with HTTP 500 and the page again in its recoverable-error state with the chosen option still selected.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:147-176",
+      "quote": "    ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p16-089",
+      "statement": "The contact page's Back link returns to the notification overview, and the page has no serious or critical accessibility violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:71 and contact.fit.spec.js:216-233",
+      "quote": "      backLink: kit.trailBackLink(request),",
+      "confidence": "verbatim",
+      "note": "The fit spec clicks Back and lands on the notification URL with the page's own slug stripped."
+    },
+    {
+      "id": "repo-frontend-p16-090",
+      "statement": "The contact page offers no control to change, edit or remove the address it has chosen: the only way to alter the answer is to choose a different option.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/template.njk:18-35",
+      "quote": "    {{ govukRadios({\n      name: \"contactAddress\",",
+      "confidence": "verbatim",
+      "note": "The parties register names an edit page for the contact party, 'consignment/contact/edit' (addresses/parties.js:58), but this page links to none; the edit page belongs to the addresses feature, another part's slice."
+    },
+    {
+      "id": "repo-frontend-p16-091",
+      "statement": "The contact page's Welsh copy carries exactly the same key tree as its English twin: title, intro, the three addNewBranchAddress keys, errors.contactRequired and the two saveActions keys, with no key missing or extra.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.cy.js:2-18 against copy/copy.en.js:1-17",
+      "quote": "export const copy = {\n  title: 'Cyfeiriad cyswllt ar gyfer y llwyth',",
+      "confidence": "verbatim",
+      "note": "The file heads itself 'MACHINE-DRAFT Welsh — not reviewed by a translator.'"
+    },
+    {
+      "id": "repo-frontend-p16-092",
+      "statement": "The contact address is one of the notification's obligations, bound to the single field the page collects, which is also what lets the INS add-address hand-off address the contact party.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/evaluation.js:7-9 with addresses/party-for-fulfilment-id.js:5-20",
+      "quote": "export const evaluationBindings = feature('contact', [\n  scalar({ field: 'contactAddress', obligation: contactAddress })\n])",
+      "confidence": "verbatim",
+      "note": "mechanism: binds the page's contactAddress answer to the set's contactAddress obligation, whose id is the fulfilment id the handshake URL carries."
+    },
+    {
+      "id": "repo-frontend-p16-093",
+      "statement": "The CPH number is one of the notification's obligations, bound to the single field the CPH page collects.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/evaluation.js:7-9",
+      "quote": "export const evaluationBindings = feature('cph-number', [\n  scalar({ field: 'countyParishHoldingCph', obligation: cph })\n])",
+      "confidence": "verbatim",
+      "note": "mechanism: binds the page's countyParishHoldingCph answer to the set's cph obligation, which is what puts the page in or out of scope."
+    },
+    {
+      "id": "repo-frontend-p16-094",
+      "statement": "The permanent address task is complete only when every identified animal on a line that needs one holds a permanent address.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/cards.js:57-63",
+      "quote": "export const everyAddressableAnimalHasPermanentAddress = (\n  answers,\n  evaluation\n) =>\n  addressableUnits(answers, evaluation).every(({ unit }) =>\n    isPartyHeld(unit.permanentAddress)\n  )",
+      "confidence": "verbatim",
+      "note": "mechanism: reads every addressable animal's stored permanent address to say whether the task is done. The task rows, the consignment addresses page and check your answers all read it (flow/task-rows.js, addresses/controller.js, check-answers/controller.js, other parts' slices)."
+    },
+    {
+      "id": "repo-frontend-p16-095",
+      "statement": "Each permanent address card's controls are named by the animal's line and position, the option as 'option-<line>-<animal>' and each address box as '<field>-<line>-<animal>', so several animals' answers post together in one form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/cards.js:30-32 and :121, with template.njk:17-77",
+      "quote": "export const cardKeyFor = (lineIndex, unitIndex) => `${lineIndex}-${unitIndex}`\n\nexport const fieldNameFor = (id, key) => `${id}-${key}`",
+      "confidence": "verbatim",
+      "note": "mechanism: keys every card's posted values by the animal's line index and position on the line, which is how one posted form carries an answer per animal."
+    },
+    {
+      "id": "repo-frontend-p16-096",
+      "statement": "The contact feature carries a held-contact test fixture naming a contact 'Held Contact' with the country code GB.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/contact/test-support.js:1-4",
+      "quote": "export const HELD_CONTACT = {\n  name: 'Held Contact',\n  address: { countryCode: 'GB' }\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: test-only data, used to stand in for an already-held contact address. It says nothing about what a trader sees."
+    }
+  ]
+}

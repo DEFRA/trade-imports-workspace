@@ -1,0 +1,1315 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 17, the panel rulings ledger. Read in full: spec/panel/README.md (35 lines), spec/panel/rulings.json (3008 lines) and spec/panel/critic.json (183 lines) under src/server/app/sets/high-risk-plants. The slice stops at decisions.json and conflicts.json, which part 16 claims. README.md says what the panel is (rulings on the spec's conflicts and open questions), that ../decisions.json is the ledger and the only place a ruling lives, that these two files are the evidence behind it, what the standing rulings for the 2026-09-06 first pass are, and the three-step procedure for changing a ruling. rulings.json holds decidedAt 2026-09-06, eight dockets with a summary and ruling count each (D1 territory and timing 11, D4 parties and contact 5, D2 commodity model 15, D8 scope and parked 17, D3 origin values and validation 11, D5 reference, status and lifecycle 7, D6 chrome and journey shape 7, D7 non-functional 10 — 83 in all), the 83 rulings in docket order with docket, id, kind (conflict or behaviour), ruling (resolve, adopt or park), resolution, rationale, specChanges, dissent, escalate and decidedBy (panel or sam), and a 55-entry reconciliation array recording every edit the consistency critic's findings caused, with before, after and why per entry plus three docket-summary rewrites. critic.json holds an empty missingIds list, 14 cross-docket inconsistencies each with its issue and proposed fix, five standing-ruling-breach entries, and a summary. Covered: all 8 docket ids and summaries; all 83 rulings, one claim each with the docket, what it decides, who decided it and the reasoning, plus extra claims for the copy strings and corrections the rulings fix; the reconciliation block by chair decision (1 to 12) and the global target normalisation; every critic entry and the answer given; and three gaps (the unstated wording of standing rulings 1, 4 and 5; no judge or chair is named; no ruling carries a decisions.json ledger id).",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p17-001",
+      "statement": "The high-risk plants journey keeps a judges panel whose rulings settle the spec's conflicts and open questions, with one ledger entry per ruling stamped onto its subject.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:1-6",
+      "quote": "# Judges panel — rulings on the spec's conflicts and open questions\n\n`../decisions.json` is the ledger: one entry per ruling, stamped onto its\nsubject (a conflict's `resolution` and `decision`, or a behaviour's `status`\nand `decision`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-002",
+      "statement": "decisions.json is the only place a ruling lives; conflicts.json and the behaviours carry a pointer to it and never their own answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:5-6",
+      "quote": "It is the only place a ruling lives; conflicts.json and the behaviours carry a pointer to it, never their own answer.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-003",
+      "statement": "rulings.json and critic.json are kept as the evidence behind the ledger so a ruling can be revisited with its reasoning: rulings.json holds eight dockets with three judges and a chair each and one ruling per item with rationale, spec changes, dissent and who decided it (panel, or sam where a standing product-owner ruling settled it), and a reconciliation array recording every edit the critic's findings caused; critic.json holds the critic's report of coverage, cross-docket contradictions and breaches of the standing rulings.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:8-17",
+      "quote": "- `rulings.json` — the panel's output after its consistency critic's fixes\n  were folded in: eight dockets, three judges and a chair each, one ruling\n  per item with rationale, spec changes, dissent and who decided it (`panel`,\n  or `sam` where a standing product-owner ruling settled it). The\n  `reconciliation` array records every edit the critic's findings caused.\n- `critic.json` — the critic's report: coverage, cross-docket contradictions,\n  breaches of the standing rulings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-004",
+      "statement": "Six subjects are standing rulings out of phase for the first pass dated 2026-09-06 — users, sign-in models, agents, delegation of authority, plant-operator registration and 'who notifies' — and bulk upload is also out of phase; both are parked, not rejected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:20-23",
+      "quote": "Standing rulings for the first pass (2026-09-06): users, sign-in models,\nagents, delegation of authority, plant-operator registration and \"who\nnotifies\" are out of phase; bulk upload is out of phase. Both are parked,\nnot rejected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-005",
+      "statement": "Changing a ruling leaves rulings.json and critic.json alone and edits the ledger and its subject in one commit: a new d-NNN entry with status current, supersedes and decidedAt; the earlier entry set superseded with supersededBy; and the subject re-stamped (a conflict's resolution, resolvedBy and decision, or a behaviour's status and decision plus ' | Ruling: <resolution>' appended to its detail).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:25-35",
+      "quote": "To change a ruling, leave the two files here alone and edit the ledger and\nits subject in one commit:\n\n1. Append an entry to `../decisions.json` with the next `d-NNN` id,\n   `status: \"current\"`, `supersedes` set to the earlier entry's id and\n   `decidedAt` set to the date of the ruling.\n2. Set the earlier entry's `status` to `\"superseded\"` and its\n   `supersededBy` to the new id.\n3. Re-stamp the subject.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-006",
+      "statement": "The panel's rulings were all decided on 2026-09-06 and the file holds 8 dockets, 83 rulings and 55 reconciliation entries.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2 (decidedAt), .dockets/.rulings/.reconciliation lengths",
+      "quote": "\"decidedAt\": \"2026-09-06\"",
+      "confidence": "verbatim",
+      "note": "Counts taken with jq: 8 dockets, 83 rulings, 55 reconciliation entries; the dockets' own rulingCount fields sum to 83 (11+5+15+17+11+7+7+10)."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-007",
+      "statement": "Docket D1-territory-and-timing (11 rulings) settles territory and timing: every notifier-facing string says Great Britain with no nation check on any address, plants and wood answer a Yes/No arrival-status question before giving one date and a destination while potatoes give an expected date and time and are never asked whether they have arrived, the arrival date is validated only as a real calendar date with one sourced bound, and lateness is computed in calendar days by one pure helper, warned on the draft check-your-answers page, committed as a system value at first submission and read back for the confirmation banner and dashboard Late tag, with competent-authority routing parked as backend work.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:5-7 (dockets[0])",
+      "quote": "Every notifier-facing string says Great Britain and no address is checked by nation; the England-only drafting of the draft SI is parked as a legal note that changes no page. ... Lateness is computed in calendar days by one pure helper (potatoes late after arrivalDate minus 2, plants and wood late after arrivalDate plus 4, time ignored), shown live as a warning on the draft check-your-answers page, committed as a system value at the first submission (reconciled to D5's model) and read back for the banner on confirmation and the submitted view and the Late tag on the dashboard — all buildable now with no engine change — while routing to APHA, the Forestry Commission or Scottish Government is parked as backend work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-008",
+      "statement": "Docket D4-parties-and-contact (5 rulings) collapses the contact section to the single animals-shaped address-book pick because the picked record already carries name, address, telephone and email, deletes the plants-only number-and-email page and its two obligations, keeps Consignment Number as an optional notifier reference with its definition parked, asks the consignor only for plants for planting and wood, swaps 'the animal' for 'the consignment' in the country-of-origin error, and replaces the five animals declaration statements with three plants statements while parking the third-party authority clauses.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:10-12 (dockets[1])",
+      "quote": "The contact section collapses to the single animals-shaped address-book pick: the picked record already carries the contact's name, address, telephone and email (the address book will not store a record without the last two), so the plants-only number-and-email page and its two obligations are deleted and Check your answers shows all four from the copied record. ... Nothing in this docket needs Sam.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-009",
+      "statement": "Docket D2-commodity-model (15 rulings) stands the commodity model as drafted: one notification-level type (potatoes, plants for planting, wood and cut trees), nine per-line categories from the SI's scope items, one-or-many commodity lines, a fifteen-entry genus list served as reference data with hardwood narrowed to Castanea, Fraxinus and Platanus, species as free text, seed potatoes treated as potatoes, every wood and potato scope condition carried as page guidance rather than a question, and a change of commodity type dropping incompatible lines in the commodity-type POST itself.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:15-17 (dockets[2])",
+      "quote": "The commodity model stands as the reconciler drafted it: one notification-level type (potatoes, plants for planting, wood and cut trees), nine per-line categories taken straight from the SI's scope items, one-or-many commodity lines, a fifteen-entry genus list served as reference data with hardwood lines narrowed to Castanea, Fraxinus and Platanus, species as free text, and seed potatoes treated as potatoes. ... Wipe wins over retain everywhere, and a change of commodity type after lines exist now drops the incompatible lines in the commodity-type POST itself (warning before, banner after), not on the list page's load, so stale lines can never reach the hub, check your answers or submission.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-010",
+      "statement": "Docket D8-scope-and-parked (17 rulings) puts every item out of the first pass: the four conflicts resolve to the readings the spec already carries and all thirteen behaviours are parked rather than rejected, so nothing new is built — no agent or importer party, registration step, bulk upload, document import, regulator, inspector or analyst screens, list-maintenance admin, check booking, documents collection, outbox, event publishing or combined animals+plants list — with five small spec edits keeping the record honest.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:20-22 (dockets[3])",
+      "quote": "Every item in this docket is out of the first pass and stays that way: the four conflicts resolve to the readings the spec already carries (proceed on the two Confluence pages as read; the signed-in Defra ID organisation is the notifier; Defra ID sign-in is the only precondition; many commodity lines in one notification is the commodityLines collection), and all thirteen behaviours are parked, not rejected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-011",
+      "statement": "Docket D3-origin-values-and-validation (11 rulings) settles what the origin page and the free-text fields may check: country of origin stays one field over the animals country list with the law's scope lists enforced on Continue (ware potatoes from Poland, Portugal, Romania or Spain; conifer wood without bark from Italy, France, Portugal or Spain; other plants and wood from an EU member state), Check your answers re-checks the rule, every unformatted field stays free text with a length cap, the only checks added are an arrival-time rule and a corrected quantity hint, the optional 'use' field is dropped, and the place of landing uses the built ports endpoint.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:25-27 (dockets[4])",
+      "quote": "This docket settles what the origin page and the free-text fields may check. Country of origin stays one field over the animals country list (which already holds every country the law names), and the law's own scope lists are enforced when the notifier presses Continue: ware potatoes must come from Poland, Portugal, Romania or Spain, conifer wood without bark from Italy, France, Portugal or Spain, and other plants and wood from an EU member state",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-012",
+      "statement": "Docket D5-reference-status-and-lifecycle (7 rulings) keeps the reference number, status and submission model exactly as animals built them — the frontend prints whatever the backend mints, the status is the four-value lifecycle with lateness as a separate Late tag and banner, and confirmation appears only once the backend has stored the submitted record — parks the plants type-code prefix at the end of the backlog, builds post-submission Amend, Cancel amendment and Delete as in animals with Copy as new parked, and fixes the late flag at first submission.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:30-32 (dockets[5])",
+      "quote": "The reference number, status and submission model stay exactly as animals built them: the frontend prints whatever the backend mints, the status is the four-value lifecycle with lateness shown as a separate Late tag and banner, and the confirmation page only appears once the backend has stored the submitted record with its own timestamp.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-013",
+      "statement": "Docket D6-chrome-and-journey-shape (7 rulings) keeps the animals chrome exactly as it is (service name Import notification service, Alpha banner with its feedback address, two placeholder links), has the confirmation page name the relevant plant health authority with no invented helpdesk, makes the dashboard a plants-only list of this session's notifications with no cross-journey filter, gives the journey the full animals shape with the commodity entry sub-page corrected out of the run steps, keeps guidance on GOV.UK, and makes commodity-list and timing-window volatility a standing build constraint.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:35-37 (dockets[6])",
+      "quote": "The plants journey keeps the animals chrome exactly as it is (service name Import notification service, Alpha banner and its feedback address, the two placeholder links) and the confirmation page tells the trader to contact the relevant plant health authority — APHA, the Forestry Commission or Scottish Government — with no invented helpdesk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-014",
+      "statement": "Docket D7-non-functional (10 rulings) splits the ten Annex 6 non-functional and management-information items five adopted (page-level accessibility, GDS Design System conformance, 24x7 readiness, minimal trader effort, the coded values and timestamps feeding the eight metrics) and five parked (GDPR, sustainability, a live Welsh service, internal login, cross-organisation access parity), with two verified corrections: the axe tag list is widened so the WCAG 2.1 and 2.2 rules run, and a two-repo fix carries submittedAt onto the backend's notifications list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:40-42 (dockets[7])",
+      "quote": "The ten Annex 6 non-functional and management-information items split cleanly: five are adopted because the engine already delivers the journey's share ... and five are parked because the policy paper gives no answer (GDPR lawful basis and retention, the meaning of 'sustainable', a live Welsh service) or because Sam has ruled users and internal access out of this phase (internal login, cross-organisation access parity). Two verified corrections come out of the adoption: the axe tag list is widened so the WCAG 2.1 and 2.2 rules actually run, and a new two-repo fix extra carries submittedAt onto the backend's notifications list so the dashboard's Date submitted row stops rendering empty in real mode.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-015",
+      "statement": "Ruling c-001 (D1, resolve, panel): 'Great Britain' wins in every notifier-facing string and the service applies no nation or territory check to the place-of-destination address, so a Scottish or Welsh destination is notified through this service; the SI's England-only drafting is recorded as a legal note that is not rendered and not built, because the policy paper, the SI's own destination clause (reg 26(2)(b) 'intended destination in Great Britain') and every tier-2 source say GB and no source asks the notifier to state the nation of arrival.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:48 (rulings[0], id c-001)",
+      "quote": "'Great Britain' wins in every notifier-facing string (arrival-status heading and legend, arrivalDate labels by state, proposedPlaceOfLanding hint, confirmation body; the dashboard intro names no territory today — guidance-before-you-start) and the service applies no nation or territory check to the placeOfDestination address, so a Scottish or Welsh destination is notified through this service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-016",
+      "statement": "Ruling c-002 (D1, resolve, panel): the journey collects exactly the statutory timing matters — one arrivalDate for every commodity type, arrivalTime only for potatoes, arrivalStatus only for plants-for-planting and wood-and-cut-trees — a potato notification is always framed as pre-arrival with a past date accepted and flagged late rather than rejected, no actual-arrival date or time is added for potatoes, and the arrival-status page needs no authored gate because the derived gate hides it for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:71 (rulings[1], id c-002)",
+      "quote": "Collect exactly the statutory matters: one arrivalDate for every commodity type; arrivalTime only when commodityType = potatoes; arrivalStatus only for plants-for-planting and wood-and-cut-trees. A potato notification is always framed as pre-arrival ('Expected date of arrival'), a past date is accepted and flagged late by lateNotificationIndicator, never rejected, and no actual-arrival date or time is added for potatoes; the arrival-status page needs no authored gate because the derived gate hides it for potatoes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-017",
+      "statement": "Ruling c-002 also sets the potato arrival-date hint 'For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.' and keeps the potato label 'Expected date of arrival' even when the date entered is past, because potatoes have no arrived state.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:85-90 (c-002 specChanges on arrivalDate)",
+      "quote": "input.hintByState = { potatoes: 'For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.', not-yet-arrived: 'For example, 27/3/2026', already-arrived: 'For example, 27/3/2026' } — provisional copy, machine-draft Welsh pair required",
+      "confidence": "verbatim",
+      "note": "Copy is flagged provisional by the ruling itself."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-018",
+      "statement": "Ruling c-006 (D1, resolve, panel): the importer selects arrivalStatus on its own single-question radios page (Yes first) for plants and wood only, placed before arrival-details and place-of-destination, and the service never derives it from the date; because the SI's two either/ors are different conditions, the destination page's already-arrived copy tells a notifier whose consignment has landed but not reached its destination to give the intended destination, so one binary status serves both clauses.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:99 (rulings[2], id c-006)",
+      "quote": "The importer selects arrivalStatus on its own single-question page (plants and wood only, radios Yes first) before arrival-details and place-of-destination; the service never derives it from the date.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-019",
+      "statement": "Ruling c-006 sets the arrival-status answer labels to 'Yes, it has already arrived | No, it has not arrived yet' over values already-arrived and not-yet-arrived, and gives placeOfDestination a hint per state whose already-arrived wording is 'Give the address where the consignment is being kept. If it is still on its way to its intended destination, give that destination. A plant health inspector may carry out a spot check here.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:108-123 (c-006 specChanges)",
+      "quote": "input.values = [\"already-arrived\", \"not-yet-arrived\"]; input.valueLabels = 'Yes, it has already arrived | No, it has not arrived yet'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-020",
+      "statement": "Ruling c-029 (D1, resolve, panel): arrivalDate validates only as a real calendar date with no sanity window and no animals-style bounds, the single sourced bound being that an already-arrived date may not be after today in Europe/London, with data-max-date only in that state; expected dates accept any past or future date, lateness is computed and never validated, and a typo sanity window is parked rather than built.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:132 (rulings[3], id c-029)",
+      "quote": "arrivalDate validates as a real calendar date (dateText) with no sanity window and no animals-style bounds; the single bound is sourced — when arrivalStatus = already-arrived the date may not be after today in Europe/London (dateTextInRange, max only) because it is 'the date on which it first arrived'",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's [today - 1 year, today + 1 year] window and the policy judge's no-bound position, both lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-021",
+      "statement": "Ruling c-029 sets the arrival-date error copy to 'Enter a real arrival date | Enter the arrival date | The date the consignment arrived cannot be in the future'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:151 (c-029 specChanges on arrivalDate)",
+      "quote": "errorCopy = 'Enter a real arrival date | Enter the arrival date | The date the consignment arrived cannot be in the future'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-022",
+      "statement": "Ruling c-031 (D1, resolve, panel): the SI wording wins — plants and wood may be notified before arrival or no later than four days after the date of arrival and potatoes only at least two days before the expected date — and lateness is calendar-day arithmetic in Europe/London that ignores arrivalTime, so potatoes are late after arrivalDate minus 2 days and plants and wood after arrivalDate plus 4 days (notifying on those days is on time), a future date can still be late for potatoes but never for plants and wood, and the windows are shown up front as option hints on commodity-type and per state on arrival-status.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:170 (rulings[4], id c-031)",
+      "quote": "Lateness is calendar-day arithmetic in Europe/London and ignores arrivalTime — potatoes are late when the notification day is after arrivalDate minus 2 days, plants and wood when it is after arrivalDate plus 4 days (notifying on arrivalDate minus 2, or on arrivalDate plus 4, is on time); a future date can still be late for potatoes but never for plants and wood",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-023",
+      "statement": "Ruling c-031 sets the arrival-status option hints to 'You are making a post-arrival notification. It must be made no later than 4 days after the date of arrival. You will give the date it arrived and where it is now. | You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.', with the day count supplied from the PLANTS_WOOD_DAYS_AFTER_ARRIVAL constant through a copy-function argument.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:189 (c-031 specChanges on arrivalStatus)",
+      "quote": "input.valueHints = 'You are making a post-arrival notification. It must be made no later than 4 days after the date of arrival. You will give the date it arrived and where it is now. | You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-024",
+      "statement": "Ruling c-035 (D1, resolve, panel): after submission the late highlight appears in three places — a notification banner naming the rule breached on the confirmation page and on the submitted read-only check-your-answers view, and a red Late tag beside the status on the dashboard card — while before submission the draft check-your-answers page shows warning text when the entered date would make the notification late today and says it can still be submitted; it never blocks and there is no separate late page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:198 (rulings[5], id c-035)",
+      "quote": "After submission the late highlight is shown in three places — a govukNotificationBanner naming the rule breached on the confirmation page and on the SUBMITTED read-only check-your-answers view, and a Late tag beside the status on the dashboard card; before submission the DRAFT check-your-answers page shows govukWarningText when the entered date would make the notification late if submitted today, computed by the same helper with the request clock, and says it can still be submitted. It never blocks and there is no separate late page.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge's wish to park the pre-submission warning, lost 2-1."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-025",
+      "statement": "Ruling c-035 makes lateNotificationIndicator a manifest obligation with system: true listed in SYSTEM_POPULATED, computed by one pure helper from (clock, commodityType, arrivalDate) called twice — with the request clock for the draft check-your-answers warning and with the finalise clock in the declaration POST, whose result is committed as a system value immediately before submitJourney only when the journey is DRAFT — so confirmation, the submitted view and the dashboard Late tag read the stored value and never recompute from submittedAt.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:201 (c-035 resolution)",
+      "quote": "lateNotificationIndicator is a manifest obligation with system: true, listed in SYSTEM_POPULATED: one pure helper computes on-time | late from (clock, commodityType, arrivalDate) and is called twice — with the request clock for the DRAFT check-your-answers warning, and with the finalise clock in the declaration POST, whose result is committed as a system value in fulfilment immediately before submitJourney only when the journey is DRAFT (c-030); confirmation, the submitted check-your-answers view and the dashboard Late tag read the stored value and never recompute from submittedAt.",
+      "confidence": "verbatim",
+      "note": "This is the reconciled D5 shape; the original D1 text had the flag derived on read and unstored (see the reconciliation entry for c-035)."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-026",
+      "statement": "Ruling c-035 fixes the late copy: the banner reads 'Your notification was made outside the required timing' followed by the commodity rule string and 'It has still been accepted and recorded.', the draft warning reads 'If you submit this notification today it will be late. {rule} You can still submit it.', and the rule strings are copy functions taking the day count from the named constants — 'Notifications for potatoes must be made at least {POTATO_DAYS_BEFORE_ARRIVAL} days before the expected date of arrival.' and 'Notifications for plants for planting and wood must be made no later than {PLANTS_WOOD_DAYS_AFTER_ARRIVAL} days after the date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:207-212 (c-035 specChanges on lateNotificationIndicator)",
+      "quote": "title Important, heading Your notification was made outside the required timing, body = the rule string for commodityType followed by It has still been accepted and recorded.; a govukTag Late (govuk-tag--red) beside the status tag on the dashboard card. Before submission: govukWarningText on the DRAFT CYA above the submit block when the helper is late for the request clock (live result, nothing stored) —\"If you submit this notification today it will be late. {rule} You can still submit it.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-027",
+      "statement": "Ruling timing-window-enforcement-and-late-highlight (D1, adopt, panel): the timing-window highlight is built in the first pass as a stored system value using the c-031 calendar-day rule, with no finalise hook, no backend field and no engine change, and the residual of projecting the flag into the backend NotificationDto for the regulator side is parked because Mapper A has no field for it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:231 (rulings[6], behaviour timing-window-enforcement-and-late-highlight)",
+      "quote": "Build it in the first pass as a stored system value: a pure lateness helper beside the check-answers feature computes on-time | late from (clock, commodityType, arrivalDate) using the c-031 calendar-day rule ... No finalise hook, no backend field, no engine change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-028",
+      "statement": "Ruling consignment-status-selected-or-derived (D1, adopt, panel): the user-selected arrivalStatus radios page (Yes first) is built for plants and wood and placed before arrival-details and place-of-destination, potatoes skip it by the derived gate, and the service never derives the status from the date in this run or later.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:249 (rulings[7], behaviour consignment-status-selected-or-derived)",
+      "quote": "Build the user-selected arrivalStatus radios page (Yes first) for plants and wood, placed before arrival-details and place-of-destination; potatoes have no status and skip the page by the derived gate. The service never derives the status from the date, in this run or later.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-029",
+      "statement": "Ruling england-vs-great-britain (D1, adopt, panel): the service is built with 'Great Britain' in every notifier-facing string and no nation check on the destination address, while the residual legal question — whether the draft SI is widened to GB or mirrored by Scottish and Welsh instruments, and whether a Scottish or Welsh destination ever routes elsewhere — is recorded as PARKED inside the behaviour and changes no page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:267 (rulings[8], behaviour england-vs-great-britain)",
+      "quote": "Build with 'Great Britain' in every notifier-facing string and no nation check on the destination address. The residual legal question — whether the draft SI is widened to GB or Scottish and Welsh instruments mirror it, and whether a Scottish or Welsh destination ever routes elsewhere — is recorded as PARKED (policy) inside this behaviour and changes no page.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's wish to park the whole behaviour, lost 2-1 on labelling only."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-030",
+      "statement": "Ruling arrival-date-window (D1, adopt, panel): arrivalDate is built as a real calendar date with no sanity window and no picker min/max except a maximum of today when the consignment has already arrived, taken from one bounds helper beside arrival-details; a past expected date for potatoes triggers no arrived question, is accepted and surfaces as late, and the typo sanity window is parked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:285 (rulings[9], behaviour arrival-date-window)",
+      "quote": "Build arrivalDate as a real calendar date with no sanity window and no picker min/max, except a maximum of today when arrivalStatus = already-arrived, from one bounds helper beside arrival-details. A past expected date for potatoes does not trigger an arrived question — potatoes have no arrived state — it is accepted, the potato hint says what to enter, and it surfaces as late; the typo sanity window is parked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-031",
+      "statement": "Ruling competent-authority-routing (D1, park, panel): there is no frontend increment — the journey already collects what routing needs (commodityType and placeOfDestination), never asks the notifier which authority applies, shows no 'sent to X' copy and keeps the confirmation's generic spot-check sentence — and routing, access parity and region derivation from the address are revisited when the plants backend has typed fields or an outbox.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:303 (rulings[10], behaviour competent-authority-routing)",
+      "quote": "Parked — no frontend increment. The notifier journey already collects what routing needs (commodityType and placeOfDestination), never asks the notifier which authority applies, shows no 'sent to X' copy, and keeps the confirmation's generic sentence that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check; routing, access parity and region derivation from the address are revisited when the plants backend has typed fields or an outbox.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-032",
+      "statement": "Ruling c-003 (D4, resolve, panel): the Common Data contact is required and satisfied by the one same-as-animals contactAddress pick, because the picked address-book record carries name, address, telephone number and email address and the address-book API refuses a record without phone and email, so 'Name of person making entry', 'Contact number', 'Contact address' and 'Contact email' are all collected by that single answer and nothing is asked twice.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:321 (rulings[11], id c-003)",
+      "quote": "The Common Data contact is required and is satisfied by the one same-as-animals contactAddress pick: the picked address-book record carries name, address, telephone number and email address (the address-book API refuses a record without phone and email, and the plants client folds both into the address block), so 'Name of person making entry', 'Contact number', 'Contact address' and 'Contact email' are all collected by that single answer and nothing is asked twice.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-033",
+      "statement": "Ruling c-003 keeps Consignment Number an optional free-text notifier reference on identification-numbers with the animals internalReferenceNumber input contract (maxText 58, pattern ^\\w*$, trimmed), parks its definition — issuer, format, potato applicability and whether it ever becomes mandatory — as an open question, and flags its label 'Consignment number (optional)' and hint as provisional reconciler-invented copy; reading 'Name of person making entry' as the signed-in user is a sub-park decided by sam under standing ruling 2.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:324, :345-350 (c-003 resolution and specChanges)",
+      "quote": "Consignment Number stays an optional free-text notifier reference on identification-numbers with the animals internalReferenceNumber input contract; its definition (issuer, format, potato applicability, whether it ever becomes mandatory) is parked as an open question, not built. ... The sub-park of 'Name of person making entry' as the signed-in user is decidedBy sam (standing ruling 2).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-034",
+      "statement": "Ruling c-025 (D4, resolve, panel): the animals shape wins outright — the contactAddress pick is the whole contact section, the contactNumber and contactEmail obligations and the contact-details page are deleted, the contact task row completes on the pick alone, and the opening run ends at consignment-contact-select (runStep 9 after c-034's renumbering) before landing on the hub.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:359 (rulings[12], id c-025)",
+      "quote": "The animals shape wins outright. contactAddress (same-as-animals: flat radios over the organisation's address book, inline copy { addressId, name, address }) is the whole contact section, because the copied address block already carries telephoneNumber and emailAddress and the address-book API guarantees both are present. Delete the contactNumber and contactEmail obligations and the contact-details page; the contact task row completes on the pick alone and the opening run ends at consignment-contact-select (runStep 9 after c-034's renumbering) before landing on the hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-035",
+      "statement": "Ruling c-025 adds Telephone number and Email address rows to the plants Check your answers Contact card, read from the inline copy, as a plants-only addition because the animals card shows name and address lines only, and records that whether 'Name of person making entry' should be the signed-in user is parked under standing ruling 2 as a new open-question behaviour name-of-person-making-entry.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:362, :431-438 (c-025 resolution and specChanges)",
+      "quote": "The plants Check your answers Contact card adds Telephone number and Email address rows read from the inline copy so the trader can see what will be submitted — animals' card shows name and address lines only, so this is a plants-only addition grounded in annex:6/common-data/item:2,4 and NNS-UN-007.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-036",
+      "statement": "Ruling c-026 (D4, resolve, panel): the SI wins on scope — the consignor is required for plants for planting and wood and cut trees only and is never asked for potatoes, whose crop is traced through producer and crop identification numbers instead — keeping the variant-of-animals address-book picker with { addressId } storage gated same-frame on commodityType with wipeOnExit, so consignor-select is skipped by the opening run and its hub row hidden for potatoes; a typed name-and-address fallback for an EU consignor not yet in the address book is parked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:447 (rulings[13], id c-026)",
+      "quote": "The SI wins on scope: the consignor is required for plants for planting and for wood and cut trees only and is never asked for potatoes — the potato list traces the crop through producer and crop identification numbers instead. ... A typed name-and-address fallback for an EU consignor not yet in the address book is parked, not built: the trader adds it in the INS address book first, as animals traders do.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-037",
+      "statement": "Ruling c-026 creates the parked behaviour consignor-typed-fallback and notes for its revisit that the INS address book requires a phone and email on every record that reg 26(2)(f) does not, so an EU consignor entry demands two facts the law does not.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:511 (c-026 specChanges, consignor-typed-fallback)",
+      "quote": "Note for the revisit: the address book requires a phone and email on every record (AddressRequest.java) that reg 26(2)(f) does not, so an EU consignor entry demands two facts the law does not.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-038",
+      "statement": "Ruling c-027 (D4, resolve, panel): countryOfOrigin keeps the animals id, page, widget, validation, label, hint and Welsh label and hint verbatim and changes only the error sentence to 'Select the country where the consignment originates from', dropping the copied Welsh error rather than shipping one that names an animal; because one copy string now differs the obligation is tagged variant-of-animals, its divergence being that error sentence and the per-category origin narrowing ruled at c-022, and the error sentence is flagged provisional copy.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:525 (rulings[14], id c-027)",
+      "quote": "Keep the animals id, page, widget, validation, label, hint and Welsh label and hint verbatim; change only the error sentence to 'Select the country where the consignment originates from' — one noun swapped in the animals sentence — and drop the copied Welsh error rather than ship one that names an animal",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's 'Select the country of origin' and the policy judge's 'Select the country the plants, wood or potatoes originate from', both lost to the engine judge's minimum one-noun swap."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-039",
+      "statement": "Ruling c-028 (D4, resolve, panel): the declaration page and its machinery stay exactly as animals has them — single checkbox, confirmation sentence in both languages, error copy, date line, Continue, flow-only key and submit gate — but all five animals statements are replaced wholesale by three short plants statements, flagged provisional for policy and content-design sign-off with no Welsh invented, and the third-party and agent-authority clauses are parked with agent-acting-on-behalf under standing ruling 2 as a sub-park decided by sam.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:563 (rulings[15], id c-028)",
+      "quote": "Keep the declaration page and its machinery exactly as animals have them — the single checkbox, its confirmation sentence in English and Welsh, the error copy, the date line, Continue, the flow-only key and submit gate. Replace the five animals statements wholesale: none survives.",
+      "confidence": "verbatim",
+      "note": "Quote lightly re-joined across the resolution's first two sentences; the source reads 'exactly as animals has them'."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-040",
+      "statement": "Ruling c-028 sets the three plants declaration statements: that the notifier is notifying the competent authority as required under the Plant Health National Notification Scheme; that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may spot-check the consignment without prior notice at its place of destination or where it is currently held; and that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:572 (c-028 specChanges on the declaration page)",
+      "quote": "I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme. | I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held. | I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.",
+      "confidence": "verbatim",
+      "note": "Flagged provisionalCopy by the ruling; Welsh is machine-drafted at build, not invented in the spec."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-041",
+      "statement": "Ruling c-004 (D2, resolve, panel): seed potatoes are potatoes — commodityType = potatoes, the per-line category offers seed-potatoes and ware-potatoes, and a seed-potato line takes the reg 24A matters and the two-day pre-arrival window — so the mural list-image's placement of seed potatoes under Plants for planting is not followed and 'Seed potatoes' is never a genus value.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:606 (rulings[16], id c-004)",
+      "quote": "Seed potatoes are potatoes: commodityType = potatoes, the per-line category offers seed-potatoes and ware-potatoes, and a seed-potato line takes the reg 24A matters (variety, quantity, intended use, producer and crop ids, time of arrival, place of landing) and the two-day pre-arrival window. The mural list-image's placement of seed potatoes under Plants for planting is not followed and 'Seed potatoes' is never a genus value.",
+      "confidence": "verbatim",
+      "note": "Ruling records no spec change: all three judges agree and the spec already carries it."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-042",
+      "statement": "Ruling c-005 (D2, resolve, panel): the category value is conifer-wood-with-bark labelled 'Conifer wood with bark, or isolated bark of conifer', because the mural table's 'with mark' is a transcription typo carrying no meaning.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:618 (rulings[17], id c-005)",
+      "quote": "The SI wording wins: the category value is conifer-wood-with-bark, labelled 'Conifer wood with bark, or isolated bark of conifer'. The mural table's 'with mark' is a transcription typo and carries no meaning.",
+      "confidence": "verbatim",
+      "note": "The label stays provisional for the copy pass and needs Welsh before release."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-043",
+      "statement": "Ruling c-007 (D2, resolve, panel): the four wood caveats are scope conditions rather than data elements, so they become the five wood category values with the bark, origin, height and form conditions in the value labels plus guidance copy, and the only extra wood data collected is size of tree and phytosanitary treatments gated on category; no question is asked about preservative treatment, bark condition or the 3-metre threshold, and the preservative exclusion moves to a hint on the category question for wood notifications with its cut-coniferous-trees exception.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:630 (rulings[18], id c-007)",
+      "quote": "The four wood caveats are scope conditions, not data elements: they become the five wood category values (with the bark, origin, height and form conditions in the value labels) and guidance copy; the only extra wood data collected is the two SI matters, size of tree and phytosanitary treatments, gated same-frame on category. No question is asked about preservative treatment, bark condition or the 3-metre threshold.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's per-option hints on all five wood values and the policy judge's no-change position, both lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-044",
+      "statement": "Ruling c-007 sets the wood category hint to 'Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.' and removes the sentence 'Preservative-treated wood does not need to be notified.' from the phytosanitary treatments field, whose hint becomes 'Describe any phytosanitary treatment the wood has had, for example heat treatment (HT) or kiln drying (KD).'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:639, :649 (c-007 specChanges)",
+      "quote": "\"hintByCommodityType\": { \"wood-and-cut-trees\": \"Preservative-treated wood does not need to be notified, unless it is cut coniferous trees more than 3 metres high.\" }",
+      "confidence": "verbatim",
+      "note": "Provisional copy, English only until the copy pass. The move is justified because reg 26(1)(b)(iii) (cut coniferous trees) carries no preservative exclusion, so the old hint was wrong on a cut-trees line."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-045",
+      "statement": "Ruling c-008 (D2, resolve, panel): '(for plants for planting)' qualifies species only, so genus is asked for plants-for-planting, trees-for-planting, hardwood-round-surface and hardwood-chips lines, species only for plants-for-planting and trees-for-planting, and the three conifer lines ask neither in the first pass; the literal reading that reg 26(2)(c) also wants a genus for conifer wood is recorded as a parked policy check.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:663 (rulings[19], id c-008)",
+      "quote": "'(for plants for planting)' qualifies species only. Genus is asked for plants-for-planting, trees-for-planting, hardwood-round-surface and hardwood-chips lines; species only for plants-for-planting and trees-for-planting; the three conifer lines (conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees) ask neither in the first pass.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge's required free-text conifer genus, lost because no source gives a conifer genus list."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-046",
+      "statement": "Ruling c-009 (D2, resolve, panel): the hardwood genus constraint is Castanea, Fraxinus and Platanus only, and Juglans and Pterocarya are not offered anywhere in the service because the SI footnotes record them as removed from scope, superseding the mural and Confluence lists that still carry them.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:681 (rulings[20], id c-009)",
+      "quote": "The hardwood genus constraint is Castanea, Fraxinus and Platanus only. Juglans and Pterocarya are not offered anywhere in the service; the mural and Confluence lists that still carry them (and the mural spelling 'Juglens') are superseded by the SI footnotes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-047",
+      "statement": "Ruling c-012 (D2, resolve, panel): a notification carries one or many commodity lines — commodityLines is a collection with minEntries 1 and the error 'Add at least one commodity', built as a two-page batch (list page plus Commodity details entry sub-page) as a variant of animals' commodityLines without its catalogue search — all lines share the one commodityType chosen first, and a consignment mixing potatoes with plants or wood is two notifications.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:693 (rulings[21], id c-012)",
+      "quote": "A notification carries one or many commodity lines: commodityLines is a collection with minEntries 1 (error 'Add at least one commodity'), built as the two-page batch (list page plus Commodity details entry sub-page) as a variant of animals' commodityLines without its catalogue search. All lines share the one commodityType chosen first; a consignment mixing potatoes with plants or wood is two notifications.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-048",
+      "statement": "Ruling c-013 (D2, resolve, panel): wipe wins — wipeOnExit stays true on every gated plants obligation and no answer is retained out of scope — and a change of commodityType after lines exist is handled in the commodity-type page's POST, which warns before the change, commits the type, drops the lines whose category is not in the new type's set via reconcileEntriesAt and redirects to the commodities list with ?removed=<n> for a banner, while the list page suppresses its zero-lines redirect for that load and never writes on GET.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:705 (rulings[22], id c-013)",
+      "quote": "Wipe wins: wipeOnExit = true stays on every gated plants obligation and no answer is retained out of scope. A change of commodityType after lines exist is handled in the commodity-type page's POST, not on the list page's load: the page warns before the change when lines exist, the POST commits the type and then drops the lines whose category is not in the new type's set via reconcileEntriesAt, and redirects to the commodities list with ?removed=<n> where a notification banner names what was removed; the list page suppresses its zero-lines redirect for that load and never writes on GET.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-049",
+      "statement": "Ruling c-013 sets the warning before a commodity-type change to 'Changing your answer will remove the commodities you have already added.' and the banner after it to 'We removed <n> commodities that are not <commodityType label>', both provisional copy.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:714, :719 (c-013 specChanges)",
+      "quote": "the page renders govukWarningText above the radios (provisional copy) \"Changing your answer will remove the commodities you have already added.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-050",
+      "statement": "Ruling c-017 (D2, resolve, panel): the genus list for plants-for-planting and trees-for-planting lines is the fifteen entries of reg 26(1)(a) with the SI's spelling and bracketed English names, the four species-level entries are offered as they stand, 'Seed potatoes' is not a genus, hardwood lines get the same control with Castanea, Fraxinus and Platanus only, and the list is set-owned reference data rather than a hard-coded enum, with the details page offering only the entries allowed for the line's category and never fifteen with twelve rejected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:738 (rulings[23], id c-017)",
+      "quote": "The genus list for plants-for-planting and trees-for-planting lines is the fifteen entries of reg 26(1)(a) with the SI's spelling and bracketed English names; the four species-level entries are offered as they stand; 'Seed potatoes' is not a genus; hardwood lines get the same control rendered with Castanea, Fraxinus and Platanus only. The list is set-owned reference data, not a hard-coded enum, and the details page offers only the entries allowed for the line's category — never fifteen with twelve rejected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-051",
+      "statement": "Ruling c-018 (D2, resolve, panel): commodityType has three values (potatoes, plants-for-planting, wood-and-cut-trees) and the per-line category has nine (seed-potatoes, ware-potatoes, plants-for-planting, trees-for-planting, conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees, hardwood-round-surface, hardwood-chips), with the commodity-details page offering only the categories of the chosen type and POST rejecting any other; the mural's five coarse labels are not a value list.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:756 (rulings[24], id c-018)",
+      "quote": "commodityType has three values (potatoes / plants-for-planting / wood-and-cut-trees) and the per-line category has nine (seed-potatoes, ware-potatoes, plants-for-planting, trees-for-planting, conifer-wood-with-bark, conifer-wood-without-bark, cut-coniferous-trees, hardwood-round-surface, hardwood-chips); the commodity-details page offers only the categories of the chosen type and POST rejects any other. The mural's five coarse labels are not a value list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-052",
+      "statement": "Ruling c-019 (D2, resolve, panel): 'trees for planting' is kept as a per-line category value beside 'plants for planting' so the notifier declares that the plants are trees and sizeOfTree gates same-frame on category in [trees-for-planting, cut-coniferous-trees], both options get a neutral self-classification hint, the genus list is not narrowed for trees for planting, which plants-for-planting lines legally count as trees is a parked policy question, and the genus-derived alternative is not built.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:768 (rulings[25], id c-019)",
+      "quote": "Keep 'trees for planting' as a per-line category value beside 'plants for planting' so the notifier declares that the plants are trees and sizeOfTree gates same-frame on category in [trees-for-planting, cut-coniferous-trees]. Both options get a neutral hint that lets the trader self-classify without policy knowledge; the genus list is not narrowed for trees for planting.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge's wish to name Annex 1's first-group genera in the hint and the engine judge's no-hint position, both lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-053",
+      "statement": "Ruling c-019 sets the two self-classification hints: 'Shrubs, young plants, cuttings and other plants for planting that are not trees.' for plants-for-planting and 'Trees for planting of any size, including saplings and whips. You will be asked their height.' for trees-for-planting, as radio item hints on commodity-details.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:777 (c-019 specChanges on category)",
+      "quote": "\"valueHintsByValue\": { \"plants-for-planting\": \"Shrubs, young plants, cuttings and other plants for planting that are not trees.\", \"trees-for-planting\": \"Trees for planting of any size, including saplings and whips. You will be asked their height.\" } — provisional copy, English only until the copy pass; rendered as govukRadios item hints on commodity-details.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-054",
+      "statement": "Ruling c-036 (D2, resolve, panel): genus is a controlled list from the set-owned commodities service, species is required free text (requiredMaxText 58, no format check) on plants-for-planting and trees-for-planting lines until a species catalogue exists, and the four species-level scope entries (Olea europaea, Nerium oleander, Polygala myrtifolia, Salvia rosmarinus) are offered as genus values exactly as the SI spells them.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:791 (rulings[26], id c-036)",
+      "quote": "Genus is a controlled list from the set-owned commodities service; species is required free text (requiredMaxText 58, no format check) on plants-for-planting and trees-for-planting lines until a species catalogue exists; the four species-level scope entries (Olea europaea, Nerium oleander, Polygala myrtifolia, Salvia rosmarinus) are offered as genus values exactly as the SI spells them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-055",
+      "statement": "Ruling c-037 (D2, resolve, panel): the SI's two items win — conifer-wood-with-bark ('Conifer wood with bark, or isolated bark of conifer', any member State) and conifer-wood-without-bark ('Conifer wood without bark', Italy, France, Portugal and Spain only) — with the four-country origin constraint on the second value alone, and the Confluence and mural rephrasing is not modelled as a third value.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:803 (rulings[27], id c-037)",
+      "quote": "The SI's two items win: conifer-wood-with-bark ('Conifer wood with bark, or isolated bark of conifer', any member State) and conifer-wood-without-bark ('Conifer wood without bark', Italy, France, Portugal and Spain only), with the four-country origin constraint on the second value alone. The Confluence and mural rephrasing is not modelled as a third value.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-056",
+      "statement": "Ruling commodity-type-change-reconciles-lines (D2, adopt, panel): the line reconcile is built in the first pass exactly as c-013 rules, and the on-load reconcile, three typed collections and retain-and-flag alternatives are not built, with a model-owned projection helper recorded as a candidate extension.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:815 (rulings[28], behaviour commodity-type-change-reconciles-lines)",
+      "quote": "Build it in the first pass exactly as ruled in c-013: the commodity-type POST, after committing a changed commodityType, reconciles commodityLines with reconcileEntriesAt (keep lines whose category is in the new type's set, drop the rest with wipe semantics), the page warns before when lines exist, and it redirects to the commodities list with ?removed=<n> ... The on-load reconcile, three typed collections and retain-and-flag alternatives are not built; a model-owned projection helper is recorded as a candidate extension.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-057",
+      "statement": "Ruling wood-scope-caveats-as-guidance (D2, adopt, panel): the guidance reading is built — the five wood category values encode the SI items with their conditions in the labels and the preservative exclusion is a hint on the category question for wood notifications with its cut-coniferous-trees exception — with no pre-scope question and no 'you do not need to notify' page, fuller scope text belonging with guidance-before-you-start outside the journey pages, and explicit scope questions that end the journey parked pending a policy answer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:838 (rulings[29], behaviour wood-scope-caveats-as-guidance)",
+      "quote": "Build the guidance reading: the five wood category values encode the SI items with the bark, origin, height and form conditions in their labels, and the preservative exclusion is a hint on the category question for wood notifications with its cut-coniferous-trees exception (the c-007 edit); no pre-scope question and no 'you do not need to notify' page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-058",
+      "statement": "Ruling potato-scope-guidance (D2, adopt, panel): the seed/ware split is the per-line category, the origin narrowing is validation owned by origin-value-list-by-commodity, and the ware-potato origin scope and Balearic Islands exclusion are one inset on the origin page rendered page-side only when a ware-potatoes line exists, so countryOfOrigin's label, hint and widget stay verbatim animals; 'suspected of having been grown' is not asked, and a Spain region option and the mural's off-board footnote are parked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:866 (rulings[30], behaviour potato-scope-guidance)",
+      "quote": "Build it: the seed/ware split is the per-line category; the origin narrowing is validation owned by origin-value-list-by-commodity (its reject-or-accept question stays open there); the ware-potato origin scope and the Balearic Islands exclusion are one govukInsetText on the origin page, rendered page-side only when a ware-potatoes line exists, so countryOfOrigin's label, hint and widget stay verbatim animals (the obligation is tagged variant-of-animals for its validation and error sentence — c-022, c-027). 'Suspected of having been grown' is not asked; a Spain region option and the mural's off-board footnote are parked.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the engine judge's conditional obligation hint and the policy judge's two-sentence version, both lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-059",
+      "statement": "Ruling potato-scope-guidance sets the origin-page inset copy to 'Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.', rendered above the autocomplete when any commodity line's category is ware-potatoes, and repoints the origin page's reference to a behaviour id 'spain-excludes-balearic-islands' that does not exist in the spec's behaviours.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:885 (potato-scope-guidance specChanges on the origin page)",
+      "quote": "with a govukInsetText rendered above the autocomplete when any commodityLines[i].category = ware-potatoes (provisional copy, plants-only, reg 24A(1)(b) and 24A(3)): \"Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-060",
+      "statement": "Ruling c-010 (D8, resolve, panel): work proceeds on the two Confluence pages exactly as extracted (requirements v5 2026-07-02, user needs v11 2026-06-30), the SharePoint requirements workbook is not a source in this run and is not chased, nothing in the spec waits on it, and if it is ever read each difference from the pages becomes a new conflict against the policy paper, which still wins.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:899 (rulings[31], id c-010)",
+      "quote": "Proceed on the two Confluence pages exactly as extracted (requirements v5 2026-07-02, user needs v11 2026-06-30). The SharePoint workbook 'EU Reset Delivery Programme_Requirements Template.xlsx' is not a source in this run, is not chased, and nothing in the spec waits on it; if it is ever read, each difference from the pages becomes a new conflict against the policy paper, which still wins.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-061",
+      "statement": "Ruling c-038 (D8, resolve, sam): the notifier is the professional operator bringing the goods into England, which in this service is the signed-in Defra ID organisation, so the journey collects no importer, agent or notifier party and the consignor is the only party obligation; the declaration carries no third-party, standing, authority or agent sentence, both animals third-party statements being parked with agent-acting-on-behalf under standing ruling 2, and agent identification, authorisation and linking stay parked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:911 (rulings[32], id c-038)",
+      "quote": "The SI wins: the notifier is the professional operator bringing the goods into England, and in this service that is the signed-in Defra ID organisation. The journey collects no importer, agent or notifier party; the consignor (reg 26(2)(f)) is the only party obligation. The declaration carries no third-party, standing, authority or agent sentence",
+      "confidence": "verbatim",
+      "note": "This is the reconciled text; the pre-reconciliation ruling retained one animals third-party sentence verbatim (see the reconciliation entry for c-038 and the critic's standing-ruling breach)."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-062",
+      "statement": "Ruling c-039 (D8, resolve, sam): Defra ID sign-in (real mode /auth/sign-in, /auth/sign-in-oidc, /auth/organisation; stub mode /auth/stub-sign-in) is the only precondition to notifying built in this run — no plant-operator registration page, registration check before the dashboard or onboarding step — and the dashboard is reachable by any authenticated organisation.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:929 (rulings[33], id c-039)",
+      "quote": "Defra ID sign-in (real mode /auth/sign-in, /auth/sign-in-oidc, /auth/organisation; stub mode /auth/stub-sign-in) is the only precondition to notifying built in this run. No plant-operator registration page, registration check before the dashboard or onboarding step; the dashboard is reachable by any authenticated organisation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-063",
+      "statement": "Ruling c-040 (D8, resolve, sam): the many-lines reading of the volume user need is met by the commodityLines collection (one notification, one or many lines, at least one, no maximum), while bulk upload of many notifications, import from existing documents and reuse of a previous consignment are not built and each stays its own parked behaviour, with no file page, upload route or format in the start section and nothing in the form shaped around a future file route.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:941 (rulings[34], id c-040)",
+      "quote": "The many-lines reading of NNS-UN-005 is met by the commodityLines collection: one notification, one or many lines, at least one, no maximum (c-012). Bulk upload of many notifications at once, import from existing documents and reuse of a previous consignment are not built and each stays its own parked behaviour; no file page, upload route or format enters the start section, and nothing in the form is shaped around a future file route.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-064",
+      "statement": "Ruling bulk-upload (D8, park, sam): bulk upload is not built in this phase and no file, template or upload page appears in the spec; it is recorded as a later alternative entry route in the start section that must produce the same canonical fulfilment and pass the same validation as the form, once policy supplies the format, scope and unit of upload.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:953 (rulings[35], behaviour bulk-upload)",
+      "quote": "Not built in this phase. No file, template or upload page appears in the spec. Recorded as a later alternative entry route in the start section that must produce the same canonical fulfilment and pass the same validation as the form, once policy supplies the format, scope and unit of upload.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-065",
+      "statement": "Ruling import-from-existing-documents (D8, park, panel): importing consignment information from existing documents is not built in this phase and stays a parked convenience need; if picked up it is an upload-and-extract route feeding the same obligations, which first needs the epic's document-upload exclusion lifted and a plants source naming the documents and their machine-readable format.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:971 (rulings[36], behaviour import-from-existing-documents)",
+      "quote": "Not built in this phase. NNS-UN-042 stays a parked convenience need. If picked up it is an upload-and-extract route feeding the same obligations, which first needs the epic's document-upload exclusion lifted and a plants source to name the documents and their machine-readable format.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge attributing the decision to Sam; the panel records decidedBy panel because no standing ruling names document import."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-066",
+      "statement": "Ruling reuse-previous-consignment (D8, park, panel): reuse of a previous consignment is not built as an increment of its own — the need maps onto animals' Copy as new, which c-030 ruled out of the first pass, so it stays parked with no increment and unparking later is one increment copying the animals copy action — and the prototype's templates pattern is not adopted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:989 (rulings[37], behaviour reuse-previous-consignment)",
+      "quote": "Not built as an increment of its own. NNS-UN-041 maps onto animals' Copy as new (POST copy on the reserved /copy slug, new DRAFT opened at the hub, ?copied=1 banner), which notification-actions-after-submission (c-030) ruled out of the first pass, so this stays parked with no increment; unparking later is one increment copying the animals copy action. The prototype's templates pattern (manageTemplates) is not adopted.",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling made the park conditional on c-030's answer."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-067",
+      "statement": "Ruling agent-acting-on-behalf (D8, park, sam): no agent work is built in this phase — the signed-in Defra ID organisation is the notifier, no agent party, agent sign-in model, authorisation or importer-agent link is collected and the declaration carries no third-party authority clause — and it is revisited when policy says how an agent is identified, authorised and linked to the professional operator and whether an agent needs their own registration.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1012 (rulings[38], behaviour agent-acting-on-behalf)",
+      "quote": "Not built in this phase. The signed-in Defra ID organisation is the notifier; no agent party, agent sign-in model, authorisation or importer-agent link is collected. The declaration carries no third-party authority clause (c-028). Revisit when policy says how an agent is identified, authorised and linked to the professional operator, and whether an agent needs their own registration.",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling said the declaration keeps the one animals third-party sentence as copy (a standing-ruling breach the critic found)."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-068",
+      "statement": "Ruling plant-operator-registration (D8, park, sam): plant-operator registration is not built in this phase since Defra ID sign-in is the only precondition, and if ruled in later it is an onboarding step or a registration check before the dashboard, outside the notification journey and outside the obligations engine.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1030 (rulings[39], behaviour plant-operator-registration)",
+      "quote": "Not built in this phase. Defra ID sign-in is the only precondition (c-039). If ruled in later it is an onboarding step or a registration check before the dashboard, outside the notification journey and outside the obligations engine.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-069",
+      "statement": "Ruling regulator-views (D8, park, panel): there is no regulator screen, filter or report in this frontend, what the notifier journey owes the regulator is already collected (coded category, genus and ISO country of origin, a structured destination address, arrival date and status, the late flag and a stable reference number), and one correction is made — the detail must not claim a region is captured, because the address block carries no region member and region derivation is an open backend question.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1048 (rulings[40], behaviour regulator-views)",
+      "quote": "No regulator screen, filter or report in this frontend. What the notifier journey owes the regulator is already collected: coded category, genus and ISO country of origin, a structured placeOfDestination address, arrivalDate and arrivalStatus, lateNotificationIndicator and a stable referenceNumber. One correction: the detail must not claim a region is captured",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-070",
+      "statement": "Ruling inspector-recording (D8, park, panel): there is no inspector-side capture in this frontend — no outcome recording, no non-notified-consignment record and no risk level — because the notifier journey already gives inspectors arrival status, place of destination (the current location when already arrived), the coded commodity lines and the contact details, and nothing else is owed by the notifier.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1071 (rulings[41], behaviour inspector-recording)",
+      "quote": "No inspector-side capture in this frontend: no outcome recording, no non-notified-consignment record, no risk level. The notifier journey already gives inspectors arrivalStatus, placeOfDestination (current location when already arrived), the coded commodity lines and the contact details; nothing else is owed by the notifier.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-071",
+      "statement": "Ruling analyst-export (D8, park, panel): there is no export or download feature in this frontend — the journey's duty to analysts is discharged by storing structured coded values (ISO country, coded commodityType, category and genus, dates, arrival status, notification status) and extraction is backend and datalake work — with the eight MI metrics on the journey ruled under mi-metrics-eight instead.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1089 (rulings[42], behaviour analyst-export)",
+      "quote": "No export or download feature in this frontend. The journey's duty to analysts is discharged by storing structured, coded values (ISO country, coded commodityType, category and genus, dates, arrivalStatus, notificationStatus); extraction is backend and datalake work. The eight MI metrics on the journey are ruled under mi-metrics-eight, not here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-072",
+      "statement": "Ruling risk-classification-and-list-maintenance (D8, park, panel): there is no admin or list-maintenance surface in this frontend and spot-check percentages and risk classifications are not represented in the notifier journey, because the run's whole obligation is already met by the set-owned commodities service holding the commodityType, category, genus and origin allow-lists behind a configure* seam pinned by a whitelists test and never hard-coded, so a policy list change is a data change.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1107 (rulings[43], behaviour risk-classification-and-list-maintenance)",
+      "quote": "No admin or list-maintenance surface in this frontend, and spot-check percentages and risk classifications are not represented in the notifier journey. This run's whole obligation is already adopted under set-owned-commodities-service: the commodityType, category, genus and origin allow-lists live in the set-owned commodities service behind a configure* seam in routes.js, pinned by obligations/whitelists.test.js, never hard-coded in obligations or copy — so a policy list change is a data change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-073",
+      "statement": "Ruling spot-check-scheduling (D8, park, panel): there is no scheduling, appointment, 'check booked' step or notice to the trader in this frontend and the hand-off to scheduling systems is backend work, the only trace of checks in the journey being copy already specified and correct — the confirmation page's spot-check-without-prior-notice sentence and the place-of-destination hint, which since c-006 is a hint per state keeping the spot-check sentence in every state.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1125 (rulings[44], behaviour spot-check-scheduling)",
+      "quote": "No scheduling, appointment, 'check booked' step or notice to the trader in this frontend; the hand-off to scheduling systems is backend work. The only trace of checks in the journey is copy that is already specified and correct: the confirmation page's 'may carry out a spot check at the place of destination without prior notice' and the placeOfDestination hint, which since c-006 is input.hintByState and keeps the spot-check sentence in every state",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling quoted the pre-c-006 single destination hint and argued provisionalCopy was only an invented-title flag."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-074",
+      "statement": "Ruling document-uploads-out-of-scope (D8, park, panel): no documents collection, upload page, uploader route, virus-scan polling or document reference is built in this run, the negative being enforced by the adopted no-export-certificate-or-documents behaviour, and the entry remains the record that if a plants source ever names a document, animals' documents collection (0..10 uploads, cdp-uploader, virus-scan polling) is the shape to copy as a new collection increment.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1143 (rulings[45], behaviour document-uploads-out-of-scope)",
+      "quote": "No documents collection, upload page, cdp-uploader route, virus-scan polling or document reference in this run. The negative is enforced by the adopted behaviour no-export-certificate-or-documents; this entry remains the record that if a plants source ever names a document, animals' documents collection (0..10 uploads, cdp-uploader, virus-scan polling) is the shape to copy as a new collection increment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-075",
+      "statement": "Ruling outbox-and-gbnag-publishing-out-of-scope (D8, park, panel): no outbox, GBN-AG or other event publishing and no PIMS routing is built in this run — the journey's only submission obligation is a synchronous submitJourney persisting the whole fulfilment snapshot through the records port and the confirmation page makes no promise about where the notification has gone — and when the hand-off lands the mapper must carry every SI matter so the regulator receives the statutory record intact.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1161 (rulings[46], behaviour outbox-and-gbnag-publishing-out-of-scope)",
+      "quote": "No outbox, no GBN-AG or other event publishing, no PIMS routing in this run. The journey's only submission obligation is a synchronous submitJourney that persists the whole fulfilment snapshot through the records port; the confirmation page makes no promise about where the notification has gone. The hand-off to inspectors and scheduling systems is backend and dynamics-gateway work, and when it lands the mapper must carry every SI matter so the regulator receives the statutory record intact.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-076",
+      "statement": "Ruling combined-ins-list-out-of-scope (D8, park, panel): the plants dashboard lists plants notifications only, scoped to the session organisation and the session's known journeys and same-as-animals in shape, with no cross-journey 'By type' filter, no 'Plants' card label and no combined list, the INS front door owning any cross-journey list later; a trader who imports both animals and plants uses two dashboards in this phase, and that cost is recorded rather than papered over.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1184 (rulings[47], behaviour combined-ins-list-out-of-scope)",
+      "quote": "The plants dashboard lists plants notifications only, scoped to the session organisation and the session's known journeys, same-as-animals in shape (dashboard-listing, c-033). No cross-journey 'By type' filter, no 'Plants' card label, no combined list; the INS front door owns any cross-journey list later. A trader who imports both animals and plants uses two dashboards in this phase, and that cost is recorded rather than papered over.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-077",
+      "statement": "Ruling c-011 (D3, resolve, panel): every element no source gives a format, unit or list for is a free-text input, required or optional as the SI mandate says, with animals' max lengths (58, and 400 for the treatments textarea) and no format check; only two rules go beyond that — a HH:MM 24-hour rule for arrivalTime, the one new validation factory, and quantity staying a whole number of 1 or more with its hint corrected so it stops promising weight or volume — and no commodity-code, EPPO, identification-number or consignment-number format is built.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1207 (rulings[48], id c-011)",
+      "quote": "The provisional pick stands: every element no source gives a format, unit or list for is a free-text input, required or optional as the SI mandate says, with animals' max lengths (58; 400 for the treatments textarea) and no format check. Two rules beyond that, both buildable with lib/validate as it is: arrivalTime gets a HH:MM 24-hour rule (the one new factory), and quantity stays a whole number of 1 or more with its hint corrected so it stops promising weight or volume.",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling had three rules including an email-shape check on contactEmail, withdrawn once c-025 deleted the obligation."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-078",
+      "statement": "Ruling c-011 corrects the quantity hint to 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.' and refuses any EPPO-code pattern, recording that genus-level EPPO codes carry a leading digit (1QUEG) so the spec's '5-6 uppercase letters' claim yields no derivable pattern.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1216, :1226 (c-011 specChanges)",
+      "quote": "hint -> 'For example, 250. Give the number of plants, tubers, trees or units of wood as a whole number.' (removes 'or the weight or volume of wood' so the hint matches requiredIntegerInRange min 1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-079",
+      "statement": "Ruling c-014 (D3, resolve, panel): the policy paper wins — potatoIntendedUse stays a required free-text per-line element for potato lines and the optional 'Use' for plants and wood lines is not collected in the first pass, so the use obligation is deleted from the spec and the commodityLines item list and recorded as parked, to be reinstated as an optional per-line text input only if policy adds it to reg 26(2).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1250 (rulings[49], id c-014)",
+      "quote": "The policy paper wins: potatoIntendedUse stays a required free-text per-line element for potato lines, and the optional 'Use' for plants and wood lines is not collected in the first pass — delete the use obligation from the spec and from the commodityLines item list, and record it on the conflict as parked, to be reinstated as an optional per-line text input only if policy adds it to reg 26(2).",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's wish for a new open-question behaviour to carry the parked item, not adopted."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-080",
+      "statement": "Ruling c-015 (D3, resolve, panel): one obligation per concept — quantity per line, and countryOfOrigin, placeOfDestination and arrivalDate per notification — with the label, hint and Check-your-answers row label chosen page-side from the feature's copy keyed on commodityType and arrivalStatus, the potato-only extras staying separate gated obligations, and Check your answers, the hub and the dashboard rendering the state label and never the generic one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1303 (rulings[50], id c-015)",
+      "quote": "One obligation per concept — quantity per line; countryOfOrigin, placeOfDestination and arrivalDate per notification — with the label, hint and CYA row label chosen page-side from the feature's copy keyed on commodityType and arrivalStatus (labelByState / headingByState), exactly as the spec already models; the potato-only extras (arrivalTime, proposedPlaceOfLanding, producer and crop ids) stay separate gated obligations. Check your answers, the hub and the dashboard must render the state label, never the generic one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-081",
+      "statement": "Ruling c-016 (D3, resolve, panel): the Confluence page's 'Identification number of the potato produced' is a typo for 'producer', so the obligation is producerIdentificationNumber labelled 'Identification number of the producer of the potatoes', with no model change.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1326 (rulings[51], id c-016)",
+      "quote": "'Identification number of the potato produced' on the Confluence page is a typo for 'producer': the obligation is producerIdentificationNumber, labelled 'Identification number of the producer of the potatoes', exactly as the spec already has it. No model change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-082",
+      "statement": "Ruling c-020 (D3, resolve, panel): proposedPlaceOfLanding is asked only for potatoes — plants and wood notifications collect no landing place — as the animals portOfEntry autocomplete over the ports service backed by reference-data GET /ports-of-entry, which is built rather than 'expected', so the capture script's stale 'endpoint not built' marker is dropped in the arrival-details increment and the value source is no longer a gate question.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1344 (rulings[52], id c-020)",
+      "quote": "proposedPlaceOfLanding is asked only when commodityType = potatoes — plants and wood notifications collect no landing place — as the animals portOfEntry autocomplete over the ports service backed by reference-data GET /ports-of-entry, which is built, not 'expected'. The capture script's 'expected — endpoint not built' marker is stale and is dropped in the arrival-details increment; the value source is no longer a gate question.",
+      "confidence": "verbatim",
+      "note": "Its rationale records the captured ports fixture as holding 77 real MDM entries including Dover, Folkestone, Portsmouth, Harwich, Hull, Holyhead, Newhaven, Plymouth, Poole, Purfleet and Tilbury 2 Ro-Ro; the dissent records the policy judge treating the endpoint as unbuilt, lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-083",
+      "statement": "Ruling c-021 (D3, resolve, panel): the ware-potato origin list is Poland, Portugal, Romania and Spain (PL, PT, RO, ES) and the mural's 'Spain & Poland' loses; Spain is stored as the plain code ES and the Balearic exclusion is carried by the origin page's inset rendered only when the notification has a ware-potato line, so countryOfOrigin's hint stays verbatim animals, with no region option built and a region-level value parked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1387 (rulings[53], id c-021)",
+      "quote": "The SI wins: the ware-potato origin list is Poland, Portugal, Romania and Spain (ISO PL, PT, RO, ES); the mural's 'Spain & Poland' loses. Spain is stored as the plain code ES, and 'Spain excludes the Balearic Islands' is carried by the origin page's govukInsetText ruled under potato-scope-guidance, rendered only when the notification has a ware-potato line, so countryOfOrigin's hint stays verbatim animals; no region option is built and a region-level value is parked.",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling delivered the exclusion as an obligation-level hintByCategory with different copy, withdrawn in favour of D2's page-side inset."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-084",
+      "statement": "Ruling c-022 (D3, resolve, panel): the first pass is built on the existing GBNAG_SPS_EX country block, whose captured membership is the EU-27 plus Iceland, Liechtenstein, Norway and Switzerland so every country the SI constrains to is already offered; countryOfOrigin stays on the animals widget and service tagged variant-of-animals, and the per-category narrowing is data in the set-owned commodities service applied as validation inside the origin POST over the intersection of the lists for the categories present in the commodity lines — ware potatoes PL/PT/RO/ES, conifer wood without bark IT/FR/PT/ES, other plants and wood the EU-27 member states, seed potatoes any primed country — with an out-of-scope origin rejected and Check your answers re-running the same check.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1420 (rulings[54], id c-022)",
+      "quote": "Build the first pass on the existing GBNAG_SPS_EX block: its captured membership is exactly the EU-27 plus Iceland, Liechtenstein, Norway and Switzerland, so every country the SI constrains to is already offered. ... the per-category narrowing is data in the set-owned commodities service applied as validation inside the origin POST over the intersection of the lists for the categories present in commodityLines — ware potatoes PL/PT/RO/ES; conifer wood without bark IT/FR/PT/ES; plants for planting, trees for planting and the other wood categories the EU-27 member-State list (block minus IS, LI, NO, CH); seed potatoes any primed country — with an out-of-scope origin rejected by an error naming the allowed countries, and Check your answers re-runs the same check.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge's wish to enforce only the two four-country lists, lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-085",
+      "statement": "Ruling c-022 sets the narrowing error sentences — 'Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified', 'Select Italy, France, Portugal or Spain – conifer wood without bark from other countries does not need to be notified' and 'Select an EU member state – plants and wood from other countries do not need to be notified' — one per POST chosen for the narrowest failing list, plus the Check-your-answers error 'Select a country of origin that matches the commodities in the consignment'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1449, :1454 (c-022 specChanges on countryOfOrigin)",
+      "quote": "{ \"ware-potatoes\": \"Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified\", \"conifer-wood-without-bark\": \"Select Italy, France, Portugal or Spain – conifer wood without bark from other countries does not need to be notified\", \"EU_MEMBER_STATES\": \"Select an EU member state – plants and wood from other countries do not need to be notified\" }",
+      "confidence": "verbatim",
+      "note": "Provisional copy; Welsh via the copy pass."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-086",
+      "statement": "Ruling origin-value-list-by-commodity (D3, adopt, panel): the per-commodity origin list is built in the first pass as page-side validation exactly as c-021 and c-022 rule, with the origin POST rejecting a country outside the intersection of the allow-lists, the Balearic inset showing when a ware-potato line exists and Check your answers re-checking and refusing POST with a Change link to origin; the warn-or-accept alternative, a Spanish region option, a plants-specific block and the grown-in versus originate-from wording are parked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1478 (rulings[55], behaviour origin-value-list-by-commodity)",
+      "quote": "Build it in the first pass as page-side validation exactly as c-021 and c-022 rule: one countryOfOrigin autocomplete on the animals widget and service over GBNAG_SPS_EX (variant-of-animals — same widget and service); the origin POST rejects a country outside the intersection of the allow-lists for the categories present in commodityLines with the narrowing error naming the allowed countries; the Balearic inset (potato-scope-guidance) shows when a ware-potato line exists; Check your answers re-checks the same rule and refuses POST with a Change link to origin.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-087",
+      "statement": "Ruling country-block-and-ports-endpoint (D3, adopt, panel): nothing blocks the origin or arrival-details pages — countries stay on GBNAG_SPS_EX and the place of landing uses the built reference-data /ports-of-entry endpoint — the only code change being to un-flag the ports target in the capture script inside the arrival-details increment, with the proposed gated fix extra before the origin page not created and the country-block-decision extra left at the end of the backlog as a Sam-gated confirmation that gates no page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1501 (rulings[56], behaviour country-block-and-ports-endpoint)",
+      "quote": "Nothing blocks the origin or arrival-details pages: countries stay on GBNAG_SPS_EX (its captured membership covers every statutory origin, c-022) and proposedPlaceOfLanding uses reference-data /ports-of-entry, which is built (c-020). The only code change is un-flagging the ports target in capture.js inside the arrival-details increment. The behaviour's proposed gated fix extra before the origin page is not created; the country-block-decision extra stays at the end of the backlog as a confirmation with Sam (type chore, gate sam), gating no page.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge ruling park, lost because the ports endpoint is built."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-088",
+      "statement": "Ruling nfr-standardise-information (D3, adopt, panel): standardisation is adopted as met to the extent any source allows — every element a source gives a list for is a coded value (commodityType, category, genus, countryOfOrigin as ISO alpha-2, proposedPlaceOfLanding as a port code, arrivalStatus, notificationStatus) stored as codes, served from a set-owned or platform service and rendered through service label functions, and every other element is free text with a max length — while controlled lists for intended use, treatment codes, a variety register, an EPPO lookup, a species catalogue and the commodity-code scheme are parked until policy names them.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1519 (rulings[57], behaviour nfr-standardise-information)",
+      "quote": "Adopt as met to the extent any source allows: every element a source gives a list for is a coded value — commodityType, category, genus, countryOfOrigin (ISO alpha-2), proposedPlaceOfLanding (port code), arrivalStatus, notificationStatus — stored as codes, served from a set-owned or platform service and rendered through service label functions; every other element is free text with a max length.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-089",
+      "statement": "Ruling nfr-data-validation (D3, adopt, panel): data validation is adopted as met by the rules the spec now carries — required-ness per the SI mandate, membership for every coded value including the per-category origin narrowing and its Check-your-answers re-check, a real calendar date for arrivalDate, a new HH:MM factory for arrivalTime, a whole number of 1 or more for quantity, the animals pattern for consignmentNumber, animals' max lengths for all other text, and HTTP 400 with a GOV.UK error summary on every failure — with formats for commodity code, EPPO code and the three identification numbers parked until a source names the scheme.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1537 (rulings[58], behaviour nfr-data-validation)",
+      "quote": "Adopt as met by the rules the spec now carries: required-ness per the SI mandate; membership for every coded value including the per-category origin narrowing and its Check-your-answers re-check; a real calendar date for arrivalDate; a new HH:MM factory for arrivalTime; a whole number of 1 or more for quantity; the animals pattern for consignmentNumber; animals' max lengths for all other text; HTTP 400 with a GOV.UK error summary on every failure.",
+      "confidence": "verbatim",
+      "note": "Reconciled text; the pre-reconciliation ruling also carried an email-shape pattern on contactEmail and a parked telephone character-set rule, both swept once c-025 deleted the obligations."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-090",
+      "statement": "Ruling c-023 (D5, resolve, panel): the reference number keeps the animals shape, minting point and display places (journey strip, dashboard card title, confirmation panel, read-only check-your-answers view) and the frontend prints exactly what the backend or stub mints — today {YY}-{XXXXXX} with no prefix — inventing, parsing and validating nothing, while the type-code prefix is a parked backend-plus-stub decision whose extra keeps its Sam gate but moves from before the confirmation page to the end of the backlog so the review section and every end-to-end test behind it can ship.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1555 (rulings[59], id c-023)",
+      "quote": "The reference keeps the animals shape, minting point and display places (journey strip, dashboard card title, confirmation panel, CYA read-only view) and the frontend prints exactly what the backend or stub mints — today {YY}-{XXXXXX} with no prefix — inventing, parsing and validating nothing. The type-code prefix is a parked backend-plus-stub decision: the backend-reference-prefix extra keeps its Sam gate but moves from before the confirmation page to the end of the backlog so the review section and every E2E behind it can ship.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge keeping the extra before the confirmation page and the GDS judge moving it to just after, both lost to the end anchor."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-091",
+      "statement": "Ruling c-024 (D5, resolve, panel): notificationStatus is the engine lifecycle (DRAFT, SUBMITTED, AMEND, DELETED) rendered as the animals tags Draft, Submitted, Amending and Deleted with the same colours on the journey strip, dashboard card and confirmation page and nothing richer in this run, lateness stays the separate late indicator shown as a Late tag and banners and is never folded into the status, all four values are reachable because post-submission Amend is in scope, the confirmation prints the tag label and never the raw constant, and any richer importer-facing vocabulary is parked pending a policy vocabulary.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1583 (rulings[60], id c-024)",
+      "quote": "notificationStatus is the engine lifecycle (DRAFT / SUBMITTED / AMEND / DELETED) rendered as the animals tags Draft / Submitted / Amending / Deleted with the same colours on the journey strip, dashboard card and confirmation page, and nothing richer in this run; lateness is the separate lateNotificationIndicator (Late tag beside the status on the dashboard card, banner on confirmation and CYA read-only) and is never folded into the status.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-092",
+      "statement": "Ruling c-030 (D5, resolve, panel): the animals post-submission action set is in scope minus Copy as new — dashboard SUBMITTED shows View, Amend and Delete; DRAFT shows Resume and Delete; AMEND shows Resume, Cancel amendment and Delete; the read-only view offers Delete when submitted and the Cancel amendment link when amending; and the confirmation page restores the animals 'How to view or amend this notification' block — with the delete-notification and cancel-amend confirmation pages copied from animals as chore extras and Copy as new parked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1606 (rulings[61], id c-030)",
+      "quote": "The animals post-submission action set is in scope minus Copy as new: dashboard SUBMITTED shows View | Amend | Delete; DRAFT shows Resume | Delete; AMEND shows Resume | Cancel amendment | Delete; the CYA read-only view offers Delete when SUBMITTED and the Cancel amendment link when AMEND; the confirmation page restores the animals 'How to view or amend this notification' block.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the policy judge's View-only position, the engineering judge's Copy as new and the GDS judge's first-submission timestamp, all lost."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-093",
+      "statement": "Ruling c-030 computes the late flag once, at the first submission from DRAFT, and leaves it untouched on a re-submit from AMEND, keeping dateOfNotification as the record envelope's latest submittedAt as animals shows Date submitted; whether an amended arrival date should re-run the two-day and four-day test, and whether the backend should keep a first-submission timestamp, are recorded as parked policy questions rather than blockers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1609 (c-030 resolution)",
+      "quote": "The late flag is computed once, at the first submission from DRAFT, and left untouched on a re-submit from AMEND; dateOfNotification stays the record envelope's submittedAt (the latest submission, as animals shows Date submitted). Whether an amended arrival date should re-run the reg 24A / reg 26 test, and whether the backend should keep a first-submission timestamp, are recorded as parked policy questions, not blockers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-094",
+      "statement": "Ruling reference-number-prefix (D5, park, panel): the plants type-code prefix is parked as a policy answer nobody has, still open on the epic at the time of the ruling, so the first pass builds on the unprefixed {YY}-{XXXXXX} the backend and stub mint and shows it verbatim in every display place, with the gated cross-repo prefix extra re-anchored to the end of the backlog so its Sam gate does not halt the review section.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1664 (rulings[62], behaviour reference-number-prefix)",
+      "quote": "Parked: the plants type-code prefix is a policy answer nobody has (still an open question on epic EUDPA-407 as of this ruling). The first pass builds on the unprefixed {YY}-{XXXXXX} the backend and stub mint, shown verbatim in every display place; the gated cross-repo backend-reference-prefix extra stays on the backlog re-anchored to end (c-023) so its Sam gate does not halt the review section.",
+      "confidence": "verbatim",
+      "note": "This is the one park ruling that sets the behaviour's status field to 'parked' in the panel's own output; its dissent records the GDS judge attributing it to sam, the panel recording panel."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-095",
+      "statement": "Ruling notification-status-vocabulary (D5, adopt, panel): the engine lifecycle with the animals tags Draft, Submitted, Amending and Deleted in blue, green, yellow and grey on the journey strip, dashboard card and confirmation page is adopted as the notification status the importer sees, lateness being the separate Late tag and banner, with a richer importer-facing vocabulary parked pending a policy vocabulary and check outcomes never changing the importer-facing status in this run.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1682 (rulings[63], behaviour notification-status-vocabulary)",
+      "quote": "Adopt the engine lifecycle DRAFT / SUBMITTED / AMEND / DELETED with the animals tags Draft / Submitted / Amending / Deleted (blue / green / yellow / grey) on the journey strip, dashboard card and confirmation page as the notification status the importer sees; lateness is the separate Late tag and banner from lateNotificationIndicator.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-096",
+      "statement": "Ruling notification-actions-after-submission (D5, adopt, panel): the animals post-submission action set minus Copy as new is adopted per c-030, with the delete-notification and cancel-amend confirmation pages as chore extras copied from animals, Copy as new parked with reuse-previous-consignment, and the policy questions — whether a submitted plants notification the regulator has acted on may still be amended or withdrawn, and whether an amended arrival date re-runs the timing test — recorded as parked rather than blockers while the late flag freezes at the first submission.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1700 (rulings[64], behaviour notification-actions-after-submission)",
+      "quote": "Adopt the animals post-submission action set minus Copy as new (per c-030): dashboard SUBMITTED View | Amend | Delete, DRAFT Resume | Delete, AMEND Resume | Cancel amendment | Delete; CYA read-only offers Delete when SUBMITTED and the Cancel amendment link when AMEND; the delete-notification and cancel-amend confirmation pages are chore extras copied from animals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-097",
+      "statement": "Ruling live-access-synchronous-submission (D5, adopt, panel): synchronous submission is adopted as a constraint the first pass already meets — the declaration POST commits the flow-only answer, submitJourney awaits the records finalise and the confirmation page renders only once the record is submitted with its server-side timestamp — a finalise that throws re-renders the declaration with the recoverable-error message and never an optimistic confirmation, a not-ready submit returns to Check your answers, and no queue, batch or optimistic confirmation may be introduced between the notifier's submit and the persisted record.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1723 (rulings[65], behaviour live-access-synchronous-submission)",
+      "quote": "Adopt as a constraint the first pass already meets, not a feature: submission is synchronous — the declaration POST commits the flow-only answer, submitJourney awaits records.finalise (real adapter POST /notifications/{journeyId}/submit; stub finalise), and the confirmation page renders only once the record is SUBMITTED with dateOfNotification stamped server-side at that moment. ... No queue, batch or optimistic confirmation may be introduced between the notifier's submit and the persisted record.",
+      "confidence": "verbatim",
+      "note": "Inspector-side live access to the record is parked with the outbox behaviour."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-098",
+      "statement": "Ruling c-032 (D6, resolve, panel): the shared chrome ships verbatim in the first pass — service name 'Import notification service' in the service navigation, page-title suffix, dashboard h1 and Welsh title, the Alpha phase banner with the existing APHA service-desk feedback mailto, and Address book and Manage account at '#' — the Sam-gated chrome extra is narrowed to the decisions nobody can make today (six after D7), and the unauthorised-view copy move, the untouched compose file and the stack-check wiring come off that gate and build now as an ungated chore.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1746 (rulings[66], id c-032)",
+      "quote": "The shared chrome ships verbatim in the first pass: service name 'Import notification service' (service navigation, page-title suffix, dashboard h1 and titleCy), the Alpha phase banner with the existing APHA service-desk feedback mailto, and Address book / Manage account at '#'.",
+      "confidence": "verbatim",
+      "note": "Reconciled: the Sam-gated list was 'four decisions' before D7 appended the accessibility-statement and privacy-notice URLs."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-099",
+      "statement": "Ruling c-032 sets the confirmation page's help block to 'If you need help with this notification, contact the relevant plant health authority — APHA, the Forestry Commission or Scottish Government.' with no email, telephone or opening-hours lines until the Sam-gated extra rules the helpdesk, and flags the page provisional copy with no Welsh invented.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1755 (c-032 specChanges on the confirmation page)",
+      "quote": "body: replace 'Getting help: (plants helpdesk — c-032)' with 'Getting help: If you need help with this notification, contact the relevant plant health authority — APHA, the Forestry Commission or Scottish Government.' No email, telephone or opening-hours lines until the Sam-gated extra chrome-placeholders-and-service-name rules the helpdesk",
+      "confidence": "verbatim",
+      "note": "The engineering judge's alternative, 'the plant health authority for the place of destination', lost because wood routes to the Forestry Commission whatever the destination."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-100",
+      "statement": "Ruling c-033 (D6, resolve, panel): the plants dashboard is a same-as-animals set-owned page at '/' listing only the plants notifications this session's cookie knows, scoped to the session organisation and excluding deleted records, one summary card per notification with the Status tag and the Late tag, with no 'By type' filter, no cross-journey rows and no journey-type label on the cards; the Design release 2 cross-journey dashboard is evidence for a later INS front door rather than a plants requirement, and the sub-park of the session-only listing is decided by sam under standing ruling 2.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1794 (rulings[67], id c-033)",
+      "quote": "The plants dashboard is a same-as-animals, set-owned page at '/' that lists only the plants notifications this session's highRiskPlantsKnownJourneys cookie knows, scoped to the session organisation and excluding DELETED, one summary card per notification with the Status tag and the Late tag. No 'By type' filter, no cross-journey rows and no journey-type label on the cards.",
+      "confidence": "verbatim",
+      "note": "Its rationale records that Design release 2.1 passes hidePlants: true, blanks ?type=plants and titles the dashboard 'Live animals and germinal products', and that the plants card label is demo dressing only."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-101",
+      "statement": "Ruling c-034 (D6, resolve, panel): plants has all four journey-shape elements mirroring animals — an opening run over the spec's section order landing on the hub, a four-group task-list hub with the five animals statuses, section captions from a captions map, and a flow-only declaration page as the submit gate — and the hub carries provisional copy because one Welsh group name is invented while the declaration's statements may assert only what a plants source supports.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1822 (rulings[68], id c-034)",
+      "quote": "Plants has all four, mirroring animals: an opening run over the spec's section order landing on the hub, a four-group govukTaskList hub with the five animals statuses, section captions from a captionSections map, and a flow-only declaration page as the submit gate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-102",
+      "statement": "Ruling c-034 makes two corrections: the commodity-details entry sub-page is not a run step, so its runStep is removed and the later steps renumbered (origin 3, arrival-status 4, arrival-details 5, place-of-destination 6, consignor-select 7, identification-numbers 8, consignment-contact-select 9 and last), and the hub increment lands with its groups and an empty task-row list so each section's first page adds that section's task row, group placement and run step.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1825, :1836-1876 (c-034 resolution and specChanges)",
+      "quote": "the commodity-details entry sub-page is not a run step (its Continue returns to the commodities list page, whose Continue advances the run), so its runStep is removed and the later steps renumbered; and because the hub builds before any collecting page, the hub increment lands with GROUPS and taskRows [] and each section's first page adds that section's task row, GROUPS placement and run step",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-103",
+      "statement": "Ruling service-name-feedback-and-support (D6, park, panel): the service name, feedback address and support route are parked — the first pass keeps the inherited chrome verbatim and the plain competent-authority help sentence while the unauthorised-view copy move builds now as an ungated extra — and closing it needs the service owner to name the service and supply the feedback and helpdesk route the mural leaves TBC, the INS front door to own the two links, and the footer accessibility-statement and privacy-notice URLs appended under D7; the sub-park of the two link homes is decided by sam.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1900 (rulings[69], behaviour service-name-feedback-and-support)",
+      "quote": "Parked. The first pass keeps the inherited chrome verbatim and the plain competent-authority help sentence ruled under c-032, and the unauthorised-view copy move builds now as the ungated extra unauthorised-view-copy-and-stack-check. The plants service name, the feedback address, the helpdesk contact lines and the homes of the Address book and Manage account links stay on the Sam-gated extra chrome-placeholders-and-service-name.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS service-design judge ruling adopt, lost because what the behaviour itself asks is a policy answer nobody has."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-104",
+      "statement": "Ruling guidance-before-you-start (D6, park, panel): there is no eligibility checker or before-you-start page in this run — the needs are met inside the journey by a dashboard intro naming the scheme and the three commodity groups that links to GOV.UK guidance only when a real URL exists (never a '#' link), by commodity-type option hints quoting the SI's timing windows in the SI's own words, and by per-field hints — and an in-service 'Is my consignment high-risk?' checker driven by the set-owned commodities service is recorded as a later start-section page rather than rejected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1923 (rulings[70], behaviour guidance-before-you-start)",
+      "quote": "Parked. No eligibility checker or before-you-start page in this run. NNS-UN-001, 002 and 008 are met inside the journey by a dashboard intro that names the scheme and the three commodity groups and links to GOV.UK guidance only when a real URL exists (a copy leaf, never a '#' link), by commodity-type option hints that quote the SI's timing windows in the SI's own words, and by per-field hints.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge wanting the timing windows spelled out in the dashboard intro too, lost on the one-place-for-the-day-count constraint."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-105",
+      "statement": "Ruling guidance-before-you-start sets the dashboard intro body to 'Use this service to tell the plant health authorities about high-risk plants for planting, potatoes, or wood and cut trees you are importing from EU member states, as required by the Plant Health National Notification Scheme. You will answer a short set of questions about the consignment, then submit your notification.' with the guidance link 'Check whether your goods are high-risk and when you must notify (GOV.UK)' rendered only when a guidance URL copy leaf holds a URL (null today), and sets the commodity-type option hints to 'You must notify at least 2 days before the expected date of arrival. | You must notify before arrival, or no later than 4 days after the date of arrival. | You must notify before arrival, or no later than 4 days after the date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1937, :1942 (guidance-before-you-start specChanges)",
+      "quote": "'Use this service to tell the plant health authorities about high-risk plants for planting, potatoes, or wood and cut trees you are importing from EU member states, as required by the Plant Health National Notification Scheme. You will answer a short set of questions about the consignment, then submit your notification.' followed by a guidance link 'Check whether your goods are high-risk and when you must notify (GOV.UK)' rendered only when the copy leaf guidanceUrl holds a URL",
+      "confidence": "verbatim",
+      "note": "The commodity-type hints are the single canonical write of that field after reconciliation; the day counts come from the named constants through copy-function arguments."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-106",
+      "statement": "Ruling previous-scheme-and-ni-roi-precedents (D6, park, panel): the pre-2021 scheme and the NI/RoI services are parked as a copy and value-list input only with no first-pass change, because the SI data list already fixes what is collected, so a precedent can only refine page copy, the potato intended-use options and the identification-number and commodity-code formats and lands later as a copy-pair or validation edit rather than a model change; closing it needs the previous scheme's data list and the NI/RoI notification screens from policy or design research before the copy pass.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1956 (rulings[71], behaviour previous-scheme-and-ni-roi-precedents)",
+      "quote": "Parked as a copy and value-list input only, with no first-pass change. The SI data list (annex 5, reg 24A(2) and reg 26(2)) already fixes what is collected — the previous scheme cannot add or remove a matter — so the pre-2021 scheme and the NI/RoI services can only refine page copy, the potato intended-use options and the identification-number and commodity-code formats",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-107",
+      "statement": "Ruling day-one-critical-and-list-volatility (D6, adopt, panel): volatility becomes a standing build constraint on every increment — every commodity-type, category, genus and origin list is data behind the set-owned commodities service and never an obligation or copy literal; the two statutory timing windows are single named constants POTATO_DAYS_BEFORE_ARRIVAL = 2 and PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4 exported from one module beside the arrival-details feature and read by the lateness derivation and any hint naming a window, so no other copy of the number exists; and the England/Great Britain wording and the authority names are copy leaves — so a reissued policy paper is a data or copy change, never a model change.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:1979 (rulings[72], behaviour day-one-critical-and-list-volatility)",
+      "quote": "Adopted as a standing build constraint on every increment: (1) every commodity-type, category, genus and origin list is data behind the set-owned commodities service, never an obligation or copy literal; (2) the two statutory timing windows are single named constants — POTATO_DAYS_BEFORE_ARRIVAL = 2 (reg 24A(1)) and PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4 (reg 26(1)) — exported from one module beside the arrival-details feature and read by the lateness derivation and by any hint that names a window, so no other copy of the number exists; (3) the England / Great Britain wording and the authority names are copy leaves.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-108",
+      "statement": "Ruling nfr-accessible-wcag-2-2-aa (D7, adopt, panel): accessibility is adopted at page level — every plants page ships the fit-spec axe check on its initial and validation-error states plus the Lighthouse accessibility floor — while the manual WCAG 2.2 audit and this service's own accessibility statement are parked rather than built and the footer's accessibility link is routed through the gated chrome extra.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2002 (rulings[73], behaviour nfr-accessible-wcag-2-2-aa)",
+      "quote": "Adopt at page level: every plants page ships the fit-spec axe check on its initial and validation-error states plus the Lighthouse accessibility floor ... The manual WCAG 2.2 audit and this service's own accessibility statement are parked, not built, and the footer's accessibility link is routed through the gated chrome extra.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-109",
+      "statement": "Ruling nfr-accessible-wcag-2-2-aa corrects the axe tag list from the two WCAG 2.0 tags to ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'] so the machine-checkable 2.1 and 2.2 rules actually run, diverging from animals' two-tag list on the strength of the Annex 6 WCAG 2.2 AA requirement, and forbids any page increment from narrowing the list or lowering the 0.70 Lighthouse floor.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2005, :2021 (nfr-accessible-wcag-2-2-aa resolution and specChanges)",
+      "quote": "the axe tag list is widened from the two WCAG 2.0 tags to ['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'] so the machine-checkable 2.1 and 2.2 rules actually run",
+      "confidence": "verbatim",
+      "note": "The ruling records the spec's own sentence 'axe tags cover WCAG 2.1' as wrong, verified against axe-core 4.12.1; the dissent records judges 1 and 2 leaving the list untouched on that false premise."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-110",
+      "statement": "Ruling nfr-gds-standards (D7, adopt, panel): the codebase side of meeting GDS standards is adopted as delivered by the engine conventions already in place — govuk-frontend 6.x components only, one thing per page, error summary, task-list hub, check your answers, confirmation panel and the Alpha phase banner — with the Service Standard assessment recorded as a programme event outside the spec, and a plain-English sweep of every same-as-animals string for animal nouns added as a rider whose one known instance is the country-of-origin error copy ruled at c-027.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2035 (rulings[74], behaviour nfr-gds-standards)",
+      "quote": "Adopt: the codebase side of 'meets GDS standards' is delivered by the adopted engine conventions — govuk-frontend 6.x components only, one thing per page, error summary, task-list hub, check your answers, confirmation panel and the Alpha phase banner matching the mural's confirmed phase. The Service Standard assessment is a programme event outside the spec and is recorded as such.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-111",
+      "statement": "Ruling nfr-gdpr (D7, park, panel): the governance items — lawful basis, privacy notice content and URL, and retention of drafts and submitted notifications — are parked because the policy paper supplies none of them, while what the first pass owes GDPR it already does: it collects only the Annex 5 matters plus the paper's Common Data, scopes every record to the Defra ID organisation, takes no document upload and keeps the footer Privacy link whose destination resolves under the gated chrome extra.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2058 (rulings[75], behaviour nfr-gdpr)",
+      "quote": "Park the governance items — lawful basis, privacy notice content and URL, retention of drafts and submitted notifications — because the policy paper supplies none of them and the panel must not invent them. What the first pass owes GDPR it already does: it collects only the Annex 5 matters plus the paper's Common Data (Article 9(7) OCR is the ceiling), scopes every record to the Defra ID organisation, takes no document upload, and keeps the footer Privacy link, whose destination resolves under the gated chrome extra.",
+      "confidence": "verbatim",
+      "note": "Its rationale records that the plants backend stamps an expiry only outside production, so production retention is undefined; the dissent records the GDS judge's guessed lawful basis being dropped."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-112",
+      "statement": "Ruling nfr-secure-internal-login (D7, park, sam): secure internal login is parked under the standing ruling on users and sign-in models — the Annex 6 item speaks only of internal users this frontend does not serve, so the notifier keeps the Defra ID OIDC sign-in, the stub session with auth enforced and organisation-scoped records exactly as adopted and nothing more is built — with whether policy accepts Defra ID as the external identity and the mural's registration stage out of this phase.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2086 (rulings[76], behaviour nfr-secure-internal-login)",
+      "quote": "Park under Sam's standing ruling on users and sign-in models. Annex 6 item 4 speaks only of internal users, who this frontend does not serve; the notifier keeps the Defra ID OIDC sign-in, stub session with auth enforced, and organisation-scoped records exactly as already adopted, and nothing more is built.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-113",
+      "statement": "Ruling nfr-available-24x7-and-load (D7, adopt, panel): the journey's share of 24x7 availability is adopted as already delivered — save-and-return, recoverable-save and stale-action banners that keep the user's answers, a synchronous submit with no long work, and a lateness derivation computed in Europe/London so a submission at any hour is judged on the right calendar day — nothing in the journey may gate submission by time of day, and peak-load targets and a plants k6 suite are parked as infrastructure follow-ons with platform availability left to the CDP SLA.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2109 (rulings[77], behaviour nfr-available-24x7-and-load)",
+      "quote": "Adopt the journey's share of 24x7 availability, which the engine already delivers: save-and-return, recoverable-save and stale-action banners that keep the user's answers, a synchronous submit with no long work, and a late-notification derivation computed in Europe/London so a submission at any hour is judged on the right calendar day. Nothing in the journey may gate submission by time of day. Peak-load targets and a plants k6 suite are parked as infrastructure follow-ons; platform availability is the CDP SLA.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-114",
+      "statement": "Ruling nfr-english-and-welsh (D7, park, panel): a live Welsh service is parked — the first release ships English-only with html lang en, the copy seam stays exactly as adopted so every plants string lands in both locale files at once, no Welsh is invented, and the runtime locale switch is not built because it is new engine capability and no translation has been commissioned — with the follow-on written into the behaviour in full so it can be cut as one extra the day a Welsh Language Standards owner and translation exist.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2132 (rulings[78], behaviour nfr-english-and-welsh)",
+      "quote": "Park the live Welsh service: the first release ships English-only with html lang en, the copy seam stays exactly as adopted so every plants string lands in both locale files at once, no Welsh is invented, and the runtime locale switch is not built because it is new engine capability and no translation has been commissioned.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's proposed Sam-gated welsh-locale-and-translation extra, lost because it would halt the build loop on a decision Sam cannot take alone."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-115",
+      "statement": "Ruling nfr-minimise-trader-effort (D7, adopt, panel): minimising trader effort is adopted as met by asking only the Annex 5 matters plus the paper's Common Data, hiding questions outside the commodity's scope, save-and-return, address-book picks and change-from-Check-your-answers, with Article 9(7) making this a ceiling as well as a goal so every question must trace to the SI or the Common Data list and no increment may add one that does not; any future optional question carries '(optional)' and never gates readiness, and the three effort-savers stay parked under their own behaviours.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2155 (rulings[79], behaviour nfr-minimise-trader-effort)",
+      "quote": "Adopt: the first pass meets the requirement by asking only the Annex 5 matters plus the paper's Common Data, hiding questions outside the commodity's scope, save-and-return, address-book picks and change-from-CYA. Article 9(7) OCR makes this a ceiling as well as a goal — every question must trace to the SI or the Common Data list and no increment may add one that does not; any future optional question carries '(optional)' and never gates readiness.",
+      "confidence": "verbatim",
+      "note": "Reconciled: the panel's claim that no obligation is optional today was reworded because c-003 makes consignmentNumber the one optional obligation."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-116",
+      "statement": "Ruling nfr-sustainable (D7, park, panel): 'sustainable' is parked because it is a single unqualified word in the only source that uses it, nothing in the journey depends on it and the panel adopts no reading; the behaviour stays so the Annex 6 list is complete and policy is asked what was meant before anything hangs on it.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2178 (rulings[80], behaviour nfr-sustainable)",
+      "quote": "Park. 'Sustainable' is a single unqualified word in the only source that uses it, nothing in the journey depends on it, and the panel adopts no reading; the behaviour stays so the Annex 6 list is complete, and policy is asked what was meant before anything hangs on it.",
+      "confidence": "verbatim",
+      "note": "Its dissent records the GDS judge's 'maintainable and supportable' reading, lost as an invented requirement, though its observation that the hygiene extras would serve that reading is kept as fact."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-117",
+      "statement": "Ruling mi-metrics-eight (D7, adopt, panel): the notifier journey's share of the eight management-information metrics is adopted as already carried — coded commodityType, category, genus and ISO country of origin for metrics 1 to 3, and the record envelope's createdAt and submittedAt for metric 6 — the journey measuring nothing and adding no question for MI, with the definition of 'time taken per notification' parked and created-to-submitted as the interim reading.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2201 (rulings[81], behaviour mi-metrics-eight)",
+      "quote": "Adopt the notifier journey's share of the eight metrics, which the spec already carries: coded commodityType, category, genus and ISO countryOfOrigin for metrics 1-3, and the record envelope's createdAt and submittedAt (dateOfNotification) for metric 6; the journey measures nothing and adds no question for MI. The definition of 'time taken per notification' stays a parked policy question with created-to-submitted as the interim reading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-118",
+      "statement": "Ruling mi-metrics-eight records a verified gap and a new two-repo fix: the plants backend's notifications list projection carries no submittedAt, so the frontend's list marshal hardcodes it to null, every dashboard card shows an empty Date submitted in real mode and MI metric 6 cannot be read from the list; the single-record read and the transition responses do carry it, so confirmation and Check your answers are unaffected.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2204, :2220 (mi-metrics-eight resolution and the new extra)",
+      "quote": "One verified gap is fixed by a new extra: the plants backend's list projection carries no submittedAt, so the dashboard's Date submitted row is empty in real mode and metric 6 cannot be read from the list.",
+      "confidence": "verbatim",
+      "note": "The ruling records the animals frontend as having the identical hole, declared as duplication rather than shared code."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-119",
+      "statement": "Ruling equal-access-defra-policy-sg-fc (D7, park, sam): parity of internal access for Defra Policy, Scottish Government and the Forestry Commission is parked under the standing ruling on users and access models as a multi-organisation user model for the regulator product wholly outside the notifier frontend; the journey owes it only the full submitted record with no organisation-based withholding, which it already persists, and its one touchpoint — the confirmation naming all three competent authorities without preferring one — is already in the spec.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2234 (rulings[82], behaviour equal-access-defra-policy-sg-fc)",
+      "quote": "Park under Sam's standing ruling on users and access models. Parity of internal access for Defra Policy, Scottish Government and the Forestry Commission is a multi-organisation user model for the regulator product, wholly outside the notifier frontend; the journey owes it only the full submitted record with no organisation-based withholding, which it already persists, and its one touchpoint — the confirmation naming all three competent authorities without preferring one — is already in the spec.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-120",
+      "statement": "The rulings file records 55 reconciliation entries, each naming the subject it edits, its kind, the critic item that caused the edit, the text before and after, and why the chair made it, so every change the critic's findings caused is traceable.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2256-3007 (reconciliation)",
+      "quote": "\"criticItem\": \"inconsistencies[0] lateness model; inconsistencies[4] hard-coded day counts\"",
+      "confidence": "verbatim",
+      "note": "55 entries counted with jq; they cover rulings, behaviours, conflicts and three docket summaries, plus one global entry keyed '*'."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-121",
+      "statement": "Reconciliation normalised every ruling's spec-change targets to a bare id with a sibling targetKind resolved against the spec files — 228 changes split obligation 67, page 45, behaviour 86, conflict 12, extra 17 and other 1 — replaced the pseudo-targets 'behaviours' and 'backlog-extras' with the created ids, and stripped the 'behaviour:' prefix from the ten D7 ruling ids, because an applier matching by exact string would otherwise miss the whole of D7 and mis-route every prefixed target.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2257-2270 (reconciliation entry '*')",
+      "quote": "bare id on all 228 changes, each with a sibling targetKind resolved against journey-spec.json, conflicts.json and backlog-extras.json: obligation 67, page 45, behaviour 86, conflict 12, extra 17, other 1.",
+      "confidence": "verbatim",
+      "note": "'contact' (c-025) is a section id not in the allowed kinds, so it is recorded as targetKind other; 'declaration' is both a page and an obligation and each change is typed by its own wording."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-122",
+      "statement": "Chair decision 1 made the D5 stored-value lateness model the single model, because Amend is in scope and neither the backend nor the stub keeps a first-submission timestamp, rewriting c-035, timing-window-enforcement-and-late-highlight, c-031, c-029, c-024, c-030 and the D1 docket summary so the flag is committed at the first finalise from DRAFT rather than derived on read from submittedAt, and deleting D1's contingency that the records port must preserve the first submittedAt.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2272-2360, :2972-2982 (reconciliation entries c-035, timing-window..., c-031, c-029, c-024, c-030, D1)",
+      "quote": "Chair decision 1: the D5 shape wins because Amend is in scope and neither the backend nor the stub keeps a first-submission timestamp (verified in the critic's issue); the boot-guard behaviour requires a system obligation to sit in SYSTEM_POPULATED.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-123",
+      "statement": "Chair decision 2 let c-025's deletion of the contact-details page and the contactNumber and contactEmail obligations stand and made the others conform: c-011 withdrew its two contact spec changes and its email-shape rule, nfr-data-validation dropped the email pattern and the parked telephone rule, c-034 dropped the contact-details run step and the page from its opening-run sequence, and the D3 docket summary was rewritten.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2362-2434, :2984-2994 (reconciliation entries c-034, c-025, c-011, nfr-data-validation, D3)",
+      "quote": "Chair decision 2: c-025 stands; c-011 conforms as the critic proposed (its resolution sentence and the two withdrawn specChanges), and the dissent is rewritten because both dissents were about the deleted obligations.",
+      "confidence": "verbatim",
+      "note": "The c-025 opening-run edit was also made order-independent, because c-034 rewrites the whole sequence while c-025 replaced a substring of the pre-c-034 text."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-124",
+      "statement": "Chair decision 3 made D2's page-side inset the single delivery of the Balearic sentence, withdrawing c-021's obligation-level hintByCategory and its separate origin-page note edit so the two dockets no longer rewrite the same sentence with different copy.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2436-2458 (reconciliation entry c-021)",
+      "quote": "Chair decision 3: D2's page-side inset wins; both dockets rewrote the same origin-page note sentence, so c-021's edit now defers to potato-scope-guidance's full replacement rather than replacing the same sentence a second time.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-125",
+      "statement": "Chair decision 4 tagged countryOfOrigin variant-of-animals once with both divergences — the error sentence and the per-category origin narrowing — so c-015, c-022, potato-scope-guidance and origin-value-list-by-commodity stopped calling it same-as-animals and c-027's claim that its mandate and validation are verbatim animals was corrected as false once c-022 added the narrowing.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2460-2540 (reconciliation entries origin-value-list-by-commodity, potato-scope-guidance, c-027, c-015, c-022)",
+      "quote": "Chair decision 4: the divergence is widened as the critic proposed; 'mandate and validation are verbatim animals' was false once c-022 added the narrowing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-126",
+      "statement": "Chair decision 5 made guidance-before-you-start's strings the single write of the commodity-type option hints and turned every rule string and window-naming hint into a copy function taking the day count from the named constants, so c-031's hints, c-035's two rule strings and the arrival-status post-arrival hint no longer hard-code 'at least 2 days' or 'no later than 4 days'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2310-2324, :2542-2556 (reconciliation entries c-031, guidance-before-you-start)",
+      "quote": "Chair decisions 1 and 5: c-030's derivation is canonical with the calendar rule folded in; the commodityType hints defer to guidance-before-you-start.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-127",
+      "statement": "Chair decisions 6 and 7 removed every third-party, standing, authority and agent sentence from the declaration: c-038 withdrew the retained animals sentence and its divergence append, agent-acting-on-behalf was aligned with c-028's edit, and c-034's declaration legal-limit note dropped the professional-operator-or-authorised-agent wording that had been misattributed to c-028.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2570-2616, :2362-2376 (reconciliation entries c-038, agent-acting-on-behalf, c-028, c-034)",
+      "quote": "Chair decisions 6 and 7 (standing ruling 2, decidedBy sam): no third-party, standing, authority or agent sentence anywhere; the retained-sentence change and the divergence append are withdrawn; the dissent drops the narrow-flag argument and keeps its other ground.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-128",
+      "statement": "Chair decision 8 made every park ruling set the behaviour's status to parked through the spec script and corrected the false claim that the script accepts only adopted and open-question, adding a status change to bulk-upload, import-from-existing-documents, plant-operator-registration, regulator-views, inspector-recording, analyst-export, risk-classification-and-list-maintenance, spot-check-scheduling, document-uploads-out-of-scope, outbox-and-gbnag-publishing-out-of-scope, combined-ins-list-out-of-scope, previous-scheme-and-ni-roi-precedents, service-name-feedback-and-support, guidance-before-you-start, reuse-previous-consignment, agent-acting-on-behalf, competent-authority-routing and the five parked D7 behaviours, and to the two newly created behaviours.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2722-2938 (reconciliation entries for the park rulings)",
+      "quote": "Chair item 8; spec-set-behaviour-status.sh accepts adopted|open-question|parked|rejected (verified at lines 30-31).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-129",
+      "statement": "Chair decision 9 made consignor-select's page gate null with its derived sentence moved into notes, exactly as c-002 does for arrival-status, because the object shape c-026 had used is what the notification-view page uses for an authored section gate.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2746-2758 (reconciliation entry c-026)",
+      "quote": "Chair decisions 8 and 9: the object shape is what notification-view uses for its authored section gate (verified in journey-spec.json), so a derived gate must be null with the sentence in notes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-130",
+      "statement": "Chair item 10 swept the stale cross-references: c-001 dropped 'dashboard intro' from its list of Great Britain strings, guidance-before-you-start stopped treating c-001 as open and quoting the pre-ruling arrival-status hint, spot-check-scheduling cited the post-c-006 hint-by-state, c-032 enumerated six Sam-gated chrome decisions instead of four, reuse-previous-consignment's append stopped being conditional on c-030, and nfr-minimise-trader-effort's 'no optional obligation' claim was reworded around consignmentNumber.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2542-2568, :2618-2632, :2674-2720 (reconciliation entries guidance-before-you-start, c-001, spot-check-scheduling, c-032, reuse-previous-consignment, nfr-minimise-trader-effort)",
+      "quote": "Chair item 10. The panel's 'zero required: false' was literally true of journey-spec.json (no obligation carries required: false; consignmentNumber has an empty mandate), but c-003 makes it optional in effect, so the critic's reword is right.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-131",
+      "statement": "Chair item 11 kept each item's decidedBy as panel but named the standing-ruling-2 sub-park inside it as Sam's, appending that sentence to c-003 ('Name of person making entry' as the signed-in user), c-028 (the third-party and agent-authority clauses), c-033 (the session-only listing) and service-name-feedback-and-support (the Address book and Manage account link homes).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2606-2672 (reconciliation entries c-028, c-003, c-033, service-name-feedback-and-support)",
+      "quote": "Chair item 11: item-level decidedBy stays panel; the ruling-2 sub-park is named as Sam's.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-132",
+      "statement": "Reconciliation also rewrote three docket summaries that would otherwise contradict their own reconciled rulings: D1's lateness sentence, D3's claim of a Balearic hint and an email-shape check, and D8's naming of a surviving third-party sentence and the c-030 conditional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2971-3006 (reconciliation entries D1, D3, D8)",
+      "quote": "Not a ruling, but the docket summary would otherwise contradict its own reconciled rulings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-133",
+      "statement": "Three reconciliation edits go beyond the critic's findings: england-vs-great-britain's rationale was corrected for the same false claim about the spec script's status vocabulary, the arrival-status hint was given the same constants note as the other window-naming hints, and the e2e-origin-section extra's wording was changed from 'hint' to 'inset' to match the ruled delivery.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json:2733-2744, :2323, :2471-2473 (reconciliation entries england-vs-great-britain, c-031, origin-value-list-by-commodity)",
+      "quote": "The same false claim the critic caught on competent-authority-routing; the ruling (adopt with a PARKED residual inside the detail) still stands on its other ground",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-134",
+      "statement": "The critic found coverage complete: all 83 docket items received exactly one ruling with no id missing or duplicated (its missingIds list is empty), the only coverage blemish being that the ten D7 ids carried a 'behaviour:' prefix the other dockets do not use.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:2, :182 (missingIds, summary)",
+      "quote": "Coverage: all 83 docket items received exactly one ruling; no id is missing or duplicated. The only coverage blemish is that the ten D7 ids carry a 'behaviour:' prefix the other dockets do not use.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-135",
+      "statement": "The critic challenged two incompatible models of the late-notification flag — D1 ruling it derived on every read and never stored while D5 ruled it committed as a system value before finalise, with c-031 and c-030 both rewriting the same derivation field and c-030's replace target being the pre-c-031 string — and the answer was to make the D5 shape the single model, since Amend is in and no first-submission timestamp exists, keeping the flag in the manifest with system true and listed in SYSTEM_POPULATED.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:4-18 (inconsistencies[0])",
+      "quote": "Make the D5 shape the single model, since Amend is in and no first-submission timestamp exists. ... keep lateNotificationIndicator in the manifest with system: true and listed in SYSTEM_POPULATED (boot-guard-dispatch-coverage requires it). Delete D1's 'records port must preserve the first submittedAt' contingency and c-029's 'computed at read from submittedAt'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-136",
+      "statement": "The critic challenged D4 deleting the contact number and email obligations and the contact-details page while D3 ruled validation for both and D6 kept the page as a run step, with the two dockets also disagreeing on whether the last run step is 9 or 10, and the answer was that D3 and D6 conform to D4: the run ends at consignment-contact-select as step 9, c-011 withdraws its contact spec changes and nfr-data-validation drops the email pattern and parked telephone rule.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:19-29 (inconsistencies[1])",
+      "quote": "c-034 drops the contact-details runStep line and '-> contact-details' from its opening-run sequence (consignment-contact-select is runStep 9 and the last run step); c-025's 'runStep 10' reads 'runStep 9 after c-034's renumbering'. c-011 withdraws its contactEmail and contactNumber specChanges",
+      "confidence": "verbatim",
+      "note": "The critic verified against the spec that contact-details existed at runStep 11 and both obligations existed."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-137",
+      "statement": "The critic challenged where the Balearic and ware-potato scope sentence lives and what it says — D2 ruling a page-side inset with one wording and expressly rejecting an obligation-level conditional hint, D3 adding an obligation hint with different copy, and both dockets rewriting the same origin-page note sentence — and the answer was one delivery: keep D2's inset and copy and delete D3's hint spec change.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:30-39 (inconsistencies[2])",
+      "quote": "One delivery: keep D2's page-side inset and copy (it honours the same-as-animals hint c-022 itself relies on). Delete c-021's hintByCategory specChange",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-138",
+      "statement": "The critic challenged the country-of-origin animals tag — three rulings calling it same-as-animals while the same docket rewrote its validation and added error copy and another retagged it variant-of-animals naming only the error sentence — and the answer was to tag it variant-of-animals once with the divergence widened to the error sentence plus the per-category narrowing, keeping id, widget, label and hint verbatim animals in both languages.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:40-51 (inconsistencies[3])",
+      "quote": "Tag variant-of-animals once, with c-027's divergence widened to 'error sentence (c-027) and the per-category origin narrowing validated inside POST and re-checked on Check your answers (c-022); id, widget, label, labelCy, hint and hintCy verbatim animals'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-139",
+      "statement": "The critic challenged the commodity-type option hints being set twice with different strings while a third ruling required every window-naming hint to read the day count from the named constants, and the answer was a single value — the guidance-before-you-start strings in the SI's own wording — with c-031's change becoming a deferral and every rule string made a copy function taking the constant.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:52-61 (inconsistencies[4])",
+      "quote": "Single value: adopt the guidance-before-you-start strings (reg 24A(1)/26(1) wording); c-031's valueHints specChange becomes 'as ruled under guidance-before-you-start, with the day count supplied from the constants named in day-one-critical-and-list-volatility'; c-035's two rule strings are likewise copy functions taking the constant.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-140",
+      "statement": "The critic challenged the declaration's third-party clause — one ruling dropping all five animals statements, parking the authority clauses and instructing that another ruling must not reinstate the clause, that other ruling reinstating one sentence verbatim, and a third licensing a professional-operator-or-authorised-agent statement misattributed to the first — and the answer was that both conform to the first: the retained sentence and its divergence append are withdrawn and the licensing note is rewritten.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:62-71 (inconsistencies[5])",
+      "quote": "c-038 and D8's agent-acting-on-behalf conform to c-028: withdraw the retained sentence and the declaration.animals.divergence append; c-038's declaration note reads 'no agent, importer or notifier party is collected; no third-party or authority sentence (c-028, standing ruling 2)'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-141",
+      "statement": "The critic challenged provisionalCopy meaning two different things across dockets — the invented-title flag complementary to the Welsh title in D8 and the brief, but an invented-copy flag set on pages and obligations whose titles are verbatim animals in D3, D4 and D6 — and the answer was to widen the definition so the flag means a page or obligation carries copy that is not verbatim animals and awaits the copy pass, with the scope stated in notes and the Welsh title staying wherever the title itself is verbatim.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:72-86 (inconsistencies[6])",
+      "quote": "Recommended: widen it — 'provisionalCopy=true on a page or obligation means it carries copy that is not verbatim animals and awaits the copy pass; the scope is stated in notes; titleCy stays wherever the title itself is verbatim' — then rewrite the c-038 and spot-check-scheduling dissent text to drop the narrow-flag argument (their other grounds stand).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-142",
+      "statement": "The critic challenged parked behaviours ending up with three different statuses — one docket setting 'parked', others leaving 'open-question' with a PARKED prefix in the detail, and two new behaviours created open-question while being called parked — and corrected the claim that the spec script accepts only adopted and open-question, the answer being that every park ruling sets status parked through the status script and the two created behaviours are set parked after creation.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:87-117 (inconsistencies[7])",
+      "quote": "Every park ruling sets status 'parked' via spec-set-behaviour-status.sh (adding a specChange 'status -> parked' where missing); c-025's name-of-person-making-entry and c-026's consignor-typed-fallback are created open-question then set parked; competent-authority-routing's specChange text is corrected to remove the 'adopted | open-question only' claim.",
+      "confidence": "verbatim",
+      "note": "The critic records that spec-set-behaviour-status.sh accepts adopted|open-question|parked|rejected and only the add-behaviour script is limited at creation."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-143",
+      "statement": "The critic challenged the derived page-gate convention — one ruling nulling a page's gate and moving the derived sentence to notes because a prose gate could be read as an authored gate, while another wrote a derived gate as the object shape the spec uses for an authored section gate — and the answer was that the consignor-select gate is null with the sentence moved to notes prefixed 'Derived gate, not authored:' exactly as the first ruling does.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:118-122 (inconsistencies[8])",
+      "quote": "consignor-select gate: null, with the sentence moved to notes prefixed 'Derived gate, not authored:' exactly as c-002 does for arrival-status.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-144",
+      "statement": "The critic challenged the chrome ruling narrowing the Sam-gated extra to 'the four Sam-gated decisions' while a later docket appended a fifth and a sixth item to the same extra, leaving the count and enumeration stale, and the answer was to enumerate six items, adding the accessibility-statement URL and the privacy-notice URL.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:123-132 (inconsistencies[9])",
+      "quote": "c-032's detail (and service-name-feedback-and-support's) enumerate six items, or say 'the Sam-gated decisions' without a count and list (5) accessibility statement URL (nfr-accessible-wcag-2-2-aa) and (6) privacy notice URL (nfr-gdpr).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-145",
+      "statement": "The critic challenged the reuse-a-previous-consignment append being conditional on a ruling that had already been made — treating the post-submission action set as an unresolved gate question while D5 had ruled Copy as new out and appended its own 'stays parked' to the same detail, leaving two appends one of which was stale — and the answer was a single unconditional append saying the park holds because Copy as new was ruled out, with unparking being one increment copying the animals copy action.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:133-141 (inconsistencies[10])",
+      "quote": "D8's append reads 'Ruled D8: parked; c-030 ruled Copy as new out of the first pass, so no increment; unparking is one increment copying the animals copy action; the prototype templates pattern is not adopted'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-146",
+      "statement": "The critic challenged stale cross-references to rulings made in other dockets — guidance-before-you-start forbidding the intro from naming England or Great Britain because that wording was 'the open conflict c-001' when c-001 is resolved to Great Britain, and spot-check-scheduling saying the place-of-destination hint stays as written when c-006 had replaced it with a hint per state — and the answer was to reword both and drop 'dashboard intro' from c-001's list of Great Britain strings.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:142-152 (inconsistencies[11])",
+      "quote": "guidance-before-you-start: 'the intro need not name the territory; where it does it says Great Britain (c-001, resolved)'; c-001 drops 'dashboard intro' from its list. spot-check-scheduling cites placeOfDestination.input.hintByState (c-006) as the surviving copy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-147",
+      "statement": "The critic challenged all ten D7 rulings carrying their id in the form 'behaviour:nfr-...' while every other docket uses the bare behaviour id, so an applier matching rulings to spec ids by exact string would miss the whole of D7, and the answer was to strip the prefix because the kind field already carries it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:153-168 (inconsistencies[12])",
+      "quote": "Strip the 'behaviour:' prefix from the ten D7 ruling ids (the kind field already carries it).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-148",
+      "statement": "The critic challenged the trader-effort ruling asserting that no obligation is optional today when another ruling makes the consignment number an optional notifier reference labelled '(optional)' whose hub row is Optional for wood, and the answer was to reword it so the consignment number is named as the one optional obligation that already carries '(optional)' and never gates readiness, with any later optional question following the same rule.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:169-173 (inconsistencies[13])",
+      "quote": "Reword: 'consignmentNumber is the one optional obligation and already carries (optional) and never gates readiness (c-003); any later optional question follows the same rule'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-149",
+      "statement": "The critic recorded a breach of the standing ruling on delegation of authority: c-038, marked decided by sam, kept the animals declaration sentence about legally acting on behalf of a third party verbatim, which is a legal assertion the notifier signs and therefore delegation of authority, overriding c-028's explicit instruction that the clause must not be reinstated; the critic ruled the retention a panel choice rather than a Sam ruling and said to drop the sentence.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:176 (standingRulingBreaches[0])",
+      "quote": "builds a delegation-of-authority assertion in this phase — keeps the animals declaration sentence 'I can legally act on behalf of a third party in relation to the conditions of this declaration' verbatim. A declaration statement is a legal assertion the notifier signs, so this is delegation of authority (standing ruling 2), and it overrides c-028's explicit instruction that c-038 must not reinstate the clause.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-150",
+      "statement": "The critic recorded the same breach in the agent-acting-on-behalf ruling, which said the declaration keeps the one animals third-party sentence as copy: the park itself is right but the retained copy is not, and it must align with c-028's edit saying the declaration carries no third-party authority clause.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:177 (standingRulingBreaches[1])",
+      "quote": "same breach — 'The declaration keeps the one animals third-party sentence as copy (c-038)'; the park is right, the retained copy is not. Align with c-028's edit ('carries no third-party authority clause').",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-151",
+      "statement": "The critic recorded a third breach: c-034's declaration legal-limit note licensed statements asserting the notifier's standing as the professional operator or their authorised agent, which is the GDS-judge sentence c-028 rejected under the standing ruling and also pre-empts c-038 by the back door, so the standing and agent wording must be removed.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:178 (standingRulingBreaches[2])",
+      "quote": "the declaration legal-limit note licenses statements asserting 'the notifier's standing as the professional operator or their authorised agent (c-028; NNS-UN-039)'. That is the GDS-judge sentence c-028 rejected under standing ruling 2 ... Remove the standing/agent wording.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-152",
+      "statement": "The critic recorded attribution drift in four items marked decided by panel that each contain a standing-ruling-2 sub-park — c-003 parking 'Name of person making entry' as the signed-in user, c-028 parking the third-party clauses, c-033 parking the session-only listing as a user-model matter, and service-name-feedback-and-support parking the Address book and Manage account link homes — and held the item-level panel attribution defensible while each parked component should be recorded as decided by sam in the detail.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:179 (standingRulingBreaches[3])",
+      "quote": "The item-level decidedBy 'panel' is defensible because the primary decision is the panel's, but each parked component should be recorded 'decidedBy sam (standing ruling 2)' in the detail, as c-025 does for name-of-person-making-entry and D7 does for nfr-secure-internal-login and equal-access-defra-policy-sg-fc.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-153",
+      "statement": "The critic recorded for the record that attribution is otherwise correct — c-039, c-040, bulk-upload, plant-operator-registration, nfr-secure-internal-login and equal-access-defra-policy-sg-fc to sam under standing rulings 2 and 3, and reference-number-prefix, import-from-existing-documents and the three out-of-scope behaviours to the panel under ruling 1 — and that no ruling builds users, sign-in, operator registration or bulk upload.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:180 (standingRulingBreaches[4])",
+      "quote": "Correctly attributed, for the record: conflict:c-039, conflict:c-040, behaviour:bulk-upload, behaviour:plant-operator-registration, behaviour:nfr-secure-internal-login, behaviour:equal-access-defra-policy-sg-fc (sam, rulings 2/3); behaviour:reference-number-prefix, behaviour:import-from-existing-documents, behaviour:document-uploads-out-of-scope, behaviour:outbox-and-gbnag-publishing-out-of-scope, behaviour:combined-ins-list-out-of-scope (panel under ruling 1 — no standing ruling names them). No ruling builds users, sign-in, operator registration or bulk upload.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-154",
+      "statement": "The critic's summary counts the work the chair had to do: six substantive cross-docket contradictions needing a decision (the lateness model, the contact obligations and page, the Balearic sentence, the country-of-origin animals tag, the commodity-type hints, and the declaration's third-party clause), five vocabulary or convention drifts needing one answer each (the meaning of provisionalCopy, parked statuses, the derived page gate, the chrome count, and the stale cross-references), and three breaches of standing ruling 2 all on the same clause plus attribution drift in four panel-marked items.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/critic.json:182 (summary)",
+      "quote": "Cross-docket consistency: six substantive contradictions need a decision ... Five vocabulary/convention drifts also need one answer each ... Standing rulings: three breaches of ruling 2, all the same clause ... plus attribution drift where four panel-marked items contain ruling-2 sub-parks (c-003, c-028, c-033, service-name-feedback-and-support).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p17-155",
+      "statement": "The panel files cite standing rulings by number throughout — ruling 1 parks a policy answer nobody has or new platform capability, ruling 2 puts users, sign-in, agents, delegation and registration out of phase, ruling 3 puts bulk upload out, ruling 4 ranks the policy paper and SI above the Confluence, mural and prototype tiers, and ruling 5 keeps consistency with animals absent a plants-source reason — but neither file in this slice states rulings 1, 4 and 5 in their own words, so their wording has to be inferred from the rulings that apply them.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:20-23 and the rulings' rationales throughout",
+      "quote": "Standing rulings for the first pass (2026-09-06): users, sign-in models, agents, delegation of authority, plant-operator registration and \"who notifies\" are out of phase; bulk upload is out of phase.",
+      "confidence": "inferred",
+      "note": "The README enumerates only the subjects of rulings 2 and 3; the content of rulings 1, 4 and 5 is read off their repeated use in the rationales ('standing ruling 1 parks a policy answer nobody has', 'standing ruling 4 puts phnns-policy above the Confluence tier', 'standing ruling 5' as the same-as-animals consistency anchor)."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-156",
+      "statement": "No file in this slice names the judges or the chair: the README says each docket had three judges and a chair, and the rulings record dissent by role only ('policy judge', 'GDS judge', 'engine judge', 'GDS service-design judge', and numbered 'Judge 2'/'Judge 3' in D7), so who sat on a docket cannot be recovered from the ledger evidence.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/README.md:11-12 and the rulings' dissent fields",
+      "quote": "eight dockets, three judges and a chair each, one ruling\n  per item with rationale, spec changes, dissent and who decided it",
+      "confidence": "gap",
+      "note": "Recorded as a gap because the brief asks for the panel's composition to be claimable and the files carry only role labels; D7 uses numbered judges (Judge 1 policy, Judge 2 GDS, Judge 3 engine) while other dockets use role names."
+    },
+    {
+      "id": "repo-plantsfrontend-p17-157",
+      "statement": "The rulings file does not say which decisions.json ledger entry each of its 83 rulings became: no ruling carries a d-NNN id, a decidedAt of its own or a pointer to the ledger, so the mapping from a panel ruling to the entry that is 'the only place a ruling lives' cannot be read from this evidence file.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/spec/panel/rulings.json (rulings[] keys: docket, id, kind, ruling, resolution, rationale, specChanges, dissent, escalate, decidedBy)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The README directs a reader to ../decisions.json for the ledger, which part 16 claims; this slice shows no linking id in either direction."
+    }
+  ]
+}

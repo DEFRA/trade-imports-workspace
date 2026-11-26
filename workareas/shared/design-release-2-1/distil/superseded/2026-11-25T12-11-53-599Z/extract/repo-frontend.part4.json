@@ -1,0 +1,966 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 4 of repos/trade-imports-animals-frontend at main 4c2119da: the notification hub (the 'Overview' task list) and the first journey page, origin. Read in full: features/hub/controller.js (178 lines: route, six section groups, status tags, row hiding, commodity totals, Review and submit and Return to dashboard buttons), hub/template.njk, hub/copy/copy.en.js and copy.cy.js (Welsh is a machine draft with matching keys), hub/hub.fit.spec.js (4 describe blocks, 24 tests); features/origin/page.js, evaluation.js (five fields bound to obligations), controller.js (GET/POST, back link, save and recoverable error, next page), template.njk (country type-ahead, region-code Yes/No with conditional prefixed box, internal reference, save actions), validate.js (rules, region-code prefix mechanics, blanking), copy/copy.en.js and copy.cy.js, origin.fit.spec.js (6 describe blocks, 33 tests); flow/task-rows.js (12 task rows, their pages and parts, the conditional identification and transit-countries rows). The shared save-actions macro, shared copy (saveActions, journeyStrip, validator oneOf default) and shared/paths.js were looked up only to resolve labels and routes these files use; the shared layout itself is part 1's. Claims cover the hub route, heading, commodity totals panel, task-list heading, six numbered section headings, every row title, hint, link and status tag, row hiding, the absent cannot-start state, the review button and dashboard button; the origin route, heading, every field with label, hint, options and optionality, every validation rule with its English error verbatim, region-code prefix behaviour, back link and save outcomes; and every fit test in both specs.",
+  "claims": [
+    {
+      "id": "repo-frontend-p4-001",
+      "statement": "The hub (task list) for a notification is served by a GET route at /notifications/{journeyId} under the live-animals set base.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:8; src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:177",
+      "quote": "export const hubRoutePath = () => '/notifications/{journeyId}'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-002",
+      "statement": "The hub page's title and h1 heading is 'Overview'.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:2; hub/controller.js:164-165",
+      "quote": "title: 'Overview',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-003",
+      "statement": "Visiting the hub completes the opening run: once a trader reaches the hub, the guided first pass through the journey is treated as finished.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:148",
+      "quote": "await completeOpeningRun(request, h, journeyId)",
+      "confidence": "inferred",
+      "note": "The run-state semantics live in the generic flow platform (flow/run-state.js), outside this part; the statement reads the function name."
+    },
+    {
+      "id": "repo-frontend-p4-004",
+      "statement": "The hub carries the journey status strip (the notification's status tag and reference) passed to the shared layout.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:168",
+      "quote": "journeyStrip: journeyStrip(journey),",
+      "confidence": "inferred",
+      "note": "The strip's rendering (Draft/Submitted/Amending/Deleted tag and reference) is the shared layout's, part 1. The hub itself shows no separate reference or status beyond this strip."
+    },
+    {
+      "id": "repo-frontend-p4-005",
+      "statement": "The hub has no back link; the ways off it are the 'Return to dashboard' button and the Dashboard item in the service navigation.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:160-162; hub.fit.spec.js 'overview has no back link and returns to the dashboard'",
+      "quote": "// No back link: Design release 1 treats the overview as the top of the\n  // notification rather than a step within it, so the way off the page is the\n  // Dashboard item in the service navigation, which every page carries.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-006",
+      "statement": "The hub shows a commodity summary headed 'Your commodities' (an h2) above the task list.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:4; hub/template.njk:8",
+      "quote": "heading: 'Your commodities',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-007",
+      "statement": "The commodity summary has an animals box showing the total number of animals, labelled 'Animals' with the caption 'Total number of animals in this consignment'.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:5-6; hub/template.njk:11-15",
+      "quote": "animalsLabel: 'Animals',\n    animalsCaption: 'Total number of animals in this consignment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-008",
+      "statement": "The commodity summary has a packages box showing the total number of packages, labelled 'Packages/boxes' with the caption 'Total number of packages in this consignment'.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:7-8; hub/template.njk:18-22",
+      "quote": "packagesLabel: 'Packages/boxes',\n    packagesCaption: 'Total number of packages in this consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-009",
+      "statement": "The animals total is the sum of the number of animals over every commodity line, and the packages total is the sum of the number of packages over every commodity line.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:138-144",
+      "quote": "animals: sumOverLines(lines, 'numberOfAnimalsQuantity'),\n    packages: sumOverLines(lines, 'numberOfPackages')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-010",
+      "statement": "A commodity line whose number of animals or packages is blank or not a number counts as zero in the hub totals.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:128-131",
+      "quote": "const count = Number((value ?? '').toString().trim())\n  return Number.isFinite(count) ? count : 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-011",
+      "statement": "The commodity summary shows on every visit to the hub, with both totals reading 0 before any commodity line exists.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:136-137; hub.fit.spec.js 'both boxes read 0 before a commodity is added'",
+      "quote": "// Design release 1 shows the summary on every visit to the hub, reading zero\n// before any commodity line exists, so the totals are never absent.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-012",
+      "statement": "Each commodity total box reads in order: the number, then the label as an h3 heading, then the caption.",
+      "kind": "behaviour",
+      "ref": "features/hub/template.njk:11-15; hub.fit.spec.js 'each box reads as the number, then the label, then the caption'",
+      "quote": "<p class=\"app-commodity-total__value\">{{ commodityTotals.animals }}</p>\n        <h3 class=\"app-commodity-total__label\">{{ copy.commodityTotals.animalsLabel }}</h3>\n        <p class=\"app-commodity-total__caption\">{{ copy.commodityTotals.animalsCaption }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-013",
+      "statement": "The two commodity total boxes sit side by side in two half-width columns on a wide screen.",
+      "kind": "behaviour",
+      "ref": "features/hub/template.njk:9-24",
+      "quote": "<div class=\"govuk-grid-column-one-half govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-014",
+      "statement": "The commodity total boxes are static panels with no link or button, styled as a light grey panel (rgb 243,243,243) with the number in blue bold 48px, the label in blue bold 24px with no top margin, and the caption in black 19px.",
+      "kind": "non-functional",
+      "ref": "hub.fit.spec.js 'the boxes are static panels styled from govuk design tokens'",
+      "quote": "background: 'rgb(243, 243, 243)',\n      valueColour: 'rgb(29, 112, 184)',\n      valueFontSize: '48px',\n      valueFontWeight: '700',\n      labelColour: 'rgb(29, 112, 184)',\n      labelFontSize: '24px',\n      labelFontWeight: '700',\n      labelMarginTop: '0px',\n      captionFontSize: '19px',\n      captionColour: 'rgb(11, 12, 12)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-015",
+      "statement": "Each commodity total caption wraps to no more than two lines.",
+      "kind": "non-functional",
+      "ref": "hub.fit.spec.js 'each box reads as the number, then the label, then the caption'",
+      "quote": "`\"${text}\" wraps to more than two lines`\n      ).toBeLessThanOrEqual(lineHeight * 2 + 1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-016",
+      "statement": "On a small screen (360px wide) the two commodity total boxes stack vertically and the page has no horizontal overflow.",
+      "kind": "non-functional",
+      "ref": "hub.fit.spec.js 'the boxes stack with no horizontal overflow on a small screen'",
+      "quote": "await page.setViewportSize({ width: 360, height: 740 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-017",
+      "statement": "The task list is headed 'Notification tasklist' (an h2).",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:20; hub/template.njk:26",
+      "quote": "taskListHeading: 'Notification tasklist',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-018",
+      "statement": "The task list is divided into six numbered sections, each with an h3 heading, in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address'.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:21-28; hub/controller.js:30-52; hub/template.njk:28-35",
+      "quote": "'about-the-consignment': '1. About the consignment',\n    'description-of-the-goods': '2. Description of the goods',\n    'transport-and-arrival': '3. Transport and arrival',\n    documents: '4. Documents',\n    'consignment-parties': '5. Consignment parties',\n    'contact-address': '6. Contact address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-019",
+      "statement": "Section 1 'About the consignment' holds the rows 'Where is this consignment coming from?', 'What are you importing?' and 'Main reason for import', in that order.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:31-34; hub/copy/copy.en.js:33-41",
+      "quote": "id: 'about-the-consignment',\n    rows: ['origin', 'commodities', 'importReason']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-020",
+      "statement": "Section 2 'Description of the goods' holds the rows 'Commodity details', 'Identification details' and 'Additional details', in that order: identification comes before additional details.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:35-44; hub.fit.spec.js 'overview: the second section lists identification above the additional details'",
+      "quote": "rows: ['consignmentDetails', 'animalIdentification', 'additionalDetails']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-021",
+      "statement": "Section 3 'Transport and arrival' holds the rows 'Arrival details', 'Transit countries' and 'Transport details', in that order.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:45-48; hub/copy/copy.en.js:51-59",
+      "quote": "id: 'transport-and-arrival',\n    rows: ['arrivalDetails', 'transitCountries', 'transporter']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-022",
+      "statement": "Section 4 'Documents' holds the single row 'Upload documents'.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:49; hub/copy/copy.en.js:67-69",
+      "quote": "{ id: 'documents', rows: ['documents'] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-023",
+      "statement": "Section 5 'Consignment parties' holds the single row 'Roles and addresses'.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:50; hub/copy/copy.en.js:60-63",
+      "quote": "{ id: 'consignment-parties', rows: ['addresses'] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-024",
+      "statement": "Section 6 'Contact address' holds the single row 'Contact address for this consignment'.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:51; hub/copy/copy.en.js:64-66",
+      "quote": "{ id: 'contact-address', rows: ['contact'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-025",
+      "statement": "The hub task row titles are, verbatim: 'Where is this consignment coming from?', 'What are you importing?', 'Main reason for import', 'Commodity details', 'Additional details', 'Identification details', 'Arrival details', 'Transit countries', 'Transport details', 'Roles and addresses', 'Contact address for this consignment', 'Upload documents'.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:32-70",
+      "quote": "origin: {\n      title: 'Where is this consignment coming from?'\n    },\n    commodities: {\n      title: 'What are you importing?'\n    },\n    importReason: {\n      title: 'Main reason for import'\n    },\n    consignmentDetails: {\n      title: 'Commodity details'\n    },\n    additionalDetails: {\n      title: 'Additional details'\n    },\n    animalIdentification: {\n      title: 'Identification details'\n    },\n    arrivalDetails: {\n      title: 'Arrival details'\n    },\n    transitCountries: {\n      title: 'Transit countries'\n    },\n    transporter: {\n      title: 'Transport details'\n    },\n    addresses: {\n      title: 'Roles and addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-026",
+      "statement": "Only the 'Roles and addresses' row carries a hint, reading 'Consignor or Exporter, Consignee, Importer and Place of Destination'; every other row is a bare link with a status and no hint slot.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:60-63; hub/controller.js:108-113; hub.fit.spec.js 'overview: only the roles and addresses row carries a hint'",
+      "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-027",
+      "statement": "Every task row shown on the hub is a link, whatever else has been answered, so a trader can start any task in any order.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:84-92; hub.fit.spec.js 'every task the hub shows opens before a commodity is chosen'",
+      "quote": "// Design release 1 lets a trader start any task on the notification in any\n// order, so a row is a link and carries a real status whatever else has been\n// answered.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-028",
+      "statement": "Each row's link leads to the entry page for that row, chosen by the flow's row-entry rule from the row and the notification's scope.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:90",
+      "quote": "href: rowEntry(row, scope, journeyId),",
+      "confidence": "inferred",
+      "note": "rowEntry is generic flow (flow/navigation.js), outside this part. The fit specs show the observable outcomes: Commodity details links to /consignment-details, and opens the commodity search while nothing is chosen."
+    },
+    {
+      "id": "repo-frontend-p4-029",
+      "statement": "A task row's status tag reads one of two words only: 'Complete' (green tag) or 'To do' (blue tag).",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:16-19; hub/controller.js:54-59",
+      "quote": "statuses: {\n    complete: 'Complete',\n    toDo: 'To do'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-030",
+      "statement": "A row reads 'Complete' only when its status is fulfilled and its stored answer still passes its own page's rules; otherwise it reads 'To do'.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:72-73",
+      "quote": "const statusTag = (status, invalid) =>\n  status === FULFILLED && !invalid ? COMPLETE_TAG : TO_DO_TAG",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-031",
+      "statement": "The hub draws no part-done ('in progress') and no optional state: a part-answered task and an optional task both read 'To do', the same as an untouched one.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:61-71; hub/copy/copy.en.js:12-15",
+      "quote": "// Design release 1 tags a task with one of two words and no others:\n  // \"Complete\" when the task is finished, \"To do\" everywhere else. It draws no\n  // part-done state, and never tells a trader on the hub that a task is\n  // optional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-032",
+      "statement": "A row whose saved answer no longer passes its page's validation (for example a stored value the reference data has moved past) reads 'To do' on the hub even if the engine counts it fulfilled.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:152-158",
+      "quote": "// A row whose stored answer no longer passes its own page's rules is not\n  // complete, so it must read \"To do\" here",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-033",
+      "statement": "No hub row is ever shown as 'Cannot start yet'; the hub renders no cannot-start status.",
+      "kind": "rule",
+      "ref": "hub.fit.spec.js 'every task the hub shows opens before a commodity is chosen' and 'leads the secondary Return to dashboard button, with no review task row above them'",
+      "quote": "await expect(page.locator(CANNOT_START_STATUS)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-034",
+      "statement": "A conditional row whose status is Not applicable is removed from the hub rather than shown locked.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:82, 104-107",
+      "quote": "const isHiddenRow = (row, status) => row.conditional && status === NA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-035",
+      "statement": "The two conditional rows are 'Identification details' (animalIdentification) and 'Transit countries'; every other row is always shown.",
+      "kind": "rule",
+      "ref": "flow/task-rows.js:67-75",
+      "quote": "conditional: true,\n    applies: identifiesAnAnimal\n  },\n  { id: 'arrivalDetails', pages: [portOfEntryPage] },\n  { id: 'transitCountries', pages: [transitCountriesPage], conditional: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-036",
+      "statement": "The 'Identification details' row appears only once at least one commodity line has a chosen commodity that carries identifiers; with nothing chosen the row is absent.",
+      "kind": "rule",
+      "ref": "flow/task-rows.js:22-37; hub.fit.spec.js 'overview: when no commodity is chosen, the animal identification row is absent' and 'overview: when a commodity carrying identifiers is chosen, the animal identification row appears'",
+      "quote": "const identifiesAnAnimal = (answers) =>\n  (Array.isArray(answers?.commodityLines) ? answers.commodityLines : []).some(\n    (line) => identifiedCommodities().includes(line?.commoditySelection)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-037",
+      "statement": "The 'Transit countries' row leaves the hub when its questions are not applicable to the notification, as on a notification with no commodity chosen.",
+      "kind": "rule",
+      "ref": "flow/task-rows.js:75; hub.fit.spec.js 'every task the hub shows opens before a commodity is chosen'",
+      "quote": "// Identification and transit countries do not apply to a notification with\n    // nothing chosen, so these ten are the whole list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-038",
+      "statement": "A row that does not apply (its applies test answers no) counts as Not applicable however its parts roll up, so it also stands down as work needed before submission.",
+      "kind": "rule",
+      "ref": "flow/task-rows.js:89-97",
+      "quote": "// A row with no `applies` test is always applicable; one that answers no is\n// Not applicable however its parts roll up, which is what lets a `conditional`\n// row leave the hub and stand down as submit-readiness work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-039",
+      "statement": "The 'Where is this consignment coming from?' row covers the origin page.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:40",
+      "quote": "{ id: 'origin', pages: [originPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-040",
+      "statement": "The 'What are you importing?' row covers the commodity selection page and every commodity-line answer except the animal identifiers, number of animals and number of packages.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:41-54",
+      "quote": "collection: 'commodityLines',\n        except: [\n          'animalIdentifiers',\n          'numberOfAnimalsQuantity',\n          'numberOfPackages'\n        ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-041",
+      "statement": "The 'Commodity details' row covers the consignment-details page and only the number of animals and number of packages on each commodity line.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:55-64",
+      "quote": "collection: 'commodityLines',\n        only: ['numberOfAnimalsQuantity', 'numberOfPackages']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-042",
+      "statement": "The 'Identification details' row covers the animal identification page and only the animal identifiers on each commodity line.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:67-73",
+      "quote": "parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-043",
+      "statement": "The 'Main reason for import' row covers the import-reason page and the 'Additional details' row covers the additional-details page.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:65-66",
+      "quote": "{ id: 'importReason', pages: [importReasonPage] },\n  { id: 'additionalDetails', pages: [additionalDetailsPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-044",
+      "statement": "The 'Arrival details' row covers the port-of-entry page.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:74",
+      "quote": "{ id: 'arrivalDetails', pages: [portOfEntryPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-045",
+      "statement": "The 'Transport details' row covers the transporters page, spanning the transporter type and both transporter address blocks.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:76-78",
+      "quote": "// The list declares all three transporter answers, so the row still spans\n  // the type and both address blocks from the one page.\n  { id: 'transporter', pages: [transportersPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-046",
+      "statement": "The 'Roles and addresses' row covers both the addresses page and the CPH number page.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:79",
+      "quote": "{ id: 'addresses', pages: [addressesPage, cphNumberPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-047",
+      "statement": "The 'Contact address for this consignment' row covers the consignment contact selection page, and the 'Upload documents' row covers the documents page.",
+      "kind": "data",
+      "ref": "flow/task-rows.js:80-81",
+      "quote": "{ id: 'contact', pages: [consignmentContactSelectPage] },\n  { id: 'documents', pages: [documentsPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-048",
+      "statement": "There is no review or 'Check and submit' task row on the hub; the review is reached by a button under the task list.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js:52-54 and 'renders navigation copy and the task statuses of a newly entered journey'",
+      "quote": "// The task row Design release 1 does not have: the review is a button now, so\n// nothing on the hub carries this title or the shut status it used to read.\nconst RETIRED_REVIEW_ROW_TITLE = 'Check and submit'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-049",
+      "statement": "The hub ends with a primary 'Review and submit' button followed by a secondary 'Return to dashboard' button, in one button group.",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:10-11; hub/template.njk:37-48; hub.fit.spec.js 'leads the secondary Return to dashboard button, with no review task row above them'",
+      "quote": "reviewAndSubmit: 'Review and submit',\n  returnToDashboard: 'Return to dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-050",
+      "statement": "The 'Review and submit' button links to the notification-view (check answers) page and is offered whatever else has been answered, including on a notification with only the origin answered.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:75-80; hub.fit.spec.js 'opens the review from a notification with only the origin answered'",
+      "quote": "// Design release 1 ends the hub with a primary \"Review and submit\" button, not\n// a task row: the review page is offered whatever else has been answered",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-051",
+      "statement": "Submitting is still gated by the review section, not by the hub: the review page shows an unfinished notification and names what is still outstanding.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:76-79",
+      "quote": "The page\n// renders an unfinished notification, naming what is still outstanding, and the\n// review section's own gate still stands between that page and submitting.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-052",
+      "statement": "The 'Return to dashboard' button links to the dashboard (the set base path).",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:172; hub.fit.spec.js 'overview has no back link and returns to the dashboard'",
+      "quote": "dashboardHref: dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-053",
+      "statement": "Hub Welsh copy exists for every English key (title 'Trosolwg'), marked as a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/hub/copy/copy.cy.js:1-3",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-054",
+      "statement": "Fit test: on a newly entered journey the hub shows the 'Overview' heading and all six section headings; the origin row is a link reading 'Complete'; 'What are you importing?' and 'Commodity details' are links reading 'To do'; and nothing reads 'Check and submit'.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'renders navigation copy and the task statuses of a newly entered journey'",
+      "quote": "test('renders navigation copy and the task statuses of a newly entered journey'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-055",
+      "statement": "The earliest hub a trader reaches already has the origin row 'Complete', because the entry guard holds a new notification on the origin page until it is answered.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js:172-174",
+      "quote": "Origin is\n  // the journey's entry page and the entry guard holds a notification there\n  // until it is answered, so the earliest hub a trader reaches already has\n  // origin Complete; this is that hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-056",
+      "statement": "Fit test: the task list is headed 'Notification tasklist' (h2) and its h3 section headings read exactly the six numbered sections in order, with nothing after them.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'the task list is headed \"Notification tasklist\" over the six numbered design sections in order, with nothing after them'",
+      "quote": "await expect(page.locator(SECTION_HEADING)).toHaveText(\n      Object.values(copy.groups)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-057",
+      "statement": "Fit test: before a commodity is chosen, exactly ten rows are shown and every one is a link: origin, commodities, import reason, commodity details, additional details, arrival details, transport details, roles and addresses, contact, and documents.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'every task the hub shows opens before a commodity is chosen'",
+      "quote": "test('every task the hub shows opens before a commodity is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-058",
+      "statement": "Fit test: 'Arrival details' opens the port-of-entry page before a commodity is chosen, and saving it returns the trader to the Overview because the rest of the transport section is out of scope with no commodity chosen.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'a task with nothing before it opens and saves before a commodity is chosen'",
+      "quote": "with no commodity\n    // chosen the rest of the transport section is out of scope — transit\n    // countries and transporters both sit after the commodity selection in\n    // flow order, so `nextInSection` finds no further page and returns the\n    // hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-059",
+      "statement": "Fit test: the 'Commodity details' row, followed while nothing is chosen, opens the commodity search question rather than an empty table.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'the commodity details task opens the commodity question while nothing is chosen'",
+      "quote": "// Nothing has been chosen to give numbers for, so the consignment-details\n  // page asks the commodity question rather than drawing an empty table.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-060",
+      "statement": "Fit test: with a commodity chosen but its numbers not entered, the 'Commodity details' row links to the consignment-details page and reads 'To do' while 'What are you importing?' reads 'Complete', and that hub has no serious or critical axe violations.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'stands as its own task, linking to the consignment-details page'",
+      "quote": ").toHaveAttribute('href', /\\/consignment-details$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-061",
+      "statement": "Fit test: once the number of animals and packages are saved, 'Commodity details' and 'What are you importing?' read 'Complete' and 'Additional details' still reads 'To do'.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'reads Complete once the numbers are saved, leaving the other rows alone'",
+      "quote": "test('reads Complete once the numbers are saved, leaving the other rows alone'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-062",
+      "statement": "The consignment-details page carries 'Cancel and return to overview', which takes the trader back to the hub without saving.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js openHubOwingTheCommodityNumbers; shared/copy.en.js:66",
+      "quote": ".getByRole('link', { name: sharedCopy.saveActions.cancelAndReturnToHub })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-063",
+      "statement": "Fit test: the 'Review and submit' button's link ends /notifications/{id}/notification-view and opens the check-answers page from a notification with only the origin answered.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'opens the review from a notification with only the origin answered'",
+      "quote": ").toHaveAttribute('href', /\\/notifications\\/[^/]+\\/notification-view$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-064",
+      "statement": "Fit test: the hub's button group reads 'Review and submit' then 'Return to dashboard'; 'Review and submit' is not a secondary button; there is no 'Check and submit' row and no cannot-start status.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'leads the secondary Return to dashboard button, with no review task row above them'",
+      "quote": "await expect(page.locator('.govuk-button-group .govuk-button')).toHaveText([\n      copy.reviewAndSubmit,\n      copy.returnToDashboard\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-065",
+      "statement": "Fit test: once every answer section is complete, the 'Review and submit' button opens the check-answers page.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'opens the review once every answer section is complete'",
+      "quote": "test('opens the review once every answer section is complete'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-066",
+      "statement": "Animal identifiers are optional unless multiple species are selected: a single-species notification with no identifier saved shows 'Identification details' as 'Complete' and reaches the review page.",
+      "kind": "rule",
+      "ref": "hub.fit.spec.js 'a single-species notification reaches the review with no identifier saved'",
+      "quote": "// Design release 1: \"Animal identifiers are optional unless multiple species\n  // are selected.\" A single-species consignment reaches the review page with\n  // no identifier saved; what is outstanding is chased after submission.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-067",
+      "statement": "Fit test: the hub with nothing but the origin answered, showing the zero-total commodity panels and both buttons, has no serious or critical WCAG 2 A/AA axe violations.",
+      "kind": "non-functional",
+      "ref": "hub.fit.spec.js 'hub with nothing but the origin answered has no serious or critical axe violations'",
+      "quote": "test('hub with nothing but the origin answered has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-068",
+      "statement": "Fit test: the hub showing non-zero commodity totals has no serious or critical WCAG 2 A/AA axe violations.",
+      "kind": "non-functional",
+      "ref": "hub.fit.spec.js 'hub showing commodity totals has no serious or critical axe violations'",
+      "quote": "test('hub showing commodity totals has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-069",
+      "statement": "Fit test: after entering 25 animals and 5 packages on the consignment-details page, the hub's boxes read 25 and 5.",
+      "kind": "behaviour",
+      "ref": "hub.fit.spec.js 'each box reads as the number, then the label, then the caption'",
+      "quote": "const ANIMALS = '25'\nconst PACKAGES = '5'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-070",
+      "statement": "The origin page is served at /notifications/{journeyId}/origin and is the page a trader lands on after starting a new notification from the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/origin/page.js:1; origin.fit.spec.js startAtOrigin",
+      "quote": "await expect(page).toHaveURL(urlUnderBase('/notifications/[^/]+/origin'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-071",
+      "statement": "The origin page's title and h1 heading is 'Origin of the import', with a section caption above it.",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:2; origin/template.njk:11-12",
+      "quote": "title: 'Origin of the import',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-072",
+      "statement": "The origin page shows the journey status strip, with the 'Draft' tag and the notification reference, from the first request before any answer is saved, because starting a notification creates the record and its reference.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:49-52; origin.fit.spec.js 'shows the draft status and the notification reference before any answer is saved'",
+      "quote": "// The journey always reaches the layout, so the status strip — the Draft tag\n// and the notification reference — is drawn from the first request, matching\n// every later page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-073",
+      "statement": "The origin page collects five answers: country of origin, country of origin subdivision code, region of origin code requirement, region of origin code and internal reference number.",
+      "kind": "data",
+      "ref": "features/origin/controller.js:18-28; origin/evaluation.js:13-28",
+      "quote": "collects: [\n    'countryOfOrigin',\n    'countryOfOriginSubdivisionCode',\n    'regionOfOriginCodeRequirement',\n    'regionOfOriginCode',\n    'internalReferenceNumber'\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-074",
+      "statement": "Each of the five origin answers is bound to its own obligation: country of origin, country of origin subdivision code, region code requirement, region code and internal reference number.",
+      "kind": "rule",
+      "ref": "features/origin/evaluation.js:13-28",
+      "quote": "scalar({ field: 'countryOfOrigin', obligation: countryOfOrigin }),",
+      "confidence": "verbatim",
+      "note": "Whether each obligation is mandatory is declared in obligations/, part 2."
+    },
+    {
+      "id": "repo-frontend-p4-075",
+      "statement": "The first question is 'Country of origin' (medium label) with the hint 'Start typing to search for a country.'",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:4-5; origin/template.njk:18-27",
+      "quote": "label: 'Country of origin',\n    hint: 'Start typing to search for a country.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-076",
+      "statement": "Country of origin is a select of origin countries from the country reference service, led by the placeholder option 'Select a country', with no divider under it.",
+      "kind": "data",
+      "ref": "features/origin/controller.js:33-39; origin/copy/copy.en.js:6",
+      "quote": "{ value: '', text: copy.country.placeholder },\n  ...(await countries.originCountryOptions())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-077",
+      "statement": "Country of origin options are the captured MDM country list, in the order and with the codes and names of that list.",
+      "kind": "integration",
+      "ref": "origin.fit.spec.js 'renders the captured MDM country options and feature copy'",
+      "quote": "expect(renderedCountries).toEqual(originPageCountryEntries())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-078",
+      "statement": "With JavaScript, the country select is enhanced into an accessible type-ahead (combobox) that offers the whole list on focus without typing.",
+      "kind": "behaviour",
+      "ref": "features/origin/template.njk:18-27; origin.fit.spec.js 'offers the whole country list on focus, without typing'",
+      "quote": "autocomplete: { showAllValues: true, noResults: copy.country.noResults }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-079",
+      "statement": "The country type-ahead filters the list as the user types, case-insensitively.",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'filters the list as the user types, case-insensitively'",
+      "quote": "await field.fill('fran')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-080",
+      "statement": "When nothing matches what was typed, the type-ahead shows 'No countries found'.",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:7; origin.fit.spec.js 'tells the user when nothing matches what they typed'",
+      "quote": "noResults: 'No countries found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-081",
+      "statement": "Choosing a country in the type-ahead leaves the country name visible in the box and submits the country code.",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'leaves the chosen country visible in the box and submits its code'",
+      "quote": "await expect(page.locator(countryInput)).toHaveValue(france.name)\n    await expect(page.locator(countryHidden)).toHaveValue(france.code)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-082",
+      "statement": "Without JavaScript, the country is a native select that submits and persists the country code.",
+      "kind": "non-functional",
+      "ref": "origin.fit.spec.js 'native select submits and persists the country code'",
+      "quote": "test.use({ javaScriptEnabled: false })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-083",
+      "statement": "The country type-ahead uses GOV.UK typography (GDS Transport, govuk-input size) for its input and options, paints its dropdown arrow behind the input, keeps the GOV.UK focus indicator (3px focus-colour outline with an inset shadow), and takes the standard GOV.UK error border when in error.",
+      "kind": "non-functional",
+      "ref": "origin.fit.spec.js 'country of origin type-ahead styles' (4 tests)",
+      "quote": "expect(typography.inputFamily).toMatch(/^\"?GDS Transport/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-084",
+      "statement": "Country of origin is optional on the page: it is checked only for being one of the listed countries, so a trader can save the rest of the page without it.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:93-99",
+      "quote": "// Membership only, not required — the obligation model requires the country\n// separately, so a user waiting on paperwork can save what they know and\n// come back.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-085",
+      "statement": "A submitted country not in the list gives the error 'Select a country from the list'; the error summary links to and focuses the country field, which is cleared.",
+      "kind": "rule",
+      "ref": "features/origin/copy/copy.en.js:24; origin/validate.js:76-77; origin.fit.spec.js 'country validation: an out-of-list country links to and focuses the cleared field'",
+      "quote": "countryFromList: 'Select a country from the list',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-086",
+      "statement": "A saved country the reference data no longer lists is caught when the page is opened again, with the error 'The saved country is no longer available. Select a country from the list.'",
+      "kind": "rule",
+      "ref": "features/origin/copy/copy.en.js:25-26; origin/validate.js:76-77; origin/controller.js:76-83",
+      "quote": "countryNoLongerAvailable:\n      'The saved country is no longer available. Select a country from the list.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-087",
+      "statement": "A country chosen from the list that is a subdivision is saved both as the country of origin and as the country of origin subdivision code; otherwise the subdivision code is saved blank.",
+      "kind": "data",
+      "ref": "features/origin/validate.js:148-152",
+      "quote": "countryOfOriginSubdivisionCode: isSubdivisionCode(values.countryOfOrigin)\n      ? values.countryOfOrigin\n      : '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-088",
+      "statement": "When the page is reopened, the country field shows the saved subdivision code if there is one, otherwise the saved country of origin.",
+      "kind": "behaviour",
+      "ref": "features/origin/validate.js:138-139",
+      "quote": "countryOfOrigin:\n      answers.countryOfOriginSubdivisionCode || answers.countryOfOrigin || '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-089",
+      "statement": "The second question is the radio group 'Does the consignment have a region of origin code?' (medium legend) with the hint 'If a region of origin code is required it will be shown on your health certificate.' and the options 'Yes' and 'No'.",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:9-14; origin/template.njk:42-50",
+      "quote": "legend: 'Does the consignment have a region of origin code?',\n    hint: 'If a region of origin code is required it will be shown on your health certificate.',\n    yes: 'Yes',\n    no: 'No'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-090",
+      "statement": "The region of origin code question is optional on the page: leaving it unanswered is allowed, but an answer other than yes or no gives the default error 'Select a valid option', whose summary link focuses the radio group.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:100; shared/copy.en.js:93; origin.fit.spec.js 'region requirement validation: when the submitted option is invalid, links to and focuses the group'",
+      "quote": "oneOf('regionOfOriginCodeRequirement', REGION_CODE_REQUIREMENT_ANSWERS),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-091",
+      "statement": "Choosing 'Yes' reveals a conditional text box labelled 'Enter the region of origin code' with the hint 'Enter up to 5 characters.'",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:15-18; origin/template.njk:29-47",
+      "quote": "label: 'Enter the region of origin code',\n    hint: 'Enter up to 5 characters.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-092",
+      "statement": "The region code box shows the chosen country's code (the parent country code for a subdivision, upper case) as a fixed prefix; the trader types only the part after it.",
+      "kind": "behaviour",
+      "ref": "features/origin/validate.js:22-24, 56-57; origin/template.njk:36; origin.fit.spec.js 'shows the country already chosen as a fixed prefix beside the region code box' and 'the prefix follows the country the user chose'",
+      "quote": "// Country is a fixed prefix on the form; the trader only types the part after\n// it. The stored answer is the whole joined code — nothing downstream sees\n// two fields.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-093",
+      "statement": "The region of origin code is saved as the country prefix, a hyphen and the typed part, upper-cased (for example FR-75); with no country the typed part is saved alone, and an empty box saves no code.",
+      "kind": "data",
+      "ref": "features/origin/validate.js:67-74; origin.fit.spec.js 'the region of origin code is still held and shown after it is made optional'",
+      "quote": "return prefix ? `${prefix}${REGION_CODE_SEPARATOR}${rest}` : rest",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-094",
+      "statement": "If the trader types the country prefix and hyphen themselves, it is stripped so the prefix is not doubled.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:59-65",
+      "quote": "// Also forgives a user who typed the prefix themselves.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-095",
+      "statement": "When 'Yes' is chosen and the region code box is empty, the page holds the trader with the error 'Enter the region of origin code', linking to and focusing the box.",
+      "kind": "rule",
+      "ref": "features/origin/copy/copy.en.js:27; origin/validate.js:79-86; origin.fit.spec.js 'region code validation: when Yes is chosen and the box is empty, holds the user on the page'",
+      "quote": "regionCodeRequired: 'Enter the region of origin code',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-096",
+      "statement": "The region code (the part after the prefix) must be 5 characters or fewer, under either answer; longer gives 'Region of origin code must be 5 characters or less', keeping the typed value and focusing the box.",
+      "kind": "rule",
+      "ref": "features/origin/copy/copy.en.js:28; origin/validate.js:19, 81-91; origin.fit.spec.js 'region code validation: when over 5 characters, links to and focuses the preserved value'",
+      "quote": "regionCodeMaxLength: 'Region of origin code must be 5 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-097",
+      "statement": "Choosing 'No' leaves an empty region code box unasked for, and the page saves and moves on.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:79-80; origin.fit.spec.js 'region code validation: No leaves the empty box unasked for'",
+      "quote": "// Required under Yes, left alone under No. The obligation would stop the\n// notification later either way; the rule here tells the user in-page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-098",
+      "statement": "A region code saved under 'Yes' is kept when the answer is changed to 'No': it is still shown in the hidden box on the origin page and on the review page (as FR-75).",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'the region of origin code is still held and shown after it is made optional'",
+      "quote": "test('the region of origin code is still held and shown after it is made optional'",
+      "confidence": "verbatim",
+      "note": "Records current behaviour; the code is retained, not cleared, when No is chosen."
+    },
+    {
+      "id": "repo-frontend-p4-099",
+      "statement": "When the country of origin is blanked by a validation failure, the subdivision code and the region code box are blanked with it.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:122-131",
+      "quote": "// Blank the suffix with the country — its prefix mechanic depends on the\n// country still matching, or the whole stored code cascades into a 5-char field.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-100",
+      "statement": "The third question is 'Your internal reference for this consignment (optional)' (medium label, three-quarter width) with the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'",
+      "kind": "copy",
+      "ref": "features/origin/copy/copy.en.js:19-22; origin/template.njk:52-60",
+      "quote": "label: 'Your internal reference for this consignment (optional)',\n    hint: 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-101",
+      "statement": "The internal reference is optional and checked only for length: more than 58 characters gives 'Internal reference must be 58 characters or less', keeping the typed value and focusing the field.",
+      "kind": "rule",
+      "ref": "features/origin/copy/copy.en.js:29-30; origin/validate.js:20, 102-108; origin.fit.spec.js 'internal reference validation: when over 58 characters, links to and focuses the preserved value'",
+      "quote": "internalReferenceMaxLength:\n      'Internal reference must be 58 characters or less'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-102",
+      "statement": "The internal reference has no character rules: hyphens, slashes, spaces, full stops and underscores are saved as entered and shown back the same.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:102-103; origin.fit.spec.js 'internal reference validation: saves a reference punctuated the way the user holds it'",
+      "quote": "// The reference is the user's own; the service never reads it. Length\n    // only — no character rules.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-103",
+      "statement": "The internal reference and the region code box are trimmed of surrounding spaces when submitted.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:41-54",
+      "quote": "const TRIMMED_FORM_FIELDS = [\n  REGION_CODE_SUFFIX_FIELD,\n  'internalReferenceNumber'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-104",
+      "statement": "All three origin question labels (country, region code requirement legend, internal reference) are set at the same medium size.",
+      "kind": "non-functional",
+      "ref": "origin.fit.spec.js 'sets all three question labels at the same medium size'",
+      "quote": "test('sets all three question labels at the same medium size'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-105",
+      "statement": "The origin page ends with 'Save and continue', a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link to the hub.",
+      "kind": "copy",
+      "ref": "features/origin/template.njk:62; shared/save-actions.njk; shared/copy.en.js:63-67",
+      "quote": "saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-106",
+      "statement": "'Cancel and return to overview' reaches the hub even on a notification with no answers saved.",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'cancel and return to overview reaches the hub on a notification with no answers'",
+      "quote": "test('cancel and return to overview reaches the hub on a notification with no answers'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-107",
+      "statement": "The origin page's back link goes to the dashboard while the notification has no saved answers, and to the hub once it has.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:41-47; origin.fit.spec.js 'back link returns to the dashboard while the journey is unanswered' and 'back link returns to the notification hub once the journey has answers'",
+      "quote": "const backLinkFor = (journey, answers) =>\n  hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-108",
+      "statement": "When the origin page is opened, the saved answers are re-checked against the page's rules and any failure is shown as an error straight away.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:76-83",
+      "quote": "// The stored answers go back through the page's own rules on the way in, so a\n// country the reference data has moved past is named here rather than\n// surviving to the review page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-109",
+      "statement": "A submission with validation errors is not saved: the page is shown again with an error summary and the entered values, with HTTP status 400.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:85-94",
+      "quote": "return (await render(h, journey, values, errors, storedAnswers)).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-110",
+      "statement": "If saving the origin answers fails, the page is shown again with the entered values and a recoverable-error message, with HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:96-110",
+      "quote": "return (await render(h, journey, values, {}, storedAnswers, true)).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim",
+      "note": "The recoverable-error message text is in the shared layout/kit, part 1."
+    },
+    {
+      "id": "repo-frontend-p4-111",
+      "statement": "The origin form posts with a CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "features/origin/template.njk:15-16",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-112",
+      "statement": "After a valid save, the trader goes to the next page chosen by the flow from the notification's scope: with a country chosen, that is the commodities page.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:112-113; origin.fit.spec.js 'saves valid values, redirects to the next page and persists the answer'",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-113",
+      "statement": "Saving the origin page with no country chosen still saves the other answers and sets the trader down on the hub, because the commodity search needs the country and the opening run has no next page.",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'country: an unanswered country saves the rest of the page and moves on'",
+      "quote": "// The commodity search is asked for by country of origin, so with the\n  // country unanswered the opening run has no next page to offer and the user\n  // is set down on the hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-114",
+      "statement": "An origin page saved without a country leaves the 'Where is this consignment coming from?' row reading 'To do' on the hub, because country of origin is mandatory for completeness.",
+      "kind": "rule",
+      "ref": "origin.fit.spec.js 'country: an unanswered country leaves the origin task unfinished'",
+      "quote": "// The country is mandatory for completeness even though it does not block\n  // the save, so the gap is shown on the hub rather than enforced at the page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-115",
+      "statement": "Fit test: saved origin answers (France, Yes, region 75, reference Imports456_GB) are shown back when the trader returns to the origin page.",
+      "kind": "behaviour",
+      "ref": "origin.fit.spec.js 'saves valid values, redirects to the next page and persists the answer'",
+      "quote": "await page.getByLabel(copy.internalReference.label).fill('Imports456_GB')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-116",
+      "statement": "Fit test: the origin page, the page with the region code prefix, the open type-ahead results list, the out-of-list country error page and the empty region code error page each have no serious or critical WCAG 2 A/AA axe violations (ignoring the known GOV.UK conditional-reveal aria false positive).",
+      "kind": "non-functional",
+      "ref": "origin.fit.spec.js 'has no serious or critical axe violations', 'region code prefix has no serious or critical axe violations', 'open results list has no serious or critical axe violations', 'out-of-list country error page has no serious or critical axe violations', 'empty region code error page has no serious or critical axe violations'",
+      "quote": "const isGovukConditionalRevealFalsePositive = (violation) =>\n  violation.id === 'aria-allowed-attr' &&",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-117",
+      "statement": "Origin page Welsh copy exists for every English key (title 'Tarddiad y mewnforyn'), marked as a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/origin/copy/copy.cy.js:1-3",
+      "quote": "title: 'Tarddiad y mewnforyn',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p4-118",
+      "statement": "The origin page shows no notification-level region or subdivision picker separate from the country list: a subdivision is chosen from the same country list.",
+      "kind": "behaviour",
+      "ref": "features/origin/validate.js:148-152; origin/template.njk:18-27",
+      "quote": "isSubdivisionCode(values.countryOfOrigin)",
+      "confidence": "inferred",
+      "note": "Inferred from the single countryOfOrigin field feeding the subdivision code; which subdivisions the list holds is the countries service's, outside this part."
+    },
+    {
+      "id": "repo-frontend-p4-119",
+      "statement": "Neither the hub nor the origin page states what, if anything, the notification reference or status should look like beyond the shared strip, and the hub has no copy explaining the order of tasks or that tasks can be done in any order.",
+      "kind": "copy",
+      "ref": "features/hub/template.njk; hub/copy/copy.en.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the hub template and copy: there is no intro paragraph or guidance text on the hub, only headings, the totals panel, the task list and the two buttons."
+    }
+  ]
+}

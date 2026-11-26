@@ -1,0 +1,922 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 11, animals visual and security suites. Read in full: the 12 visual-regression specs under tests/animals/e2e/visual (origin-of-import, import-reason, arrival-details, transited-countries, identification-card, upload-documents, party-picker, date-picker, overview-totals, review, refused-review, declaration) and the names of the 46 committed PNG baselines beside them in *-snapshots folders (listed with find, never read as pixels); the 8 frontend security specs under tests/animals/security (frontend-auth, frontend-notification-journey, frontend-conditional-pages, frontend-lifecycle, frontend-documents, frontend-draft-validation-error, frontend-dashboard-params, frontend-trail); the fixtures the two suites use (fixtures/visual.ts, fixtures/security.ts); utils/frozen-date-picker.ts; all four files of utils/zap (client.ts, prime-context.ts, check-context-sync.ts, run-and-gate.ts); config/zap.ts; the three ZAP Automation Framework plans (zap/automation-passive.yaml, zap/automation-active.yaml, zap/automation-context.yaml) and zap/rules.tsv; docs/security.md; and bin/update-visual-baselines-linux.sh. Read as supporting context, not claimed except where a spec rests on them: page-objects/shared/date-picker.ts, page-objects/shared/address-picker-results.ts, page-objects/shared/base-page.ts (journeyStrip, TRAIL_START), page-objects/shared/sets.ts, page-objects/animals/party-picker-page.ts, utils/playwright/shared-config.ts (the 1280x1000 project viewport), utils/playwright/legacy-scrollers-browser.ts and package.json's security scripts.\n\nThe slice holds 23 visual test declarations across the 12 visual specs (2+5+1+2+1+1+1+5+1+1+2+1) and 9 test declarations across the 8 frontend security specs (frontend-lifecycle holds two, the other seven one each). Both are smaller than the partition's own counts of 60 and 26; the files are the evidence and the counts are recorded as they are. Covered: every visual test by title with the page or component it photographs, its baseline file names, its viewport, and what is masked, pinned or frozen to make the shot stable; every baseline file name, each present for both chromium-darwin and chromium-linux; every frontend security test by title with the journey it walks for the scan; the ZAP set-up as rules (six contexts, their excluded diagnostic paths, their dataDrivenNodes, the three-plan sync rule, the DOM-XSS rule turned off, the 60-minute cap, the alert-rating gate, the truncation gate and the no-traffic gate); the scan profiles and the three lanes that run them; which services are deliberately not scanned and why; and the coverage gaps the suites and docs/security.md leave open. The backend security spec under tests/animals/security/backend is part 9's and is not claimed here.",
+  "claims": [
+    {
+      "id": "repo-tests-p11-001",
+      "statement": "The animals visual-regression suite is a separate, tagged suite: every one of its 12 specs declares the tag @visual on its describe block, so it is selected and excluded by that tag rather than by folder.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/*.visual.spec.ts, each describe block",
+      "quote": "test.describe('Origin of import (visual regression)', { tag: '@visual' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-002",
+      "statement": "Every visual spec forces a headless browser for itself rather than relying on the run's default, so a headed debugging run cannot quietly produce different pixels.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/origin-of-import.visual.spec.ts:4 (and the same line in all 12 visual specs)",
+      "quote": "test.use({ headless: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-003",
+      "statement": "Every visual baseline is committed twice, once for chromium-darwin and once for chromium-linux, so the same shot is pinned on a developer's Mac and on a Linux CI runner: 23 shots and 46 PNG files.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/*.visual.spec.ts-snapshots/ (46 files; e.g. review.visual.spec.ts-snapshots/review-desktop-chromium-darwin.png and review-desktop-chromium-linux.png)",
+      "quote": "review-desktop-chromium-darwin.png",
+      "confidence": "verbatim",
+      "note": "Counted with find over the -snapshots folders; the PNGs themselves were not read."
+    },
+    {
+      "id": "repo-tests-p11-004",
+      "statement": "On macOS the visual suite photographs the page in a browser launched with always-shown scroll bars and a coarse pointer, whatever the developer's own mouse and scroll-bar settings, so a Mac shot matches the Linux baseline.",
+      "kind": "non-functional",
+      "ref": "fixtures/visual.ts:8-19 with utils/playwright/legacy-scrollers-browser.ts:54-69",
+      "quote": "export const test = process.platform === 'darwin' ? legacyScrollersTest : base;",
+      "confidence": "verbatim",
+      "note": "mechanism: swaps the worker's browser for a headless shell started with -AppleShowScrollBars Always and --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4, so the shot's scroll bars and hover styling do not depend on the host."
+    },
+    {
+      "id": "repo-tests-p11-005",
+      "statement": "Every full-page visual shot of a journey page hides the journey strip, the band that carries the notification's own reference number and status tag, so a fresh reference number each run does not break the comparison.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/origin-of-import.visual.spec.ts:13-14 with page-objects/shared/base-page.ts:142-152",
+      "quote": "mask: [animalsPages.originOfImport.journeyStrip],",
+      "confidence": "verbatim",
+      "note": "mechanism: the journey strip locator is '.app-journey-strip', which holds the status tag and the notification reference."
+    },
+    {
+      "id": "repo-tests-p11-006",
+      "statement": "Visual shots are taken at a 1280 by 1000 viewport unless a test changes it, that being the width and height every Playwright project in the suite sets.",
+      "kind": "non-functional",
+      "ref": "utils/playwright/shared-config.ts:26",
+      "quote": "const viewport = { width: 1280, height: 1000 };",
+      "confidence": "inferred",
+      "note": "Inferred because no visual spec states its own viewport except refused-review's phone test; the figure comes from the shared Playwright config, whose own claims belong to the configuration part."
+    },
+    {
+      "id": "repo-tests-p11-007",
+      "statement": "A visual shot of a page that shows a date replaces the date's text with 1 November 2026 before the shot, so a page whose content moves with today's date still has a fixed baseline.",
+      "kind": "non-functional",
+      "ref": "fixtures/visual.ts:27-29",
+      "quote": "export async function pinDateText(locator: Locator): Promise<void> {\n  await pinText(locator, '1 November 2026');\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: writes textContent into the located element in the browser."
+    },
+    {
+      "id": "repo-tests-p11-008",
+      "statement": "A visual shot of a notification's view header replaces the reference number with GBN-AG-26-AAAAAA in both places it appears and the created date with \"Date created: 1 January 2026\".",
+      "kind": "non-functional",
+      "ref": "fixtures/visual.ts:31-35",
+      "quote": "await pinText(viewHeader.reference, 'GBN-AG-26-AAAAAA');\n  await pinText(viewHeader.notificationReferenceValue, 'GBN-AG-26-AAAAAA');\n  await pinText(viewHeader.dateCreated, 'Date created: 1 January 2026');",
+      "confidence": "verbatim",
+      "note": "The header shows the reference number twice, as a heading-level reference and as a named value."
+    },
+    {
+      "id": "repo-tests-p11-009",
+      "statement": "A visual shot of a date picker can be taken as though today were a fixed day: the browser clock stops at noon on that day and every picker's earliest and latest allowed dates move by the same number of days before the picker reads them, so the calendar's greyed-out days stay put.",
+      "kind": "non-functional",
+      "ref": "utils/frozen-date-picker.ts:32-45",
+      "quote": "Makes every date picker the page loads behave as though today were `today`\n * (a `yyyy-mm-dd` civil date): the browser clock stops at noon that day and\n * each picker's served `data-min-date` and `data-max-date` move by the same\n * number of days before the picker reads them. Call it before the page loads.",
+      "confidence": "verbatim",
+      "note": "mechanism: shifts the data-min-date and data-max-date attributes on every element that carries them, on readystatechange at document.readyState 'interactive', and sets a fixed clock."
+    },
+    {
+      "id": "repo-tests-p11-010",
+      "statement": "Linux visual baselines are regenerated from a Mac by running the @visual suite in a Playwright Linux container against the local workspace stack, one worker at a time, with the repo bind-mounted so the updated PNGs land on the host owned by the person who ran it.",
+      "kind": "non-functional",
+      "ref": "bin/update-visual-baselines-linux.sh:1-10 and its final docker run",
+      "quote": "run _test_docker_compose -- --grep @visual --update-snapshots --workers=1 \"$@\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-011",
+      "statement": "The origin of import page's appearance on first load is pinned by a full-page shot, baseline origin-of-import.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/origin-of-import.visual.spec.ts:11-16, test 'shows expected page appearance on first load'",
+      "quote": "await expect(page).toHaveScreenshot('origin-of-import.png', {\n      fullPage: true,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-012",
+      "statement": "The origin of import page's appearance with France chosen as the country and Yes answered to the region-of-origin question is pinned by a full-page shot, with the revealed region code box checked visible first; baseline origin-of-import-region-code-revealed.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/origin-of-import.visual.spec.ts:18-27, test 'shows the chosen country and the revealed region of origin code box'",
+      "quote": "await origin.country.choose(countryCodes.eu.france.display);\n    await origin.radioRequiresOriginCode('Yes').check();\n    await expect(origin.regionCode).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-013",
+      "statement": "The import reason page's appearance with \"Transhipment or onward travel\" chosen, showing the destination country search, is pinned by a full-page shot; baseline import-reason-transhipment.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/import-reason.visual.spec.ts:10-17, test 'shows the transhipment destination country search'",
+      "quote": "await animalsPages.importReason.reason('Transhipment or onward travel').check();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-014",
+      "statement": "The import reason page's appearance with \"Transit\" chosen, showing both the port of exit search and the destination country search, is pinned by a full-page shot; baseline import-reason-transit.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/import-reason.visual.spec.ts:19-26, test 'shows the transit port of exit and destination country searches'",
+      "quote": "test('shows the transit port of exit and destination country searches'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-015",
+      "statement": "The import reason page's appearance with \"Temporary admission horses\" chosen, showing the exit date and the port of exit search, is pinned by a full-page shot; baseline import-reason-temporary-admission.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/import-reason.visual.spec.ts:28-35, test 'shows the temporary admission exit date and port of exit search'",
+      "quote": "test('shows the temporary admission exit date and port of exit search'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-016",
+      "statement": "The import reason page's error state is pinned so that the gap above the port of exit is kept when the temporary admission exit date is missing: Temporary admission horses is chosen, Save and continue pressed, the error summary checked visible, then a full-page shot; baseline import-reason-temporary-admission-error.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/import-reason.visual.spec.ts:37-45, test 'shows the temporary admission exit date error with the gap kept above the port of exit'",
+      "quote": "test('shows the temporary admission exit date error with the gap kept above the port of exit'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-017",
+      "statement": "The import reason page is also pinned with JavaScript switched off, where the temporary admission port of exit is a plain select rather than a search; baseline import-reason-temporary-admission-no-javascript.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/import-reason.visual.spec.ts:48-60, describe 'Import reason without JavaScript (visual regression)', test 'shows the temporary admission exit date and port of exit select'",
+      "quote": "test.use({ javaScriptEnabled: false });\n\n  test('shows the temporary admission exit date and port of exit select'",
+      "confidence": "verbatim",
+      "note": "The only visual test in the slice that runs with JavaScript disabled; it proves the page is photographable, and so renderable, without JavaScript."
+    },
+    {
+      "id": "repo-tests-p11-018",
+      "statement": "The arrival details page's appearance on first load is pinned by a full-page shot; baseline arrival-details-first-load.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/arrival-details.visual.spec.ts:10-15, test 'shows expected page appearance on first load'",
+      "quote": "await expect(page).toHaveScreenshot('arrival-details-first-load.png', {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-019",
+      "statement": "The transited countries page's appearance with no country added is pinned by a full-page shot; baseline transited-countries-empty.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/transited-countries.visual.spec.ts:10-15, test 'shows expected page appearance with no country added'",
+      "quote": "test('shows expected page appearance with no country added'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-109",
+      "statement": "The transited countries page's appearance with one country added, France, is pinned by a second full-page shot; baseline transited-countries-one-country.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/transited-countries.visual.spec.ts:17-23, test 'shows expected page appearance with one country added'",
+      "quote": "await animalsPages.transitedCountries.addCountry('France');",
+      "confidence": "verbatim",
+      "note": "The two shots together pin the empty table and the table holding one row."
+    },
+    {
+      "id": "repo-tests-p11-020",
+      "statement": "The animal identification page is pinned in the state where one of two cats has been saved: the entry form for the second cat sits above the table of saved animals; baseline identification-card.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/identification-card.visual.spec.ts:9-22, test 'shows the entry form for the second cat above the saved animals table'",
+      "quote": "test('shows the entry form for the second cat above the saved animals table'",
+      "confidence": "verbatim",
+      "note": "Set up with one commodity line of domestic cat and an animal count of 2, the mandatory identifiers saved for the first, and the \"enter details\" counter heading checked at 2 of 2 before the shot."
+    },
+    {
+      "id": "repo-tests-p11-021",
+      "statement": "The accompanying documents page is pinned with one uploaded document listed after its virus scan has cleared; baseline upload-documents-one-document.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/upload-documents.visual.spec.ts:10-23, test 'shows expected page appearance with one scanned document listed'",
+      "quote": "await animalsPages.accompanyingDocuments.uploadDocumentAndWaitForScan({\n      ...ALL_ANSWERS.accompanyingDocument,\n      reference: HEALTH_CERTIFICATE_DOCUMENT_REFERENCE,\n    });",
+      "confidence": "verbatim",
+      "note": "The document uploaded is the health certificate; the test is marked slow because it waits for the scan."
+    },
+    {
+      "id": "repo-tests-p11-022",
+      "statement": "The consignor picker's search row is pinned as a component shot, not a page shot: the search box with its label, hint and the search button joined to it; baseline consignor-picker-search-row.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/party-picker.visual.spec.ts:7-16, test 'shows the address search box with its label, hint and joined search button'",
+      "quote": "await expect(animalsPages.consignorSelection.searchRow).toHaveScreenshot('consignor-picker-search-row.png');",
+      "confidence": "verbatim",
+      "note": "The search row is the GOV.UK form group around the field labelled exactly \"Search\" (page-objects/shared/address-picker-results.ts:72-78), so the shot pins the label, hint and button as one group. No journey strip mask is needed because the shot is of the component, not the page."
+    },
+    {
+      "id": "repo-tests-p11-023",
+      "statement": "The consignor picker is reached for that shot by starting a notification, answering the commodity question, opening the Consignment addresses task from the overview and pressing Add for the Consignor party.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/party-picker.visual.spec.ts:9-13",
+      "quote": "await animalsPages.overview.task(CONSIGNMENT_ADDRESSES).click();\n    await animalsPages.addresses.addParty('Consignor').click();\n    await animalsPages.consignorSelection.heading.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-024",
+      "statement": "The arrival date picker's Choose date button is pinned at rest as a component shot of the picker; baseline arrival-date-picker-button-at-rest.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:13-18, test 'shows the Choose date button at rest'",
+      "quote": "await expect(picker.root).toHaveScreenshot('arrival-date-picker-button-at-rest.png');",
+      "confidence": "verbatim",
+      "note": "The picker root is the Ministry of Justice date picker component wrapping the arrival date field (page-objects/shared/date-picker.ts:8-10, '.moj-datepicker:has(#<fieldId>)'), and its toggle is the button named \"Choose date\"."
+    },
+    {
+      "id": "repo-tests-p11-025",
+      "statement": "The arrival date picker's Choose date button is pinned under the mouse, so its hover styling is held to the baseline; baseline arrival-date-picker-button-hover.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:20-25, test 'shows the Choose date button under the mouse'",
+      "quote": "await picker.toggle.hover();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-026",
+      "statement": "The arrival date picker's Choose date button is pinned with keyboard focus, reached by tabbing from the date field, so its focus styling is held to the baseline; baseline arrival-date-picker-button-focus.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:27-33, test 'shows the Choose date button with keyboard focus', with page-objects/shared/date-picker.ts:30-33",
+      "quote": "await picker.focusToggleByKeyboard();\n    await expect(picker.toggle).toBeFocused();",
+      "confidence": "verbatim",
+      "note": "focusToggleByKeyboard focuses the date input and presses Tab, so the shot also proves the button is the next thing in the tab order after the field."
+    },
+    {
+      "id": "repo-tests-p11-027",
+      "statement": "The arrival date picker's open calendar is pinned when opened with the mouse, as a shot of the dialog; baseline arrival-date-picker-calendar-mouse.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:35-41, test 'shows the calendar opened with the mouse'",
+      "quote": "await expect(picker.dialog).toHaveScreenshot('arrival-date-picker-calendar-mouse.png');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-028",
+      "statement": "The arrival date picker's open calendar is pinned when opened from the keyboard by tabbing to the button and pressing Enter; baseline arrival-date-picker-calendar-keyboard.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:43-49, test 'shows the calendar opened with the keyboard', with page-objects/shared/date-picker.ts:35-38",
+      "quote": "await picker.openByKeyboard();\n    await expect(picker.dialog).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "Two baselines of the same calendar, one per opening method, so a difference between mouse-opened and keyboard-opened appearance would be caught."
+    },
+    {
+      "id": "repo-tests-p11-029",
+      "statement": "The date picker shots are all taken with every picker on the page frozen to 18 March 2026, so the calendar's month, today marker and out-of-range days are the same every run.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/date-picker.visual.spec.ts:7-10",
+      "quote": "await freezeDatePickersAt(page, '2026-03-18');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-030",
+      "statement": "The overview page is pinned with saved counts of 12 animals and 3 packages, holding the animal and package totals to two panels side by side; baseline overview-totals.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/overview-totals.visual.spec.ts:7-15, test 'shows the animal and package totals as two side-by-side panels'",
+      "quote": "await animalsJourney.toOverviewWithSavedCounts({ animals: '12', packages: '3' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-031",
+      "statement": "The notification view of a ready draft is pinned at desktop width from its first section down to the Contact address card, with the Continue button in shot; baseline review-desktop.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/review.visual.spec.ts:7-26, test 'shows a ready draft from the first section to the Contact address card and the Continue button at desktop width'",
+      "quote": "await expect(animalsPages.notificationView.contactAddressCard).toBeVisible();\n    await expect(animalsPages.notificationView.continueButton).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The draft is seeded rather than keyed in, then opened through the notification view."
+    },
+    {
+      "id": "repo-tests-p11-032",
+      "statement": "The review shot pins the arrival date by its displayed name \"Arrival date at port of entry\" in the arrival details card, replacing its value with a fixed date, and pins the view header's reference number and created date.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/visual/review.visual.spec.ts:16-23",
+      "quote": "animalsPages.notificationView.summaryValue(animalsPages.notificationView.arrivalDetailsCard, 'Arrival date at port of entry'),",
+      "confidence": "verbatim",
+      "note": "The row label the shot looks up is evidence of the wording the review page uses for the arrival date today."
+    },
+    {
+      "id": "repo-tests-p11-033",
+      "statement": "The refused review is pinned at desktop width: the unfinished card with its red left border and its Complete line; baseline refused-review-desktop.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/refused-review.visual.spec.ts:16-18, test 'shows the unfinished card with its red left border and Complete line at desktop width'",
+      "quote": "test('shows the unfinished card with its red left border and Complete line at desktop width'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-034",
+      "statement": "The refused review is also pinned at phone width, the viewport resized to 360 by 740 before the shot; baseline refused-review-phone.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/refused-review.visual.spec.ts:20-24, test 'shows the unfinished card with its red left border and Complete line at phone width'",
+      "quote": "await page.setViewportSize({ width: 360, height: 740 });",
+      "confidence": "verbatim",
+      "note": "The only visual test in the slice that photographs a page at phone width."
+    },
+    {
+      "id": "repo-tests-p11-035",
+      "statement": "The refused review is reached by pressing Continue on the notification view of a draft that is not complete, which lands on the notification view with a refused marker in the address.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/refused-review.visual.spec.ts:7-14",
+      "quote": "await expect(page).toHaveURL(/\\/notification-view\\?refused=1$/);",
+      "confidence": "verbatim",
+      "note": "The draft is seeded 'unlocked', so the refusal comes from the notification being incomplete rather than from a locked record."
+    },
+    {
+      "id": "repo-tests-p11-036",
+      "statement": "The declaration page is pinned by a full-page shot holding its statements, a small confirmation checkbox and no visible legend; baseline declaration.png.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/visual/declaration.visual.spec.ts:10-16, test 'shows the declaration statements, the small confirmation checkbox and no visible legend'",
+      "quote": "test('shows the declaration statements, the small confirmation checkbox and no visible legend'",
+      "confidence": "verbatim",
+      "note": "The declaration's date value is pinned to a fixed date before the shot."
+    },
+    {
+      "id": "repo-tests-p11-037",
+      "statement": "The security scan is dynamic application security testing with OWASP ZAP as a proxy: Playwright drives real signed-in journeys through it instead of letting ZAP crawl, so ZAP attacks what a real session touched.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, opening paragraph",
+      "quote": "A DAST (Dynamic Application Security Testing) scan using [OWASP ZAP](https://www.zaproxy.org/) as a proxy. Playwright drives real authenticated journeys through it rather than letting ZAP crawl, so it observes what a real session touches and then attacks that.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-038",
+      "statement": "Scan coverage is traffic-driven, so any route no spec drives is invisible to the scan; the attacking corpus is therefore curated by hand rather than generated.",
+      "kind": "constraint",
+      "ref": "docs/security.md, 'Coverage is therefore traffic-driven'",
+      "quote": "Coverage is therefore **traffic-driven**: a route no spec drives is invisible to the scan. That is why the `@active` corpus is curated by hand rather than generated.",
+      "confidence": "verbatim",
+      "note": "Stated in general terms: the weakness is one of coverage, not of any particular route."
+    },
+    {
+      "id": "repo-tests-p11-039",
+      "statement": "There are two security profiles: a passive one that runs the end-to-end suite without the attacking specs and does not attack, and an attacking one that runs only the attacking specs and is deliberate and docker-compose only.",
+      "kind": "rule",
+      "ref": "docs/security.md, Profiles table",
+      "quote": "| `security`        | The e2e suite, excluding `@active` | No — passive only | Cheap, run broadly              |\n| `security:active` | The `@active` suite only           | Yes               | Deliberate; docker-compose only |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-040",
+      "statement": "The attacking specs are kept out of the passive profile because they walk the same journeys a second time and include destructive steps.",
+      "kind": "rule",
+      "ref": "docs/security.md, note under the Profiles table",
+      "quote": "`@active` is excluded from the passive profile because it walks the same journeys a second time and includes destructive steps.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-041",
+      "statement": "The attacking profile is refused on the CDP platform: the attacking specs delete notifications, documents and dead-letter messages and the scan refires each with fuzzed payloads, which is acceptable against a throwaway stack and destructive against a shared one, so the entrypoint fails the run instead.",
+      "kind": "rule",
+      "ref": "docs/security.md, '`security:active` is refused on CDP'",
+      "quote": "The `@active` suite deletes notifications, documents and DLQ messages, and the active scan re-fires each with fuzzed payloads — fine against a disposable stack, destructive against a shared one. `entrypoint.sh` writes to `FAILED` rather than running it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-042",
+      "statement": "Guarding only the production environment is not enough to keep the attacking profile off shared environments, because such a guard would still have let dev, test and perf-test run it.",
+      "kind": "rule",
+      "ref": "docs/security.md, same paragraph",
+      "quote": "The `throwIfProdEnvironment` guard is no help here: it stops `prod` alone, so `dev`, `test` and `perf-test` would all have run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-043",
+      "statement": "The scan runs in three lanes that do not share a configuration or a target: locally against the localhost stack in either profile, from a GitHub Action against a stack on the runner in the attacking profile, and on the CDP portal against a deployed environment in the passive profile only.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, 'How it runs' table",
+      "quote": "| **CDP portal**    | `PROFILE` env var → `entrypoint.sh`                                                                         | `playwright.config.ts`                | deployed `${ENVIRONMENT}` | `security` or `<domain>:security` only  |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-044",
+      "statement": "The GitHub Action that runs the attacking scan is manual dispatch only and its nightly schedule stays switched off until an end-to-end run has been verified.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, paragraph after the lanes table",
+      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-045",
+      "statement": "The attacking scan's report is published to a public GitHub Pages site under a dated path and is password-protected for that reason, and reports older than seven days are deleted.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, same paragraph",
+      "quote": "Its report publishes to GitHub Pages under `security-active/<date>/`, password-protected via the `ZAP_REPORT_PASSWORD` secret because that Pages site is otherwise public. Reports older than 7 days are pruned.",
+      "confidence": "verbatim",
+      "note": "The password itself is a repository secret and is not in the source; nothing here names a value."
+    },
+    {
+      "id": "repo-tests-p11-046",
+      "statement": "Six services are in the scan, each as its own named ZAP context: the animals frontend, the animals admin, the INS frontend, the animals backend, the plants backend and the address book.",
+      "kind": "integration",
+      "ref": "docs/security.md, 'What gets scanned' table, and zap/automation-context.yaml env.contexts",
+      "quote": "| `trade-imports-animals-frontend` | 3000       | `frontend`        |\n| `trade-imports-animals-admin`    | 3001       | `admin`           |\n| `trade-imports-ins-frontend`     | 3002       | `ins`             |\n| `trade-imports-animals-backend`  | 8085       | `animals-backend` |\n| `trade-imports-plants-backend`   | 8091       | `plants-backend`  |\n| `trade-imports-address-book`     | 8089       | `address-book`    |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-047",
+      "statement": "Each context's address is supplied by its own environment variable rather than hard-coded, so the same plans point at the compose stack's ports locally and at a per-service subdomain on CDP.",
+      "kind": "integration",
+      "ref": "zap/automation-context.yaml env.contexts urls; docs/security.md, 'Ports are the compose stack's'",
+      "quote": "Ports are the compose stack's; on CDP each service is a per-service subdomain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-048",
+      "statement": "Diagnostic endpoints are left out of every context rather than scanned: health and static assets on the three Node apps, and health, info, metrics, cache and env on the three Java services.",
+      "kind": "rule",
+      "ref": "docs/security.md, 'Diagnostics are excluded rather than scanned'; zap/automation-context.yaml excludePaths for every context",
+      "quote": "Diagnostics are excluded rather than scanned: `/health` and static assets on the Node contexts, and the full actuator set (`/health`, `/info`, `/metrics`, `/cache`, `/env`) on the three Java services.",
+      "confidence": "verbatim",
+      "note": "The Java services' diagnostic endpoints sit on the API's own root namespace, not under a prefix, because the actuator base path is \"/\" in each service's own configuration."
+    },
+    {
+      "id": "repo-tests-p11-049",
+      "statement": "The identifiers in a page or API address are declared to ZAP as data rather than structure, so each run's notification does not appear as a brand-new branch of the site tree and the identifier itself becomes something the scan can attack: the notification id and upload id on the animals frontend, the address id on the INS frontend, the reference number and upload id on the animals backend, the reference number on the plants backend, and the organisation id and address id on the address book.",
+      "kind": "rule",
+      "ref": "zap/automation-active.yaml env.contexts structure.dataDrivenNodes (every context), with the frontend comment at lines 15-21",
+      "quote": "dataDrivenNodes tells ZAP the segment\n    # is data, not structure: one folded node, and the id becomes an\n    # injection point (IDOR-style access-by-id checks included).",
+      "confidence": "verbatim",
+      "note": "This is how the suite tests for access to another organisation's record by guessing its identifier."
+    },
+    {
+      "id": "repo-tests-p11-050",
+      "statement": "Those structure rules only apply to parts of the site tree as they are first seen, so the contexts are registered on ZAP by a plan of their own before any journey runs; registering them with the scanning plan afterwards would be too late for the identifiers to be recognised as data.",
+      "kind": "rule",
+      "ref": "zap/automation-context.yaml, header comment; utils/zap/prime-context.ts",
+      "quote": "Structural Modifiers (dataDrivenNodes) and excludePaths only apply to\n# site-tree nodes as they're *added* — they don't retroactively reshape\n# nodes that already exist.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-051",
+      "statement": "The context-registration plan declares one do-nothing job only because a plan must have at least one, there being no traffic yet to wait for.",
+      "kind": "non-functional",
+      "ref": "zap/automation-context.yaml, jobs",
+      "quote": "# No traffic exists yet at this point in the run, so there's nothing to\n  # wait for — this job only exists because a plan needs at least one job.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-052",
+      "statement": "All three ZAP plans must declare exactly the same contexts, and a run stops with an explanatory error before registering anything if they have drifted apart, because ZAP offers no way to share that block between plans.",
+      "kind": "rule",
+      "ref": "utils/zap/check-context-sync.ts:38-58, called from utils/zap/prime-context.ts",
+      "quote": "`env.contexts in ${mismatches.join(', ')} doesn't match ${BASELINE_FILE} — ZAP has no way to share this block across plans, so all three must be kept identical.`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-053",
+      "statement": "The attacking plan runs one attack job per context, six in all, each capped at 60 minutes.",
+      "kind": "non-functional",
+      "ref": "zap/automation-active.yaml, the six activeScan jobs",
+      "quote": "- type: activeScan\n    parameters:\n      context: frontend\n      ... \n      maxScanDurationInMins: 60",
+      "confidence": "verbatim",
+      "note": "Quote abbreviated across the job's comment block; the same two parameters appear on each of the six jobs."
+    },
+    {
+      "id": "repo-tests-p11-054",
+      "statement": "The 60-minute cap is a runaway guard rather than a budget, set at about four and a half times the slowest context measured: the animals frontend took 13 minutes 27 seconds, the admin 4 minutes 39, the INS frontend 1 minute 25, the backend 1 minute 17 and the address book 21 seconds, 21 minutes in all.",
+      "kind": "non-functional",
+      "ref": "zap/automation-active.yaml, frontend activeScan comment",
+      "quote": "A runaway guard, not a budget. Measured: frontend 13m27s, admin 4m39s,\n      # ins 1m25s, backend 1m17s, address-book 21s — 21m total, frontend 64% of\n      # it. 60 is ~4.5x the slowest, leaving room for CI (2 vCPU, ~2-3x local)\n      # and for the corpus to roughly double.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-055",
+      "statement": "The cap in the plan and the figure the gate checks against must be changed together and must match exactly, or a cut-short scan would pass unnoticed.",
+      "kind": "rule",
+      "ref": "zap/automation-active.yaml, frontend activeScan comment; utils/zap/run-and-gate.ts, ACTIVE_SCAN_CAP_MINS",
+      "quote": "Change this, the six below, and ACTIVE_SCAN_CAP_MINS in\n      # utils/zap/run-and-gate.ts together — they must match exactly.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-056",
+      "statement": "A run fails when an attack job finished at or within half a minute of its cap, because a scan cut off part-way reporting no findings is a false clean; the fix is to raise the cap, not to overlook it.",
+      "kind": "rule",
+      "ref": "utils/zap/run-and-gate.ts, findTruncatedActiveScans and its comment",
+      "quote": "an incomplete scan reporting \"no findings\" is a false clean,\n// not a real one, so this is treated as a hard failure rather than a\n// warning. If it fires for real, the fix is to raise the cap, not to\n// ignore it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-057",
+      "statement": "A run fails when a declared context recorded no traffic at all, the one failure that looks like success, since nothing reached means no site-tree entry, no alerts and a clean-looking report section.",
+      "kind": "rule",
+      "ref": "utils/zap/run-and-gate.ts, findContextsWithNoTraffic doc comment",
+      "quote": "Fails the run when a declared context recorded no traffic — the one failure\n * mode that looks like success, since no requests means no site-tree node, no\n * alerts, and a clean-looking report section.",
+      "confidence": "verbatim",
+      "note": "The check reads the plan rather than the report, because a context with no traffic is missing from the report entirely. It catches a context nothing drives, a spec dropped from the corpus, and the case where the API clients stop sending through the proxy."
+    },
+    {
+      "id": "repo-tests-p11-058",
+      "statement": "The no-traffic check only runs in the attacking profile.",
+      "kind": "rule",
+      "ref": "utils/zap/run-and-gate.ts, main()",
+      "quote": "const contextsWithNoTraffic = zapProfile === 'active' ? await findContextsWithNoTraffic(client, scope?.contexts) : [];",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-059",
+      "statement": "An attacking run can be narrowed to one domain, and then only that domain's contexts are checked for traffic and the report is marked as a scoped run so a green scoped report is never mistaken for a full one: animals covers the animals frontend and backend, animals-admin the admin, ins the INS frontend and address book, and plants the plants backend.",
+      "kind": "rule",
+      "ref": "config/zap.ts, ZAP_SCOPE_CONTEXTS and resolveZapScope; utils/zap/run-and-gate.ts, scopedSection",
+      "quote": "const ZAP_SCOPE_CONTEXTS: Record<string, readonly string[]> = {\n  animals: ['frontend', 'animals-backend'],\n  'animals-admin': ['admin'],\n  ins: ['ins', 'address-book'],\n  plants: ['plants-backend'],\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-060",
+      "statement": "An unknown domain name for a scoped run is refused with a message listing the domains that exist, rather than silently scanning everything.",
+      "kind": "rule",
+      "ref": "config/zap.ts, resolveZapScope",
+      "quote": "throw new Error(`Unknown ZAP_SCOPE '${domain}'. Expected one of: ${Object.keys(ZAP_SCOPE_CONTEXTS).join(', ')}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-061",
+      "statement": "Anything other than the exact attacking profile name is treated as passive, so a mistyped profile cannot start an attack.",
+      "kind": "rule",
+      "ref": "config/zap.ts, isActiveProfile and zapProfile",
+      "quote": "Fails safe: anything other\n// than an explicit, exact 'security:active' is treated as passive, not the\n// reverse.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-062",
+      "statement": "Each ZAP alert type is rated from a rules file that maps ZAP's plugin ids to ignore, warn or fail, and an unlisted alert fails the build if it is high risk and only warns otherwise.",
+      "kind": "rule",
+      "ref": "zap/rules.tsv header; utils/zap/run-and-gate.ts, resolveAction",
+      "quote": "Unlisted rules default to: FAIL if High risk, WARN otherwise — see\n# run-and-gate.ts.",
+      "confidence": "verbatim",
+      "note": "High is chosen as the bar because it is the least noisy risk tier and so the safest starting point for a new gate; individual medium findings are to be escalated in the rules file as they are triaged."
+    },
+    {
+      "id": "repo-tests-p11-063",
+      "statement": "An ignored alert stays visible in the report exactly as a warned one does and the difference is documentation only: it records that someone has already looked at it and judged it a known false positive.",
+      "kind": "rule",
+      "ref": "zap/rules.tsv, header",
+      "quote": "IGNORE: triaged as a known false positive — stays visible in the report\n#   (same as WARN) and does not fail the build; the difference from WARN is\n#   documentation only, marking that someone has already looked at it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-064",
+      "statement": "No alert is suppressed or ignored today: the rules file holds its format, its defaults and two commented-out examples, and not one live rule line.",
+      "kind": "rule",
+      "ref": "zap/rules.tsv, whole file (every line begins with #)",
+      "quote": "# Examples:\n# 10015\tWARN\t(Incomplete or No Cache-control and Pragma HTTP Header Set — flagged 2026-08-19, not yet triaged)\n# 10096\tIGNORE\t(Timestamp Disclosure - Unix — triaged 2026-08-19, false positive: matches the numeric suffix of a notification reference number, not an actual timestamp)",
+      "confidence": "verbatim",
+      "note": "The two examples name findings previously seen on this suite, but as examples only: with no live line, every alert today is rated by the default rule."
+    },
+    {
+      "id": "repo-tests-p11-065",
+      "statement": "The gate counts a failing finding once per alert type rather than once per occurrence, so a finding seen on eighty-one pages is one thing to fix.",
+      "kind": "rule",
+      "ref": "utils/zap/run-and-gate.ts, summariseSite comment",
+      "quote": "Gated per alert type, not per instance — an 81-instance finding that\n    // fails the gate is one thing to fix, not 81.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-066",
+      "statement": "A finding recorded twice because ZAP split one host into two entries of its site tree is counted once, while the same finding on two genuinely different hosts still counts twice.",
+      "kind": "rule",
+      "ref": "utils/zap/run-and-gate.ts, loadReportSites comment",
+      "quote": "group by\n// name and dedupe by pluginid within each group so a finding recorded\n// under both nodes isn't double-counted, while the same pluginid on two\n// genuinely different hosts still counts separately.",
+      "confidence": "verbatim",
+      "note": "mechanism: groups the report's site entries by name and keeps one alert per plugin id in each group."
+    },
+    {
+      "id": "repo-tests-p11-067",
+      "statement": "Alongside its alerts each site in the report shows how many requests reached it, as reassurance that a site with few or no findings was really reached through the proxy rather than quietly skipped.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, getMessageCount comment and the index page's Sites table",
+      "quote": "Traffic volume, not an alert — reassurance that a site with few/no\n// alerts was actually reached through the proxy rather than silently\n// skipped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-068",
+      "statement": "Each run writes a landing page with a row per site showing pass or fail, requests seen and the count of high, medium, low and informational alerts, plus a totals row, and links to the full human-readable report, the machine-readable one, the Playwright run's own report and ZAP's log.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, writeIndexHtml",
+      "quote": "<h2>Sites</h2>",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the HTML landing page the CDP report viewer links to, from the report JSON and live request counts."
+    },
+    {
+      "id": "repo-tests-p11-069",
+      "statement": "The landing page is written before the run is failed, so the report exists on disk exactly when someone needs it most.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, main()",
+      "quote": "Written before the throw below, not after — a failing run is exactly\n  // when someone most needs the report",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-070",
+      "statement": "The landing page carries a prominent notice in three cases: a scan that hit its cap, a run whose traffic-generating specs did not all pass, and a run narrowed to one domain, the first two as failures and the third as a warning.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, truncationSection, partialRunSection and scopedSection",
+      "quote": "The traffic-generation specs did not all succeed (outcome: ${specsOutcome}) — the findings below reflect whatever traffic ran before that, not full corpus coverage.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-071",
+      "statement": "ZAP's own log and its machine-readable report are republished as plain HTML pages, because the CDP report viewer refuses anything that is not HTML and the GitHub Action's password gate only wraps HTML files.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, ZAP_LOG_ARTEFACT and JSON_REPORT_ARTEFACT comment with wrapAsHtml",
+      "quote": "CDP's report viewer 403s anything that isn't .html, and GitHub Actions'\n// staticrypt password gate (security-active-scan.yml) only wraps .html\n// files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-072",
+      "statement": "Both scanning plans produce one combined report, machine-readable and human-readable, covering every site ZAP touched in the session, with no filter by site.",
+      "kind": "non-functional",
+      "ref": "zap/automation-passive.yaml and zap/automation-active.yaml, the two report jobs",
+      "quote": "# No sites: filter — covers every site ZAP touched this session.",
+      "confidence": "verbatim",
+      "note": "Both plans title the report 'trade-imports-animals — security scan' even though it covers six services."
+    },
+    {
+      "id": "repo-tests-p11-073",
+      "statement": "The plans wait for passive scanning and then pause five seconds before attacking or reporting, because ZAP registers the last site a moment after the last journey finishes navigating and would otherwise reject it as an invalid site.",
+      "kind": "non-functional",
+      "ref": "zap/automation-active.yaml and zap/automation-passive.yaml, passiveScan-wait and delay jobs",
+      "quote": "ZAP's site-tree bookkeeping lags slightly behind the last spec to finish\n  # navigating — without this, the activeScan jobs below can start before\n  # the last site is registered (\"invalid site\" from ZAP).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-074",
+      "statement": "The DOM-based cross-site-scripting rule is switched off on every attack job, because it needs a real browser the plain ZAP image does not ship, is far slower than the other rules, and is a poor fit for server-rendered GOV.UK Design System pages that keep client-side DOM handling to a minimum; the reflected and stored cross-site-scripting rules still run.",
+      "kind": "rule",
+      "ref": "zap/automation-active.yaml, the policyDefinition on each of the six activeScan jobs",
+      "quote": "Reflected/\n    # stored XSS rules are unaffected and still run. Also a poor fit for\n    # this app regardless: GOV.UK Design System + Nunjucks server-rendered\n    # pages, GDS progressive enhancement keeps client-side DOM handling to a\n    # minimum, so DOM-based XSS is a small slice of the real risk surface.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-075",
+      "statement": "The passive plan carries no attack job at all and is safe to run against a real deployed environment on demand.",
+      "kind": "rule",
+      "ref": "zap/automation-passive.yaml, header comment",
+      "quote": "ZAP Automation Framework plan — passive scan only, no activeScan jobs.\n# Safe to run against a real deployed environment on demand, no destructive\n# risk.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-076",
+      "statement": "Deciding pass or fail is deliberately kept out of the ZAP plans and done afterwards by the suite's own gate, so the plans only scan and report.",
+      "kind": "rule",
+      "ref": "zap/automation-active.yaml and zap/automation-passive.yaml, header comments",
+      "quote": "Gating is deliberately not done here; see\n# run-and-gate.ts and rules.tsv.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-077",
+      "statement": "The scan is run against the already-running ZAP rather than a fresh one, so it sees what passive scanning captured while the journeys ran.",
+      "kind": "non-functional",
+      "ref": "utils/zap/client.ts, runAutomationPlan comment",
+      "quote": "Runs against the already-running daemon via automation's runPlan, not\n// `zap.sh -cmd -autorun` (which would start a fresh ZAP with an empty site\n// tree) — this one sees what passive scanning already captured.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-078",
+      "statement": "A plan that reports an error of its own fails the run, and a plan that has not finished within five hours is abandoned with an error, that ceiling being a safety net over the worst case rather than a coverage limit.",
+      "kind": "rule",
+      "ref": "utils/zap/client.ts, PLAN_TIMEOUT_MS and runAutomationPlan",
+      "quote": "throw new Error(`ZAP automation plan finished with errors: ${progress.error.join('; ')}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-079",
+      "statement": "The suite talks to ZAP on a loopback address through a connection that ignores any proxy settings in the environment, so the platform's own outbound proxy cannot redirect those control calls.",
+      "kind": "integration",
+      "ref": "utils/zap/client.ts, zapAgent and zapRequest",
+      "quote": "Dedicated agent with no proxyEnv so CDP's HTTP_PROXY / --use-env-proxy\n// cannot redirect these loopback API calls.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-080",
+      "statement": "ZAP listens on a port kept deliberately outside the workspace's two growing port ranges, because the next free slot after either range is eventually taken by the next new service.",
+      "kind": "constraint",
+      "ref": "config/zap.ts, zapPort",
+      "quote": "Deliberately outside this workspace's two growing port sequences (3xxx\n// Node apps, 808x Java services currently at 8085-8089) rather than the\n// next free slot after either — a workspace-assigned range only grows, so\n// \"next free slot\" today is \"taken by the next new service\" eventually.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-081",
+      "statement": "The suite's ZAP credential and port both fall back to built-in local development values when nothing is set, so no one has to configure them day to day.",
+      "kind": "non-functional",
+      "ref": "config/zap.ts, zapApiKey and zapPort",
+      "quote": "export const zapApiKey = process.env.ZAP_API_KEY || '[REDACTED]';",
+      "confidence": "verbatim",
+      "note": "The default value is redacted here on principle; it is a local development placeholder, not a real credential. Stated in general terms: a built-in default exists, and the environment variable overrides it."
+    },
+    {
+      "id": "repo-tests-p11-082",
+      "statement": "The three APIs are scanned without any attacking spec of their own because every API client in the suite is built from Playwright's own request fixture, which inherits the run's proxy, so the specs' seeding and assertion calls reach ZAP as real traffic.",
+      "kind": "integration",
+      "ref": "docs/security.md, 'What gets scanned'",
+      "quote": "The three APIs are scanned all the same: every API client here is built from Playwright's own `request` fixture, which inherits the project's proxy, so the specs' seeding and assertion calls reach ZAP as real traffic.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-083",
+      "statement": "A security spec that needs to call the notification API through the proxy explicitly gets a client pointed at ZAP, rather than relying on inheritance.",
+      "kind": "integration",
+      "ref": "fixtures/security.ts:11-16",
+      "quote": "const context = await request.newContext({ proxy: { server: `http://localhost:${zapPort}` } });\n    await use(new NotificationApiClient(context));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-084",
+      "statement": "The sign-in stub is deliberately observed but never attacked, because it is a temporary service the team does not own, while the service's own sign-in and sign-in-callback handlers are in scope since the callback and its redirect parameter outlive the stub.",
+      "kind": "rule",
+      "ref": "docs/security.md, 'What is not, and why' table",
+      "quote": "A temporary sign-in stub we do not own. Observed passively, never attacked. Our own `/auth/sign-in` and `/auth/sign-in-oidc` handlers **are** in scope — the OIDC callback and its `redirect` parameter outlive the stub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-085",
+      "statement": "The platform's file uploader is out of scope because the browser posts uploads to the frontend, which forwards them from the server, so the uploader never enters ZAP's site tree.",
+      "kind": "rule",
+      "ref": "docs/security.md, 'What is not, and why' table",
+      "quote": "A platform component. The browser posts uploads to the frontend, which forwards them server-side, so the uploader never enters the site tree.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-086",
+      "statement": "The INS backend is out of scope because it is a queue consumer with no HTTP controllers: its risk boundary is the queue, which this kind of scan cannot reach, and the API that produces its events is scanned instead.",
+      "kind": "rule",
+      "ref": "docs/security.md, 'What is not, and why' table",
+      "quote": "An SQS consumer with no HTTP controllers. Its risk boundary is the queue, which DAST cannot reach; the API that produces those events is scanned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-087",
+      "statement": "Signing in and out is driven through the proxy by one attacking spec only, because every other animals security spec starts already signed in: it attempts an invalid user id and checks the error summary, signs in properly and checks it lands on the dashboard, then signs out.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-auth.spec.ts:6-26, test 'routes the sign-in redirect round trip through the ZAP proxy'",
+      "quote": "// /auth/sign-in and /auth/sign-in-oidc are documented as in scope\n    // (docs/security.md) but every other spec here starts pre-authenticated.",
+      "confidence": "verbatim",
+      "note": "The spec declares a cold start so it begins with no stored session."
+    },
+    {
+      "id": "repo-tests-p11-088",
+      "statement": "A whole submitted live-animals notification journey is driven through the proxy by one attacking spec, which checks it reaches the \"Import notification submitted\" page at the live-animals set's confirmation address for that reference number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-notification-journey.spec.ts:5-16, test 'routes a submitted notification journey through the ZAP proxy', with page-objects/shared/sets.ts",
+      "quote": "await expect(pages.page).toHaveURL(\n      new RegExp(`${SET_BASES.liveAnimals}/notifications/${journeyContext.referenceNumber}/confirmation$`),\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-089",
+      "statement": "The pages that only appear for certain answers are driven through the proxy by one attacking spec: the transit reason with a port of exit and destination country, then the temporary admission reason with an exit date two months out and a port of exit, each followed by the additional details page, and then adding a private transporter by hand.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-conditional-pages.spec.ts:8-47, test 'routes the reason-gated and transporter-gated pages through the ZAP proxy'",
+      "quote": "test('routes the reason-gated and transporter-gated pages through the ZAP proxy'",
+      "confidence": "verbatim",
+      "note": "Without this spec those pages would never reach the proxy, because the straight-through journey never asks for them."
+    },
+    {
+      "id": "repo-tests-p11-090",
+      "statement": "What a trader can do to a notification after submitting it is driven through the proxy by one attacking test: amending it, checked by the status reading Amend, and then copying it as a new one.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-lifecycle.spec.ts:3-21, test 'routes the post-submission actions through the ZAP proxy'",
+      "quote": "await expect(animalsPages.overview.statusTag).toHaveText('Amend');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-091",
+      "statement": "Cancelling an amendment and deleting a notification are driven through the proxy by a second attacking test, which checks the status reads Submitted again after the cancellation.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-lifecycle.spec.ts:23-37, test 'routes cancelling an amendment and deleting through the ZAP proxy'",
+      "quote": "await expect(animalsPages.notificationView.viewHeader.statusTag).toHaveText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-092",
+      "statement": "Uploading a document is driven through the proxy by one attacking spec, which waits for the scan to read \"Check completed\" and then opens the file, because that is what puts the polled scan-status address and the file-download address into the site tree; a bare upload leaves both out.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-documents.spec.ts:6-28, test 'routes a document upload through the ZAP proxy'",
+      "quote": "// Waiting for the scan to clear is what puts the polled status route and\n    // the file-download route in the site tree; a bare upload leaves both out.",
+      "confidence": "verbatim",
+      "note": "The spec gives its reason: file upload is the richest input surface the journey has, and the only page whose addresses carry a second, nested identifier."
+    },
+    {
+      "id": "repo-tests-p11-093",
+      "statement": "A validation error on a draft is driven through the proxy by one attacking spec, which answers the origin page partly, presses Save and continue, checks the error summary, then answers it fully and saves on to the commodity page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-draft-validation-error.spec.ts:4-18, test 'routes a draft validation error through the ZAP proxy'",
+      "quote": "await expect(animalsPages.originOfImport.errorSummary).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-094",
+      "statement": "The notification list's search, paging and sorting are driven through the proxy by one attacking spec, which searches for a reference number, opens page one, sorts by date created oldest to newest and jumps to the last page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-dashboard-params.spec.ts:5-25, test 'routes the dashboard query parameters through the ZAP proxy'",
+      "quote": "// activeScan only fuzzes parameters it has observed, so the dashboard's\n    // server-side search, sort and paging are unattackable until a request\n    // carrying each one reaches the proxy. The submitted journeys elsewhere in\n    // this suite only ever land on the unparameterised dashboard.",
+      "confidence": "verbatim",
+      "note": "The list's search, sort and paging are server-side, which is why each needs a request of its own through the proxy before the scan can attack it."
+    },
+    {
+      "id": "repo-tests-p11-095",
+      "statement": "The marker that records where a Change link on the review page was opened from is driven through the proxy by one attacking spec: it opens the notification view on the overview trail, follows \"Change origin of import\", checks the trail is carried on the opened page, changes the country to Belgium and saves on.",
+      "kind": "behaviour",
+      "ref": "tests/animals/security/frontend-trail.spec.ts:5-28, test 'routes the trail query parameter of a review Change link through the ZAP proxy'",
+      "quote": "await animalsPages.notificationView.openOnTrail(reference, [TRAIL_START.overview]);",
+      "confidence": "verbatim",
+      "note": "That marker is a request parameter the scan can only attack once a request carrying it has been seen."
+    },
+    {
+      "id": "repo-tests-p11-096",
+      "statement": "Six of the eight animals attacking specs declare themselves slow, because each walks a whole journey or waits on a scan, so the security corpus costs considerably more time than the same pages cost the ordinary end-to-end suite.",
+      "kind": "non-functional",
+      "ref": "tests/animals/security/frontend-notification-journey.spec.ts:7, frontend-conditional-pages.spec.ts:11, frontend-lifecycle.spec.ts:11 and :31, frontend-documents.spec.ts:8, frontend-trail.spec.ts:11",
+      "quote": "test.slow();",
+      "confidence": "verbatim",
+      "note": "Counted by test: six of the nine test declarations call it; frontend-auth and frontend-draft-validation-error and the dashboard-parameters test do not."
+    },
+    {
+      "id": "repo-tests-p11-097",
+      "statement": "Running the scan locally takes the workspace stack plus ZAP started as an extra profile of the same stack, and the ZAP container can be left running between runs.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, 'Running locally' steps 1, 2 and 4",
+      "quote": "2. Bring up ZAP too — additive, and waits for healthchecks so it returns only once ZAP is accepting requests: `tim docker up --profile security`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-098",
+      "statement": "The full attacking run is the authoritative clean bill of health; a per-domain attacking run only gates its own domain's contexts for traffic and its report is labelled as narrowed.",
+      "kind": "rule",
+      "ref": "docs/security.md, 'Running locally' step 3",
+      "quote": "Full `security:active` is the authoritative clean bill of health. Per-domain active sets `ZAP_SCOPE` so the no-traffic gate only covers that domain's contexts; the report is labelled as scoped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-099",
+      "statement": "Each run clears the report folder first, so running two domains one after the other keeps only the second domain's report; the folder's contents are cleared but never the folder itself, because ZAP mounts it when its container starts.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, 'Running locally'",
+      "quote": "Each run clears `zap-report/` first, so running two domains back to back keeps only the second domain's report.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-100",
+      "statement": "On a Mac, ZAP has to share the host's network for the stack's sign-in redirects to resolve, which needs a recent Docker Desktop with host networking switched on, off by default, or an alternative runtime that supports it already.",
+      "kind": "constraint",
+      "ref": "docs/security.md, Docker Desktop for Mac note",
+      "quote": "ZAP needs `network_mode: host` to resolve the stack's `localhost` OIDC redirects. OrbStack supports this out of the box; Docker Desktop needs 4.34+ with host networking enabled in Settings (off by default).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-101",
+      "statement": "The same plan files and the same gate are used on the platform as locally, with ZAP running inside the test process rather than as a container.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, end of 'Running locally'",
+      "quote": "On CDP the same plan files and gate are reused, with ZAP as an in-process daemon rather than a container.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-102",
+      "statement": "The Playwright run's own report is copied whole into the published report folder, not just its index page, because its screenshots and traces sit beside it and would otherwise be missing.",
+      "kind": "non-functional",
+      "ref": "utils/zap/run-and-gate.ts, writeIndexHtml's copy step",
+      "quote": "Copied whole, not just index.html: Playwright's HTML report embeds test\n  // results inline, but attachments (screenshots, traces) sit alongside it\n  // in data/ and would 404 without it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-103",
+      "statement": "The visual suite photographs only the live-animals set of the animals frontend: no baseline covers the germinal-products set, the notification list, the confirmation page, the commodity pages, the address book or the INS front door.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/ (12 specs and their 23 baselines, listed in full)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every spec name and every baseline file name under tests/animals/e2e/visual. The pages pinned are origin of import, import reason, arrival details, transited countries, animal identification, accompanying documents, the consignor picker's search row, the arrival date picker, the overview totals, the notification view as review and as refused review, and the declaration. Design Release 2.1 work on any other page has no committed baseline to break."
+    },
+    {
+      "id": "repo-tests-p11-104",
+      "statement": "The notification view as review has a desktop baseline but no phone one, where the refused review has both, so a change that breaks the review's layout on a phone would not be caught.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual/review.visual.spec.ts-snapshots/ (review-desktop only) against refused-review.visual.spec.ts-snapshots/ (desktop and phone)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The review spec's single test is named '... at desktop width', so the omission looks deliberate rather than accidental; recorded because the two sibling specs differ."
+    },
+    {
+      "id": "repo-tests-p11-105",
+      "statement": "No attacking spec exists for the high-risk plants journey, so the plants backend is declared as a context with an attack job of its own that nothing drives.",
+      "kind": "non-functional",
+      "ref": "docs/security.md, 'Running locally' step 3; package.json security scripts; zap/automation-active.yaml plants-backend activeScan job",
+      "quote": "Plants has no security specs yet.",
+      "confidence": "verbatim",
+      "note": "There is no plants security script in package.json either, while config/zap.ts still defines a plants scope naming that context. Searched tests/ for the @active tag: the corpus is animals, animals-admin and ins only."
+    },
+    {
+      "id": "repo-tests-p11-106",
+      "statement": "Because the attacking run fails when a declared context records no traffic, a full attacking run gates the plants backend context that no spec drives, so the full run cannot pass as things stand unless something else sends traffic there; only a per-domain run avoids the question.",
+      "kind": "constraint",
+      "ref": "utils/zap/run-and-gate.ts, findContextsWithNoTraffic with zap/automation-active.yaml plants-backend context and docs/security.md's 'Plants has no security specs yet'",
+      "quote": "No traffic reached ${contextsWithNoTraffic.length} declared context(s), so their activeScan jobs scanned nothing and reported clean — drive them from a spec, or drop them from the plans:",
+      "confidence": "inferred",
+      "note": "Inferred from the gate's own rule and the absence of any plants attacking spec; the two cannot both hold. The gate's message names the two ways out, driving the context from a spec or dropping it from the plans, and neither has been done."
+    },
+    {
+      "id": "repo-tests-p11-107",
+      "statement": "The attacking plan's own note that the animals frontend's upload identifier is not reached by the security specs is out of date: a security spec now uploads a document, waits for its scan and opens the file.",
+      "kind": "non-functional",
+      "ref": "zap/automation-active.yaml, frontend uploadId comment, against tests/animals/security/frontend-documents.spec.ts",
+      "quote": "Not currently\n          # hit by the security specs (no upload step in their traffic), but\n          # real app surface with the same structural problem waiting to\n          # happen the day a spec does exercise it.",
+      "confidence": "inferred",
+      "note": "Inferred by reading the comment against the spec that now drives that address; the spec says in its own comment that the upload identifier in the plans had nothing to fold until a spec drove it. The configuration itself is right; only the comment is stale."
+    },
+    {
+      "id": "repo-tests-p11-108",
+      "statement": "Nothing in the two suites records a judgement or ruling about Design Release 2.1: there is no decisions ledger beside them and no spec or document in the slice cites a design decision.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/visual, tests/animals/security, zap/, docs/security.md, bin/update-visual-baselines-linux.sh",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Read every file in the slice. The only rules stated are about how the suites run, which this part has claimed; what the suites prove about the pages is in the shots and journeys, not in prose."
+    }
+  ]
+}

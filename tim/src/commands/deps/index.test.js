@@ -10,7 +10,7 @@ const helpOf = async (...command) => {
 }
 
 describe('tim deps --help', () => {
-  test('lists the dependabot, policy, evidence, hold, holds, lift and drift subcommands', async () => {
+  test('lists the dependabot, policy, evidence, hold, holds, lift, drift and versions subcommands', async () => {
     const stdout = await helpOf('deps')
 
     expect(stdout).toContain('dependabot [options] <repo>')
@@ -20,6 +20,7 @@ describe('tim deps --help', () => {
     expect(stdout).toMatch(/^ {2}holds\b/m)
     expect(stdout).toMatch(/^ {2}lift (\[options\] )?<package>/m)
     expect(stdout).toMatch(/^ {2}drift \[options\]/m)
+    expect(stdout).toMatch(/^ {2}versions (\[options\] )?<package>/m)
     expect(stdout).toContain('config/dependency-sets.json')
   })
 

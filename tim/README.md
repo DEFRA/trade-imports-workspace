@@ -2398,6 +2398,28 @@ it for npm drift and for the cross-repo sets that are waiting.
 - `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`,
   with `fetched` on each repo under `--fetch`.
 
+### `tim deps versions` — every published version of a package
+
+```bash
+tim deps versions @axe-core/playwright
+tim deps versions org.springdoc:springdoc-openapi-starter-webmvc-ui
+tim deps versions org.springframework.boot:spring-boot-starter-parent --json
+```
+
+Lists every version a package has published, one a line, prereleases
+included, in the order the registry gives them. The nightly hold re-check
+uses it to find a release a hold has not been tried against.
+
+- An npm package name reads the npm registry: `npm_config_registry` when
+  set, else the public registry.
+- A Maven `groupId:artifactId` reads its `maven-metadata.xml` on Maven
+  Central: `MAVEN_CENTRAL_URL` when set, else
+  `https://repo1.maven.org/maven2`.
+- A name that is neither, such as a wildcard, exits 2 before any registry
+  is asked.
+- `--json` gives `{package, ecosystem, versions}`, with `ecosystem` `npm`
+  or `maven`.
+
 ### `tim deps policy` — can an upgrade merge on green CI
 
 ```bash

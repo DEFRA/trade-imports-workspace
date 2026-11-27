@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 8 read two feature folders of the high-risk-plants linear journey in full, plus four context files. The place-of-destination folder (11 files: page.js, fields.js, evaluation.js, controller.js, controller.test.js, place-of-destination.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js) is one picker page served at /notifications/{journeyId}/destinations/select: it owns no template of its own, borrowing the shared address-book-picker template through pickerRoutes, and contributes the question's three state-dependent headings and descriptions, the single radio field placeOfDestination, one refusal sentence and a bound picker view model. The party-edit folder (11 files: page.js, party-edit.controller.js, party-edit.controller.test.js, party-edit.njk, party-edit.fit.spec.js, edit-href.js, address-rules.js, address-rules.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js) is one page rendered at three routes, one per party in the set's party registry (consignors/edit, destinations/edit, consignment/contact/edit): a nine-field form whose labels, lengths, required flags and error sentences are copied from the INS address book, which writes only the notification's own copy of a picked address, with a return marker deciding where Save and Cancel go back to. Context read but not claimed as its own: parties/picked-party.js and parties/index.js (part 7's party registry and copy shapes, read for the editSlug values and the picker's parties copy), address-book-picker/template.njk (part 9's picker shell, read for which context keys the destination page fills), obligations/sections/destination.js (part 12's obligation, read for the rule that one obligation covers all three destination questions), arrival-status/statuses.js (part 6's status values), and the three call sites of edit-href.js in address-book-picker/render.js and check-answers (parts 9 and 10). Covered: the destination picker page's route, maturity, caption, three headings, three descriptions, state rule, field, refusal, role, next page, save controls, back link, hub reachability, held-copy card and accessibility; the party-edit page's three routes, entry points, heading, caption, hint, nine labels, hints, buttons, every validation rule with its message in English and Welsh, its guards, its return-marker rule, its save, cancel and failure behaviour; every copy key of both features in both locales; the 7 own tests of place-of-destination.fit.spec.js and the 5 of party-edit.fit.spec.js; and view-model/index.js and address-rules.js as mechanisms.",
+  "structure": "Part 8, place of destination picker and party edit, read on main at 2f2b07f. Read in full every file of features/place-of-destination/ (evaluation.js, page.js, fields.js, controller.js, controller.test.js, place-of-destination.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js) and of features/party-edit/ (page.js, party-edit.controller.js, party-edit.controller.test.js, party-edit.njk, party-edit.fit.spec.js, edit-href.js, address-rules.js, address-rules.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js). Read for context only, claimed by other parts: parties/picked-party.js and parties/index.js (the party registry with each party's slug, edit slug and address-book role), address-book-picker/template.njk and its copy (the picker shell), obligations/sections/destination.js, and the three callers of edit-href.js (address-book-picker/render.js, check-answers/controller.js, check-answers/view-model/index.js). Covered: the place of destination picker at destinations/select (its caption, three-state heading and description in English and Welsh, the rule choosing the state from commodity type and arrival status, its PLACE_OF_DESTINATION address-book role, its one radio answer, its refusal sentence, save controls, hub row link, Back link, held-copy card and Edit details link, and all 7 of its own fit tests plus the shared picker suites it runs); the party-edit page served at consignors/edit, destinations/edit and consignment/contact/edit (caption, heading, notification-only hint, nine fields with labels, hint, autofill, widths and required-ness, every address-rules.js rule with its English and Welsh error messages, the address-book country list, Save changes and Cancel, the return-marker rules, the redirect to the picker when no copy is held or the party is not owed, the failed-save path, and all 5 of its fit tests); edit-href.js and the three places that offer an Edit details link; and the mechanism claims for the destination view model and address-rules.js. All earlier p8 claims are kept with the same ids except 031, 032 and 038, which rest on context-only files other parts now claim; refs for 116 to 118 are updated to the callers' current lines.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p8-001",
@@ -244,23 +244,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p8-031",
-      "statement": "One notification-level place of destination is owed for every commodity type, and it is never behind a gate; which of the three sentences a notifier sees is the page's business, decided from the arrival status.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:1-15",
-      "quote": "One notification-level answer for every commodity type: reg 24A(2)(c)\n// asks potatoes for their intended destination and reg 26(2)(b) asks plants\n// and wood for the intended destination or the current location. The matter\n// owed is the same one, so it is one obligation and never a gate; which of the\n// three sentences a notifier is shown is the page's business, decided from the\n// arrival status.",
-      "confidence": "verbatim",
-      "note": "The obligation file itself is part 12's; quoted here because it carries the ruling behind the destination page's three-state wording."
-    },
-    {
-      "id": "repo-plantsfrontend-p8-032",
-      "statement": "The place of destination answer is a copy of an address-book record taken when it is picked, and a later change to that record does not reach the notification.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:9-10",
-      "quote": "The answer is a copy of a record in the organisation's address book, taken\n// when it is picked; a later change to the record does not reach it.",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-plantsfrontend-p8-033",
       "statement": "The destination page offers the three save controls every collecting page offers: save and continue, save and return to the hub, and cancel.",
       "kind": "behaviour",
@@ -299,15 +282,6 @@
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:125-143",
       "quote": "test('renders the caption, the heading, the description and the search box', async ({\n    page\n  }) => {\n    await startAtDestination(page)\n\n    await expect(\n      page.getByText(captionsCopy.sections.destination, { exact: true })\n    ).toBeVisible()",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p8-038",
-      "statement": "The state's heading is the page's only level-one heading, and the state's description is the paragraph under it.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk:12-13",
-      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ description }}</p>",
-      "confidence": "verbatim",
-      "note": "The picker template is part 9's; quoted here only to show where the destination page's heading and description land."
     },
     {
       "id": "repo-plantsfrontend-p8-039",
@@ -951,7 +925,7 @@
       "id": "repo-plantsfrontend-p8-117",
       "statement": "A notifier also reaches the party-edit page from an Edit details action on a party's card on the check-your-answers page, which returns to check-your-answers.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/edit-href.js:4-8, features/check-answers/view-model/index.js:59-68",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/edit-href.js:4-8, features/check-answers/view-model/index.js:58-68",
       "quote": "href: partyEditHref(\n        journeyId,\n        partyRegistryEntry,\n        CYA_SLUG,\n        reviewPageTrail\n      ),\n      text: copy.editDetails,",
       "confidence": "verbatim",
       "note": "The check-answers feature is part 10's; cited here because edit-href.js is this part's and the link's target is what it decides."
@@ -960,7 +934,7 @@
       "id": "repo-plantsfrontend-p8-118",
       "statement": "A refusal on the check-your-answers page about a party's details links straight to that party's edit page, returning to check-your-answers.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/edit-href.js:4-8, features/check-answers/controller.js:50-64",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/edit-href.js:4-8, features/check-answers/controller.js:49-62",
       "quote": "if (key.startsWith(PARTY_KEY_PREFIX)) {\n      return partyEditHref(\n        journeyId,\n        partyOf(key.slice(PARTY_KEY_PREFIX.length)),\n        kit.CYA_SLUG,\n        reviewPageTrail\n      )",
       "confidence": "verbatim"
     },
@@ -1063,6 +1037,66 @@
       "quote": "{% block journeyContent %}\n  {% include \"shared/error-summary.njk\" %}\n\n  <span class=\"govuk-caption-l\">{{ partyTitle }}</span>\n  <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>",
       "confidence": "inferred",
       "note": "Read from the template, which uses the role as its caption and adds no section caption or save-actions block, and from the controller, which sets only a back link."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-131",
+      "statement": "The destination picker does not list an address-book record that holds a different role ('Northgate Trading AG') or no role at all ('Unlisted Traders Ltd'), while it does list a second record holding the destination role ('Import Co'). Inferred because the shared picker suites are handed these names as the wrong-role, roleless and second-role addresses; the assertions themselves sit in the shared harness.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:102-118, controller.test.js:91-110",
+      "quote": "secondRoleAddress: IMPORT_CO,\n  rolelessAddress: 'Unlisted Traders Ltd',\n  otherRoleAddress: 'Northgate Trading AG',",
+      "confidence": "inferred",
+      "note": "The shared picker suites (describeAddressPicker, describeAddressBookPickerController) are part 9's and the fit harness's; the names are the stubbed address book's seed data."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-132",
+      "statement": "The party-edit page's browser title is 'Edit address details', the same words as its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.js:54-58",
+      "quote": "...kit.base(copy.title, {\n      backLink: returnHref(request, party),\n      journey,\n      recoverableError\n    }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-133",
+      "statement": "On the party-edit page the phone field is a telephone-number input and the email field is an email-address input, so a phone or tablet offers the matching keyboard.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.njk:91, :103",
+      "quote": "type: \"tel\",",
+      "confidence": "verbatim",
+      "note": "The email field is declared with type: \"email\" at party-edit.njk:103."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-134",
+      "statement": "Each country in the party-edit page's drop-down list shows the country's name and saves its code.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.js:41-44",
+      "quote": "const countryItemsOf = (countries) => [\n  { value: '', text: copy.countrySelectText },\n  ...countries.map(({ code, name }) => ({ value: code, text: name }))\n]",
+      "confidence": "verbatim",
+      "note": "mechanism: turns the address book's country list into drop-down options, the country code as the saved value and the name as the shown text, after a blank first option."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-135",
+      "statement": "Cancel on the party-edit page is acted on before anything entered is checked, and it returns the notifier to the same place Save changes would: the page named in an honoured return marker, otherwise the party's picker.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.js:83-87, :27-36",
+      "quote": "if (payload.cancel) {\n    return h.redirect(returnHref(request, party))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-136",
+      "statement": "A refused edit on the party-edit page is answered with a bad-request status, and a save that fails is answered with a server-error status, while the form is shown again in both cases.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.js:101-119, party-edit.controller.test.js:161, :279",
+      "quote": "return (await render(request, h, journey, party, { values, errors })).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p8-137",
+      "statement": "A refused edit shows each refusal both in the error summary, linked to its field, and as an error message on the field itself.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.njk:7, :25, party-edit.controller.test.js:166-172",
+      "quote": "errorMessage: errors.name and { text: errors.name }",
+      "confidence": "verbatim",
+      "note": "Each of the nine fields carries the same errorMessage pattern (party-edit.njk:25, :35, :45, :55, :65, :75, :84, :96, :108); the summary links use '#<field>' anchors."
     }
   ]
 }

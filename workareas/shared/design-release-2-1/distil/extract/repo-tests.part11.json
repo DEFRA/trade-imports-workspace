@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 11, animals visual and security suites. Read in full: the 12 visual-regression specs under tests/animals/e2e/visual (origin-of-import, import-reason, arrival-details, transited-countries, identification-card, upload-documents, party-picker, date-picker, overview-totals, review, refused-review, declaration) and the names of the 46 committed PNG baselines beside them in *-snapshots folders (listed with find, never read as pixels); the 8 frontend security specs under tests/animals/security (frontend-auth, frontend-notification-journey, frontend-conditional-pages, frontend-lifecycle, frontend-documents, frontend-draft-validation-error, frontend-dashboard-params, frontend-trail); the fixtures the two suites use (fixtures/visual.ts, fixtures/security.ts); utils/frozen-date-picker.ts; all four files of utils/zap (client.ts, prime-context.ts, check-context-sync.ts, run-and-gate.ts); config/zap.ts; the three ZAP Automation Framework plans (zap/automation-passive.yaml, zap/automation-active.yaml, zap/automation-context.yaml) and zap/rules.tsv; docs/security.md; and bin/update-visual-baselines-linux.sh. Read as supporting context, not claimed except where a spec rests on them: page-objects/shared/date-picker.ts, page-objects/shared/address-picker-results.ts, page-objects/shared/base-page.ts (journeyStrip, TRAIL_START), page-objects/shared/sets.ts, page-objects/animals/party-picker-page.ts, utils/playwright/shared-config.ts (the 1280x1000 project viewport), utils/playwright/legacy-scrollers-browser.ts and package.json's security scripts.\n\nThe slice holds 23 visual test declarations across the 12 visual specs (2+5+1+2+1+1+1+5+1+1+2+1) and 9 test declarations across the 8 frontend security specs (frontend-lifecycle holds two, the other seven one each). Both are smaller than the partition's own counts of 60 and 26; the files are the evidence and the counts are recorded as they are. Covered: every visual test by title with the page or component it photographs, its baseline file names, its viewport, and what is masked, pinned or frozen to make the shot stable; every baseline file name, each present for both chromium-darwin and chromium-linux; every frontend security test by title with the journey it walks for the scan; the ZAP set-up as rules (six contexts, their excluded diagnostic paths, their dataDrivenNodes, the three-plan sync rule, the DOM-XSS rule turned off, the 60-minute cap, the alert-rating gate, the truncation gate and the no-traffic gate); the scan profiles and the three lanes that run them; which services are deliberately not scanned and why; and the coverage gaps the suites and docs/security.md leave open. The backend security spec under tests/animals/security/backend is part 9's and is not claimed here.",
+  "structure": "Part 11, animals visual and security suites, read at the tests repo's main (c433e6b). Read in full: the 12 visual-regression specs under tests/animals/e2e/visual (origin-of-import, import-reason, arrival-details, transited-countries, identification-card, upload-documents, party-picker, date-picker, overview-totals, review, refused-review, declaration) and the names of the 46 committed PNG baselines beside them in *-snapshots folders (listed with find, never read as pixels); the 8 frontend security specs under tests/animals/security (frontend-auth, frontend-notification-journey, frontend-conditional-pages, frontend-lifecycle, frontend-documents, frontend-draft-validation-error, frontend-dashboard-params, frontend-trail); the fixtures the two suites use (fixtures/visual.ts, fixtures/security.ts); utils/frozen-date-picker.ts; all four files of utils/zap (client.ts, prime-context.ts, check-context-sync.ts, run-and-gate.ts); config/zap.ts; the three ZAP Automation Framework plans (zap/automation-passive.yaml, zap/automation-active.yaml, zap/automation-context.yaml) and zap/rules.tsv; docs/security.md; and bin/update-visual-baselines-linux.sh. Checked as supporting context, not claimed except where a spec rests on them: utils/playwright/legacy-scrollers-browser.ts (the scroll-bar and pointer flags) and utils/playwright/shared-config.ts (the 1280x1000 project viewport).\n\nThe slice holds 23 visual test declarations across the 12 visual specs (2+5+1+2+1+1+1+5+1+1+2+1) and 9 test declarations across the 8 frontend security specs (frontend-lifecycle holds two, the other seven one each). Covered: every visual test by title with the page or component it photographs, its baseline file names, its viewport, and what is masked, pinned or frozen to make the shot stable; every baseline file name, each present for both chromium-darwin and chromium-linux; every frontend security test by title with the journey it walks for the scan; the ZAP set-up as rules (six contexts, their excluded diagnostic paths, their dataDrivenNodes, the three-plan sync rule, the DOM-XSS rule turned off, the 60-minute cap, the alert-rating gate, the truncation gate and the no-traffic gate); the scan profiles and the three lanes that run them; which services are deliberately not scanned and why; what docs/security.md says the INS attacking specs drive; and the coverage gaps the suites and docs/security.md leave open. Since the earlier extract, three things changed in the slice and got new ids: the review shot now runs to the Consignment addresses card (the contact address card is gone), the conditional-pages scan saves and returns to the overview after each page, and the attacking GitHub Action now runs on a weekday schedule. The backend security spec under tests/animals/security/backend is part 9's and is not claimed here.",
   "claims": [
     {
       "id": "repo-tests-p11-001",
@@ -266,13 +266,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p11-031",
-      "statement": "The notification view of a ready draft is pinned at desktop width from its first section down to the Contact address card, with the Continue button in shot; baseline review-desktop.png.",
+      "id": "repo-tests-p11-110",
+      "statement": "The notification view of a ready draft is pinned at desktop width from its first section down to the Consignment addresses card, with the Continue button in shot; baseline review-desktop.png.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/visual/review.visual.spec.ts:7-26, test 'shows a ready draft from the first section to the Contact address card and the Continue button at desktop width'",
-      "quote": "await expect(animalsPages.notificationView.contactAddressCard).toBeVisible();\n    await expect(animalsPages.notificationView.continueButton).toBeVisible();",
+      "ref": "tests/animals/e2e/visual/review.visual.spec.ts:11-24, test 'shows a ready draft from the first section to the Consignment addresses card and the Continue button at desktop width'",
+      "quote": "await expect(animalsPages.notificationView.addressesCard).toBeVisible();\n    await expect(animalsPages.notificationView.continueButton).toBeVisible();",
       "confidence": "verbatim",
-      "note": "The draft is seeded rather than keyed in, then opened through the notification view."
+      "note": "Replaces the earlier claim that the shot ran to the Contact address card: the review page no longer shows one in this shot, and the review, refused-review and overview-totals baselines were regenerated with it. The draft is seeded rather than keyed in, then opened through the notification view."
     },
     {
       "id": "repo-tests-p11-032",
@@ -376,12 +376,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p11-044",
-      "statement": "The GitHub Action that runs the attacking scan is manual dispatch only and its nightly schedule stays switched off until an end-to-end run has been verified.",
+      "id": "repo-tests-p11-111",
+      "statement": "The GitHub Action that runs the attacking scan runs at 01:00 UTC on weekdays, and can also be started by hand.",
       "kind": "non-functional",
-      "ref": "docs/security.md, paragraph after the lanes table",
-      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run.",
-      "confidence": "verbatim"
+      "ref": "docs/security.md, paragraph after the lanes table (line 28)",
+      "quote": "The GitHub Action runs at 01:00 UTC on weekdays, and on manual dispatch.",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier claim that the Action was manual dispatch only with its nightly schedule switched off."
     },
     {
       "id": "repo-tests-p11-045",
@@ -731,6 +732,32 @@
       "confidence": "verbatim"
     },
     {
+      "id": "repo-tests-p11-113",
+      "statement": "The INS front door's sign-in and sign-in-callback addresses are driven through the proxy by one INS attacking spec only, the address book sign-in spec, which also holds the only check that the INS front door shows a sign-out link.",
+      "kind": "behaviour",
+      "ref": "docs/security.md, 'What the INS @active specs drive', Sign-in round trip",
+      "quote": "so `address-book-auth.spec.ts` is the only spec that drives them. It also holds the only check that INS renders a sign-out link",
+      "confidence": "verbatim",
+      "note": "Recorded from docs/security.md, which this part reads; the INS specs themselves are another part's."
+    },
+    {
+      "id": "repo-tests-p11-114",
+      "statement": "An address book record's whole life is driven through the proxy by one INS attacking spec: adding an address, then viewing, editing and deleting it, and opening a tab filtered by a role, so the scan reaches the address identifier and the list's address type and role parameters.",
+      "kind": "behaviour",
+      "ref": "docs/security.md, 'What the INS @active specs drive', Record lifecycle",
+      "quote": "`address-book.spec.ts` adds one address through `/address-book/add`, and views, edits and deletes it through `/address-book/{addressId}`; the `addressId` dataDrivenNode has nothing to fold without them. It also opens a tab and filters it by a role, so the scan reaches the list's `addressType` and `role` parameters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p11-115",
+      "statement": "The address book's add page is also opened with the hand-off parameters a notification journey sends (journey type, notification id, fulfilment id and hand-off token), but only the path where the hand-off is refused is proven; an accepted hand-off is not, because no valid token can be seeded yet.",
+      "kind": "behaviour",
+      "ref": "docs/security.md, 'What the INS @active specs drive', Handshake query parameters",
+      "quote": "`address-book.spec.ts` also opens the add page with `journey-type`, `notification-id`, `fulfilment-id` and `handshake-token`, which no other spec sends. Only the rejected-guard path is provable here; extend it to a real accepted token if seeding one becomes possible.",
+      "confidence": "verbatim",
+      "note": "A coverage limit stated by the source itself: the accepted hand-off into the address book is not scanned."
+    },
+    {
       "id": "repo-tests-p11-087",
       "statement": "Signing in and out is driven through the proxy by one attacking spec only, because every other animals security spec starts already signed in: it attempts an invalid user id and checks the error summary, signs in properly and checks it lands on the dashboard, then signs out.",
       "kind": "behaviour",
@@ -748,13 +775,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p11-089",
-      "statement": "The pages that only appear for certain answers are driven through the proxy by one attacking spec: the transit reason with a port of exit and destination country, then the temporary admission reason with an exit date two months out and a port of exit, each followed by the additional details page, and then adding a private transporter by hand.",
+      "id": "repo-tests-p11-112",
+      "statement": "The pages that only appear for certain answers are driven through the proxy by one attacking spec: from the overview it opens the import reason task, answers Transit with a port of exit and France as destination, saves and returns to the overview, opens Additional details from the overview and saves and returns; it repeats that with Temporary admission horses, an exit date two months out and a port of exit; then it adds a private transporter, Jean Dupont, typed by hand, and lands back on the transporter page.",
       "kind": "behaviour",
       "ref": "tests/animals/security/frontend-conditional-pages.spec.ts:8-47, test 'routes the reason-gated and transporter-gated pages through the ZAP proxy'",
-      "quote": "test('routes the reason-gated and transporter-gated pages through the ZAP proxy'",
+      "quote": "await animalsPages.importReason.saveAndReturnToOverview.click();\n    await animalsPages.overview.heading.waitFor();\n    await animalsPages.overview.task('Additional details').click();",
       "confidence": "verbatim",
-      "note": "Without this spec those pages would never reach the proxy, because the straight-through journey never asks for them."
+      "note": "Replaces the earlier claim: each save is now Save and return to overview, and the Additional details page is reached from its overview task rather than straight after the import reason page. Without this spec those pages would never reach the proxy, because the straight-through journey never asks for them."
     },
     {
       "id": "repo-tests-p11-090",

@@ -1,0 +1,609 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 5, Locked API contract. Read in full: docs/openapi/api-contract.locked.yaml (890 lines: info with the wire, identity, soft delete, search, pagination, country code, roles and list-by-role conventions; one server; two tags; a global Trade-Imports-Organisation-Id security requirement; 4 paths with 10 operations, addresses and transporters each with list, create, get, replace and soft delete; components with the apiKey security scheme and 10 schemas: AddressRole, AddressRequest, ValidationProblem, Problem, AddressResponse, AddressPageResponse, TransporterType, TransporterRequest, TransporterResponse, TransporterPageResponse), integration/ApiContractComplianceIT.java (442 lines, 15 tests), openapi/OpenApiArtifactGeneratorIT.java (69 lines, the opt-in regenerator), testsupport/ApiDocs.java (73 lines, fetch, render and locked-contract loading), configuration/OpenApiConfig.java and JacksonConfig.java, src/main/resources/application-local.yml, and README.md's 'OpenAPI contract' section, the Swagger UI line under 'Running the local stack', the 'Testing' section and the 'Design notes' bullets on springdoc's ObjectMapper and the anyOf 400. Covered: every path, method, operationId, parameter (name and location) and response code the locked contract names; the AddressRole and TransporterType enums and where they are used; the AddressRequest and TransporterRequest required lists, field length bounds and minItems on roles; the Problem and ValidationProblem shapes and the anyOf 400 on create and update; the page response shapes and page and pageSize bounds; what the build check compares and how the artifact is regenerated; that /v3/api-docs and Swagger UI are on only under the local profile; and the camelCase wire, unknown-property and date conventions. What each operation does is left to parts 2 to 4; the contract's info prose on those behaviours is claimed only as what the contract states.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p5-001",
+      "statement": "The service's API surface is locked by a human-authored contract, docs/openapi/api-contract.locked.yaml, which is the source of truth for paths, operationIds, the 400 anyOf shapes, enum allowed values, the AddressRequest and TransporterRequest required lists and the minimum number of AddressRequest.roles.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/README.md:297-305",
+      "quote": "The API surface is locked and tested on every `mvn verify`. ... Human-authored source of truth (paths, operationIds, 400 `anyOf` shapes, allowed values of enum properties, the `AddressRequest` and `TransporterRequest` required lists, the minimum number of `AddressRequest.roles`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-002",
+      "statement": "A springdoc-generated spec for the whole service, addresses and transporters both, is committed at docs/openapi/addresses.yml for downstream consumers.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-address-book/README.md:305",
+      "quote": "springdoc-generated spec for the whole service, addresses and transporters, committed for downstream consumers",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-003",
+      "statement": "The locked contract is OpenAPI 3.0.3, titled trade-imports-address-book, version 1.0.0, with one server, http://localhost:8089, described as Local dev.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:1-43",
+      "quote": "openapi: 3.0.3\ninfo:\n  title: trade-imports-address-book\n  version: 1.0.0 ... servers:\n  - url: http://localhost:8089\n    description: Local dev",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-004",
+      "statement": "The locked contract groups operations under two tags: addresses (the address book, scoped to the caller's organisation) and transporters (an organisation's transporters, scoped to its address book).",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:44-48",
+      "quote": "- name: addresses\n  description: Address book, scoped to the caller's organisation\n- name: transporters\n  description: An organisation's transporters, scoped to its address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-005",
+      "statement": "The contract states the wire conventions: camelCase JSON properties and query parameters, and RFC 9457 application/problem+json errors carrying a camelCase traceId and, on validation failures, an errors map keyed by wire field name.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:8-10",
+      "quote": "**Wire conventions:** camelCase JSON properties and query params; RFC 9457\n    `application/problem+json` errors with camelCase `traceId` and (on validation\n    failures) an `errors` map keyed by wire field name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-006",
+      "statement": "The contract states that every operation requires the Trade-Imports-Organisation-Id header, that the path orgId must match it, and that a mismatch returns 404 so existence is not disclosed.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:12-13",
+      "quote": "**Identity:** every operation requires `Trade-Imports-Organisation-Id`. The path\n    `{orgId}` must match the header value; mismatch returns **404** (no existence disclosure).",
+      "confidence": "verbatim",
+      "note": "The behaviour itself is another part's; this records what the locked contract states."
+    },
+    {
+      "id": "repo-addressbook-p5-007",
+      "statement": "The contract declares a global security requirement on an apiKey scheme named Trade-Imports-Organisation-Id, sent in the header of the same name, described as the caller organisation id from the trusted forwarded header that must match the path orgId.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:49-50, 619-624",
+      "quote": "Trade-Imports-Organisation-Id:\n      type: apiKey\n      in: header\n      name: Trade-Imports-Organisation-Id\n      description: Caller organisation id from the trusted forwarded header; must match path orgId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-008",
+      "statement": "The contract states that DELETE is a soft delete: it sets an internal DELETED status, the wire exposes deleted: true, tombstones stay readable by id, and a 404 is not a deletion signal.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:15-16",
+      "quote": "**Soft delete:** DELETE sets internal status DELETED; the wire exposes `deleted: true`.\n    Tombstones remain readable by id. A **404** is not a deletion signal.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-009",
+      "statement": "The contract states that the q, countryCode and searchRole search parameters combine with OR semantics when more than one is supplied, and that searchRole is repeatable, matching an address holding any role it names.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:18-20",
+      "quote": "**Search:** `q`, `countryCode` and `searchRole` combine with OR semantics when more than one\n    is supplied. `searchRole` is repeatable; an address holding any of the roles it names matches\n    the search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-010",
+      "statement": "The contract states that the page size is the optional pageSize request parameter and that a value outside its schema's bounds is a 400.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:22-23",
+      "quote": "**Pagination:** the page size is the optional `pageSize` request parameter; a value outside\n    its schema's bounds is a 400.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-011",
+      "statement": "The contract states that countryCode is ISO 3166-1 alpha-2, stored as given with presence-only validation, and that consumers resolve it to a display name.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:25-26",
+      "quote": "**Country codes:** `countryCode` is ISO 3166-1 alpha-2 (e.g. \"GB\"), stored as given with\n    presence-only validation; consumers resolve it to a display name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-012",
+      "statement": "The contract states the role rules: at least one roles entry on create and update; roles returned on read, as an empty list when an address has none; a repeated role collapses to its first occurrence; a missing list or unknown value is a 400 keyed by roles with nothing saved; an update replaces the roles; every role must come from one group, sending (PLACE_OF_ORIGIN, CONSIGNOR) or receiving (CONSIGNEE, IMPORTER, PLACE_OF_DESTINATION); and an address holding any role can be in any country.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:28-35",
+      "quote": "**Roles:** at least one `roles` entry is required on create and update, and roles are returned\n    on read, as an empty list when an address has none. ... Every role must come from one group: sending\n    (PLACE_OF_ORIGIN, CONSIGNOR) or receiving (CONSIGNEE, IMPORTER, PLACE_OF_DESTINATION); a 400\n    keyed by `roles` otherwise. An address holding any role can be in any country.",
+      "confidence": "verbatim",
+      "note": "One combined record of the contract's prose; the enforcing behaviour is claimed claim-by-claim in the address parts."
+    },
+    {
+      "id": "repo-addressbook-p5-013",
+      "statement": "The contract describes a role as what a notification can choose the address for, a party or a place.",
+      "kind": "copy",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:29-31",
+      "quote": "A role is what a notification can choose\n    the address for, a party or a place: PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION,\n    CONSIGNEE or IMPORTER.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-014",
+      "statement": "The contract states that the list's role query parameter is repeatable and returns only addresses holding any role it names, narrows the q, countryCode and searchRole search, never matches an address with no roles, is a 400 for an unknown value, and without it every live address is listed.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:37-40",
+      "quote": "**Listing by role:** the list's `role` query parameter is repeatable and returns only the\n    addresses holding any of the roles it names. It narrows the search (`q`, `countryCode` and\n    `searchRole`), an address with no roles never matches it, and an unknown value is a 400.\n    Without it, every live address is listed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-015",
+      "statement": "The locked contract has exactly four paths: /organisation/{orgId}/addresses, /organisation/{orgId}/addresses/{address-id}, /organisation/{orgId}/transporters and /organisation/{orgId}/transporters/{transporter-id}.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:51-617",
+      "quote": "/organisation/{orgId}/transporters/{transporter-id}: ... /organisation/{orgId}/transporters: ... /organisation/{orgId}/addresses/{address-id}: ... /organisation/{orgId}/addresses:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-016",
+      "statement": "GET /organisation/{orgId}/addresses has operationId list-addresses, summary 'List the caller's live addresses (paginated, searchable)', and parameters orgId (path), Trade-Imports-Organisation-Id (header), page, pageSize, q, countryCode, role and searchRole (all query, optional).",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:480-537",
+      "quote": "summary: List the caller's live addresses (paginated, searchable)\n      operationId: list-addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-017",
+      "statement": "list-addresses answers 200 with AddressPageResponse, 400 for an out-of-range or non-numeric page or page size, an unknown role or search role, or a missing org header, 404 when the path orgId does not match the caller's organisation header, and 500 for an unexpected server error; every error is application/problem+json Problem.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:538-562",
+      "quote": "description: An out-of-range or non-numeric page or page size, an unknown role or search role, or a missing org header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-018",
+      "statement": "On both list operations, page is an optional int32 defaulting to 1, and pageSize is an optional int32 defaulting to 25 with a minimum of 1 and a maximum of 100.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:213-228, 496-511",
+      "quote": "- name: pageSize\n        in: query\n        required: false\n        schema:\n          type: integer\n          format: int32\n          default: 25\n          maximum: 100\n          minimum: 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-019",
+      "statement": "On both list operations, q is a single string and countryCode is an array of strings, so countryCode can be repeated.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:229-240, 512-523",
+      "quote": "- name: countryCode\n        in: query\n        required: false\n        schema:\n          type: array\n          items:\n            type: string",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-020",
+      "statement": "On list-addresses, role and searchRole are each an array of AddressRole values.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:524-537",
+      "quote": "- name: role\n        in: query\n        required: false\n        schema:\n          type: array\n          items:\n            $ref: '#/components/schemas/AddressRole'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-021",
+      "statement": "POST /organisation/{orgId}/addresses has operationId create-address, summary 'Create an address in the caller's address book', parameters orgId (path) and Trade-Imports-Organisation-Id (header), and a required AddressRequest JSON body.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:563-584",
+      "quote": "summary: Create an address in the caller's address book\n      operationId: create-address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-022",
+      "statement": "create-address answers 201 Created with an AddressResponse and a Location header described as the relative URI of the created address, 400 for a validation error or a missing identity header, 404 when the path orgId does not match the header, and 500 for an unexpected error.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:585-617",
+      "quote": "Location:\n              description: Relative URI of the created address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-023",
+      "statement": "GET /organisation/{orgId}/addresses/{address-id} has operationId get-address, summary 'Fetch one address, including tombstones', parameters orgId (path), Trade-Imports-Organisation-Id (header) and address-id (path), and answers 200 AddressResponse (deleted false or true), 404 for an unknown id or one outside the caller's organisation scope, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:336-375",
+      "quote": "summary: Fetch one address, including tombstones\n      operationId: get-address",
+      "confidence": "verbatim",
+      "note": "get-address declares no 400 response for a missing org header, unlike update and delete."
+    },
+    {
+      "id": "repo-addressbook-p5-024",
+      "statement": "PUT /organisation/{orgId}/addresses/{address-id} has operationId update-address, summary 'Replace an address's mutable fields', parameters orgId, Trade-Imports-Organisation-Id and address-id, a required AddressRequest body, and answers 200 with modifiedAt bumped, 400 for a validation error or missing org header, 404 for an unknown id, an id outside scope or a tombstone, 409 for a concurrent update conflict, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:376-436",
+      "quote": "summary: Replace an address's mutable fields\n      operationId: update-address ... '409':\n          description: Concurrent update conflict",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-025",
+      "statement": "DELETE /organisation/{orgId}/addresses/{address-id} has operationId delete-address, summary 'Soft-delete an address (tombstone)', parameters orgId, Trade-Imports-Organisation-Id and address-id, and answers 204 (soft-deleted or already deleted, idempotent), 400 for a missing org header, 404 for an unknown id or one outside scope, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:437-478",
+      "quote": "summary: Soft-delete an address (tombstone)\n      operationId: delete-address ... '204':\n          description: Soft-deleted (or already deleted — idempotent)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-026",
+      "statement": "GET /organisation/{orgId}/transporters has operationId list-transporters, summary 'List the caller's live transporters (paginated, searchable)', and parameters orgId (path), Trade-Imports-Organisation-Id (header), page, pageSize, q, countryCode, type and searchType (all query, optional), where type and searchType are arrays of TransporterType.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:197-254",
+      "quote": "summary: List the caller's live transporters (paginated, searchable)\n      operationId: list-transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-027",
+      "statement": "list-transporters answers 200 with TransporterPageResponse, 400 for an out-of-range or non-numeric page or page size, an unknown type or search type, or a missing org header, 404 when the path orgId does not match the header, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:255-279",
+      "quote": "description: An out-of-range or non-numeric page or page size, an unknown type or search type, or a missing org header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-028",
+      "statement": "POST /organisation/{orgId}/transporters has operationId create-transporter, summary 'Create a transporter in the caller's address book', parameters orgId and Trade-Imports-Organisation-Id, a required TransporterRequest body, and answers 201 with TransporterResponse and a Location header described as the absolute URI of the created transporter, 400 for a validation error or missing identity header, 404 on an orgId mismatch, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:280-334",
+      "quote": "operationId: create-transporter ... Location:\n              description: Absolute URI of the created transporter",
+      "confidence": "verbatim",
+      "note": "The contract describes the address Location as relative and the transporter Location as absolute; recorded as the contract says, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p5-029",
+      "statement": "GET /organisation/{orgId}/transporters/{transporter-id} has operationId get-transporter, summary 'Fetch one transporter, including tombstones', parameters orgId, Trade-Imports-Organisation-Id and transporter-id, and answers 200 TransporterResponse (deleted false or true), 404 for an unknown id or one outside scope, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:53-92",
+      "quote": "summary: Fetch one transporter, including tombstones\n      operationId: get-transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-030",
+      "statement": "PUT /organisation/{orgId}/transporters/{transporter-id} has operationId update-transporter, summary 'Replace a transporter's mutable fields', parameters orgId, Trade-Imports-Organisation-Id and transporter-id, a required TransporterRequest body, and answers 200 with modifiedAt bumped, 400 for a validation error or missing org header, 404 for an unknown id, out-of-scope id or tombstone, 409 for a concurrent update conflict, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:93-153",
+      "quote": "summary: Replace a transporter's mutable fields\n      operationId: update-transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-031",
+      "statement": "DELETE /organisation/{orgId}/transporters/{transporter-id} has operationId delete-transporter, summary 'Soft-delete a transporter (tombstone)', parameters orgId, Trade-Imports-Organisation-Id and transporter-id, and answers 204 (soft-deleted or already deleted, idempotent), 400 for a missing org header, 404 for an unknown or out-of-scope id, and 500.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:154-195",
+      "quote": "summary: Soft-delete a transporter (tombstone)\n      operationId: delete-transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-032",
+      "statement": "The 400 response of create and update, for both addresses and transporters, is application/problem+json with a schema of anyOf ValidationProblem or Problem.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:127-135, 314-322, 410-418, 597-605",
+      "quote": "'400':\n          description: Validation error, or a missing org header\n          content:\n            application/problem+json:\n              schema:\n                type: object\n                anyOf:\n                - $ref: '#/components/schemas/ValidationProblem'\n                - $ref: '#/components/schemas/Problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-033",
+      "statement": "The create and update 400 is anyOf rather than oneOf because a field-validation failure carries an errors map and every other 400 carries none.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/README.md:378",
+      "quote": "POST and PUT declare their 400 as `anyOf(ValidationProblem, Problem)`, not `oneOf`: a field-validation failure carries an `errors` map and every other 400 carries none.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-034",
+      "statement": "The AddressRole enum allows exactly PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION, CONSIGNEE and IMPORTER, and it types AddressRequest.roles, AddressResponse.roles and the list's role and searchRole parameters.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:626-633",
+      "quote": "AddressRole:\n      type: string\n      enum:\n      - PLACE_OF_ORIGIN\n      - CONSIGNOR\n      - PLACE_OF_DESTINATION\n      - CONSIGNEE\n      - IMPORTER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-035",
+      "statement": "The TransporterType enum allows exactly PRIVATE and COMMERCIAL, and it types TransporterRequest.type, TransporterResponse.type and the list's type and searchType parameters.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:781-785",
+      "quote": "TransporterType:\n      type: string\n      enum:\n      - PRIVATE\n      - COMMERCIAL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-036",
+      "statement": "AddressRequest has properties name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email and roles, and requires addressLine1, countryCode, email, name, phone, postcode, roles and townOrCity; addressLine2 and county are optional.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:634-685",
+      "quote": "required:\n      - addressLine1\n      - countryCode\n      - email\n      - name\n      - phone\n      - postcode\n      - roles\n      - townOrCity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-037",
+      "statement": "In the locked AddressRequest, name, addressLine1 and addressLine2 allow up to 255 characters, townOrCity and county up to 100, postcode up to 12, countryCode up to 2, phone up to 20 and email up to 254; every required string has a minimum length of 1 and addressLine2 and county a minimum of 0.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:635-671",
+      "quote": "postcode:\n          type: string\n          maxLength: 12\n          minLength: 1\n        countryCode:\n          type: string\n          maxLength: 2\n          minLength: 1",
+      "confidence": "verbatim",
+      "note": "The compliance test checks property names, not these lengths: see repo-addressbook-p5-063."
+    },
+    {
+      "id": "repo-addressbook-p5-038",
+      "statement": "AddressRequest.roles is an array of AddressRole with a minimum of one item.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:672-676",
+      "quote": "roles:\n          type: array\n          minItems: 1\n          items:\n            $ref: '#/components/schemas/AddressRole'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-039",
+      "statement": "AddressResponse has properties id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, roles (an AddressRole array), organisationId, deleted (boolean), createdAt and modifiedAt (date-time strings), and declares no required list.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:727-762",
+      "quote": "organisationId:\n          type: string\n        deleted:\n          type: boolean\n        createdAt:\n          type: string\n          format: date-time",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-040",
+      "statement": "AddressPageResponse and TransporterPageResponse each have items (an array of the matching response), page, pageSize, totalItems and totalPages (int32).",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:763-780, 873-890",
+      "quote": "AddressPageResponse:\n      properties:\n        items:\n          type: array\n          items:\n            $ref: '#/components/schemas/AddressResponse'\n        page: ... totalItems: ... totalPages:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-041",
+      "statement": "TransporterRequest has properties name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, type and approvalNumber, and requires addressLine1, countryCode, email, name, phone, postcode, townOrCity and type; addressLine2, county and approvalNumber are optional.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:786-836",
+      "quote": "required:\n      - addressLine1\n      - countryCode\n      - email\n      - name\n      - phone\n      - postcode\n      - townOrCity\n      - type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-042",
+      "statement": "In the locked TransporterRequest, the string lengths match AddressRequest except that countryCode has a minimum length of 1 and no maximum, and approvalNumber allows up to 50 characters.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:812-827",
+      "quote": "countryCode:\n          type: string\n          minLength: 1 ... approvalNumber:\n          type: string\n          maxLength: 50",
+      "confidence": "verbatim",
+      "note": "AddressRequest.countryCode has maxLength 2; the transporter's has none. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p5-043",
+      "statement": "TransporterResponse has properties id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, type (TransporterType), approvalNumber, organisationId, deleted (boolean), createdAt and modifiedAt (date-time strings).",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:837-872",
+      "quote": "type:\n          $ref: '#/components/schemas/TransporterType'\n        approvalNumber:\n          type: string\n        organisationId:\n          type: string\n        deleted:\n          type: boolean",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-044",
+      "statement": "Problem has type, title, status (int32), detail and traceId, and requires status, title and type.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:710-726",
+      "quote": "Problem:\n      properties:\n        type: ... traceId:\n          type: string\n      required:\n      - status\n      - title\n      - type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-045",
+      "statement": "ValidationProblem has the Problem properties plus errors, a map from field name to an array of message strings, and requires errors, status, title and type.",
+      "kind": "data",
+      "ref": "repos/trade-imports-address-book/docs/openapi/api-contract.locked.yaml:686-709",
+      "quote": "errors:\n          type: object\n          additionalProperties:\n            type: array\n            items:\n              type: string\n      required:\n      - errors\n      - status\n      - title\n      - type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-046",
+      "statement": "The build fails when the committed docs/openapi/addresses.yml is missing, with the message that it must be committed and is regenerated with -Dopenapi.generate=true.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:107-110",
+      "quote": "assertThat(Files.exists(ApiDocs.COMMITTED_ARTIFACT))\n        .as(\"the OpenAPI artifact must be committed — regenerate with -Dopenapi.generate=true\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-047",
+      "statement": "The build fails when the committed addresses.yml differs, byte for byte, from the live /v3/api-docs rendered as block-style YAML with the servers entry removed.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:111-113; testsupport/ApiDocs.java:35-39, 67-72",
+      "quote": "assertThat(Files.readString(ApiDocs.COMMITTED_ARTIFACT))\n        .as(\"the committed OpenAPI artifact is stale against /v3/api-docs\")\n        .isEqualTo(ApiDocs.renderCommittedForm(ApiDocs.fetchLive(port)));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-048",
+      "statement": "The build fails when the live API's set of paths differs from the locked contract's.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:123-125",
+      "quote": ".as(\"path set must match the locked contract\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-049",
+      "statement": "The build fails when any locked path's set of HTTP methods, or any operation's operationId, differs on the live API.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:127-144",
+      "quote": ".as(\"HTTP methods on %s must match the locked contract\", path) ... .as(\"operationId for %s %s must match the locked contract\", method, path)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-050",
+      "statement": "The build fails when the live component schema names differ from the locked contract's, when an enum schema's values differ, or when any object schema's property names differ.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:285-328",
+      "quote": ".as(\"component schema names must match the locked contract\") ... .as(\"enum values of schema %s must match the locked contract\", name) ... .as(\"property names on schema %s must match the locked contract\", name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-051",
+      "statement": "The build fails when any locked operation's parameters, compared by name and location in order, differ on the live API.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:366-404",
+      "quote": ".as(\"parameters for %s %s must match the locked contract\", method, path)",
+      "confidence": "verbatim",
+      "note": "Only name and in are compared; a parameter's schema (type, default, bounds) is not."
+    },
+    {
+      "id": "repo-addressbook-p5-052",
+      "statement": "The build fails unless the 400 of create-address, update-address, create-transporter and update-transporter is an anyOf (never oneOf) of exactly two branches whose refs match the locked contract and name ValidationProblem and Problem.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:157-166, 406-441",
+      "quote": ".as(\"%s %s 400 must be anyOf, not oneOf\", method, path)\n        .containsKey(\"anyOf\")\n        .doesNotContainKey(\"oneOf\");\n    List<Map<String, Object>> branches = (List<Map<String, Object>>) schema.get(\"anyOf\");\n    assertThat(branches).hasSize(2);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-053",
+      "statement": "The build fails when the allowed values of AddressRequest.roles, AddressResponse.roles or the address list's role and searchRole parameters differ from the locked contract, or when the locked contract lists none for them.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:168-178, 192-216",
+      "quote": "assertListAndSchemaAllowedValuesMatchLocked(\n        ApiDocs.fetchLive(port),\n        lockedContract(),\n        \"/organisation/{orgId}/addresses\",\n        List.of(\"role\", \"searchRole\"),\n        List.of(\"AddressRequest\", \"AddressResponse\"),\n        \"roles\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-054",
+      "statement": "The build fails when the allowed values of TransporterRequest.type, TransporterResponse.type or the transporter list's type and searchType parameters differ from the locked contract, or when the locked contract lists none for them.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:180-190, 192-216",
+      "quote": "\"/organisation/{orgId}/transporters\",\n        List.of(\"type\", \"searchType\"),\n        List.of(\"TransporterRequest\", \"TransporterResponse\"),\n        \"type\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-055",
+      "statement": "The build fails unless the locked AddressRequest required list includes roles and the live AddressRequest required list holds exactly the locked properties, in any order.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:218-226",
+      "quote": "assertThat(lockedRequired).contains(\"roles\");\n    assertThat(requiredProperties(ApiDocs.fetchLive(port), \"AddressRequest\"))\n        .as(\"required properties of AddressRequest must match the locked contract\")\n        .containsExactlyInAnyOrderElementsOf(lockedRequired);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-056",
+      "statement": "The build fails unless the locked TransporterRequest required list includes type and the live TransporterRequest required list holds exactly the locked properties, in any order.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:228-236",
+      "quote": "assertThat(lockedRequired).contains(\"type\");\n    assertThat(requiredProperties(ApiDocs.fetchLive(port), \"TransporterRequest\"))\n        .as(\"required properties of TransporterRequest must match the locked contract\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-057",
+      "statement": "The build fails unless the locked AddressRequest.roles minItems is 1 and the live value equals it.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:238-246",
+      "quote": "assertThat(lockedMinItems).isEqualTo(1);\n    assertThat(minItems(ApiDocs.fetchLive(port), \"AddressRequest\", \"roles\"))\n        .as(\"minItems of AddressRequest.roles must match the locked contract\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-058",
+      "statement": "The live API docs declare the address list's page schema as a top-level object, not an array, with items (an array), page, pageSize, totalItems and totalPages, and the list's 200 response references AddressPageResponse.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:92-104",
+      "quote": "assertThat(page).doesNotContainEntry(\"type\", \"array\");\n    assertThat(pageProps).containsKeys(\"items\", \"page\", \"pageSize\", \"totalItems\", \"totalPages\");\n    assertThat(nested(pageProps, \"items\", \"type\")).isEqualTo(\"array\");\n    assertThat(listResponseSchemaRef(doc)).endsWith(\"/AddressPageResponse\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-059",
+      "statement": "Creating and then reading an address returns camelCase properties (addressLine1, townOrCity, countryCode, organisationId, createdAt, modifiedAt) and deleted: false, with no status property and no snake_case address_line_1.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:27-46",
+      "quote": ".andExpect(jsonPath(\"$.deleted\").value(false))\n        .andExpect(jsonPath(\"$.status\").doesNotExist())\n        .andExpect(jsonPath(\"$.address_line_1\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-060",
+      "statement": "The address list response is a top-level JSON object, never a bare array; with one address it returns items, page 1, the default page size, totalItems 1 and totalPages 1.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:48-61",
+      "quote": ".andExpect(jsonPath(\"$\").isMap())\n        .andExpect(jsonPath(\"$.items\").isArray())\n        .andExpect(jsonPath(\"$.page\").value(1))\n        .andExpect(jsonPath(\"$.pageSize\").value(DEFAULT_PAGE_SIZE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-061",
+      "statement": "A 404 for an unknown address is application/problem+json with type https://api.cdp.defra.cloud/problems/not-found, a traceId equal to the request's x-cdp-request-id header, and no errors map.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:63-74",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"))\n        .andExpect(jsonPath(\"$.traceId\").value(traceId))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-062",
+      "statement": "A validation failure, such as a blank addressLine1 on create, is a 400 application/problem+json validation-error problem carrying the x-cdp-request-id as traceId and an errors map keyed by the camelCase field name addressLine1, never address_line_1.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:76-90",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(VALIDATION_ERROR_TYPE))\n        .andExpect(jsonPath(\"$.traceId\").value(traceId))\n        .andExpect(jsonPath(\"$.errors.addressLine1\").exists())\n        .andExpect(jsonPath(\"$.errors.address_line_1\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-063",
+      "statement": "The locked contract's field lengths, parameter types, defaults and bounds, response codes, summaries and info prose are not checked by the build: the compliance test compares paths, methods, operationIds, parameter names and locations, schema and property names, enum values, the four anyOf 400s, the two required lists and AddressRequest.roles minItems, plus the byte check of addresses.yml against the live docs.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:116-246; README.md:307-313",
+      "quote": "or if paths, HTTP methods, operationIds, operation parameter names, component schema property\nnames, the allowed values of `roles` ... or the minimum\nnumber of `AddressRequest.roles` diverge from the locked contract.",
+      "confidence": "inferred",
+      "note": "Inferred from what the tests assert and the README's list; nothing compares the other locked values, so they can drift from the live API without failing the build. The live info description ('Org-scoped address book API for EUDP Live Animals') already differs from the locked one."
+    },
+    {
+      "id": "repo-addressbook-p5-064",
+      "statement": "The committed artifact is regenerated after an intentional API change by running mvn verify -Dopenapi.generate=true -Dit.test=OpenApiArtifactGeneratorIT, which needs no Testcontainers.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/README.md:315-319",
+      "quote": "Regenerate the committed artifact after an intentional API change (no Testcontainers required):\n\n```bash\nmvn verify -Dopenapi.generate=true -Dit.test=OpenApiArtifactGeneratorIT\n```",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-065",
+      "statement": "The generator runs only when the openapi.generate system property is true; it starts the app on a random port under the integration-test profile with Mongo auto-configuration excluded and the repositories and MongoTemplate mocked, and writes the live /v3/api-docs, in committed form, to docs/openapi/addresses.yml.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/openapi/OpenApiArtifactGeneratorIT.java:27-60",
+      "quote": "@EnabledIfSystemProperty(named = \"openapi.generate\", matches = \"true\") ... Files.writeString(\n        ApiDocs.COMMITTED_ARTIFACT, ApiDocs.renderCommittedForm(ApiDocs.fetchLive(port)));",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the committed OpenAPI artifact from the live document."
+    },
+    {
+      "id": "repo-addressbook-p5-066",
+      "statement": "The compliance test byte-checks the committed artifact on every full mvn verify, and the generator lives in the openapi package rather than integration so its nested @SpringBootApplication does not shadow the application.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/README.md:321-323",
+      "quote": "`ApiContractComplianceIT` still byte-checks the artifact on every full `mvn verify`.\nThe generator IT lives in the `openapi` package rather than `integration` so a nested\n`@SpringBootApplication` does not shadow `Application`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-067",
+      "statement": "/v3/api-docs and Swagger UI are enabled only under the local profile and disabled in the default configuration.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/README.md:325-327; src/main/resources/application-local.yml:30-35",
+      "quote": "# Interactive API explorer, local development only (design §1.6).\nspringdoc:\n  api-docs:\n    enabled: true\n  swagger-ui:\n    enabled: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-068",
+      "statement": "Locally, Swagger UI is at http://localhost:8089/swagger-ui.html when SPRING_PROFILES_ACTIVE=local, which the repo's compose.yml sets by default.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-address-book/README.md:41-42",
+      "quote": "Interactive Swagger UI is available at **http://localhost:8089/swagger-ui.html** when\n`SPRING_PROFILES_ACTIVE=local` (set by default in `compose.yml`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-069",
+      "statement": "The local profile also exposes the health, info, metrics and env actuator endpoints, shows health details when authorised, turns off Mongo SSL and logs at DEBUG.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-address-book/src/main/resources/application-local.yml:5-25",
+      "quote": "include: health,info,metrics,env",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-070",
+      "statement": "The whole API is camelCase: JSON is serialised and deserialised with lower camel case property names, and enum values stay UPPER_SNAKE.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java:9-24",
+      "quote": "Makes the whole API camelCase: the Spring-managed {@code ObjectMapper} serialises and\n * deserialises with {@link PropertyNamingStrategies#LOWER_CAMEL_CASE}. Enum values stay\n * UPPER_SNAKE (their {@code name()}).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-071",
+      "statement": "Unknown request properties are ignored, not rejected, so a body carrying server-assigned fields such as id, status or timestamps is accepted and those fields are dropped.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java:14-25",
+      "quote": "Unknown properties are ignored, not rejected, so a request body carrying server-assigned\n * fields such as {@code id}, {@code status} or timestamps is accepted and those fields dropped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-072",
+      "statement": "Dates are written as text rather than numeric timestamps, matching the contract's date-time strings for createdAt and modifiedAt.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java:26",
+      "quote": ".featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);",
+      "confidence": "inferred",
+      "note": "Disabling WRITE_DATES_AS_TIMESTAMPS makes Jackson write ISO-8601 strings; the format itself is inferred from Jackson's default."
+    },
+    {
+      "id": "repo-addressbook-p5-073",
+      "statement": "springdoc resolves schemas through a copy of the application ObjectMapper, so the generated document uses the same camelCase property names as the wire and cannot drift from it through swagger-core's own mapper.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/OpenApiConfig.java:17-19, 51-54; README.md:381",
+      "quote": "springdoc resolves schemas through the application `ObjectMapper`. Otherwise swagger-core would use its own mapper and the generated document could drift from the camelCase wire.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p5-074",
+      "statement": "The live API document declares title trade-imports-address-book, version 1.0.0, description 'Org-scoped address book API for EUDP Live Animals', the http://localhost:8089 Local dev server, and the Trade-Imports-Organisation-Id apiKey header security scheme as a global requirement.",
+      "kind": "integration",
+      "ref": "repos/trade-imports-address-book/src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/OpenApiConfig.java:22-49",
+      "quote": "title = \"trade-imports-address-book\",\n            version = \"1.0.0\",\n            description = \"Org-scoped address book API for EUDP Live Animals\"))",
+      "confidence": "verbatim",
+      "note": "The live description differs from the locked contract's 'Address-book API contract.' prose; info is not compared by the build."
+    }
+  ]
+}

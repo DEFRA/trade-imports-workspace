@@ -1,0 +1,468 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 17, Find an address by postcode, read at commit c2078fb (the checkout's HEAD). Read in full: the root views app/views/find-address.html (72 lines), app/views/find-address-select.html (81 lines) and app/views/postcode-lookup.html (73 lines), which DR2.1 falls back on because app/views/design-release-2.1/ has no override for them; app/utils/postcode.js (postcode normalising and format rules), app/utils/postcode-lookup-addresses.js (addresses at a postcode as form entries, by id) and app/utils/postcode-address-lookup.js (the spike's lookup); app/routes.js lines 41-56 (getUkConsignmentLookupAddresses, the postcode requires, getUkLookupAddressesFor) and lines 15143-15331 (POSTCODE_ERRORS, GET /postcode-lookup, mountFindAddress with its four routes, and its two mounts: /address-book/add/find-address and <section path>/find-address for each selectable consignment section that uses the lookup). To say which sections and categories get the pages, it also looked up, without claiming their other uses, addressBookCategoryUsesLookup (routes.js 11613), getConsignmentAddAddressHeading (routes.js 4703), CONSIGNMENT_SECTION_ADDRESS_TYPE_MAP (routes.js 11222), app/data/consignment-address-sections.js, app/data/consignment-address-use-groups.js and app/data/address-book-destination-uses.js. Covered: the find-address page (route per mount, heading, postcode field, hint, button, manual-entry and cancel links, validation and errors, where it leads), the find-address-select page (route, heading for found and none, postcode with change link, count option and address list, button, error, where a choice leads for the address book and for a consignment section), the guards and which sections and categories get the pages, the address data the pages read (Companies House registered office fixtures) and how a chosen address fills the form, and the /postcode-lookup spike page (field, errors, results). The add-address forms the pages hand on to belong to parts 8 and 16. Address search is parked by programme ruling; this part records what the prototype shows without judging it.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p17-001",
+      "statement": "Finding an address by postcode is two pages in front of a UK address form: the user enters a postcode on the first page, picks one of the addresses at that postcode from a list on the second, and the address form then opens with that address filled in.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15167-15169",
+      "quote": "Finding an address takes two pages in front of a UK address form: the user\n// enters a postcode on the first, picks one of the registered office addresses\n// there from a list on the second, and the form opens with it filled in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-002",
+      "statement": "The address book's add journey has a find-address page at /address-book/add/find-address (under the version's address book base path), with its select page at /address-book/add/find-address/select.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15275-15283, 15253",
+      "quote": "route: '/address-book/add/find-address',",
+      "confidence": "verbatim",
+      "note": "The select route is mounted as `${route}/select`; links use getAddressBookBasePath(res), so the DR2.1 copy lives under /design-release-2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-003",
+      "statement": "The address book's find-address pages apply only in a Design Release 2 version (DR2.1 sets this flag) and only when the address being added is in the destination-consignee-importer category or the branch category.",
+      "kind": "rule",
+      "ref": "app/routes.js:15287-15290; app/routes.js:11613-11615",
+      "quote": "if (res.locals.isDesignRelease2Version && addressBookCategoryUsesLookup(req.session.data.addressBookAddressCategory)) {\n      return false\n    }",
+      "confidence": "verbatim",
+      "note": "addressBookCategoryUsesLookup: return category === 'destination-consignee-importer' || category === 'branch'"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-004",
+      "statement": "For any other address book category, or outside a Design Release 2 version, opening the address book's find-address pages redirects to the address book's add page.",
+      "kind": "rule",
+      "ref": "app/routes.js:15292-15293",
+      "quote": "res.redirect(`${getAddressBookBasePath(res)}/add`)\n    return true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-005",
+      "statement": "The address book's find-address page is headed \"Add an address\", since the address book mount gives no heading of its own.",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:9; app/routes.js:15279-15285",
+      "quote": "{% set pageName = pageHeading or \"Add an address\" %}",
+      "confidence": "inferred",
+      "note": "The address book mount's urls() returns no heading, so pageHeading is undefined and the default applies."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-006",
+      "statement": "On the address book's find-address page the back link goes to the address book's add page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15282",
+      "quote": "back: `${addressBookBasePath}/add`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-007",
+      "statement": "On the address book's find-address pages the \"Enter address manually\" link goes to the address book's add lookup page with manual=true.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15283",
+      "quote": "manual: `${addressBookBasePath}/add/lookup?manual=true`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-008",
+      "statement": "On the address book's find-address pages the cancel link reads \"Cancel and return to address book\" and goes to the address book.",
+      "kind": "copy",
+      "ref": "app/routes.js:15284-15285",
+      "quote": "cancel: addressBookBasePath,\n      cancelText: 'Cancel and return to address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-009",
+      "statement": "When the user chooses an address on the address book's select page, the service keeps the chosen address's id and label as the address book lookup choice, clears any manual address and any errors, and redirects to the address book's add lookup page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15296-15303",
+      "quote": "req.session.data.addressBookLookupAddressId = found.id\n    req.session.data.addressBookLookup = found.label\n    req.session.data.addressBookManualAddress = null\n\n    return res.redirect(`${getAddressBookBasePath(res)}/add/lookup`)",
+      "confidence": "verbatim",
+      "note": "mechanism: stores the chosen lookup address (id and label) in the session for the address book add form."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-010",
+      "statement": "Each selectable consignment address section that uses the lookup gets a find-address page at <section path>/find-address, with its select page at <section path>/find-address/select.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15307-15314",
+      "quote": "consignmentAddressSections\n  .filter((section) => section.selectable && consignmentAddAddressUsesLookup(section.id))\n  .forEach((section) => {\n    mountFindAddress({\n      route: `${section.path}/find-address`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-011",
+      "statement": "The consignment sections that get the find-address pages are the destination-and-receiver ones: consignee (/consignee), importer (/importer) and place of destination (/place-of-destination). Place of origin and consignor do not get them, nor do the CPH and permanent address sections, which are not selectable.",
+      "kind": "rule",
+      "ref": "app/data/consignment-address-use-groups.js:19-25, 81-83; app/data/consignment-address-sections.js",
+      "quote": "function consignmentAddAddressUsesLookup (sectionId) {\n  return getConsignmentAddressUseGroupIdForSection(sectionId) === 'destination-and-receiver'\n}",
+      "confidence": "inferred",
+      "note": "Follows from consignmentSectionUseGroupMap (consignee, importer and place-of-destination map to 'destination-and-receiver') and the sections' selectable flags; these data files are read here only to say which sections are mounted."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-012",
+      "statement": "The consignment find-address pages apply only in Design Release 2.1 session data. Elsewhere they redirect to the address book's add page with from=<section id>.",
+      "kind": "rule",
+      "ref": "app/routes.js:15320-15324",
+      "quote": "if (isDesignRelease21SessionData(req.session.data)) return false\n\n        res.redirect(`/address-book/add?from=${section.id}`)\n        return true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-013",
+      "statement": "A consignment section's find-address page is headed \"Add an address for a\" or \"an\" followed by the section's address type in lower case, so \"Add an address for a consignee\", \"Add an address for an importer\" and \"Add an address for a place of destination\"; with no type label it is \"Add an address\".",
+      "kind": "copy",
+      "ref": "app/routes.js:15313; app/routes.js:4703-4712; app/data/address-book-destination-uses.js",
+      "quote": "return `Add an address for ${/^[aeiou]/i.test(label) ? 'an' : 'a'} ${label.toLowerCase()}`",
+      "confidence": "inferred",
+      "note": "The three headings are worked out from the type labels 'Consignee', 'Importer' and 'Place of destination'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-014",
+      "statement": "On a consignment section's find-address page the back link goes to the section's page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15315",
+      "quote": "back: section.path,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-015",
+      "statement": "On a consignment section's find-address pages the \"Enter address manually\" link goes to the section's add-address page with manual=true.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15316",
+      "quote": "manual: `${section.path}/add-address?manual=true`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-016",
+      "statement": "On a consignment section's find-address pages the cancel link reads \"Cancel and return to hub\" and goes to the notification hub.",
+      "kind": "copy",
+      "ref": "app/routes.js:15317-15318",
+      "quote": "cancel: '/notification-hub',\n        cancelText: 'Cancel and return to hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-017",
+      "statement": "When the user chooses an address on a consignment section's select page, the service redirects to the section's add-address page with the chosen address's id as foundAddressId.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15326-15328",
+      "quote": "return res.redirect(`${section.path}/add-address?foundAddressId=${encodeURIComponent(found.id)}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-018",
+      "statement": "The find-address page's title is the page heading, prefixed with \"Error: \" when there is an error.",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:11-13",
+      "quote": "{{ \"Error: \" if errorList }}{{ pageName }} – {{ serviceName }} – GOV.UK Prototype Kit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-019",
+      "statement": "The find-address and find-address-select pages show the Alpha phase banner with a feedback-by-email link.",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:16-21; app/views/find-address-select.html:16-21",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-020",
+      "statement": "The find-address page has one text field labelled \"Enter a UK postcode\" with the hint \"For example, AB12 3CD\".",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:42-48",
+      "quote": "label: {\n          text: \"Enter a UK postcode\"\n        },\n        hint: {\n          text: \"For example, AB12 3CD\"\n        },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-021",
+      "statement": "The postcode field is a width-10 input with postal-code autocomplete and spellcheck off.",
+      "kind": "constraint",
+      "ref": "app/views/find-address.html:49-54",
+      "quote": "classes: \"govuk-input--width-10\",\n        id: \"postcode\",\n        name: \"findAddressPostcode\",\n        value: postcodeInput,\n        autocomplete: \"postal-code\",\n        spellcheck: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-022",
+      "statement": "The find-address page's button reads \"Find address\".",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:58-60",
+      "quote": "text: \"Find address\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-023",
+      "statement": "Below the form, the find-address page links \"Enter address manually\" and then a cancel link whose text comes from the mount.",
+      "kind": "copy",
+      "ref": "app/views/find-address.html:63-69",
+      "quote": "<a class=\"govuk-link\" href=\"{{ manualHref }}\">Enter address manually</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-024",
+      "statement": "Opening the find-address page with a findAddressPostcode in the address fills the postcode field with it.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15233-15237",
+      "quote": "return renderPostcodePage(req, res, { postcodeInput: req.query.findAddressPostcode || '' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-025",
+      "statement": "Submitting the find-address page with no postcode shows the error \"Enter a postcode\".",
+      "kind": "rule",
+      "ref": "app/routes.js:15147-15150, 15245-15249",
+      "quote": "missing: 'Enter a postcode',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-026",
+      "statement": "Submitting the find-address page with something that is not a full UK postcode shows the error \"Enter a full UK postcode, like BB4 4AA\".",
+      "kind": "rule",
+      "ref": "app/routes.js:15147-15150, 15245-15249",
+      "quote": "invalid: 'Enter a full UK postcode, like BB4 4AA'",
+      "confidence": "verbatim",
+      "note": "The example in this error (BB4 4AA) differs from the field's hint (AB12 3CD)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-027",
+      "statement": "A postcode error shows in an error summary titled \"There is a problem\" that links to the postcode field, and beside the field, and the field keeps what the user typed.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15191-15194, 15245-15249; app/views/find-address.html:32-37",
+      "quote": "errorList: postcodeError ? [{ text: postcodeError, href: '#postcode' }] : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-028",
+      "statement": "A postcode is read ignoring spaces and letter case: all whitespace is removed and the letters are upper-cased before it is checked.",
+      "kind": "rule",
+      "ref": "app/utils/postcode.js:8-10",
+      "quote": "return String(value == null ? '' : value).replace(/\\s+/g, '').toUpperCase()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-029",
+      "statement": "A full UK postcode is an outward code of one or two letters, a digit and an optional letter or digit, followed by a three-character inward code of a digit and two letters; GIR 0AA is also accepted.",
+      "kind": "rule",
+      "ref": "app/utils/postcode.js:2-5",
+      "quote": "const FULL_POSTCODE = /^(?:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}|GIR0AA)$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-030",
+      "statement": "A valid postcode is shown formatted as the outward code, a space and the inward code, such as \"BB4 4AA\".",
+      "kind": "rule",
+      "ref": "app/utils/postcode.js:24-26",
+      "quote": "return `${outwardCode(normalised)} ${normalised.slice(-3)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-031",
+      "statement": "Submitting a full postcode on the find-address page redirects to the select page, carrying the formatted postcode as findAddressPostcode.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15252",
+      "quote": "return res.redirect(`${urls(res).page}/select?${postcodeQuery(formatPostcode(postcode))}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-032",
+      "statement": "Opening or submitting the select page without a full postcode redirects back to the find-address page.",
+      "kind": "rule",
+      "ref": "app/routes.js:15225-15231, 15255-15266",
+      "quote": "const postcode = selectedPostcode(req)\n    if (!postcode) return res.redirect(urls(res).page)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-033",
+      "statement": "The select page is headed and titled \"Select an address\" when addresses are found at the postcode.",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:9, 39-40",
+      "quote": "{% set pageName = \"Select an address\" if addressCount else \"No addresses found\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-034",
+      "statement": "When no addresses are found at the postcode, the select page is titled \"No addresses found\" and headed \"No addresses found for <postcode>\", and shows no address list or Continue button.",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:9, 41-43, 51-70",
+      "quote": "<h1 class=\"govuk-heading-l\">No addresses found for {{ postcode }}</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-035",
+      "statement": "The select page's title is prefixed with \"Error: \" when there is an error.",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:11-13",
+      "quote": "{{ \"Error: \" if errorList }}{{ pageName }} – {{ serviceName }} – GOV.UK Prototype Kit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-036",
+      "statement": "The select page shows \"Postcode\" with the formatted postcode in bold beneath it, followed by a \"Change postcode\" link.",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:45-49",
+      "quote": "Postcode<br>\n      <strong data-testid=\"find-address-postcode\">{{ postcode }}</strong>\n      <a class=\"govuk-link\" href=\"{{ changeHref }}\">Change postcode</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-037",
+      "statement": "The select page's \"Change postcode\" link and its back link both go to the find-address page with the postcode filled in.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15203-15204",
+      "quote": "backLink: `${links.page}?${postcodeQuery(shown)}`,\n      changeHref: `${links.page}?${postcodeQuery(shown)}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-038",
+      "statement": "The select page lists the addresses in a plain full-width select (a dropdown, not an autocomplete) labelled \"Select an address\".",
+      "kind": "behaviour",
+      "ref": "app/views/find-address-select.html:55-64",
+      "quote": "{{ govukSelect({\n          id: \"address-id\",\n          name: \"foundAddressId\",\n          label: {\n            text: \"Select an address\"\n          },\n          classes: \"govuk-!-width-full\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-039",
+      "statement": "The select's first option has no value and reads \"<N> address found\" or \"<N> addresses found\", with the count of addresses at the postcode.",
+      "kind": "copy",
+      "ref": "app/routes.js:15214",
+      "quote": "{ value: '', text: `${addresses.length} ${addresses.length === 1 ? 'address' : 'addresses'} found` },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-040",
+      "statement": "Each address option reads the address text followed by a comma and the formatted postcode, such as \"UNIT 1, YORK AVENUE, HASLINGDEN, BB4 4AA\".",
+      "kind": "copy",
+      "ref": "app/utils/postcode-lookup-addresses.js:50-52; app/routes.js:15215-15218",
+      "quote": "const label = `${text}, ${shown}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-041",
+      "statement": "When the select page is shown again after an error, the address the user had picked stays selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:15218",
+      "quote": "selected: address.id === req.body?.foundAddressId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-042",
+      "statement": "The select page's button reads \"Continue\".",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:66-68",
+      "quote": "text: \"Continue\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-043",
+      "statement": "The select page carries the postcode in a hidden field, so the postcode it posts is the one shown.",
+      "kind": "behaviour",
+      "ref": "app/views/find-address-select.html:53; app/routes.js:15224",
+      "quote": "<input type=\"hidden\" name=\"findAddressPostcode\" value=\"{{ postcode }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-044",
+      "statement": "Continuing on the select page without choosing an address, or with one that is not found, shows the error \"Select an address\" in a \"There is a problem\" summary that links to the select and beside the select.",
+      "kind": "rule",
+      "ref": "app/routes.js:15268-15269, 15210; app/views/find-address-select.html:32-37, 63",
+      "quote": "if (!found) return renderSelectPage(req, res, postcode, { addressError: 'Select an address' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-045",
+      "statement": "Whether or not addresses are found, the select page links \"Enter address manually\" and then the mount's cancel link below the form.",
+      "kind": "copy",
+      "ref": "app/views/find-address-select.html:72-78",
+      "quote": "<a class=\"govuk-link\" href=\"{{ manualHref }}\">Enter address manually</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-046",
+      "statement": "The addresses offered at a postcode are the registered office addresses of live companies on the Companies House register, read from generated fixture files, one per postcode district (outward code).",
+      "kind": "integration",
+      "ref": "app/routes.js:15143-15144; app/utils/postcode-lookup-addresses.js:17-31; app/views/postcode-lookup.html:19",
+      "quote": "// Spike: registered office addresses for a postcode, from the Companies House\n// files that `npm run build:postcode-addresses` writes.",
+      "confidence": "verbatim",
+      "note": "A prototype fixture source, not a real address lookup service. Address search is parked by programme ruling until the INS address lookup is real."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-047",
+      "statement": "A postcode with no fixture file, or with no entry in its district's file, finds no addresses, so the select page shows \"No addresses found for <postcode>\".",
+      "kind": "behaviour",
+      "ref": "app/utils/postcode-lookup-addresses.js:20-31",
+      "quote": "if (error.code === 'ENOENT') return []",
+      "confidence": "inferred",
+      "note": "mechanism: reading the district fixture file. Follows from readPostcode returning [] and the select page's addressCount being 0."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-048",
+      "statement": "Each found address has an id naming its postcode and its place in that postcode's list, such as ch-BB44JG-2, so the address form can find the address again from the id alone.",
+      "kind": "data",
+      "ref": "app/utils/postcode-lookup-addresses.js:4-5, 18, 55, 73-86",
+      "quote": "// The id names the postcode and the address's place in that postcode's list\n// (ch-BB44JG-2), so the forms can find the address again from the id alone.",
+      "confidence": "verbatim",
+      "note": "mechanism: id scheme for fixture addresses; the prototype's own way to pass a choice between pages."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-049",
+      "statement": "A chosen address fills the address form by splitting its text at commas: the first part is address line 1, the last part (when there are two or more) is the town or city, and any parts between are address line 2; the name or organisation and county are left blank, the postcode is the formatted postcode and the country is United Kingdom.",
+      "kind": "behaviour",
+      "ref": "app/utils/postcode-lookup-addresses.js:33-48",
+      "quote": "// \"UNIT 1, YORK AVENUE, HASLINGDEN\" becomes line 1 \"UNIT 1\", line 2\n// \"YORK AVENUE\" and town \"HASLINGDEN\". A single part is line 1 only.",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes a one-line Companies House address into the address form's fields."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-050",
+      "statement": "A UK address form lists the other addresses at the postcode where the user found the chosen address; when the address was not found by postcode, it lists the prototype's example UK addresses instead.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:41-43, 52-56; app/utils/postcode-lookup-addresses.js:88-93",
+      "quote": "// The addresses a UK address form lists: those at the postcode the user found\n// the chosen address at, or the example addresses when there is none.",
+      "confidence": "verbatim",
+      "note": "mechanism: picks the address list an add-address form offers. The example addresses are address-book-lookup-addresses filtered to country 'United Kingdom'. The forms themselves belong to parts 8 and 16."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-051",
+      "statement": "The prototype has a spike page at /postcode-lookup, headed and titled \"Find an address by postcode\", that is not linked into a journey and shows a \"Spike\" phase banner reading \"Addresses come from the Companies House register of live companies.\"",
+      "kind": "copy",
+      "ref": "app/views/postcode-lookup.html:8, 15-20, 33; app/routes.js:15152",
+      "quote": "tag: {\n      text: \"Spike\"\n    },\n    text: \"Addresses come from the Companies House register of live companies.\"",
+      "confidence": "inferred",
+      "note": "Not linked from a journey is inferred: nothing in this part's files links to /postcode-lookup, and it has no back link. The form posts to the unprefixed /postcode-lookup even under /design-release-2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-052",
+      "statement": "The spike page's form is submitted by GET and has one width-10 field labelled \"Postcode\" with the hint \"A full UK postcode, like BB4 4AA\" and a \"Find address\" button.",
+      "kind": "copy",
+      "ref": "app/views/postcode-lookup.html:35-54",
+      "quote": "label: {\n          text: \"Postcode\"\n        },\n        hint: {\n          text: \"A full UK postcode, like BB4 4AA\"\n        },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-053",
+      "statement": "On the spike page an empty postcode shows \"Enter a postcode\" and a postcode that is not full shows \"Enter a full UK postcode, like BB4 4AA\", in a \"There is a problem\" summary linking to the field and beside the field, with \"Error: \" in the title.",
+      "kind": "rule",
+      "ref": "app/routes.js:15147-15150, 15155-15161; app/utils/postcode-address-lookup.js:24-25; app/views/postcode-lookup.html:11, 26-31",
+      "quote": "postcodeError: POSTCODE_ERRORS[lookup.status],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-054",
+      "statement": "When the spike page finds addresses it shows a \"Registered office addresses\" heading, the line \"<N> address(es) found for <postcode>\" and a bulleted list of each address followed by the postcode.",
+      "kind": "copy",
+      "ref": "app/views/postcode-lookup.html:57-66",
+      "quote": "<h2 class=\"govuk-heading-m\" id=\"results-heading\">Registered office addresses</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-055",
+      "statement": "When the spike page finds no addresses it shows the heading \"No registered office addresses found for <postcode>\" and the line \"Check the postcode, or try another one.\"",
+      "kind": "copy",
+      "ref": "app/views/postcode-lookup.html:67-69",
+      "quote": "<h2 class=\"govuk-heading-m\">No registered office addresses found for {{ lookup.postcode }}</h2>\n      <p class=\"govuk-body\">Check the postcode, or try another one.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p17-056",
+      "statement": "The spike page fails with an error, rather than reporting no addresses, when the postcode address files have not been built at all.",
+      "kind": "behaviour",
+      "ref": "app/utils/postcode-address-lookup.js:35-41; app/routes.js:15163-15165",
+      "quote": "throw new Error(`No postcode address files in ${dir}: run npm run build:postcode-addresses`)",
+      "confidence": "verbatim",
+      "note": "mechanism: guards against a missing build of the fixture files. The find-address journey pages do not have this guard and show no addresses instead."
+    }
+  ]
+}

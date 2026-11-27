@@ -1,7 +1,31 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 8 read, in full, every file under the three non-commodity question folders of the about-the-consignment and description-of-the-goods sections of repos/trade-imports-animals-frontend's live-animals set, except the co-located *.test.js unit tests (controller.test.js, validate.test.js, copy/copy.test.js), which the scope leaves out. (1) journeys/linear/features/origin/: page.js (id/slug 'origin', maturity 'agreed'), evaluation.js (five obligation bindings), controller.js (120 lines: meta.collects, country item loading, per-country region-code prefix map, render, GET, POST, routes), template.njk (79 lines: accessible-autocomplete country field, Yes/No region-requirement radios with a conditional region-code input carrying a prefix, an optional internal-reference input, save actions with the return controls switched off), validate.js (163 lines: field order, trimming, prefix derivation, suffix normalisation, joined region code, country/region/internal-reference rules, blanks-on-change, fromAnswers/toAnswers), copy/copy.en.js and copy/copy.cy.js (title, country, region requirement, region code, internal reference and six error strings), and origin.fit.spec.js (856 lines, six describe blocks: the feature, region code and internal reference, the country type-ahead, the no-JavaScript path, country and region validation, internal-reference validation). (2) journeys/linear/features/import-reason/: page.js ('import-reason', 'agreed'), evaluation.js (five obligation bindings), controller.js (127 lines: reason and purpose option lists with per-value hints, country and port item lists, the exit-date field, render/GET/POST/routes), template.njk (85 lines: one radio set of reasons, each with its own reveal built from a shared autocomplete macro, plus an MOJ date picker), validate.js (153 lines: the REVEALS table, per-field country/port/purpose/date rules applied only to the chosen reason's reveals, payload and answer mapping, blanking of stale shared answers), copy/copy.en.js and copy/copy.cy.js (title, hidden legend, five reason hints, purpose legend and eleven purpose hints, country, port, date and seven error strings), and import-reason.fit.spec.js (853 lines, eight describe blocks: the feature, the reveals, reveal validation, the exit-date calendar position, destination territories, port and country type-ahead, temporary-admission port type-ahead, the no-JavaScript path and reveal accessibility). (3) journeys/linear/features/additional-details/: page.js ('additional-details', 'agreed'), evaluation.js (two obligation bindings), controller.js (105 lines: certification options from a service, Yes/No unweaned options, the in-scope test for the unweaned question, render/GET/POST/routes), template.njk (46 lines: two radio sets, the second shown only when the unweaned answer is in scope), validate.js (39 lines: oneOf rules for both radios, the unweaned applicability test shared with check-answers), copy/copy.en.js and copy/copy.cy.js (title, certification legend and hint, unweaned legend, hint and options, one error string), and additional-details.fit.spec.js (311 lines, four describe blocks: rendering, the unweaned commodity gate, validation, persistence and accessibility). It covers three routes (origin, import-reason, additional-details), their headings, captions, every field with its label, hint, options and whether it is required, every validation message in the three English copy files verbatim, every conditional reveal and what it asks, where Continue and Save and return lead, the save and failure behaviour, Welsh key parity for all three copy.cy.js files, and every behaviour the three fit specs prove. The reason, purpose and certification option labels are rendered from services outside this slice (services/import-reason-purpose, services/certification-purposes), and the country, subdivision and port lists from services/countries and services/ports, so those labels are recorded as gaps rather than invented.",
+  "structure": "Part 8 read in full every non-unit-test file in three feature folders of src/server/app/sets/live-animals/journeys/linear/features: origin/ (page.js, controller.js, evaluation.js, validate.js, template.njk, copy/copy.en.js, copy/copy.cy.js, origin.fit.spec.js), import-reason/ (the same set, with import-reason.fit.spec.js) and additional-details/ (the same set, with additional-details.fit.spec.js). The controller.test.js, validate.test.js and copy.test.js unit tests were left out, as the part says. It covers three pages, each marked agreed. The origin page (slug origin) has a country-of-origin type-ahead over a native select, a Yes/No region of origin code question that reveals a prefixed five-character code box, and an optional internal reference. It offers Save and continue only, which goes on to the commodities question. The main import reason page (slug import-reason) has one radio question of five reasons, with reveals: a purpose radio list for internal market, a destination country for transhipment, a port of exit then a destination country for transit, an MOJ date picker then a port for temporary admission of horses, and nothing for re-entry. It offers Save and continue (to commodities) and Save and return to overview. The additional details page (slug additional-details) asks the certification purpose and, only when the commodities put it in scope, the unweaned animals Yes/No. It offers both save actions, and Save and continue goes to the port of entry. The part claims the routes, headings, captions, fields, hints, options, reveals, validation messages verbatim, save behaviour, back links, Welsh key parity, what the three fit specs prove and the gaps where labels or list sources sit outside the slice. The slice is unchanged since the earlier extract apart from an internal rename of the exit date reader, so every kept claim still holds.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-029",
+      "statement": "The origin page collects five answers: the country of origin, the country-of-origin subdivision code, whether a region-of-origin code is required, the region-of-origin code, and the trader's internal reference number.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:21-31",
+      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'countryOfOrigin',\n    'countryOfOriginSubdivisionCode',\n    'regionOfOriginCodeRequirement',\n    'regionOfOriginCode',\n    'internalReferenceNumber'\n  ],\n  validation\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-033",
+      "statement": "The import reason page collects five answers: the reason for import, the purpose in the internal market, the destination country, the port of exit and the exit date.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:22-32",
+      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'reasonForImport',\n    'purposeInInternalMarket',\n    'destinationCountry',\n    'portOfExit',\n    'exitDate'\n  ],\n  validation\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-034",
+      "statement": "The additional details page collects two answers: what the animals are certified for, and whether the consignment contains unweaned animals.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:16-20",
+      "quote": "export const meta = {\n  ...page,\n  collects: ['animalsCertifiedFor', 'containsUnweanedAnimals'],\n  validation\n}",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p8-001",
       "statement": "A user reaches the origin question at the path segment 'origin' under a notification, and the page's behaviour is marked as agreed.",
@@ -1215,6 +1239,14 @@
       "quote": "",
       "confidence": "gap",
       "note": "Looked at every import in the three controllers and validators: they reach the lists through src/server/app/services/countries and services/ports, which this part's read does not name. Those services decide the upstream."
+    },
+    {
+      "id": "repo-frontend-p8-151",
+      "statement": "When the transit reason is chosen with only the port of exit missing, Save and return to overview is refused with 'Select a port of exit', the reveal stays open and the destination country the user chose is kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:503-515",
+      "quote": "test('transit reveal validation: the same refusal holds Save and return to overview when only the port is missing, keeping the country shown'",
+      "confidence": "verbatim"
     }
   ]
 }

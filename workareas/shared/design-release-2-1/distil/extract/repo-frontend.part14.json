@@ -1,7 +1,16 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 14, the consignment addresses page and the INS address hand-off. Read in full: the addresses feature's own files at src/server/app/sets/live-animals/journeys/linear/features/addresses/ — page.js (5 lines), controller.js (285), template.njk (54), evaluation.js (22), parties.js (66), party-held.js (1), party-inline.js (17), party-for-fulfilment-id.js (34), address-summary.js (21), same-as-action.js (18), frozen-parties.js (48), ins-handshake.js (92), assert-party-bindings.js (19), test-support.js (30), address-return/controller.js (215), copy/copy.en.js (91), copy/copy.cy.js (93) and fit/address-return.fit.spec.js (68). To quote the strings and paths those files reach for, these files outside the part were also read but are another part's to claim: shared/copy.en.js (saveActions and addressHandshake copy), shared/kit.js (base, pageRoutes, nextTarget, recoverableSave, logRefusal, redirectOnStaleAction), shared/trail.js, shared/paths.js, sets/live-animals/set.js, flow/flow.js, flow/task-rows.js, flow/section-captions, obligations/sections/parties.js and misc.js, page-maturity/copy/copy.en.js, common/helpers/ins-address-book-urls.js and organisation-id.js, services/address-book/index.js and to-wire-address.js, services/countries/index.js, features/cph-number/shape.js, features/permanent-address/cards.js and saved-addresses.js, features/contact/evaluation.js, features/commodities/action-prefix.js, features/addresses/party-edit/edit-href.js and features/addresses/party-picker/selection.js and view-model/address-lines.js. What it covers: the one page at GET and POST /live-animals/notifications/{journeyId}/addresses — its caption, heading, intro, warning, maturity banner, hidden form fields and save buttons; the five party sections in display order with every title, hint, add-link and select-error string; the chosen-address inset, its Change and Edit details links and their hrefs; the same-as copy control, its three refusals and its recoverable-save failure; the conditional CPH number and Permanent address sections; the added-address success banner and its single showing; the hand-off out to the INS address book's add-an-address page (journey type, fulfilment ids, single-use handshake token, cookies); and the whole return hand-off at GET /live-animals/notifications/{journeyId}/address-return — its four landings, four refusals, address lookup, not-found and unavailable handling, and where each landing sends the trader. It also covers what address-return.fit.spec.js proves, Welsh key parity, and the display and storage mechanisms (address lines, address summary, inline frozen party copies, party-to-fulfilment-id mapping). It leaves the party picker page, the party edit form and their own copy files to part 15, and the permanent-address and CPH pages themselves to their own parts.",
+  "structure": "Part 14 read all 18 files of the addresses feature's page and return hand-off in full: page.js, controller.js, template.njk, evaluation.js, parties.js, party-held.js, party-inline.js, party-for-fulfilment-id.js, address-summary.js, same-as-action.js, frozen-parties.js, ins-handshake.js, assert-party-bindings.js, test-support.js, address-return/controller.js, copy/copy.en.js, copy/copy.cy.js and fit/address-return.fit.spec.js. It covers one page, the Consignment addresses page at /live-animals/notifications/{journeyId}/addresses (GET and POST): its caption, heading, intro, fraud warning and maturity banner; five party sections in order (place of origin, consignor, consignee, importer, place of destination) with their headings, hints, add links, Change and Edit details links and inset address; the three same-as copies and their refusals; the conditional CPH number and permanent address sections; and the save actions. It covers the INS address-book hand-off: the add-an-address URL and its four parameters, the per-fulfilment-id handshake token cookie, the fulfilment-id map over the five parties, and the GET-only /address-return route with its landings (select, return, cancel, bare back), its 400 refusals, its not-found and unavailable outcomes, and the one-shot added-address banner the one fit test proves. Since the earlier extract the party list lost its per-party return page and the contact-address party, so the hand-off maps the five consignment parties only and every selection lands on the addresses page; the address summary lost its stop-at-postcode variant. The picker, the edit form and the picker's copy keys are part 15's; the overview task row, the flow section and shared copy are other parts'.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-036",
+      "statement": "The addresses page collects the five consignment parties: the consignor, the place of destination, the place of origin, the consignee and the importer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:33-42",
+      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'consignor',\n    'placeOfDestination',\n    'placeOfOrigin',\n    'consignee',\n    'importer'\n  ]\n}",
+      "confidence": "verbatim",
+      "note": "The addresses page states no validation rules of its own, unlike most collecting pages."
+    },
     {
       "id": "repo-frontend-p14-001",
       "statement": "The consignment addresses page is served at /live-animals/notifications/{journeyId}/addresses, and answers both a GET to show it and a POST to save it.",
@@ -53,30 +62,6 @@
       "note": "Not a signed-off page: maturity is below 'agreed'."
     },
     {
-      "id": "repo-frontend-p14-007",
-      "statement": "The page sits in the journey's consignment-parties section alongside the CPH number page and the permanent address page.",
-      "kind": "behaviour",
-      "ref": "flow/flow.js:65-68",
-      "quote": "id: 'consignment-parties',\n    pages: [cphNumberPage, permanentAddressPage, addressesPage]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p14-008",
-      "statement": "A trader reaches the page from the notification overview's addresses task row, which covers the addresses page and the CPH number page.",
-      "kind": "behaviour",
-      "ref": "flow/task-rows.js:67-71",
-      "quote": "id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p14-009",
-      "statement": "The addresses task row is not complete until every animal that needs a permanent address has one, even when all five parties are chosen and the CPH number is given.",
-      "kind": "rule",
-      "ref": "flow/task-rows.js:70, features/permanent-address/cards.js:57-63",
-      "quote": "extraAnswerGiven: everyAddressableAnimalHasPermanentAddress  …  export const everyAddressableAnimalHasPermanentAddress = (\n  answers,\n  evaluation\n) =>\n  addressableUnits(answers, evaluation).every(({ unit }) =>\n    isPartyHeld(unit.permanentAddress)\n  )",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p14-010",
       "statement": "The page's Back link returns to the newest place on the trader's trail, and to the notification overview when the request carries no trail.",
       "kind": "behaviour",
@@ -123,7 +108,7 @@
       "id": "repo-frontend-p14-015",
       "statement": "The page lists five parties, in this order: Place of origin, Consignor, Consignee, Importer, Place of destination.",
       "kind": "behaviour",
-      "ref": "features/addresses/parties.js:11-52, features/addresses/controller.js:166",
+      "ref": "features/addresses/parties.js:7-43, features/addresses/controller.js:166",
       "quote": "export const PARTIES = [\n  {\n    id: 'placeOfOrigin',  …  id: 'consignor',  …  id: 'consignee',  …  id: 'importer',  …  id: 'placeOfDestination',  …  ...PARTIES.map(partySectionBuilder(request, journeyId, parties)),",
       "confidence": "verbatim"
     },
@@ -219,7 +204,7 @@
       "id": "repo-frontend-p14-027",
       "statement": "Each party's add link opens that party's own address picker page: place-of-origin/select, consignors/select, consignees/select, importers/select or destinations/select, carrying the trader's trail.",
       "kind": "behaviour",
-      "ref": "features/addresses/parties.js:16,22,30,38,46, features/addresses/controller.js:69,74",
+      "ref": "features/addresses/parties.js:11,18,25,32,39, features/addresses/controller.js:69,74",
       "quote": "slug: 'place-of-origin/select',  …  slug: 'consignors/select',  …  slug: 'consignees/select',  …  slug: 'importers/select',  …  slug: 'destinations/select',  …  const href = kit.carryTrail(request, pagePath(journeyId, party.slug))  …  add: { href, text: party.add },",
       "confidence": "verbatim",
       "note": "The picker pages themselves are part 15's."
@@ -228,36 +213,19 @@
       "id": "repo-frontend-p14-028",
       "statement": "Each party has its own 'Select a … from the list' error message: 'Select a place of origin from the list', 'Select a consignor from the list', 'Select a consignee from the list', 'Select an importer from the list' and 'Select a place of destination from the list'.",
       "kind": "copy",
-      "ref": "features/addresses/copy/copy.en.js:36,42,48,54,60, features/addresses/parties.js:18,26,34,42,50",
+      "ref": "features/addresses/copy/copy.en.js:36,42,48,54,60, features/addresses/parties.js:13,20,27,34,41",
       "quote": "error: 'Select a place of origin from the list'  …  error: 'Select a consignor from the list'  …  error: 'Select a consignee from the list'  …  error: 'Select an importer from the list'  …  error: 'Select a place of destination from the list'",
       "confidence": "verbatim",
-      "note": "The messages are defined with the parties but shown by the picker page, which is part 15's."
+      "note": "The messages are spread onto each party from its copy block but shown by the picker page, which is part 15's."
     },
     {
       "id": "repo-frontend-p14-029",
       "statement": "Each party is bound to an address-book role, and only records offered for that role can be chosen: PLACE_OF_ORIGIN, CONSIGNOR, CONSIGNEE, IMPORTER and PLACE_OF_DESTINATION.",
       "kind": "integration",
-      "ref": "features/addresses/parties.js:14,20,28,36,44, features/addresses/party-picker/selection.js:6-14, services/address-book/index.js:14-15",
+      "ref": "features/addresses/parties.js:10,17,24,31,38, features/addresses/address-return/controller.js:87-91",
       "quote": "addressBookRole: 'PLACE_OF_ORIGIN',  …  addressBookRole: 'CONSIGNOR',  …  addressBookRole: 'CONSIGNEE',  …  addressBookRole: 'IMPORTER',  …  addressBookRole: 'PLACE_OF_DESTINATION',  …  export const offeredForRole = (record, role) =>\n  !role || record.roles.length === 0 || record.roles.includes(role)",
       "confidence": "verbatim",
-      "note": "A record with no roles at all is offered for every role."
-    },
-    {
-      "id": "repo-frontend-p14-030",
-      "statement": "All five parties return the trader to the consignment addresses page once an address has been chosen or added.",
-      "kind": "behaviour",
-      "ref": "features/addresses/parties.js:17,23,31,39,47",
-      "quote": "returnSlug: 'addresses',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p14-031",
-      "statement": "The consignment's contact address is a sixth party of the same kind, bound to the address-book role BRANCH_ADDRESS and returning to the contact select page, but it is not one of the sections on the consignment addresses page.",
-      "kind": "behaviour",
-      "ref": "features/addresses/parties.js:54-62, features/addresses/controller.js:166",
-      "quote": "export const CONTACT_PARTY = {\n  id: 'contactAddress',\n  addressBookRole: 'BRANCH_ADDRESS',\n  slug: consignmentContactSelectPage.slug,\n  editSlug: 'consignment/contact/edit',\n  returnSlug: consignmentContactSelectPage.slug,",
-      "confidence": "verbatim",
-      "note": "It matters to this part because the address-book hand-off maps it like the other five; the contact page itself is another part's."
+      "note": "The role filter itself (party-picker/selection.js) is part 15's; the return hand-off passes the party's role to it."
     },
     {
       "id": "repo-frontend-p14-032",
@@ -437,40 +405,22 @@
       "note": "mechanism: reshapes a chosen address-book record into the party answer stored on the notification. The id of the record it came from is kept as pickedFromId."
     },
     {
-      "id": "repo-frontend-p14-053",
-      "statement": "A party's stored address keeps addressLine1, addressLine2, townOrCity, county, postcode and the ISO country code only — a third address line is not kept.",
-      "kind": "data",
-      "ref": "services/address-book/to-wire-address.js:7-14",
-      "quote": "export const toWireAddress = (address = {}) => ({\n  addressLine1: address.addressLine1,\n  addressLine2: address.addressLine2,\n  townOrCity: address.townOrCity,\n  county: address.county,\n  postcode: address.postcode,\n  countryCode: address.countryCode\n})",
-      "confidence": "verbatim",
-      "note": "mechanism: the wire shape of a party address. The inset on this page still reads addressLine3, so a third line would be shown if one were ever stored."
-    },
-    {
       "id": "repo-frontend-p14-054",
       "statement": "The country shown for a party is the address book's name for the stored ISO country code, falling back to the code itself when no name is known.",
       "kind": "behaviour",
-      "ref": "features/addresses/frozen-parties.js:20-38, services/countries/index.js:142-144",
-      "quote": "country: await addressBookCountryName(address.countryCode),  …  export const addressBookCountryName = async (code) =>\n  (await addressBookCountries()).find((option) => option.code === code)?.name ??\n  code",
+      "ref": "features/addresses/frozen-parties.js:8-26, services/countries/index.js",
+      "quote": "country: await addressBookCountryName(address.countryCode),",
       "confidence": "verbatim",
-      "note": "mechanism: turns one stored party answer into the display party the page renders, resolving the country code to a name and folding the party's phone and email into the address block."
-    },
-    {
-      "id": "repo-frontend-p14-055",
-      "statement": "The page builds its six possible party sections from the five consignment parties plus the contact address, and shows a section as chosen only for those whose stored answer has a name.",
-      "kind": "behaviour",
-      "ref": "features/addresses/frozen-parties.js:14-17,40-48",
-      "quote": "const JOURNEY_PARTY_IDS = [\n  ...PARTIES.map((party) => party.id),\n  CONTACT_PARTY.id\n]  …  export const partiesFromStoredAnswers = async (answers = {}) => {\n  const entries = await Promise.all(\n    JOURNEY_PARTY_IDS.map(async (partyId) => [\n      partyId,\n      await toDisplayParty(answers[partyId])\n    ])\n  )\n  return Object.fromEntries(entries)\n}",
-      "confidence": "verbatim",
-      "note": "mechanism: reads every party answer at once so the page can show each party and decide which same-as controls apply. The contact address is in the map but has no section on this page."
+      "note": "mechanism: turns one stored party answer into the display party the page renders, resolving the country code to a name and folding the party's phone and email into the address block. The fallback to the code itself lives in services/countries, outside this part's read."
     },
     {
       "id": "repo-frontend-p14-056",
       "statement": "The scope expects parties that are frozen and cannot be changed; the page has no such notion — every party with an address offers Change, and nothing marks a party as locked.",
       "kind": "behaviour",
-      "ref": "features/addresses/frozen-parties.js:1-48, features/addresses/controller.js:67-88, features/addresses/template.njk:30-48",
+      "ref": "features/addresses/frozen-parties.js:1-36, features/addresses/controller.js:67-88, features/addresses/template.njk:30-48",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked through the whole addresses feature for a locked, frozen or read-only party. The file named frozen-parties.js is about the party answer being a frozen copy of the address-book record (claims repo-frontend-p14-052 and repo-frontend-p14-055), not about a party a trader may not change. The repo's only other use of the word is the permanent-address and check-answers features, which are other parts'."
+      "note": "Looked through the whole addresses feature for a locked, frozen or read-only party. The file named frozen-parties.js is about the party answer being a frozen copy of the address-book record (claims repo-frontend-p14-052 and repo-frontend-p14-107), not about a party a trader may not change."
     },
     {
       "id": "repo-frontend-p14-057",
@@ -658,21 +608,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p14-079",
-      "statement": "The fulfilment id the hand-off sends is the identifier of the answer the party fills: 89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c for the place of origin, 9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d for the consignor, abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e for the consignee, bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f for the importer, cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60 for the place of destination and f037e8f9-a0b1-4c26-8d72-fe5f60718293 for the consignment's contact address.",
-      "kind": "integration",
-      "ref": "features/addresses/party-for-fulfilment-id.js:5-34, features/addresses/evaluation.js:13-22, features/contact/evaluation.js:7-9, obligations/sections/parties.js:6-34, obligations/sections/misc.js:5-9",
-      "quote": "const nonIndexedFulfilmentId = binding.obligation.id\n      map.set(nonIndexedFulfilmentId, party)  …  export const consignor = {\n  id: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',  …  export const contactAddress = {\n  id: 'f037e8f9-a0b1-4c26-8d72-fe5f60718293',",
-      "confidence": "verbatim",
-      "note": "mechanism: builds the two-way map between a party and the fulfilment id the address book is handed, over the addresses and contact fulfilment bindings. The ids are the obligation ids, not identifiers invented for the hand-off."
-    },
-    {
       "id": "repo-frontend-p14-080",
       "statement": "Only a single-valued answer can take part in the address-book hand-off: a party bound to a repeating answer is refused outright with 'Party fulfilment mapping only supports scalar bindings'.",
       "kind": "constraint",
-      "ref": "features/addresses/assert-party-bindings.js:8-18",
-      "quote": "export const assertPartyBindingsAreScalar = () => {\n  for (const binding of [\n    ...addressesBindings.bindings,\n    ...contactBindings.bindings\n  ]) {\n    if (binding.kind !== 'scalar') {\n      throw new Error(\n        `Party fulfilment mapping only supports scalar bindings; ${binding.field} is ${binding.kind}`\n      )\n    }\n  }\n}",
-      "confidence": "verbatim"
+      "ref": "features/addresses/assert-party-bindings.js:7-15",
+      "quote": "export const assertPartyBindingsAreScalar = () => {\n  for (const binding of addressesBindings.bindings) {\n    if (binding.kind !== 'scalar') {\n      throw new Error(\n        `Party fulfilment mapping only supports scalar bindings; ${binding.field} is ${binding.kind}`\n      )\n    }\n  }\n}",
+      "confidence": "verbatim",
+      "note": "It checks the addresses feature's five bindings only."
     },
     {
       "id": "repo-frontend-p14-081",
@@ -767,10 +709,10 @@
     },
     {
       "id": "repo-frontend-p14-092",
-      "statement": "An address returned as a selection is read back from the address book, copied onto the party as its answer, and the trader is taken to that party's return page — the Consignment addresses page for all five consignment parties — with the added-address banner naming it.",
+      "statement": "An address returned as a selection is read back from the address book, copied onto the party as its answer, and the trader is taken to the Consignment addresses page with the added-address banner naming it.",
       "kind": "behaviour",
-      "ref": "features/addresses/address-return/controller.js:112-144,202-205, features/addresses/parties.js:17",
-      "quote": "const saveAddressAndLandOnReturnPageWithBanner = async (\n  request,\n  h,\n  { journeyId, party, addressId, landing, chosen }\n) => {  …  setAddedAddressBanner(h, chosen.name)\n  logLanding(request, { journeyId, partyId: party.id, landing, addressId })\n  return h.redirect(pagePath(journeyId, party.returnSlug))\n}",
+      "ref": "features/addresses/address-return/controller.js:112-144,202-205",
+      "quote": "const saveAddressAndLandOnAddressesPageWithBanner = async (\n  request,\n  h,\n  { journeyId, party, addressId, landing, chosen }\n) => {  …  setAddedAddressBanner(h, chosen.name)\n  logLanding(request, { journeyId, partyId: party.id, landing, addressId })\n  return h.redirect(pagePath(journeyId, addressesPage.slug))\n}",
       "confidence": "verbatim"
     },
     {
@@ -790,14 +732,6 @@
       "quote": "const chosen = await chosenPartyFor(\n      organisationIdOf(request),\n      addressId,\n      party.addressBookRole\n    )  …  export const organisationIdOf = (request) =>\n  sessionOrganisationId(request?.auth?.credentials)",
       "confidence": "verbatim",
       "note": "Security: the address id comes from the query, so the organisation scope on the read is what keeps the lookup to the trader's own address book."
-    },
-    {
-      "id": "repo-frontend-p14-095",
-      "statement": "An address that has been deleted, or that is not offered for the party's address-book role, is treated as though it had never been chosen.",
-      "kind": "rule",
-      "ref": "features/addresses/party-picker/selection.js:4-14",
-      "quote": "/** A picker selection, looked up in the book. A missing, soft-deleted or\n * wrong-role record is treated as no selection (UCD — never entered). */\nexport const chosenPartyFor = async (orgId, selectedId, role) => {\n  if (!selectedId) {\n    return undefined\n  }\n  const record = await addressBook.party(orgId, selectedId)\n  return record && !record.deleted && addressBook.offeredForRole(record, role)\n    ? record\n    : undefined\n}",
-      "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p14-096",
@@ -845,10 +779,10 @@
       "id": "repo-frontend-p14-101",
       "statement": "A return from the address book does not carry the trader's trail, so the Back link on the Consignment addresses page they land on falls back to the notification overview.",
       "kind": "behaviour",
-      "ref": "features/addresses/address-return/controller.js:143,153,179,191, shared/trail.js:197-205",
-      "quote": "return h.redirect(pagePath(journeyId, party.returnSlug))",
+      "ref": "features/addresses/address-return/controller.js:143,153,179,191,199, features/addresses/controller.js:193",
+      "quote": "return h.redirect(pagePath(journeyId, addressesPage.slug))",
       "confidence": "inferred",
-      "note": "Follows because every redirect in the return handler builds a plain page path with no trail, and trailBackLink falls back to the overview when a request carries no trail."
+      "note": "Follows because every redirect in the return handler builds a plain page path with no trail, and the page's Back link is kit.trailBackLink, which falls back to the overview when a request carries no trail (claim repo-frontend-p14-010)."
     },
     {
       "id": "repo-frontend-p14-102",
@@ -858,15 +792,6 @@
       "quote": "",
       "confidence": "gap",
       "note": "Looked at the four query parameters the add-address hand-off sends, the url helper it uses, and the whole return handler. The helpers that build view-an-address URLs take an explicit `return` path, but the add-address hand-off sends no return path — the address book must derive the address-return URL from journey-type and notification-id itself."
-    },
-    {
-      "id": "repo-frontend-p14-103",
-      "statement": "The address a party section shows can also be rendered as a single comma-separated line, either ending at the country or stopping at the postcode.",
-      "kind": "behaviour",
-      "ref": "features/addresses/address-summary.js:1-21",
-      "quote": "const ADDRESS_PARTS_TO_POSTCODE = [\n  'addressLine1',\n  'addressLine2',\n  'addressLine3',\n  'townOrCity',\n  'county',\n  'postcode'\n]\nconst ADDRESS_LINE_PARTS = [...ADDRESS_PARTS_TO_POSTCODE, 'country']  …  export const addressSummary = (address = {}) =>\n  lineOf(address, ADDRESS_LINE_PARTS)\n\nexport const addressSummaryEndingAtPostcode = (address = {}) =>\n  lineOf(address, ADDRESS_PARTS_TO_POSTCODE)",
-      "confidence": "verbatim",
-      "note": "mechanism: summarises one address into a single line, dropping empty parts. Defined with the addresses feature but used by the transporters list (full line including country) and the contact address page (line ending at the postcode), both other parts'."
     },
     {
       "id": "repo-frontend-p14-104",
@@ -894,6 +819,77 @@
       "quote": "",
       "confidence": "gap",
       "note": "Looked for a validate.js in the addresses feature folder (there is none), for any error-summary or field-error block in the template (there is none), and for any check before the redirect in the page's POST handler (there is none beyond the same-as refusals). The mandatory parties are enforced elsewhere — the task-row status and the check-your-answers refusal, both other parts'."
+    },
+    {
+      "id": "repo-frontend-p15-057",
+      "statement": "Add a new address sends the trader to the INS address book's add page, carrying the journey type gbn-ag, the notification id, the fulfilment id of the party being filled and a one-off handshake token.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js:77-92, party-picker.controller.js:132-134",
+      "quote": "return insAddAddressUrl({\n    'journey-type': JOURNEY_TYPE,\n    'notification-id': notificationId,\n    'fulfilment-id': fulfilmentId,\n    'handshake-token': token\n  })",
+      "confidence": "verbatim",
+      "note": "ins-handshake.js belongs to part 14's read; claimed here because the picker is where the control is offered."
+    },
+    {
+      "id": "repo-frontend-p15-077",
+      "statement": "The picker's maturity banner is the addresses feature's, which is set to 'detailing'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses/page.js:1-5, party-picker.controller.js:238",
+      "quote": "export const addressesPage = {\n  id: 'addresses',\n  slug: 'addresses',\n  maturity: 'detailing'\n}",
+      "confidence": "verbatim",
+      "note": "So neither the picker nor the edit page is a signed-off page."
+    },
+    {
+      "id": "repo-frontend-p14-107",
+      "statement": "The page reads the stored answers of the five consignment parties at once, and treats a party as chosen only when its stored answer has a name.",
+      "kind": "behaviour",
+      "ref": "features/addresses/frozen-parties.js:5,8-11,28-36",
+      "quote": "const JOURNEY_PARTY_IDS = PARTIES.map((party) => party.id)  …  if (!isPartyHeld(party)) {\n    return undefined\n  }  …  export const partiesFromStoredAnswers = async (answers = {}) => {\n  const entries = await Promise.all(\n    JOURNEY_PARTY_IDS.map(async (partyId) => [\n      partyId,\n      await toDisplayParty(answers[partyId])\n    ])\n  )\n  return Object.fromEntries(entries)\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: reads every party answer so the page can show each party and decide which same-as controls apply. The map holds the five consignment parties only; the consignment contact address is not one of them."
+    },
+    {
+      "id": "repo-frontend-p14-108",
+      "statement": "The fulfilment id the hand-off sends for a party is the id of the obligation that party's answer fills: 89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c for the place of origin, 9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d for the consignor, abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e for the consignee, bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f for the importer and cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60 for the place of destination.",
+      "kind": "integration",
+      "ref": "features/addresses/party-for-fulfilment-id.js:4-30, features/addresses/evaluation.js:13-22",
+      "quote": "for (const binding of addressesBindings.bindings) {\n    const party = partyOf(binding.field)\n    if (party) {\n      const nonIndexedFulfilmentId = binding.obligation.id\n      map.set(nonIndexedFulfilmentId, party)\n    }\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: builds the two-way map between a party and the fulfilment id the address book is handed, over the addresses feature's five bindings. The id values are the obligation ids in obligations/sections/parties.js, outside this part's read, carried forward from the earlier extract's reading of that file."
+    },
+    {
+      "id": "repo-frontend-p14-109",
+      "statement": "Only the five consignment parties can take part in the address-book hand-off: a return naming any other fulfilment id, the consignment contact address's included, is refused as 'Unknown fulfilment'.",
+      "kind": "rule",
+      "ref": "features/addresses/party-for-fulfilment-id.js:7-13,20-21, features/addresses/address-return/controller.js:165-173",
+      "quote": "for (const binding of addressesBindings.bindings) {  …  export const partyForFulfilmentId = (fulfilmentId) =>\n  partyFulfilmentMap.get(fulfilmentId)  …  if (!party) {\n    throw logAndRefuse(\n      request,\n      returned,\n      'unknown-fulfilment',\n      'Unknown fulfilment'\n    )\n  }",
+      "confidence": "inferred",
+      "note": "Follows because the fulfilment map is built from the addresses feature's bindings alone and the party list holds no contact party. Whether the contact page offers a hand-off of its own is another part's."
+    },
+    {
+      "id": "repo-frontend-p14-110",
+      "statement": "An address can be summarised into one comma-separated line of its address lines, town or city, county, postcode and country, with any empty part left out.",
+      "kind": "behaviour",
+      "ref": "features/addresses/address-summary.js:1-14",
+      "quote": "const ADDRESS_LINE_PARTS = [\n  'addressLine1',\n  'addressLine2',\n  'addressLine3',\n  'townOrCity',\n  'county',\n  'postcode',\n  'country'\n]\n\nexport const addressSummary = (address = {}) =>\n  ADDRESS_LINE_PARTS.map((part) => address[part])\n    .filter(Boolean)\n    .join(', ')",
+      "confidence": "verbatim",
+      "note": "mechanism: summarises one address into a single line. Defined in the addresses feature but not used by the addresses page or the return; its callers are other parts'. There is no longer a variant that stops at the postcode."
+    },
+    {
+      "id": "repo-frontend-p14-111",
+      "statement": "A party's picker shows a handshake message only for the error codes 'not-found' and 'unavailable'; any other code shows no message.",
+      "kind": "rule",
+      "ref": "features/addresses/ins-handshake.js:23-31",
+      "quote": "export const handshakeErrorMessage = (handshakeErrors, code) => {\n  if (code === 'not-found') {\n    return handshakeErrors.notFound\n  }\n  if (code === 'unavailable') {\n    return handshakeErrors.unavailable\n  }\n  return undefined\n}",
+      "confidence": "verbatim",
+      "note": "The picker that calls this is part 15's."
+    },
+    {
+      "id": "repo-frontend-p14-112",
+      "statement": "The address-return route is registered with the addresses page's own route options, so it is reachable under the same conditions as the Consignment addresses page.",
+      "kind": "constraint",
+      "ref": "features/addresses/address-return/controller.js:208-215",
+      "quote": "options: pageRouteOptions(addressesPage),",
+      "confidence": "verbatim"
     }
   ]
 }

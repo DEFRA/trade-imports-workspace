@@ -1,0 +1,58 @@
+{
+  "source": "repo:stub",
+  "structure": "repos/trade-imports-stub is a small Java / Spring Boot service that stands in for third-party integrations on the local stack, in the fit suites and in CDP perf runs. About 100 files: src/main/java/uk/gov/defra/trade/imports holds stubs/federated (an address lookup simulator plus Entra and STS token simulators for the EUDPA-390 address lookup spike, about 500 lines), stubs/mdm (CountriesController and PortsOfEntryController with their MdmCountry, MdmBlock, MdmSubDivision, MdmCodedValue, MdmPortsResponse and MdmPortOfEntry records, about 180 lines), stubs/trade (the Trade Platform OAuth token stub), utils/FileUtils, and cross-cutting latency, faults, filter, configuration, tls, metrics and exception packages. src/main/resources/responses holds the two MDM fixtures: countriesResponse.json (772 lines) and portsOfEntryResponse.json (82 lines, 78 ports). application.yml (152 lines) configures the address lookup simulator's audience and the MDM latency profile. Tests mirror the main tree (AddressLookupSimulatorControllerTest 194 lines, FileUtilsTest 77 lines). There is no rulings ledger. The scope takes in only the address lookup simulator (the searches it answers, the addresses it returns and their postcodes, and the bearer check that gates them) and the MDM countries and ports stubs (what they return, their fields and how the blocks parameter is handled). It leaves out the Entra and STS simulators' token issuing, the trade token stub, the latency profiles and fault injection (perf-test tooling, not look and feel), and the Mongo, AWS, TLS, metrics, logging and CI configuration. The scoped code is about 1,600 lines in two independent features, cut into two parts along that seam.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Address lookup simulator",
+      "scope": "The simulated DEFRA address lookup gateway the INS backend calls: GET /simulator/address-lookup/v2.1/addresses, its bearer check, its reserved postcode and free-text fixtures and its responses, with the application.yml block that sets its expected audience. Stops at the Entra and STS simulators (token issuing only, out of scope) and at the MDM stubs (part 2).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java",
+        "src/test/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorControllerTest.java",
+        "src/main/resources/application.yml (the EUDPA-390 address lookup simulator block, from the comment at line 106 to the address-lookup-simulator settings at about line 120)",
+        "README.md",
+        "~/git/defra/trade-imports-workspace/docs/repos/trade-imports-stub.md (the address lookup simulator, if it names it)"
+      ],
+      "covers": [
+        "The endpoint path and its two query parameters, postcode and find, and that postcode wins when both are sent",
+        "The 400 answer when neither is sent, with its message verbatim",
+        "Every reserved term and what it returns: SW1A 1AA (three addresses), ZZ1 1ZZ (204 no content), QQ1 1QQ (400 'Requested postcode is not valid'), XX1 1XX (503), YY1 1YY (HTML bad gateway body), TT1 1TT (15-second delay then three addresses), 'Buckingham Palace' and 'Downing Street' (three addresses), and every other term (no results)",
+        "Each of the three fixture addresses field by field: addressLine, subBuildingName, buildingName, buildingNumber, street, town, postcode, country, uprn, match, matchDescription, language; and the header totalResults, as strings and in upper case",
+        "The recorded reason the fixtures follow the real dev response of 2026-09-17 rather than the published v2.1 specification, and that find matching is deliberately not modelled",
+        "The bearer check in general terms (scheme, signature, audience, expiry) and the 401 body verbatim, without describing how to get past it",
+        "Every test in AddressLookupSimulatorControllerTest that proves one of the behaviours above"
+      ],
+      "prefix": "repo-stub-p1"
+    },
+    {
+      "part": 2,
+      "title": "MDM countries and ports stubs",
+      "scope": "The MDM stubs reference-data calls: GET /mdm/geo/countries and GET /mdm/trade/bcp/poes, their records, the two response fixtures they serve, FileUtils that loads them and FileUtilsTest, and the MDM latency block in application.yml only for the paths it names. Stops at latency profiles and fault injection themselves (out of scope) and at the address lookup simulator (part 1).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/CountriesController.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/MdmCountry.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/MdmBlock.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/MdmSubDivision.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries/MdmCodedValue.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/MdmPortsResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/MdmPortOfEntry.java",
+        "src/main/java/uk/gov/defra/trade/imports/utils/FileUtils.java",
+        "src/test/java/uk/gov/defra/trade/imports/utils/FileUtilsTest.java",
+        "src/main/resources/responses/countriesResponse.json",
+        "src/main/resources/responses/portsOfEntryResponse.json",
+        "src/main/resources/application.yml (the mdm integration block, lines 139 to 152, for the paths it lists)",
+        "README.md (the MDM rows of its integration tables)"
+      ],
+      "covers": [
+        "The countries endpoint: path, the required Ocp-Apim-Subscription-Key header, the system and blocks parameters and what the stub does with each (including whether blocks filters anything), and the response header it sets",
+        "The countries fixture: every country in countriesResponse.json, with each record's fields (as MdmCountry, MdmBlock, MdmSubDivision and MdmCodedValue define them), the blocks each country belongs to and any subdivisions, counted and named",
+        "The ports endpoint: path, headers and parameters it reads, and the response wrapper (MdmPortsResponse)",
+        "The ports fixture: all 78 ports in portsOfEntryResponse.json with id, code and name, counted, and the order they come in",
+        "What FileUtils does when it loads a fixture, and every test in FileUtilsTest with what it asserts about the two fixtures",
+        "Any gap between what the fixtures hold and what the live-animals or germinal products journeys need from countries or ports (such as missing fields or a missing traffic type), recorded as a gap with where you looked"
+      ],
+      "prefix": "repo-stub-p2"
+    }
+  ]
+}

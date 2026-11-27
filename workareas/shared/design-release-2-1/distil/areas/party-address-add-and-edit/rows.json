@@ -1,55 +1,65 @@
 {
   "area": "party-address-add-and-edit",
-  "rows": [],
+  "rows": [
+    {
+      "title": "Find an address by postcode before the address form, in the consignee, importer and place of destination sections",
+      "detail": "Adding a consignee, importer or place of destination address from a notification starts with a postcode step: the trader enters a UK postcode, picks the address from those found, or is told none were found, and either way can enter the address by hand. The ways out of each step, the errors on each step and the Back links between the steps are what this area adds to the find-address row. Address search is parked until it is planned again and the INS backend's address lookup is a real feature, so this row waits.",
+      "acceptanceCriteria": [
+        "The postcode step reached from the consignee, importer or place of destination picker has a Back link that opens that picker and a 'Cancel and return to hub' link that opens the notification's hub. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-046, -p7-047; prototype:dr2-1-specs prototype-dr2-1-specs-p4-070, -p4-071, -p4-088, -p4-090)",
+        "Pressing 'Find address' with a postcode that is not a full UK postcode, such as 'M1', shows the error 'Enter a full UK postcode, like BB4 4AA', and the postcode field still holds 'M1'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-050; prototype:dr2-1-specs prototype-dr2-1-specs-p4-073)",
+        "A full postcode with no addresses opens a page titled 'No addresses found' and headed 'No addresses found for <postcode>', showing 'Postcode' with the postcode and a 'Change postcode' link, then an 'Enter address manually' link and a 'Cancel and return to hub' link, and no button. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-052, -p7-053, -p7-055; prototype:dr2-1-specs prototype-dr2-1-specs-p4-074, -p4-075)",
+        "Pressing 'Continue' on the 'Select an address' page without choosing an address shows the error 'Select an address' in a 'There is a problem' summary linked to the select, and the browser title starts 'Error: '. (prototype:dr2-1-source prototype-dr2-1-source-p8-180; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-059; prototype:dr2-1-specs prototype-dr2-1-specs-p4-078)",
+        "The 'Select an address' and 'No addresses found' pages have a Back link that opens the postcode step with the postcode searched for filled in, and their 'Change postcode' link opens the postcode step with that postcode filled in. (prototype:dr2-1-source prototype-dr2-1-source-p8-181; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-053, -p7-054; prototype:dr2-1-specs prototype-dr2-1-specs-p4-075)",
+        "The consignee, importer and place of destination add-address form reached from the postcode step, by a found address or by 'Enter address manually', has a Back link that opens that role's postcode step. (prototype:dr2-1-source prototype-dr2-1-source-p8-167; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-065; prototype:dr2-1-specs prototype-dr2-1-specs-p4-083)"
+      ],
+      "requirements": ["req-2725", "req-2726", "req-2727", "req-2728", "req-2729", "req-2730"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-167, -p8-180, -p8-181" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p7-046, -p7-047, -p7-050, -p7-052 to -p7-055, -p7-059, -p7-065" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-070, -p4-071, -p4-073 to -p4-075, -p4-078, -p4-083, -p4-088, -p4-090" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-178" },
+        { "source": "ruling:sam-2026-11-09", "ref": "ruling-sam-2026-11-09-p1-002" }
+      ],
+      "repos": ["stub", "insbackend", "insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: address search is parked as concept work the deadline does not need (ruling:sam-2026-11-09 points 2 and 3), and it waits on the INS backend's address lookup becoming a real feature; today only a spike exists, gated to dev and local and not wired in. Who: Sam must plan address search again, and the INS backend's owners must make the lookup real; the address search area is then re-distilled and this row rewritten to it."
+      ],
+      "notes": "Combiner: merge into the existing blocked row inc-282 and keep its id, theme, repos and touches. One slice: the postcode step's ways out, errors and Back links for the three party sections (req-2725 to req-2730), which share the find-address pages, set-up and blocker with the address-lookup area's requirements already in inc-282. Every requirement here carries the same parking blocker, so the row stays blocked with no default to build. Its code falls in the split-off address-book theme (the INS add page's Back link, the address-lookup service) and consignment-parties theme (the party picker's add link), but it is kept here rather than handed to those branches' pickUp, as inc-282 already decided: neither branch can build it until the parking lifts. The criteria name what the user sees on the local and CI stacks (the stub's lookup through the INS backend) and in CDP alike, because the row only builds once the lookup is real in every environment.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-lookup-spike",
+        "insfrontend:src/server/app/services/address-lookup",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated",
+        "tests:tests/ins/e2e/features/address-lookup"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker"
+      ],
+      "existingRow": "inc-282"
+    },
+    {
+      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements, in the address book and the commercial transporter form",
+      "detail": "Carried unchanged. The postcode lookup's 'Enter address manually' link at every step, the uses checkboxes shown only on the add-address form, and the empty-postcode error already sit in this deferred row.",
+      "acceptanceCriteria": [],
+      "requirements": ["req-652", "req-653", "req-654"],
+      "sources": [
+        { "source": "ruling:sam-2026-11-09", "ref": "ruling-sam-2026-11-09-p1-002" }
+      ],
+      "repos": ["insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "deferred",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combiner: inc-194 is deferred, so keep it exactly as it is in backlog.json, every field unchanged. This draft only records that req-652, req-653 and req-654 already sit there, so no other row may take them. They now also carry the address-search parking blocker, which the deferral already reflects.",
+      "touches": [],
+      "shared": [],
+      "existingRow": "inc-194"
+    }
+  ],
   "unobservable": [],
-  "splitOff": [
-    {
-      "requirement": "req-631",
-      "theme": "address-book",
-      "why": "It changes the journey's address-return route and the handshake token it checks, which live in frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return and frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js, and is proven by tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts. All three are touches of the address-book theme, which already holds the rest of the add handshake and return set (req-634 to req-640, req-643, req-646). The refusals it asks for (missing, reused or mismatched token, and an address id looked up outside the signed-in organisation's own book) cannot be built without changing that theme's code."
-    },
-    {
-      "requirement": "req-682",
-      "theme": "consignment-parties",
-      "why": "The party edit page's heading, browser title and journey strip are already built; the only delta the requirement records is the consignor's caption, which comes from the shared party title copy in frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy and is proven by frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js. Both are touches of the consignment-parties theme, which owns the party roles and their titles. The plants party edit page already captions with the party's own title, so nothing is left in party-edit itself."
-    }
-  ],
-  "alreadyCovered": [
-    {
-      "requirement": "req-649",
-      "existingRow": "inc-194",
-      "status": "deferred",
-      "theme": "waiting-on-design",
-      "why": "The existing deferred row for the parked address search already covers it. A deferred row covers its requirements, and a row built or set aside may not be rewritten, so no new row is drafted and it is not handed to a split-off branch."
-    },
-    {
-      "requirement": "req-652",
-      "existingRow": "inc-194",
-      "status": "deferred",
-      "theme": "waiting-on-design",
-      "why": "Covered by the same deferred address-search row."
-    },
-    {
-      "requirement": "req-653",
-      "existingRow": "inc-194",
-      "status": "deferred",
-      "theme": "waiting-on-design",
-      "why": "Covered by the same deferred address-search row."
-    },
-    {
-      "requirement": "req-654",
-      "existingRow": "inc-194",
-      "status": "deferred",
-      "theme": "waiting-on-design",
-      "why": "Covered by the same deferred address-search row."
-    },
-    {
-      "requirement": "req-1957",
-      "existingRow": "inc-194",
-      "status": "deferred",
-      "theme": "waiting-on-design",
-      "why": "Covered by the same deferred address-search row."
-    }
-  ],
-  "notes": "The area holds 79 requirements. Every one about the copied address a notification holds (copy semantics, the party edit page's fields, rules and messages, rule-breaking copies blocking submit, and the copy frozen after submission: req-679, req-681, req-683 to req-698) is adopted as already met, so none takes a row. req-629, req-1961 and req-1962 are out of scope. Thirteen adopted new or change requirements in the area are already held by themes split off early (req-643, req-646, req-647, req-648, req-650, req-651, req-660, req-664, req-670, req-678, req-1958 and req-2186 by address-book, req-680 by overview-and-review, req-1831 by consignment-parties), so they are left out of the area's work. What was left to build is the two requirements in splitOff, whose code a split-off theme owns, and the five the existing deferred address-search row already covers. The area therefore drafts no row."
+  "splitOff": []
 }

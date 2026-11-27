@@ -169,7 +169,7 @@ test.describe('what are you importing', () => {
     await expect(page).toHaveTitle('What are you importing? - Import notification service - GOV.UK')
     await expectHeading(page, 'What are you importing?')
     const main = page.locator('main')
-    await expect(main).toContainText('You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.')
+    await expect(main).toContainText('You must submit a separate notification for every single health certificate. You must also submit a notification for goods that do not need an health certificate.')
     await expect(page.getByLabel('Search for a commodity')).toBeVisible()
     await expect(main).toContainText('You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).')
     await expect(page.locator('button[name="action"]')).toHaveText(['Save and continue', 'Save and return to overview'])
@@ -198,8 +198,10 @@ test.describe('what are you importing', () => {
     await input.click()
     await input.pressSequentially('cattle', { delay: 30 })
     await expect(page.locator('main')).toContainText('Cattle (0102)')
-    await expect(page.locator('main')).toContainText('11 results available')
-    await expect(page.locator('label[for="commodity-species-cattle-bos-taurus"]')).toContainText('Bos taurus')
+    await expect(page.locator('main')).toContainText('16 results available')
+    await expect(page.locator('label[for="commodity-species-cattle-bos-taurus"]')).toHaveText('Domestic cattle (Bos taurus)')
+    await expect(page.locator('label[for="commodity-species-cattle-bison-bison"]')).toHaveText('Bison bison (Bison bison)')
+    await expect(page.locator('main')).toContainText('Cattle, antelopes, sheep and goats (Bovidae)')
     await capture(page, testInfo, 'search-results')
 
     await page.locator('#commodity-species-cattle-bos-taurus').check()
@@ -207,7 +209,7 @@ test.describe('what are you importing', () => {
     const selected = page.locator('#commodity-search-selected')
     await expect(selected).toContainText('1 selected')
     await expect(selected).toContainText('Cattle (0102):')
-    await expect(selected).toContainText('Bos taurus')
+    await expect(selected).toContainText('Domestic cattle (Bos taurus)')
     await expect(selected.getByRole('button', { name: 'Clear all' })).toBeVisible()
     await capture(page, testInfo, 'one-selected')
   })
@@ -320,32 +322,119 @@ test.describe('main import reason', () => {
   })
 })
 
+const GERMINAL_REASON_HINTS = {
+  'Internal market': 'For consignments intended for sale or use in Great Britain (England, Scotland or Wales).',
+  Transit: 'For consignments moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.'
+}
+
+const GERMINAL_PURPOSE_HINTS = {
+  'Transfer of ownership - Sale/gift': 'Any movement of a consignment that has as its aim the sale of or the transfer of ownership of the consignment from one person or entity to another.',
+  Breeding: 'Consignments for reproduction. This includes animals and germinal products intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.',
+  Research: 'Animals and germinal products for use in scientific or medical research.',
+  Production: 'Animals and germinal products that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.'
+}
+
+const GERMINAL_SEMEN_RESULTS = [
+  'Cat, Semen (05119985)', 'Cattle, Semen (05111000)', 'Dog, Semen (05119985)', 'Goat, Semen (05119985)',
+  'Horse, Semen (05119985)', 'Pig, Semen (05119985)', 'Rabbit/Rodent, Semen (05119985)', 'Sheep, Semen (05119985)'
+]
+
 test.describe('germinal products: section 1', () => {
-  test('category start, germinal search hint and the reduced list of reasons', async ({ page }, testInfo) => {
-    await page.goto(url('/create-notification?category=germinal-products'))
+  test('create new on the germinal products dashboard goes straight to origin, labelled as germinal products', async ({ page }, testInfo) => {
+    await page.goto(url('/germinal-products'))
+    await page.locator('main').getByRole('button', { name: 'Create new' }).click()
     await expect(page).toHaveURL(urlFor('/origin-of-the-import'))
     await expectBackLink(page, url('/germinal-products'))
-    await answerOrigin(page, { search: 'Neth', country: 'Netherlands' })
+    await expect(page.locator('.app-dr2-notification-status')).toHaveText(/Draft\s+Germinal products - GBN-AG-26-[A-Z0-9]+/)
+    await expectHeading(page, 'Origin of the import')
+    await capture(page, testInfo, 'germinal')
+  })
 
-    await test.step('germinal commodity search', async () => {
-      await expect(page.locator('main')).toContainText('You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).')
+  test('germinal commodity search: semen, ova and embryos with common and Latin names', async ({ page }, testInfo) => {
+    await page.goto(url('/create-notification?category=germinal-products'))
+    await answerOrigin(page, { search: 'Neth', country: 'Netherlands' })
+    await expect(page).toHaveURL(urlFor('/what-are-you-importing'))
+    const main = page.locator('main')
+    await expect(main).toContainText('You must submit a separate notification for every single health certificate. You must also submit a notification for goods that do not need an health certificate.')
+    await expect(main).toContainText('You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).')
+    await capture(page, testInfo, 'germinal')
+
+    await test.step('nothing selected is an error', async () => {
+      await saveAndContinue(page)
+      await expectErrorSummary(page, ['Select a commodity'])
+      await capture(page, testInfo, 'germinal-error')
+    })
+
+    await test.step('searching for semen lists every semen commodity and its species', async () => {
       const input = page.locator('#commodity-search')
       await input.click()
       await input.pressSequentially('semen', { delay: 30 })
-      await expect(page.locator('main')).toContainText('Cattle, Semen (05111000)')
+      await expect(main).toContainText('12 results available')
+      for (const result of GERMINAL_SEMEN_RESULTS) await expect(main).toContainText(result)
+      await expect(page.locator(`label[for="commodity-species-${SPECIES.cattleSemen.id}"]`)).toHaveText('Domestic cattle (Bos taurus)')
+      await expect(page.locator('label[for="commodity-species-cattle-semen-bubalus-bubalis"]')).toHaveText('Water buffalo (Bubalus bubalis)')
       await capture(page, testInfo, 'germinal-search-results')
-      await input.press('Escape')
-      await answerCommodity(page, SPECIES.cattleSemen)
     })
 
-    await test.step('only internal market and transit are offered', async () => {
+    await test.step('searching for embryos lists the embryos and ova commodities', async () => {
+      const input = page.locator('#commodity-search')
+      await input.fill('')
+      await input.pressSequentially('embryo', { delay: 30 })
+      for (const result of ['Cat, Embryos/Ova (05119985)', 'Cattle, Embryos/Ova (05119985)', 'Horse, Embryos/Ova (05119985)', 'Pig, Embryos/Ova (05119985)', 'Sheep, Embryos/Ova (05119985)']) {
+        await expect(main).toContainText(result)
+      }
+      await capture(page, testInfo, 'germinal-search-embryos')
+    })
+
+    await test.step('a picked species is listed with its commodity', async () => {
+      await chooseSpecies(page, SPECIES.cattleSemen.search, SPECIES.cattleSemen.id)
+      const selected = page.locator('#commodity-search-selected')
+      await expect(selected).toContainText('1 selected')
+      await expect(selected).toContainText('Cattle, Semen (05111000):')
+      await expect(selected.getByRole('button', { name: 'Remove Domestic cattle (Bos taurus)' })).toBeVisible()
+      await capture(page, testInfo, 'germinal-one-selected')
+      await saveAndContinue(page)
       await expect(page).toHaveURL(urlFor('/reason-for-import'))
-      await expect(page.locator('input[name="importReason"] + label')).toHaveText(['Internal market', 'Transit'])
-      await page.locator('input[name="importReason"][value="Internal market"]').check()
-      await expect(page.locator('input[name="internalMarketPurpose"] + label')).toHaveText([
-        'Transfer of ownership - Sale/gift', 'Breeding', 'Research', 'Production'
-      ])
+    })
+  })
+
+  test('germinal reasons: internal market and transit only, with consignment wording', async ({ page }, testInfo) => {
+    await page.goto(url('/create-notification?category=germinal-products'))
+    await answerOrigin(page, { search: 'Neth', country: 'Netherlands' })
+    await answerCommodity(page, SPECIES.cattleSemen)
+    await expect(page).toHaveURL(urlFor('/reason-for-import'))
+    const main = page.locator('main')
+
+    await test.step('two reasons, each with its germinal hint', async () => {
+      await expectHeading(page, 'Main import reason')
+      await expect(page.locator('input[name="importReason"] + label')).toHaveText(Object.keys(GERMINAL_REASON_HINTS))
+      for (const hint of Object.values(GERMINAL_REASON_HINTS)) await expect(main).toContainText(hint)
+      await expectBackLink(page, url('/what-are-you-importing'))
       await capture(page, testInfo, 'germinal')
+    })
+
+    await test.step('internal market offers four purposes with germinal hints, and needs one', async () => {
+      await page.locator('input[name="importReason"][value="Internal market"]').check()
+      await expect(page.locator('input[name="internalMarketPurpose"] + label')).toHaveText(Object.keys(GERMINAL_PURPOSE_HINTS))
+      for (const hint of Object.values(GERMINAL_PURPOSE_HINTS)) await expect(main).toContainText(hint)
+      await capture(page, testInfo, 'germinal-internal-market-reveal')
+      await saveAndContinue(page)
+      await expectErrorSummary(page, ['Select a purpose in the internal market'])
+      await capture(page, testInfo, 'germinal-error-internal-market')
+    })
+
+    await test.step('transit needs a port of exit and a destination country', async () => {
+      await page.locator('input[name="importReason"][value="Transit"]').check()
+      await saveAndContinue(page)
+      await expectErrorSummary(page, ['Select a port of exit', 'Select a destination country'])
+      await capture(page, testInfo, 'germinal-error-transit')
+    })
+
+    await test.step('a reason with its purpose continues to commodity details', async () => {
+      await page.locator('input[name="importReason"][value="Internal market"]').check()
+      await page.locator('input[name="internalMarketPurpose"][value="Research"]').check()
+      await saveAndContinue(page)
+      await expect(page).toHaveURL(urlFor('/consignment-details'))
     })
   })
 })

@@ -1,810 +1,1658 @@
 {
   "source": "repo:referencedata",
-  "structure": "repos/trade-imports-reference-data at 9f3aa3e (main, tag 0.20.0): a small Java 25 / Spring Boot REST service (about 100 files, about 1,500 lines in scope) that serves two reference lists, read from MDM and cached in memory: GET /countries (optional blocks query parameter; GB removed; sorted by name; subdivisions) in src/main/java/.../countries/, and GET /ports-of-entry (sorted by name) in src/main/java/.../portsofentry/. The MDM adaptation (Feign client, service, Mdm* records), the Caffeine cache config and the global exception handler carry the rules those endpoints apply; their unit and integration tests, the MDM fixtures, README, application.yml and ADR 0002 (shared service for several reference-data domains; commodity codes planned, not built) record what is proven and ruled. There is no rulings ledger. Of the lists the scope names, only countries and ports exist here: commodities and species, commodity identifiers, transporters, document types and certification purposes have no endpoint, model or data in this repo, and are gaps for the extract to record. Left out as outside scope: platform plumbing with no bearing on the lists (metrics, tracing and logging filters and interceptors, TLS, proxy, AWS, Mongo config and their tests, CI workflows, Dockerfile, .claude hooks), except where a part file is read for an auth or caching rule the endpoints depend on. One part covers the whole scoped source.\n\nExtracted in 1 part:\nPart 1, Countries and ports of entry: Part 1 of 1, Countries and ports of entry, read at repos/trade-imports-reference-data 9f3aa3e (main, tag 0.20.0). Read in full: README.md; doc/adr/0002 (shared reference-data service, countries managed, commodity codes and BCPs/POEs planned); application.yml and application-local.yml (port, MDM cache TTL, MDM and trade-auth URLs, actuator exposure); countries/ (CountriesController GET /countries with optional blocks param, Country, SubDivision); portsofentry/ (PortsOfEntryController GET /ports-of-entry, PortOfEntry); client/ (MdmClient Feign calls to /mdm/geo/countries and /mdm/trade/bcp/poes, MdmService with GB removal, block filter, null-body handling and @Cacheable, the Mdm* payload records, TradeApiClient and Token); CacheConfig (three Caffeine caches, MDM TTL default 60 minutes, max 20 entries, empty results not cached); MdmConfiguration; MdmClientInterceptor (client-credentials bearer token on every MDM call); exceptions/ (GlobalExceptionHandler mapping to 400, 404, 409 and 500 ProblemDetail bodies, three exception classes); tests: CountriesControllerTest, CountryTest, MdmServiceTest, CountriesControllerIT, CountriesControllerCacheExpiryIT, PortsOfEntryControllerIT, CacheConfigTest, GlobalExceptionHandlerTest; and the two MDM fixtures. Covered: both endpoints' routes, params, filtering, sort and every returned field; every MDM payload field and whether it is kept, renamed or dropped; caching; error responses; what MDM calls send; per-endpoint timing metrics; every test; the ADR rulings; and gap claims for commodities and species, commodity identifiers, transporters, document types and certification purposes, looked for by grep across src/ and doc/ and in the request mappings. There is no rulings ledger in the repo.",
+  "structure": "repos/trade-imports-reference-data is a small Java / Spring Boot service (about 1,650 lines of main code in scope, about 2,100 lines of unit and integration tests, about 1,000 lines of MDM JSON fixtures). It fronts MDM (the Defra master data service) and serves reference lists to the frontends through three REST endpoints: GET /countries (CountriesController, with an optional blocks filter and subdivisions), GET /ports-of-entry (PortsOfEntryController, with port types and list order), and GET /commodities plus POST /commodities/species-check (CommoditiesController, CommoditySearchService, SpeciesCheckService). Everything comes from MDM through MdmClient (Feign: /mdm/geo/countries, /mdm/trade/bcp/poes, /mdm/trade/product/search, /mdm/trade/product/commodities, /mdm/trade/product/commodities/{code}/species) and MdmService, with countries and ports cached (CacheConfig) and MDM failures mapped to HTTP errors by GlobalExceptionHandler and MdmErrorDecoder. Its rulings are the ADRs under doc/adr/ (0002: reference-data serves several domains until they get too large); there is no decisions ledger. Of the scope's seven lists, countries, ports, and commodities with species and commodity identifiers (commodity codes) are served today; transporters, document types and certification purposes have no endpoint, model or MDM call anywhere in the repo, so they are gaps. Left out as outside scope: metrics, observability, logging, tracing, TLS trust store, proxy, Mongo, AWS and auth-token plumbing (src/main/java/.../metrics, logging, filter, interceptor, configuration/tls and the non-MDM configuration classes) and CI workflows, except where they change what a caller receives. Cut into 3 parts by reference list: countries and ports; commodities and species; the service's shared contract (docs, ADRs, error handling, MDM configuration) together with the scope's missing lists.\n\nExtracted in 3 parts:\nPart 1, Countries and ports of entry: Part 1, countries and ports of entry. Read in full: CountriesController, Country, SubDivision (countries package); PortsOfEntryController, PortOfEntry, PortType, PortListOrder (portsofentry package); MdmService and MdmClient (claimed only for getCountries, getPortsOfEntry, the /mdm/geo/countries and /mdm/trade/bcp/poes calls and the shared body and trace-id handling those two use); the MDM models MdmCountry, MdmSubDivision, MdmBlock, MdmCodedValue, MdmPortOfEntry, MdmPortsResponse; CacheConfig; the unit tests CountriesControllerTest, CountryTest, PortsOfEntryControllerTest, PortOfEntryTest, PortTypeTest and the countries and ports tests of MdmServiceTest; the integration tests CountriesControllerIT, CountriesControllerCacheExpiryIT, PortsOfEntryControllerIT; and the MDM fixtures mdm-countries-response.json and mdm-poe-response.json. Covered: GET /countries (optional blocks parameter, code, name and subDivisions fields, GB removed, block filtering, A to Z by name, empty list when MDM has none), GET /ports-of-entry (no parameters, code, name and type fields, the three port types from MDM traffic, airports then seaports then rail then unknown, each A to Z ignoring case and spacing, then by code), the MDM_COUNTRIES_CACHE and MDM_POE_CACHE caches (60-minute default expiry, 20 entries, empty results not cached, countries cached per blocks value), the two MDM calls with the GBNAG system and subscription-key header, the MDM-unavailable failures for a missing body or result, and every test in the nine test files that proves countries or ports behaviour. Gaps recorded for what the slice is silent on: a single country or port by code, filtering ports by type or by what a port is designated for, and subdivision order.\nPart 2, Commodities, species and commodity codes: Part 2, commodities and species. Read in full: the commodities package (CommoditiesController, CommoditySearchService, SpeciesCheckService and the five records CommoditySearchResponse, CommodityGroup, CommodityLine, CommoditySpecies, SpeciesCheckRequest, SpeciesCheckResponse), the MDM client layer (MdmService and MdmClient in full, claiming only searchProducts, getCommodities and getCommoditySpecies; the records MdmCommodity, MdmSpecies, MdmProductPage, MdmProductSearchResult), the five commodity unit test files (CommoditiesControllerTest, CommoditySearchServiceTest, SpeciesCheckServiceTest, CommoditySpeciesTest, CommodityGroupTest), CommoditiesControllerIT, the product, commodity and species tests of MdmServiceTest, and the six MDM fixtures (commodities, search 0102, species of 0102, search cattle, bison, dog). Covered: GET /commodities (q, page, size, the two-character minimum, how MDM species and commodity rows become species matches, the germinal exclusion, de-duplication by code and Latin name, grouping by code in MDM order, the page-size cap and what total counts), POST /commodities/species-check (request and response fields, validation, per-code paged lookups, exact-case matching, every answer), the three MDM product calls with their dataset and paging, how MDM failures surface on these endpoints, the OpenAPI descriptions, what the fixtures show of MDM's commodity and species data, and every test that proves this behaviour. Gaps recorded: no commodity description in the response, no germinal search, no commodity hierarchy browsing, and no caching of product calls.\nPart 3, Service contract, rulings and missing lists: Part 3 of 3, the service's shared contract and the scope's missing lists. Read in full: README.md (purpose, endpoints, port, ports-of-entry ordering, commodity search notes, metrics and configuration notes), AGENTS.md (code-quality notes for agents, no behaviour), the workspace page docs/repos/trade-imports-reference-data.md (purpose, owns / does not own, integrations, MDM commodity search behaviour, stack, how to run), ADR 0001 (record decisions as ADRs) and ADR 0002 (one shared reference-data service for several domains until one grows too large), application.yml and application-local.yml, MdmConfiguration, MdmErrorDecoder, GlobalExceptionHandler, the five exception classes, GlobalExceptionHandlerTest, MdmErrorDecoderTest and TokenEndpointUnavailableIT. To say which exceptions a caller can actually meet, MdmService and MdmClientInterceptor were grepped for where each exception is thrown (MDM no body / no result / no content / no total, MDM unreachable, token endpoint 502-504 or unreachable); NotFoundException and ConflictException are never thrown in src/main. Endpoints were confirmed with a grep of every request mapping in src/main/java: GET /countries, GET /ports-of-entry, GET /commodities, POST /commodities/species-check, and the MDM calls. Claims cover: the stated purpose, endpoints, port and callers; ADR 0002 as a ruling and ADR 0001 as the record-keeping rule; every error response GlobalExceptionHandler gives (status, type, title, detail, traceId, field errors) with the tests that prove each; MdmErrorDecoder's 502/503/504 mapping; the MDM and cache settings that change what a caller receives (base URL, cache TTL, timeouts, subscription key, system and dataset); and three gaps (transporters, document types, certification purposes) found by a case-insensitive repo-wide grep of src/main, src/test/java, doc/, README.md and the workspace page for transporter, haulier, carrier, document type, accompanying document, certification and purpose, which found nothing but the word Purpose as a heading. Page sizes for commodity search belong to part 2 and are only mentioned as documented.",
   "scopeHash": "2b1e56d140aaf3477a54736f9b08054f236c5771bf6fc8b3d02cdcfeae7bebd7",
+  "repoHead": "b1b8a7732d51609d953f1444bb201f9728adb5a4",
   "claims": [
     {
       "id": "repo-referencedata-p1-001",
       "statement": "The service serves the list of countries at GET /countries.",
       "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:18-23",
-      "quote": "@RequestMapping(\"/countries\")",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:19-27",
+      "quote": "@RequestMapping(\"/countries\")\npublic class CountriesController {\n...\n  @GetMapping()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-002",
-      "statement": "GET /countries takes one optional query parameter, blocks.",
+      "statement": "GET /countries takes one optional query parameter, blocks, and no other parameter.",
       "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:25-26",
-      "quote": "@RequestParam(required = false, value = \"blocks\") String blocks",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:27-28",
+      "quote": "public ResponseEntity<List<Country>> getCountries(\n      @RequestParam(required = false, value = \"blocks\") String blocks)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-003",
-      "statement": "GET /countries returns 200 with a JSON array of countries.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:25,33",
+      "statement": "GET /countries answers 200 OK with a JSON array of countries.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:36",
       "quote": "return ResponseEntity.ok(countries);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-004",
-      "statement": "GET /countries returns countries sorted by their name.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:30",
-      "quote": ".sorted(Comparator.comparing(Country::getName))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-005",
-      "statement": "The country sort is a plain case-sensitive string comparison of the name, not a locale-aware collation, so names are ordered by character code.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:30",
-      "quote": "Comparator.comparing(Country::getName)",
-      "confidence": "inferred",
-      "note": "Comparator.comparing on a String uses String.compareTo; no Collator is applied."
-    },
-    {
-      "id": "repo-referencedata-p1-006",
-      "statement": "The United Kingdom (effectiveAlpha2 GB) is always removed from the countries list, whatever blocks value is asked for.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:49",
-      "quote": ".filter(c -> !\"GB\".equals(c.getEffectiveAlpha2()))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-007",
-      "statement": "When blocks is given, a country is kept only if one of its MDM blocks has a name equal to the blocks value and includeCountry true.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:54-59",
-      "quote": "return country.getBlocks().stream()\n        .anyMatch(b -> requestedBlock.equals(b.getName())\n                 && Boolean.TRUE.equals(b.getIncludeCountry()));",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-008",
-      "statement": "When blocks is not given, no block filter is applied and every country except the United Kingdom is returned.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:55",
-      "quote": "if (requestedBlock == null || country.getBlocks() == null) return true;",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-009",
-      "statement": "When blocks is given but MDM sends a country with no blocks list at all, that country is kept rather than filtered out.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:55",
-      "quote": "if (requestedBlock == null || country.getBlocks() == null) return true;",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-010",
-      "statement": "The blocks value is also passed to MDM as its own blocks query parameter, so MDM filters first and the service filters again on includeCountry.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:39-40; src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:24",
-      "quote": "mdmClient.getCountries(ocpApimSubscriptionKey, SYSTEM, blocks);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-011",
-      "statement": "The block filter compares the whole blocks value with a single block name, so asking for several blocks at once in one value (for example comma-separated) would match no country unless MDM names a block that way.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:57",
-      "quote": "requestedBlock.equals(b.getName())",
-      "confidence": "inferred",
-      "note": "No splitting of the blocks value is done anywhere in the service."
-    },
-    {
-      "id": "repo-referencedata-p1-012",
-      "statement": "The block names used in tests are GBNAG_SPS_EX, GBNAG_PHYTO_EX and OMR; the service has no fixed list of allowed block values and accepts any string.",
+      "statement": "Each country in the response has three fields: code, name and subDivisions.",
       "kind": "data",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:107-108; src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:185",
-      "quote": "restTemplate.getForEntity(\"/countries?blocks=GBNAG_PHYTO_EX\", String.class);",
-      "confidence": "inferred",
-      "note": "No validation of the blocks parameter exists in the controller or service."
-    },
-    {
-      "id": "repo-referencedata-p1-013",
-      "statement": "Each returned country has a code field, taken from MDM's effectiveAlpha2 (the ISO alpha-2 code).",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:17,22",
-      "quote": "this.code = mdmCountry.getEffectiveAlpha2();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-014",
-      "statement": "Each returned country has a name field, taken from MDM's effectiveAlias (the short display name, such as \"United Kingdom\"), not MDM's name or longName.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:18,23",
-      "quote": "this.name = mdmCountry.getEffectiveAlias();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-015",
-      "statement": "Each returned country has a subDivisions field: a list of its subdivisions, and an empty list when MDM sends none or a null list.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:19,27-30",
-      "quote": "if (mdmSubDivisions == null || mdmSubDivisions.isEmpty()) {\n      return List.of();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-016",
-      "statement": "Each subdivision has a code field taken from MDM's code.value (such as ES-CN).",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:35; src/main/java/uk/gov/defra/trade/imports/countries/SubDivision.java:14",
-      "quote": ".code(subDivision.getCode().getValue())",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-017",
-      "statement": "Each subdivision has a name field taken from MDM's subdivision name (such as Canary Islands).",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:36; src/main/java/uk/gov/defra/trade/imports/countries/SubDivision.java:15",
-      "quote": ".name(subDivision.getName())",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-018",
-      "statement": "A subdivision MDM sends with no code, or a code with no value, is dropped from the country's subdivisions.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:32-33",
-      "quote": ".filter(subDivision -> subDivision.getCode() != null\n            && subDivision.getCode().getValue() != null)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-019",
-      "statement": "Subdivisions are returned in the order MDM sends them; they are not sorted.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:31-38",
-      "quote": "return mdmSubDivisions.stream()",
-      "confidence": "inferred",
-      "note": "No sort is applied in mapSubDivisions or anywhere else to subdivisions."
-    },
-    {
-      "id": "repo-referencedata-p1-020",
-      "statement": "A country is returned with only code, name and subDivisions: MDM's longName, name, independent, statusName, system, systemAlias, systemAlpha2, systemAlpha3, systemLongName, effectiveAlpha3, effectiveLongName and blocks are all dropped.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCountry.java:15-29; src/main/java/uk/gov/defra/trade/imports/countries/Country.java:17-19",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:17-19",
       "quote": "private String code;\n  private String name;\n  private List<SubDivision> subDivisions;",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-021",
-      "statement": "An MDM subdivision's blocs list is dropped; a subdivision is returned with only code and name.",
+      "id": "repo-referencedata-p1-005",
+      "statement": "A country's code is MDM's effectiveAlpha2 (the two-letter country code, such as DE).",
       "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmSubDivision.java:15-17; src/main/java/uk/gov/defra/trade/imports/countries/SubDivision.java:14-15",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:22",
+      "quote": "this.code = mdmCountry.getEffectiveAlpha2();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-006",
+      "statement": "A country's name is MDM's effectiveAlias (the short common name, such as \"United Kingdom\"), not MDM's name or long name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:23; src/test/resources/integration/mdm-countries-response.json:59-63",
+      "quote": "this.name = mdmCountry.getEffectiveAlias();",
+      "confidence": "verbatim",
+      "note": "The fixture shows the difference: MDM name \"United Kingdom of Great Britain and Northern Ireland (the)\", effectiveAlias \"United Kingdom\"."
+    },
+    {
+      "id": "repo-referencedata-p1-007",
+      "statement": "The other MDM country fields (longName, name, independent, statusName, system, the system alias and codes, effectiveAlpha3, effectiveLongName and blocks) are not passed on in the response.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCountry.java:15-29; src/main/java/uk/gov/defra/trade/imports/countries/Country.java:21-25",
+      "quote": "private String longName;\n  private String name;\n  private Boolean independent;\n  private String statusName;",
+      "confidence": "inferred",
+      "note": "Inferred: MdmCountry carries these fields and the Country constructor copies only effectiveAlpha2, effectiveAlias and subDivisions."
+    },
+    {
+      "id": "repo-referencedata-p1-008",
+      "statement": "Each subdivision (a territory or region of a country, such as the Canary Islands of Spain) has two fields: code and name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/SubDivision.java:14-15",
+      "quote": "private String code;\n  private String name;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-009",
+      "statement": "A subdivision's code is the value of MDM's coded subdivision code (such as ES-CN), and its name is MDM's subdivision name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:34-37",
+      "quote": ".code(subDivision.getCode().getValue())\n            .name(subDivision.getName())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-010",
+      "statement": "A subdivision MDM gives with no code, or with a code that has no value, is left out of the country's subdivisions.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:32-33",
+      "quote": ".filter(subDivision -> subDivision.getCode() != null\n            && subDivision.getCode().getValue() != null)",
+      "confidence": "verbatim",
+      "note": "mechanism: drops MDM subdivisions that lack a code."
+    },
+    {
+      "id": "repo-referencedata-p1-011",
+      "statement": "A country MDM gives with no subdivisions, or with none listed, is served with an empty subDivisions list rather than a missing one.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:28-30",
+      "quote": "if (mdmSubDivisions == null || mdmSubDivisions.isEmpty()) {\n      return List.of();\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-012",
+      "statement": "The blocs list MDM gives on each subdivision is not passed on in the response.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmSubDivision.java:17; src/main/java/uk/gov/defra/trade/imports/countries/Country.java:34-37",
       "quote": "private List<String> blocs;",
+      "confidence": "inferred",
+      "note": "Inferred: MdmSubDivision carries blocs and the mapping copies only code and name. Subdivisions are not filtered by block either."
+    },
+    {
+      "id": "repo-referencedata-p1-013",
+      "statement": "The countries list comes back sorted by name, A to Z.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:33",
+      "quote": ".sorted(Comparator.comparing(Country::getName))",
+      "confidence": "verbatim",
+      "note": "The comparison is plain string order, so it is case-sensitive and not locale-aware, unlike the ports order."
+    },
+    {
+      "id": "repo-referencedata-p1-014",
+      "statement": "The United Kingdom (MDM effectiveAlpha2 GB) is never in the countries list, and its subdivisions, such as Northern Ireland, go with it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:48",
+      "quote": ".filter(c -> !\"GB\".equals(c.getEffectiveAlpha2()))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-015",
+      "statement": "When blocks is given, a country is listed only if MDM gives it a block with that exact name marked includeCountry true.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:101-106",
+      "quote": "return country.getBlocks().stream()\n        .anyMatch(b -> requestedBlock.equals(b.getName())\n                 && Boolean.TRUE.equals(b.getIncludeCountry()));",
+      "confidence": "verbatim",
+      "note": "Block names seen in tests: GBNAG_SPS_EX, GBNAG_PHYTO_EX, OMR. The value is matched as one block name, so a comma-separated list of blocks would match nothing locally."
+    },
+    {
+      "id": "repo-referencedata-p1-016",
+      "statement": "A country MDM gives with no blocks at all is kept in the list whatever blocks value was asked for.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:102",
+      "quote": "if (requestedBlock == null || country.getBlocks() == null) return true;",
+      "confidence": "verbatim",
+      "note": "mechanism: works on MDM's blocks list per country."
+    },
+    {
+      "id": "repo-referencedata-p1-017",
+      "statement": "When blocks is not given, no block filter is applied: every country MDM returns, except the United Kingdom, is listed.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:102",
+      "quote": "if (requestedBlock == null || country.getBlocks() == null) return true;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-018",
+      "statement": "When MDM returns no countries, GET /countries answers 200 OK with an empty list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:114-125",
+      "quote": "void getCountries_returnsEmptyList_whenMdmReturnsNoCountries()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-019",
+      "statement": "When MDM answers the countries request with no body, the service treats MDM as unavailable, with the message \"MDM returned no body for countries request for <blocks>\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:76-85",
+      "quote": "throw new MdmUnavailableException(\n          \"MDM returned no body for %s request for %s\".formatted(requestName, requestedFor));",
+      "confidence": "verbatim",
+      "note": "How MdmUnavailableException reaches the caller as an HTTP status is the shared error handling, part 3."
+    },
+    {
+      "id": "repo-referencedata-p1-020",
+      "statement": "The service gets countries from MDM with GET /mdm/geo/countries, sending the subscription key in the Ocp-Apim-Subscription-Key header and the system and blocks query parameters.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:19-26",
+      "quote": "@GetMapping(value = \"/mdm/geo/countries\")\n  ResponseEntity<List<MdmCountry>> getCountries(\n      @RequestHeader(OCP_APIM_SUBSCRIPTION_KEY) String ocpApimSubscriptionKey,\n      @RequestParam(value = \"system\", required = false) String system,\n      @RequestParam(value = \"blocks\", required = false) String blocks",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-021",
+      "statement": "The countries request to MDM always sends system GBNAG, and passes the caller's blocks value on unchanged (left out when the caller gave none).",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:22,44-45",
+      "quote": "private static final String SYSTEM = \"GBNAG\";\n...\nfromMdm(() -> mdmClient.getCountries(ocpApimSubscriptionKey, SYSTEM, blocks));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-022",
-      "statement": "MDM's block records carry name, includeCountry and tags; tags are read but never used.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmBlock.java:15-17",
-      "quote": "private String name;\n  private Boolean includeCountry;\n  private List<String> tags;",
+      "statement": "The service gets ports of entry from MDM with GET /mdm/trade/bcp/poes, sending the subscription key in the Ocp-Apim-Subscription-Key header and system GBNAG as a query parameter.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:28-32; src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:31",
+      "quote": "@GetMapping(value = \"/mdm/trade/bcp/poes\")\n  ResponseEntity<MdmPortsResponse> getPorts(\n      @RequestHeader(OCP_APIM_SUBSCRIPTION_KEY) String ocpApimSubscriptionKey,\n      @RequestParam(value = \"system\", required = false) String system",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-023",
-      "statement": "A subdivision code arrives from MDM wrapped in an object with a single value field.",
+      "statement": "MDM's ports answer is an object whose result field holds the list of ports, each with id, code, name and traffic.",
       "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCodedValue.java:14; src/test/resources/integration/mdm-countries-response.json:13",
-      "quote": "\"code\": { \"value\": \"FR-MQ\" }",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmPortsResponse.java:15; src/main/java/uk/gov/defra/trade/imports/client/MdmPortOfEntry.java:14-17",
+      "quote": "private List<MdmPortOfEntry> result;\n...\n  private String id;\n  private String code;\n  private String name;\n  private String traffic;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-024",
-      "statement": "Subdivisions are listed under their parent country, so overseas territories such as Martinique and Guadeloupe appear as subdivisions of France and the Canary Islands as a subdivision of Spain, not as countries.",
+      "statement": "MDM's countries answer is a JSON array of countries, each with its codes, names, independence, status, system, subdivisions and blocks; a block has a name, an includeCountry flag and tags.",
       "kind": "data",
-      "ref": "src/test/resources/integration/mdm-countries-response.json:11-20,48-53",
-      "quote": "{\n        \"code\": { \"value\": \"FR-MQ\" },\n        \"name\": \"Martinique\"\n      }",
-      "confidence": "verbatim",
-      "note": "Test fixture data, not live MDM data. MdmServiceTest also uses Martinique (MQ) as a country with an OMR block, so MDM's shape for territories is not fixed by this repo."
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCountry.java:15-29; src/main/java/uk/gov/defra/trade/imports/client/MdmBlock.java:15-17",
+      "quote": "private String name;\n  private Boolean includeCountry;\n  private List<String> tags;",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-025",
-      "statement": "When MDM returns no countries, GET /countries returns 200 with an empty array.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:100-111",
-      "quote": "assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);\n    assertThat(response.getBody()).isEmpty();",
+      "statement": "The service reads an MDM trace id from the x-ms-middleware-request-id response header on the countries and ports calls, logging it when present and warning when absent, and the request still succeeds without it.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:21,116-125",
+      "quote": "log.warn(\"No MDM trace id returned for {} request for {}\", requestName, requestedFor);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-026",
-      "statement": "When MDM answers the countries call with an empty body, the service treats it as no countries and returns an empty list rather than an error.",
+      "statement": "When the connection to MDM is dropped or times out on a countries or ports call, the service reports MDM as unavailable, with the message \"MDM unavailable\".",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:43-47",
-      "quote": "if (body == null) {\n      log.warn(\"MDM returned a null body for countries request\");\n      return List.of();",
-      "confidence": "verbatim"
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:108-114",
+      "quote": "} catch (RetryableException ex) {\n      throw new MdmUnavailableException(\"MDM unavailable\", ex);",
+      "confidence": "verbatim",
+      "note": "The shared helper is proven for product search in MdmServiceTest; no countries or ports test covers it."
     },
     {
       "id": "repo-referencedata-p1-027",
-      "statement": "A country with no name would make the sort fail, so GET /countries would answer 500 if MDM sent a country with no effectiveAlias.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:30; src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:116-121",
-      "quote": ".sorted(Comparator.comparing(Country::getName))",
-      "confidence": "inferred",
-      "note": "Comparator.comparing without nullsFirst/nullsLast throws NullPointerException on a null key, which the RuntimeException handler maps to 500. Not tested."
+      "statement": "The service serves the list of ports of entry at GET /ports-of-entry, which takes no query parameters.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:17,23-25",
+      "quote": "@RequestMapping(\"/ports-of-entry\")\n...\n  @GetMapping()\n  @Timed(\"controller.getPortsOfEntry.time\")\n  public ResponseEntity<List<PortOfEntry>> getPortsOfEntry() {",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-028",
-      "statement": "The service serves the list of ports of entry at GET /ports-of-entry.",
+      "statement": "GET /ports-of-entry answers 200 OK with a JSON array of ports.",
       "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:17-22",
-      "quote": "@RequestMapping(\"/ports-of-entry\")",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:32",
+      "quote": "return ResponseEntity.ok(ports);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-029",
-      "statement": "GET /ports-of-entry takes no query parameters and returns 200 with a JSON array of ports.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:24,30",
-      "quote": "public ResponseEntity<List<PortOfEntry>> getPortsOfEntry() {",
+      "statement": "Each port in the response has three fields: code, name and type.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:21-23",
+      "quote": "private String code;\n  private String name;\n  private PortType type;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-030",
-      "statement": "GET /ports-of-entry returns ports sorted by their name.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:28",
-      "quote": ".sorted(Comparator.comparing(PortOfEntry::getName))",
-      "confidence": "verbatim"
+      "statement": "A port's code and name are MDM's code and name as given, and MDM's port id is not passed on.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:25-28",
+      "quote": "this.code = mdm.getCode();\n    this.name = mdm.getName();",
+      "confidence": "verbatim",
+      "note": "MDM codes may hold a space, such as \"GB ABD\" in the fixture."
     },
     {
       "id": "repo-referencedata-p1-031",
-      "statement": "Each returned port has a code field taken from MDM's port code (such as GBABE).",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:15,19",
-      "quote": "this.code = mdm.getCode();",
+      "statement": "Port names are served exactly as MDM gives them: the list order only compares names, it never changes them (so \"TILBURY\" and \"Portsmouth  Quay\" with a double space come back unchanged).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortListOrder.java:7-11",
+      "quote": "Names are only compared in this order, never changed.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-032",
-      "statement": "Each returned port has a name field taken from MDM's port name (such as Aberdeen).",
+      "statement": "A port's type is one of three values: airport, seaport or rail, written in lower case.",
       "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:16,20",
-      "quote": "this.name = mdm.getName();",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortType.java:10-13,28-31",
+      "quote": "AIRPORT(\"airport\", \"Airport\"),\n  SEAPORT(\"seaport\", \"Port\"),\n  RAIL(\"rail\", \"Rail\");",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-033",
-      "statement": "MDM's port id is dropped; a port is returned with only code and name.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmPortOfEntry.java:14-16",
-      "quote": "private String id;\n  private String code;\n  private String name;",
+      "statement": "A port's type comes from MDM's traffic field: \"Airport\" gives airport, \"Port\" gives seaport and \"Rail\" gives rail, ignoring letter case and surrounding spaces.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortType.java:39-44",
+      "quote": "String stripped = traffic == null ? \"\" : traffic.strip();\n    return Stream.of(values())\n        .filter(candidate -> candidate.mdmTraffic.equalsIgnoreCase(stripped))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-034",
-      "statement": "MDM returns ports wrapped in an object whose result field holds the list.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmPortsResponse.java:15; src/test/resources/integration/mdm-poe-response.json:2",
-      "quote": "private List<MdmPortOfEntry> result;",
+      "statement": "A port whose MDM traffic is missing or not one of the three known values is still listed, with type null.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:28-31",
+      "quote": "this.type = PortType.fromTraffic(mdm.getTraffic()).orElse(null);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-035",
-      "statement": "When MDM answers the ports call with an empty body or no result list, the service returns an empty list rather than an error.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:27-31",
-      "quote": "if (body == null || body.getResult() == null) {\n      log.warn(\"MDM returned a null body for ports-of-entry request\");\n      return List.of();",
+      "statement": "The service logs a warning, once per port code and traffic value, when MDM gives a port a traffic value that is not a known port type.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java:19,29-31",
+      "quote": "log.warn(\"MDM port {} has traffic '{}', which is not a known port type; it is listed last with no type\",",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-036",
-      "statement": "Ports of entry are not filtered by the service: every port MDM returns for the GBNAG system is listed, with no type (airport, seaport, BCP) or species filter.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:22-33",
-      "quote": "return body.getResult();",
-      "confidence": "inferred",
-      "note": "The returned port carries no type or capability field, so a client cannot filter by port type either."
+      "statement": "The ports list comes back as airports first, then seaports, then rail ports, then ports of unknown type.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortListOrder.java:16-23; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:30",
+      "quote": "Airports, then seaports, then rail ports, then ports of unknown type.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-037",
-      "statement": "Ports are read from MDM's border control post points-of-entry list (/mdm/trade/bcp/poes).",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:27",
-      "quote": "@GetMapping(value = \"/mdm/trade/bcp/poes\")",
+      "statement": "Within each port type group, ports run A to Z by name, ignoring letter case and treating non-breaking spaces and runs of spaces as one space.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortListOrder.java:14,19-24,30-32",
+      "quote": "Each group runs A to Z by name ignoring letter case and reading non-breaking and doubled spaces as one,\n   * then by code.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-038",
-      "statement": "Countries are read from MDM's geography countries list (/mdm/geo/countries).",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:20",
-      "quote": "@GetMapping(value = \"/mdm/geo/countries\")",
+      "statement": "Ports with the same type and name are ordered by code.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortListOrder.java:25",
+      "quote": ".thenComparing(PortOfEntry::getCode, Comparator.nullsLast(Comparator.naturalOrder()));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-039",
-      "statement": "Every MDM call asks for the GBNAG system's view of the list.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:17",
-      "quote": "private static final String SYSTEM = \"GBNAG\";",
-      "confidence": "verbatim"
+      "statement": "Every port MDM returns for system GBNAG is listed: the service does not filter ports by type or any other property.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28-38; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:27-31",
+      "quote": "return body.getResult();",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any filter between the MDM result and the response."
     },
     {
       "id": "repo-referencedata-p1-040",
-      "statement": "Every MDM call carries the platform subscription key in the Ocp-Apim-Subscription-Key header, read from configuration.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:18; src/main/resources/application.yml:116",
-      "quote": "ocpApimSubscriptionKey: ${TRADE_PLATFORM_SUBSCRIPTION_KEY:[REDACTED]}",
+      "statement": "When MDM answers the ports request with no body, the service treats MDM as unavailable, with the message \"MDM returned no body for ports-of-entry request for GBNAG\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:32; src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:68-75",
+      "quote": ".hasMessage(\"MDM returned no body for ports-of-entry request for GBNAG\");",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-041",
-      "statement": "Every MDM call carries a bearer token obtained from the trade platform's OAuth token endpoint with the client-credentials grant.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptor.java:34,43",
-      "quote": "formData.add(\"grant_type\", \"client_credentials\");",
+      "statement": "When MDM's ports answer has no result list, the service treats MDM as unavailable, with the message \"MDM returned a ports-of-entry body with no result for GBNAG\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:33-36",
+      "quote": "throw new MdmUnavailableException(\n          \"MDM returned a ports-of-entry body with no result for \" + SYSTEM);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-042",
-      "statement": "The bearer token is reused until its expiresOn time passes; a token with no expiresOn is treated as already expired, so a new one is fetched on the next call.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptor.java:30-32,51-53",
-      "quote": "expiryTime = token.getExpiresOn() != null\n            ? Instant.ofEpochMilli(token.getExpiresOn())\n            : Instant.now().minusSeconds(10);",
+      "statement": "Countries from MDM are cached in a cache named MDM_COUNTRIES_CACHE.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:17; src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:40",
+      "quote": "@Cacheable(value = CacheConfig.MDM_COUNTRIES_CACHE, unless = \"#result == null || #result.isEmpty()\")",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-043",
-      "statement": "The MDM base URL is set by MDM_SERVICE_URL and defaults to http://localhost:8087 (the local stub).",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:115",
-      "quote": "url: ${MDM_SERVICE_URL:http://localhost:8087}",
+      "statement": "Ports of entry from MDM are cached in a cache named MDM_POE_CACHE.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:18; src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28",
+      "quote": "@Cacheable(value = CacheConfig.MDM_POE_CACHE, unless = \"#result == null || #result.isEmpty()\")",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-044",
-      "statement": "MDM and trade-auth calls are configured with a 3000 ms connection timeout and a 3000 ms read timeout.",
+      "statement": "Cached countries and ports expire 60 minutes after they are fetched by default, set by cache.mdm.ttl-minutes.",
       "kind": "non-functional",
-      "ref": "src/main/resources/application.yml:110-111,117-118",
-      "quote": "connectionTimeout: 3000\n  readTimeout: 3000",
-      "confidence": "verbatim",
-      "note": "Whether these values are wired into the Feign clients is not shown in this part's files; MdmConfiguration only holds them."
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:20-21,38,46",
+      "quote": "@Value(\"${cache.mdm.ttl-minutes:60}\")\n    long mdmCacheTtlMinutes;",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-045",
-      "statement": "The service logs MDM's x-ms-middleware-request-id trace header for each call, and a missing header only logs a warning; the list is still returned.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:16,61-69",
-      "quote": "log.warn(\"No MDM trace id returned\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-046",
-      "statement": "Countries returned by MDM are cached in memory in MDM_COUNTRIES_CACHE, keyed by the blocks value, so each distinct blocks value (including none) is fetched and cached separately.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:35-36",
-      "quote": "@Cacheable(value = \"MDM_COUNTRIES_CACHE\", unless = \"#result == null || #result.isEmpty()\")\n  public List<MdmCountry> getCountries(String blocks) {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-047",
-      "statement": "Ports of entry returned by MDM are cached in memory in MDM_POE_CACHE.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:22",
-      "quote": "@Cacheable(value = \"MDM_POE_CACHE\", unless = \"#result == null || #result.isEmpty()\")",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-048",
-      "statement": "An empty list from MDM is never cached, for countries or ports, so the next request calls MDM again.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:22,35",
-      "quote": "unless = \"#result == null || #result.isEmpty()\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-049",
-      "statement": "A countries result that is empty only because every country was filtered out (for example by the block filter) is also not cached.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:35,48-51",
-      "quote": "return body.stream()\n        .filter(c -> !\"GB\".equals(c.getEffectiveAlpha2()))\n        .filter(c -> isIncludedInRequestedBlock(c, blocks))\n        .toList();",
-      "confidence": "inferred",
-      "note": "The cache condition is applied to the filtered result the method returns."
-    },
-    {
-      "id": "repo-referencedata-p1-050",
-      "statement": "Both MDM caches expire entries a set number of minutes after they are written, set by CACHE_MDM_TTL_MINUTES and defaulting to 60 minutes.",
+      "statement": "The countries and ports caches each hold at most 20 entries.",
       "kind": "non-functional",
-      "ref": "src/main/resources/application.yml:5-7; src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:16-17,36,43",
-      "quote": "ttl-minutes: ${CACHE_MDM_TTL_MINUTES:60}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-051",
-      "statement": "Each MDM cache holds at most 20 entries.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:35,42",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:37,45",
       "quote": ".maximumSize(20)",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-referencedata-p1-046",
+      "statement": "An empty or missing result from MDM is never cached, so the next request asks MDM again.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28,40",
+      "quote": "unless = \"#result == null || #result.isEmpty()\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-047",
+      "statement": "Countries are cached separately for each blocks value, so a repeated blocks value is served from the cache and a new one asks MDM.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:40-41; src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:104-116",
+      "quote": "void getCountries_cachesResultsIndependently_perUniqueBlocksParam()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-048",
+      "statement": "The cache holds MDM's countries after the United Kingdom and block filters, and the A to Z sort and mapping to code, name and subdivisions run on every request.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:40-51; src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:30-34",
+      "quote": "return bodyFrom(responseEntity, \"countries\", blocks).stream()\n        .filter(c -> !\"GB\".equals(c.getEffectiveAlpha2()))\n        .filter(c -> isIncludedInRequestedBlock(c, blocks))\n        .toList();",
+      "confidence": "inferred",
+      "note": "mechanism: inferred from @Cacheable on MdmService.getCountries, which returns the filtered list, while sorting and mapping sit in the controller. A list that filters down to empty is not cached."
+    },
+    {
+      "id": "repo-referencedata-p1-049",
+      "statement": "Each GET /countries and each GET /ports-of-entry request is counted as a lookup and timed.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:26,29; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:24,26",
+      "quote": "@Timed(\"controller.getCountries.time\")\n...\n    lookupMetrics.recordLookup(LookupMetrics.COUNTRIES);",
+      "confidence": "verbatim",
+      "note": "Metrics are outside the source's scope; recorded only because the endpoints do it."
+    },
+    {
+      "id": "repo-referencedata-p1-050",
+      "statement": "Proven (CountriesControllerTest): a countries request is counted as one \"countries\" lookup.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:34-41",
+      "quote": "void getCountries_countsOneCountriesLookup()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-051",
+      "statement": "Proven (CountriesControllerTest): countries MDM returns as Sweden, Austria, France come back as Austria, France, Sweden.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:43-60",
+      "quote": "void getCountries_sortsMdmResponseAlphabeticallyByName()",
+      "confidence": "verbatim"
+    },
+    {
       "id": "repo-referencedata-p1-052",
-      "statement": "The caches exist to limit how often the service calls MDM, not to survive MDM being down or to speed responses up.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:30-31",
-      "quote": "// The primary purpose of caching MDM responses is to rate-limit our calls to MDM,\n        // rather than to defend against MDM unavailability or improve performance.",
+      "statement": "Proven (CountriesControllerTest, CountryTest): an MDM country DE / Germany is served with code DE, name Germany and no subdivisions.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:62-79; src/test/java/uk/gov/defra/trade/imports/countries/CountryTest.java:10-24",
+      "quote": "void getCountries_mapsMdmCountryFieldsToCountry()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-053",
-      "statement": "The service also registers an IDENTITY_TOKEN_CACHE (at most 5 entries, 30-minute expiry), which no list endpoint uses.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java:20-28",
-      "quote": "new CaffeineCacheManager(\"IDENTITY_TOKEN_CACHE\");",
-      "confidence": "inferred",
-      "note": "No @Cacheable in the read files names IDENTITY_TOKEN_CACHE; the MDM token is held inside the interceptor instead."
+      "statement": "Proven (CountriesControllerTest): Spain is served with its Canary Islands subdivision (code ES-CN), and Austria with an empty subdivision list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java:81-112",
+      "quote": "void getCountries_mapsSubDivisionsFromMdmCountry()",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-054",
-      "statement": "The actuator exposes a cache endpoint alongside health, metrics and info at the service root.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:73-75",
-      "quote": "include: health,metrics,info,cache",
+      "statement": "Proven (CountriesControllerIT, against a stubbed MDM): GET /countries?blocks=GBNAG_SPS_EX lists France before Germany, leaves out the United Kingdom and Northern Ireland, and carries nested subdivisions such as the Canary Islands.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:32-51",
+      "quote": "void getCountries_returnsSortedCountriesFromMdm()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-055",
-      "statement": "The service listens on port 8086 by default.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:2",
-      "quote": "port: ${PORT:8086}",
+      "statement": "Proven (CountriesControllerIT): the response writes MDM's effectiveAlpha2 as code and effectiveAlias as name (\"code\":\"DE\", \"name\":\"Germany\").",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:53-62",
+      "quote": "void getCountries_mapsCountryFieldsCorrectly()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-056",
-      "statement": "Any unexpected runtime error, including a failed MDM call, is answered with 500 and an RFC 7807 problem body titled \"Internal Server Error\" with detail \"An unexpected error occurred. Please try again later.\" and type https://api.cdp.defra.cloud/problems/internal-error.",
+      "statement": "Proven (CountriesControllerIT): on an empty cache the first countries request calls MDM once, and a second identical request is served from the cache without calling MDM.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:116-138",
-      "quote": "\"An unexpected error occurred. Please try again later.\"",
-      "confidence": "verbatim",
-      "note": "That a failed MDM call lands here is inferred: Feign errors are RuntimeExceptions and nothing else catches them. The lists have no fallback to stale data."
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:64-74,118-129",
+      "quote": "void getCountries_returnsCachedResult_onSecondCall()",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-057",
-      "statement": "A NotFoundException is answered with 404, title \"Resource Not Found\", the exception's message as detail and type https://api.cdp.defra.cloud/problems/not-found; neither list endpoint throws it.",
+      "statement": "Proven (CountriesControllerIT): when MDM first returns no countries, the next request calls MDM again.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:66-84",
-      "quote": "problemDetail.setTitle(\"Resource Not Found\");",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:76-102",
+      "quote": "void getCountries_doesNotCacheEmptyMdmResponse()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-058",
-      "statement": "A ConflictException is answered with 409, title \"Resource Conflict\", the exception's message as detail and type https://api.cdp.defra.cloud/problems/conflict; neither list endpoint throws it.",
+      "statement": "Proven (CountriesControllerCacheExpiryIT): with the cache expiry set to zero, two countries requests both call MDM, so an expired entry is fetched again.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:89-107",
-      "quote": "problemDetail.setTitle(\"Resource Conflict\");",
-      "confidence": "verbatim"
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerCacheExpiryIT.java:40-51",
+      "quote": "void getCountries_refetchesFromMdm_afterCacheExpires()",
+      "confidence": "verbatim",
+      "note": "Expiry is proven for the countries cache only; no test proves ports cache expiry."
     },
     {
       "id": "repo-referencedata-p1-059",
-      "statement": "A request-body validation failure is answered with 400, title \"Validation Error\", detail \"Validation failed for one or more fields\", type https://api.cdp.defra.cloud/problems/validation-error and an errors map of field to message; neither list endpoint takes a validated body, so the lists never return it.",
+      "statement": "Proven (MdmServiceTest): the countries call sends the subscription key, system GBNAG and the caller's blocks value to MDM, and returns MDM's countries, with or without a trace id header.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:35-61",
-      "quote": "\"Validation failed for one or more fields\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-060",
-      "statement": "Every error body carries a traceId property with the request's trace id when one is set, and omits it otherwise.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:30,49-51",
-      "quote": "if (traceId != null) {\n      problemDetail.setProperty(\"traceId\", traceId);",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-061",
-      "statement": "Spring's own errors, such as 404 for an unknown path, are left to Spring and not reshaped by the handler.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:111-115",
-      "quote": "Note: Does NOT catch Spring framework exceptions like NoResourceFoundException (404) or other\n   * HTTP-related exceptions.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-062",
-      "statement": "TradeImportsReferenceDataException is documented as mapping to 404 but has no handler of its own, so if thrown it would be answered as a 500.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/TradeImportsReferenceDataException.java:3-7",
-      "quote": "Will be mapped to 404 Not Found by GlobalExceptionHandler.",
-      "confidence": "inferred",
-      "note": "It extends RuntimeException and GlobalExceptionHandler has no @ExceptionHandler for it; nothing in the read files throws it."
-    },
-    {
-      "id": "repo-referencedata-p1-063",
-      "statement": "A unit test proves GET /countries sorts MDM's countries alphabetically by name (Austria, France, Sweden).",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java getCountries_sortsMdmResponseAlphabeticallyByName",
-      "quote": ".containsExactly(\"Austria\", \"France\", \"Sweden\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-064",
-      "statement": "A unit test proves a country's code comes from effectiveAlpha2, its name from effectiveAlias, and its subdivisions default to empty.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java getCountries_mapsMdmCountryFieldsToCountry",
-      "quote": "assertThat(country.getSubDivisions()).isEmpty();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-065",
-      "statement": "A unit test proves subdivisions are mapped to code and name (Spain's ES-CN Canary Islands) and a country with an empty subdivision list returns an empty list.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java getCountries_mapsSubDivisionsFromMdmCountry",
-      "quote": "SubDivision.builder().code(\"ES-CN\").name(\"Canary Islands\").build());",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-066",
-      "statement": "A unit test proves the Country mapping takes code and name from an MDM country.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountryTest.java constructor_mapsAllFieldsFromMdmCountry",
-      "quote": "assertThat(country.getCode()).isEqualTo(\"DE\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-067",
-      "statement": "Unit tests prove the ports list returns MDM's ports, returns an empty list for an empty body or a missing result, still returns ports when the trace header is missing, and calls MDM with the GBNAG system and the subscription key.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getPortsOfEntry_returnsBodyFromMdmResponse, getPortsOfEntry_returnsEmptyList_whenMdmBodyIsNull, getPortsOfEntry_returnsEmptyList_whenResultIsNull, getPortsOfEntry_stillReturnsData_whenMdmTraceHeaderIsAbsent, getPortsOfEntry_callsMdmWithGbnagSystem",
-      "quote": "verify(mdmClient).getPorts(SUBSCRIPTION_KEY, \"GBNAG\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-068",
-      "statement": "Unit tests prove the countries list returns MDM's countries, still returns them when the trace header is missing, and passes the GBNAG system and the blocks value through to MDM.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getCountries_returnsBodyFromMdmResponse, getCountries_stillReturnsCountries_whenMdmTraceHeaderIsAbsent, getCountries_callsMdmWithGbnagSystemAndPassedBlocksParam",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:109-149",
       "quote": "verify(mdmClient).getCountries(SUBSCRIPTION_KEY, \"GBNAG\", \"GBNAG_SPS_EX\");",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-069",
-      "statement": "A unit test proves the United Kingdom is filtered out of the countries list.",
+      "id": "repo-referencedata-p1-060",
+      "statement": "Proven (MdmServiceTest): the United Kingdom is filtered out, and Martinique is filtered out when its GBNAG_SPS_EX block has includeCountry false even though another block includes it.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getCountries_filtersOutUk",
-      "quote": "// Then: UK is filtered out\n    assertThat(result).isEmpty();",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:151-184",
+      "quote": "void getCountries_filtersOutCountriesWhereGbnagSpsExBlockHasIncludeCountryFalse()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-061",
+      "statement": "Proven (MdmServiceTest): with no blocks value, countries are kept even when their block says includeCountry false.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:375-394",
+      "quote": "void getCountries_doesNotApplyBlockFilter_whenBlocksParamIsNull()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-062",
+      "statement": "Proven (MdmServiceTest): a countries answer with no body is reported as MDM unavailable, naming the blocks value.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:186-193",
+      "quote": ".hasMessage(\"MDM returned no body for countries request for GBNAG_SPS_EX\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-063",
+      "statement": "Proven (MdmServiceTest): the ports call sends the subscription key and system GBNAG, returns MDM's ports with or without a trace id header, and reports MDM unavailable for a missing body or a missing result.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:53-107",
+      "quote": "verify(mdmClient).getPorts(SUBSCRIPTION_KEY, \"GBNAG\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-064",
+      "statement": "Proven (PortsOfEntryControllerTest): a ports request answers 200 OK and is counted as one \"ports-of-entry\" lookup.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryControllerTest.java:34-45",
+      "quote": "void getPortsOfEntry_shouldCountOnePortsOfEntryLookup()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-065",
+      "statement": "Proven (PortOfEntryTest): an MDM port with traffic Airport is served as type airport with its code and name, and a port with unknown traffic (Hovercraft) has no type and is warned about once however often it is mapped.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntryTest.java:12-38",
+      "quote": "void constructor_warnsOnceWithThePortCodeWhenTheTrafficIsUnknown()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-066",
+      "statement": "Proven (PortTypeTest): traffic \"Airport\", \"PORT\" and \" rail \" give airport, seaport and rail, and null or unknown traffic gives no type.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/portsofentry/PortTypeTest.java:11-35",
+      "quote": "void fromTraffic_matchesIgnoringCaseAndSurroundingWhitespace(String traffic, PortType expected)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-067",
+      "statement": "Proven (PortsOfEntryControllerIT, against a stubbed MDM of 14 ports): the list comes back as two airports, nine seaports, one rail port and two of unknown type, each group A to Z ignoring case and doubled spaces, in the order Aberdeen Airport, East Midlands Airport, Aberdeen Harbour, Port of Dover, Port of Sheerness, Port of Sheerness, Port of Tyne, Portsmouth Port, Portsmouth  Quay, Teestort, TILBURY, Folkestone, Alpha Ferry Terminal, Beta Quay.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java:34-49; src/test/resources/integration/mdm-poe-response.json:2-17",
+      "quote": "void getPortsOfEntry_returnsAirportsThenSeaportsThenRailThenUnknown_eachAToZIgnoringCaseAndSpacing()",
+      "confidence": "verbatim",
+      "note": "The fixture includes traffic \" port \" (Port of Tyne, typed seaport), \"Ferry\" and null (both unknown)."
+    },
+    {
+      "id": "repo-referencedata-p1-068",
+      "statement": "Proven (PortsOfEntryControllerIT): two ports both named Port of Sheerness come back ordered by code, \"GB SHS\" before \"GBSHS\".",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java:51-61",
+      "quote": "void getPortsOfEntry_ordersPortsWithTheSameNameByCode()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-069",
+      "statement": "Proven (PortsOfEntryControllerIT): each port is written as code, name and type, such as {\"code\":\"GB ABD\",\"name\":\"Aberdeen Harbour\",\"type\":\"seaport\"}, and a port of unknown type is written with \"type\":null.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java:63-81",
+      "quote": ".contains(\"{\\\"code\\\":\\\"GB ZZA\\\",\\\"name\\\":\\\"Alpha Ferry Terminal\\\",\\\"type\\\":null}\")",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-070",
-      "statement": "A unit test proves a country whose requested block has includeCountry false is filtered out, even when another of its blocks (OMR) has includeCountry true.",
+      "statement": "Proven (PortsOfEntryControllerIT): on an empty cache the first ports request calls MDM once, a second request is served from the cache, and an empty MDM answer is not cached.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getCountries_filtersOutCountriesWhereGbnagSpsExBlockHasIncludeCountryFalse",
-      "quote": "// Then: country with includeCountry=false for requested block is filtered out",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java:83-126",
+      "quote": "void getPortsOfEntry_doesNotCacheEmptyMdmResponse()",
       "confidence": "verbatim"
     },
     {
       "id": "repo-referencedata-p1-071",
-      "statement": "A unit test proves an empty MDM countries body gives an empty list rather than an error.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getCountries_returnsEmptyList_whenMdmBodyIsNull",
-      "quote": "// Then: null body is treated as empty list rather than NPE",
-      "confidence": "verbatim"
+      "statement": "There is no way to look up a single country or a single port by its code: only the whole lists are served.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at both controllers: each has one GET mapping on its root path and no path variable."
     },
     {
       "id": "repo-referencedata-p1-072",
-      "statement": "A unit test proves that with no blocks value every non-UK country is returned regardless of its blocks.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java getCountries_doesNotApplyBlockFilter_whenBlocksParamIsNull",
-      "quote": "// Then: all non-UK countries returned regardless of blocks",
-      "confidence": "verbatim"
+      "statement": "The ports list cannot be narrowed by port type or by what a port is designated to handle (such as live animals or germinal products): GET /ports-of-entry takes no parameters and MDM is asked only by system.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:25; src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:28-32",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The source scope names ports for the live-animals journey; nothing in the slice says which ports suit which commodity."
     },
     {
       "id": "repo-referencedata-p1-073",
-      "statement": "An integration test proves GET /countries?blocks=GBNAG_SPS_EX returns 200 with countries sorted (France before Germany), the UK and its Northern Ireland subdivision removed, and nested subdivisions (Canary Islands, ES-CN) included.",
+      "statement": "The order of a country's subdivisions is not set by the service: they come back in the order MDM gives them.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java getCountries_returnsSortedCountriesFromMdm",
-      "quote": "assertThat(body).doesNotContain(\"GB-NIR\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-074",
-      "statement": "An integration test proves the JSON response carries code (DE) and name (Germany) fields for a country.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java getCountries_mapsCountryFieldsCorrectly",
-      "quote": "assertThat(response.getBody()).contains(\"\\\"code\\\":\\\"DE\\\"\");",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-075",
-      "statement": "Integration tests prove the countries cache: a cold cache calls MDM once, a repeat request is served from cache, an empty MDM response is not cached, and each distinct blocks value is cached separately.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java getCountries_callsMdm_onFirstRequestAfterCacheClear, getCountries_returnsCachedResult_onSecondCall, getCountries_doesNotCacheEmptyMdmResponse, getCountries_cachesResultsIndependently_perUniqueBlocksParam",
-      "quote": "// Then: MDM called once per unique blocks value — repeated value is a cache hit",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-076",
-      "statement": "An integration test proves an expired countries cache entry is fetched again from MDM.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerCacheExpiryIT.java getCountries_refetchesFromMdm_afterCacheExpires",
-      "quote": "// Then: MDM was called twice — the cached entry expired before the second request",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-077",
-      "statement": "Integration tests prove GET /ports-of-entry returns 200 with ports sorted by name (Aberdeen, East Midlands Airport, Edinburgh) and code and name fields (GBABE, Aberdeen).",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java getPortsOfEntry_returnsSortedPortsFromMdm, getPortsOfEntry_mapsPortFieldsCorrectly",
-      "quote": "// Aberdeen < East Midlands < Edinburgh alphabetically",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-078",
-      "statement": "Integration tests prove the ports cache: a cold cache calls MDM once, a repeat request is served from cache, and an empty MDM result is not cached.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java getPortsOfEntry_callsMdm_onFirstRequestAfterCacheClear, getPortsOfEntry_returnsCachedResult_onSecondCall, getPortsOfEntry_doesNotCacheEmptyMdmResponse",
-      "quote": ".withBody(\"{\\\"result\\\":[]}\")",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-079",
-      "statement": "No test proves the ports cache expiry; only the countries cache has an expiry test.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/ (CountriesControllerCacheExpiryIT only)",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:27-39",
       "quote": "",
       "confidence": "gap",
-      "note": "Looked in every integration test in this part's read list."
+      "note": "Looked in Country.mapSubDivisions and the controller sort: only countries are sorted. No test fixes a subdivision order."
     },
     {
-      "id": "repo-referencedata-p1-080",
-      "statement": "A unit test proves the service has exactly three caches: IDENTITY_TOKEN_CACHE, MDM_COUNTRIES_CACHE and MDM_POE_CACHE.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/configuration/CacheConfigTest.java testCacheManager",
-      "quote": "containsExactlyInAnyOrder(\"IDENTITY_TOKEN_CACHE\", \"MDM_COUNTRIES_CACHE\", \"MDM_POE_CACHE\");",
+      "id": "repo-referencedata-p2-001",
+      "statement": "The service exposes a commodity search at GET /commodities, described as searching species by name or commodity code.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:26-41",
+      "quote": "@RequestMapping(\"/commodities\") ... @Operation(summary = \"Search species by name or commodity code\"",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-081",
-      "statement": "Unit tests prove each error handler's status, title, detail, type and traceId (present when set, absent when not) for validation (400), not found (404), conflict (409) and unexpected errors (500, including IllegalStateException and IllegalArgumentException).",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandlerTest.java (10 tests)",
-      "quote": "assertThat(problemDetail.getDetail()).isEqualTo(\"An unexpected error occurred. Please try again later.\");",
+      "id": "repo-referencedata-p2-002",
+      "statement": "The commodity endpoints are tagged as serving live-animal commodity codes and species from MDM.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:22",
+      "quote": "@Tag(name = \"Commodities\", description = \"Live-animal commodity codes and species from MDM\")",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-082",
-      "statement": "No test proves a failed or timed-out MDM call reaches the caller as a 500 from either list endpoint.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java; src/test/java/uk/gov/defra/trade/imports/integration/*IT.java",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked in MdmServiceTest and the three integration tests: none stubs an MDM error status or timeout."
+      "id": "repo-referencedata-p2-003",
+      "statement": "GET /commodities takes an optional search term in the query parameter q, which may be a species name or a commodity code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:42-43",
+      "quote": "@Parameter(description = \"Search term: a species name or a commodity code\", example = \"dog\") @RequestParam(value = \"q\", required = false) String q",
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-083",
-      "statement": "Ruling (ADR 0002, accepted 2026-05-07): trade-imports-reference-data is the shared service for several reference-data domains until one grows large enough to justify its own service.",
+      "id": "repo-referencedata-p2-004",
+      "statement": "GET /commodities takes a zero-based page number in the query parameter page, defaulting to 0 and refusing anything below 0.",
       "kind": "rule",
-      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md Decision",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:44-45",
+      "quote": "@Parameter(description = \"Zero-based page number\") @RequestParam(defaultValue = \"0\") @Min(0) int page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-005",
+      "statement": "GET /commodities takes the most species to list in the query parameter size, defaulting to 100 and limited to between 1 and 100.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:46-48; CommoditySearchService.java:29",
+      "quote": "@Parameter(description = \"Most species to list, from 1 to 100\") @RequestParam(defaultValue = \"100\") @Min(1) @Max(CommoditySearchService.MAXIMUM_PAGE_SIZE) int size ... static final int MAXIMUM_PAGE_SIZE = 100;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-006",
+      "statement": "GET /commodities answers 400 when the page or size is not valid, 503 when MDM is unavailable, and 200 with the matching species otherwise.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:36-38",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"The matching species\") @ApiResponse(responseCode = \"400\", description = \"The page or size is not valid\") @ApiResponse(responseCode = \"503\", description = \"MDM unavailable\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-007",
+      "statement": "The search term is trimmed of surrounding spaces before it is used, and a missing term counts as empty.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:35",
+      "quote": "String trimmedSearchTerm = searchTerm == null ? \"\" : searchTerm.trim();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-008",
+      "statement": "A trimmed search term shorter than two characters matches nothing: the search answers 200 with a total of 0, the page and size asked for, and no groups, without asking MDM.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:28,36-41; CommoditiesController.java:34-35",
+      "quote": "static final int MINIMUM_SEARCH_LENGTH = 2; ... if (trimmedSearchTerm.length() < MINIMUM_SEARCH_LENGTH) { ... return CommoditySearchResponse.builder().total(0).page(page).size(size).groups(List.of()).build(); ... \"A term shorter than two characters matches nothing.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-009",
+      "statement": "A search term of two characters or more is sent to MDM's product search with the page and size the caller gave.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43-44",
+      "quote": "mdmService.searchProducts(trimmedSearchTerm, page, size);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-010",
+      "statement": "The service does not itself tell a search by commodity code apart from a search by species name: both go to MDM's one product search as the same q term, and MDM's answer decides whether species rows or commodity rows come back.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:34-62; client/MdmClient.java:34-41",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/search\") ... @RequestParam(value = \"q\") String query",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any code-versus-name branch in CommoditySearchService; the IT shows a q of 0102 returning a commodity row and q of dog, cattle or bison returning species rows."
+    },
+    {
+      "id": "repo-referencedata-p2-011",
+      "statement": "MDM product search returns two kinds of row, species and commodity; a row of any other result type is read as having no type and contributes nothing to the search.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductSearchResult.java:10,17-22; commodities/CommoditySearchService.java:92-100,119-123",
+      "quote": "@JsonFormat(with = JsonFormat.Feature.READ_UNKNOWN_ENUM_VALUES_AS_NULL) ResultType resultType ... @JsonProperty(\"species\") SPECIES, @JsonProperty(\"commodity\") COMMODITY ... return null;",
+      "confidence": "verbatim",
+      "note": "mechanism: maps MDM product search rows to a commodity code by result type."
+    },
+    {
+      "id": "repo-referencedata-p2-012",
+      "statement": "A species row from MDM search becomes one species match under the row's commodityCnCode, with the row's speciesName as the Latin name and its commonName.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:93-95,130-133; client/MdmProductSearchResult.java:11-13",
+      "quote": "if (row.resultType() == SPECIES) { return row.commodityCnCode(); } ... Stream.of(new SpeciesMatch(code, row.latinName(), row.commonName())); ... @JsonProperty(\"speciesName\") String latinName",
+      "confidence": "verbatim",
+      "note": "mechanism: turns MDM species search rows into code and species pairs."
+    },
+    {
+      "id": "repo-referencedata-p2-013",
+      "statement": "A commodity row from MDM search contributes one species match per entry in its scientificNames list, each under the row's code; a commodity row with no scientificNames contributes nothing.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:96-98,135-142; client/MdmProductSearchResult.java:14-15",
+      "quote": "if (row.resultType() == COMMODITY) { return row.code(); } ... if (row.species() == null) { return Stream.empty(); } ... @JsonProperty(\"scientificNames\") List<MdmSpecies> species",
+      "confidence": "verbatim",
+      "note": "mechanism: expands an MDM commodity search row into its listed species."
+    },
+    {
+      "id": "repo-referencedata-p2-014",
+      "statement": "An MDM search row with no commodity code (no commodityCnCode on a species row, no code on a commodity row, or no result type) is left out of the search.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:119-123",
+      "quote": "String code = codeOf(row); if (code == null) { return Stream.empty(); }",
+      "confidence": "verbatim",
+      "note": "mechanism: drops MDM search rows that carry no commodity code."
+    },
+    {
+      "id": "repo-referencedata-p2-015",
+      "statement": "After each search, the service asks MDM once for the commodity records of every distinct code the search rows carry, and leaves out every row whose code MDM flags as germinal (isGerminal true).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:45,77-90,102-108",
+      "quote": "return mdmService.getCommodities(codes).stream().filter(CommoditySearchService::isGerminal) ... return Boolean.TRUE.equals(commodity.isGerminal()); ... .filter(row -> !germinalCodes.contains(codeOf(row)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-016",
+      "statement": "The commodity search lists only non-germinal species, so it serves live animals only and offers no search over germinal-product commodities.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:34",
+      "quote": "\"Lists the non-germinal species MDM matches to the term, grouped by code. \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-017",
+      "statement": "A code MDM does not flag as germinal is listed even when it sits outside the live-animals chapter; a missing isGerminal counts as not germinal.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:114-128; CommoditySearchService.java:88-90",
+      "quote": "search_listsACodeOutsideTheLiveAnimalsChapter_whenMdmDoesNotFlagItGerminal ... givenMdmCommodities(commodity(\"0102\", false), commodity(\"05111000\", null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-018",
+      "statement": "A species with no Latin name is left out of the search results.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:110-117",
+      "quote": ".filter(match -> match.latinName() != null)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-019",
+      "statement": "The same species (same Latin name) under the same code is listed once, keeping the first occurrence's common name, even when MDM returns it on both a species row and a commodity row.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:110-117",
+      "quote": "matchesByCodeAndLatinName.putIfAbsent(List.of(match.code(), match.latinName()), match)",
+      "confidence": "verbatim",
+      "note": "mechanism: de-duplicates MDM species matches by commodity code and Latin name."
+    },
+    {
+      "id": "repo-referencedata-p2-020",
+      "statement": "The same species under two different codes is listed under each code, so one species can appear in several groups.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:66-86",
+      "quote": "searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes ... .code(\"01061900\").species(List.of(species(\"Bison bonasus\", \"European Bison\")))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-021",
+      "statement": "The search lists no more species than the size asked for, in MDM's order, but its total counts every distinct named, non-germinal species match on the MDM page it read.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:51-61",
+      "quote": "List<SpeciesMatch> listed = matches.stream().limit(size).toList(); ... .total(matches.size())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-022",
+      "statement": "The search total is the number of species matches on the one MDM page read, not MDM's totalElements, so it does not count matches on later MDM pages.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43-61; CommoditiesControllerIT.java:88-93; mdm-product-search-0102-response.json totalElements",
+      "quote": ".total(matches.size()) ... assertThat(response.getBody().total()).isEqualTo(15); ... \"totalElements\": 1",
+      "confidence": "inferred",
+      "note": "Inferred: totalElements of the MDM search page is never read by CommoditySearchService; the 0102 fixture has totalElements 1 and the endpoint answers total 15. The schema text 'Number of species matching the search term' is therefore true only of the page read. MDM pages are of rows (a commodity row can hold many species), so page and size mean different units to MDM and to this service."
+    },
+    {
+      "id": "repo-referencedata-p2-023",
+      "statement": "Matching species are grouped by commodity code, with the groups and the species within each group in the order MDM returned them.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:144-151; CommoditySearchResponse.java:19-21",
+      "quote": "Collectors.groupingBy(SpeciesMatch::code, LinkedHashMap::new, ... \"Species on this page, grouped by commodity code in MDM's order\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-024",
+      "statement": "The search response has four required fields: total (number of species matching the term), page (zero-based page number), size (most species the page lists) and groups (species on this page grouped by commodity code).",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchResponse.java:9-21",
+      "quote": "\"Number of species matching the search term\" ... long total, ... \"Zero-based page number\" ... int page, ... \"Most species the page lists\" ... int size, ... List<CommodityGroup> groups",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-025",
+      "statement": "The search response echoes the page and size the caller asked for.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:56-60",
+      "quote": ".page(page) .size(size)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-026",
+      "statement": "A commodity group has a required commodity (CN) code, such as 0102, and the list of matching species under that code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java:10-21",
+      "quote": "\"Commodity (CN) code\", requiredMode = REQUIRED, example = \"0102\") String code, @Schema(description = \"Matching species listed under the code\", requiredMode = REQUIRED) List<CommoditySpecies> species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-027",
+      "statement": "A species in the search has a required Latin (scientific) name, such as Bos taurus, and a common name, such as Cattle or Cow, which is null when MDM holds none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySpecies.java:11-23",
+      "quote": "\"Latin (scientific) name\", requiredMode = REQUIRED, example = \"Bos taurus\") String latinName, @Schema(description = \"Common name, when MDM holds one\", requiredMode = NOT_REQUIRED, types = {\"string\", \"null\"}, example = \"Cattle or Cow\") @Nullable String commonName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-028",
+      "statement": "The search response gives each group only its commodity code: it carries no commodity description (such as MDM's \"Live bovine animals\"), selectability or hierarchy, though MDM returns them.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityGroup.java:12-16; src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in CommodityGroup, CommoditySearchResponse and MdmProductSearchResult: no description, isSelectable, parentCode or children field is read or returned. A page showing a commodity name beside the code has no source in this service today."
+    },
+    {
+      "id": "repo-referencedata-p2-029",
+      "statement": "Each GET /commodities call is counted as a commodity-search lookup in the service's lookup metric.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:49; CommoditiesControllerTest.java:42-51",
+      "quote": "lookupMetrics.recordLookup(LookupMetrics.COMMODITY_SEARCH); ... assertThat(lookupTypesCounted()).containsExactly(\"commodity-search\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-030",
+      "statement": "A search logs, at info, how many MDM rows it left out for having no code, how many species for having no Latin name and how many beyond the page size, and logs the germinal codes it left out.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:46-49,64-75",
+      "quote": "\"Commodity search for '{}' leaves out {} MDM rows with no code, {} species with no \" + \"Latin name and {} species beyond the page size\" ... \"Commodity search for '{}' leaves out germinal codes {}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-031",
+      "statement": "The service exposes a species check at POST /commodities/species-check, which returns the lines whose Latin name MDM does not list under their code.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:53-64",
+      "quote": "@Operation(summary = \"Check chosen species are still listed under their codes\", description = \"Returns the lines whose Latin name MDM does not list under their code.\") ... @PostMapping(\"/species-check\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-032",
+      "statement": "The species check answers 200 with the lines MDM does not list, 400 when the body is not a list of complete lines, and 503 when MDM is unavailable.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:55-57",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"The lines MDM does not list\") @ApiResponse(responseCode = \"400\", description = \"The body is not a list of complete lines\") @ApiResponse(responseCode = \"503\", description = \"MDM unavailable\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-033",
+      "statement": "The species check request has one required field, lines: the commodity lines whose species to check against MDM.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckRequest.java:12-21",
+      "quote": "\"Commodity lines whose species to check against MDM\", requiredMode = REQUIRED) @NotNull @Valid List<CommodityLine> lines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-034",
+      "statement": "A commodity line is a species chosen under a commodity code, with a required, non-blank commodity (CN) code and a required, non-blank Latin name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommodityLine.java:9-16",
+      "quote": "@Schema(description = \"A species chosen under a commodity code\") ... \"Commodity (CN) code\", requiredMode = REQUIRED, example = \"0102\") @NotBlank String code, ... \"Latin (scientific) name of the species\", requiredMode = REQUIRED, example = \"Bos taurus\") @NotBlank String latinName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-035",
+      "statement": "The species check response has one required field, unlisted: the lines whose species MDM does not list under their code, in the order they were sent.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckResponse.java:9-14; SpeciesCheckService.java:32-34",
+      "quote": "\"Lines whose species MDM does not list under their code\", requiredMode = REQUIRED) List<CommodityLine> unlisted ... request.lines().stream().filter(line -> !isListed(line, latinNamesByCode)).toList();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-036",
+      "statement": "A line is listed when its Latin name exactly matches, case included, a species name MDM lists under the line's code; otherwise it is returned as unlisted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:42-44; SpeciesCheckServiceTest.java:46-57",
+      "quote": "return latinNamesByCode.get(line.code()).contains(line.latinName()); ... check_returnsTheLinesWhoseLatinNameIsNotListedUnderTheirCode_matchingCaseExactly",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-037",
+      "statement": "The species check asks MDM once per distinct code among the lines, reading every page of that code's species, 100 at a time.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:22,28-31,46-59",
+      "quote": "static final int PAGE_SIZE = 100; ... .map(CommodityLine::code).distinct() ... mdmService.getCommoditySpecies(code, page, PAGE_SIZE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-038",
+      "statement": "The species check stops reading a code's species at the first empty page, or once the pages read cover MDM's total.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:53-57",
+      "quote": "if (speciesPage.content().isEmpty() || (long) (page + 1) * PAGE_SIZE >= total) { return latinNames; }",
+      "confidence": "verbatim",
+      "note": "mechanism: pages through MDM's species list for one commodity code."
+    },
+    {
+      "id": "repo-referencedata-p2-039",
+      "statement": "Every line under a code MDM lists no species for is returned as unlisted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:112-123",
+      "quote": "check_returnsEveryLine_forACodeMdmHasNoSpeciesFor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-040",
+      "statement": "A species check with an empty list of lines answers with no unlisted lines and does not call MDM.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:135-141",
+      "quote": "check_returnsNothingWithoutCallingMdm_whenThereAreNoLines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-041",
+      "statement": "The species check applies no germinal rule: it checks lines under any code, germinal or not.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:27-40",
+      "quote": "Map<String, Set<String>> latinNamesByCode = request.lines().stream().map(CommodityLine::code).distinct()",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any getCommodities or isGerminal call in SpeciesCheckService, unlike the search."
+    },
+    {
+      "id": "repo-referencedata-p2-042",
+      "statement": "When the species check finds unlisted lines it logs, at warn, how many and the code and Latin name of each.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckService.java:35-38; SpeciesCheckServiceTest.java:59-71",
+      "quote": "log.warn(\"Species check found {} lines MDM does not list under their code: {}\", unlisted.size(), unlisted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-043",
+      "statement": "Each POST /commodities/species-check call is counted as a species-check lookup in the service's lookup metric.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java:62; CommoditiesControllerTest.java:53-61",
+      "quote": "lookupMetrics.recordLookup(LookupMetrics.SPECIES_CHECK); ... containsExactly(\"species-check\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-044",
+      "statement": "The commodity search calls MDM GET /mdm/trade/product/search with the term as q, dataset gbnag, and the page and size, sending the APIM subscription key header.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:34-41; MdmService.java:23,53-58",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/search\") ... @RequestParam(value = \"q\") String query, @RequestParam(value = \"dataset\") String dataset, @RequestParam(value = \"page\") int page, @RequestParam(value = \"size\") int size ... private static final String DATASET = \"gbnag\";",
+      "confidence": "verbatim",
+      "note": "The subscription key value comes from configuration and is [REDACTED] here."
+    },
+    {
+      "id": "repo-referencedata-p2-045",
+      "statement": "The germinal lookup calls MDM GET /mdm/trade/product/commodities with the codes comma-separated in codes and dataset gbnag, and is not called when there are no codes.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:43-48; MdmService.java:60-67",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/commodities\") ... @RequestParam(value = \"codes\") String commaSeparatedCodes, @RequestParam(value = \"dataset\") String dataset ... if (codes.isEmpty()) { return List.of(); } ... String.join(\",\", codes)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-046",
+      "statement": "The species check calls MDM GET /mdm/trade/product/commodities/{code}/species with dataset gbnag, page and size.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:50-57; MdmService.java:69-74",
+      "quote": "@GetMapping(value = \"/mdm/trade/product/commodities/{code}/species\") ... @PathVariable(\"code\") String code, @RequestParam(value = \"dataset\") String dataset, @RequestParam(value = \"page\") int page, @RequestParam(value = \"size\") int size",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-047",
+      "statement": "The service reads from MDM's commodity record only its code and isGerminal flag, and from an MDM species only its speciesName (as Latin name) and commonName.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmCommodity.java:6; MdmSpecies.java:7",
+      "quote": "public record MdmCommodity(String code, Boolean isGerminal) ... public record MdmSpecies(@JsonProperty(\"speciesName\") String latinName, String commonName)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-048",
+      "statement": "MDM product search and species pages are read as content plus totalElements; a page with no body, no content or no total is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmProductPage.java:7; MdmService.java:76-99",
+      "quote": "\"MDM returned no body for %s request for %s\" ... \"MDM returned a %s page with no content for %s\" ... \"MDM returned a %s page with no total for %s\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-049",
+      "statement": "A commodities lookup that returns no body is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:64-66,79-83; MdmServiceTest.java:330-338",
+      "quote": "\"MDM returned no body for commodities request for [0102]\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-050",
+      "statement": "A dropped MDM connection on any product call is treated as MDM unavailable.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:108-114; MdmServiceTest.java:276-297",
+      "quote": "} catch (RetryableException ex) { throw new MdmUnavailableException(\"MDM unavailable\", ex); }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-051",
+      "statement": "Each MDM product call logs MDM's trace id with the request name and what it was for, or warns when MDM returned none.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:21,116-125; MdmServiceTest.java:205-226",
+      "quote": "\"MDM trace id for product search request for cattle is trace-abc-123\" ... \"No MDM trace id returned for commodity species request for 0102\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-052",
+      "statement": "The product search, commodities and species calls are not cached: every commodity search and species check asks MDM afresh, unlike countries and ports.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28,40,53,60,69",
+      "quote": "@Cacheable(value = CacheConfig.MDM_POE_CACHE ... @Cacheable(value = CacheConfig.MDM_COUNTRIES_CACHE ... public MdmProductPage<MdmProductSearchResult> searchProducts(",
+      "confidence": "inferred",
+      "note": "Inferred from the @Cacheable annotation on the countries and ports methods only."
+    },
+    {
+      "id": "repo-referencedata-p2-053",
+      "statement": "The service offers no way to browse commodities by hierarchy (parent and child codes) or to list a commodity's species without a search term, although MDM's product data holds parentCode, parents and children.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditiesController.java; src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in CommoditiesController (two endpoints only) and the MDM records. A catalogue page that lists commodities by group would need a new endpoint."
+    },
+    {
+      "id": "repo-referencedata-p2-054",
+      "statement": "The service offers no commodity search for germinal products: the germinal-products set has no reference-data endpoint for its commodities today.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:45-50",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The only search drops germinal codes; no other endpoint lists them."
+    },
+    {
+      "id": "repo-referencedata-p2-055",
+      "statement": "MDM's commodities lookup returns, for each code, a description, isGerminal, isSelectable and speciesCount: for example 0102 Live bovine animals (not germinal, 15 species), 01061900 Other (not germinal, 2 species) and 05111000 Bovine semen (germinal, 1 species).",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-commodities-response.json",
+      "quote": "\"code\": \"0102\", \"description\": \"Live bovine animals\", \"isGerminal\": false, \"isSelectable\": true, \"speciesCount\": 15 ... \"code\": \"05111000\", \"description\": \"Bovine semen\", \"isGerminal\": true",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of the shape of today's MDM content only, not of what the service must offer."
+    },
+    {
+      "id": "repo-referencedata-p2-056",
+      "statement": "MDM product search by a commodity code (0102) returns a commodity row carrying the code, description, isSelectable, isGerminal, commodityGroup \"Great British notification - Animals & Germinals\", parent code 01, CN code details and its 15 species in scientificNames.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-0102-response.json",
+      "quote": "\"resultType\": \"commodity\", ... \"code\": \"0102\", \"depth\": 4, \"description\": \"Live bovine animals\", \"isSelectable\": true, ... \"commodityGroup\": \"Great British notification - Animals & Germinals\", \"isGerminal\": false, ... \"parentCode\": \"01\", ... \"speciesCount\": 15, \"scientificNames\": [",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of MDM's data shape only. The row also carries empty lists for certifiedAs, breedCategory, identificationSystems, animalSubcategory, natureOfCommodity, packageType, treatmentType and productTemperature."
+    },
+    {
+      "id": "repo-referencedata-p2-057",
+      "statement": "MDM species rows carry speciesName, commonName, a commonNames list (such as Cattle or Cow and Aurochs), an EPPO code, taxonomy, the commodityCnCode and the dataset gbnag.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-cattle-response.json; mdm-product-search-dog-response.json",
+      "quote": "\"speciesName\": \"Bos taurus\", \"commonName\": \"Cattle or Cow\", \"commonNames\": [ \"Cattle or Cow\", \"Aurochs\" ], \"languageId\": \"la\", \"eppoCode\": \"BOVSTA\", ... \"commodityCnCode\": \"0102\", ... \"dataset\": \"gbnag\"",
+      "confidence": "verbatim",
+      "note": "Test fixture: evidence of MDM's data shape only. The service reads only commonName, so a species' other common names are not offered."
+    },
+    {
+      "id": "repo-referencedata-p2-058",
+      "statement": "MDM product search by a species name returns one species row per code the species sits under: cattle returns Bos taurus under 0102 and under germinal 05111000; bison returns Bison bison under 0102 and Bison bonasus under both 0102 and 01061900; dog returns Raccoon Dog and Dog under 01061900.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-search-cattle-response.json; mdm-product-search-bison-response.json; mdm-product-search-dog-response.json",
+      "quote": "\"speciesName\": \"Nyctereutes procyonoides\", \"commonName\": \"Raccoon Dog\", ... \"commodityCnCode\": \"01061900\" ... \"speciesName\": \"Canis familiaris\", \"commonName\": \"Dog\"",
+      "confidence": "verbatim",
+      "note": "Test fixtures: evidence of today's MDM content only."
+    },
+    {
+      "id": "repo-referencedata-p2-059",
+      "statement": "MDM's species list for commodity 0102 returns 15 species in alphabetical order of Latin name, from Bibos spp. to Syncerus, with a totalElements of 15.",
+      "kind": "data",
+      "ref": "src/test/resources/integration/mdm-product-species-0102-response.json",
+      "quote": "\"speciesName\": \"Syncerus\", \"commonName\": \"African Buffaloes\", ... \"page\": 0, \"size\": 100, \"totalElements\": 15",
+      "confidence": "verbatim",
+      "note": "Test fixture. The search's commodity row lists the same 15 species in a different, non-alphabetical order, and the search keeps MDM's order."
+    },
+    {
+      "id": "repo-referencedata-p2-060",
+      "statement": "Proven by test: species from MDM species rows are grouped under their code in MDM's order, with a total of every match.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:40-57 search_groupsSpeciesByCodeInMdmOrder",
+      "quote": "search_groupsSpeciesByCodeInMdmOrder",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-061",
+      "statement": "Proven by test: a species MDM returns on both species rows and a commodity row is listed once per code, germinal codes are dropped, and a species with no common name is listed with none.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:59-92 search_listsACommodityRowsSpeciesOncePerCode",
+      "quote": "search_listsACommodityRowsSpeciesOncePerCode ... assertThat(response.total()).isEqualTo(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-062",
+      "statement": "Proven by test: the codes MDM flags as germinal are left out of the search, whether they arrive on species rows or commodity rows.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:94-112 search_leavesOutTheCodesMdmFlagsAsGerminal; CommoditiesControllerIT.java:50-64",
+      "quote": "search_leavesOutTheCodesMdmFlagsAsGerminal ... .withQueryStringParameter(\"codes\", \"0102,05111000\") .withQueryStringParameter(\"dataset\", \"gbnag\"), VerificationTimes.exactly(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-063",
+      "statement": "Proven by test: the search counts every species match but lists no more than the page size.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:130-149 search_countsEverySpeciesMatchButListsNoMoreThanThePageSize",
+      "quote": "search_countsEverySpeciesMatchButListsNoMoreThanThePageSize ... assertThat(response.total()).isEqualTo(4);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-064",
+      "statement": "Proven by test: rows with no result type, commodity rows with no species, and species with no Latin name are left out of the search.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:151-183 search_listsOnlyTheNamedSpeciesOfRowsWithAKnownResultType, search_listsNothingForACommodityRowWithNoSpecies",
+      "quote": "search_listsOnlyTheNamedSpeciesOfRowsWithAKnownResultType ... search_listsNothingForACommodityRowWithNoSpecies",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-065",
+      "statement": "Proven by test: the search logs the rows and species it leaves out.",
+      "kind": "non-functional",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:185-200 search_logsTheRowsAndSpeciesItLeavesOut",
+      "quote": "\"Commodity search for 'bos' leaves out 1 MDM rows with no code, 1 species with no \" + \"Latin name and 1 species beyond the page size\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-066",
+      "statement": "Proven by test: the term is trimmed before searching, and a blank, missing or one-character term returns nothing without calling MDM.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySearchServiceTest.java:202-228; CommoditiesControllerIT.java:143-150",
+      "quote": "search_trimsTheTermBeforeSearching ... search_returnsNothingWithoutCallingMdm_whenTheTrimmedTermIsShorterThanTheMinimum ... \"{\\\"total\\\":0,\\\"page\\\":0,\\\"size\\\":100,\\\"groups\\\":[]}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-067",
+      "statement": "Proven by integration test: a search by commodity code 0102 lists and counts the 15 species of that commodity, in MDM's order.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:88-113 searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode",
+      "quote": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode ... assertThat(response.getBody().total()).isEqualTo(15);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-068",
+      "statement": "Proven by integration test: a search by species name (bison) groups MDM species rows under their codes, with a total of 3.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:66-86 searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes",
+      "quote": "searchCommodities_groupsMdmSpeciesRowsUnderTheirCodes ... assertThat(response.getBody().total()).isEqualTo(3);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-069",
+      "statement": "Proven by integration test: the search asks MDM for the page and size given, and for page 0 and size 100 with dataset gbnag when none is given.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:115-141",
+      "quote": "searchCommodities_asksMdmForThePageAndSizeGiven ... searchCommodities_asksMdmForOneHundredResults_whenNoSizeIsGiven",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-070",
+      "statement": "Proven by integration test: a page below 0, a size of 0 or above 100, or a page or size that is not a number answers 400 without calling MDM.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:209-218",
+      "quote": "@ValueSource(strings = {\"page=-1\", \"size=0\", \"size=101\", \"page=first\", \"size=many\"}) void searchCommodities_answersBadRequestWithoutCallingMdm_forPagingOutsideItsLimits",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-071",
+      "statement": "Proven by integration test: the search answers 503 when MDM answers 502, 503 or 504 or drops the connection, and 500 when MDM answers 400, 401 or 500.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:241-271",
+      "quote": "@ValueSource(ints = {502, 503, 504}) void searchCommodities_answersServiceUnavailable_whenMdmIsDown ... searchCommodities_answersServiceUnavailable_whenMdmDropsTheConnection ... @ValueSource(ints = {400, 401, 500}) void searchCommodities_answersInternalServerError_forAnMdmStatusOtherThanUnavailable",
+      "confidence": "verbatim",
+      "note": "The status mapping itself is shared error handling (part 3); this claims only what these tests prove for the commodity search."
+    },
+    {
+      "id": "repo-referencedata-p2-072",
+      "statement": "Proven by integration test: the species check returns the lines MDM does not list under their code, asking MDM for the code's species with dataset gbnag, page 0 and size 100.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:152-170 checkSpecies_returnsTheLinesMdmDoesNotListUnderTheirCode",
+      "quote": "checkSpecies_returnsTheLinesMdmDoesNotListUnderTheirCode ... .containsExactly(CommodityLine.builder().code(\"0102\").latinName(\"Bos spp.\").build());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-073",
+      "statement": "Proven by integration test: the species check answers 503 when MDM sends no body.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:194-207 checkSpecies_answersServiceUnavailable_whenMdmSendsNoBody",
+      "quote": "checkSpecies_answersServiceUnavailable_whenMdmSendsNoBody ... HttpStatus.SERVICE_UNAVAILABLE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-074",
+      "statement": "Proven by integration test: the species check answers 400 without calling MDM for an empty body, malformed JSON, a body with no lines, null lines, a null line, a line with no code, or a line with a blank Latin name.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:220-239",
+      "quote": "\"\", \"{\", \"{}\", \"{\\\"lines\\\":null}\", \"{\\\"lines\\\":[null]}\", \"{\\\"lines\\\":[{\\\"latinName\\\":\\\"Bos taurus\\\"}]}\", \"{\\\"lines\\\":[{\\\"code\\\":\\\"0102\\\",\\\"latinName\\\":\\\" \\\"}]}\" ... checkSpecies_answersBadRequestWithoutCallingMdm_forABodyThatIsNotAListOfLines",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-075",
+      "statement": "Proven by test: the species check asks MDM once per code and reads every page, stopping at the first empty page.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:73-99 check_asksMdmOncePerCode_andReadsEveryPage, check_stopsReadingPages_atTheFirstEmptyPage",
+      "quote": "check_asksMdmOncePerCode_andReadsEveryPage ... check_stopsReadingPages_atTheFirstEmptyPage",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-076",
+      "statement": "Proven by test: the species check fails as MDM unavailable when MDM sends a species page with no total or no page at all.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/SpeciesCheckServiceTest.java:101-133",
+      "quote": "check_throwsMdmUnavailable_whenMdmSendsASpeciesPageWithNoTotal ... check_throwsMdmUnavailable_whenMdmSendsNoSpeciesPageForACode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-077",
+      "statement": "Proven by test: a search species must have a Latin name, and a commodity group must have a code and a species list and keeps its own copy of the species.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/commodities/CommoditySpeciesTest.java:9-16; CommodityGroupTest.java:12-36",
+      "quote": "rejectsANullLatinName ... holdsItsOwnCopyOfTheSpecies ... rejectsANullCode ... rejectsANullSpeciesList",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-078",
+      "statement": "Proven by integration test: the OpenAPI document describes both commodity endpoints by their summaries, latinName as the only required species field, commonName as a string or null, lines as required on the request, the unlisted field's description, and total, page, size and groups as required on the search response.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java:172-192 openApiDocument_describesBothCommodityEndpointsAndTheirFields",
+      "quote": "openApiDocument_describesBothCommodityEndpointsAndTheirFields",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-079",
+      "statement": "Proven by test: the MDM product calls send the subscription key, dataset gbnag and the paging given; commodities are asked for comma-separated and not at all for no codes; and MDM's content, totals and commodity records are returned as sent.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:195-373",
+      "quote": "searchProducts_callsMdmWithGbnagDatasetAndPaging ... getCommodities_callsMdmWithCodesCommaSeparated ... getCommodities_doesNotCallMdm_whenThereAreNoCodes ... getCommoditySpecies_callsMdmWithCodeGbnagDatasetAndPaging ... searchProducts_returnsBodyFromMdmResponse ... getCommodities_returnsBodyFromMdmResponse ... getCommoditySpecies_returnsBodyFromMdmResponse",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p2-080",
+      "statement": "Proven by test: an MDM product search with no body, no content, no total or a dropped connection, and a commodities or species call with no body, each fail as MDM unavailable with a message naming the request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java:246-297,330-338,365-373",
+      "quote": "searchProducts_throwsMdmUnavailable_whenMdmBodyIsNull ... searchProducts_throwsMdmUnavailable_whenMdmContentIsNull ... searchProducts_throwsMdmUnavailable_whenMdmTotalIsNull ... searchProducts_throwsMdmUnavailable_whenMdmDropsTheConnection ... getCommodities_throwsMdmUnavailable_whenMdmBodyIsNull ... getCommoditySpecies_throwsMdmUnavailable_whenMdmBodyIsNull",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-001",
+      "statement": "The reference-data service serves countries, ports of entry and commodity reference data, all sourced from MDM.",
+      "kind": "integration",
+      "ref": "README.md:3-5",
+      "quote": "Spring Boot service that serves countries, ports of entry and commodity\nreference data from MDM: `GET /countries`, `GET /ports-of-entry`,\n`GET /commodities` and `POST /commodities/species-check`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-002",
+      "statement": "The service exposes exactly four reference endpoints to callers: GET /countries, GET /ports-of-entry, GET /commodities and POST /commodities/species-check.",
+      "kind": "integration",
+      "ref": "README.md:4-5; request mappings in src/main/java (CountriesController, PortsOfEntryController, CommoditiesController)",
+      "quote": "`GET /countries`, `GET /ports-of-entry`,\n`GET /commodities` and `POST /commodities/species-check`",
+      "confidence": "verbatim",
+      "note": "A grep of every @RequestMapping / @GetMapping / @PostMapping in src/main/java found only these four inbound routes; the other mappings are outbound Feign calls to MDM and the token endpoint."
+    },
+    {
+      "id": "repo-referencedata-p3-003",
+      "statement": "The service listens on port 8086 by default, overridable with PORT.",
+      "kind": "constraint",
+      "ref": "README.md:5-6; src/main/resources/application.yml:2",
+      "quote": "port: ${PORT:8086}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-004",
+      "statement": "The service serves its reference data to the Trade Imports frontends.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:7 (Purpose)",
+      "quote": "REST microservice that serves reference data (countries, ports of entry and live-animal commodities) to the Trade Imports frontends.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-005",
+      "statement": "The animals frontend calls the service for countries, commodity search and the species check, through TRADE_IMPORTS_REFERENCE_DATA_URL (default http://localhost:8086).",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:31 (Integrations table, inbound animals-frontend row)",
+      "quote": "Countries (`services/countries/client.js`), commodity search and species check (`sets/live-animals/services/commodities/client.js`); the stack waits for this service before starting the frontend.",
+      "confidence": "verbatim",
+      "note": "The page does not list ports of entry among the animals frontend's calls."
+    },
+    {
+      "id": "repo-referencedata-p3-006",
+      "statement": "The INS frontend and the plants frontend are configured with the service's base URL, and countries and ports are primed at boot; which endpoints each one calls has not been checked.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:32 (Integrations table, ins-frontend and plants-frontend row)",
+      "quote": "Configured with the base URL; the compose files say countries and ports are primed at boot. Exact endpoints per consumer not checked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-007",
+      "statement": "The animals backend does not call the reference-data service.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:38",
+      "quote": "No use of this service by `trade-imports-animals-backend` was found in its `application.yml`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-008",
+      "statement": "MDM is the source of truth for every list: the service holds no reference data of its own, and MongoDB is configured but nothing reads or writes through it.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:21 (Does not own); README.md:110",
+      "quote": "The source of truth for the data: that is MDM. This service holds no reference data of its own; MongoDB is configured but no repository is used in `src/main`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-009",
+      "statement": "The service does not serve BCPs beyond ports of entry.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:22 (Does not own)",
+      "quote": "BCPs beyond ports of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-010",
+      "statement": "The service does not authenticate its own callers: no inbound authentication was found on its endpoints.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:25 (Does not own)",
+      "quote": "Authentication of its own callers: no inbound auth was found in the controllers.",
+      "confidence": "verbatim",
+      "note": "Recorded in general terms only. The service serves public reference lists."
+    },
+    {
+      "id": "repo-referencedata-p3-011",
+      "statement": "The service does not own notification, address or user data; those belong to the backend, address-book and ins-backend services.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md:24 (Does not own)",
+      "quote": "Notification, address or user data (see the backend, address-book and ins-backend services).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-012",
+      "statement": "Countries and ports of entry come back cached and as a simplified view sorted by name; commodity search and the species check are not cached and come back in MDM's order.",
+      "kind": "behaviour",
+      "ref": "docs/repos/trade-imports-reference-data.md:7, :12",
+      "quote": "Countries and ports of entry are cached in memory and returned as a simplified, sorted view; commodity search and the species check are not cached and come back in MDM's order.",
+      "confidence": "verbatim",
+      "note": "The page says both lists are 'returned sorted by name' (line 12), while README.md:96 says ports are grouped in PortType order (airports, seaports, rail ports). Recorded, not reconciled; part 1 owns the ports ordering."
+    },
+    {
+      "id": "repo-referencedata-p3-013",
+      "statement": "Ruling (ADR 0002, accepted 2026-05-07): trade-imports-reference-data is one shared service for several reference-data domains until any one domain grows large enough to justify its own service.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:15-17 (Decision)",
       "quote": "We will use `trade-imports-reference-data` as a shared service to manage multiple reference data domains until any individual domain grows large enough to justify extraction into its own dedicated service.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-084",
-      "statement": "Ruling (ADR 0002): countries are a managed domain, sourced from MDM.",
+      "id": "repo-referencedata-p3-014",
+      "statement": "ADR 0002 lists countries as the domain managed when it was written, with commodity codes and BCPs/POEs planned to be added to this service first.",
       "kind": "rule",
-      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md Decision",
-      "quote": "- **Countries** — data sourced from MDM",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-085",
-      "statement": "Ruling (ADR 0002): commodity codes are planned to be added to this service first.",
-      "kind": "rule",
-      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md Decision",
-      "quote": "- **Commodity codes** — to be added to this service initially",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-086",
-      "statement": "Ruling (ADR 0002): BCPs/POEs are planned to be added to this service first; the ports-of-entry endpoint now exists, so the ADR's list of managed domains is out of date.",
-      "kind": "rule",
-      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md Decision",
-      "quote": "- **BCPs/POEs** — to be added to this service initially",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:19-24",
+      "quote": "Currently managed domains:\n- **Countries** — data sourced from MDM\n\nPlanned future domains:\n- **Commodity codes** — to be added to this service initially\n- **BCPs/POEs** — to be added to this service initially",
       "confidence": "verbatim",
-      "note": "The second half (out of date) is inferred from PortsOfEntryController existing."
+      "note": "The code now serves both planned domains (ports of entry, commodities); the ADR has not been updated. Transporters, document types and certification purposes are not named in it."
     },
     {
-      "id": "repo-referencedata-p1-087",
-      "statement": "Ruling (ADR 0002): a domain is extracted into its own service when its complexity, data volume or operational needs make it a burden here, and domain concerns are kept separate in the codebase to make that easy.",
+      "id": "repo-referencedata-p3-015",
+      "statement": "Under ADR 0002, a domain is extracted into its own service once its complexity, data volume or operational needs make managing it inside the shared service a burden.",
       "kind": "rule",
-      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md Decision; Consequences",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:26",
       "quote": "When a domain's complexity, data volume, or operational requirements become significant enough that managing it within this shared service becomes a burden, it will be extracted into its own service at that point.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-088",
-      "statement": "The README documents neither endpoint, its parameters nor its response shape; it is the Core delivery template README with local-stack and MongoDB set-up only.",
-      "kind": "constraint",
-      "ref": "README.md",
-      "quote": "Core delivery Java Spring Boot backend template.",
-      "confidence": "gap",
-      "note": "Looked through every section of README.md."
-    },
-    {
-      "id": "repo-referencedata-p1-089",
-      "statement": "The service serves no commodities or species list: there is no endpoint, model, MDM call or data for commodity codes or species, although ADR 0002 plans commodity codes.",
-      "kind": "integration",
-      "ref": "src/main/java (request mappings: /countries and /ports-of-entry only); grep for commodit|species across src/ and doc/",
-      "quote": "",
-      "confidence": "gap",
-      "note": "The only hits were a test field name in GlobalExceptionHandlerTest and the ADR's planned-domains line."
-    },
-    {
-      "id": "repo-referencedata-p1-090",
-      "statement": "The service serves no commodity identifiers list (such as identification fields or values per commodity).",
-      "kind": "integration",
-      "ref": "src/main/java (request mappings); grep for identifier across src/ and doc/",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-referencedata-p1-091",
-      "statement": "The service serves no transporters list.",
-      "kind": "integration",
-      "ref": "src/main/java (request mappings); grep for transporter across src/ and doc/",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-referencedata-p1-092",
-      "statement": "The service serves no document types list.",
-      "kind": "integration",
-      "ref": "src/main/java (request mappings); grep for document.?type across src/ and doc/",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-referencedata-p1-093",
-      "statement": "The service serves no certification purposes list.",
-      "kind": "integration",
-      "ref": "src/main/java (request mappings); grep for certification|purpose across src/ and doc/",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-referencedata-p1-094",
-      "statement": "Neither list is localised: names come only as MDM sends them for the GBNAG system, with no Welsh or other language variant.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortOfEntry.java",
-      "quote": "",
-      "confidence": "gap",
-      "note": "No language parameter or translated name field exists in either response or MDM call."
-    },
-    {
-      "id": "repo-referencedata-p1-095",
-      "statement": "Each list endpoint records its own response-time metric: controller.getCountries.time for GET /countries and controller.getPortsOfEntry.time for GET /ports-of-entry.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:24; src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:23",
-      "quote": "@Timed(\"controller.getCountries.time\")",
+      "id": "repo-referencedata-p3-016",
+      "statement": "ADR 0002's consequences: adding a new reference-data domain needs no new service, and domains share deployment, monitoring and MDM connectivity.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:30-33 (Consequences, Easier)",
+      "quote": "- Simpler initial setup — new reference data domains can be added without bootstrapping a new service\n- Reduced operational overhead while domains are small\n- Shared infrastructure (deployment, monitoring, MDM connectivity) across domains",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-referencedata-p1-096",
-      "statement": "A port with no name would make the sort fail, so GET /ports-of-entry would answer 500 if MDM sent a port with no name; the sort is a plain case-sensitive string comparison, as for countries.",
+      "id": "repo-referencedata-p3-017",
+      "statement": "ADR 0002's consequences: domain concerns must be kept well separated in the code so a later extraction is straightforward, and extraction is a planned activity.",
+      "kind": "rule",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:35-38 (Consequences, More difficult / risks)",
+      "quote": "- As multiple domains grow, the service may become harder to reason about and deploy independently\n- Extraction of a domain into its own service later will require effort and coordination; this should be treated as a planned activity rather than an afterthought\n- Care must be taken to keep domain concerns well-separated within the codebase to make future extraction straightforward",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-018",
+      "statement": "Ruling (ADR 0001, accepted 2026-05-07): the service's architectural decisions are recorded as Architecture Decision Records under doc/adr/.",
+      "kind": "rule",
+      "ref": "doc/adr/0001-record-architecture-decisions.md:13-15 (Decision)",
+      "quote": "We will use Architecture Decision Records, as [described by Michael Nygard](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-019",
+      "statement": "The repo has no rulings ledger beyond its two ADRs.",
+      "kind": "rule",
+      "ref": "doc/adr/ (0001, 0002)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a decisions ledger in the repo; the partition's structure also records none. Only ADRs 0001 and 0002 exist."
+    },
+    {
+      "id": "repo-referencedata-p3-020",
+      "statement": "Every error the service answers itself is an RFC 7807 problem detail, with a type URI, a title, a detail and, when the request has a trace id, a traceId property.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:28; src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:116-121",
-      "quote": ".sorted(Comparator.comparing(PortOfEntry::getName))",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandler.java:19-21, :41-43",
+      "quote": "Answers application exceptions with RFC 7807 problem details that carry the request's trace id.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-021",
+      "statement": "When there is no trace id on the request, the error body has no traceId property.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:41-43; GlobalExceptionHandlerTest.java handleValidationException_shouldHandleNullTraceId, handleNotFoundException_shouldHandleNullTraceId, handleConflictException_shouldHandleNullTraceId, handleException_shouldHandleNullTraceId",
+      "quote": "if (traceId != null) {\n      problemDetail.setProperty(\"traceId\", traceId);\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-022",
+      "statement": "A request body that fails bean validation is answered 400 with title \"Validation Error\", detail \"Validation failed for one or more fields\", type https://api.cdp.defra.cloud/problems/validation-error, and an errors map of field name to its validation message.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:28-52; GlobalExceptionHandlerTest.java handleValidationException_shouldReturnBadRequestWithFieldErrors",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n        HttpStatus.BAD_REQUEST,\n        \"Validation failed for one or more fields\"\n    );\n\n    problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/validation-error\"));\n    problemDetail.setTitle(\"Validation Error\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-023",
+      "statement": "A constraint violation, an unreadable request body or a parameter of the wrong type is answered 400 with title \"Bad Request\", detail \"The request is not valid\" and type https://api.cdp.defra.cloud/problems/bad-request, with no per-field errors.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:54-76; GlobalExceptionHandlerTest.java handleBadRequestException_shouldReturnBadRequest; README.md:115",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n        HttpStatus.BAD_REQUEST,\n        \"The request is not valid\"\n    );\n\n    problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/bad-request\"));\n    problemDetail.setTitle(\"Bad Request\");",
+      "confidence": "verbatim",
+      "note": "The test proves the ConstraintViolationException case only; the unreadable-body and type-mismatch cases share the handler and are not tested in this file."
+    },
+    {
+      "id": "repo-referencedata-p3-024",
+      "statement": "When MDM is unavailable, the caller gets 503 with title \"Service Unavailable\", detail \"Reference data is unavailable. Please try again later.\" and type https://api.cdp.defra.cloud/problems/service-unavailable.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:118-145; GlobalExceptionHandlerTest.java handleMdmUnavailable_shouldReturnServiceUnavailable",
+      "quote": "HttpStatus.SERVICE_UNAVAILABLE,\n        \"Reference data is unavailable. Please try again later.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-025",
+      "statement": "MDM counts as unavailable, giving the caller a 503, when it answers 502, 503 or 504, cannot be reached, or returns no body, no result, no content or no total.",
+      "kind": "rule",
+      "ref": "README.md:115; MdmErrorDecoder.java:14-16; MdmService.java:34, :81, :91, :95, :112",
+      "quote": "a 503 when MDM returns no body, content or total, answers 502, 503 or 504, or is not reachable",
+      "confidence": "verbatim",
+      "note": "mechanism: MdmService and MdmErrorDecoder turn MDM transport failures and empty MDM responses into MdmUnavailableException."
+    },
+    {
+      "id": "repo-referencedata-p3-026",
+      "statement": "An MDM answer of 502, 503 or 504 is treated as MDM unavailable; any other MDM error status is left to Feign's default handling.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmErrorDecoder.java:14-17; MdmErrorDecoderTest.java decode_wrapsAnUnavailableMdmStatus, decode_leavesOtherStatusesToTheDefaultDecoder",
+      "quote": "case 502, 503, 504 -> new MdmUnavailableException(\"MDM unavailable\", decoded);\n      default -> decoded;",
+      "confidence": "verbatim",
+      "note": "mechanism: maps MDM HTTP error statuses to the service's unavailable exception."
+    },
+    {
+      "id": "repo-referencedata-p3-027",
+      "statement": "Any other MDM error, such as a 400 or 404 from MDM, reaches the caller as a 500.",
+      "kind": "behaviour",
+      "ref": "README.md:115; GlobalExceptionHandler.java:147-169",
+      "quote": "Any other MDM error is 500.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-028",
+      "statement": "When the token endpoint MDM calls need answers 502, 503 or 504 or cannot be reached, the caller gets the same 503 \"Reference data is unavailable. Please try again later.\" answer.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:123-126; MdmClientInterceptor.java:60-67; GlobalExceptionHandlerTest.java handleTokenEndpointUnavailable_shouldReturnServiceUnavailable; TokenEndpointUnavailableIT.java searchCommodities_answersServiceUnavailable_whenTheTokenEndpointAnswers503",
+      "quote": "if (ex.status() == 502 || ex.status() == 503 || ex.status() == 504) {\n            throw new TokenEndpointUnavailableException(\"Token endpoint unavailable\", ex);",
+      "confidence": "verbatim",
+      "note": "The integration test proves it end to end for GET /commodities?q=fox with the token endpoint answering 503."
+    },
+    {
+      "id": "repo-referencedata-p3-029",
+      "statement": "Any other token endpoint error reaches the caller as a 500.",
+      "kind": "behaviour",
+      "ref": "MdmClientInterceptor.java:67; GlobalExceptionHandler.java:147-169",
+      "quote": "throw ex;",
       "confidence": "inferred",
-      "note": "Comparator.comparing with a null key throws NullPointerException, a RuntimeException the handler maps to 500."
+      "note": "Inferred: a non-502/503/504 FeignException is rethrown and, being a RuntimeException, falls to the 500 handler. No test proves it."
     },
     {
-      "id": "repo-referencedata-p1-097",
-      "statement": "In the local profile the actuator exposes health, info, metrics and env, and drops the cache endpoint the default profile exposes.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application-local.yml:13-17",
-      "quote": "include: health,info,metrics,env",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-referencedata-p1-098",
-      "statement": "The countries integration test's comment says France carries the nested subdivisions it checks, but the subdivision it asserts (Canary Islands, ES-CN) belongs to Spain in the fixture; France's own subdivisions (Martinique FR-MQ, Guadeloupe FR-GP) are not asserted.",
+      "id": "repo-referencedata-p3-030",
+      "statement": "An unexpected error is answered 500 with title \"Internal Server Error\", detail \"An unexpected error occurred. Please try again later.\" and type https://api.cdp.defra.cloud/problems/internal-error, without the error's own message.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java:47-50; src/test/resources/integration/mdm-countries-response.json:11-20,48-53",
-      "quote": "// France carries nested subdivisions from MDM",
+      "ref": "GlobalExceptionHandler.java:147-169; GlobalExceptionHandlerTest.java handleException_shouldReturnInternalServerError_forRuntimeException, _forIllegalStateException, _forIllegalArgumentException",
+      "quote": "HttpStatus.INTERNAL_SERVER_ERROR,\n        \"An unexpected error occurred. Please try again later.\"",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-031",
+      "statement": "The handler would answer a not-found error 404 with title \"Resource Not Found\" and a conflict 409 with title \"Resource Conflict\", each with the error's own message as the detail, but no code path in the service raises either, so a caller cannot receive them from the service's own logic.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:78-116; NotFoundException.java; ConflictException.java; GlobalExceptionHandlerTest.java handleNotFoundException_shouldReturnNotFound, handleConflictException_shouldReturnConflict",
+      "quote": "@ExceptionHandler(NotFoundException.class)\n  public ProblemDetail handleNotFoundException(NotFoundException ex) {",
+      "confidence": "inferred",
+      "note": "Inferred: a grep of src/main/java finds NotFoundException and ConflictException only in their own files and the handler. The tests use notification examples, carried over from another service."
+    },
+    {
+      "id": "repo-referencedata-p3-032",
+      "statement": "Spring's own errors, such as a 404 for an unknown path, keep Spring's default answers rather than the service's problem details.",
+      "kind": "behaviour",
+      "ref": "README.md:115",
+      "quote": "Spring's other exceptions, such as a 404 for an unknown path, keep Spring's answers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-033",
+      "statement": "A failure of the AWS STS connection is raised as a reference-data exception and so reaches a caller as a 500.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/AwsConfig.java:52; TradeImportsReferenceDataException.java; GlobalExceptionHandler.java:147",
+      "quote": "throw new TradeImportsReferenceDataException(\"Sts connection error\", ex);",
+      "confidence": "inferred",
+      "note": "Inferred from the throw site found by grep; AwsConfig is outside this part's read, and whether it can fail during a request rather than at start-up was not checked."
+    },
+    {
+      "id": "repo-referencedata-p3-034",
+      "statement": "The service calls MDM at MDM_SERVICE_URL, defaulting to http://localhost:8087, where trade-imports-stub listens locally.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:111-112; README.md:90-92",
+      "quote": "url: ${MDM_SERVICE_URL:http://localhost:8087}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-035",
+      "statement": "The service gets its MDM bearer token from the Trade Platform token endpoint at TRADE_PLATFORM_AUTH_URL, defaulting to http://localhost:8087/tenant/oauth2/v2.0/token, using OAuth2 client credentials.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:101-106; docs/repos/trade-imports-reference-data.md:18, :34",
+      "quote": "url: ${TRADE_PLATFORM_AUTH_URL:http://localhost:8087/tenant/oauth2/v2.0/token}",
+      "confidence": "verbatim",
+      "note": "The client secret default is [REDACTED] here."
+    },
+    {
+      "id": "repo-referencedata-p3-036",
+      "statement": "Every MDM call carries a subscription key header, Ocp-Apim-Subscription-Key, set from TRADE_PLATFORM_SUBSCRIPTION_KEY.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:113; MdmConfiguration.java:15; docs/repos/trade-imports-reference-data.md:33",
+      "quote": "ocpApimSubscriptionKey: ${TRADE_PLATFORM_SUBSCRIPTION_KEY:[REDACTED]}",
+      "confidence": "verbatim",
+      "note": "Default value redacted."
+    },
+    {
+      "id": "repo-referencedata-p3-037",
+      "statement": "Geo and port calls to MDM send system=GBNAG, and product calls send dataset=gbnag with no system.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-reference-data.md:18; MdmService.java:22-23",
+      "quote": "sends the subscription key and `system=GBNAG` on geo and port calls, and `dataset=gbnag` (no `system`) on product calls.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-038",
+      "statement": "MDM calls and token calls each time out after 3 seconds to connect and 3 seconds to read.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:107-108, :114-115",
+      "quote": "connectionTimeout: 3000\n  readTimeout: 3000",
+      "confidence": "verbatim",
+      "note": "How a timeout reaches the caller (as MDM unreachable, 503) is inferred from MdmService.fromMdm catching RetryableException; not tested in this part's files."
+    },
+    {
+      "id": "repo-referencedata-p3-039",
+      "statement": "Countries and ports of entry are cached for CACHE_MDM_TTL_MINUTES, 60 minutes by default, so a change in MDM can take up to that long to reach callers; empty results are not cached.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:5-7; README.md:106; docs/repos/trade-imports-reference-data.md:17",
+      "quote": "Caching of MDM responses (Caffeine caches `MDM_COUNTRIES_CACHE` and `MDM_POE_CACHE`, TTL `CACHE_MDM_TTL_MINUTES`, default 60; empty results are not cached).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-040",
+      "statement": "Commodity search takes a page size from 1 to 100, defaulting to 100, and a page from 0; any other value is refused with a 400.",
+      "kind": "rule",
+      "ref": "docs/repos/trade-imports-reference-data.md:15",
+      "quote": "`GET /commodities?q=&page=&size=` (size from 1 to 100, defaulting to 100, and page from 0; any other value is refused with a 400)",
+      "confidence": "verbatim",
+      "note": "Recorded here as the documented contract; part 2 owns commodity search behaviour and the code that enforces it."
+    },
+    {
+      "id": "repo-referencedata-p3-041",
+      "statement": "When HTTP_PROXY is set, every outbound call to MDM and the token endpoint goes through that proxy, as CDP requires for egress; without it, calls go direct.",
+      "kind": "constraint",
+      "ref": "README.md:114; src/main/resources/application.yml:36",
+      "quote": "When `HTTP_PROXY` is set to `http://host:port`, every outbound HTTP and HTTPS call goes through it, as CDP requires for egress; without it, calls go direct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-042",
+      "statement": "The service's health endpoint is GET /health and shows no details; it does not reflect MDM's availability, so a down dependency never restarts the service.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:61-75; README.md:105; docs/repos/trade-imports-reference-data.md:81",
+      "quote": "`external.dependency.available` is for the dashboard only. It is not a Spring `HealthIndicator`, because CDP uses `/health` to decide whether a task is alive and would restart every task whenever a dependency went down.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-043",
+      "statement": "In the workspace stack, if the stub is left out, GET /countries fails until a stub answers, because the service fetches an MDM token first.",
+      "kind": "behaviour",
+      "ref": "docs/repos/trade-imports-reference-data.md:97",
+      "quote": "`/countries` then fails until a stub answers, because it fetches an MDM token first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p3-044",
+      "statement": "The service serves no transporter list: it has no endpoint, model or MDM call for transporters or hauliers.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read transporters. A case-insensitive grep for transporter, haulier and carrier found nothing; the only request mappings are /countries, /ports-of-entry, /commodities and /commodities/species-check."
+    },
+    {
+      "id": "repo-referencedata-p3-045",
+      "statement": "The service serves no document types list: it has no endpoint, model or MDM call for accompanying document types.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read document types. A case-insensitive grep for 'document type', documentType and 'accompanying document' found nothing."
+    },
+    {
+      "id": "repo-referencedata-p3-046",
+      "statement": "The service serves no certification purposes list: it has no endpoint, model or MDM call for certification purposes.",
+      "kind": "integration",
+      "ref": "repo-wide search: src/main, src/test/java, doc/, README.md, docs/repos/trade-imports-reference-data.md",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The scope expects the live-animals journey to read certification purposes. A case-insensitive grep for certification and purpose found only the 'Purpose' heading of the workspace page. MDM product search fixtures under src/test/resources carry certifiedAs and certificateModelCodes fields, but the service maps none of them."
     }
   ]
 }

@@ -1,568 +1,675 @@
 {
   "source": "trace:prototype-dr2-1",
-  "structure": "Part 4, Main import reason: the 7 traces of about-the-consignment.fit.spec.js › 'main import reason', every one opened and mined in full (actions, page requests, POST bodies, and DOM snapshots of each state). Traces: lists every reason with its hint (59 actions; reason page DOM at action 36, the pointer for the full page); a reason is optional to proceed (47 actions; POST at request 161, next page at action 34); internal market reveals the purposes and needs one (68 actions; reveal at 33, error at 45, success POST request 199); transhipment needs a destination country (67 actions; error at 44, POST 199); transit needs a port of exit and a destination country (67 actions; error at 43, POST 199); temporary admission horses needs a real exit date and a port of exit (76 actions; empty error at 44, 'real date' error at 57, both POST 200); the prototype seed route jumps straight to the reason page (46 actions; navigate at 31, redirect request 161, landing at 33). Every trace's beforeEach walks create-notification › live animals › origin (France, region code No) › commodity (cattle, Bos taurus) to /design-release-2.1/reason-for-import; those earlier pages belong to other parts. One page is in scope: reason-for-import ('Main import reason'), always shown for live animals after the commodity page. On it, one optional radios question (importReason, 5 reasons each with a hint) with four conditional reveals: Internal market › purpose radios (11 options, required once the reason is chosen); Transhipment or onward travel › destination country select (required); Transit › port of exit and destination country selects (both required); Temporary admission horses › exit date (MoJ date picker, required, must be a real date) and port of exit select (required). Re-entry has no reveal. Plus the seed route /design-release-2.1/prototype/reason-for-import. The slice stops at the page after the reason, consignment-details ('Commodity details'), which every successful submit reaches.",
+  "structure": "Part 4 mined all 9 traces its partition names, each opened and its full action list read, with snapshots and evals on every page in scope and the network log read for each: description-of-the-goods.fit.spec.js commodity details (cattle number of animals, 97 actions; two commodities horse and pig, 67 actions; germinal cattle semen, 91 actions), total gross weight (germinal, 98 actions; live animals have no gross weight page, 52 actions), additional details (cattle, 71 actions; poultry, 62 actions), and snagging.fit.spec.js S13 (selected commodities table, cattle, 52 actions) and S14 (spacing above each commodity title, horse and pig, with an error state, 66 actions). All 9 recorded 0 errors; validation shows as re-rendered pages. Every trace walks the opening run (create-notification, notification-type, origin-of-the-import, what-are-you-importing, reason-for-import with Internal market / Breeding) to reach its page; that run belongs to other parts and is not claimed here. Pages claimed, in journey order: /consignment-details (Commodity details: always, after the main import reason; one block per selected commodity, with Number of animals and, for some species, Number of packages for live animals, or Quantity (unit/pieces), Number of packages and one Temperature question for germinal products); /consignment-gross-weight (What is the total gross weight of the consignment?: germinal products only, after commodity details, before identification details; live animals are redirected away); /additional-animal-details (Additional details: live animals, after identification details, before arrival details; cattle get certification purpose and unweaned animals, poultry get certification purpose only). Identification details is reached in several traces but belongs to part 5; only the routes into and out of it are claimed here. Refs cite the trace zip by file name (all in workareas/shared/design-release-2-1/sources/traces-prototype/) and an action id from its actions list, or a request id from its requests list. Snapshot pointers: commodity details cattle action 45 (default), 58 (empty error), 73 (zero error) of the cattle number-of-animals zip; two commodities action 42 and 52; germinal action 36 (default), 49 (required errors), 64 (invalid errors); gross weight action 39 (default), 53, 66, 73 (errors), 85 (next page); additional details cattle action 49, poultry action 43; S13 action 38; S14 action 44 (default) and 52 (error). The prototype is a GOV.UK Prototype Kit app holding answers in its session; no call to any other system appears in any network log.",
   "claims": [
     {
       "id": "trace-prototype-dr2-1-p4-001",
-      "statement": "After a live-animals user saves and continues from the commodity page (what-are-you-importing), the journey goes to the main import reason page at /design-release-2.1/reason-for-import.",
+      "statement": "After the main import reason page, Save and continue takes a live animals or germinal products user to the commodity details page at /consignment-details.",
       "kind": "behaviour",
-      "ref": "trace lists-every-reason-with-its-hint request 121 (POST what-are-you-importing 302) and request 122 (GET reason-for-import 200)",
-      "quote": "GET 200 reason-for-import",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip requests 166-167",
+      "quote": "POST 302 reason-for-import / GET 200 consignment-details",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-002",
-      "statement": "The reason page's browser title is 'Main import reason - Import notification service - GOV.UK'.",
+      "statement": "The commodity details page's browser title is 'Commodity details - Import notification service - GOV.UK'.",
       "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36 (document.title)",
-      "quote": "Main import reason - Import notification service - GOV.UK",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "Commodity details - Import notification service - GOV.UK",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-003",
-      "statement": "The reason page's main heading (h1) is 'Main import reason'.",
+      "statement": "The commodity details page has the caption 'Description of the goods' above the heading 'Commodity details'.",
       "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, main h1.app-reason-for-import-page__heading",
-      "quote": "Main import reason",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<p class=\"app-consignment-details-page__caption\">Description of the goods</p> <h1 class=\"app-consignment-details-page__heading\">Commodity details</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-004",
-      "statement": "The reason page shows the section caption 'About the consignment' above the heading.",
+      "statement": "Above the page content, every page in this part shows a notification status line: a 'Draft' tag and the notification's type and reference, such as 'Live animals - GBN-AG-26-0FI8DO'.",
       "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, p.app-reason-for-import-page__caption",
-      "quote": "About the consignment",
-      "confidence": "verbatim"
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">Live animals - GBN-AG-26-0FI8DO</span>",
+      "confidence": "verbatim",
+      "note": "Seen on commodity details, total gross weight and additional details. The reference differs on every trace (GBN-AG-26-0A3QUT, GBN-AG-26-0X5LME and so on), so it is generated per notification."
     },
     {
       "id": "trace-prototype-dr2-1-p4-005",
-      "statement": "The reason radios sit in a fieldset whose legend, 'What is the main reason for importing the animals?', is visually hidden; the visible h1 'Main import reason' sits outside the fieldset, so screen-reader users hear the legend as the question.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, legend.govuk-fieldset__legend.govuk-visually-hidden",
-      "quote": "What is the main reason for importing the animals?",
+      "statement": "The status line names the notification type the user chose: 'Germinal products' for a germinal products notification, 'Live animals' for a live animals one.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "Germinal products - GBN-AG-26-0BARV3",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-006",
-      "statement": "Above the caption, the reason page shows a 'Draft' status tag and the notification's reference (for example GBN-AG-26-09TXQW).",
-      "kind": "behaviour",
-      "ref": "trace lists-every-reason-with-its-hint action 36, div.app-dr2-notification-status",
-      "quote": "Draft GBN-AG-26-09TXQW",
-      "confidence": "verbatim",
-      "note": "Rendered with custom classes app-dr2-notification-status and app-dr2-review-status__tag--draft on a govuk-tag. The reference differs per trace (GBN-AG-26-0ZNDNN in the seed-route trace)."
+      "statement": "Commodity details lists the user's chosen commodities under the heading 'Selected commodities', in a table with the columns 'Commodity code', 'Commodity' and 'Species', plus an unlabelled action column.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "Selected commodities ... Commodity code ... Commodity ... Species ... <div class=\"app-consignment-details-page__summary-action\"></div>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-007",
-      "statement": "The reason page has a 'Back' link to the commodity page, /design-release-2.1/what-are-you-importing.",
-      "kind": "behaviour",
-      "ref": "trace lists-every-reason-with-its-hint action 36, a.govuk-back-link",
-      "quote": "Back | /design-release-2.1/what-are-you-importing",
+      "statement": "Each selected commodity has one row in the Selected commodities table, showing its commodity code, commodity name and species, such as '0102', 'Cattle', 'Domestic cattle (Bos taurus)'.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "0102 Cattle Domestic cattle (Bos taurus) Remove",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-008",
-      "statement": "The user chooses one main reason for import (field importReason, GOV.UK radios) from five options, in this order: Internal market; Transhipment or onward travel; Transit; Re-entry; Temporary admission horses.",
+      "statement": "With two commodities chosen (horse and pig), the Selected commodities table has two rows: '0101 Horse Equus cabalus' and '0103 Pig Sus scrofa domesticus'.",
       "kind": "data",
-      "ref": "trace lists-every-reason-with-its-hint action 34 (expect input[name=\"importReason\"] + label) and action 36 DOM",
-      "quote": "Internal market | Transhipment or onward travel | Transit | Re-entry | Temporary admission horses",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 42",
+      "quote": "0101\nHorse\nEquus cabalus\nRemove\n0103\nPig\nSus scrofa domesticus\nRemove",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-009",
-      "statement": "The 'Internal market' reason carries the hint 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "statement": "The species shown for a commodity is not in one format: cattle shows a common name with the Latin name in brackets ('Domestic cattle (Bos taurus)'), while horse, pig and chicken show a Latin name alone ('Equus cabalus', 'Sus scrofa domesticus', 'Gallus domesticus').",
       "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #import-reason-item-hint",
-      "quote": "For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).",
-      "confidence": "verbatim"
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 42; trace description-of-the-goods--additional-details-poultry-certification-purpose-only-after-identification-details.zip action 35",
+      "quote": "Domestic cattle (Bos taurus) / Equus cabalus / Sus scrofa domesticus / Gallus domesticus",
+      "confidence": "verbatim",
+      "note": "The horse's rendered name is 'Equus cabalus' while its field ids use 'horse-equus-caballus', so the displayed spelling differs from the id spelling."
     },
     {
       "id": "trace-prototype-dr2-1-p4-010",
-      "statement": "The 'Transhipment or onward travel' reason carries a hint describing direct travel to a third country while staying within the same GB port or airport.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #import-reason-2-item-hint",
-      "quote": "For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.",
+      "statement": "Each row in the Selected commodities table has a 'Remove' button that removes that commodity from the notification.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<button class=\"app-consignment-details-page__summary-remove\" type=\"submit\" name=\"removeCommodity\" value=\"cattle\"> Remove </button>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-011",
-      "statement": "The 'Transit' reason carries a hint describing animals entering GB at one port or airport and leaving from a different one.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #import-reason-3-item-hint",
-      "quote": "For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.",
+      "statement": "Removing one commodity while another remains shows commodity details again, without the removed commodity's row or block.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 49-52, requests 206-207",
+      "quote": "0103\nPig\nSus scrofa domesticus\nRemove\n\nAdd another commodity\n\nPig (0103)",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-012",
-      "statement": "The 'Re-entry' reason carries the hint 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #import-reason-4-item-hint",
-      "quote": "For animals authorised for re-entry, or rejected exports re-entering Great Britain.",
+      "statement": "Removing the last remaining commodity takes the user back to the commodity search page at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 53, requests 247-248",
+      "quote": "POST 302 consignment-details / GET 200 what-are-you-importing",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-013",
-      "statement": "The 'Temporary admission horses' reason carries the hint 'For horses authorised for temporary entry.'",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #import-reason-5-item-hint",
-      "quote": "For horses authorised for temporary entry.",
+      "statement": "Below the Selected commodities table, an 'Add another commodity' link goes to the commodity search page at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/what-are-you-importing\">Add another commodity</a>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-014",
-      "statement": "Choosing 'Re-entry' reveals nothing further: it is the only reason without a conditional reveal (its radio has no aria-controls and no conditional block follows it).",
-      "kind": "rule",
-      "ref": "trace lists-every-reason-with-its-hint action 36, input#import-reason-4",
-      "quote": "<input class=\"govuk-radios__input\" id=\"import-reason-4\" name=\"importReason\" type=\"radio\" value=\"Re-entry\" aria-describedby=\"import-reason-4-item-hint\">",
-      "confidence": "inferred",
-      "note": "Read from the markup; no trace selects Re-entry and submits it."
+      "statement": "The Back link on commodity details goes to the commodity search page at /what-are-you-importing, not to the main import reason page the user came from.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 58",
+      "quote": "<a href=\"/design-release-2.1/what-are-you-importing\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-015",
-      "statement": "Choosing 'Internal market' reveals a second radios question, 'Purpose in the internal market' (field internalMarketPurpose, medium-size legend), nested inside the reason radios.",
-      "kind": "rule",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one actions 31-33; lists-every-reason-with-its-hint action 36, #conditional-import-reason legend.govuk-fieldset__legend--m",
-      "quote": "Purpose in the internal market",
+      "statement": "Commodity details has one block per selected commodity, headed with the commodity name and its code in brackets, such as 'Horse (0101)' and 'Pig (0103)'.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 42",
+      "quote": "Horse (0101)\nEquus cabalus\nNumber of animals ... Pig (0103)\nSus scrofa domesticus\nNumber of animals",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-016",
-      "statement": "The internal market purpose options are, in order: Transfer of ownership - Sale/gift; Transfer of ownership - Rescue; Breeding; Research; Racing, competition, show or training; Approved premises or body; Companion animal not for resale or rehoming; Production; Slaughter; Fattening; Restocking.",
-      "kind": "data",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 32 (expect input[name=\"internalMarketPurpose\"] + label); lists-every-reason-with-its-hint action 36",
-      "quote": "Transfer of ownership - Sale/gift | Transfer of ownership - Rescue | Breeding | Research | Racing, competition, show or training | Approved premises or body | Companion animal not for resale or rehoming | Production | Slaughter | Fattening | Restocking",
-      "confidence": "verbatim",
-      "note": "Live animals with cattle (Bos taurus) chosen. Whether the list varies by commodity is not shown in this slice."
+      "statement": "Inside each commodity block, a sub-heading names the species, and that species' fields sit under it.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<h3 class=\"app-consignment-details-page__species-name\">Domestic cattle (Bos taurus)</h3>",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-017",
-      "statement": "The purpose 'Transfer of ownership - Sale/gift' carries a hint about sale or transfer of ownership, including gifts.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-item-hint",
-      "quote": "Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).",
+      "statement": "For live animals, each species asks for 'Number of animals' in a text input, one per species.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 42",
+      "quote": "INPUT|text|numberOfAnimals[horse-equus-caballus]|number-of-animals-horse-equus-caballus| ... INPUT|text|numberOfAnimals[pig-sus-scrofa]|number-of-animals-pig-sus-scrofa|",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-018",
-      "statement": "The purpose 'Transfer of ownership - Rescue' carries a hint about rehoming, adoption and fostering.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-2-item-hint",
-      "quote": "Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.",
+      "statement": "For cattle, horses and pigs, each species also has an optional 'Number of packages (when required)' text input with the hint 'Such as crates, bags or boxes'.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-two-commodities-get-one-block-each-removing-the-last-returns-to-the-search.zip action 42",
+      "quote": "Number of packages (when required)\nSuch as crates, bags or boxes",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-019",
-      "statement": "The purpose 'Breeding' carries a hint about animals for reproduction.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-3-item-hint",
-      "quote": "Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.",
-      "confidence": "verbatim"
+      "statement": "For chickens (poultry), the commodity block asks only for 'Number of animals'. There is no Number of packages field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--additional-details-poultry-certification-purpose-only-after-identification-details.zip action 35",
+      "quote": "Chicken (010511)\nGallus domesticus\nNumber of animals\nSave and continue",
+      "confidence": "verbatim",
+      "note": "The chicken row in the Selected commodities table reads '010511 Chicken Gallus domesticus'."
     },
     {
       "id": "trace-prototype-dr2-1-p4-020",
-      "statement": "The purpose 'Research' carries the hint 'Animals for use in scientific or medical research.'",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-4-item-hint",
-      "quote": "Animals for use in scientific or medical research.",
+      "statement": "Number of animals must be given: submitting it empty shows the error 'Enter the number of animals' in the error summary and above the field, and the summary link goes to that species' field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 58",
+      "quote": "<a href=\"#number-of-animals-cattle-bos-taurus\">Enter the number of animals</a> ... <span class=\"govuk-visually-hidden\">Error:</span> Enter the number of animals",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-021",
-      "statement": "The purpose 'Racing, competition, show or training' carries the hint 'Animals to participate in competitive or training events.'",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-5-item-hint",
-      "quote": "Animals to participate in competitive or training events.",
+      "statement": "Number of animals must be a whole number greater than 0: entering 0 shows the error 'Enter a whole number greater than 0' in the error summary and above the field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 73",
+      "quote": "There is a problem\nEnter a whole number greater than 0 ... Number of animals\n\nError:\nEnter a whole number greater than 0",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-022",
-      "statement": "The purpose 'Approved premises or body' carries a hint about exhibitions, zoos, collections or conservation needing a licence or approval.",
+      "statement": "Validation errors on these pages appear in an error summary titled 'There is a problem'.",
       "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-6-item-hint",
-      "quote": "Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 58",
+      "quote": "<h2 class=\"govuk-error-summary__title\"> There is a problem </h2>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-023",
-      "statement": "The purpose 'Companion animal not for resale or rehoming' carries a hint about privately owned animals imported under the commercial rules.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-7-item-hint",
-      "quote": "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
-      "confidence": "verbatim"
+      "statement": "When a page is shown again with errors, the value the user entered stays in the field, such as '0' in Number of animals.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 73",
+      "quote": "Enter a whole number greater than 0 | value=0",
+      "confidence": "verbatim",
+      "note": "The same holds on germinal commodity details ('value=x', 'value=0') and total gross weight ('value=abc', 'value=0')."
     },
     {
       "id": "trace-prototype-dr2-1-p4-024",
-      "statement": "The purpose 'Production' carries a hint about animals farmed for meat, milk, eggs, wool or other products.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-8-item-hint",
-      "quote": "Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.",
+      "statement": "With two commodities and no number of animals for either, each species' field gets its own error, but both read 'Enter the number of animals', so the error summary lists the same words twice without naming the species.",
+      "kind": "rule",
+      "ref": "trace snagging--commodity-details-s14-commodity-details-spacing-above-each-commodity-title.zip action 52",
+      "quote": "There is a problem\nEnter the number of animals\nEnter the number of animals\n#number-of-animals-horse-equus-caballus #number-of-animals-pig-sus-scrofa",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-025",
-      "statement": "The purpose 'Slaughter' carries a hint about slaughter shortly after arrival into Great Britain.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-9-item-hint",
-      "quote": "Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.",
+      "statement": "Number of packages is optional for live animals: commodity details is accepted with it left empty.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip request 286",
+      "quote": "numberOfAnimals%5Bcattle-bos-taurus%5D=2&numberOfPackages%5Bcattle-bos-taurus%5D=&action=continue",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-026",
-      "statement": "The purpose 'Fattening' carries the hint 'Animals to be fattened for meat production.'",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-10-item-hint",
-      "quote": "Animals to be fattened for meat production.",
+      "statement": "For live animals, a valid commodity details page continues straight to identification details at /animal-identification-details, with no gross weight page between.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip request 286",
+      "quote": "location: /design-release-2.1/animal-identification-details",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-027",
-      "statement": "The purpose 'Restocking' carries a hint about replenishing populations, for example game or fish.",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, #internal-market-purpose-11-item-hint",
-      "quote": "To replenish or enhance populations of species, for example, restocking of game or fish.",
+      "statement": "A page that fails validation comes back from its own POST with the errors shown (status 200), while one that passes redirects (302) to the next page.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip requests 207, 246, 286",
+      "quote": "POST 200 consignment-details / POST 200 consignment-details / POST 302 consignment-details",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-028",
-      "statement": "When 'Internal market' is chosen and no purpose is selected, Save and continue shows the error summary item 'Select a purpose in the internal market' linking to #internal-market-purpose, and the same message inline on the purpose question.",
-      "kind": "rule",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45 (error summary and #internal-market-purpose-error)",
-      "quote": "Select a purpose in the internal market",
-      "confidence": "verbatim"
+      "statement": "The browser title stays the same when commodity details or total gross weight is shown with errors. It has no 'Error: ' prefix.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 58; trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 53",
+      "quote": "Commodity details - Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "The GOV.UK error message pattern adds 'Error: ' to the title. The prototype does not."
     },
     {
       "id": "trace-prototype-dr2-1-p4-029",
-      "statement": "Internal market with a purpose chosen (Breeding) saves and goes on to /design-release-2.1/consignment-details; the form posts importReason=Internal market and internalMarketPurpose=Breeding.",
+      "statement": "When commodity details has errors, the error summary sits below the notification status line and above the caption and heading.",
       "kind": "behaviour",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one actions 52-55, request 199 (POST reason-for-import 302, location /design-release-2.1/consignment-details)",
-      "quote": "importReason=Internal+market&internalMarketPurpose=Breeding",
+      "ref": "trace snagging--commodity-details-s14-commodity-details-spacing-above-each-commodity-title.zip action 52",
+      "quote": "app-dr2-notification-status top=252 ... govuk-error-summary top=312 ... app-consignment-details-page__caption top=502",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-030",
-      "statement": "Choosing 'Transhipment or onward travel' reveals a 'Destination country' dropdown (field transhipmentDestinationCountry, GOV.UK select) that starts on 'Select one'.",
-      "kind": "rule",
-      "ref": "trace transhipment-needs-a-destination-country actions 31-33; lists-every-reason-with-its-hint action 36, #conditional-import-reason-2",
-      "quote": "Destination country",
+      "statement": "Commodity details, total gross weight and additional details each end with a 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link to the notification overview at /notification-hub.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "Save and continue ... Save and return to overview ... <a class=\"govuk-link\" href=\"/design-release-2.1/notification-hub\">Cancel and return to overview</a>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-031",
-      "statement": "The destination country dropdown offers 41 countries after 'Select one', in alphabetical order: EU member states plus some of their outermost regions and the Crown Dependencies.",
-      "kind": "data",
-      "ref": "trace lists-every-reason-with-its-hint action 36, select#transhipment-destination-country (42 options)",
-      "quote": "Select one | Austria | Azores (Portugal) | Belgium | Bulgaria | Canary Islands (Spain) | Ceuta (Spain) | Croatia | Cyprus | Czech Republic | Denmark | Estonia | Finland | France | French Guiana (France) | Germany | Greece | Guadeloupe (France) | Guernsey (United Kingdom) | Hungary | Isle of Man (United Kingdom) | Italy | Jersey (United Kingdom) | Latvia | Lithuania | Luxembourg | Madeira (Portugal) | Malta | Martinique (France) | Mayotte (France) | Melilla (Spain) | Netherlands | Poland | Portugal | Republic of Ireland | Reunion (France) | Romania | Saint Martin (France) | Slovakia | Slovenia | Spain | Sweden",
-      "confidence": "verbatim",
-      "note": "Reference data, rendered server-side. A list of 'third countries' that contains only the EU and the Crown Dependencies may be a prototype stand-in; recorded as rendered."
+      "statement": "No trace in this part presses 'Save and return to overview' or 'Cancel and return to overview' on these pages, so whether a page saves partial or invalid answers before going to the overview is not shown.",
+      "kind": "behaviour",
+      "ref": "every trace in part 4: actions lists",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p4-032",
-      "statement": "When 'Transhipment or onward travel' is chosen with no destination country, Save and continue shows the error summary item 'Select a destination country' linking to #transhipment-destination-country, and the same message inline on the dropdown.",
+      "statement": "Only an empty value and 0 were tried in Number of animals. What a decimal, a negative number, text or a very large number shows is not in the traces.",
       "kind": "rule",
-      "ref": "trace transhipment-needs-a-destination-country action 44 (error summary and #transhipment-destination-country-error)",
-      "quote": "Select a destination country",
-      "confidence": "verbatim"
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip actions 54-82",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p4-033",
-      "statement": "Transhipment with a destination country chosen (Republic of Ireland) saves and goes on to /design-release-2.1/consignment-details.",
-      "kind": "behaviour",
-      "ref": "trace transhipment-needs-a-destination-country actions 51-54, requests 199 (POST reason-for-import 302) and 200 (GET consignment-details 200)",
-      "quote": "POST 302 reason-for-import | GET 200 consignment-details",
-      "confidence": "verbatim"
+      "statement": "No trace enters an invalid Number of packages for live animals, so its validation for live animals is not shown.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip",
+      "quote": "",
+      "confidence": "gap",
+      "note": "For germinal products, 0 packages gives 'Number of packages must be a whole number greater than 0' (see claim trace-prototype-dr2-1-p4-042)."
     },
     {
       "id": "trace-prototype-dr2-1-p4-034",
-      "statement": "Choosing 'Transit' reveals two dropdowns: 'Port of exit' (field transitExitBorderControlPost) and 'Destination country' (field transitDestinationCountry), both starting on 'Select one'.",
+      "statement": "Which live animal species get the Number of packages field beyond cattle, horse, pig (with it) and chicken (without it) is not shown.",
       "kind": "rule",
-      "ref": "trace transit-needs-a-port-of-exit-and-a-destination-country actions 31-32; lists-every-reason-with-its-hint action 36, #conditional-import-reason-3",
-      "quote": "Port of exit | Destination country",
-      "confidence": "verbatim"
+      "ref": "traces in part 4 reaching /consignment-details",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p4-035",
-      "statement": "The port of exit dropdown offers 10 GB border control posts after 'Select one'.",
+      "statement": "For germinal products, the Selected commodities table shows the commodity code, name and species, such as '05111000', 'Cattle, Semen', 'Domestic cattle (Bos taurus)', and its block is headed 'Cattle, Semen (05111000)'.",
       "kind": "data",
-      "ref": "trace lists-every-reason-with-its-hint action 36, select#transit-exit-border-control-post (11 options); transit trace action 32 asserts option 1",
-      "quote": "Select one | Edinburgh Airport (animals) - GBEDI4 | Gatwick Airport (animals) - GBLGW4 | Glasgow Airport (animals) - GBGLA002 | Heathrow Airport - HARC (animals) - GBLHR4A | Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022 | Heathrow Airport – Animal Aircare Ltd (animals) - GBLHR067 | Holyhead POE - GBHLY | Manchester Airport (animals) - GBMNC4 | Prestwick Airport (animals) - GBPIK4 | Stansted Airport (animals) - GBSTN4A",
-      "confidence": "verbatim",
-      "note": "Reference data, rendered server-side. The Airpets entry repeats its code ('GBLHR022 - GBLHR022') and mixes en dashes with hyphens, as rendered."
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "<div class=\"app-consignment-details-page__summary-key\">05111000</div> <div class=\"app-consignment-details-page__summary-value\">Cattle, Semen</div> ... Cattle, Semen (05111000)",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-036",
-      "statement": "The transit destination country dropdown offers the same 41 countries as the transhipment one.",
+      "statement": "For germinal products, each species asks for 'Quantity (unit/pieces)' in a text input, and it is required.",
       "kind": "data",
-      "ref": "trace lists-every-reason-with-its-hint action 36, select#transit-destination-country (42 options)",
-      "quote": "Select one | Austria | Azores (Portugal) | Belgium | Bulgaria",
-      "note": "Option-for-option the same 42 options as select#transhipment-destination-country; the quote is the first five.",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "<label class=\"govuk-label\" for=\"quantity-cattle-semen-bos-taurus\"> Quantity (unit/pieces) </label>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-037",
-      "statement": "When 'Transit' is chosen with neither dropdown answered, Save and continue shows two error summary items, 'Select a port of exit' (linking to #transit-exit-border-control-post) then 'Select a destination country' (linking to #transit-destination-country), with each message inline on its dropdown.",
-      "kind": "rule",
-      "ref": "trace transit-needs-a-port-of-exit-and-a-destination-country action 43 (error summary, #transit-exit-border-control-post-error, #transit-destination-country-error)",
-      "quote": "Select a port of exit | Select a destination country",
+      "statement": "For germinal products, each species also has an optional 'Number of packages' text input, with no hint and without the '(when required)' wording live animals get.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "<label class=\"govuk-label\" for=\"number-of-packages-cattle-semen-bos-taurus\"> Number of packages </label>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-038",
-      "statement": "Transit with a port of exit (Holyhead POE - GBHLY) and a destination country (Republic of Ireland) saves and goes on to /design-release-2.1/consignment-details.",
-      "kind": "behaviour",
-      "ref": "trace transit-needs-a-port-of-exit-and-a-destination-country actions 50-54, request 199 (POST reason-for-import 302, location /design-release-2.1/consignment-details)",
-      "quote": "importReason=Transit&transitExitBorderControlPost=Holyhead+POE+-+GBHLY&transitDestinationCountry=Republic+of+Ireland",
-      "confidence": "verbatim"
+      "statement": "The germinal form posts the Quantity (unit/pieces) value under the field name numberOfPackages[<species>] and the Number of packages value under germinalPackages[<species>], so a field's name does not match its label.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "id=\"quantity-cattle-semen-bos-taurus\" name=\"numberOfPackages[cattle-semen-bos-taurus]\" ... id=\"number-of-packages-cattle-semen-bos-taurus\" name=\"germinalPackages[cattle-semen-bos-taurus]\"",
+      "confidence": "verbatim",
+      "note": "mechanism: the live animals form uses numberOfPackages for Number of packages; the germinal form reuses it for the quantity."
     },
     {
       "id": "trace-prototype-dr2-1-p4-039",
-      "statement": "Choosing 'Temporary admission horses' reveals an 'Exit date' field (field temporaryAdmissionExitDate, a single text input) with the hint 'For example, 27/3/2026'.",
-      "kind": "rule",
-      "ref": "trace temporary-admission-horses-needs-a-real-exit-date-and-a-port-of-exit actions 31-33; lists-every-reason-with-its-hint action 36, #conditional-import-reason-5",
-      "quote": "Exit date | For example, 27/3/2026",
-      "confidence": "verbatim"
+      "statement": "For germinal products, after the commodity blocks and a section break, commodity details asks one 'Temperature' question for the consignment, with the hint 'How the products will be stored.' and the radio options 'Ambient', 'Chilled' and 'Frozen'.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-label\"> Temperature </legend> <div id=\"storage-temperature-hint\" class=\"govuk-hint\"> How the products will be stored. </div> ... Ambient ... Chilled ... Frozen",
+      "confidence": "verbatim",
+      "note": "The radios are named storageTemperature with no species key, so the answer covers the whole consignment, not one commodity."
     },
     {
       "id": "trace-prototype-dr2-1-p4-040",
-      "statement": "Choosing 'Temporary admission horses' also reveals a 'Port of exit' dropdown (field temporaryAdmissionPortOfExit) with the same 10 ports as transit, starting on 'Select one'.",
+      "statement": "For germinal products, Quantity (unit/pieces) and Temperature are required: submitting both empty shows 'Enter the quantity' and 'Select a temperature', and leaving Number of packages empty raises no error.",
       "kind": "rule",
-      "ref": "trace lists-every-reason-with-its-hint action 36, select#temporary-admission-port-of-exit (11 options)",
-      "quote": "Port of exit",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 49",
+      "quote": "There is a problem\nEnter the quantity\nSelect a temperature\n#quantity-cattle-semen-bos-taurus #storage-temperature",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-041",
-      "statement": "The exit date uses the MoJ date picker (moj-datepicker): a single text input with a 'Choose date' calendar toggle that opens a dialog with previous/next year and month buttons and 'Select' and 'Close' buttons. This is outside govuk-frontend; the GOV.UK date input (separate day, month and year boxes) is the standard alternative.",
-      "kind": "constraint",
-      "ref": "trace lists-every-reason-with-its-hint action 36, div.moj-datepicker inside .app-temporary-admission-horses-reveal",
-      "quote": "Choose date | Previous year | Previous month | Next month | Next year | Select | Close",
-      "confidence": "verbatim",
-      "note": "The reveal reuses the arrival details page's classes (app-arrival-details-page__date, __field-label, __field-hint)."
+      "statement": "Quantity (unit/pieces) must be a whole number greater than 0: entering 'x' shows 'Enter a whole number greater than 0'.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 64",
+      "quote": "Quantity (unit/pieces) / Error: / Enter a whole number greater than 0 | value=x",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-042",
-      "statement": "When 'Temporary admission horses' is chosen with no exit date and no port, Save and continue shows two error summary items, 'Enter an exit date' (linking to #temporary-admission-exit-date) then 'Select a port of exit' (linking to #temporary-admission-port-of-exit), with each message inline and both controls in their error style.",
+      "statement": "When given, the germinal Number of packages must be a whole number greater than 0: entering 0 shows 'Number of packages must be a whole number greater than 0'.",
       "kind": "rule",
-      "ref": "trace temporary-admission-horses-needs-a-real-exit-date-and-a-port-of-exit action 44",
-      "quote": "Enter an exit date | Select a port of exit",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 64",
+      "quote": "Number of packages / Error: / Number of packages must be a whole number greater than 0 | value=0",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-043",
-      "statement": "An exit date that is not a real calendar date (31/2/2026) gives the error 'Enter a real date' in the summary and inline, the entered value is kept in the field, and 'Select a port of exit' shows again because no port was chosen.",
-      "kind": "rule",
-      "ref": "trace temporary-admission-horses-needs-a-real-exit-date-and-a-port-of-exit actions 51-57 (fill \"31/2/2026\"; error state at action 57, field value 31/2/2026)",
-      "quote": "Enter a real date | Select a port of exit",
+      "statement": "The invalid number messages on commodity details are worded differently: the quantity and number of animals message does not name its field ('Enter a whole number greater than 0'), while the packages message does ('Number of packages must be a whole number greater than 0').",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 64",
+      "quote": "Enter a whole number greater than 0\nNumber of packages must be a whole number greater than 0",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-044",
-      "statement": "No trace submits temporary admission horses successfully (a valid exit date with a port), so where it goes next, and whether a past exit date or a date in the wrong format is rejected, is not shown.",
-      "kind": "rule",
-      "ref": "trace temporary-admission-horses-needs-a-real-exit-date-and-a-port-of-exit (ends at action 57 on the error state)",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "The error summary lists errors in page order: quantity, then number of packages, then temperature, each linking to its field.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 64",
+      "quote": "#quantity-cattle-semen-bos-taurus #number-of-packages-cattle-semen-bos-taurus #storage-temperature",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-045",
-      "statement": "A main import reason is optional: Save and continue with no reason chosen shows no error and goes on to /design-release-2.1/consignment-details.",
-      "kind": "rule",
-      "ref": "trace a-reason-is-optional-to-proceed actions 31-34, request 161 (POST reason-for-import 302, location /design-release-2.1/consignment-details)",
-      "quote": "location: /design-release-2.1/consignment-details",
+      "statement": "For germinal products, a valid commodity details page (a quantity and a temperature, packages empty) continues to the total gross weight page at /consignment-gross-weight.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip actions 73-78",
+      "quote": "Fill \"20\" locator('#quantity-cattle-semen-bos-taurus') ... Check locator('input[name=\"storageTemperature\"][value=\"Frozen\"]') ... Expect \"toHaveURL\"",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-046",
-      "statement": "The form always posts every reveal field, empty when unused (transhipmentDestinationCountry, transitExitBorderControlPost, transitDestinationCountry, temporaryAdmissionExitDate, temporaryAdmissionPortOfExit), plus action=continue; importReason is absent when no reason is chosen.",
-      "kind": "data",
-      "ref": "trace a-reason-is-optional-to-proceed request 161 body",
-      "quote": "transhipmentDestinationCountry=&transitExitBorderControlPost=&transitDestinationCountry=&temporaryAdmissionExitDate=&temporaryAdmissionPortOfExit=&action=continue",
-      "confidence": "verbatim",
-      "note": "So a hidden reveal's stale value could be submitted alongside a different reason; whether the server discards answers for reasons not chosen is not shown."
+      "statement": "The germinal commodity details page has the same Back link (to /what-are-you-importing), caption and heading as the live animals one.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip action 36",
+      "quote": "<a href=\"/design-release-2.1/what-are-you-importing\" class=\"govuk-back-link\">Back</a> ... Description of the goods ... Commodity details",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-047",
-      "statement": "The page after the main import reason is consignment-details, titled 'Commodity details - Import notification service - GOV.UK' with the heading 'Commodity details'.",
+      "statement": "Only one germinal commodity (cattle semen) is walked, so how several germinal commodities lay out, and whether Temperature stays a single question across them, is not shown.",
       "kind": "behaviour",
-      "ref": "trace a-reason-is-optional-to-proceed action 34 (document.title and h1)",
-      "quote": "Commodity details - Import notification service - GOV.UK | Commodity details",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-048",
-      "statement": "The reason page's primary button is 'Save and continue' (action=continue).",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, button.govuk-button[value=continue]",
-      "quote": "Save and continue",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-049",
-      "statement": "The reason page has a secondary button 'Save and return to overview' (action=hub).",
-      "kind": "copy",
-      "ref": "trace lists-every-reason-with-its-hint action 36, button.govuk-button--secondary[value=hub]",
-      "quote": "Save and return to overview",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-050",
-      "statement": "The reason page has a 'Cancel and return to overview' link to /design-release-2.1/notification-hub.",
-      "kind": "behaviour",
-      "ref": "trace lists-every-reason-with-its-hint action 36, p.app-origin-form-actions__cancel a",
-      "quote": "Cancel and return to overview",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-051",
-      "statement": "No trace in this slice clicks 'Save and return to overview' or 'Cancel and return to overview', so whether the hub save validates the reveals, and whether cancel discards the answer, is not shown.",
-      "kind": "behaviour",
-      "ref": "all 7 main import reason traces: only button[value=continue] is clicked",
+      "ref": "trace description-of-the-goods--commodity-details-germinal-products-quantity-in-units-or-pieces-optional-number-of-packages-and-storage-temperature.zip",
       "quote": "",
       "confidence": "gap"
     },
     {
-      "id": "trace-prototype-dr2-1-p4-052",
-      "statement": "Every error summary on the reason page has the title 'There is a problem'.",
+      "id": "trace-prototype-dr2-1-p4-048",
+      "statement": "The total gross weight page's browser title is 'What is the total gross weight of the consignment? - Import notification service - GOV.UK'.",
       "kind": "copy",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45, .govuk-error-summary__title",
-      "quote": "There is a problem",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "What is the total gross weight of the consignment? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-049",
+      "statement": "The total gross weight page has the caption 'Description of the goods', and its question 'What is the total gross weight of the consignment?' is both the page heading and the field label.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "<span class=\"govuk-caption-l\">Description of the goods</span> ... <h1 class=\"govuk-label-wrapper\"> <label class=\"govuk-label govuk-label--l\" for=\"gross-weight\"> What is the total gross weight of the consignment? </label> </h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-050",
+      "statement": "The gross weight field has the hint 'This includes the weight of all the commodities in the consignment and their packaging.'",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "This includes the weight of all the commodities in the consignment and their packaging.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-051",
+      "statement": "Total gross weight is one text input for the whole consignment, with a 'kg' suffix.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "<input class=\"govuk-input govuk-input--width-5\" id=\"gross-weight\" name=\"grossWeight\" type=\"text\" value=\"\" aria-describedby=\"gross-weight-hint\"> <div class=\"govuk-input__suffix\" aria-hidden=\"true\">kg</div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-052",
+      "statement": "Total gross weight is required: submitting it empty shows 'Enter the total gross weight', linked to the field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 53",
+      "quote": "There is a problem\nEnter the total gross weight\n#gross-weight",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-053",
-      "statement": "Each inline error message on the reason page is prefixed with a visually hidden 'Error:'.",
-      "kind": "copy",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45, #internal-market-purpose-error",
-      "quote": "Error:\nSelect a purpose in the internal market",
+      "statement": "Total gross weight must be a number: entering 'abc' shows 'Enter a number greater than 0'.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 66",
+      "quote": "Error: / Enter a number greater than 0 / kg | value=abc",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-054",
-      "statement": "When the reason page shows errors, its browser title stays 'Main import reason - Import notification service - GOV.UK' with no 'Error: ' prefix.",
-      "kind": "copy",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45; transhipment action 44; transit action 43; temporary admission actions 44 and 57 (document.title)",
-      "quote": "Main import reason - Import notification service - GOV.UK",
-      "confidence": "verbatim",
-      "note": "The GOV.UK error pattern prefixes the title with 'Error: '. Recorded as rendered, not reconciled."
+      "statement": "Total gross weight must be greater than 0: entering '0' shows 'Enter a number greater than 0' in the error summary and above the field.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 73",
+      "quote": "There is a problem\nEnter a number greater than 0\n----\nWhat is the total gross weight of the consignment? / This includes the weight of all the commodities in the consignment and their packaging. / Error: / Enter a number greater than 0 / kg | value=0",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-055",
-      "statement": "On a validation error the reason page is re-rendered directly in the POST response (status 200), not redirected.",
-      "kind": "behaviour",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one request 160 (POST reason-for-import 200); temporary admission requests 160 and 199 (POST 200)",
-      "quote": "POST 200 reason-for-import",
+      "statement": "Total gross weight accepts a decimal: '12.5' is accepted and the user continues to identification details at /animal-identification-details.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip actions 81-85",
+      "quote": "Identification details - Import notification service - GOV.UK | /design-release-2.1/consignment-gross-weight | Identification details",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-056",
-      "statement": "On a validation error the chosen reason stays selected and its reveal stays open, while the other reveals stay hidden.",
+      "statement": "The Back link on total gross weight goes to commodity details at /consignment-details.",
       "kind": "behaviour",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45 (importReason=Internal market checked; #conditional-import-reason without govuk-radios__conditional--hidden)",
-      "quote": "importReason=Internal market",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "<a href=\"/design-release-2.1/consignment-details\" class=\"govuk-back-link\">Back</a>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-057",
-      "statement": "The caption and heading use custom classes (app-reason-for-import-page__caption on a p, app-reason-for-import-page__heading on the h1) rather than govuk-caption-l and govuk-heading-l; standard GOV.UK caption and heading classes could replace them.",
-      "kind": "constraint",
-      "ref": "trace lists-every-reason-with-its-hint action 36, div.app-reason-for-import-page__header",
-      "quote": "<p class=\"app-reason-for-import-page__caption\">About the consignment</p>",
-      "confidence": "verbatim",
-      "note": "The rest of the question is standard govuk-radios with govuk-radios__conditional reveals and govuk-select; other app-* classes (app-reason-for-import-radios, app-internal-market-purpose-radios, app-origin-radios-block, app-origin-form-actions) wrap standard components."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-058",
-      "statement": "The reason page makes no data calls: the country and port lists come rendered in the page, and the only other traffic is the Prototype Kit's live-reload socket on localhost:3011.",
-      "kind": "integration",
-      "ref": "trace lists-every-reason-with-its-hint requests (all, assets excluded): page documents plus localhost:3011 EIO polling/websocket and page-loaded",
-      "quote": "GET 200 localhost:3011?EIO=4&transport=polling",
-      "confidence": "inferred",
-      "note": "Inferred from the network log. The real service would need port-of-exit (border control post) and country reference data; this prototype holds them in its own templates."
-    },
-    {
-      "id": "trace-prototype-dr2-1-p4-059",
-      "statement": "The prototype-only seed route /design-release-2.1/prototype/reason-for-import redirects (302) to /design-release-2.1/reason-for-import, which shows the 'Main import reason' heading with no reason preselected and the same back link.",
+      "statement": "For germinal products, the identification details page that follows total gross weight has its Back link pointing to /consignment-gross-weight.",
       "kind": "behaviour",
-      "ref": "trace the-prototype-seed-route-jumps-straight-to-the-reason-page action 31 (navigate), request 161 (GET prototype/reason-for-import 302, location /design-release-2.1/reason-for-import), action 33",
-      "quote": "location: /design-release-2.1/reason-for-import",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 85",
+      "quote": "/design-release-2.1/consignment-gross-weight",
       "confidence": "verbatim"
     },
     {
+      "id": "trace-prototype-dr2-1-p4-058",
+      "statement": "Live animals have no total gross weight page: going straight to /consignment-gross-weight on a live animals notification redirects to identification details.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-live-animals-have-no-total-gross-weight-page.zip requests 247-248",
+      "quote": "GET 302 consignment-gross-weight / GET 200 animal-identification-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-059",
+      "statement": "The total gross weight page uses only GOV.UK Frontend components: a caption, a Text input with its label as the page heading, a hint and a suffix, and a Button. Only page wrappers (app-gross-weight-field, app-origin-form-actions, app-dr2-notification-status) are custom.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip action 39",
+      "quote": "<div class=\"govuk-form-group app-gross-weight-field\"> ... <div class=\"govuk-input__wrapper\"> ... <div class=\"govuk-input__suffix\" aria-hidden=\"true\">kg</div>",
+      "confidence": "verbatim",
+      "note": "The page sits in a two-thirds column (govuk-grid-column-two-thirds), while commodity details uses the full width (govuk-grid-column-full)."
+    },
+    {
       "id": "trace-prototype-dr2-1-p4-060",
-      "statement": "The seed route is only exercised after a draft already exists in the session (the beforeEach has just walked to the reason page), so what it seeds from a fresh session is not shown.",
-      "kind": "behaviour",
-      "ref": "trace the-prototype-seed-route-jumps-straight-to-the-reason-page actions 8-30 then 31",
+      "statement": "Only empty, 'abc', '0' and '12.5' were tried in total gross weight. Negative numbers, a maximum, decimal places and unit text such as '12kg' are not shown.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--total-gross-weight-germinal-products-one-weight-for-the-consignment-required-and-greater-than-0.zip actions 47-85",
       "quote": "",
       "confidence": "gap"
     },
     {
       "id": "trace-prototype-dr2-1-p4-061",
-      "statement": "No trace returns to the reason page after saving, so whether a saved reason and its reveal answers are shown again (and whether changing the reason clears the old reveal answers) is not shown.",
+      "statement": "For live animals, identification details is followed by the additional details page at /additional-animal-details.",
       "kind": "behaviour",
-      "ref": "all 7 main import reason traces",
-      "quote": "",
-      "confidence": "gap"
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip requests 247-248",
+      "quote": "POST 302 animal-identification-details / GET 200 additional-animal-details",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-062",
-      "statement": "Re-entry is never selected and submitted in this slice, so whether it needs anything further is not shown beyond the absence of a reveal.",
-      "kind": "rule",
-      "ref": "all 7 main import reason traces",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "In this trace, Save and continue on identification details for one cattle animal, with no identifier entered, still moved on to additional details with no error.",
+      "kind": "behaviour",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip actions 37-39",
+      "quote": "Identification details | no error summary",
+      "confidence": "inferred",
+      "note": "Identification details belongs to part 5. Inferred because the trace shows a Save and continue click with no fills on that page, then the additional details URL. The poultry trace does the same with 400 chickens (actions 38-40)."
     },
     {
       "id": "trace-prototype-dr2-1-p4-063",
-      "statement": "The seed route keeps the draft already in the session: the reason page shows the same reference (GBN-AG-26-0ZNDNN) before and after the user goes to /design-release-2.1/prototype/reason-for-import.",
-      "kind": "behaviour",
-      "ref": "trace the-prototype-seed-route-jumps-straight-to-the-reason-page actions 31 and 33, div.app-dr2-notification-status",
-      "quote": "Draft\nGBN-AG-26-0ZNDNN",
+      "statement": "The additional details page's browser title is 'Additional details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "Additional details - Import notification service - GOV.UK",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-064",
-      "statement": "On the reason page the error summary sits above the caption and heading, below the Draft status and reference.",
-      "kind": "behaviour",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45 (DOM order: .app-dr2-notification-status, .govuk-error-summary, h1)",
-      "quote": "There is a problem",
+      "statement": "The additional details page has the caption 'Commodity details' above the heading 'Additional details', not the 'Description of the goods' caption that commodity details and total gross weight use.",
+      "kind": "copy",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "<p class=\"app-additional-animal-details-page__caption\">Commodity details</p> <h1 class=\"app-additional-animal-details-page__heading\">Additional details</h1>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-065",
-      "statement": "When the internal market purpose is missing, only the purpose question takes the error style; the outer reason question does not.",
-      "kind": "behaviour",
-      "ref": "trace internal-market-reveals-the-purposes-and-needs-one action 45 (.govuk-form-group--error only on app-internal-market-purpose-reveal__group; fieldset aria-describedby internal-market-purpose-error)",
-      "quote": "govuk-form-group govuk-form-group--error app-origin-radios-block app-internal-market-purpose-reveal__group",
+      "statement": "Additional details asks 'What are the animals certified for?' as radios, with the hint 'You can find this information on the ITAHC.'",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "What are the animals certified for? ... <div id=\"certification-purpose-hint\" class=\"govuk-hint\"> You can find this information on the ITAHC. </div>",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-066",
-      "statement": "A reveal dropdown in error takes the GOV.UK select error style and is described by its error message.",
-      "kind": "behaviour",
-      "ref": "trace transhipment-needs-a-destination-country action 44, select#transhipment-destination-country; transit action 43 (both selects)",
-      "quote": "govuk-select govuk-select--error describedby=transhipment-destination-country-error",
-      "confidence": "verbatim"
+      "statement": "The certification purpose radios have 16 options, in this order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "Further keeping\nSlaughter\nConfined establishment\nGerminal products\nRegistered equine animal\nTravelling circus/animal act\nExhibition\nEvent or activity near borders\nRelease into the wild\nDispatch centre\nRelaying area / purification centre\nOrnamental aquaculture establishment\nTechnical use\nQuarantine or similar establishment\nLive aquatic animals for human consumption\nOther",
+      "confidence": "verbatim",
+      "note": "The same 16 options show for cattle and for chickens. Choosing 'Other' reveals nothing in the markup (no conditional reveal)."
     },
     {
       "id": "trace-prototype-dr2-1-p4-067",
-      "statement": "The exit date is typed as free text in one box (type text, autocomplete off), described by its hint; the test types it as day/month/year with slashes.",
+      "statement": "For cattle, additional details also asks 'Does the consignment contain any unweaned animals?', with the hint 'These are animals that are still feeding from their mother.' and the radio options 'Yes' and 'No'.",
       "kind": "data",
-      "ref": "trace lists-every-reason-with-its-hint action 36, input#temporary-admission-exit-date; temporary admission trace action 51 (fill \"31/2/2026\")",
-      "quote": "<input class=\"govuk-input moj-js-datepicker-input \" id=\"temporary-admission-exit-date\" name=\"temporaryAdmissionExitDate\" type=\"text\" value=\"\" aria-describedby=\"temporary-admission-exit-date-hint\" autocomplete=\"off\">",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "Does the consignment contain any unweaned animals? ... These are animals that are still feeding from their mother. ... Yes ... No",
       "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-068",
-      "statement": "The exit date calendar opens on the current month (October 2026 on the day the traces ran), so it defaults to today rather than to any saved date.",
-      "kind": "behaviour",
-      "ref": "trace lists-every-reason-with-its-hint action 36, h2#datepicker-title-temporary-admission-exit-date",
-      "quote": "October 2026",
-      "confidence": "inferred",
-      "note": "Inferred because the traces ran on 7 October 2026 and no date was entered; the calendar dialog is hidden and no trace opens it."
+      "statement": "For poultry (chickens), additional details asks only for the certification purpose. The unweaned animals question is not shown.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--additional-details-poultry-certification-purpose-only-after-identification-details.zip action 43",
+      "quote": "Additional details\nWhat are the animals certified for?\nYou can find this information on the ITAHC.\nFurther keeping ... Other\nSave and continue",
+      "confidence": "verbatim"
     },
     {
       "id": "trace-prototype-dr2-1-p4-069",
-      "statement": "No trace opens the exit date calendar or picks a date with it, so its behaviour (which dates it allows, how a pick fills the box) is not shown.",
+      "statement": "Both additional details questions are optional: Save and continue with neither answered moves on to arrival details at /arrival-details, with no error.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 56, requests 288-289",
+      "quote": "POST 302 additional-animal-details / GET 200 arrival-details",
+      "confidence": "verbatim",
+      "note": "The POST body is 15 bytes, the size of 'action=continue', so no answer was sent."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-070",
+      "statement": "The Back link on additional details goes to identification details at /animal-identification-details, for cattle and for poultry.",
       "kind": "behaviour",
-      "ref": "trace temporary-admission-horses-needs-a-real-exit-date-and-a-port-of-exit actions 31-57 (no click on 'Choose date')",
+      "ref": "trace description-of-the-goods--additional-details-poultry-certification-purpose-only-after-identification-details.zip action 43",
+      "quote": "/design-release-2.1/animal-identification-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-071",
+      "statement": "Additional details uses GOV.UK Radios with medium legends, plus a custom app-eu-heading-m class on each legend and custom header classes (app-additional-animal-details-page__caption and __heading) in place of govuk-caption and govuk-heading classes.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip action 49",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-fieldset__legend--m app-eu-heading-m\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-072",
+      "statement": "Only cattle and chickens reach additional details in this part. Which questions horses, pigs, cats or other species get is not shown.",
+      "kind": "rule",
+      "ref": "traces in part 4 reaching /additional-animal-details",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-073",
+      "statement": "No trace in this part shows whether germinal products notifications reach additional details.",
+      "kind": "behaviour",
+      "ref": "traces in part 4",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Identification details for germinal products, in part 5, is where the next page after it shows."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-074",
+      "statement": "No error state is shown for additional details, and since both questions are optional none may exist.",
+      "kind": "rule",
+      "ref": "trace description-of-the-goods--additional-details-cattle-certification-purpose-and-unweaned-animals.zip",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-075",
+      "statement": "The Selected commodities table (snag S13) is not a GOV.UK Table or Summary list. It is a custom grid of divs (app-consignment-details-page__summary), with fixed columns of 180px, 300px, 300px and 120px, a bold header row, normal-weight data rows and a 1px grey border under each row. A GOV.UK Table could replace it.",
+      "kind": "constraint",
+      "ref": "trace snagging--commodity-details-s13-commodity-details-selected-commodities-table.zip action 38",
+      "quote": "row display=grid grid=180px 300px 300px 120px borderBottom=1px solid rgb(177, 180, 182)\nheader fontWeight=700",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-076",
+      "statement": "The Remove control in each table row is a submit button styled as a link: blue, underlined, with no border or background (custom class app-consignment-details-page__summary-remove).",
+      "kind": "constraint",
+      "ref": "trace snagging--commodity-details-s13-commodity-details-selected-commodities-table.zip action 38",
+      "quote": "remove btn: color=rgb(29, 112, 184) bg=rgba(0, 0, 0, 0) textDecoration=underline border=0px none rgb(29, 112, 184)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-077",
+      "statement": "Commodity details uses custom heading classes in place of GOV.UK typography classes, though the sizes match GOV.UK's scale: the caption 27px light grey (like govuk-caption-l), the page heading 48px bold (like govuk-heading-xl), Selected commodities 24px bold with 40px above (like govuk-heading-m), each commodity heading 36px bold (like govuk-heading-l) and each species heading 24px bold.",
+      "kind": "constraint",
+      "ref": "trace snagging--commodity-details-s13-commodity-details-selected-commodities-table.zip action 38",
+      "quote": ".app-consignment-details-page__caption size=27px weight=300 color=rgb(80, 90, 95) ... .app-consignment-details-page__heading size=48px weight=700 ... .app-consignment-details-page__selected-commodities-heading size=24px weight=700 color=rgb(11, 12, 12) mt=40px ... .app-consignment-details-page__commodity-heading size=36px weight=700 ... .app-consignment-details-page__species-name size=24px weight=700",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-078",
+      "statement": "Snag S14: on commodity details, the first commodity heading has no space above it, and each later commodity heading has 40px above it. Each species heading has 40px above it, under its commodity heading.",
+      "kind": "constraint",
+      "ref": "trace snagging--commodity-details-s14-commodity-details-spacing-above-each-commodity-title.zip action 44",
+      "quote": "app-consignment-details-page__commodity-heading | Horse (0101) | mt=0px ... app-consignment-details-page__species-heading | Equus cabalus | mt=40px ... app-consignment-details-page__commodity-heading | Pig (0103) | mt=40px ... app-consignment-details-page__species-heading | Sus scrofa domesticus | mt=40px",
+      "confidence": "verbatim",
+      "note": "The gap from the bottom of the horse block's last field (1109px) to the top of the Pig (0103) heading (1190px) is about 81px. The same spacing holds in the error state (action 52)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-079",
+      "statement": "Apart from inputs, labels, hints, links, buttons, the tag and the grid, every class on commodity details is custom: app-consignment-details-* for the page, app-dr2-notification-status for the status line and app-origin-form-actions / app-origin-actions for the buttons.",
+      "kind": "constraint",
+      "ref": "trace snagging--commodity-details-s13-commodity-details-selected-commodities-table.zip action 38",
+      "quote": "app-consignment-details-form\napp-consignment-details-page\napp-consignment-details-page--dr21 ... app-dr2-notification-status ... app-origin-actions\napp-origin-form-actions\napp-origin-form-actions__cancel\ngovuk-button\ngovuk-button--secondary\ngovuk-form-group\ngovuk-grid-column-full\ngovuk-grid-row\ngovuk-hint\ngovuk-input\ngovuk-input--width-10\ngovuk-label\ngovuk-link\ngovuk-tag",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-080",
+      "statement": "Number of animals, Number of packages and Quantity (unit/pieces) are GOV.UK text inputs at width 10, and the page uses the full-width grid column.",
+      "kind": "constraint",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip action 45",
+      "quote": "<input class=\"govuk-input govuk-input--width-10 app-consignment-details-page__input\" id=\"number-of-animals-cattle-bos-taurus\" name=\"numberOfAnimals[cattle-bos-taurus]\" type=\"text\" value=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-081",
+      "statement": "These pages call no other system. Every data request in the network logs is the prototype's own page GET or form POST under /design-release-2.1, and answers are held in the prototype kit's session cookie.",
+      "kind": "integration",
+      "ref": "trace description-of-the-goods--commodity-details-cattle-number-of-animals-is-required-and-must-be-a-whole-number.zip requests (grep design-release-2.1), request 286",
+      "quote": "Cookie: govuk-prototype-kit-[REDACTED]=[REDACTED] ... x-powered-by: Express",
+      "confidence": "verbatim",
+      "note": "The session cookie's name and value are redacted. The same holds in the other 8 traces of this part."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p4-082",
+      "statement": "The commodity codes, names and species on commodity details are rendered by the server. No reference-data lookup for them shows on the wire, so where a real service would get them is not shown.",
+      "kind": "integration",
+      "ref": "traces in part 4: requests lists",
       "quote": "",
       "confidence": "gap"
     }

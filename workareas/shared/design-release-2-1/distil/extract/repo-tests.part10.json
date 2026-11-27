@@ -1,12 +1,12 @@
 {
   "source": "repo:tests",
-  "structure": "Part 10: the animals accessibility suite. Read in full: the 12 spec files under tests/animals/a11y (notification-journey-initial-state, -filled-state, -error-state, -conditional-pages, -viewports, notification-dashboard-views, notification-dashboard-viewports, notification-view-states, notification-lifecycle-states, notification-address-edit, sign-in, a11y-scan-detects-violations), tests/animals/a11y/README.md, the a11y fixture (fixtures/a11y.ts), its helpers (utils/a11y-utils.ts, utils/a11y-exclusions.ts, utils/narrow-page-scan.ts), docs/a11y.md, the animals and shared page-object registries (page-objects/animals/index.ts, page-objects/shared/index.ts) and the animals journey flow (flows/animals/journey.ts, 1,095 lines) for the to* methods the a11y specs reach pages through. The 12 specs hold 16 literal test() declarations and run 18 tests, because notification-journey-viewports.spec.ts and notification-dashboard-viewports.spec.ts each loop one test over two narrow viewports. Every spec puts its tests in a describe titled `Accessibility ${WCAG_STANDARD.name}` tagged @a11y, and every scan goes through the runA11yScan fixture (except the scanner self-test, which calls scanPage directly). Laid out as: three specs that walk the whole live-animals journey once each and scan every page in one state (initial load, after user input, with validation errors shown); one spec for reason-gated and multi-species conditional pages; two specs that re-scan at 320x568 and 568x320; two for the live-animals notification list (default, sorted, 404, searched, paginated, and the list at both narrow viewports); one for the check-your-answers/notification view states; one for the cancel-amendment and delete lifecycle pages and their success banners; one for the copied-address edit page and the contact address page; one for the unauthorised sign-in error page from a cold start; and one that proves the scanner and the fixture fail a page that has a violation. Covered: every test by title, every page and state scanned, both narrow viewports with their sizes and stated reasons, the WCAG 2.2 AA tag set, the two conditional-reveal radio exclusions with the upstream reason given for them, the fixture's timeout, artefact and no-scan guards, and the pages the journey flow reaches that no scan covers (permanent address, four of the five party pickers, four of the five party edit pages, the contact address edit page, the sign-in and organisation-picker pages, and the INS add-address hand-off). The germinal-products set has no spec in this folder at all.",
+  "structure": "Part 10: the animals accessibility suite. Read in full: the 12 spec files under tests/animals/a11y (notification-journey-initial-state, -filled-state, -error-state, -conditional-pages, -viewports, notification-dashboard-views, notification-dashboard-viewports, notification-view-states, notification-lifecycle-states, notification-address-edit, sign-in, a11y-scan-detects-violations), tests/animals/a11y/README.md, the a11y fixture (fixtures/a11y.ts), its helpers (utils/a11y-utils.ts, utils/a11y-exclusions.ts, utils/narrow-page-scan.ts), docs/a11y.md, the animals and shared page-object registries (page-objects/animals/index.ts, page-objects/shared/index.ts) and the animals journey flow (flows/animals/journey.ts, 1,063 lines) for the to* methods the a11y specs reach pages through. The 12 specs hold 16 literal test() declarations and run 18 tests, because notification-journey-viewports.spec.ts and notification-dashboard-viewports.spec.ts each loop one test over two narrow viewports. Every spec puts its tests in a describe titled `Accessibility ${WCAG_STANDARD.name}` tagged @a11y, and every scan goes through the runA11yScan fixture, except the scanner self-test, which calls scanPage directly. Laid out as: three specs that each walk the whole live-animals journey once and scan every page in one state (initial load, after user input, with validation errors shown); one spec for the reason-gated and multi-species conditional pages; two specs that re-scan at 320x568 and 568x320; two for the live-animals notification list (default, sorted, 404, searched, paginated, and the list at both narrow viewports); one for the check-your-answers and notification view states; one for the cancel-amendment and delete lifecycle pages and their success banners; one for the consignment addresses page and the copied-address edit page; one for the unauthorised sign-in error page from a cold start; and one that proves the scanner and the fixture fail a page that has a violation. Covered: every test by title; every page and state scanned; both narrow viewports with their sizes and stated reasons; the WCAG 2.2 AA tag set; the three exclusions (two conditional-reveal radio selectors and the accompanying documents file upload button) with the upstream reasons given for them; the fixture's timeout, artefact and no-scan guards; and the pages the journey flow reaches that no scan covers (permanent address, four of the five party pickers, four of the five party edit pages, the sign-in and organisation-picker pages, and the INS add-address hand-off from a party picker). The contact address page no longer appears anywhere in this slice: no page object, no overview task and no scan. The germinal-products set has no spec in this folder.",
   "claims": [
     {
       "id": "repo-tests-p10-001",
       "statement": "Every animals accessibility test is tagged @a11y, so the suite can be selected or excluded as a whole by tag.",
       "kind": "non-functional",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:8 (and the same line in all 12 specs)",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:12 (and the describe line in all 12 specs)",
       "quote": "test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {",
       "confidence": "verbatim"
     },
@@ -105,7 +105,7 @@
       "id": "repo-tests-p10-013",
       "statement": "The origin of import page's region-of-origin-code radio is left out of every scan of that page, by the selector #regionOfOriginCodeRequirement.",
       "kind": "rule",
-      "ref": "utils/a11y-exclusions.ts:1; tests/animals/a11y/notification-journey-initial-state.spec.ts:25",
+      "ref": "utils/a11y-exclusions.ts:1; tests/animals/a11y/notification-journey-initial-state.spec.ts:28",
       "quote": "export const govukConditionalRevealRadioOnOrigin = '#regionOfOriginCodeRequirement';",
       "confidence": "verbatim"
     },
@@ -113,7 +113,7 @@
       "id": "repo-tests-p10-014",
       "statement": "The import reason page's radios that open a conditional reveal are left out of every scan of that page, by the selector input[name=\"reasonForImport\"][aria-controls].",
       "kind": "rule",
-      "ref": "utils/a11y-exclusions.ts:3; tests/animals/a11y/notification-journey-initial-state.spec.ts:69",
+      "ref": "utils/a11y-exclusions.ts:3; tests/animals/a11y/notification-journey-initial-state.spec.ts:72",
       "quote": "export const govukConditionalRevealRadiosOnReason = 'input[name=\"reasonForImport\"][aria-controls]';",
       "confidence": "verbatim"
     },
@@ -121,7 +121,7 @@
       "id": "repo-tests-p10-015",
       "statement": "The exclusion is held to be an upstream disagreement between govuk-frontend's conditional-reveal radios, which set aria-expanded on the radio input, and axe's aria-allowed-attr rule, and not a defect in the service.",
       "kind": "rule",
-      "ref": "docs/a11y.md:3-5",
+      "ref": "docs/a11y.md:5",
       "quote": "govuk-frontend's conditional-reveal radios set `aria-expanded` on the radio input in its `radios.mjs`, and axe's `aria-allowed-attr` rule rejects that. This is an upstream disagreement in component code the service does not own, not a defect in the service.",
       "confidence": "verbatim",
       "note": "The nearest thing to a ruling the a11y area records; the repo keeps no decisions ledger."
@@ -139,17 +139,48 @@
       "statement": "The import reason page offers five reasons, four of which open a conditional reveal, so four of its radios carry the disputed attribute.",
       "kind": "rule",
       "ref": "docs/a11y.md:12",
-      "quote": "| `conditionalReasonRadios` | Import reason    | Four of the five reasons open a conditional reveal, so four radios carry `aria-expanded`. |",
+      "quote": "Four of the five reasons open a conditional reveal, so four radios carry `aria-expanded`.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p10-018",
-      "statement": "The documented names of the two exclusion selectors, conditionalRadioInput and conditionalReasonRadios, no longer match the names the code exports, so the documentation table names selectors a reader cannot find.",
-      "kind": "non-functional",
-      "ref": "docs/a11y.md:9-12 against utils/a11y-exclusions.ts:1-3",
-      "quote": "| `conditionalRadioInput`   | Origin of import |",
-      "confidence": "inferred",
-      "note": "Inferred from the two files side by side: the exports are govukConditionalRevealRadioOnOrigin and govukConditionalRevealRadiosOnReason."
+      "id": "repo-tests-p10-153",
+      "statement": "The accompanying documents page's file upload button is left out of every scan of that page, by the selector button.govuk-file-upload-button: on initial load, filled in, after saving, in every error state, with an infected file, after removing it, and at both narrow viewports.",
+      "kind": "rule",
+      "ref": "utils/a11y-exclusions.ts:5; tests/animals/a11y/notification-journey-initial-state.spec.ts:92; notification-journey-filled-state.spec.ts:80, 83; notification-journey-error-state.spec.ts:108, 116, 121, 127, 130; notification-journey-viewports.spec.ts:55",
+      "quote": "export const govukFileUploadButtonOnDocuments = 'button.govuk-file-upload-button';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-154",
+      "statement": "The file upload button is excluded because govuk-frontend's file upload script replaces the file input with a button whose status text and \"Choose file\" pseudo-button axe 4.14's label-content-name-mismatch rule joins without a space, so axe reads the visible text as \"No file chosenChoose file or drop file\" and does not find it in the accessible name.",
+      "kind": "rule",
+      "ref": "docs/a11y.md:16",
+      "quote": "axe 4.14 runs `label-content-name-mismatch` by default and joins those blocks without a space. It reads the visible text as \"No file chosenChoose file or drop file\", and does not find that in the accessible name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-155",
+      "statement": "The file upload button is held to meet WCAG 2.5.3 Label in Name, because the browser's accessible name \"Attachment , No file chosen Choose file or drop file\" contains the visible text, and the failure is held to be a fault in axe's text extraction, not a defect in the service.",
+      "kind": "rule",
+      "ref": "docs/a11y.md:18",
+      "quote": "The browser's accessible name is \"Attachment , No file chosen Choose file or drop file\". That contains the visible text, so the button meets WCAG 2.5.3 Label in Name. This is a fault in axe's text extraction on component code the service does not own, not a defect in the service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-156",
+      "statement": "The false file upload finding is recorded as appearing in govuk-frontend 6.5.1 and 6.6.0 with axe-core 4.14.1.",
+      "kind": "constraint",
+      "ref": "docs/a11y.md:18",
+      "quote": "It appears in govuk-frontend 6.5.1 and 6.6.0, with axe-core 4.14.1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-157",
+      "statement": "The file upload button exclusion is to be deleted once a release of axe or govuk-frontend no longer reports the finding.",
+      "kind": "rule",
+      "ref": "docs/a11y.md:20",
+      "quote": "Delete the exclusion once a release of axe or govuk-frontend no longer reports it.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-019",
@@ -177,6 +208,15 @@
       "note": "mechanism: hides every table, measures document scrollWidth against clientWidth, then restores each table's display."
     },
     {
+      "id": "repo-tests-p10-158",
+      "statement": "The fixture offers a helper that waits one animation frame after a viewport change so that a scan does not see stale layout, but no spec in this part calls it: the narrow-viewport specs set their viewport for the whole test instead.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:47-54",
+      "quote": "export const waitForViewportSettle = (page: Page): Promise<void> =>\n  page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));",
+      "confidence": "inferred",
+      "note": "mechanism: waits on the browser's next animation frame. Inferred: the helper is verbatim, and that no spec uses it follows from none of the 12 specs importing waitForViewportSettle."
+    },
+    {
       "id": "repo-tests-p10-022",
       "statement": "The suite's standing judgement is that not every reachable state earns its own scan: a state's value is weighed against the test infrastructure it needs, and states only reachable behind disproportionate set-up are skipped.",
       "kind": "rule",
@@ -188,7 +228,7 @@
       "id": "repo-tests-p10-023",
       "statement": "The suite proves every page of the live-animals notification journey has no accessibility violations on initial load, walking the journey through the user interface from the notification list to the declaration in one test.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:13",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:17",
       "quote": "test('each notification journey page has no accessibility violations on initial load', async ({",
       "confidence": "verbatim"
     },
@@ -196,7 +236,7 @@
       "id": "repo-tests-p10-024",
       "statement": "The live-animals notification list is scanned as the journey's starting point before any notification is created.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:18-20",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:22-24",
       "quote": "await test.step('Notification dashboard', async () => {\n      await runA11yScan();\n    });",
       "confidence": "verbatim"
     },
@@ -204,15 +244,15 @@
       "id": "repo-tests-p10-025",
       "statement": "The origin of import page is scanned as it first opens after Create new notification, with its conditional-reveal radio excluded.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:22-26",
-      "quote": "await animalsPages.dashboard.btnCreateNewNotification.click();\n      await animalsPages.originOfImport.heading.waitFor();\n      await runA11yScan({ exclude: govukConditionalRevealRadioOnOrigin });",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:26-29; flows/animals/journey.ts:150-154",
+      "quote": "await animalsJourney.createNotificationFromDashboard();\n      await runA11yScan({ exclude: govukConditionalRevealRadioOnOrigin });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-026",
       "statement": "The notification overview is scanned with only the origin answered, reached by opening the overview at the reference number taken from the origin page's URL.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:28-36",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:31-39",
       "quote": "await animalsPages.overview.open(referenceNumber);\n      await animalsPages.overview.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -220,7 +260,7 @@
       "id": "repo-tests-p10-027",
       "statement": "The commodity selection page is scanned with nothing chosen, reached from the overview task \"What are you importing?\".",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:38-42",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:41-44",
       "quote": "await animalsPages.overview.task('What are you importing?').click();\n      await animalsPages.commoditySelection.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -228,7 +268,7 @@
       "id": "repo-tests-p10-028",
       "statement": "The commodity details page is scanned empty, reached from the overview task \"Commodity details\" after cattle is chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:45-50",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:48-53",
       "quote": "await animalsPages.overview.task('Commodity details').click();\n    });\n\n    await test.step('Commodity details', async () => {\n      await animalsPages.consignmentDetails.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -236,7 +276,7 @@
       "id": "repo-tests-p10-029",
       "statement": "The animal identification page is scanned empty, reached from the overview task \"Identification details\".",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:57-60",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:60-63",
       "quote": "await animalsPages.overview.task('Identification details').click();\n      await animalsPages.animalIdentification.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -244,7 +284,7 @@
       "id": "repo-tests-p10-030",
       "statement": "The import reason page is scanned with nothing chosen, with its conditional-reveal radios excluded.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:66-69",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:69-72",
       "quote": "await animalsPages.overview.task(IMPORT_REASON_TASK).click();\n      await animalsPages.importReason.heading.waitFor();\n      await runA11yScan({ exclude: govukConditionalRevealRadiosOnReason });",
       "confidence": "verbatim"
     },
@@ -252,7 +292,7 @@
       "id": "repo-tests-p10-031",
       "statement": "The additional details page is scanned with nothing chosen, reached from the overview task \"Additional details\".",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:74-79",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:77-82",
       "quote": "await animalsPages.overview.task('Additional details').click();\n    });\n\n    await test.step('Additional details', async () => {\n      await animalsPages.additionalDetails.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -260,15 +300,15 @@
       "id": "repo-tests-p10-032",
       "statement": "The upload documents page is scanned with no document added, reached from the overview task \"Upload documents\".",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:86-89",
-      "quote": "await animalsPages.overview.task('Upload documents').click();\n      await animalsPages.accompanyingDocuments.heading.waitFor();\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:89-92",
+      "quote": "await animalsPages.overview.task('Upload documents').click();\n      await animalsPages.accompanyingDocuments.heading.waitFor();\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-033",
       "statement": "The consignment addresses page is scanned with no party added, reached from the overview task named by the consignment-addresses constant.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:94-97",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:97-100",
       "quote": "await animalsPages.overview.task(CONSIGNMENT_ADDRESSES).click();\n      await animalsPages.addresses.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -276,7 +316,7 @@
       "id": "repo-tests-p10-034",
       "statement": "The consignor picker is scanned with no address chosen, reached from the consignment addresses page's Consignor add link.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:100-103",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:103-106",
       "quote": "await animalsPages.addresses.addParty('Consignor').click();\n      await animalsPages.consignorSelection.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -284,7 +324,7 @@
       "id": "repo-tests-p10-035",
       "statement": "The CPH number page is scanned empty, reached from the consignment addresses page's add-CPH control after the five parties are added.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:109-116",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:112-119",
       "quote": "await animalsJourney.addRemainingParties();\n      await animalsPages.addresses.addCph.click();\n    });\n\n    await test.step('CPH number', async () => {\n      await animalsPages.cphNumber.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -329,19 +369,11 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p10-041",
-      "statement": "The contact address page is scanned with no address chosen, reached from the overview task \"Contact address for this consignment\".",
-      "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:164-167",
-      "quote": "await animalsPages.overview.task('Contact address for this consignment').click();\n      await animalsPages.contactAddress.heading.waitFor();\n      await runA11yScan();",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p10-042",
       "statement": "The review page (check your answers) is scanned on the way to the declaration, inside a step named \"Review your notification\" that the journey flow owns, so every journey-level a11y test scans the review the same way.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:802-809; tests/animals/a11y/notification-journey-initial-state.spec.ts:173",
-      "quote": "await test.step('Review your notification', async () => {\n      await this.openReviewFromOverview();\n      await runA11yScan();\n      await this.animalsPages.notificationView.continueButton.click();",
+      "ref": "flows/animals/journey.ts:775-781; tests/animals/a11y/notification-journey-initial-state.spec.ts:164",
+      "quote": "await test.step('Review your notification', async () => {\n      await this.openReviewFromOverview();\n      await runA11yScan();\n      await this.continueFromReviewToDeclaration();",
       "confidence": "verbatim",
       "note": "mechanism: the a11y scan function is passed into the journey flow so the shared step can scan; used by the initial-state and filled-state specs."
     },
@@ -349,7 +381,7 @@
       "id": "repo-tests-p10-043",
       "statement": "The declaration page is scanned with its confirmation unchecked.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:175-177",
+      "ref": "tests/animals/a11y/notification-journey-initial-state.spec.ts:166-168",
       "quote": "await test.step('Declaration', async () => {\n      await runA11yScan();\n    });",
       "confidence": "verbatim"
     },
@@ -357,15 +389,23 @@
       "id": "repo-tests-p10-044",
       "statement": "The suite proves every page of the live-animals notification journey has no accessibility violations after the user has typed or chosen answers on it, in a second walk of the whole journey ending at the submitted confirmation.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:14",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:18",
       "quote": "test('each notification journey page has no accessibility violations after user input', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-159",
+      "statement": "The filled-state walk reopens the origin of import page from the overview task \"Where is this consignment coming from?\" before filling it in and scanning it.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:25; flows/animals/journey.ts:236-239",
+      "quote": "await this.animalsPages.overview.task('Where is this consignment coming from?').click();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-045",
       "statement": "The origin of import page is scanned filled in with a country, the region code question answered Yes, a revealed region code and the internal reference \"Imports456GB\".",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:21-23",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:24-27",
       "quote": "await animalsJourney.fillOriginOfImport({ requiresRegionCode: 'Yes', internalReference: 'Imports456GB' });\n      await runA11yScan({ exclude: govukConditionalRevealRadioOnOrigin });",
       "confidence": "verbatim"
     },
@@ -373,7 +413,7 @@
       "id": "repo-tests-p10-046",
       "statement": "The commodity selection page is scanned after searching for and checking cattle.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:29-30",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:33-34",
       "quote": "await animalsPages.commoditySelection.searchAndCheckSpecies([commodityLines.cattle]);\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -381,7 +421,7 @@
       "id": "repo-tests-p10-047",
       "statement": "The commodity details page is scanned with one animal and five packages entered.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:38-40",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:42-44",
       "quote": "await animalsPages.consignmentDetails.numberOfAnimals.fill('1');\n      await animalsPages.consignmentDetails.numberOfPackages.fill('5');\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -389,7 +429,7 @@
       "id": "repo-tests-p10-048",
       "statement": "The animal identification page is scanned with an ear tag entered.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:47-48",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:51-52",
       "quote": "await animalsPages.animalIdentification.earTag.fill('UK123456789012');\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -397,7 +437,7 @@
       "id": "repo-tests-p10-049",
       "statement": "The import reason page is scanned with the Internal market reason and the Breeding purpose chosen, so its conditional reveal is open.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:55-57",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:59-61",
       "quote": "await animalsPages.importReason.reason('Internal market').check();\n      await animalsPages.importReason.purpose('Breeding').check();\n      await runA11yScan({ exclude: govukConditionalRevealRadiosOnReason });",
       "confidence": "verbatim"
     },
@@ -405,7 +445,7 @@
       "id": "repo-tests-p10-050",
       "statement": "The additional details page is scanned with Slaughter certification and No to unweaned animals chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:65-67",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:69-71",
       "quote": "await animalsPages.additionalDetails.certifiedFor('Slaughter').check();\n      await animalsPages.additionalDetails.containsUnweanedAnimals('No').check();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -413,23 +453,23 @@
       "id": "repo-tests-p10-051",
       "statement": "The upload documents page is scanned with a document's reference, issue date and a safe 1KB PDF filled in but not yet saved.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:75-76",
-      "quote": "await animalsPages.accompanyingDocuments.fillDocument('InternalReference123', '03/01/2026', fileUploadPaths.safeFile1kbPdf);\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:79-80",
+      "quote": "await animalsPages.accompanyingDocuments.fillDocument('InternalReference123', '03/01/2026', fileUploadPaths.safeFile1kbPdf);\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-052",
       "statement": "The upload documents page is scanned again once the saved document's virus scan has finished, so the saved-document state is covered as well as the filled form.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:77-79",
-      "quote": "await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await animalsPages.accompanyingDocuments.waitForScanComplete('InternalReference123');\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:81-83",
+      "quote": "await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await animalsPages.accompanyingDocuments.waitForScanComplete('InternalReference123');\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-053",
       "statement": "The consignor picker is scanned with the address \"Astra Rosales\" selected.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:88-89",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:92-93",
       "quote": "await animalsPages.consignorSelection.select('Astra Rosales');\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -437,7 +477,7 @@
       "id": "repo-tests-p10-054",
       "statement": "The consignment addresses page is scanned with all five parties added.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:98-100",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:102-103",
       "quote": "await test.step('Consignment addresses with all parties added', async () => {\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -445,7 +485,7 @@
       "id": "repo-tests-p10-055",
       "statement": "The CPH number page is scanned with a CPH number filled in.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:105-106",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:109-110",
       "quote": "await animalsPages.cphNumber.fillCphNumber();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -453,7 +493,7 @@
       "id": "repo-tests-p10-056",
       "statement": "The arrival details page is scanned with its date, port of entry, means of transport, transport identification and transport document reference filled in.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:117-118; flows/animals/journey.ts:410-422",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:119-120; flows/animals/journey.ts:418-430",
       "quote": "await animalsJourney.fillArrivalDetails();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -461,7 +501,7 @@
       "id": "repo-tests-p10-057",
       "statement": "The transit countries page is scanned with France added to its table.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:126-127",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:128-129",
       "quote": "await animalsPages.transitedCountries.addCountry('France');\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -469,7 +509,7 @@
       "id": "repo-tests-p10-058",
       "statement": "The transporter list page is scanned with the existing transporter \"García Livestock Transport SL\" chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:135-136",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:137-138",
       "quote": "await animalsPages.transporter.transporter('García Livestock Transport SL').check();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -477,7 +517,7 @@
       "id": "repo-tests-p10-059",
       "statement": "The transporter type question is scanned with Commercial chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:142-143",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:144-145",
       "quote": "await animalsPages.transporterAdd.transporterType('Commercial').check();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -485,7 +525,7 @@
       "id": "repo-tests-p10-060",
       "statement": "The add-a-commercial-transporter form is scanned fully filled in with a uniquely named transporter.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:149-150",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:151-152",
       "quote": "await animalsPages.commercialTransporter.fill(uniquelyNamedCommercialTransporter());\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -493,23 +533,15 @@
       "id": "repo-tests-p10-061",
       "statement": "The transporter list page is scanned again straight after a new commercial transporter is saved, covering the list with the just-added transporter on it.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:151-153",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:153-155",
       "quote": "await animalsPages.commercialTransporter.saveAndContinue.click();\n      await animalsPages.transporter.heading.waitFor();\n      await runA11yScan();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p10-062",
-      "statement": "The contact address page is scanned with \"Animal and Plant Health Agency\" chosen.",
-      "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:161-162",
-      "quote": "await animalsPages.contactAddress.address('Animal and Plant Health Agency').check();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-063",
       "statement": "The declaration page is scanned with its confirmation checkbox ticked.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:170-171",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:163-164",
       "quote": "await animalsPages.declaration.confirmation.check();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -517,7 +549,7 @@
       "id": "repo-tests-p10-064",
       "statement": "The page shown after submitting, headed \"Import notification submitted\", is scanned at the end of the filled-state walk.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:175-178",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:168-170",
       "quote": "await pages.page.getByRole('heading', { name: 'Import notification submitted' }).waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -525,7 +557,7 @@
       "id": "repo-tests-p10-065",
       "statement": "The filled-state walk starts from a notification already created and its origin saved, by the journey flow's startNotification, rather than from seeded data.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:10-12; flows/animals/journey.ts:169-177",
+      "ref": "tests/animals/a11y/notification-journey-filled-state.spec.ts:14-16; flows/animals/journey.ts:170-178",
       "quote": "test.beforeEach(async ({ animalsJourney }) => {\n    await animalsJourney.startNotification();\n  });",
       "confidence": "verbatim"
     },
@@ -533,15 +565,23 @@
       "id": "repo-tests-p10-066",
       "statement": "The suite proves every page of the live-animals journey that validates input has no accessibility violations while its errors are on screen, in a third walk of the whole journey.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:18",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:22",
       "quote": "test('each notification journey page with validation has no accessibility violations when errors are shown', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-160",
+      "statement": "The error-state walk starts on the origin of import page of a new notification, created from the notification list's Create new notification control, with nothing saved.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:18-20; flows/animals/journey.ts:145-154",
+      "quote": "test.beforeEach(async ({ animalsJourney }) => {\n    await animalsJourney.createNotificationAtOrigin();\n  });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-067",
       "statement": "An error state is only scanned once the error summary headed \"There is a problem\" is visible, so a scan never runs on a page whose errors have not rendered.",
       "kind": "rule",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:24, 32-33",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:28, 36-37",
       "quote": "const errorSummaryHeading = pages.page.getByRole('heading', { name: 'There is a problem' });",
       "confidence": "verbatim"
     },
@@ -549,7 +589,7 @@
       "id": "repo-tests-p10-068",
       "statement": "The origin of import page is scanned showing the errors raised by saving with the country left empty and the region code question answered Yes.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:28-33",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:31-37",
       "quote": "await expect(animalsPages.originOfImport.country.field).toHaveValue('');\n      await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();\n      await animalsPages.originOfImport.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan({ exclude: govukConditionalRevealRadioOnOrigin });",
       "confidence": "verbatim"
     },
@@ -557,7 +597,7 @@
       "id": "repo-tests-p10-069",
       "statement": "The commodity selection page is scanned showing the error raised by saving with no species chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:40-42",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:44-46",
       "quote": "await animalsPages.commoditySelection.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -565,7 +605,7 @@
       "id": "repo-tests-p10-070",
       "statement": "The draft review page is scanned showing the errors raised by pressing Continue while sections are unfinished.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:48-53",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:52-57",
       "quote": "await animalsPages.overview.reviewAndSubmitButton.click();\n      await animalsPages.notificationView.heading.waitFor();\n      await animalsPages.notificationView.continueButton.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -573,7 +613,7 @@
       "id": "repo-tests-p10-071",
       "statement": "The commodity details page is scanned showing the errors raised by saving with no counts entered.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:59-62",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:63-66",
       "quote": "await animalsPages.consignmentDetails.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -581,7 +621,7 @@
       "id": "repo-tests-p10-072",
       "statement": "The animal identification page is scanned showing the error raised by an ear tag one character longer than the 58-character identifier limit.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:11, 72-75",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:15, 76-79",
       "quote": "await animalsPages.animalIdentification.earTag.fill('X'.repeat(IDENTIFIER_MAX_LENGTH + 1));",
       "confidence": "verbatim",
       "note": "IDENTIFIER_MAX_LENGTH = 58 is declared in the spec itself."
@@ -590,7 +630,7 @@
       "id": "repo-tests-p10-073",
       "statement": "The import reason page is scanned showing the error raised by choosing Internal market without a purpose.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:84-87",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:88-91",
       "quote": "await animalsPages.importReason.reason('Internal market').check();\n      await animalsPages.importReason.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan({ exclude: govukConditionalRevealRadiosOnReason });",
       "confidence": "verbatim"
     },
@@ -598,47 +638,55 @@
       "id": "repo-tests-p10-074",
       "statement": "The upload documents page is scanned showing the errors raised by saving an empty document form.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:102-104",
-      "quote": "await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:106-108",
+      "quote": "await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-075",
       "statement": "The upload documents page is scanned showing the errors raised by attaching a file of a type the service restricts (a 10-byte .txt).",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:105-112",
-      "quote": "fileUploadPaths.restrictedFile10bTxt,\n      );\n      await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:109-116",
+      "quote": "fileUploadPaths.restrictedFile10bTxt,\n      );\n      await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-076",
       "statement": "The upload documents page is scanned showing the field-level oversize-file error raised by attaching a PDF one byte over the maximum file size.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:113-117",
-      "quote": "const oversizeFile = await writePaddedPdf(testInfo.outputPath('oversize.pdf'), MAX_FILE_SIZE_BYTES + 1);\n      await animalsPages.accompanyingDocuments.fillDocument(`PWOVER${Date.now()}`, DOCUMENT_ISSUE_DATE, oversizeFile);\n      await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(animalsPages.accompanyingDocuments.fileFieldError).toHaveText(`Error: ${OVERSIZE_FILE_MESSAGE}`);\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:117-121",
+      "quote": "const oversizeFile = await writePaddedPdf(testInfo.outputPath('oversize.pdf'), MAX_FILE_SIZE_BYTES + 1);\n      await animalsPages.accompanyingDocuments.fillDocument(`PWOVER${Date.now()}`, DOCUMENT_ISSUE_DATE, oversizeFile);\n      await animalsPages.accompanyingDocuments.saveAndAddAnother.click();\n      await expect(animalsPages.accompanyingDocuments.fileFieldError).toHaveText(`Error: ${OVERSIZE_FILE_MESSAGE}`);\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-077",
       "statement": "The upload documents page is scanned showing the error state reached when an uploaded file is found to hold a virus.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:120-123",
-      "quote": "const reference = await animalsPages.accompanyingDocuments.uploadInfectedDocumentAndWaitForVirusFound();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:124-127",
+      "quote": "const reference = await animalsPages.accompanyingDocuments.uploadInfectedDocumentAndWaitForVirusFound();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-078",
       "statement": "The upload documents page is scanned once more after the infected document is removed and its row has gone, covering the page returning to a clean state.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:124-126",
-      "quote": "await animalsPages.accompanyingDocuments.removeDocument(1).click();\n      await expect(animalsPages.accompanyingDocuments.documentRow(reference)).toHaveCount(0);\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:128-130",
+      "quote": "await animalsPages.accompanyingDocuments.removeDocument(1).click();\n      await expect(animalsPages.accompanyingDocuments.documentRow(reference)).toHaveCount(0);\n      await runA11yScan({ exclude: govukFileUploadButtonOnDocuments });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-161",
+      "statement": "In the error-state walk, the CPH number page is reached by adding all five parties from the consignment addresses task, and neither the consignment addresses page nor any party picker is scanned on the way.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:135-137; flows/animals/journey.ts:392-397",
+      "quote": "await test.step('Continue to CPH number', async () => {\n      await animalsJourney.fillAddressesAndOpenCph();\n    });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-079",
       "statement": "The CPH number page is scanned showing the errors raised by entering \"1\" in its county box alone.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:136-139",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:140-143",
       "quote": "await animalsPages.cphNumber.county.fill('1');\n      await animalsPages.cphNumber.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -646,7 +694,7 @@
       "id": "repo-tests-p10-080",
       "statement": "The arrival details page is scanned showing the errors raised by an arrival date a year in the past.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:151-154",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:153-156",
       "quote": "await animalsPages.arrivalDetails.fillArrivalDate(getRelativeDatePickerValue({ yearOffset: -1 }));\n      await animalsPages.arrivalDetails.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -654,7 +702,7 @@
       "id": "repo-tests-p10-081",
       "statement": "The transit countries page is scanned showing the error raised by pressing Add country with no country chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:163-165",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:165-167",
       "quote": "await animalsPages.transitedCountries.addCountryButton.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -662,7 +710,7 @@
       "id": "repo-tests-p10-082",
       "statement": "The transporter list page is scanned showing the error raised by saving with no transporter chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:173-176",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:176-178",
       "quote": "await animalsPages.transporter.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -670,7 +718,7 @@
       "id": "repo-tests-p10-083",
       "statement": "The transporter type question is scanned showing the error raised by continuing with neither type chosen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:180-184",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:184-186",
       "quote": "await animalsPages.transporterAdd.continueButton.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -678,7 +726,7 @@
       "id": "repo-tests-p10-084",
       "statement": "The add-a-private-transporter form is scanned showing the errors raised by saving it empty.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:188-193",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:189-195",
       "quote": "await animalsPages.privateTransporter.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -686,15 +734,23 @@
       "id": "repo-tests-p10-085",
       "statement": "The add-a-commercial-transporter form is scanned showing the errors raised by saving with only the name filled in.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:204-208",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:207-210",
       "quote": "await animalsPages.commercialTransporter.nameOrOrganisationName.fill(commercialTransporter.name);\n      await animalsPages.commercialTransporter.saveAndContinue.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p10-162",
+      "statement": "In the error-state walk, the declaration is reached through the review page without scanning the review, which the error walk scans only in its draft errors step.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:213-216; flows/animals/journey.ts:1048-1051",
+      "quote": "await animalsJourney.fillAndSaveCommercialTransporterAddFormToOverview(commercialTransporter);\n      await animalsJourney.fromOverviewToDeclaration();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-086",
       "statement": "The declaration page is scanned showing the error raised by continuing without ticking its confirmation.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:220-223",
+      "ref": "tests/animals/a11y/notification-journey-error-state.spec.ts:219-221",
       "quote": "await animalsPages.declaration.continueButton.click();\n      await expect(errorSummaryHeading).toBeVisible();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -799,7 +855,7 @@
       "id": "repo-tests-p10-099",
       "statement": "The suite proves the journey's long pages have no accessibility violations and no sideways scrolling at a narrow portrait viewport, and again at a narrow landscape one, as two tests generated from the same body.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:4-13",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:5-14",
       "quote": "test(`the long notification pages have no accessibility violations and no sideways scrolling at ${viewportName}`, async ({",
       "confidence": "verbatim"
     },
@@ -807,7 +863,7 @@
       "id": "repo-tests-p10-100",
       "statement": "At both narrow viewports, the draft review page is scanned showing the errors raised by pressing Continue with sections unfinished.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:20-26",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:21-26",
       "quote": "const draftReference = await animalsSeededJourney.createDraftNotification('unlocked');\n        await animalsSeededJourney.resumeInUi(draftReference, animalsPages.notificationView);\n        await animalsPages.notificationView.continueButton.click();\n        await animalsPages.notificationView.errorSummary.waitFor();\n        await scanNarrowPage(page, runA11yScan);",
       "confidence": "verbatim"
     },
@@ -815,7 +871,7 @@
       "id": "repo-tests-p10-101",
       "statement": "At both narrow viewports, the notification overview is scanned with every task complete.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:30-33",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:31-33",
       "quote": "await test.step('Overview (every task complete)', async () => {\n        await animalsSeededJourney.resumeInUi(completeReference, animalsPages.overview);\n        await scanNarrowPage(page, runA11yScan);",
       "confidence": "verbatim"
     },
@@ -823,7 +879,7 @@
       "id": "repo-tests-p10-102",
       "statement": "At both narrow viewports, the consignment addresses page is scanned with all parties added.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:35-38",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:36-38",
       "quote": "await test.step('Consignment addresses with all parties added', async () => {\n        await animalsSeededJourney.resumeInUi(completeReference, animalsPages.addresses);\n        await scanNarrowPage(page, runA11yScan);",
       "confidence": "verbatim"
     },
@@ -831,7 +887,7 @@
       "id": "repo-tests-p10-103",
       "statement": "At both narrow viewports, the animal identification page is scanned with a saved animal on it.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:40-43",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:41-43",
       "quote": "await test.step('Animal identification with a saved animal', async () => {\n        await animalsSeededJourney.resumeInUi(completeReference, animalsPages.animalIdentification);\n        await scanNarrowPage(page, runA11yScan);",
       "confidence": "verbatim"
     },
@@ -839,7 +895,7 @@
       "id": "repo-tests-p10-104",
       "statement": "At both narrow viewports, the review page is scanned while a submitted notification is being amended.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:45-49",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:46-49",
       "quote": "await test.step('Amend review (amending)', async () => {\n        const amendReference = await animalsSeededJourney.createAmendNotification();\n        await animalsSeededJourney.resumeInUi(amendReference, animalsPages.notificationView);\n        await scanNarrowPage(page, runA11yScan);",
       "confidence": "verbatim"
     },
@@ -847,15 +903,15 @@
       "id": "repo-tests-p10-105",
       "statement": "At both narrow viewports, the upload documents page is scanned with a saved, scanned document on it, reached through the user interface rather than seeded.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:51-55",
-      "quote": "await test.step('Upload documents with a saved document', async () => {\n        await animalsJourney.toAccompanyingDocuments();\n        await animalsJourney.uploadScannedDocument();\n        await scanNarrowPage(page, runA11yScan);",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:52-55",
+      "quote": "await animalsJourney.toAccompanyingDocuments();\n        await animalsJourney.uploadScannedDocument();\n        await scanNarrowPage(page, runA11yScan, { exclude: govukFileUploadButtonOnDocuments });",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-106",
       "statement": "The narrow-viewport journey states are set up by seeding, through a seeded-journey fixture that creates an unlocked draft, a complete draft and an amendment and then resumes each in the user interface, rather than by walking the journey.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:21-22, 28, 46-47",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:22-23, 29, 47-48",
       "quote": "const completeReference = await animalsSeededJourney.createDraftNotification();",
       "confidence": "verbatim",
       "note": "mechanism: seeded set-up for a one-page scan, which is what the repo's own spec-writing rules allow."
@@ -864,7 +920,7 @@
       "id": "repo-tests-p10-107",
       "statement": "The scan at a narrow viewport is run at that viewport for the whole test, set through Playwright's test.use rather than resized mid-test.",
       "kind": "non-functional",
-      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:11",
+      "ref": "tests/animals/a11y/notification-journey-viewports.spec.ts:12",
       "quote": "test.use({ viewport });",
       "confidence": "verbatim"
     },
@@ -872,7 +928,7 @@
       "id": "repo-tests-p10-108",
       "statement": "The suite proves the live-animals notification list has no accessibility violations in its default view, in a sorted view, and that the service's not-found page has none either.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:10",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:11",
       "quote": "test('the notification dashboard has no accessibility violations in its default and sorted views, and the not found page has none', async ({",
       "confidence": "verbatim"
     },
@@ -880,7 +936,7 @@
       "id": "repo-tests-p10-109",
       "statement": "The notification list is scanned with notifications on it.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:15-17",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:16-18",
       "quote": "await test.step('Notification dashboard (populated list)', async () => {\n      await runA11yScan();\n    });",
       "confidence": "verbatim"
     },
@@ -888,7 +944,7 @@
       "id": "repo-tests-p10-110",
       "statement": "The notification list is scanned after sorting it by date created, newest to oldest.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:19-22",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:20-23",
       "quote": "await animalsPages.dashboard.sortBy(sortByValues.dateCreatedNewestToOldest);\n      await animalsPages.dashboard.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -896,7 +952,7 @@
       "id": "repo-tests-p10-111",
       "statement": "The page shown for an unknown path under the live-animals set root, headed \"404\", is scanned.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:25-29",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:26-30",
       "quote": "await pages.page.goto(`${SET_BASES.liveAnimals}/no-such-page`);\n      await pages.page.getByRole('heading', { name: '404' }).waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -904,7 +960,7 @@
       "id": "repo-tests-p10-112",
       "statement": "The suite proves the notification list has no accessibility violations when it has been searched.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:32",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:33",
       "quote": "test('the notification dashboard has no accessibility violations when searched', async ({",
       "confidence": "verbatim"
     },
@@ -912,7 +968,7 @@
       "id": "repo-tests-p10-113",
       "statement": "The notification list is scanned showing the result of searching for a reference number that exists, a submitted notification seeded for the test.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:40-45",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:41-46",
       "quote": "const referenceNumber = await animalsSeededJourney.createSubmittedNotification();\n      await animalsJourney.toNotificationDashboard();\n      await animalsPages.dashboard.searchForReference(referenceNumber);\n      await animalsPages.dashboard.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -920,7 +976,7 @@
       "id": "repo-tests-p10-114",
       "statement": "The notification list is scanned showing no results, after searching for the reference GBN-AG-26-ZZZZZZ, with its results label on screen.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:38, 48-52",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:39, 49-52",
       "quote": "const noMatchReferenceNumber = 'GBN-AG-26-ZZZZZZ';",
       "confidence": "verbatim"
     },
@@ -928,23 +984,24 @@
       "id": "repo-tests-p10-115",
       "statement": "The suite proves the notification list has no accessibility violations on its second page when it is paginated.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:64-68",
-      "quote": "test('the notification dashboard has no accessibility violations when paginated', async ({ animalsPages, runA11yScan }) => {\n      await animalsPages.dashboard.nextPageLink.click();\n      await animalsPages.dashboard.heading.waitFor();\n      await runA11yScan();",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:56, 65-68",
+      "quote": "test('the notification dashboard has no accessibility violations when paginated', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p10-116",
-      "statement": "The paginated notification list is only proven where there is more than one page of notifications: the test skips itself otherwise, which is expected locally only because the compose stack is seeded.",
-      "kind": "constraint",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:56-62",
-      "quote": "test.skip(\n        !hasPagination,\n        'Requires more than one page of notifications (seeded in compose; CDP environments normally have sufficient data).',\n      );",
-      "confidence": "verbatim"
+      "id": "repo-tests-p10-163",
+      "statement": "The paginated notification list test seeds one more empty notification than the list's page size before opening the list, so a second page always exists and the test never skips itself.",
+      "kind": "behaviour",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:62-66",
+      "quote": "for (let created = 0; created <= NOTIFICATION_DASHBOARD_PAGE_SIZE; created++) {\n      await animalsSeededJourney.createEmptyNotification();\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: seeded set-up for a one-page scan; the page size comes from NOTIFICATION_DASHBOARD_PAGE_SIZE."
     },
     {
       "id": "repo-tests-p10-117",
       "statement": "Every notification-list accessibility test starts from the list itself, opened through the journey flow.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:6-8; flows/animals/journey.ts:143-146",
+      "ref": "tests/animals/a11y/notification-dashboard-views.spec.ts:7-9; flows/animals/journey.ts:140-143",
       "quote": "test.beforeEach(async ({ animalsJourney }) => {\n    await animalsJourney.toNotificationDashboard();\n  });",
       "confidence": "verbatim"
     },
@@ -952,7 +1009,7 @@
       "id": "repo-tests-p10-118",
       "statement": "The suite proves the notification list has no accessibility violations at a narrow portrait viewport, and again at a narrow landscape one, as two tests generated from the same body.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts:8-16",
+      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts:3-12",
       "quote": "test(`the notification dashboard has no accessibility violations at ${viewportName}`, async ({ animalsJourney, runA11yScan }) => {",
       "confidence": "verbatim"
     },
@@ -960,7 +1017,7 @@
       "id": "repo-tests-p10-119",
       "statement": "The narrow-viewport scan of the notification list does not check for sideways scrolling, unlike the narrow-viewport scan of the journey pages.",
       "kind": "non-functional",
-      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts:12-15 against tests/animals/a11y/notification-journey-viewports.spec.ts:2, 25",
+      "ref": "tests/animals/a11y/notification-dashboard-viewports.spec.ts:12-15 against tests/animals/a11y/notification-journey-viewports.spec.ts:3, 26",
       "quote": "await animalsJourney.toNotificationDashboard();\n\n      await runA11yScan();",
       "confidence": "inferred",
       "note": "Inferred from the dashboard viewport spec calling runA11yScan directly where the journey viewport spec calls scanNarrowPage; the list is a table, which the sideways-scroll check discounts anyway."
@@ -1025,7 +1082,7 @@
       "id": "repo-tests-p10-127",
       "statement": "The lifecycle states are reached by submitting a notification through the user interface and then finding it on the list by its reference number.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:11-18",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:12-18",
       "quote": "await animalsJourney.submitNotification();\n    const { referenceNumber } = journeyContext;",
       "confidence": "verbatim"
     },
@@ -1033,7 +1090,7 @@
       "id": "repo-tests-p10-128",
       "statement": "The overview is scanned while a submitted notification is being amended, reached from the list's Amend action.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:18-22",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:16-22",
       "quote": "await animalsPages.dashboard.amend(referenceNumber).click();\n      await animalsPages.notificationView.heading.waitFor();\n      await animalsPages.overview.open(referenceNumber);\n      await animalsPages.overview.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -1057,7 +1114,7 @@
       "id": "repo-tests-p10-131",
       "statement": "The notification view is scanned showing its amendment-cancelled success banner, at the notification-view URL with cancelled=1.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:29-35",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:30-34",
       "quote": "await pages.page.waitForURL(/\\/notification-view\\?cancelled=1$/);\n    });\n\n    await test.step('Amendment cancelled (success banner)', async () => {\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -1065,7 +1122,7 @@
       "id": "repo-tests-p10-132",
       "statement": "The page headed \"Delete this notification?\" is scanned, reached from the list's Delete action after searching for the notification.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:37-42",
+      "ref": "tests/animals/a11y/notification-lifecycle-states.spec.ts:38-42",
       "quote": "await animalsPages.dashboard.searchFor(referenceNumber);\n      await animalsPages.dashboard.delete(referenceNumber).click();\n      await pages.page.getByRole('heading', { name: 'Delete this notification?' }).waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -1086,18 +1143,18 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p10-135",
-      "statement": "The suite proves the copied-address edit page and the contact address page have no accessibility violations.",
+      "id": "repo-tests-p10-164",
+      "statement": "The suite proves the consignment addresses page and the copied-address edit page have no accessibility violations, with and without errors.",
       "kind": "behaviour",
       "ref": "tests/animals/a11y/notification-address-edit.spec.ts:4",
-      "quote": "test('the copied-address edit page and the contact address page have no accessibility violations', async ({",
+      "quote": "test('the consignment addresses page and the copied-address edit page, with and without errors, have no accessibility violations', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-tests-p10-136",
       "statement": "The consignment addresses page is scanned with a Change and an Edit details link on every role, from a seeded complete draft.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:11-14",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:9-13",
       "quote": "await test.step('Consignment addresses with Change and Edit details on every role', async () => {\n      await animalsSeededJourney.resumeInUi(referenceNumber, animalsPages.addresses);\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -1105,7 +1162,7 @@
       "id": "repo-tests-p10-137",
       "statement": "The consignor edit page is scanned filled with the copy of the address taken onto the notification, reached from the consignment addresses page's Edit details link for Consignor.",
       "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:16-20",
+      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:16-19",
       "quote": "await animalsPages.addresses.editPartyDetails('Consignor').click();\n      await animalsPages.consignorEdit.heading.waitFor();\n      await runA11yScan();",
       "confidence": "verbatim"
     },
@@ -1115,14 +1172,6 @@
       "kind": "behaviour",
       "ref": "tests/animals/a11y/notification-address-edit.spec.ts:22-26",
       "quote": "await animalsPages.consignorEdit.fill({ name: '', email: 'not-an-email' });\n      await animalsPages.consignorEdit.saveChanges.click();\n      await expect(animalsPages.consignorEdit.errorSummary).toBeVisible();\n      await runA11yScan();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p10-139",
-      "statement": "The contact address page is scanned as resumed from a seeded complete draft.",
-      "kind": "behaviour",
-      "ref": "tests/animals/a11y/notification-address-edit.spec.ts:29-32",
-      "quote": "await test.step('Contact address', async () => {\n      await animalsSeededJourney.resumeInUi(referenceNumber, animalsPages.contactAddress);\n      await runA11yScan();",
       "confidence": "verbatim"
     },
     {
@@ -1170,7 +1219,7 @@
       "id": "repo-tests-p10-145",
       "statement": "An accessibility spec reaches its pages through the animals journey flow's to* methods and the animals page objects, never through its own navigation, so a change to a page's route or heading is made in one place for the whole suite.",
       "kind": "non-functional",
-      "ref": "flows/animals/journey.ts:115-120; page-objects/animals/index.ts:29-67",
+      "ref": "flows/animals/journey.ts:113-118; page-objects/animals/index.ts:28-64",
       "quote": "export function createAnimalsPages(page: Page) {",
       "confidence": "inferred",
       "note": "Inferred from every a11y spec taking animalsJourney and animalsPages from the fixture and using only their methods; the one exception is the direct goto of an unknown path in the not-found step."
@@ -1179,7 +1228,7 @@
       "id": "repo-tests-p10-146",
       "statement": "No accessibility scan covers the permanent address page, although the journey reaches it for any animal whose commodity line needs a permanent address.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:599-640 against tests/animals/a11y/ (searched all 12 specs for permanentAddress)",
+      "ref": "flows/animals/journey.ts:590-631 against tests/animals/a11y/ (searched all 12 specs for permanentAddress)",
       "quote": "",
       "confidence": "gap",
       "note": "Looked for permanentAddress, openPermanentAddress and answerPermanentAddresses across every spec in tests/animals/a11y; no match."
@@ -1188,19 +1237,19 @@
       "id": "repo-tests-p10-147",
       "statement": "No accessibility scan covers four of the five party pickers: place of destination, place of origin, consignee and importer. Only the consignor picker is scanned, and the other four are walked through unscanned.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:363-380 against tests/animals/a11y/notification-journey-initial-state.spec.ts:109-110",
+      "ref": "flows/animals/journey.ts:373-390 against tests/animals/a11y/notification-journey-initial-state.spec.ts:112-115",
       "quote": "",
       "confidence": "gap",
       "note": "addRemainingParties visits all four pickers inside the step \"Remaining addresses and CPH number\" with no runA11yScan call; searched all 12 specs for destinationSelection, placeOfOriginSelection, consigneeSelection and importerSelection with no match."
     },
     {
-      "id": "repo-tests-p10-148",
-      "statement": "No accessibility scan covers four of the five party edit pages, nor the contact address edit page. Only the consignor edit page is scanned.",
+      "id": "repo-tests-p10-165",
+      "statement": "No accessibility scan covers four of the five party edit pages: place of destination, place of origin, consignee and importer. Only the consignor edit page is scanned.",
       "kind": "behaviour",
-      "ref": "page-objects/animals/index.ts:46-50, 60 against tests/animals/a11y/notification-address-edit.spec.ts:16-27",
+      "ref": "page-objects/animals/index.ts:45-49 against tests/animals/a11y/notification-address-edit.spec.ts:16-27",
       "quote": "",
       "confidence": "gap",
-      "note": "Searched all 12 specs for destinationEdit, placeOfOriginEdit, consigneeEdit, importerEdit and contactAddressEdit; no match. The edit pages are built from one shared page object, so the consignor scan may stand for the others, but that is not stated anywhere."
+      "note": "Searched all 12 specs for destinationEdit, placeOfOriginEdit, consigneeEdit and importerEdit, with no match. The edit pages are built from one shared page object, so the consignor scan may stand for the others, but nothing in the slice says so."
     },
     {
       "id": "repo-tests-p10-149",
@@ -1212,13 +1261,22 @@
       "note": "The spec is named sign-in.spec.ts but scans only pages.signInError.openUnauthorised(); searched all 12 specs for signIn, signOut and organisationPicker with no match."
     },
     {
-      "id": "repo-tests-p10-150",
-      "statement": "No accessibility scan covers the add-address hand-off to the INS address book that the animals party pickers and the contact address page offer, so the page a trader lands on after choosing to add a new address mid journey is unproven from the animals side.",
+      "id": "repo-tests-p10-166",
+      "statement": "No accessibility scan covers the hand-off from an animals party picker to the INS address book's add-address page, so the page a trader lands on after choosing to add a new address mid journey is not proven from the animals side.",
       "kind": "behaviour",
-      "ref": "flows/animals/journey.ts:770-790 against tests/animals/a11y/",
+      "ref": "flows/animals/journey.ts:754-763 against tests/animals/a11y/",
       "quote": "",
       "confidence": "gap",
-      "note": "openInsAddAddressFromPicker and openInsAddAddressFromContact exist in the animals journey flow but no a11y spec calls them. The INS suite's own a11y specs are part 15's slice, so whether that page is scanned there is not this part's to say."
+      "note": "openInsAddAddressFromPicker and toInsAddAddressFromPicker exist in the animals journey flow, but no a11y spec calls them. The INS suite's own a11y specs are part 15's slice, so whether that page is scanned there is not this part's to say."
+    },
+    {
+      "id": "repo-tests-p10-167",
+      "statement": "No accessibility scan covers a contact address page, and the animals journey no longer has one to scan: the overview task lists, for both air or sea and overland, name no contact address task, and the page-object registry holds no contact address page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:74-99; page-objects/animals/index.ts:28-64",
+      "quote": "export const AIR_OR_SEA_OVERVIEW_TASKS = [\n  'Where is this consignment coming from?',\n  'What are you importing?',\n  IMPORT_REASON_TASK,\n  'Commodity details',\n  'Identification details',\n  'Additional details',\n  'Arrival details',\n  'Transport details',\n  'Upload documents',\n  CONSIGNMENT_ADDRESSES,\n] as const;",
+      "confidence": "inferred",
+      "note": "Inferred from the task lists and the registry. An earlier extract of this slice recorded contact address scans in the initial-state, filled-state and address-edit specs; those steps are gone from the specs today."
     },
     {
       "id": "repo-tests-p10-151",
@@ -1227,7 +1285,7 @@
       "ref": "tests/animals/a11y/ (all 12 specs) and page-objects/animals/index.ts",
       "quote": "",
       "confidence": "gap",
-      "note": "The only set root named anywhere in the folder is SET_BASES.liveAnimals, in notification-dashboard-views.spec.ts:26."
+      "note": "The only set root named anywhere in the folder is SET_BASES.liveAnimals, in notification-dashboard-views.spec.ts:27."
     },
     {
       "id": "repo-tests-p10-152",

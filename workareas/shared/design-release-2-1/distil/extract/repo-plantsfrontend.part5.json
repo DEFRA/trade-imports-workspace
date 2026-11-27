@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 5, Origin and arrival status, read two feature folders of the high-risk-plants linear journey in full, every file in each: src/server/app/sets/high-risk-plants/journeys/linear/features/origin/ (page.js, evaluation.js, controller.js 165 lines, template.njk, controller.test.js 456 lines, origin.fit.spec.js 354 lines and copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js) and features/arrival-status/ (page.js, evaluation.js, statuses.js, controller.js 103 lines, template.njk, controller.test.js 284 lines, arrival-status.fit.spec.js 345 lines and copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js). Neither folder holds a fields.js or a view-model folder. Read for context only, and claimed by other parts: obligations/sections/origin.js and obligations/sections/arrival.js (part 12), src/server/app/shared/kit.js and shared/paths.js (part 13); src/server/app/shared/copy.en.js saveActions and journeys/linear/features/timing-windows.js were read only far enough to quote the control labels and the 4-day window the hint interpolates. The part covers two collecting pages of the about-the-consignment and arrival sections: origin (slug 'origin', caption 'About the consignment', one required country-of-origin type-ahead over a native select, three narrowing rules keyed by commodity-line category, a ware-potato guidance inset and a stale-saved-country state) and arrival-status (slug 'arrival-status', caption 'Arrival', a two-radio required question whose answer decides the pre-arrival or post-arrival wording of the later arrival pages, skipped altogether for a potato notification). It covers every English and Welsh copy leaf of both features verbatim, every validation rule and error message, both pages' routes, back links, save controls, redirect targets and save-failure behaviour, the 19 tests of origin.fit.spec.js and the 18 of arrival-status.fit.spec.js, the two controller unit suites and the two copy suites, and the two evaluation.js answer bindings as mechanism claims. It stops before the arrival date and time page, which part 6 claims.",
+  "structure": "Part 5, Origin and arrival status. Read in full, at repo HEAD 2f2b07f: every file of journeys/linear/features/origin/ (evaluation.js, page.js, controller.js, template.njk, controller.test.js, origin.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js) and every file of journeys/linear/features/arrival-status/ (evaluation.js, page.js, controller.js, template.njk, statuses.js, controller.test.js, arrival-status.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), plus obligations/sections/origin.js, obligations/sections/arrival.js and shared/kit.js for context only (parts 12 and 13 claim them). Since the earlier extract (a88175f) only the two controller tests' backend-failure helper and kit.js's stale-concurrency and save-fallback logging changed; no page, copy or rule in this slice moved. Covered: the origin page (route, heading, caption, the one country type-ahead over a native select and its configuration, select text, placeholder, no-results text, required and membership rule, the three per-category narrowing rules and their messages, territory-to-parent-country matching, the ware-potato guidance inset, the stale saved country state, save controls, Back link, redirects, save failures); the arrival-status page (route, legend as h1, caption, the two statuses with labels and hints, the 4-day window in the post-arrival hint, the required rule, Save and return refusals, redirects, save failures); the scope rule that skips arrival status for potatoes and what a potato notifier sees instead; every English and Welsh copy key in both features; all 19 tests of origin.fit.spec.js and all 18 of arrival-status.fit.spec.js; both evaluation.js bindings as mechanism claims.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p5-001",
@@ -445,7 +445,7 @@
     },
     {
       "id": "repo-plantsfrontend-p5-055",
-      "statement": "When saving the origin fails because the backend is unavailable, the page is shown again at HTTP 500 with a recoverable-error banner and the country the notifier chose still in the box.",
+      "statement": "When saving the origin fails on a recoverable backend error, such as the backend refusing or being unavailable, the page is shown again at HTTP 500 with a recoverable-error banner and the country the notifier chose still in the box.",
       "kind": "behaviour",
       "ref": "journeys/linear/features/origin/controller.js:141-160 with controller.test.js:435-446",
       "quote": "expect(result.response.statusCode).toBe(500)\n    expect(result.view.context.recoverableError).toBe(true)",
@@ -853,7 +853,7 @@
     },
     {
       "id": "repo-plantsfrontend-p5-105",
-      "statement": "When saving the arrival status fails because the backend is unavailable, the page is shown again at HTTP 500 with a recoverable-error banner and the chosen radio still checked.",
+      "statement": "When saving the arrival status fails on a recoverable backend error, such as the backend refusing or being unavailable, the page is shown again at HTTP 500 with a recoverable-error banner and the chosen radio still checked.",
       "kind": "behaviour",
       "ref": "journeys/linear/features/arrival-status/controller.js:84-98 with controller.test.js:261-274",
       "quote": "expect(result.response.statusCode).toBe(500)\n    expect(result.view.context.recoverableError).toBe(true)",
@@ -967,11 +967,11 @@
     },
     {
       "id": "repo-plantsfrontend-p5-119",
-      "statement": "Two of the three origin narrowing rules are never stated to the notifier before they answer: only the ware-potato rule has an inset, so a notifier of conifer wood without bark, or of plants and wood generally, learns the rule only by being refused.",
+      "statement": "Two of the three origin narrowing rules are never stated to the notifier before they answer: only the ware-potato rule has an inset, so a notifier of conifer wood without bark, or of plants and wood generally, learns the rule only by being refused. Inferred because the guidance block holds one key and the page builds its insets only from constraints that have one.",
       "kind": "copy",
       "ref": "journeys/linear/features/origin/copy/copy.en.js:13-16 (guidance holds one key) with controller.js:50-54",
       "quote": "guidance: {\n    'ware-potatoes':\n      'Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.'\n  },",
-      "confidence": "verbatim",
+      "confidence": "inferred",
       "note": "The guidance list is built only from constraints that have a guidance string, so the other two constraints contribute nothing to the page."
     },
     {
@@ -982,6 +982,33 @@
       "quote": "",
       "confidence": "gap",
       "note": "Searched the whole fit spec for the copy key and for the message text: neither appears. The unit suite covers the state in four tests."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-121",
+      "statement": "A saved country the service no longer offers is listed in the error summary as well as on the field when the origin page opens, because the page builds its error summary from the same errors it shows on the field.",
+      "kind": "behaviour",
+      "ref": "journeys/linear/features/origin/controller.js:84-99 and 121-123",
+      "quote": "errorSummary: kit.errorSummary(errors),",
+      "confidence": "inferred",
+      "note": "No test asserts the summary in the stale-country state; controller.test.js:143-151 asserts only the field error."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-122",
+      "statement": "The narrowing of origin countries by commodity line is checked on the origin page itself, not by the obligation's scope rules, because a line's category sits below the notification-level answer an obligation gate reads.",
+      "kind": "rule",
+      "ref": "obligations/sections/origin.js:5-9 (read for context; part 12 claims the obligation)",
+      "quote": "so the narrowing is validated on the page\n// against the set-owned commodities service instead.",
+      "confidence": "verbatim",
+      "note": "Quoted here because this part covers the narrowing rules the origin page enforces."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-123",
+      "statement": "A notification started straight at the origin page in the fit suite goes from origin to the arrival details, not to the arrival-status question, so the suite's default start-at-origin notification is one the question does not apply to.",
+      "kind": "behaviour",
+      "ref": "journeys/linear/features/origin/origin.fit.spec.js:35-37, 138-150, 199-210 and 267-280",
+      "quote": "const ARRIVAL_DETAILS_URL = notificationPageWithTrail('arrival-details', [\n  'origin'\n])",
+      "confidence": "inferred",
+      "note": "Inferred from where Save and continue lands; startNotificationAtOrigin lives in fit/high-risk-plants-journey.js, outside this part, so the commodity type it seeds is not shown here."
     }
   ]
 }

@@ -1,7 +1,25 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 12 — Route registration, the obligation manifest and the cross-page fit specs. Read in full: the set identity module (src/server/app/sets/high-risk-plants/set.js, 7 lines); the whole obligations folder (index.js 91 lines, whitelists.test.js 243, coverage.test.js 133 and the seven section files origin.js 14, arrival.js 131, parties.js 69, destination.js 15, commodity.js 109, contact.js 5, review.js 6 — 816 lines in all); the features composition root (journeys/linear/features/index.js 59 lines, evaluation.js 24, timing-windows.js 12, amend-endings.test.js 108); the three cross-page fit specs (type-ahead.fit.spec.js 457 lines with 18 test declarations, 8 of them parameterised over three type-aheads, section-caption.fit.spec.js 38 lines with 2 tests, page-title.fit.spec.js 48 lines with 2 tests); and the set gateway (src/server/app/routes-high-risk-plants.js 102 lines) with src/server/app/routes.js (1 line). Covered: the 40 Hapi routes the set registers from 18 route modules, all mounted under the /high-risk-plants prefix, naming which are collecting pages, which are the dashboard/hub/create/start endpoints, which are action slugs (amend, cancel-amend, delete, and the declared-but-unrouted copy) and which are the three party-edit pages; the 13 dispatch pages and the recorded reasons the dashboard, hub, delete, cancel-amend and party-edit stay out of that index; the 25 obligations of the manifest — each one's UUID, name, status, group (`within`), gate (`applyTo`) or cardinality (`requires`) and the feature that collects it; the manifest invariants the two test files hold (unique ids and names, terminating `within` chains, derived groups, resolvable `dependsOn`, continue-enforced commodityType and countryOfOrigin, per-line fields matching the set-owned commodity service's field list, every gate's allow-list non-empty and inside the service vocabulary, the origin-constraint rules including the 27 EU member states and seed potatoes as the single unconstrained category, and the notification-level gate values); the boot-time coverage check that refuses to mount the set when any leaf obligation is owned by no feature; the two statutory timing windows and what reads them; what amend-endings.test.js proves about how an amendment's pages end; and the caption, title and type-ahead patterns the three fit specs assert verbatim. Route paths were resolved through src/server/app/shared/paths.js and src/server/app/shared/kit.js's pageRoutes, and each page's slug through its feature's page.js; collecting features were resolved through each feature's evaluation.js bindings. Mechanism claims are marked. Read but left to other parts: each page's own controller, view, fields, copy and per-page specs; the flow, task-rows and entry-guard modules; the shared kit; the spec/ ledgers.",
+  "structure": "Part 12 read the set's composition seam and rule manifest in full: set.js (set id and base), routes.js and routes-high-risk-plants.js (the set plugin: set context, obligation set, fulfilment registry, journey flow, readiness, purity and coverage asserts, dispatch, stores, cookie, entry guard, route table, completeness check), src/server/router.js (mount under /high-risk-plants behind auth.enabled, root redirect), features/index.js (13 dispatch pages, 18 route modules, 40 routes), evaluation.js (10 feature bindings), timing-windows.js (2 windows), obligations/index.js and its seven section files (25 obligations, 1 group: commodityLines), whitelists.test.js and coverage.test.js (manifest invariants and the two exceptions: quantity ungated, seed potatoes unconstrained), amend-endings.test.js (3 tests), and the three cross-page fit specs: type-ahead (18 tests, 34 runs over origin, place of landing and genus), section-caption (2) and page-title (2). For route registration only it read the page.js and controller route tables of every feature, paths.js, kit.js pageRoutes and CANCEL_AMEND_SLUG, parties/index.js edit slugs, picker-routes.js, notification-action-slugs.js and fulfilment-registry.js. Every route is claimed once here; page content belongs to parts 1 to 11. Since the earlier extract (a88175f) only kit.js and fulfilment-registry.js line numbers moved in this slice; no route, obligation or spec changed.",
   "claims": [
+    {
+      "id": "repo-plantsfrontend-p8-031",
+      "statement": "One notification-level place of destination is owed for every commodity type, and it is never behind a gate; which of the three sentences a notifier sees is the page's business, decided from the arrival status.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:1-15",
+      "quote": "One notification-level answer for every commodity type: reg 24A(2)(c)\n// asks potatoes for their intended destination and reg 26(2)(b) asks plants\n// and wood for the intended destination or the current location. The matter\n// owed is the same one, so it is one obligation and never a gate; which of the\n// three sentences a notifier is shown is the page's business, decided from the\n// arrival status.",
+      "confidence": "verbatim",
+      "note": "The obligation file itself is part 12's; quoted here because it carries the ruling behind the destination page's three-state wording. Kept from part 8 because a requirement may cite it; repo-plantsfrontend-p12-059 and -060 say the same from this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p8-032",
+      "statement": "The place of destination answer is a copy of an address-book record taken when it is picked, and a later change to that record does not reach the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:9-10",
+      "quote": "The answer is a copy of a record in the organisation's address book, taken\n// when it is picked; a later change to the record does not reach it.",
+      "confidence": "verbatim",
+      "note": " Kept from part 8 because a requirement may cite it; repo-plantsfrontend-p12-059 and -060 say the same from this part."
+    },
     {
       "id": "repo-plantsfrontend-p12-001",
       "statement": "The whole high-risk plants notification journey is served under the path prefix /high-risk-plants.",
@@ -91,7 +109,7 @@
       "id": "repo-plantsfrontend-p12-011",
       "statement": "Each collecting page is served by a pair of routes at one path, a GET that shows the page and a POST that saves it.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:342-355",
+      "ref": "src/server/app/shared/kit.js:349-363",
       "quote": "export const pageRoutes = (page, { get, post }) => [\n  {\n    method: 'GET',\n    path: pageRoutePath(page.slug),\n    options: pageRouteOptions(page),\n    handler: get\n  },\n  {\n    method: 'POST',\n    path: pageRoutePath(page.slug),\n    options: pageRouteOptions(page),\n    handler: redirectOnStaleAction(post)\n  }\n]",
       "confidence": "verbatim",
       "note": "mechanism: wraps every page POST handler in a stale-action redirect, so a submission aimed at a page the notification has moved past is redirected rather than saved. The route builder itself belongs to the shared kit part; it is quoted here because the route inventory rests on it."
@@ -190,7 +208,7 @@
       "id": "repo-plantsfrontend-p12-023",
       "statement": "An amendment is abandoned through a GET and a POST at the cancel-amend slug.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:85-98, src/server/app/shared/kit.js:73",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:85-98, src/server/app/shared/kit.js:80",
       "quote": "export const CANCEL_AMEND_SLUG = 'cancel-amend'",
       "confidence": "verbatim"
     },
@@ -672,7 +690,7 @@
       "id": "repo-plantsfrontend-p12-080",
       "statement": "Every question the notification owes is collected by exactly one page: the service refuses to start and names the offenders when any of them is collected by none.",
       "kind": "constraint",
-      "ref": "src/server/app/routes-high-risk-plants.js:67, src/server/app/routes-high-risk-plants.js:80, src/server/app/bridge/fulfilment-registry.js:156-163",
+      "ref": "src/server/app/routes-high-risk-plants.js:67, src/server/app/routes-high-risk-plants.js:80, src/server/app/bridge/fulfilment-registry.js:157-165",
       "quote": "  const missing = leaves.filter((obligation) => !owners.has(obligation.id))\n  if (missing.length > 0) {\n    fail(\n      `obligations owned by no feature: ${missing\n        .map((obligation) => obligation.name)\n        .join(', ')}`\n    )\n  }",
       "confidence": "verbatim",
       "note": "This is the coverage invariant for the manifest, checked at boot by assertFulfilmentBindingCoverage() against the set's featureEvaluationBindings. The only exception is a group: a group obligation is not a leaf, so the commodity-line group needs no collecting page."
@@ -699,7 +717,7 @@
       "id": "repo-plantsfrontend-p12-083",
       "statement": "No two pages may claim the same question, and two pages that save a grouped question must agree on where it lives, or the service refuses to start.",
       "kind": "constraint",
-      "ref": "src/server/app/bridge/fulfilment-registry.js:115-127",
+      "ref": "src/server/app/bridge/fulfilment-registry.js:107-125",
       "quote": "      fail(\n        `group ${group.obligation.name} has conflicting path/token declarations`\n      )",
       "confidence": "verbatim",
       "note": "mechanism: validates the set's fulfilment bindings against each other and against the manifest at boot."

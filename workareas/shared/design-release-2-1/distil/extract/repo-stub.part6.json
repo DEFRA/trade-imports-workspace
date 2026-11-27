@@ -1,0 +1,932 @@
+{
+  "source": "repo:stub",
+  "structure": "Part 6, MDM ports of entry. Read in full: PortsOfEntryController.java (one GET handler at /mdm/trade/bcp/poes taking the Ocp-Apim-Subscription-Key header and an optional system parameter, answering the fixture loaded at start-up with the shared trace header), PortsOfEntryControllerTest.java (three tests: whole list in MDM order, traffic types, missing key refused), MdmStubResponses.java (the header name and trace-header helper, used here; the shared plumbing itself is part 2's), MdmStubRequests.java (the test helper that adds the key), and portsOfEntryResponse.json (a result array of 78 port records, 16 lines each, with id, activeFrom, activeTo, code, name, townCity, county, postCode, countryCode, traffic and status). Claims 001-036 cover the endpoint, its header and parameter, the response shape, counts of traffic types (Airport 18, Port 59, Rail 1) and statuses (all active, Approved-Live), the empty-field, duplicate-name and odd-copy records, each test, and three gaps. Claims 037-114 are one per port record, in saved order.",
+  "claims": [
+    {
+      "statement": "The stub answers GET /mdm/trade/bcp/poes with the list of ports of entry.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:27",
+      "quote": "@GetMapping(value = \"/mdm/trade/bcp/poes\")",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-001"
+    },
+    {
+      "statement": "The ports of entry call must carry an Ocp-Apim-Subscription-Key header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:29; src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java:7",
+      "quote": "@RequestHeader(OCP_APIM_SUBSCRIPTION_KEY) String ocpApimSubscriptionKey,",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-002"
+    },
+    {
+      "statement": "The stub accepts any value in the subscription key header: the handler never reads the value, and the tests send \"any-value-at-all\".",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:28-33; src/test/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubRequests.java:15",
+      "quote": "headers.add(OCP_APIM_SUBSCRIPTION_KEY, \"any-value-at-all\");",
+      "confidence": "inferred",
+      "note": "The value is bound to a parameter the method body does not use.",
+      "id": "repo-stub-p6-003"
+    },
+    {
+      "statement": "A ports of entry call with no subscription key header is refused with 400 Bad Request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java:43-47",
+      "quote": "mockMvc.perform(get(\"/mdm/trade/bcp/poes\"))\n        .andExpect(status().isBadRequest());",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-004"
+    },
+    {
+      "statement": "The ports of entry call takes an optional system query parameter.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:30",
+      "quote": "@RequestParam(value = \"system\", required = false) String system) {",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-005"
+    },
+    {
+      "statement": "The system parameter changes nothing: the stub answers the same records whatever system is named, or none.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:30-32",
+      "quote": "return withTraceHeader(ResponseEntity.ok()).body(ports);",
+      "confidence": "inferred",
+      "note": "The system parameter is bound but never used in the body.",
+      "id": "repo-stub-p6-006"
+    },
+    {
+      "statement": "The ports of entry call answers 200 OK.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:32",
+      "quote": "return withTraceHeader(ResponseEntity.ok()).body(ports);",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-007"
+    },
+    {
+      "statement": "The ports of entry response carries the header x-ms-middleware-request-id with the value stub-trace-id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:32; src/main/java/uk/gov/defra/trade/imports/stubs/mdm/MdmStubResponses.java:12",
+      "quote": "return response.header(\"x-ms-middleware-request-id\", \"stub-trace-id\");",
+      "confidence": "verbatim",
+      "note": "The shared trace-header helper is part 2's to claim; this claim records only that this endpoint uses it.",
+      "id": "repo-stub-p6-008"
+    },
+    {
+      "statement": "The stub answers the saved port records whole: every record, unfiltered and unchanged, in the order they are saved.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:19-32",
+      "quote": "private static final String PORTS_FIXTURE = \"responses/portsOfEntryResponse.json\";",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-009"
+    },
+    {
+      "statement": "The stub reads the saved port records once, when it starts, and answers every call from that copy.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:23-25",
+      "quote": "this.ports = fileUtils.getObjectFromFile(PORTS_FIXTURE, JsonNode.class);",
+      "confidence": "verbatim",
+      "note": "mechanism: loads the ports fixture into memory at start-up; a change to the file needs a restart.",
+      "id": "repo-stub-p6-010"
+    },
+    {
+      "statement": "The ports of entry response body is an object whose result field holds the array of port records.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1-2",
+      "quote": "\"result\": [",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-011"
+    },
+    {
+      "statement": "The stub returns 78 port records.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:2-1254; src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java:27",
+      "quote": ".andExpect(jsonPath(\"$.result.length()\").value(78))",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-012"
+    },
+    {
+      "statement": "Each port record has the fields id, activeFrom, activeTo, code, name, townCity, county, postCode, countryCode, traffic and status, and status has a code and a description.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:3-18",
+      "quote": "\"id\": \"71acbad1-3d9e-4bb3-9cb2-8c7390fc6582\",\n      \"activeFrom\": null,\n      \"activeTo\": null,\n      \"code\": \"GB DYC\",\n      \"name\": \"Aberdeen Airport\",\n      \"townCity\": \"Aberdeen\",\n      \"county\": \"Aberdeen\",\n      \"postCode\": \"AB21 7DU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",\n      \"status\": {\n        \"code\": \"active\",\n        \"description\": \"Approved-Live\"\n      }",
+      "confidence": "verbatim",
+      "note": "Every one of the 78 records has exactly this set of keys.",
+      "id": "repo-stub-p6-013"
+    },
+    {
+      "statement": "Each port record carries a UUID as its id.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:4",
+      "quote": "\"id\": \"71acbad1-3d9e-4bb3-9cb2-8c7390fc6582\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-014"
+    },
+    {
+      "statement": "The records come in MDM's saved order, not sorted: 11 airports first, then 38 ports by name from Aberdeen Harbour to Tilbury Port, then the Folkestone rail record, then 28 further records sorted by code from GB AVO to GB TIL.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:3-1254",
+      "quote": "\"code\": \"GB DYC\",",
+      "confidence": "inferred",
+      "note": "Read from the record order in the file; the test title calls it MDM order. A consumer that wants the list sorted must sort it itself.",
+      "id": "repo-stub-p6-015"
+    },
+    {
+      "statement": "The records hold three traffic types: Airport on 18 records, Port on 59 and Rail on 1.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json traffic fields",
+      "quote": "\"traffic\": \"Airport\",",
+      "confidence": "verbatim",
+      "note": "Counted with jq over the whole result array.",
+      "id": "repo-stub-p6-016"
+    },
+    {
+      "statement": "Every one of the 78 records has the status code active with the description Approved-Live.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json status fields",
+      "quote": "\"code\": \"active\",\n        \"description\": \"Approved-Live\"",
+      "confidence": "verbatim",
+      "note": "Counted with jq: one status value across all 78.",
+      "id": "repo-stub-p6-017"
+    },
+    {
+      "statement": "No record sets activeFrom or activeTo: both are null on all 78.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json activeFrom and activeTo fields",
+      "quote": "\"activeFrom\": null,\n      \"activeTo\": null,",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-018"
+    },
+    {
+      "statement": "Every record has the countryCode GB.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json countryCode fields",
+      "quote": "\"countryCode\": \"GB\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-019"
+    },
+    {
+      "statement": "29 records have an empty townCity, county and postCode: Tilbury Port and the 28 records from GB AVO to GB TIL.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:775-790, 807-1254",
+      "quote": "\"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-020"
+    },
+    {
+      "statement": "Pembroke Port (GB PED) has a county and postcode but an empty townCity.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:535-541",
+      "quote": "\"townCity\": \"\",\n      \"county\": \"Pembrokeshire\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-021"
+    },
+    {
+      "statement": "Heysham Port (GB HYM), Portsmouth Port (GB PME) and Southampton Port (GB SOU) have a townCity and postcode but an empty county.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:359-365, 679-685, 743-749",
+      "quote": "\"county\": \"\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-022"
+    },
+    {
+      "statement": "Port codes are GB, a space and three or four letters, except Port of Sheerness at GBSHS, which has no space.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:647",
+      "quote": "\"code\": \"GBSHS\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-023"
+    },
+    {
+      "statement": "Two records are named Port of Sheerness, with the codes GBSHS and GB SHS.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:647-648, 1191-1192",
+      "quote": "\"name\": \"Port of Sheerness\",",
+      "confidence": "verbatim",
+      "note": "A list that shows names alone shows this name twice.",
+      "id": "repo-stub-p6-024"
+    },
+    {
+      "statement": "Two records are named Pembroke Port, with the codes GB PED and GB PEM.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:535-536, 1143-1144",
+      "quote": "\"name\": \"Pembroke Port\",",
+      "confidence": "verbatim",
+      "note": "A list that shows names alone shows this name twice.",
+      "id": "repo-stub-p6-025"
+    },
+    {
+      "statement": "Dover has three records: Port of Dover (Eastern) GB DVRE, Port of Dover (Western) GB DVRW and Port of Dover GB DVR.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:615, 631, 967",
+      "quote": "\"name\": \"Port of Dover (Eastern)\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-026"
+    },
+    {
+      "statement": "Tilbury has three records: Tilbury 2 Ro-Ro Terminal GB TILR, Tilbury Port GB TILL and TILBURY GB TIL, the last named in capitals.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:759, 775, 1239",
+      "quote": "\"name\": \"TILBURY\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-027"
+    },
+    {
+      "statement": "The Folkestone rail record (GB FOL) gives Felixstowe, Suffolk, IP11 3SY as its town, county and postcode, the same as Felixstowe Port.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:791-797, 231-237",
+      "quote": "\"name\": \"Folkestone\",\n      \"townCity\": \"Felixstowe\",\n      \"county\": \"Suffolk\",\n      \"postCode\": \"IP11 3SY\",",
+      "confidence": "verbatim",
+      "note": "Recorded as saved; the town looks copied from Felixstowe Port. Not reconciled.",
+      "id": "repo-stub-p6-028"
+    },
+    {
+      "statement": "Portsmouth Port's name is saved with two spaces between its words.",
+      "kind": "copy",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:680",
+      "quote": "\"name\": \"Portsmouth  Port\",",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-029"
+    },
+    {
+      "statement": "The GB TEE record is named Teestort.",
+      "kind": "copy",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1224",
+      "quote": "\"name\": \"Teestort\",",
+      "confidence": "verbatim",
+      "note": "Possibly a misspelling of Teesport; recorded as saved.",
+      "id": "repo-stub-p6-030"
+    },
+    {
+      "statement": "Test getPortsOfEntry_shouldAnswerMdmsPortRecordsWholeInMdmOrder proves the call answers 200 with the stub trace header and 78 records, the first being GB DYC, an Airport in Aberdeen with the status Approved-Live.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java:22-32",
+      "quote": ".andExpect(jsonPath(\"$.result[0].code\").value(\"GB DYC\"))",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-031"
+    },
+    {
+      "statement": "Test getPortsOfEntry_shouldCarryEveryPortsTraffic proves GB FOL is the only Rail record and that 18 records are Airport.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java:34-40",
+      "quote": ".andExpect(jsonPath(\"$.result[?(@.traffic == 'Rail')].code\").value(contains(\"GB FOL\")))\n        .andExpect(jsonPath(\"$.result[?(@.traffic == 'Airport')]\", hasSize(18)));",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-032"
+    },
+    {
+      "statement": "Test getPortsOfEntry_shouldRefuseTheCall_whenTheSubscriptionKeyHeaderIsMissing proves a call with no subscription key is answered 400 Bad Request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java:42-47",
+      "quote": "void getPortsOfEntry_shouldRefuseTheCall_whenTheSubscriptionKeyHeaderIsMissing()",
+      "confidence": "verbatim",
+      "id": "repo-stub-p6-033"
+    },
+    {
+      "statement": "No test proves the count of Port records (59), the order beyond the first record, or that the system parameter changes nothing.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryControllerTest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through all three tests in the class.",
+      "id": "repo-stub-p6-034"
+    },
+    {
+      "statement": "The stub holds no port that is inactive, not yet active or no longer active, so a consumer's handling of a status other than Approved-Live, or of activeFrom and activeTo dates, cannot be exercised against it.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json status, activeFrom and activeTo fields",
+      "quote": "",
+      "confidence": "gap",
+      "id": "repo-stub-p6-035"
+    },
+    {
+      "statement": "The stub cannot be made to fail the ports of entry call other than by leaving out the subscription key: it has no error, empty or slow answer for a consumer to test against.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe/PortsOfEntryController.java:27-33",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at the controller and its tests; any perf-mode latency is outside this part.",
+      "id": "repo-stub-p6-036"
+    },
+    {
+      "id": "repo-stub-p6-037",
+      "statement": "The stub returns port GB DYC, Aberdeen Airport: townCity Aberdeen, county Aberdeen, postCode AB21 7DU, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:3-18 (result[0])",
+      "quote": "\"code\": \"GB DYC\",\n      \"name\": \"Aberdeen Airport\",\n      \"townCity\": \"Aberdeen\",\n      \"county\": \"Aberdeen\",\n      \"postCode\": \"AB21 7DU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-038",
+      "statement": "The stub returns port GB BHM, Birmingham International Airport: townCity Birmingham, county West Midlands, postCode B26 3QJ, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:19-34 (result[1])",
+      "quote": "\"code\": \"GB BHM\",\n      \"name\": \"Birmingham International Airport\",\n      \"townCity\": \"Birmingham\",\n      \"county\": \"West Midlands\",\n      \"postCode\": \"B26 3QJ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-039",
+      "statement": "The stub returns port GB EMA, East Midlands Airport: townCity Castle Donington, county Leicestershire, postCode DE74 2SA, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:35-50 (result[2])",
+      "quote": "\"code\": \"GB EMA\",\n      \"name\": \"East Midlands Airport\",\n      \"townCity\": \"Castle Donington\",\n      \"county\": \"Leicestershire\",\n      \"postCode\": \"DE74 2SA\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-040",
+      "statement": "The stub returns port GB EDI, Edinburgh Airport: townCity Edinburgh, county Edinburgh, postCode EH12 9DN, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:51-66 (result[3])",
+      "quote": "\"code\": \"GB EDI\",\n      \"name\": \"Edinburgh Airport\",\n      \"townCity\": \"Edinburgh\",\n      \"county\": \"Edinburgh\",\n      \"postCode\": \"EH12 9DN\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-041",
+      "statement": "The stub returns port GB LGW, Gatwick Airport: townCity London Gatwick, county West Sussex, postCode RH6 0NP, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:67-82 (result[4])",
+      "quote": "\"code\": \"GB LGW\",\n      \"name\": \"Gatwick Airport\",\n      \"townCity\": \"London Gatwick\",\n      \"county\": \"West Sussex\",\n      \"postCode\": \"RH6 0NP\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-042",
+      "statement": "The stub returns port GB GLW, Glasgow Airport: townCity Paisley, county Renfrewshire, postCode PA3 2SW, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:83-98 (result[5])",
+      "quote": "\"code\": \"GB GLW\",\n      \"name\": \"Glasgow Airport\",\n      \"townCity\": \"Paisley\",\n      \"county\": \"Renfrewshire\",\n      \"postCode\": \"PA3 2SW\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-043",
+      "statement": "The stub returns port GB LHR, Heathrow Airport: townCity Hayes, county Middlesex, postCode UB3 5AP, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:99-114 (result[6])",
+      "quote": "\"code\": \"GB LHR\",\n      \"name\": \"Heathrow Airport\",\n      \"townCity\": \"Hayes\",\n      \"county\": \"Middlesex\",\n      \"postCode\": \"UB3 5AP\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-044",
+      "statement": "The stub returns port GB LUT, Luton Airport: townCity Luton, county Bedfordshire, postCode LU2 9PD, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:115-130 (result[7])",
+      "quote": "\"code\": \"GB LUT\",\n      \"name\": \"Luton Airport\",\n      \"townCity\": \"Luton\",\n      \"county\": \"Bedfordshire\",\n      \"postCode\": \"LU2 9PD\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-045",
+      "statement": "The stub returns port GB MAN, Manchester Airport: townCity Manchester, county Greater Manchester, postCode M90 1QX, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:131-146 (result[8])",
+      "quote": "\"code\": \"GB MAN\",\n      \"name\": \"Manchester Airport\",\n      \"townCity\": \"Manchester\",\n      \"county\": \"Greater Manchester\",\n      \"postCode\": \"M90 1QX\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-046",
+      "statement": "The stub returns port GB STN, Stansted Airport: townCity Stansted, county Essex, postCode CM24 1QW, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:147-162 (result[9])",
+      "quote": "\"code\": \"GB STN\",\n      \"name\": \"Stansted Airport\",\n      \"townCity\": \"Stansted\",\n      \"county\": \"Essex\",\n      \"postCode\": \"CM24 1QW\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-047",
+      "statement": "The stub returns port GB MME, Teesside International Airport: townCity Darlington, county County Durham, postCode DL2 1NL, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:163-178 (result[10])",
+      "quote": "\"code\": \"GB MME\",\n      \"name\": \"Teesside International Airport\",\n      \"townCity\": \"Darlington\",\n      \"county\": \"County Durham\",\n      \"postCode\": \"DL2 1NL\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-048",
+      "statement": "The stub returns port GB ABD, Aberdeen Harbour: townCity Aberdeen, county Aberdeen, postCode AB11 5SS, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:179-194 (result[11])",
+      "quote": "\"code\": \"GB ABD\",\n      \"name\": \"Aberdeen Harbour\",\n      \"townCity\": \"Aberdeen\",\n      \"county\": \"Aberdeen\",\n      \"postCode\": \"AB11 5SS\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-049",
+      "statement": "The stub returns port GB AYR, Ayr Port: townCity Ayr, county South Ayrshire, postCode KA8 8AH, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:195-210 (result[12])",
+      "quote": "\"code\": \"GB AYR\",\n      \"name\": \"Ayr Port\",\n      \"townCity\": \"Ayr\",\n      \"county\": \"South Ayrshire\",\n      \"postCode\": \"KA8 8AH\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-050",
+      "statement": "The stub returns port GB DUN, Dundee Port: townCity Dundee, county Dundee, postCode DD1 3LU, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:211-226 (result[13])",
+      "quote": "\"code\": \"GB DUN\",\n      \"name\": \"Dundee Port\",\n      \"townCity\": \"Dundee\",\n      \"county\": \"Dundee\",\n      \"postCode\": \"DD1 3LU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-051",
+      "statement": "The stub returns port GB FXT, Felixstowe Port: townCity Felixstowe, county Suffolk, postCode IP11 3SY, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:227-242 (result[14])",
+      "quote": "\"code\": \"GB FXT\",\n      \"name\": \"Felixstowe Port\",\n      \"townCity\": \"Felixstowe\",\n      \"county\": \"Suffolk\",\n      \"postCode\": \"IP11 3SY\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-052",
+      "statement": "The stub returns port GB FIS, Fishguard Port: townCity Goodwick, county Pembrokeshire, postCode SA64 0BU, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:243-258 (result[15])",
+      "quote": "\"code\": \"GB FIS\",\n      \"name\": \"Fishguard Port\",\n      \"townCity\": \"Goodwick\",\n      \"county\": \"Pembrokeshire\",\n      \"postCode\": \"SA64 0BU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-053",
+      "statement": "The stub returns port GB FRB, Fraserburgh Harbour: townCity Fraserburgh, county Aberdeenshire, postCode AB43 9BR, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:259-274 (result[16])",
+      "quote": "\"code\": \"GB FRB\",\n      \"name\": \"Fraserburgh Harbour\",\n      \"townCity\": \"Fraserburgh\",\n      \"county\": \"Aberdeenshire\",\n      \"postCode\": \"AB43 9BR\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-054",
+      "statement": "The stub returns port GB GRG, Grangemouth Port: townCity Grangemouth, county Falkirk, postCode FK3 8UE, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:275-290 (result[17])",
+      "quote": "\"code\": \"GB GRG\",\n      \"name\": \"Grangemouth Port\",\n      \"townCity\": \"Grangemouth\",\n      \"county\": \"Falkirk\",\n      \"postCode\": \"FK3 8UE\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-055",
+      "statement": "The stub returns port GB GRK, Greenock Port: townCity Greenock, county Inverclyde, postCode PA16 8UU, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:291-306 (result[18])",
+      "quote": "\"code\": \"GB GRK\",\n      \"name\": \"Greenock Port\",\n      \"townCity\": \"Greenock\",\n      \"county\": \"Inverclyde\",\n      \"postCode\": \"PA16 8UU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-056",
+      "statement": "The stub returns port GB IMM, Grimsby and Immingham Port: townCity Immingham, county Lincolnshire, postCode DN40 2PN, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:307-322 (result[19])",
+      "quote": "\"code\": \"GB IMM\",\n      \"name\": \"Grimsby and Immingham Port\",\n      \"townCity\": \"Immingham\",\n      \"county\": \"Lincolnshire\",\n      \"postCode\": \"DN40 2PN\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-057",
+      "statement": "The stub returns port GB HRW, Harwich Port: townCity Harwich, county Essex, postCode CO12 4SR, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:323-338 (result[20])",
+      "quote": "\"code\": \"GB HRW\",\n      \"name\": \"Harwich Port\",\n      \"townCity\": \"Harwich\",\n      \"county\": \"Essex\",\n      \"postCode\": \"CO12 4SR\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-058",
+      "statement": "The stub returns port GB HMR, HES Humber Bulk Terminal: townCity New Holland, county Lincolnshire, postCode DN19 7PN, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:339-354 (result[21])",
+      "quote": "\"code\": \"GB HMR\",\n      \"name\": \"HES Humber Bulk Terminal\",\n      \"townCity\": \"New Holland\",\n      \"county\": \"Lincolnshire\",\n      \"postCode\": \"DN19 7PN\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-059",
+      "statement": "The stub returns port GB HYM, Heysham Port: townCity Heysham, county empty, postCode LA3 2XF, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:355-370 (result[22])",
+      "quote": "\"code\": \"GB HYM\",\n      \"name\": \"Heysham Port\",\n      \"townCity\": \"Heysham\",\n      \"county\": \"\",\n      \"postCode\": \"LA3 2XF\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-060",
+      "statement": "The stub returns port GB HLY, Holyhead Port: townCity Gwynedd, county Anglesey, postCode LL65 1DQ, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:371-386 (result[23])",
+      "quote": "\"code\": \"GB HLY\",\n      \"name\": \"Holyhead Port\",\n      \"townCity\": \"Gwynedd\",\n      \"county\": \"Anglesey\",\n      \"postCode\": \"LL65 1DQ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-061",
+      "statement": "The stub returns port GB HUL, Hull Port: townCity Hull, county East Riding of Yorkshire, postCode HU9 5PQ, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:387-402 (result[24])",
+      "quote": "\"code\": \"GB HUL\",\n      \"name\": \"Hull Port\",\n      \"townCity\": \"Hull\",\n      \"county\": \"East Riding of Yorkshire\",\n      \"postCode\": \"HU9 5PQ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-062",
+      "statement": "The stub returns port GB IVG, Invergordon Port: townCity Invergordon, county Highland, postCode IV18 0HD, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:403-418 (result[25])",
+      "quote": "\"code\": \"GB IVG\",\n      \"name\": \"Invergordon Port\",\n      \"townCity\": \"Invergordon\",\n      \"county\": \"Highland\",\n      \"postCode\": \"IV18 0HD\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-063",
+      "statement": "The stub returns port GB KGH, Killingholme Port: townCity North Killingholme, county North Lincolnshire, postCode DN40 3JP, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:419-434 (result[26])",
+      "quote": "\"code\": \"GB KGH\",\n      \"name\": \"Killingholme Port\",\n      \"townCity\": \"North Killingholme\",\n      \"county\": \"North Lincolnshire\",\n      \"postCode\": \"DN40 3JP\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-064",
+      "statement": "The stub returns port GB LEI, Leith Port: townCity Edinburgh, county Edinburgh, postCode EH6 7DN, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:435-450 (result[27])",
+      "quote": "\"code\": \"GB LEI\",\n      \"name\": \"Leith Port\",\n      \"townCity\": \"Edinburgh\",\n      \"county\": \"Edinburgh\",\n      \"postCode\": \"EH6 7DN\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-065",
+      "statement": "The stub returns port GB LIV, Liverpool Docks: townCity Liverpool, county Merseyside, postCode L21 1LA, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:451-466 (result[28])",
+      "quote": "\"code\": \"GB LIV\",\n      \"name\": \"Liverpool Docks\",\n      \"townCity\": \"Liverpool\",\n      \"county\": \"Merseyside\",\n      \"postCode\": \"L21 1LA\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-066",
+      "statement": "The stub returns port GB LGP, London Gateway Port: townCity Stanford-le-Hope, county Essex, postCode SS17 9PD, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:467-482 (result[29])",
+      "quote": "\"code\": \"GB LGP\",\n      \"name\": \"London Gateway Port\",\n      \"townCity\": \"Stanford-le-Hope\",\n      \"county\": \"Essex\",\n      \"postCode\": \"SS17 9PD\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-067",
+      "statement": "The stub returns port GB THP, London Thamesport: townCity Near Rochester, county Kent, postCode ME3 0EP, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:483-498 (result[30])",
+      "quote": "\"code\": \"GB THP\",\n      \"name\": \"London Thamesport\",\n      \"townCity\": \"Near Rochester\",\n      \"county\": \"Kent\",\n      \"postCode\": \"ME3 0EP\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-068",
+      "statement": "The stub returns port GB MTH, Methil Port: townCity Leven, county Fife, postCode KY8 3RE, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:499-514 (result[31])",
+      "quote": "\"code\": \"GB MTH\",\n      \"name\": \"Methil Port\",\n      \"townCity\": \"Leven\",\n      \"county\": \"Fife\",\n      \"postCode\": \"KY8 3RE\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-069",
+      "statement": "The stub returns port GB NHV, Newhaven Port: townCity Newhaven, county Sussex, postCode BN9 0BN, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:515-530 (result[32])",
+      "quote": "\"code\": \"GB NHV\",\n      \"name\": \"Newhaven Port\",\n      \"townCity\": \"Newhaven\",\n      \"county\": \"Sussex\",\n      \"postCode\": \"BN9 0BN\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-070",
+      "statement": "The stub returns port GB PED, Pembroke Port: townCity empty, county Pembrokeshire, postCode SA72 6TD, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:531-546 (result[33])",
+      "quote": "\"code\": \"GB PED\",\n      \"name\": \"Pembroke Port\",\n      \"townCity\": \"\",\n      \"county\": \"Pembrokeshire\",\n      \"postCode\": \"SA72 6TD\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-071",
+      "statement": "The stub returns port GB PER, Perth Port: townCity Perth, county Perth & Kinross, postCode PH2 8BB, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:547-562 (result[34])",
+      "quote": "\"code\": \"GB PER\",\n      \"name\": \"Perth Port\",\n      \"townCity\": \"Perth\",\n      \"county\": \"Perth & Kinross\",\n      \"postCode\": \"PH2 8BB\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-072",
+      "statement": "The stub returns port GB PLY, Plymouth Port: townCity Plymouth, county Devon, postCode PL1 3EF, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:563-578 (result[35])",
+      "quote": "\"code\": \"GB PLY\",\n      \"name\": \"Plymouth Port\",\n      \"townCity\": \"Plymouth\",\n      \"county\": \"Devon\",\n      \"postCode\": \"PL1 3EF\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-073",
+      "statement": "The stub returns port GB POO, Poole Port: townCity Poole, county Dorset, postCode BH15 4AJ, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:579-594 (result[36])",
+      "quote": "\"code\": \"GB POO\",\n      \"name\": \"Poole Port\",\n      \"townCity\": \"Poole\",\n      \"county\": \"Dorset\",\n      \"postCode\": \"BH15 4AJ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-074",
+      "statement": "The stub returns port GB CYN, Port of Cairnryan: townCity Stranraer, county Wigtownshire, postCode DG9 8RF, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:595-610 (result[37])",
+      "quote": "\"code\": \"GB CYN\",\n      \"name\": \"Port of Cairnryan\",\n      \"townCity\": \"Stranraer\",\n      \"county\": \"Wigtownshire\",\n      \"postCode\": \"DG9 8RF\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-075",
+      "statement": "The stub returns port GB DVRE, Port of Dover (Eastern): townCity Dover, county Kent, postCode CT17 9BU, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:611-626 (result[38])",
+      "quote": "\"code\": \"GB DVRE\",\n      \"name\": \"Port of Dover (Eastern)\",\n      \"townCity\": \"Dover\",\n      \"county\": \"Kent\",\n      \"postCode\": \"CT17 9BU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-076",
+      "statement": "The stub returns port GB DVRW, Port of Dover (Western): townCity Dover, county Kent, postCode CT17 9BU, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:627-642 (result[39])",
+      "quote": "\"code\": \"GB DVRW\",\n      \"name\": \"Port of Dover (Western)\",\n      \"townCity\": \"Dover\",\n      \"county\": \"Kent\",\n      \"postCode\": \"CT17 9BU\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-077",
+      "statement": "The stub returns port GBSHS, Port of Sheerness: townCity Sheerness, county Kent, postCode ME12 1RS, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:643-658 (result[40])",
+      "quote": "\"code\": \"GBSHS\",\n      \"name\": \"Port of Sheerness\",\n      \"townCity\": \"Sheerness\",\n      \"county\": \"Kent\",\n      \"postCode\": \"ME12 1RS\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-078",
+      "statement": "The stub returns port GB TYN, Port of Tyne: townCity South Shields, county Tyne and Wear, postCode NE34 9PT, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:659-674 (result[41])",
+      "quote": "\"code\": \"GB TYN\",\n      \"name\": \"Port of Tyne\",\n      \"townCity\": \"South Shields\",\n      \"county\": \"Tyne and Wear\",\n      \"postCode\": \"NE34 9PT\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-079",
+      "statement": "The stub returns port GB PME, Portsmouth  Port: townCity Portsmouth, county empty, postCode PO2 8BF, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:675-690 (result[42])",
+      "quote": "\"code\": \"GB PME\",\n      \"name\": \"Portsmouth  Port\",\n      \"townCity\": \"Portsmouth\",\n      \"county\": \"\",\n      \"postCode\": \"PO2 8BF\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-080",
+      "statement": "The stub returns port GB PFT, Purfleet Port: townCity Purfleet, county Essex, postCode RM19 1PD, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:691-706 (result[43])",
+      "quote": "\"code\": \"GB PFT\",\n      \"name\": \"Purfleet Port\",\n      \"townCity\": \"Purfleet\",\n      \"county\": \"Essex\",\n      \"postCode\": \"RM19 1PD\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-081",
+      "statement": "The stub returns port GB PRU, Royal Portbury Dock: townCity Bristol, county Gloucestershire, postCode BS11 9DQ, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:707-722 (result[44])",
+      "quote": "\"code\": \"GB PRU\",\n      \"name\": \"Royal Portbury Dock\",\n      \"townCity\": \"Bristol\",\n      \"county\": \"Gloucestershire\",\n      \"postCode\": \"BS11 9DQ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-082",
+      "statement": "The stub returns port GB SIL, Silloth Port: townCity Silloth, county Cumbria, postCode CA7 4JQ, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:723-738 (result[45])",
+      "quote": "\"code\": \"GB SIL\",\n      \"name\": \"Silloth Port\",\n      \"townCity\": \"Silloth\",\n      \"county\": \"Cumbria\",\n      \"postCode\": \"CA7 4JQ\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-083",
+      "statement": "The stub returns port GB SOU, Southampton Port: townCity Southampton, county empty, postCode SO15 1DA, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:739-754 (result[46])",
+      "quote": "\"code\": \"GB SOU\",\n      \"name\": \"Southampton Port\",\n      \"townCity\": \"Southampton\",\n      \"county\": \"\",\n      \"postCode\": \"SO15 1DA\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-084",
+      "statement": "The stub returns port GB TILR, Tilbury 2 Ro-Ro Terminal: townCity West Tilbury, county Essex, postCode RM18 8UL, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:755-770 (result[47])",
+      "quote": "\"code\": \"GB TILR\",\n      \"name\": \"Tilbury 2 Ro-Ro Terminal\",\n      \"townCity\": \"West Tilbury\",\n      \"county\": \"Essex\",\n      \"postCode\": \"RM18 8UL\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-085",
+      "statement": "The stub returns port GB TILL, Tilbury Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:771-786 (result[48])",
+      "quote": "\"code\": \"GB TILL\",\n      \"name\": \"Tilbury Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-086",
+      "statement": "The stub returns port GB FOL, Folkestone: townCity Felixstowe, county Suffolk, postCode IP11 3SY, countryCode GB, traffic Rail, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:787-802 (result[49])",
+      "quote": "\"code\": \"GB FOL\",\n      \"name\": \"Folkestone\",\n      \"townCity\": \"Felixstowe\",\n      \"county\": \"Suffolk\",\n      \"postCode\": \"IP11 3SY\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Rail\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-087",
+      "statement": "The stub returns port GB AVO, Avonmouth Docks: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:803-818 (result[50])",
+      "quote": "\"code\": \"GB AVO\",\n      \"name\": \"Avonmouth Docks\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-088",
+      "statement": "The stub returns port GB BKG, Barking Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:819-834 (result[51])",
+      "quote": "\"code\": \"GB BKG\",\n      \"name\": \"Barking Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-089",
+      "statement": "The stub returns port GB BLY, Port of Blyth: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:835-850 (result[52])",
+      "quote": "\"code\": \"GB BLY\",\n      \"name\": \"Port of Blyth\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-090",
+      "statement": "The stub returns port GB BRK, Port of Birkenhead: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:851-866 (result[53])",
+      "quote": "\"code\": \"GB BRK\",\n      \"name\": \"Port of Birkenhead\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-091",
+      "statement": "The stub returns port GB BRS, Port of Bristol: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:867-882 (result[54])",
+      "quote": "\"code\": \"GB BRS\",\n      \"name\": \"Port of Bristol\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-092",
+      "statement": "The stub returns port GB CBG, Cambridge Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:883-898 (result[55])",
+      "quote": "\"code\": \"GB CBG\",\n      \"name\": \"Cambridge Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-093",
+      "statement": "The stub returns port GB CTM, Chatham Docks: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:899-914 (result[56])",
+      "quote": "\"code\": \"GB CTM\",\n      \"name\": \"Chatham Docks\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-094",
+      "statement": "The stub returns port GB CVT, Coventry Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:915-930 (result[57])",
+      "quote": "\"code\": \"GB CVT\",\n      \"name\": \"Coventry Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-095",
+      "statement": "The stub returns port GB DAG, Port of Dagenham: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:931-946 (result[58])",
+      "quote": "\"code\": \"GB DAG\",\n      \"name\": \"Port of Dagenham\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-096",
+      "statement": "The stub returns port GB DFD, Dartford, Thames Europort: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:947-962 (result[59])",
+      "quote": "\"code\": \"GB DFD\",\n      \"name\": \"Dartford, Thames Europort\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-097",
+      "statement": "The stub returns port GB DVR, Port of Dover: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:963-978 (result[60])",
+      "quote": "\"code\": \"GB DVR\",\n      \"name\": \"Port of Dover\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-098",
+      "statement": "The stub returns port GB FBO, Farnborough Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:979-994 (result[61])",
+      "quote": "\"code\": \"GB FBO\",\n      \"name\": \"Farnborough Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-099",
+      "statement": "The stub returns port GB GSY, Port of Grimsby: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:995-1010 (result[62])",
+      "quote": "\"code\": \"GB GSY\",\n      \"name\": \"Port of Grimsby\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-100",
+      "statement": "The stub returns port GB HTH, Hythe Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1011-1026 (result[63])",
+      "quote": "\"code\": \"GB HTH\",\n      \"name\": \"Hythe Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-101",
+      "statement": "The stub returns port GB HUY, Humberside Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1027-1042 (result[64])",
+      "quote": "\"code\": \"GB HUY\",\n      \"name\": \"Humberside Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-102",
+      "statement": "The stub returns port GB IOG, Port of Isle of Grain: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1043-1058 (result[65])",
+      "quote": "\"code\": \"GB IOG\",\n      \"name\": \"Port of Isle of Grain\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-103",
+      "statement": "The stub returns port GB LPL, Liverpool Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1059-1074 (result[66])",
+      "quote": "\"code\": \"GB LPL\",\n      \"name\": \"Liverpool Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-104",
+      "statement": "The stub returns port GB MID, Port of Middlesbrough: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1075-1090 (result[67])",
+      "quote": "\"code\": \"GB MID\",\n      \"name\": \"Port of Middlesbrough\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-105",
+      "statement": "The stub returns port GB MNC, Port of Manchester: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1091-1106 (result[68])",
+      "quote": "\"code\": \"GB MNC\",\n      \"name\": \"Port of Manchester\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-106",
+      "statement": "The stub returns port GB NHP, Northampton Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1107-1122 (result[69])",
+      "quote": "\"code\": \"GB NHP\",\n      \"name\": \"Northampton Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-107",
+      "statement": "The stub returns port GB NTG, Nottingham Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1123-1138 (result[70])",
+      "quote": "\"code\": \"GB NTG\",\n      \"name\": \"Nottingham Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-108",
+      "statement": "The stub returns port GB PEM, Pembroke Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1139-1154 (result[71])",
+      "quote": "\"code\": \"GB PEM\",\n      \"name\": \"Pembroke Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-109",
+      "statement": "The stub returns port GB PHD, Peterhead Port: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1155-1170 (result[72])",
+      "quote": "\"code\": \"GB PHD\",\n      \"name\": \"Peterhead Port\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-110",
+      "statement": "The stub returns port GB PIK, Glasgow Prestwick Airport: townCity empty, county empty, postCode empty, countryCode GB, traffic Airport, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1171-1186 (result[73])",
+      "quote": "\"code\": \"GB PIK\",\n      \"name\": \"Glasgow Prestwick Airport\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Airport\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-111",
+      "statement": "The stub returns port GB SHS, Port of Sheerness: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1187-1202 (result[74])",
+      "quote": "\"code\": \"GB SHS\",\n      \"name\": \"Port of Sheerness\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-112",
+      "statement": "The stub returns port GB STR, Stranraer Harbour: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1203-1218 (result[75])",
+      "quote": "\"code\": \"GB STR\",\n      \"name\": \"Stranraer Harbour\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-113",
+      "statement": "The stub returns port GB TEE, Teestort: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1219-1234 (result[76])",
+      "quote": "\"code\": \"GB TEE\",\n      \"name\": \"Teestort\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p6-114",
+      "statement": "The stub returns port GB TIL, TILBURY: townCity empty, county empty, postCode empty, countryCode GB, traffic Port, status active (Approved-Live), no activeFrom or activeTo.",
+      "kind": "data",
+      "ref": "src/main/resources/responses/portsOfEntryResponse.json:1235-1250 (result[77])",
+      "quote": "\"code\": \"GB TIL\",\n      \"name\": \"TILBURY\",\n      \"townCity\": \"\",\n      \"county\": \"\",\n      \"postCode\": \"\",\n      \"countryCode\": \"GB\",\n      \"traffic\": \"Port\",",
+      "confidence": "verbatim"
+    }
+  ]
+}

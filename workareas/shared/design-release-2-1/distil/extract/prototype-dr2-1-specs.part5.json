@@ -1,1195 +1,629 @@
 {
   "source": "prototype:dr2-1-specs",
-  "structure": "Part 5 of 7, Dashboards and managing notifications. Read in full: e2e/dashboard.fit.spec.js (213 lines; 3 describe blocks, 8 tests: overall dashboard (summary cards, /dashboard redirects, the prototype index), category dashboards (live animals with tabs, search, sort and additional filters; germinal products with packages), and the three at-a-glance drill-downs /actions, /changes and /inspection); e2e/manage-notifications.fit.spec.js (195 lines; 5 describe blocks, 7 tests: view a notification per status (submitted action required, submitted, completed, draft), amend a submitted notification (confirm modal, change and save and return, held continue, valid arrival, declaration and resubmit), cancel an amendment, amend and copy guards, copy as new, delete with confirmation and banner); e2e/support/journey.js (270 lines; shared helpers: the /design-release-2.1 mirror mount, url helpers, action-button values, date format, autocomplete and journey steps). Claims cover every route, title, heading, caption, tab, column text, status tag, filter, link target, button, modal, banner and redirect these tests assert, plus gaps where a test title promises more than its assertions prove. From journey.js only what the dashboards and manage-notification flows rely on is claimed (mount, action button values, date format, reference format, create-new redirect); the journey-step helpers belong to other parts' journeys.",
+  "structure": "Part 5, Address book. Read in full: e2e/address-book.fit.spec.js (239 lines; 3 describes, 9 tests: 'address book list' with 1 test 'categories, pagination and filters' in 7 steps; 'add an address to the address book' with 6 tests: choose an address type, origin or consignor entered by hand, destination/consignee/importer found by postcode, branch, transporter hand-over, usage-step guard; 'an address book entry' with 2 tests: view/edit/save in 4 steps, and delete), e2e/support/journey.js (283 lines; this part claims only the shared helpers the address-book tests call: url/urlFor for the /design-release-2.1 mount, expectHeading on the first h1, expectErrorSummary with its 'There is a problem' title and exact ordered message list, expectBackLink, submitForm and clickAction) and e2e/support/fixtures.js (48 lines; records each test's main-frame navigations for the trace index, which is suite tooling and no prototype behaviour, so it gets no claim). Routes covered: /address-book (list, ?category=, ?page=2, search and type filter), /address-book/add, /address-book/add/lookup (and ?manual=true), /address-book/add/find-address, /address-book/add/find-address/select, /address-book/add/usage (guard only), /transporter/add (hand-over only), /address-book/<entry>, /address-book/<entry>/edit and /address-book/<entry>/delete.",
   "claims": [
     {
       "id": "prototype-dr2-1-specs-p5-001",
-      "statement": "Design Release 2.1 is served as a mirror mount of the root route table at the path /design-release-2.1; every route in these tests sits under it.",
-      "kind": "constraint",
-      "ref": "e2e/support/journey.js:3-5",
-      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "statement": "The address book list is at /design-release-2.1/address-book and its page title is 'Address book - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:23-24 (address book list > categories, pagination and filters > origin and consignor addresses by default)",
+      "quote": "await page.goto(url('/address-book'))\n      await expect(page).toHaveTitle('Address book - Import notification service - GOV.UK')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-002",
-      "statement": "The mount root (/design-release-2.1) is the overall dashboard.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:12-13 (overall dashboard > summarises every category)",
-      "quote": "await test.step('the mount root is the overall dashboard', async () => {\n      await page.goto(url())",
+      "statement": "The address book list's heading is 'Address book'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:25",
+      "quote": "await expectHeading(page, 'Address book')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-003",
-      "statement": "The overall dashboard's page title is 'Dashboard - Import notification service - GOV.UK'.",
+      "statement": "The address book list says 'Manage your addresses for use across all your import notifications'.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:14",
-      "quote": "await expect(page).toHaveTitle('Dashboard - Import notification service - GOV.UK')",
+      "ref": "e2e/address-book.fit.spec.js:27",
+      "quote": "await expect(main).toContainText('Manage your addresses for use across all your import notifications')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-004",
-      "statement": "The overall dashboard's h1 is 'Import notification service'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:15",
-      "quote": "await expectHeading(page, 'Import notification service')",
+      "statement": "The address book list has an 'Add a new address' link to /design-release-2.1/address-book/add.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:28",
+      "quote": "await expect(main.locator('a', { hasText: 'Add a new address' })).toHaveAttribute('href', url('/address-book/add'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-005",
-      "statement": "The overall dashboard's main content shows the text 'Dashboard' (alongside the h1, so read as a caption or sub-heading).",
+      "statement": "The address book list shows 'Filter addresses'.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:16",
-      "quote": "await expect(page.locator('main')).toContainText('Dashboard')",
-      "confidence": "verbatim",
-      "note": "The test does not say where in main the word sits; caption is an inference."
+      "ref": "e2e/address-book.fit.spec.js:29",
+      "quote": "await expect(main).toContainText('Filter addresses')",
+      "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-006",
-      "statement": "The service navigation has a 'Dashboard' link to the DR2.1 mount root.",
+      "statement": "The address book list has four category links, each to /design-release-2.1/address-book?category=<category>: 'Origin and Consignor' (origin-and-consignor), 'Destination, Consignee and Importer' (destination-consignee-importer), 'Transporter' (transporter) and 'Branch' (branch).",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:22",
-      "quote": "await expect(nav.getByRole('link', { name: 'Dashboard', exact: true })).toHaveAttribute('href', url())",
+      "ref": "e2e/address-book.fit.spec.js:30-32",
+      "quote": "for (const [name, category] of [['Origin and Consignor', 'origin-and-consignor'], ['Destination, Consignee and Importer', 'destination-consignee-importer'], ['Transporter', 'transporter'], ['Branch', 'branch']]) {\n        await expect(main.locator(`a[href=\"${url(`/address-book?category=${category}`)}\"]`).first()).toContainText(name)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-007",
-      "statement": "The service navigation has a 'Templates' link to /design-release-2.1/templates.",
+      "statement": "With no category chosen, the address book list shows the origin and consignor addresses, under the heading 'Origin and Consignor addresses'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:23",
-      "quote": "await expect(nav.getByRole('link', { name: 'Templates', exact: true })).toHaveAttribute('href', url('/templates'))",
+      "ref": "e2e/address-book.fit.spec.js:22,33",
+      "quote": "await test.step('origin and consignor addresses by default', async () => {\n...\n      await expect(main.getByRole('heading', { name: 'Origin and Consignor addresses' })).toBeVisible()",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-008",
-      "statement": "The service navigation has an 'Address book' link to /design-release-2.1/address-book.",
+      "statement": "The address book list shows 8 addresses a page with a count line; the seeded origin and consignor category holds 23 addresses, so the first page says 'Showing 1-8 of 23'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:24",
-      "quote": "await expect(nav.getByRole('link', { name: 'Address book', exact: true })).toHaveAttribute('href', url('/address-book'))",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:34",
+      "quote": "await expect(main).toContainText('Showing 1-8 of 23')",
+      "confidence": "verbatim",
+      "note": "The page size of 8 is read from the count line, here and on page 2 ('Showing 9-16 of 23')."
     },
     {
       "id": "prototype-dr2-1-specs-p5-009",
-      "statement": "The overall dashboard shows a messages count reading '12 unread messages'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:29",
-      "quote": "await expect(main).toContainText('12 unread messages')",
-      "confidence": "verbatim",
-      "note": "The count 12 is prototype seed data; no messages page is asserted."
+      "statement": "The address book table has the columns Name, Type, Address and Country.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:35",
+      "quote": "await expect(main).toContainText(/Name\\s+Type\\s+Address\\s+Country/)",
+      "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-010",
-      "statement": "The overall dashboard has a 'Create new' button linking to /create-notification.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:30",
-      "quote": "await expect(main.getByRole('button', { name: 'Create new' })).toHaveAttribute('href', url('/create-notification'))",
-      "confidence": "verbatim"
+      "statement": "In the origin and consignor category, the address type filter (#address-book-type) has the options 'Select one', 'Place of Origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:36",
+      "quote": "await expect(page.locator('#address-book-type option')).toHaveText(['Select one', 'Place of Origin', 'Consignor'])",
+      "confidence": "verbatim",
+      "note": "The type options for the other three categories are not asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-011",
-      "statement": "The overall dashboard has a 'Use template' button linking to /templates.",
+      "statement": "Each address book row has a 'View' link to its entry; the first origin and consignor row links to /design-release-2.1/address-book/green-valley-farm-sanpetru-0.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:31",
-      "quote": "await expect(main.getByRole('button', { name: 'Use template' })).toHaveAttribute('href', url('/templates'))",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:37",
+      "quote": "await expect(main.getByRole('link', { name: 'View' }).first()).toHaveAttribute('href', url('/address-book/green-valley-farm-sanpetru-0'))",
+      "confidence": "verbatim",
+      "note": "The entry id looks like a slug of the name and town plus an index (green-valley-farm-sanpetru-0); the spec does not say how ids are formed."
     },
     {
       "id": "prototype-dr2-1-specs-p5-012",
-      "statement": "Going to /create-notification leads to the notification type page (/notification-type), where the trader chooses the notification type before origin of the import.",
+      "statement": "On the address book pages the service navigation marks 'Address book' as the active item.",
       "kind": "behaviour",
-      "ref": "e2e/support/journey.js:121-127 (startNotification)",
-      "quote": "/** Dashboard \"Create new\" → notification type → origin. */\nasync function startNotification (page, type = 'live-animals') {\n  await page.goto(url('/create-notification'))\n  await expect(page).toHaveURL(urlFor('/notification-type'))",
+      "ref": "e2e/address-book.fit.spec.js:38",
+      "quote": "await expect(page.locator('.govuk-service-navigation__item--active')).toContainText('Address book')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-013",
-      "statement": "The overall dashboard shows one card per notification category; cards with headings 'Live animals', 'Germinal products' and 'Inspection required' are visible.",
+      "statement": "The address book list has GOV.UK pagination; its 'Next' link goes to page=2, which says 'Showing 9-16 of 23'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:34-38",
-      "quote": "for (const heading of ['Live animals', 'Germinal products', 'Inspection required']) {\n        await expect(main.getByRole('heading', { name: heading }).first()).toBeVisible()",
+      "ref": "e2e/address-book.fit.spec.js:42-46 (step 'page 2')",
+      "quote": "await page.locator('.govuk-pagination').getByRole('link', { name: 'Next' }).click()\n      await expect(page).toHaveURL(/page=2/)\n      await expect(page.locator('main')).toContainText('Showing 9-16 of 23')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-014",
-      "statement": "The overall dashboard has a plants card whose text includes 'Plants, plant products or' (the heading is only partly asserted).",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:39",
-      "quote": "await expect(main).toContainText('Plants, plant products or')",
-      "confidence": "verbatim"
+      "statement": "The destination-consignee-importer, transporter and branch categories each show an address table when chosen with ?category=.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:49-55",
+      "quote": "for (const category of ['destination-consignee-importer', 'transporter', 'branch']) {\n...\n        await page.goto(url(`/address-book?category=${category}`))\n        await expect(page.locator('main table')).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Headings, counts and rows of these three categories are not asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-015",
-      "statement": "The inspection card on the overall dashboard includes the text 'Consignments due at the BCP'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:40",
-      "quote": "await expect(main).toContainText('Consignments due at the BCP')",
+      "statement": "The search box and type filter sit inside a 'Filter addresses' disclosure that is collapsed when the list opens, so the search box is hidden until the disclosure is opened.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:59-61 (step 'search within a category')",
+      "quote": "// Search and type sit inside a collapsed \"Filter addresses\" disclosure.\n      await expect(page.locator('#address-book-search')).toBeHidden()\n      await page.locator('.app-address-book-page__filter-summary').click()",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-016",
-      "statement": "The live animals card has a 'View dashboard' link to /live-animals, and it is the first 'View dashboard' link on the page.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:41",
-      "quote": "await expect(main.getByRole('link', { name: 'View dashboard' }).first()).toHaveAttribute('href', url('/live-animals'))",
+      "statement": "The address book search box is labelled 'Search' with the placeholder 'Search by name, address or country'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:62-63",
+      "quote": "await expect(page.locator('label[for=\"address-book-search\"]')).toHaveText('Search')\n      await expect(page.locator('#address-book-search')).toHaveAttribute('placeholder', 'Search by name, address or country')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-017",
-      "statement": "The germinal products card has a 'View dashboard' link to /germinal-products, the second 'View dashboard' link on the page.",
+      "statement": "Typing in the address book search narrows the visible rows of the current category as the user types, with no submit; typing 'Ballymore' leaves 2 visible rows, both Ballymore.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:42",
-      "quote": "await expect(main.getByRole('link', { name: 'View dashboard' }).nth(1)).toHaveAttribute('href', url('/germinal-products'))",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:64-67",
+      "quote": "await page.locator('#address-book-search').pressSequentially('Ballymore', { delay: 30 })\n...\n      await expect(page.locator('main tbody tr:visible')).toHaveCount(2)\n      await expect(page.locator('main tbody tr:visible')).toContainText(['Ballymore', 'Ballymore'])",
+      "confidence": "inferred",
+      "note": "That the filtering happens in the page as keys are typed is inferred: the test types key by key, presses no button and counts visible rows. mechanism: hides table rows client-side by search text."
     },
     {
       "id": "prototype-dr2-1-specs-p5-018",
-      "statement": "The live animals card has a 'View tasks' link to /actions?category=live-animals.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:43",
-      "quote": "await expect(main.getByRole('link', { name: 'View tasks' }).first()).toHaveAttribute('href', url('/actions?category=live-animals'))",
+      "statement": "The same organisation can be held twice in the address book, once per use: Ballymore Farm is held once as a place of origin and once as a consignor.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:65",
+      "quote": "// Ballymore Farm is held twice: once as a place of origin, once as a consignor.",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-019",
-      "statement": "The live animals card has a 'View updates' link to /changes?category=live-animals.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:44",
-      "quote": "await expect(main.getByRole('link', { name: 'View updates' }).first()).toHaveAttribute('href', url('/changes?category=live-animals'))",
+      "statement": "Every address book route is reachable under /design-release-2.1/address-book and its links stay inside the /design-release-2.1 mount.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-7",
+      "quote": "// The address book under the DR2.1 mount. Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override), but every route is\n// reachable at /design-release-2.1/address-book and links stay inside the mount.",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-020",
-      "statement": "The germinal products card has a 'View tasks' link to /actions?category=germinal-products.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:45",
-      "quote": "await expect(main.getByRole('link', { name: 'View tasks' }).nth(1)).toHaveAttribute('href', url('/actions?category=germinal-products'))",
+      "statement": "The address book views are shared with the prototype's other releases; only the delete confirmation page is a Design Release 2.1 override.",
+      "kind": "constraint",
+      "ref": "e2e/address-book.fit.spec.js:5-6",
+      "quote": "Its views are shared with the other\n// releases (only the delete confirmation is a DR2.1 override)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-021",
-      "statement": "The plants card is a placeholder in DR2.1: its 'View dashboard' link (the third on the page) goes to '#'.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:46-47",
-      "quote": "// The plants card and the inspection card are placeholders in DR2.1.\n      await expect(main.getByRole('link', { name: 'View dashboard' }).nth(2)).toHaveAttribute('href', '#')",
+      "statement": "The choose-an-address-type page is at /design-release-2.1/address-book/add, with the title 'Choose an address type - Import notification service - GOV.UK' and the heading 'Choose an address type'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:75-77 (add an address to the address book > choose an address type)",
+      "quote": "await page.goto(url('/address-book/add'))\n    await expect(page).toHaveTitle('Choose an address type - Import notification service - GOV.UK')\n    await expectHeading(page, 'Choose an address type')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-022",
-      "statement": "The inspection card is a placeholder in DR2.1: its 'View requirements' link goes to '#', even though an /inspection drill-down page exists.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:46,48",
-      "quote": "await expect(main.getByRole('link', { name: 'View requirements' })).toHaveAttribute('href', '#')",
+      "statement": "The choose-an-address-type page shows 'Add a new address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:79",
+      "quote": "await expect(main).toContainText('Add a new address')",
       "confidence": "verbatim",
-      "note": "The /inspection page is asserted in the at-a-glance tests at line 190; the card does not link to it."
+      "note": "Probably the caption above the heading; the test only checks the text is in main."
     },
     {
       "id": "prototype-dr2-1-specs-p5-023",
-      "statement": "The test promises each category card shows its glance counts, but no count value on any card is asserted, and the germinal products card's 'View updates' link target is not asserted.",
+      "statement": "The address type question (addressType) has four radio options, in order: 'Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter' and 'Branch'.",
       "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:34-49",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Step title 'one card per category with its glance counts'; only headings and links are checked."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-024",
-      "statement": "Going to /dashboard with no query redirects to the overall dashboard at the mount root.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:52-54",
-      "quote": "await page.goto(url('/dashboard'))\n    await expect(page).toHaveURL(new RegExp(`${url().replace(/\\./g, '\\\\.')}$`))",
+      "ref": "e2e/address-book.fit.spec.js:80",
+      "quote": "await expect(page.locator('input[name=\"addressType\"] + label')).toHaveText(['Origin or Consignor', 'Destination, Consignee or Importer', 'Transporter', 'Branch'])",
       "confidence": "verbatim"
     },
     {
+      "id": "prototype-dr2-1-specs-p5-024",
+      "statement": "The address type options carry the hints 'Place of origin, Consignor', 'Place of destination, Consignee, Importer', 'Private, Commercial' and 'Branch address'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:81-83",
+      "quote": "for (const hint of ['Place of origin, Consignor', 'Place of destination, Consignee, Importer', 'Private, Commercial', 'Branch address']) {\n      await expect(main).toContainText(hint)",
+      "confidence": "verbatim",
+      "note": "The test checks each hint is on the page, not which option it sits under; the order matches the four options."
+    },
+    {
       "id": "prototype-dr2-1-specs-p5-025",
-      "statement": "Going to /dashboard with a query (such as ?tab=drafts) redirects to the live animals dashboard, keeping the query.",
+      "statement": "The choose-an-address-type page's back link goes to /design-release-2.1/address-book.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:55-57",
-      "quote": "await page.goto(url('/dashboard?tab=drafts'))\n    await expect(page).toHaveURL(urlFor('/live-animals'))\n    await expect(page).toHaveURL(/tab=drafts/)",
+      "ref": "e2e/address-book.fit.spec.js:84",
+      "quote": "await expectBackLink(page, url('/address-book'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-026",
-      "statement": "The prototype index at /design-release-2.1/index has the page title 'Import notification service', with no GOV.UK suffix.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:61-62",
-      "quote": "await page.goto(url('/index'))\n    await expect(page).toHaveTitle('Import notification service')",
+      "statement": "Pressing 'Continue' with no address type chosen shows the error 'Select an address type', linked to the first option (#address-type-origin-and-consignor).",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:87-89",
+      "quote": "await submitForm(page, 'Continue')\n    await expectErrorSummary(page, ['Select an address type'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#address-type-origin-and-consignor')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-027",
-      "statement": "The prototype index's h1 is 'Import notification service'.",
+      "statement": "Every address book error summary is titled 'There is a problem' and lists its messages as links, in the order asserted.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:63",
-      "quote": "await expectHeading(page, 'Import notification service')",
+      "ref": "e2e/support/journey.js:39-44 (expectErrorSummary), called at e2e/address-book.fit.spec.js:88,105,138",
+      "quote": "await expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')\n  await expect(summary.locator('.govuk-error-summary__list a')).toHaveText(messages)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-028",
-      "statement": "The prototype index explains: 'Choose a prototype version to work on. Each version has its own journey and dashboard, with a shared address book.'",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:65",
-      "quote": "Choose a prototype version to work on. Each version has its own journey and dashboard, with a shared address book.",
+      "statement": "Choosing 'Origin or Consignor' goes straight to the address form at /design-release-2.1/address-book/add/lookup, with no postcode lookup first.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:94-95 (origin or consignor: an address entered by hand with its uses)",
+      "quote": "await chooseType(page, 'origin-and-consignor')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-029",
-      "statement": "The prototype index describes Design release 2.1 as 'A duplicate of Design release 2 for making changes without affecting the original version.'",
+      "statement": "The address form page has the title 'Add an address - Import notification service - GOV.UK' and the heading 'Add an address'.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:66",
-      "quote": "A duplicate of Design release 2 for making changes without affecting the original version.",
+      "ref": "e2e/address-book.fit.spec.js:96-97",
+      "quote": "await expect(page).toHaveTitle('Add an address - Import notification service - GOV.UK')\n    await expectHeading(page, 'Add an address')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-030",
-      "statement": "The prototype index has a 'Start design release 2.1' link to /design-release-2.1.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:67",
-      "quote": "await expect(page.locator('a', { hasText: 'Start design release 2.1' })).toHaveAttribute('href', '/design-release-2.1')",
+      "statement": "The address form has an address uses checkbox group (addressUses) with the legend 'Add to your address book' and the hint 'Select what types of address this can be used for in your address book.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:98-100",
+      "quote": "await expect(uses.locator('legend')).toHaveText('Add to your address book')\n    await expect(uses).toContainText('Select what types of address this can be used for in your address book.')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-031",
-      "statement": "The test title says the prototype index lists every design release, but only the Design release 2.1 entry is asserted; the other releases and their links are not.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:60-69",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "For an origin or consignor address, the uses checkboxes are 'Place of origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:101",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of origin', 'Consignor'])",
+      "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-032",
-      "statement": "The live animals category dashboard is at /live-animals and has the page title 'Dashboard - Import notification service - GOV.UK'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:75-76",
-      "quote": "await page.goto(url('/live-animals'))\n      await expect(page).toHaveTitle('Dashboard - Import notification service - GOV.UK')",
-      "confidence": "verbatim"
+      "statement": "Submitting the empty address form shows six errors, in order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:9-12,104-105",
+      "quote": "const MANUAL_ERRORS = [\n  'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n  'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n]\n...\n    await clickAction(page, 'continue')\n    await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "verbatim",
+      "note": "So name, address line 1, town or city, postcode, email and phone are required."
     },
     {
       "id": "prototype-dr2-1-specs-p5-033",
-      "statement": "The live animals dashboard's h1 is 'Live animals'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:77",
-      "quote": "await expectHeading(page, 'Live animals')",
-      "confidence": "verbatim"
+      "statement": "An empty address form shows no error for the country or for the address uses, so neither is reported as missing on a first empty submit.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:105",
+      "quote": "await expectErrorSummary(page, MANUAL_ERRORS)",
+      "confidence": "inferred",
+      "note": "Inferred from the exact error list: expectErrorSummary asserts the whole list, which holds no country or uses message. Whether a uses or country error appears once the other fields are filled is not tested."
     },
     {
       "id": "prototype-dr2-1-specs-p5-034",
-      "statement": "The live animals dashboard has a back link to the overall dashboard at the mount root.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:78",
-      "quote": "await expectBackLink(page, url())",
-      "confidence": "verbatim"
+      "statement": "On the add page the address form's fields are labelled 'Name or organisation', 'Address line 1', 'Town or city', 'Postcode or Zip code', 'Email address' and 'Phone number', with a country field (#address-book-manual-country).",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:108-117",
+      "quote": "await page.getByLabel('Name or organisation', { exact: true }).fill('Hof Sonnenberg')\n    await page.getByLabel('Address line 1', { exact: true }).fill('Bergstrasse 5')\n    await page.getByLabel('Town or city', { exact: true }).fill('Munich')\n    await page.getByLabel('Postcode or Zip code', { exact: true }).fill('80331')\n    const country = page.locator('#address-book-manual-country')\n...\n    await page.getByLabel('Email address', { exact: true }).fill('hof@example.com')\n    await page.getByLabel('Phone number', { exact: true }).fill('+49 89 000000')",
+      "confidence": "verbatim",
+      "note": "The add form labels the name field 'Name or organisation' while its error and the edit page's label say 'Name or organisation name' (see the edit claims). Recorded, not reconciled."
     },
     {
       "id": "prototype-dr2-1-specs-p5-035",
-      "statement": "The live animals dashboard's 'Create new' button links to /create-notification?category=live-animals.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:80",
-      "quote": "await expect(main.getByRole('button', { name: 'Create new' })).toHaveAttribute('href', url('/create-notification?category=live-animals'))",
-      "confidence": "verbatim"
+      "statement": "The add form's country field may or may not be a select list: the test picks 'Germany' only when it is a select.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:112-115",
+      "quote": "if (await country.evaluate((el) => el.tagName === 'SELECT')) {\n      await country.selectOption('Germany')\n    }",
+      "confidence": "gap",
+      "note": "The spec does not pin the country control's type or label for the origin and consignor form; it hedges between a select and another control (perhaps fixed or prefilled)."
     },
     {
       "id": "prototype-dr2-1-specs-p5-036",
-      "statement": "The live animals dashboard has a 'Summary' heading.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:81",
-      "quote": "await expect(main.getByRole('heading', { name: 'Summary' })).toBeVisible()",
-      "confidence": "verbatim"
+      "statement": "The address form is submitted with a button whose action is 'continue'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:104,119; e2e/support/journey.js:17-20 (clickAction)",
+      "quote": "await page.locator(`button[name=\"action\"][value=\"${value}\"]`).first().click()",
+      "confidence": "verbatim",
+      "note": "The button's visible text is not asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-037",
-      "statement": "The live animals dashboard summary has an 'Action needed' heading described as 'Tasks requiring your attention'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:82,84",
-      "quote": "await expect(main.getByRole('heading', { name: 'Action needed' })).toBeVisible()",
+      "statement": "A completed origin or consignor address, with 'Place of origin' ticked as its use, is saved and the user returns to the address book, where the new address (Hof Sonnenberg) is listed.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:118-121",
+      "quote": "await page.locator('input[name=\"addressUses\"][value=\"place-of-origin\"]').check()\n    await clickAction(page, 'continue')\n    await expect(page).toHaveURL(/\\/design-release-2\\.1\\/address-book/)\n    await expect(page.locator('main')).toContainText('Hof Sonnenberg')",
       "confidence": "verbatim",
-      "note": "The text 'Tasks requiring your attention' is asserted on main (line 84); pairing it with Action needed follows the drill-down page /actions, whose h1 is that text."
+      "note": "The URL check is a prefix match, so the exact page after saving (the list, or another address-book page) is not pinned; no banner is asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-038",
-      "statement": "The live animals dashboard summary has a 'Status updated' heading described as 'Changes in the past 24 hours'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:83,85",
-      "quote": "await expect(main.getByRole('heading', { name: 'Status updated' })).toBeVisible()",
-      "confidence": "verbatim",
-      "note": "Line 85 asserts 'Changes in the past 24 hours' on main; the /changes page h1 says 'Changes in past 24 hours' without 'the'."
+      "statement": "The value for the 'Place of origin' use is 'place-of-origin'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:118",
+      "quote": "input[name=\"addressUses\"][value=\"place-of-origin\"]",
+      "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-039",
-      "statement": "The live animals dashboard has a search field labelled 'Search by'.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:86",
-      "quote": "await expect(main.getByLabel('Search by')).toBeVisible()",
+      "statement": "Choosing 'Destination, Consignee or Importer' goes to a UK postcode finder at /design-release-2.1/address-book/add/find-address, headed 'Add an address'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:126-129 (destination, consignee or importer: a UK address found by postcode)",
+      "quote": "await chooseType(page, 'destination-consignee-importer')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address'))\n...\n    await expectHeading(page, 'Add an address')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-040",
-      "statement": "The search field's hint reads 'Keyword, notification number, commodity, consignee or consignor'.",
+      "statement": "The postcode finder's page title is 'Add an address – Import notification service – GOV.UK Prototype Kit', with en dashes and 'GOV.UK Prototype Kit', unlike the other address book titles.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:87",
-      "quote": "Keyword, notification number, commodity, consignee or consignor",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:128",
+      "quote": "await expect(page).toHaveTitle('Add an address – Import notification service – GOV.UK Prototype Kit')",
+      "confidence": "verbatim",
+      "note": "Every other address book title uses hyphens and ends 'GOV.UK'. Recorded as the spec asserts it; looks like a prototype inconsistency."
     },
     {
       "id": "prototype-dr2-1-specs-p5-041",
-      "statement": "The dashboard sort select (#dashboard-sort) offers exactly 'Select one', 'Newest first', 'Oldest first' and 'Arrival date', in that order.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:88",
-      "quote": "await expect(main.locator('#dashboard-sort option')).toHaveText(['Select one', 'Newest first', 'Oldest first', 'Arrival date'])",
+      "statement": "The postcode finder has a field labelled 'Enter a UK postcode' (#postcode) with the hint 'For example, AB12 3CD'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:131,141",
+      "quote": "await expect(page.getByLabel('Enter a UK postcode')).toHaveAccessibleDescription('For example, AB12 3CD')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-042",
-      "statement": "The live animals dashboard has exactly three tabs, in order: 'In progress', 'Draft', 'Completed'.",
+      "statement": "The postcode finder has an 'Enter address manually' link to /design-release-2.1/address-book/add/lookup?manual=true.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:89",
-      "quote": "await expect(main.locator('.govuk-tabs__tab')).toHaveText([/In progress\\s+\\(2\\)/, 'Draft', 'Completed'])",
+      "ref": "e2e/address-book.fit.spec.js:132",
+      "quote": "await expect(main.getByRole('link', { name: 'Enter address manually' })).toHaveAttribute('href', url('/address-book/add/lookup?manual=true'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-043",
-      "statement": "The 'In progress' tab label shows the count of in-progress notifications in brackets, '(2)' with the seed data; the Draft and Completed tabs show no count.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:89",
-      "quote": "/In progress\\s+\\(2\\)/, 'Draft', 'Completed'",
+      "statement": "The postcode finder has a 'Cancel and return to address book' link to /design-release-2.1/address-book.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:133",
+      "quote": "await expect(main.getByRole('link', { name: 'Cancel and return to address book' })).toHaveAttribute('href', url('/address-book'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-044",
-      "statement": "The In progress tab panel has the heading 'Notifications in progress'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:90",
-      "quote": "await expect(main.getByRole('heading', { name: 'Notifications in progress' })).toBeVisible()",
+      "statement": "The postcode finder's back link goes to the choose-an-address-type page, /design-release-2.1/address-book/add.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:134",
+      "quote": "await expectBackLink(page, url('/address-book/add'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-045",
-      "statement": "The in-progress list shows the seeded notification GBN-AG-26-7K8M2P.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:91",
-      "quote": "await expect(main).toContainText('GBN-AG-26-7K8M2P')",
+      "statement": "Pressing 'Find address' with no postcode shows the error 'Enter a postcode'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:137-138",
+      "quote": "await submitForm(page, 'Find address')\n    await expectErrorSummary(page, ['Enter a postcode'])",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-046",
-      "statement": "An in-progress notification card shows what is outstanding on it, such as 'ITAHC is missing'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:92",
-      "quote": "await expect(main).toContainText('ITAHC is missing')",
-      "confidence": "verbatim"
+      "statement": "The spec does not test a postcode in the wrong format, or a postcode that finds no addresses, on the postcode finder.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:125-156",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through the destination and branch tests; only the empty postcode and one found postcode (BB4 4JG) are walked."
     },
     {
       "id": "prototype-dr2-1-specs-p5-047",
-      "statement": "Each notification card has a 'View' link to /review-notification?reference=<reference>.",
+      "statement": "A postcode that finds addresses goes to /design-release-2.1/address-book/add/find-address/select, headed 'Select an address'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:93",
-      "quote": "await expect(main.getByRole('link', { name: 'View', exact: true }).first()).toHaveAttribute('href', url('/review-notification?reference=GBN-AG-26-7K8M2P'))",
+      "ref": "e2e/address-book.fit.spec.js:141-144",
+      "quote": "await page.locator('#postcode').fill('BB4 4JG')\n    await submitForm(page, 'Find address')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address/select'))\n    await expectHeading(page, 'Select an address')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-048",
-      "statement": "Each notification card has a 'Copy as new' link to /notifications/copy-as-new?reference=<reference>.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:94",
-      "quote": "await expect(main.getByRole('link', { name: 'Copy as new' }).first()).toHaveAttribute('href', url('/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P'))",
+      "statement": "The select-an-address list (#address-id) opens with an option giving the count found, such as '5 addresses found' for BB4 4JG.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:145",
+      "quote": "await expect(page.locator('#address-id option').first()).toHaveText('5 addresses found')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-049",
-      "statement": "The dashboard has collapsed additional filters that open when their summary is clicked, revealing a filters panel.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:98-101",
-      "quote": "await page.locator('.app-dr2-dashboard-filters__summary').click()\n      const filters = page.locator('.app-dr2-dashboard-filters__panel')\n      await expect(filters).toBeVisible()",
+      "statement": "Each found address is offered as one upper-case comma-separated line, such as 'UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:146",
+      "quote": "await expect(page.locator('#address-id option')).toContainText(['UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG'])",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-050",
-      "statement": "The filters panel offers a 'By arrival date' filter.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:102",
-      "quote": "await expect(filters).toContainText('By arrival date')",
-      "confidence": "verbatim"
+      "statement": "Choosing a found address and pressing 'Continue' returns to the address form at /design-release-2.1/address-book/add/lookup with it filled in: address line 1 'UNIT 2 YORK AVENUE' and town or city 'ROSSENDALE'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:149-153",
+      "quote": "await page.locator('#address-id').selectOption({ label: 'UNIT 2 YORK AVENUE, HASLINGDEN, ROSSENDALE, BB4 4JG' })\n    await submitForm(page, 'Continue')\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))\n    await expect(page.getByLabel('Address line 1', { exact: true })).toHaveValue('UNIT 2 YORK AVENUE')\n    await expect(page.getByLabel('Town or city', { exact: true })).toHaveValue('ROSSENDALE')",
+      "confidence": "verbatim",
+      "note": "The town is the last place in the line (ROSSENDALE), not HASLINGDEN; where HASLINGDEN goes and whether the postcode is filled are not asserted. The select page's own error with nothing chosen is not tested."
     },
     {
       "id": "prototype-dr2-1-specs-p5-051",
-      "statement": "The filters panel offers a 'By date range' filter with 'Start date' and 'End date' fields.",
+      "statement": "For a destination, consignee or importer address, the uses checkboxes are 'Place of destination', 'Consignee' and 'Importer'.",
       "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:103,105-106",
-      "quote": "await expect(filters).toContainText('By date range')",
+      "ref": "e2e/address-book.fit.spec.js:154",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Place of destination', 'Consignee', 'Importer'])",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-052",
-      "statement": "The filter date fields carry the hint 'For example, 27/3/2026'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:104",
-      "quote": "await expect(filters).toContainText('For example, 27/3/2026')",
-      "confidence": "verbatim"
+      "statement": "Saving a destination, consignee or importer address found by postcode is not walked: the test stops at the filled-in form.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:155-156",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "prototype-dr2-1-specs-p5-053",
-      "statement": "The status filter select (#dashboard-filter-status) offers exactly 'Select one', 'Action required', 'Submitted' and 'Completed', in that order.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:107",
-      "quote": "await expect(page.locator('#dashboard-filter-status option')).toHaveText(['Select one', 'Action required', 'Submitted', 'Completed'])",
+      "statement": "Choosing 'Branch' also goes to the UK postcode finder at /design-release-2.1/address-book/add/find-address.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:159-160 (branch: a UK address found by postcode, with the branch address use)",
+      "quote": "await chooseType(page, 'branch')\n    await expect(page).toHaveURL(urlFor('/address-book/add/find-address'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-054",
-      "statement": "Choosing the Draft tab puts tab=drafts in the URL.",
+      "statement": "Following 'Enter address manually' from the postcode finder opens the address form at /design-release-2.1/address-book/add/lookup with manual=true in the query.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:112-113",
-      "quote": "await page.getByRole('tab', { name: 'Draft' }).click()\n      await expect(page).toHaveURL(/tab=drafts/)",
+      "ref": "e2e/address-book.fit.spec.js:161-163",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Enter address manually' }).click()\n    await expect(page).toHaveURL(urlFor('/address-book/add/lookup'))\n    await expect(page).toHaveURL(/manual=true/)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-055",
-      "statement": "The Draft tab panel has the heading 'Draft notifications' and lists the seeded draft GBN-AG-26-7K8M2S.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:114-115",
-      "quote": "await expect(page.locator('main').getByRole('heading', { name: 'Draft notifications' })).toBeVisible()",
-      "confidence": "verbatim"
+      "statement": "For a branch address, the uses group has one checkbox, 'Branch address'.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:164-165",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"]')).toHaveCount(1)\n    await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Branch address'])",
+      "confidence": "verbatim",
+      "note": "The test title says the branch address is 'found by postcode', but the test enters it manually; a postcode-found branch address is not walked."
     },
     {
       "id": "prototype-dr2-1-specs-p5-056",
-      "statement": "Choosing the Completed tab puts tab=completed in the URL.",
+      "statement": "Choosing 'Transporter' hands over to the add-a-transporter pages at /design-release-2.1/transporter/add, headed 'Choose a transporter type'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:120-121",
-      "quote": "await page.getByRole('tab', { name: 'Completed' }).click()\n      await expect(page).toHaveURL(/tab=completed/)",
+      "ref": "e2e/address-book.fit.spec.js:169-173 (transporter: hands over to the add-a-transporter pages)",
+      "quote": "await chooseType(page, 'transporter')\n    await expect(page).toHaveURL(urlFor('/transporter/add'))\n    await expectHeading(page, 'Choose a transporter type')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-057",
-      "statement": "The Completed tab panel has the heading 'Completed notifications' and lists the seeded completed notification GBN-AG-26-7K8M2W.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:122-123",
-      "quote": "await expect(page.locator('main').getByRole('heading', { name: 'Completed notifications' })).toBeVisible()",
+      "statement": "Opening /design-release-2.1/address-book/add/usage with no address pending redirects to the choose-an-address-type page, /design-release-2.1/address-book/add.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:175-178 (the usage step is only reachable with an address pending)",
+      "quote": "await page.goto(url('/address-book/add/usage'))\n    await expect(page).toHaveURL(urlFor('/address-book/add'))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-058",
-      "statement": "Search and sort submit as a GET to the category dashboard: the URL carries search=<text> and sort=<value> (sort value 'oldest' for Oldest first).",
+      "statement": "The add flow has a usage step at /address-book/add/usage for an address that is pending, but the spec never shows that page or says when it is reached.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:127-133",
-      "quote": "await test.step('search and sort submit as a GET to the category list', async () => {",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:175-178",
+      "quote": "test('the usage step is only reachable with an address pending'",
+      "confidence": "gap",
+      "note": "The origin, destination and branch walks pick uses on the address form itself and never land on /usage."
     },
     {
       "id": "prototype-dr2-1-specs-p5-059",
-      "statement": "After a search, the 'Search by' field keeps the text the trader entered.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:134",
-      "quote": "await expect(page.getByLabel('Search by')).toHaveValue('Horses')",
+      "statement": "An address book entry is at /design-release-2.1/address-book/<entry id>; its title is '<name> - Import notification service - GOV.UK' and its heading is the name, such as 'Green Valley Farm'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:182-188 (an address book entry > view, edit and save > view)",
+      "quote": "const ENTRY = '/address-book/green-valley-farm-sanpetru-0'\n...\n      await page.goto(url(ENTRY))\n      await expect(page).toHaveTitle('Green Valley Farm - Import notification service - GOV.UK')\n      await expectHeading(page, 'Green Valley Farm')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-060",
-      "statement": "No test proves that search, sort or the additional filters change which notifications are listed or their order; only the URL parameters and retained value are asserted, and the sort values for 'Newest first' and 'Arrival date' are not shown.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:98-136",
-      "quote": "",
-      "confidence": "gap"
+      "statement": "An address book entry shows its details as label and value rows, including 'Name or organisation name', 'Country' and 'Email address' (Green Valley Farm, Romania, info@greenvalleyfarm.eu).",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:190-192",
+      "quote": "await expect(main).toContainText(/Name or organisation name\\s+Green Valley Farm/)\n      await expect(main).toContainText(/Country\\s+Romania/)\n      await expect(main).toContainText(/Email address\\s+info@greenvalleyfarm\\.eu/)",
+      "confidence": "verbatim",
+      "note": "Other rows (address lines, town, postcode, phone, uses) are not asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-061",
-      "statement": "The germinal products category dashboard is at /germinal-products and its h1 is 'Germinal products'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:140-141",
-      "quote": "await page.goto(url('/germinal-products'))\n    await expectHeading(page, 'Germinal products')",
+      "statement": "An address book entry has an 'Edit' link to /design-release-2.1/address-book/<entry id>/edit.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:197-198 (step 'edit')",
+      "quote": "await page.locator('main').locator('a', { hasText: /^\\s*Edit\\s*$/ }).click()\n      await expect(page).toHaveURL(urlFor(`${ENTRY}/edit`))",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-062",
-      "statement": "The germinal products dashboard's 'Create new' button links to /create-notification?category=germinal-products.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:143",
-      "quote": "await expect(main.getByRole('button', { name: 'Create new' })).toHaveAttribute('href', url('/create-notification?category=germinal-products'))",
+      "statement": "The edit page has the title 'Edit address and contact details - Import notification service - GOV.UK' and the heading 'Edit address and contact details'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:199-200",
+      "quote": "await expect(page).toHaveTitle('Edit address and contact details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Edit address and contact details')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-063",
-      "statement": "The germinal products dashboard lists the seeded notification GBN-GP-26-7K8M2Q with commodity 'Cattle, Semen'; germinal product references use the GBN-GP prefix where live animals use GBN-AG.",
-      "kind": "data",
-      "ref": "e2e/dashboard.fit.spec.js:144-145",
-      "quote": "await expect(main).toContainText('GBN-GP-26-7K8M2Q')\n    await expect(main).toContainText('Cattle, Semen')",
+      "statement": "The edit page opens filled with the entry's saved details; its name field is labelled 'Name or organisation name' and holds 'Green Valley Farm'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:201",
+      "quote": "await expect(page.getByLabel('Name or organisation name', { exact: true })).toHaveValue('Green Valley Farm')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-064",
-      "statement": "Germinal products notification cards show 'Number of packages' where live animals cards show a number of animals.",
+      "statement": "The edit page also has fields labelled 'Town or city' and 'Postcode or Zip code'.",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:139,146",
-      "quote": "test('germinal products: packages instead of animals'",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:214-215",
+      "quote": "await page.getByLabel('Town or city', { exact: true }).fill('Sânpetru')\n      await page.getByLabel('Postcode or Zip code', { exact: true }).fill('507190')",
+      "confidence": "verbatim",
+      "note": "The edit page's other fields are not named by the test."
     },
     {
       "id": "prototype-dr2-1-specs-p5-065",
-      "statement": "The action needed drill-down is at /actions with the page title 'Tasks requiring your attention - Import notification service - GOV.UK'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:153-154",
-      "quote": "await expect(page).toHaveTitle('Tasks requiring your attention - Import notification service - GOV.UK')",
+      "statement": "Saving the edit page with the name cleared shows the error 'Enter a name or organisation name'.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:205-209 (step 'clearing a required field is an error')",
+      "quote": "await page.getByLabel('Name or organisation name', { exact: true }).fill('')\n      await page.locator('main form button[type=\"submit\"]').first().click()\n      await expect(page.locator('.govuk-error-summary')).toContainText('Enter a name or organisation name')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-066",
-      "statement": "The /actions page's h1 is 'Tasks requiring your attention' with 'Action needed' shown on the page (a caption).",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:155,158",
-      "quote": "await expectHeading(page, 'Tasks requiring your attention')",
-      "confidence": "verbatim"
+      "statement": "Saving a valid edit returns to /design-release-2.1/address-book with a notification banner saying '<name> address updated', such as 'Green valley farm srl address updated'.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:212-218 (step 'saving the edit returns to the list with a banner')",
+      "quote": "await page.locator('main form button[type=\"submit\"]').first().click()\n      await expect(page).toHaveURL(urlFor('/address-book'))\n      await expect(page.locator('.govuk-notification-banner')).toContainText(/Green valley farm srl address updated/i)",
+      "confidence": "verbatim",
+      "note": "The banner match is case-insensitive, so how the name is cased in the banner is not pinned (the delete banner's match is case-sensitive and sentence-cases the name)."
     },
     {
       "id": "prototype-dr2-1-specs-p5-067",
-      "statement": "With no category, the /actions page's back link goes to the overall dashboard at the mount root.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:156",
-      "quote": "await expectBackLink(page, url())",
+      "statement": "The delete confirmation is at /design-release-2.1/address-book/<entry id>/delete, with the title 'Delete this address? - Import notification service - GOV.UK' and the heading 'Delete this address?'.",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:224-226 (delete: confirm, then the list says it was deleted)",
+      "quote": "await page.goto(url(`${ENTRY}/delete`))\n    await expect(page).toHaveTitle('Delete this address? - Import notification service - GOV.UK')\n    await expectHeading(page, 'Delete this address?')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-068",
-      "statement": "The /actions page explains: 'Add missing information or upload documents to prevent your consignment from being delayed.'",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:159",
-      "quote": "Add missing information or upload documents to prevent your consignment from being delayed.",
-      "confidence": "verbatim"
+      "statement": "How a user reaches the delete confirmation from an entry is not shown: the test opens it by URL.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:224",
+      "quote": "",
+      "confidence": "gap"
     },
     {
       "id": "prototype-dr2-1-specs-p5-069",
-      "statement": "The /actions page has a 'Notifications needing action' heading over the list.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:160",
-      "quote": "await expect(main.getByRole('heading', { name: 'Notifications needing action' })).toBeVisible()",
+      "statement": "The delete confirmation shows the address being deleted as an 'Address' row with its name.",
+      "kind": "data",
+      "ref": "e2e/address-book.fit.spec.js:228",
+      "quote": "await expect(main).toContainText(/Address\\s+Green Valley Farm/)",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-070",
-      "statement": "The /actions page shows a results count in the form 'Show 1-2 of 2 results'.",
+      "statement": "The delete confirmation has the inset text 'This will not remove the address from existing notifications.'",
       "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:161",
-      "quote": "await expect(main).toContainText('Show 1-2 of 2 results')",
+      "ref": "e2e/address-book.fit.spec.js:229",
+      "quote": "await expect(main.locator('.govuk-inset-text')).toHaveText('This will not remove the address from existing notifications.')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-071",
-      "statement": "With no category, /actions lists notifications needing action across every category (live animals GBN-AG-26-7K8M2P and germinal products GBN-GP-26-7K8M2V).",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:162-163",
-      "quote": "await expect(main).toContainText('GBN-AG-26-7K8M2P')\n    await expect(main).toContainText('GBN-GP-26-7K8M2V')",
-      "confidence": "verbatim"
+      "statement": "Deleting an address book entry does not remove it from existing notifications.",
+      "kind": "rule",
+      "ref": "e2e/address-book.fit.spec.js:229",
+      "quote": "This will not remove the address from existing notifications.",
+      "confidence": "inferred",
+      "note": "Inferred from the page's copy; no test checks a notification after a delete."
     },
     {
       "id": "prototype-dr2-1-specs-p5-072",
-      "statement": "/actions?category=live-animals lists only live animals notifications, excluding germinal products ones.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:166-169",
-      "quote": "await page.goto(url('/actions?category=live-animals'))\n    await expectBackLink(page, url('/live-animals'))\n    await expect(main).toContainText('GBN-AG-26-7K8M2P')\n    await expect(main).not.toContainText('GBN-GP-26-7K8M2V')",
+      "statement": "The delete confirmation says 'This action cannot be undone.'",
+      "kind": "copy",
+      "ref": "e2e/address-book.fit.spec.js:230",
+      "quote": "await expect(main).toContainText('This action cannot be undone.')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-073",
-      "statement": "With a category, the /actions page's back link goes to that category's dashboard (/live-animals for category=live-animals).",
+      "statement": "The delete confirmation has a 'No, cancel' link.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:167",
-      "quote": "await expectBackLink(page, url('/live-animals'))",
-      "confidence": "verbatim"
+      "ref": "e2e/address-book.fit.spec.js:231",
+      "quote": "await expect(main.locator('a', { hasText: 'No, cancel' })).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "Where 'No, cancel' leads is not asserted."
     },
     {
       "id": "prototype-dr2-1-specs-p5-074",
-      "statement": "The status updated drill-down is at /changes with the page title 'Changes in past 24 hours - Import notification service - GOV.UK' and h1 'Changes in past 24 hours'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:174-176",
-      "quote": "await expect(page).toHaveTitle('Changes in past 24 hours - Import notification service - GOV.UK')\n    await expectHeading(page, 'Changes in past 24 hours')",
+      "statement": "Pressing 'Yes, delete' removes the entry and returns to /design-release-2.1/address-book with a notification banner saying 'Green valley farm address deleted', the name in sentence case.",
+      "kind": "behaviour",
+      "ref": "e2e/address-book.fit.spec.js:233-235",
+      "quote": "await submitForm(page, 'Yes, delete')\n    await expect(page).toHaveURL(urlFor('/address-book'))\n    await expect(page.locator('.govuk-notification-banner')).toContainText('Green valley farm address deleted')",
       "confidence": "verbatim"
     },
     {
       "id": "prototype-dr2-1-specs-p5-075",
-      "statement": "The /changes page shows 'Status updated' (a caption).",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:178",
-      "quote": "await expect(main).toContainText('Status updated')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-076",
-      "statement": "The /changes page explains: 'Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.'",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:179",
-      "quote": "Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-077",
-      "statement": "The /changes page shows status change labels 'Passed inspection', 'Needs inspection' and 'Delayed'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:180-182",
-      "quote": "for (const label of ['Passed inspection', 'Needs inspection', 'Delayed']) {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-078",
-      "statement": "/changes?category=germinal-products lists germinal products changes, including GBN-GP-26-7K8M2T.",
+      "statement": "After a delete the list count drops by one: the origin and consignor category says 'Showing 1-8 of 22'.",
       "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:185-186",
-      "quote": "await page.goto(url('/changes?category=germinal-products'))\n    await expect(main).toContainText('GBN-GP-26-7K8M2T')",
+      "ref": "e2e/address-book.fit.spec.js:236",
+      "quote": "await expect(page.locator('main')).toContainText('Showing 1-8 of 22')",
       "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-079",
-      "statement": "The /changes page's back link, list heading, results count and whether category filtering excludes other categories are not asserted.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:173-188",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-080",
-      "statement": "The inspection required drill-down is at /inspection with the page title 'Consignments due at the border control post (BCP) - Import notification service - GOV.UK' and h1 'Consignments due at the border control post (BCP)'.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:191-193",
-      "quote": "await expect(page).toHaveTitle('Consignments due at the border control post (BCP) - Import notification service - GOV.UK')\n    await expectHeading(page, 'Consignments due at the border control post (BCP)')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-081",
-      "statement": "The /inspection page shows 'Inspection required' (a caption).",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:195",
-      "quote": "await expect(main).toContainText('Inspection required')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-082",
-      "statement": "The /inspection page explains: 'Consignments that must go to your chosen BCP for inspection.'",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:196",
-      "quote": "Consignments that must go to your chosen BCP for inspection.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-083",
-      "statement": "The /inspection page has a 'Notifications chosen for inspection' heading and lists GBN-AG-26-7K8M2U and GBN-AG-26-7K8M2Z.",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:197-199",
-      "quote": "await expect(main.getByRole('heading', { name: 'Notifications chosen for inspection' })).toBeVisible()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-084",
-      "statement": "The /inspection page has a 'What to do at a border inspection' details component, closed until the trader opens it.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:202-205",
-      "quote": "await test.step('border inspection guidance is collapsed until opened', async () => {\n      const details = main.locator('details', { hasText: 'What to do at a border inspection' })\n      await expect(details).not.toHaveAttribute('open', '')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-085",
-      "statement": "The border inspection guidance reads: 'If your consignments need to have sanitary or phytosanitary checks, you or the transporter must take it to your chosen border control post (BCP).'",
-      "kind": "copy",
-      "ref": "e2e/dashboard.fit.spec.js:206",
-      "quote": "If your consignments need to have sanitary or phytosanitary checks, you or the transporter must take it to your chosen border control post (BCP).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-086",
-      "statement": "The border inspection guidance links 'what you need to do at a border inspection' to https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps.",
-      "kind": "integration",
-      "ref": "e2e/dashboard.fit.spec.js:207-209",
-      "quote": "await expect(details.getByRole('link', { name: 'what you need to do at a border inspection' })).toHaveAttribute(\n        'href', 'https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-087",
-      "statement": "The /inspection page's back link and category filtering are not asserted.",
-      "kind": "behaviour",
-      "ref": "e2e/dashboard.fit.spec.js:190-212",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-088",
-      "statement": "A notification reference has the shape GBN-<two capital letters>-<two digits>-<letters and digits>, and journey pages show a draft strip with the status tag and the reference.",
-      "kind": "data",
-      "ref": "e2e/support/journey.js:60-64 (readReference)",
-      "quote": "/** The draft strip (status tag + notification reference) on journey pages. */",
-      "confidence": "verbatim",
-      "note": "Pattern in code: /GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]+/"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-089",
-      "statement": "Choosing 'View' on the first in-progress live animals card opens /review-notification?reference=GBN-AG-26-7K8M2P, a view of the notification showing its reference.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:10-14",
-      "quote": "await page.locator('main').getByRole('link', { name: 'View', exact: true }).first().click()\n    await expect(page).toHaveURL(url('/review-notification?reference=GBN-AG-26-7K8M2P').replace(/\\./g, '.'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-090",
-      "statement": "A submitted notification needing action shows the status 'Submitted action required'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:15",
-      "quote": "await expect(main).toContainText('Submitted action required')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-091",
-      "statement": "A submitted notification needing action shows a warning saying what is needed, such as 'You need to upload a health certificate'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:9,16",
-      "quote": "await expect(main).toContainText('You need to upload a health certificate')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-092",
-      "statement": "A submitted notification's view shows its submission date as 'Date submitted: <d Month yyyy>', such as 'Date submitted: 20 June 2026'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:17",
-      "quote": "await expect(main).toContainText('Date submitted: 20 June 2026')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-093",
-      "statement": "A submitted notification's view has an 'Import reference numbers' section.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:18",
-      "quote": "await expect(main).toContainText('Import reference numbers')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-094",
-      "statement": "The import reference numbers section warns: 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.'",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:19",
-      "quote": "You must use the correct reference and code on the customs declaration or your consignment will be delayed.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-095",
-      "statement": "The import reference numbers section shows 'Customs document code' as C640.",
-      "kind": "data",
-      "ref": "e2e/manage-notifications.fit.spec.js:20",
-      "quote": "await expect(main).toContainText(/Customs document code\\s+C640/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-096",
-      "statement": "The import reference numbers section has two 'Copy' buttons (one per value: reference and customs document code).",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:21",
-      "quote": "await expect(main.getByRole('button', { name: 'Copy' })).toHaveCount(2)",
-      "confidence": "inferred",
-      "note": "Count is asserted verbatim; that each copies one of the two values is inferred from the section showing a reference and a code."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-097",
-      "statement": "A submitted action required notification's view has an 'Amend this notification' button.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:22",
-      "quote": "await expect(main.getByRole('button', { name: 'Amend this notification' })).toBeVisible()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-098",
-      "statement": "A notification's view has a 'Copy as new' link to /notifications/copy-as-new?reference=<reference>.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:23",
-      "quote": "await expect(main.locator('a', { hasText: 'Copy as new' })).toHaveAttribute('href', url('/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-099",
-      "statement": "The action required view shows outstanding actions in its answers, such as 'Upload a valid health certificate' and 'Enter a minimum of 1 identifier'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:24-25",
-      "quote": "await expect(main).toContainText('Upload a valid health certificate')\n    await expect(main).toContainText('Enter a minimum of 1 identifier')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-100",
-      "statement": "A submitted notification's view is read only: it has no 'Change' links.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:26-27",
-      "quote": "// Read only: no change links.\n    await expect(main.getByRole('link', { name: 'Change' })).toHaveCount(0)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-101",
-      "statement": "A notification's view has a back link to the overall dashboard at the mount root, even when opened from the live animals dashboard.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:10,28",
-      "quote": "await expectBackLink(page, url())",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-102",
-      "statement": "A submitted notification (no action required) shows its reference followed by the status 'Submitted', and its submission date ('Date submitted: 16 June 2026' for GBN-AG-26-7K8M2U).",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:34-36",
-      "quote": "await expect(page.locator('main')).toContainText(/GBN-AG-26-7K8M2U\\s+Submitted/)\n      await expect(page.locator('main')).toContainText('Date submitted: 16 June 2026')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-103",
-      "statement": "A completed notification shows the status 'Completed' and has no 'Amend this notification' button.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:40-43",
-      "quote": "await test.step('completed: no amend', async () => {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-104",
-      "statement": "A draft notification's view shows the status 'Draft' and its creation date as 'Date created: <d Month yyyy>' (such as 'Date created: 18 June 2026').",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:48-51",
-      "quote": "await expect(main).toContainText(/GBN-GP-26-7K8M2T\\s+Draft/)\n      await expect(main).toContainText('Date created: 18 June 2026')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-105",
-      "statement": "A draft notification's view lists its incomplete sections in an error summary, such as 'Complete arrival details'.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:47,52",
-      "quote": "await expect(page.locator('.govuk-error-summary')).toContainText('Complete arrival details')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-106",
-      "statement": "A draft notification's view is editable: it has 'Change' links, the first going to /origin-of-the-import.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:47,53",
-      "quote": "await expect(main.getByRole('link', { name: 'Change' }).first()).toHaveAttribute('href', url('/origin-of-the-import'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-107",
-      "statement": "Choosing 'Amend this notification' on a submitted notification opens a confirmation modal (#amend-notification-modal) with the heading 'Amend notification'.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:63-67",
-      "quote": "await test.step('amend asks for confirmation in a modal', async () => {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-108",
-      "statement": "The amend modal asks 'Are you sure you want to change this notification?'",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:68",
-      "quote": "Are you sure you want to change this notification?",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-109",
-      "statement": "The amend modal's 'No, go back' button closes the modal and leaves the notification unchanged.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:70-71",
-      "quote": "await modal.getByRole('button', { name: 'No, go back' }).click()\n      await expect(modal).toBeHidden()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-110",
-      "statement": "The amend modal's 'Yes, continue' link starts the amendment and opens the amend review at /review-notification.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:73,77",
-      "quote": "await modal.locator('a', { hasText: 'Yes, continue' }).click()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-111",
-      "statement": "The amend review shows 'Amend' followed by the notification's reference.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:79",
-      "quote": "await expect(main).toContainText(/Amend\\s+GBN-AG-26-7K8M2U/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-112",
-      "statement": "The amend review has a 'Cancel amend' button.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:80",
-      "quote": "await expect(main.getByRole('button', { name: 'Cancel amend' }).first()).toBeVisible()",
-      "confidence": "verbatim",
-      "note": "Asserted with .first(), so there may be more than one Cancel amend button."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-113",
-      "statement": "The amend review makes answers editable: it has 'Change' links, the first going to /origin-of-the-import.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:81",
-      "quote": "await expect(main.getByRole('link', { name: 'Change' }).first()).toHaveAttribute('href', url('/origin-of-the-import'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-114",
-      "statement": "A journey page opened from the amend review offers three action buttons, in order: 'Save and return', 'Save and continue' and 'Save and return to overview'.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:85-88",
-      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and return', 'Save and continue', 'Save and return to overview'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-115",
-      "statement": "The journey's action buttons submit a field named action whose value is 'continue' for Save and continue, 'hub' for Save and return to overview and 'review' for Save and return.",
-      "kind": "data",
-      "ref": "e2e/support/journey.js:17-23; e2e/manage-notifications.fit.spec.js:91",
-      "quote": "const saveAndContinue = (page) => clickAction(page, 'continue')\nconst saveAndReturnToOverview = (page) => clickAction(page, 'hub')",
-      "confidence": "inferred",
-      "note": "continue and hub are named in journey.js; 'review' is inferred as Save and return because the amend test clicks action=review and lands back on /review-notification."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-116",
-      "statement": "During an amendment, changing an answer (such as the internal reference on origin of the import) and choosing Save and return goes back to the amend review, which shows the new answer.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:90-93",
-      "quote": "await page.locator('#internal-reference').fill('AMENDED-REF')\n      await clickAction(page, 'review')\n      await expect(page).toHaveURL(urlFor('/review-notification'))\n      await expect(page.locator('main')).toContainText('AMENDED-REF')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-117",
-      "statement": "The arrival date must fall between 7 days in the past and 6 months ahead.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:97-99",
-      "quote": "// The seeded notification arrives in June 2026, outside the arrival-date\n      // window (7 days back to 6 months ahead), so the amendment is incomplete;",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-118",
-      "statement": "Choosing 'Continue' on the amend review while the amendment is incomplete (such as an out-of-range arrival date) keeps the trader on the amend review and shows no error summary.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:96-103",
-      "quote": "// the amend review shows no error, it simply stays put.\n      await submitForm(page, 'Continue')\n      await expect(page).toHaveURL(urlFor('/review-notification'))\n      await expect(page.locator('.govuk-error-summary')).toHaveCount(0)",
-      "confidence": "verbatim",
-      "note": "Silent hold: the trader is not told why Continue did nothing."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-119",
-      "statement": "The arrival details page, during an amendment, also offers 'Save and return', 'Save and continue' and 'Save and return to overview'.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:106-107",
-      "quote": "await page.goto(url('/arrival-details'))\n      await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and return', 'Save and continue', 'Save and return to overview'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-120",
-      "statement": "The arrival details page takes an arrival date at port (date picker, d/m/yyyy), a port of entry (type-and-pick autocomplete, such as Holyhead), a means of transport select (such as 'Sea'), a transport identification and a transport document reference.",
-      "kind": "data",
-      "ref": "e2e/manage-notifications.fit.spec.js:108-112",
-      "quote": "await fillDate(page, '#arrival-date-at-port', dateFromToday(10))\n      await pickFromAutocomplete(page, 'port-of-entry', 'Holyhead', 'Holyhead')\n      await page.locator('#means-of-transport').selectOption('Sea')\n      await page.locator('#transport-identification').fill('STENA ADVENTURER')\n      await page.locator('#transport-document-reference').fill('BOL-2U')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-121",
-      "statement": "Every DR2.1 date picker takes dates in d/m/yyyy format.",
-      "kind": "constraint",
-      "ref": "e2e/support/journey.js:10",
-      "quote": "/** d/m/yyyy, the format every DR2.1 date picker takes, `days` from today. */",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-122",
-      "statement": "Once the arrival date is in range, Save and return goes back to the amend review, and Continue then goes to the declaration page (/declaration).",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:114-120",
-      "quote": "await test.step('continue to the declaration and resubmit', async () => {\n      await submitForm(page, 'Continue')\n      await expect(page).toHaveURL(urlFor('/declaration'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-123",
-      "statement": "Resubmitting an amendment: ticking the declaration (#declaration-confirmed) and choosing Continue goes to /notification-submitted, which shows the same reference as before the amendment.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:121-124",
-      "quote": "await page.locator('#declaration-confirmed').check()\n      await submitForm(page, 'Continue')\n      await expect(page).toHaveURL(urlFor('/notification-submitted'))\n      await expect(page.locator('main')).toContainText('GBN-AG-26-7K8M2U')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-124",
-      "statement": "Going to /notifications/amend?reference=<reference> for a submitted notification starts an amendment directly and redirects to the amend review at /review-notification.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:130-131",
-      "quote": "await page.goto(url('/notifications/amend?reference=GBN-AG-26-7K8M2U'))\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-125",
-      "statement": "Choosing 'Cancel amend' on the amend review opens a modal (#cancel-amend-modal) headed 'Are you sure you want to cancel this amendment?'",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:132-135",
-      "quote": "await expect(modal.getByRole('heading', { name: 'Are you sure you want to cancel this amendment?' })).toBeVisible()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-126",
-      "statement": "The cancel amendment modal's 'Yes, cancel amendment' link ends the amendment and returns to /review-notification?reference=<reference>, where the notification shows as 'Submitted' again.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:137-139",
-      "quote": "await modal.locator('a', { hasText: 'Yes, cancel amendment' }).click()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-127",
-      "statement": "The cancel amendment modal's option to keep amending (its 'no' choice), and whether cancelling discards answers already changed, are not asserted.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:129-140",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-128",
-      "statement": "Going to /notifications/cancel-amend when no amendment is in progress redirects to the overall dashboard at the mount root.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:146-147",
-      "quote": "await page.goto(url('/notifications/cancel-amend'))\n    await expect(page).toHaveURL(root)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-129",
-      "statement": "Going to /notifications/amend with an unknown reference redirects to the overall dashboard at the mount root.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:148-149",
-      "quote": "await page.goto(url('/notifications/amend?reference=GBN-AG-26-NOSUCH'))\n    await expect(page).toHaveURL(root)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-130",
-      "statement": "Going to /notifications/copy-as-new with an unknown reference redirects to the overall dashboard at the mount root.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:150-151",
-      "quote": "await page.goto(url('/notifications/copy-as-new?reference=GBN-AG-26-NOSUCH'))\n    await expect(page).toHaveURL(root)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-131",
-      "statement": "Choosing 'Copy as new' on a submitted notification's dashboard card creates a new draft and opens it on the notification hub (/notification-hub), whose h1 is 'Overview'.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:156-160",
-      "quote": "test('copying a submitted notification opens a new draft on the hub'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-132",
-      "statement": "The copied notification shows the status 'Draft'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:162",
-      "quote": "await expect(main).toContainText('Draft')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-133",
-      "statement": "The copy gets its own new GBN-AG-26 reference, not the source notification's reference.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:163-165",
-      "quote": "// The copy gets its own reference, not the source's.\n    await expect(main).not.toContainText('GBN-AG-26-7K8M2U')\n    await expect(main).toContainText(/GBN-AG-26-[A-Z0-9]+/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-134",
-      "statement": "The second in-progress card on the live animals dashboard is the submitted notification GBN-AG-26-7K8M2U, so the In progress tab holds both submitted action required and submitted notifications.",
-      "kind": "data",
-      "ref": "e2e/manage-notifications.fit.spec.js:158,164",
-      "quote": "await page.locator('main').getByRole('link', { name: 'Copy as new' }).nth(1).click()",
-      "confidence": "inferred",
-      "note": "Inferred: the test copies the second card and then asserts 7K8M2U is not on the hub, implying it was the source; the test title calls it a submitted notification."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-135",
-      "statement": "Which answers a copy as new carries over, and whether a draft or completed notification can be copied, are not asserted.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:155-168",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-136",
-      "statement": "A notification's view (such as a submitted action required notification) has a 'Delete' link to /notifications/delete?reference=<reference>.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:172-174",
-      "quote": "await page.locator('main a', { hasText: /^Delete$/ }).click()\n    await expect(page).toHaveURL(/\\/notifications\\/delete\\?reference=GBN-AG-26-7K8M2P$/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-137",
-      "statement": "The delete confirmation page has the title 'Delete this notification? - Import notification service - GOV.UK' and h1 'Delete this notification?'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:175-176",
-      "quote": "await expect(page).toHaveTitle('Delete this notification? - Import notification service - GOV.UK')\n    await expectHeading(page, 'Delete this notification?')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-138",
-      "statement": "The delete confirmation page shows the notification's 'Reference number'.",
-      "kind": "data",
-      "ref": "e2e/manage-notifications.fit.spec.js:178",
-      "quote": "await expect(main).toContainText(/Reference number\\s+GBN-AG-26-7K8M2P/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-139",
-      "statement": "The delete confirmation page shows the notification's 'Commodity', listing its species with Latin names, such as 'Sheep (Ovis Aries), Goat (Capra Hircus)'.",
-      "kind": "data",
-      "ref": "e2e/manage-notifications.fit.spec.js:179",
-      "quote": "await expect(main).toContainText(/Commodity\\s+Sheep \\(Ovis Aries\\), Goat \\(Capra Hircus\\)/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-140",
-      "statement": "The delete confirmation page says 'Confirm that you want to delete this notification.'",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:180",
-      "quote": "Confirm that you want to delete this notification.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-141",
-      "statement": "The delete confirmation page warns 'This action cannot be undone.'",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:181",
-      "quote": "This action cannot be undone.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-142",
-      "statement": "The delete confirmation page has a 'No, cancel' link back to the notification's view.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:182",
-      "quote": "await expect(main.locator('a', { hasText: 'No, cancel' })).toHaveAttribute('href', url('/review-notification?reference=GBN-AG-26-7K8M2P'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-143",
-      "statement": "The delete confirmation page's back link goes to the notification's view.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:183",
-      "quote": "await expectBackLink(page, url('/review-notification?reference=GBN-AG-26-7K8M2P'))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-144",
-      "statement": "Choosing 'Yes, delete' deletes the notification and returns to the overall dashboard at the mount root, which shows no notification banner.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:186-189",
-      "quote": "await submitForm(page, 'Yes, delete')\n    // Deleting returns to the overall dashboard, which shows no banner itself.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-145",
-      "statement": "After a deletion, the live animals dashboard shows a notification banner '<reference> has been deleted'.",
-      "kind": "copy",
-      "ref": "e2e/manage-notifications.fit.spec.js:190-191",
-      "quote": "await expect(page.locator('.govuk-notification-banner')).toContainText('GBN-AG-26-7K8M2P has been deleted')",
-      "confidence": "verbatim",
-      "note": "The banner appears on the category dashboard, not on the overall dashboard the delete lands on."
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-146",
-      "statement": "A deleted notification no longer appears in the live animals dashboard's notification list.",
-      "kind": "behaviour",
-      "ref": "e2e/manage-notifications.fit.spec.js:192",
-      "quote": "await expect(page.locator('.app-dr2-dashboard-notification-list')).not.toContainText('GBN-AG-26-7K8M2P')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "prototype-dr2-1-specs-p5-147",
-      "statement": "Which notification statuses may be deleted (draft, submitted, completed), and whether the banner shows only once, are not asserted.",
-      "kind": "rule",
-      "ref": "e2e/manage-notifications.fit.spec.js:170-194",
-      "quote": "",
-      "confidence": "gap"
     }
   ]
 }

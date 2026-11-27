@@ -1,7 +1,23 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 11, \"Port of entry, arrival and transit countries\": the first two pages of the live-animals transport-and-arrival section. Read in full: features/transport/port-of-entry/ (port-of-entry.controller.js, port-of-entry.njk, arrival-window.js, validate.js — the *.test.js unit tests left out by the scope), features/transport/transit-countries/ (transit-countries.controller.js, transit-countries.njk, _added-countries-table.njk, rows.js, remove-action.js, validate.js — likewise), the shared feature files features/transport/page.js, evaluation.js, means-of-transport-label.js, copy/copy.en.js and copy/copy.cy.js (claiming only the portOfEntry and transitCountries key trees, with one parity claim on the Welsh file), features/transport/fit/arrival-transit.fit.spec.js (1,191 lines, 41 tests across 11 describe blocks: arrival rendering, port type-ahead, port without JavaScript, arrival date calendar, arrival validation, transport reference validation, arrival save and routing, arrival continue with no commodity, transit rendering and validation, transit list/limits/persistence, Save and continue order, transit without JavaScript, and accessibility) and features/transport/fit/test-support.js, which holds only transporter form fixtures and so yields nothing for these two pages (parts 12 and 13 own it). Read for context, not claimed beyond what these two pages show: fit/live-animals-journey.js helpers (openArrival, openTransit, LANDINGS, ARRIVAL_DATE_IN_WINDOW, answerArrivalDetails, answerTransitCountries, addTransitCountry), shared/kit.js (dateField, pageRoutes, saveActions), shared/paths.js, shared/copy.en.js (dateExample, validatorDefaults, saveActions), services/ports/, services/transport-reference/, services/countries/, lib/validate/calendar.js, flow/flow.js, flow/task-rows.js, flow/section-captions/ and obligations/sections/arrival.js and transport.js. Covered: both pages' routes, captions, headings, every field with its label, hint, component and limits, the arrival window, every validation message verbatim, the add-and-remove table and its limit, where Save and continue and Save and return lead, the no-JavaScript fallbacks, the accessibility assertions, and the obligation and task-row gating that decides whether transit countries is asked at all.",
+  "structure": "Part 11 read, in full, the transport feature's port-of-entry folder (port-of-entry.controller.js, port-of-entry.njk, validate.js, arrival-window.js; the *.test.js unit tests left out as the scope says) and transit-countries folder (transit-countries.controller.js, transit-countries.njk, _added-countries-table.njk, rows.js, remove-action.js, validate.js; unit tests left out), the shared transport files page.js (all six page identities), evaluation.js (the nine answer-to-obligation bindings), means-of-transport-label.js, copy/copy.en.js and copy/copy.cy.js (only the portOfEntry and transitCountries keys claimed), and the fit files fit/arrival-transit.fit.spec.js (1,190 lines, 14 describe blocks: arrival rendering, port type-ahead, port without JavaScript, the date calendar, arrival validation, transport reference validation, arrival save and routing, save with no commodity, transit rendering and validation, transit list and limits, Save and continue order, transit without JavaScript, accessibility) and fit/test-support.js (transporter test data, claimed only as kept). To resolve what these files render it also looked up, without claiming their other contents, the section-caption files, the hub copy's row titles, shared/copy.en.js (date example, save actions, the default oneOf message), services/ports/index.js, services/countries/index.js and the openArrival, openTransit and answer* helpers in fit/live-animals-journey.js. Pages covered: arrival details at /notifications/{journeyId}/port-of-entry (arrival date with MoJ date picker and its 7-days-back to 6-months-ahead window, port of entry autocomplete, means of transport select, transport identification, transport document reference; no time-of-arrival field, recorded as a gap) and transit countries at /notifications/{journeyId}/transit-countries (one-at-a-time country autocomplete, Add country, the added-countries table with per-row Remove, the 12-country limit, refusals, scope redirects, and save). Where Continue leads from each page, the Save and return behaviour, every fit test's behaviour and the Welsh key parity are claimed. Transporter pages are left to parts 12 and 13, except the kept page.js and test-support.js claims about them.",
   "claims": [
+    {
+      "id": "repo-frontend-p1-039",
+      "statement": "The port of entry page collects five answers: the arrival date at the port, the port of entry, the means of transport, the transport identification and the transport document reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js:19-29",
+      "quote": "export const meta = {\n  ...page,\n  collects: [\n    'arrivalDateAtPort',\n    'portOfEntry',\n    'meansOfTransport',\n    'transportIdentification',\n    'transportDocumentReference'\n  ],\n  validation\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p1-040",
+      "statement": "The transit countries page collects one answer, the countries transited.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:32-36",
+      "quote": "export const meta = {\n  ...page,\n  collects: ['transitedCountries'],\n  validation\n}",
+      "confidence": "verbatim"
+    },
     {
       "id": "repo-frontend-p11-001",
       "statement": "The arrival details page is served at /notifications/{journeyId}/port-of-entry under the live-animals set base, on GET and POST.",
@@ -19,27 +35,11 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p11-003",
-      "statement": "A user reaches the arrival details page from the overview task list by the link \"Arrival details\".",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:46-48 with fit/live-animals-journey.js:1411-1420",
-      "quote": "arrivalDetails: {\n      title: 'Arrival details'\n    } … await page\n    .getByRole('link', { name: transportCopy.portOfEntry.title })\n    .click()",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p11-004",
       "statement": "The arrival details page's H1 reads \"Arrival details\".",
       "kind": "copy",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:7 with port-of-entry.njk:13",
       "quote": "title: 'Arrival details' … <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p11-005",
-      "statement": "The caption above the arrival details heading reads \"Transport and arrival\".",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:46 with flow/section-captions/copy/copy.en.js:13",
-      "quote": "{ id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] } … transportAndArrival: 'Transport and arrival'",
       "confidence": "verbatim"
     },
     {
@@ -138,15 +138,6 @@
       "ref": "src/server/app/services/ports/index.js:33,41-44 with features/transport/fit/arrival-transit.fit.spec.js:62,296-303",
       "quote": "const displayName = (port) => `${port.name} - ${port.code}` … return ports.map((port) => ({ value: port.code, text: displayName(port) })) … const DOVER_OPTION = 'Port of Dover - GB DVR' … await expect(page.locator(portInput)).toHaveValue(DOVER_OPTION)\n    await expect(page.locator(portNativeSelect)).toHaveValue('GB DVR')",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p11-018",
-      "statement": "The port list is whatever the reference-data service's /ports-of-entry endpoint returns, in the order it returns it: the frontend loads it on first use and does no sorting of its own.",
-      "kind": "integration",
-      "ref": "src/server/app/services/ports/client.js:6-11 with services/ports/index.js:16-44",
-      "quote": "export const fetchPortsOfEntry = () =>\n  requestReferenceData(\n    referenceDataUrl('/ports-of-entry'), … ports = await fetchPortsOfEntry() … export const portOptions = async () => {\n  await ensureLoaded()\n  return ports.map((port) => ({ value: port.code, text: displayName(port) }))\n}",
-      "confidence": "verbatim",
-      "note": "mechanism: loads and caches the port list for the page's options; the ordering decision sits in reference-data, not here."
     },
     {
       "id": "repo-frontend-p11-019",
@@ -303,14 +294,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p11-038",
-      "statement": "The arrival date, port of entry, means of transport, transport identification and transport document reference are each mandatory for a notification, whatever the page lets a user save part-way.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/obligations/sections/arrival.js:5-15 and obligations/sections/transport.js:69-85",
-      "quote": "export const arrivalDateAtPort = {\n  id: '12b3c4d5-e6f7-4a08-8b9a-1c2d3e4f5a6b',\n  name: 'arrivalDateAtPort',\n  status: 'mandatory'\n}\n\nexport const portOfEntry = { … status: 'mandatory'\n} … export const meansOfTransport = { … status: 'mandatory'\n} … export const transportIdentification = { … status: 'mandatory'\n} … export const transportDocumentReference = { … status: 'mandatory'\n}",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p11-039",
       "statement": "Each of the page's five answers is reported against its own obligation when the notification's completeness is worked out.",
       "kind": "behaviour",
@@ -438,14 +421,6 @@
       "kind": "copy",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:62-63 with transit-countries.controller.js:64, transit-countries.njk:12 and features/hub/copy/copy.en.js:49-51",
       "quote": "pageTitle: 'Transit countries',\n    title: 'Which countries will the consignment travel through?', … ...kit.base(copy.pageTitle, { … <h1 class=\"govuk-heading-l\">{{ copy.title }}</h1> … transitCountries: {\n      title: 'Transit countries'\n    },",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p11-055",
-      "statement": "The caption above the transit countries heading reads \"Movement\", not \"Transport and arrival\".",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:45 with flow/section-captions/copy/copy.en.js:12",
-      "quote": "{ id: 'movement', pages: [transitCountriesPage] } … movement: 'Movement',",
       "confidence": "verbatim"
     },
     {
@@ -659,22 +634,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p11-082",
-      "statement": "Transit countries is asked only of a consignment arriving by rail or road: for any other means of transport the answer is out of scope and dropped.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:17-21,96-111",
-      "quote": "const transitedCountriesReason = {\n  code: 'obligation.transitedCountries.applicable.becauseLandTransport',\n  explanation:\n    'transitedCountries applies when meansOfTransport is RAILWAY or ROAD_VEHICLE'\n} … const LAND_TRANSPORT_MODES = ['RAILWAY', 'ROAD_VEHICLE'] … applyTo: includesGate(\n    meansOfTransport,\n    LAND_TRANSPORT_MODES, … { inScope: false }\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p11-083",
-      "statement": "The overview shows a transit countries task row only while the page applies, which is why the row is marked conditional.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:63-64 with fit/arrival-transit.fit.spec.js:697-703",
-      "quote": "{ id: 'arrivalDetails', pages: [portOfEntryPage] },\n  { id: 'transitCountries', pages: [transitCountriesPage], conditional: true }, … await expect(\n      page.getByRole('link', {\n        name: hubCopy.rows.transitCountries.title,\n        exact: true\n      })\n    ).toHaveCount(0)",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p11-084",
       "statement": "Opening the transit countries page by its address when it does not apply sends the user to the overview, and the service logs why.",
       "kind": "behaviour",
@@ -696,14 +655,6 @@
       "kind": "behaviour",
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:142-155",
       "quote": "const missing = earliestMissingAnswerPage(page.id, current.scope) … 'Redirected to the page that asks for a missing earlier answer: transit countries needs it'\n  )\n  return h.redirect(kit.carryTrail(request, askingPagePath(missing, journeyId)))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p11-087",
-      "statement": "Save and continue from transit countries opens the transporter list.",
-      "kind": "behaviour",
-      "ref": "fit/live-animals-journey.js:1399-1403 with src/server/app/sets/live-animals/journeys/linear/flow/flow.js:59",
-      "quote": "export const answerTransitCountries = async (page) => {\n  await addTransitCountry(page, 'France')\n  await addTransitCountry(page, 'Belgium')\n  await saveAndExpectLanding(page, LANDINGS.transporters)\n} … pages: [portOfEntryPage, transitCountriesPage, transportersPage]",
       "confidence": "verbatim"
     },
     {
@@ -763,6 +714,191 @@
       "quote": "if (action === ADD_ACTION) {\n    return postAdd(request, h, current, selected)\n  }\n  if (isRemoveAction(action)) {\n    return postRemove(request, h, current, selected, removeCodeOf(action))\n  }\n  return postContinue(request, h, current, payload, selected)",
       "confidence": "inferred",
       "note": "Follows because both the add and the remove action render the same page back with the list changed; no other route or template exists in the feature folder for a confirmation."
+    },
+    {
+      "id": "repo-frontend-p13-001",
+      "statement": "The private transporter details form is served at /notifications/<journeyId>/transporters/add/private within the live-animals set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:31-35 with src/server/app/shared/paths.js:11-12",
+      "quote": "export const privateTransporterDetailsPage = {\n  id: 'private-transporter-details',\n  slug: 'transporters/add/private',\n  maturity: 'agreed'\n}",
+      "confidence": "verbatim",
+      "note": "page.js and paths.js are outside this part's read list and were opened for provenance only; the slug-to-URL join is paths.js:11-12, `${setBase()}/notifications/${journeyId}/${slug}`."
+    },
+    {
+      "id": "repo-frontend-p13-002",
+      "statement": "The commercial transporter details form is served at /notifications/<journeyId>/transporters/add/commercial within the live-animals set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:25-29 with src/server/app/shared/paths.js:11-12",
+      "quote": "export const commercialTransporterDetailsPage = {\n  id: 'commercial-transporter-details',\n  slug: 'transporters/add/commercial',\n  maturity: 'agreed'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-003",
+      "statement": "Both transporter details pages are marked as agreed behaviour, the maturity level that makes a page signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:28 and :34",
+      "quote": "maturity: 'agreed'",
+      "confidence": "verbatim",
+      "note": "Both page definitions carry the same level, so a change to either page's behaviour trips the signed-off check."
+    },
+    {
+      "id": "repo-frontend-p13-116",
+      "statement": "The test data the suite adds transporters with is a Northern Ireland commercial haulier with a UK/BELF authorisation number and a French private transporter, so both forms are exercised with a within-UK and an outside-UK address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/test-support.js:63-101",
+      "quote": "export const validCommercialTransporter = {\n  approvalNumber: 'UK/BELF/T2/00104115',\n  nameOrOrganisationName: 'Lough Neagh Livestock Ltd',",
+      "confidence": "verbatim",
+      "note": "The private sample sets country to France, which the private form accepts and the commercial form would refuse."
+    },
+    {
+      "id": "repo-frontend-p11-095",
+      "statement": "A user reaches the arrival details page from the overview task list by the link \"Arrival details\".",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:1414-1423 with src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:45-47",
+      "quote": "export const openArrival = async (page) => {\n  await startNotification(page)\n  await unlockSections(page)\n  await page\n    .getByRole('link', { name: transportCopy.portOfEntry.title })\n    .click() … arrivalDetails: {\n      title: 'Arrival details'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-096",
+      "statement": "The caption above the arrival details heading reads \"Transport and arrival\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:12 with src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:46 and flow/section-captions/copy/copy.en.js:13",
+      "quote": "{{ sectionCaption(caption) }} … { id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] }, … transportAndArrival: 'Transport and arrival',",
+      "confidence": "verbatim",
+      "note": "The caption value is owned by the flow's section-captions files, read here only to resolve what the template renders."
+    },
+    {
+      "id": "repo-frontend-p11-097",
+      "statement": "The caption above the transit countries heading reads \"Movement\", not \"Transport and arrival\" like the arrival details page.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:11 with src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:45 and flow/section-captions/copy/copy.en.js:12",
+      "quote": "{{ sectionCaption(caption) }} … { id: 'movement', pages: [transitCountriesPage] }, … movement: 'Movement',",
+      "confidence": "verbatim",
+      "note": "The two pages of one overview section carry different captions; recorded, not reconciled."
+    },
+    {
+      "id": "repo-frontend-p11-098",
+      "statement": "The port of entry list is whatever the reference-data service returns, in the order it returns it: the frontend loads it on first use, retries a failed load on the next read, and does no sorting of its own.",
+      "kind": "integration",
+      "ref": "src/server/app/services/ports/index.js:16-44 with port-of-entry/port-of-entry.controller.js:34-40",
+      "quote": "export const ensureLoaded = async () => {\n  if (isStubMode() || loaded) {\n    return\n  }\n  try {\n    ports = await fetchPortsOfEntry()\n    loaded = true … export const portOptions = async () => {\n  await ensureLoaded()\n  return ports.map((port) => ({ value: port.code, text: displayName(port) }))\n}",
+      "confidence": "verbatim",
+      "note": "mechanism: loads and caches the ports-of-entry reference list. Read outside the part's listed files to answer the covers item on where the port list comes from and how it is ordered."
+    },
+    {
+      "id": "repo-frontend-p11-099",
+      "statement": "The port dropdown opens on \"Select a port\" followed by every captured port of entry, in the captured order, each shown as \"<name> - <code>\" with the code as its value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:178-222",
+      "quote": "expect(options).toEqual([\n      { code: '', label: copy.portOfEntry.port.selectText },\n      ...portsOfEntry.map((port) => ({\n        code: port.code,\n        label: `${port.name} - ${port.code}`\n      }))\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-100",
+      "statement": "The arrival details page's browser tab is titled with its heading, \"Arrival details\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js:61 with copy/copy.en.js:7",
+      "quote": "...kit.base(copy.title, { … title: 'Arrival details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-101",
+      "statement": "The transit countries browser tab reads \"Transit countries - Import notification service - GOV.UK\", prefixed with \"Error: \" when the page shows an error.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:722-738",
+      "quote": "const transitTitle = `${copy.transitCountries.pageTitle} - Import notification service - GOV.UK` … await expect(page).toHaveTitle(`Error: ${transitTitle}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-102",
+      "statement": "In the date picker calendar the day before the arrival window is shown as an excluded date, while the window's first day can be picked and fills the date field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:377-403",
+      "quote": "test('the picker calendar excludes the day before the window and allows the boundary itself' … name: `Excluded date, ${dayLabel(dayBefore)}` … ).toHaveValue(dateWindow.minText)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-103",
+      "statement": "An impossible arrival date such as 31/2/2026 is refused with an error-summary link that focuses the date field, and the typed date and the chosen port are shown back.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:358-375",
+      "quote": "test('arrival date validation: impossible date links to and focuses the preserved value' … .fill('31/2/2026') … copy.portOfEntry.errors.arrivalDateInvalid … ).toHaveValue('31/2/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-104",
+      "statement": "A typed arrival date one day before or one day after the window is refused with the between-dates message, its error-summary link focuses the date field, and the typed date, port, identification and means of transport are all shown back.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:405-437",
+      "quote": "['before the earliest allowed date', justBeforeWindow],\n      ['after the latest allowed date', justAfterWindow] … test(`a typed date ${bound} links to and focuses the preserved value`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-105",
+      "statement": "When arrival details are reopened, a missing saved means of transport raises no error, and a saved means that is no longer on the list is refused with the default \"Select a valid option\" message rather than the required message.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/validate.js:19-28 with src/server/app/shared/copy.en.js:93",
+      "quote": "return stored\n    ? oneOf('meansOfTransport', codes)\n    : requiredOneOf(\n        'meansOfTransport',\n        codes,\n        copy.errors.meansOfTransportRequired\n      ) … oneOf: 'Select a valid option',",
+      "confidence": "inferred",
+      "note": "Inferred from the stored branch passing no message to oneOf, so the validator default applies; no fit test shows the stored case."
+    },
+    {
+      "id": "repo-frontend-p11-106",
+      "statement": "The fit suite checks the arrival date picker's calendar position, using the port of entry label as the next question below it.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:340-351",
+      "quote": "describeCalendarPosition({\n    fieldName: 'arrival date',\n    label: copy.portOfEntry.arrivalDate.label,\n    nextQuestionLabel: (page) => page.locator('label[for=\"portOfEntry\"]')\n  })",
+      "confidence": "inferred",
+      "note": "What describeCalendarPosition asserts lives in fit/live-animals-journey.js, outside this part; the statement says only which field and neighbour it is run against."
+    },
+    {
+      "id": "repo-frontend-p11-107",
+      "statement": "Saving arrival details with an overland means of transport and returning to the overview makes the overview offer a \"Transit countries\" task link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:612-625",
+      "quote": "test('saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport' … page.getByRole('link', {\n        name: hubCopy.rows.transitCountries.title,\n        exact: true\n      })\n    ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-108",
+      "statement": "Save and continue from transit countries opens the transporter list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:1073-1081 with fit/live-animals-journey.js:1402-1406",
+      "quote": "test('arrival details lead to transit countries, then the transporter list, then Upload documents' … export const answerTransitCountries = async (page) => {\n  await addTransitCountry(page, 'France')\n  await addTransitCountry(page, 'Belgium')\n  await saveAndExpectLanding(page, LANDINGS.transporters)\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-109",
+      "statement": "When saved transit countries are refused on reopening the page, the service logs the refusal at info with the journey id before showing the error.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:219-225",
+      "quote": "if (hasErrors(errors)) {\n    request.logger.info(\n      { journeyId: current.journey.journeyId, ...refusal },\n      'Stored transit countries refused: banner shown'\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-110",
+      "statement": "The transit countries answer is reported against its own obligation when the notification's completeness is worked out.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js:33",
+      "quote": "scalar({ field: 'transitedCountries', obligation: transitedCountries }),",
+      "confidence": "verbatim",
+      "note": "mechanism: binds the transitedCountries answer to its obligation for completeness evaluation."
+    },
+    {
+      "id": "repo-frontend-p11-111",
+      "statement": "A user reaches the transit countries page from the overview task list by the link \"Transit countries\".",
+      "kind": "behaviour",
+      "ref": "fit/live-animals-journey.js:1461-1474 with src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:48-50",
+      "quote": ".getByRole('link', {\n      name: hubCopy.rows.transitCountries.title,\n      exact: true\n    })\n    .click() … transitCountries: {\n      title: 'Transit countries'\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p11-112",
+      "statement": "More than 12 countries submitted at once are refused but left in the form as they were, so the user removes the extras.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js:1006-1024",
+      "quote": "expect(await addedCountries(page)).toHaveLength(MAX_TRANSITED_COUNTRIES + 1)",
+      "confidence": "verbatim"
     }
   ]
 }

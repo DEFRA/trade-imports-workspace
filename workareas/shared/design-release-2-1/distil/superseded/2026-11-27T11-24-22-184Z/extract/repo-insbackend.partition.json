@@ -1,0 +1,55 @@
+{
+  "source": "repo:insbackend",
+  "structure": "repos/trade-imports-ins-backend is a small Java / Spring Boot service (about 100 files). It consumes notification outbox events from an SQS queue and upserts them into a Mongo 'notifications' collection (the cross-journey read model), then serves that read model read-only at GET /notifications. The read model lives in one package, src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/ (10 classes, about 470 lines: the AggregatedNotification document with fields aggregateId, aggregateVersion, referenceNumber, status, originCountry, commodity, arrivalDate, lastUpdated; the controller with page, sort and referenceNumber parameters; the query service, sort parser, page response, repository; the SQS listener, upsert service, outbox event types and error handler), with its unit tests (7 files, about 750 lines) and integration tests AggregatedNotificationControllerIT and NotificationSqsListenerIT (about 300 lines), plus GlobalExceptionHandler (174 lines), application.yml (160 lines), compose/mongo/10-init.js and the README (108 lines). No rulings ledger exists in the repo. The scope (the read model behind the dashboard: fields, statuses, filters, sort and search) is about 2,000 lines, so it is one part. Left out: the addresslookup package (postcode address lookup proxy, 12 classes and 7 tests), which is not the dashboard read model; platform config (TLS, proxy, AWS, metrics, logging, tracing filters and interceptors, health check) and their tests; CI workflows, Dockerfile, floci and compose plumbing other than the Mongo init script.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Notification read model and dashboard query API",
+      "scope": "The whole notification package of ins-backend: how outbox events become read-model records (event types, upsert and version rules, error handling) and the GET /notifications API the dashboard calls (fields returned, paging, sort options, reference-number search, status handling, validation and error responses). Stops at the addresslookup package and platform config.",
+      "read": [
+        "README.md",
+        "~/git/defra/trade-imports-workspace/docs/repos/trade-imports-ins-backend.md (workspace doc)",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/OutboxEventType.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/SqsRetryableException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/SqsNonRetryableException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/NotFoundException.java",
+        "src/main/java/uk/gov/defra/trade/imports/ins/backend/exceptions/ConflictException.java",
+        "src/main/resources/application.yml",
+        "compose/mongo/10-init.js",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSortTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListenerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/OutboxEventTypeTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationErrorHandlerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/NotificationSqsListenerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java"
+      ],
+      "covers": [
+        "Every field of the read-model record (the 8 fields of AggregatedNotification), its Mongo collection and indexes, and what each field is filled from",
+        "Every status value the read model stores or the API returns, and whether the API filters on status",
+        "GET /notifications: every request parameter (page with its minimum and default, sort, referenceNumber) and its validation; the page size; the page response fields",
+        "Every sort option (arrivalDate and lastUpdated, asc and desc), the default, tie-breaking, and what happens with an unknown sort value",
+        "Search: the referenceNumber exact-match behaviour, and the absence of any other filter or free-text search (a gap where the dashboard needs one)",
+        "Event ingestion: every outbox event type accepted, how each maps to an upsert or other change, the aggregateVersion ordering rule for stale or duplicate events, and retryable versus non-retryable errors",
+        "Error responses from GlobalExceptionHandler that the dashboard API can return, with status codes and bodies",
+        "Any scoping of the list by user or organisation, or its absence (a security finding stated in general terms only)",
+        "Notification-related configuration in application.yml (queue name, page size or similar) and the Mongo init script",
+        "What each unit and integration test above proves about the read model and the API"
+      ],
+      "prefix": "repo-insbackend-p1"
+    }
+  ]
+}

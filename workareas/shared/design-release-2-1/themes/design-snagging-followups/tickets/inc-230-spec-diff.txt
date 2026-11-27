@@ -1,0 +1,42 @@
+h3. What the specification now says
+
+A live animals notification submitted with documents but no ITAHC now gets the "Before the consignment is imported" reminder on its confirmation page, so the ITAHC is still listed as owed. The Save and return to overview rule on hub pages is also clarified: a blank optional answer, such as no means of transport on Arrival details, is accepted, and the task reads "To do". This is generated from the merged Behaviour Spec on main.
+
+h4. [Live animals: Confirmation page|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/confirmation/spec.md]
+
+Changed requirement: "The page tells the user they still owe the ITAHC when none was uploaded" (was "The page tells the user what they still owe when documents are outstanding"). The reminder now shows whenever no ITAHC was uploaded, whatever other documents were, and is hidden only when an ITAHC was uploaded.
+
+h5. Added: A submission with documents but no ITAHC carries the outstanding-work section
+* *GIVEN* a notification was submitted with documents recorded, none of them an ITAHC
+* *WHEN* the user reads the confirmation page
+* *THEN* a "Before the consignment is imported" section tells them they still need to 'upload the ITAHC and any other required documents'
+
+h5. Changed: A submission with an ITAHC carries no outstanding-work section
+The scenario was "A submission with a document carries no outstanding-work section"; it now needs an ITAHC uploaded, not just any document, to hide the section.
+* *GIVEN* a notification was submitted with an ITAHC uploaded
+* *WHEN* the user reads the confirmation page
+* *THEN* the panel is followed by "Transporting the consignment", and the page's sections are exactly transporting, view or amend, and help
+
+h4. [Live animals: Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]
+
+Changed requirement: "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview" now says Save and return to overview refuses only a missing required answer or an answer that breaks its rule, and that a blank optional answer is accepted by either save.
+
+h5. Changed: Arrival details saved and returned without a means of transport keeps the other answers
+The task on Overview must now read "To do" (it previously had only to not read "Complete"), and the scenario says saving and continuing would also accept the page.
+* *GIVEN* the Arrival details page with a port of entry chosen and no means of transport
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they return to Overview with no error shown, as saving and continuing would also accept the page
+* *AND* the Arrival details task reads "To do"
+* *AND* re-opening the page shows the port of entry chosen
+
+h4. Test coverage
+
+* Confirmation page: the new scenario is proven by a unit test and an end-to-end test; the ITAHC scenario's unit test now uploads an ITAHC.
+* Journey flow: the Arrival details scenario moves from no coverage to full, proven by an end-to-end test and a unit test.
+* Commodity selection: the search page's "offers all three controls" scenario moves from no coverage to full, proven by a fit test.
+
+h4. Pull requests
+
+* [trade-imports-ins-tests #65|https://github.com/DEFRA/trade-imports-ins-tests/pull/65]
+* [trade-imports-animals-frontend #443|https://github.com/DEFRA/trade-imports-animals-frontend/pull/443]
+* [trade-imports-workspace #174|https://github.com/DEFRA/trade-imports-workspace/pull/174]

@@ -1,0 +1,110 @@
+h3. What the specification now says
+
+When a trader chooses Add another commodity on commodity details or identification details, or Change on an identification details summary row, saving on "What are you importing?" now takes them back to the page they came from, instead of moving on through the journey. This summary is generated from the merged Behaviour Spec on main.
+
+h4. [Live animals: commodity details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-details/spec.md]
+
+The requirement "Adding another commodity from this page preserves what was already entered" now also says the trader is returned to commodity details once the new commodity is saved.
+
+h5. Changed: Adding another commodity keeps the earlier species selected and their counts intact
+
+The last step now says commodity details is shown again, and checks the number of packages as well as the number of animals.
+
+* *GIVEN* the user has saved a count for one species
+* *WHEN* they choose to add another commodity, select a further species and save
+* *THEN* the earlier species was still shown as selected on the selection page
+* *AND* commodity details is shown again, the earlier species' saved number of animals and number of packages are unchanged, and the new species starts with an empty count
+
+h5. Added: In the opening sequence, adding another commodity returns to commodity details
+
+* *GIVEN* the user is in the opening sequence on commodity details
+* *WHEN* they choose to add another commodity, select a further species and save
+* *THEN* commodity details is shown, not the reason for import
+
+h4. [Live animals: what are you importing (commodity selection)|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]
+
+The back link requirement is renamed "The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise", and now says the back link returns to commodity details or identification details when that page opened the question.
+
+h5. Added: Opened from commodity details, the back link opens commodity details
+
+* *GIVEN* the user opened what are you importing from the Add another commodity link on commodity details
+* *WHEN* they follow the back link
+* *THEN* commodity details is shown
+
+A new requirement, "Saving returns the user to the page that opened the question, else goes on", says: the system MUST return the user to commodity details or identification details after a save on what are you importing when that page opened it, keeping any change context. Otherwise a save MUST go to the next step of the opening sequence, a save from a Change link on the review MUST go to commodity details, and save and return to overview MUST go to Overview.
+
+h5. Added: Opened from commodity details, saving returns there
+
+* *GIVEN* the user opened what are you importing from the Add another commodity link on commodity details
+* *WHEN* they choose a further species and save and continue
+* *THEN* commodity details is shown
+
+h5. Added: Opened from identification details, saving returns there
+
+* *GIVEN* the user opened what are you importing from identification details
+* *WHEN* they save and continue
+* *THEN* identification details is shown
+
+h5. Added: In the opening sequence, saving opens the reason for import
+
+* *GIVEN* the user is in the opening sequence on what are you importing
+* *WHEN* they save and continue
+* *THEN* the reason for import page is shown
+
+h5. Added: Opened from a review Change link, saving opens commodity details
+
+* *GIVEN* the user opened what are you importing from a Change link on the review
+* *WHEN* they save and continue
+* *THEN* commodity details is shown
+
+h5. Added: Opened from commodity details under a review Change, saving returns there keeping the change context
+
+* *GIVEN* the user opened what are you importing from commodity details, reached from a Change link on the review
+* *WHEN* they save and continue
+* *THEN* commodity details is shown, still carrying the change context
+
+h5. Added: A return value naming a page that does not open the question is ignored
+
+* *GIVEN* the user opened what are you importing with a return value that names a page other than commodity details or identification details
+* *WHEN* they save and continue
+* *THEN* the save goes where a save with no return value goes
+
+h4. [Live animals: identification details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/identification-details/spec.md]
+
+The summary table requirement now says each row's Change link opens commodity selection showing what is already chosen, and saving there returns the trader to identification details. The card requirement now says saving after Add another commodity returns the trader to identification details.
+
+h5. Added: Adding a commodity from a summary row's Change returns to identification details listing it
+
+* *GIVEN* the user is on the identification details page
+* *WHEN* they follow Change on a summary row
+* *THEN* commodity selection shows the commodities already chosen
+* *WHEN* they choose a further commodity and save and continue
+* *THEN* identification details is shown, and its summary lists the added commodity
+
+h5. Added: Removing a commodity from a summary row's Change returns to identification details without it
+
+* *GIVEN* the user is on the identification details page with more than one commodity chosen
+* *WHEN* they follow Change on a summary row, untick that commodity and save and continue
+* *THEN* identification details is shown, and its summary lists only the commodities left
+
+h5. Changed: Add another commodity is offered while cards still need identifying
+
+A new last step says saving on commodity selection returns the trader to identification details.
+
+* *GIVEN* the user has a commodity still to identify
+* *WHEN* they follow Add another commodity
+* *THEN* commodity selection opens
+* *AND* saving there returns to identification details
+
+h4. Test coverage
+
+* Commodity details coverage: the changed scenario is now proved by two frontend tests (with and without JavaScript) and an end-to-end test, and the new scenario by a frontend test.
+* Commodity selection coverage: the new back link scenario and the six new save scenarios are linked to frontend tests. The new back link scenario, four of the six save scenarios, the back link requirement and the new save requirement are marked as only partly proved.
+* Identification details coverage: the new adding scenario is linked to a frontend test and an end-to-end test, and the new removing scenario to two frontend tests. The existing summary and Add another commodity tests were renamed to cover the return trip, and the Add another commodity unit test is now marked as only partly proving its scenario.
+
+h4. Pull requests
+
+* [trade-imports-workspace #164|https://github.com/DEFRA/trade-imports-workspace/pull/164]
+* [trade-imports-animals-frontend #437|https://github.com/DEFRA/trade-imports-animals-frontend/pull/437]
+* [trade-imports-plants-frontend #121|https://github.com/DEFRA/trade-imports-plants-frontend/pull/121]
+* [trade-imports-ins-tests #60|https://github.com/DEFRA/trade-imports-ins-tests/pull/60]

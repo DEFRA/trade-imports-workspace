@@ -1,12 +1,12 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 3, commodity type and the set-owned commodity vocabulary. Read in full: every file of src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/ (page.js, controller.js, evaluation.js, template.njk, controller.test.js, commodity-type.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js) and both files of src/server/app/sets/high-risk-plants/services/commodities/ (index.js, commodities.test.js). Read for context, claimed by other parts: journeys/linear/flow/flow.js (part 2), src/server/app/shared/kit.js (part 13), and - to say where each branch of the answer leads, which this part's covers demands - shared/paths.js, shared/copy.en.js saveActions, journeys/linear/flow/entry-guard.js, journeys/linear/features/timing-windows.js, journeys/linear/features/commodities/links.js and fields.js key names, journeys/linear/features/hub/copy/copy.en.js row title, journeys/linear/flow/section-captions/copy/copy.en.js, journeys/linear/test-support.js helpers and fixtures, obligations/sections/commodity.js, obligations/sections/arrival.js and obligations/sections/parties.js. Covered: the one page of this slice, commodity-type, at /high-risk-plants/notifications/{journeyId}/commodity-type - its route, its place as the journey's entry page and guard, its caption, heading, hint and warning, its three radio options with label and timing hint, its required-answer rule and the one error message, its three save controls and Back behaviour in five trail states, what it commits, the line reconciliation a change of type triggers, its save-failure and stale-token answers, every copy key of copy.en.js and copy.cy.js verbatim, the 17 tests of commodity-type.fit.spec.js and the 32 of controller.test.js and copy/copy.test.js, the whole vocabulary services/commodities/index.js serves (3 commodity types, 9 categories, 15 genera, 3 origin constraints, 9 per-line fields and every narrowing between them) with its prototype-independent owner question recorded, evaluation.js as a mechanism, and every branch the commodity-type answer opens in the obligation model, the potato branch that skips arrival status included. Stops at the commodities list and details pages, which part 4 claims.",
+  "structure": "Part 3 read, on main at 2f2b07f, every file of journeys/linear/features/commodity-type/ in full (page.js 5 lines, evaluation.js 9, controller.js 151, template.njk 38, controller.test.js 418, commodity-type.fit.spec.js 349 with 17 tests, copy/copy.en.js 36, copy/copy.cy.js 31, copy/copy.test.js 90) and services/commodities/ in full (index.js 290, commodities.test.js 227). For context only, it read flow/flow.js (commodity-type is the first page of the about-the-consignment section, after the dashboard's start section), flow/entry-guard.js, features/timing-windows.js, features/commodities/links.js, obligations/sections/commodity.js, arrival.js and parties.js, the shared journey test-support.js, and the parts of shared/kit.js the page calls (base, nextTarget, recoverableSave, pageRoutes and its stale-action wrapper). The slice is one page: the commodity-type question at /high-risk-plants/notifications/{journeyId}/commodity-type, a single required radio group of three types with timing hints, a lines-removal warning, the three shared save controls, its back and cancel destinations, its refusals, its type-change line purge and its save failure; then the set-owned commodity vocabulary the page and the commodity pages read (3 commodity types, 9 categories partitioned by type, 15 genus entries with a 3-entry hardwood list, 3 origin constraints narrowest first, 9 per-line fields with the categories each applies to). Claims cover the route, entry guard, heading, caption, hint, every option label and hint, every English and Welsh copy key, the error, every branch (the commodities list, the overview, the removal report, and the potato versus plants-and-wood fork in arrival and parties scope), every unit and fit test, the vocabulary as hard-coded data whose owner (V4 or MDM through reference-data) is an open question, and evaluation.js as a mechanism. It stops at the commodities list and details pages, which part 4 claims.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p3-001",
       "statement": "The commodity-type question is served at /high-risk-plants/notifications/{journeyId}/commodity-type, by GET to show it and POST to answer it, and both need a signed-in session.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.js:151, journeys/linear/features/commodity-type/page.js:3, shared/kit.js:342-355, shared/kit.js:24, shared/paths.js:5, sets/high-risk-plants/set.js:7",
+      "ref": "journeys/linear/features/commodity-type/controller.js:151, journeys/linear/features/commodity-type/page.js:3, shared/kit.js:350-363, shared/kit.js:31, shared/kit.js:40, shared/paths.js:5, sets/high-risk-plants/set.js:7",
       "quote": "export const routes = kit.pageRoutes(page, { get, post })\n...\nexport const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`\n...\nexport const routeOptions = { auth: 'session' }\n...\nexport const SET_BASE = `/${SET_ID}`",
       "confidence": "verbatim"
     },
@@ -14,15 +14,15 @@
       "id": "repo-plantsfrontend-p3-002",
       "statement": "The commodity-type page is the journey's entry page: opening any other page of a notification that holds no user-entered answer sends the trader to it instead, logged once.",
       "kind": "behaviour",
-      "ref": "journeys/linear/flow/entry-guard.js:55-68",
-      "quote": "if (hasCommittedNotificationAnswers(answers)) {\n    return null\n  }\n  request.logger.info(\n    { journeyId: journey.journeyId, path: request.path },\n    'No answer entered, sent to the first page'\n  )\n  return pagePath(request.params.journeyId, commodityTypePage.slug)",
+      "ref": "journeys/linear/flow/entry-guard.js:56-70",
+      "quote": "if (hasCommittedNotificationAnswers(answers)) {\n    return null\n  }\n  request.logger.info(\n    { journeyId: journey.journeyId, path: request.path },\n    'No answer entered, sent to the first page'\n  )\n...\n  return pagePath(request.params.journeyId, commodityTypePage.slug)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p3-003",
       "statement": "The commodity-type page itself, and anything beneath its slug, is exempt from the entry guard, so the trader is never bounced away from the question that would let them past it.",
       "kind": "behaviour",
-      "ref": "journeys/linear/flow/entry-guard.js:31-34",
+      "ref": "journeys/linear/flow/entry-guard.js:32-35",
       "quote": "const isEntrySurface =\n    slug === commodityTypePage.slug ||\n    slug.startsWith(`${commodityTypePage.slug}/`)\n  return Boolean(journeyId) && !isEntrySurface",
       "confidence": "verbatim"
     },
@@ -395,7 +395,7 @@
       "id": "repo-plantsfrontend-p3-049",
       "statement": "Once the commodity type is committed, Cancel and return to overview goes to the notification overview rather than the dashboard.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.test.js:121, journeys/linear/test-support.js:224-243, journeys/linear/flow/entry-guard.js:47-50",
+      "ref": "journeys/linear/features/commodity-type/controller.test.js:121, journeys/linear/test-support.js:224-243, journeys/linear/flow/entry-guard.js:48-51",
       "quote": "export const leaveJourneyLink = (journey, answers) =>\n  hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
       "confidence": "verbatim"
     },
@@ -419,7 +419,7 @@
       "id": "repo-plantsfrontend-p3-052",
       "statement": "Back from the commodity-type page goes to the Import Notification Service's notification-type question when the notification was started there, answered or not.",
       "kind": "integration",
-      "ref": "journeys/linear/features/commodity-type/controller.test.js:142-157, journeys/linear/flow/entry-guard.js:52-53",
+      "ref": "journeys/linear/features/commodity-type/controller.test.js:142-157, journeys/linear/flow/entry-guard.js:53-54",
       "quote": "        expectBackLinkIsPath(result, 'http://ins.example/notification-type')\n...\nexport const insTypeQuestionUrl = () =>\n  buildInsFrontendUrl('/notification-type')",
       "confidence": "verbatim"
     },
@@ -428,9 +428,9 @@
       "statement": "Back from the commodity-type page goes to the review page when the trader arrived by a Change link on it.",
       "kind": "behaviour",
       "ref": "journeys/linear/features/commodity-type/controller.test.js:168-175",
-      "quote": "    it('Should send Back to the review when opened by a Change link', async () => {\n...\n      expectBackLinkIsPath(result, pagePath(result.journeyId, CYA_SLUG))",
+      "quote": "    it('Should send Back to the review when opened from a Change link', async () => {\n...\n      expectBackLinkIsPath(result, pagePath(result.journeyId, CYA_SLUG))",
       "confidence": "verbatim",
-      "note": "The review page's slug is notification-view (shared/kit.js:71)."
+      "note": "The review page's slug is notification-view (shared/kit.js:78)."
     },
     {
       "id": "repo-plantsfrontend-p3-054",
@@ -508,17 +508,18 @@
     },
     {
       "id": "repo-plantsfrontend-p3-063",
-      "statement": "When saving the commodity type fails because the backend is unavailable, the page is shown again at 500 with a recoverable-error banner and the trader's choice still filled in, and the failure is logged once at warn.",
+      "statement": "When saving the commodity type fails because the backend is unavailable, the page is shown again at 500 with a recoverable-error banner and the trader's choice still filled in, and the fallback is logged once at warn.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.js:122-139, journeys/linear/features/commodity-type/controller.test.js:394-409",
-      "quote": "    expect(result.response.statusCode).toBe(500)\n    expect(result.view.context.recoverableError).toBe(true)\n    expect(result.view.context.values).toEqual({ commodityType: POTATOES })\n    expectOneSaveFallbackLogged(result.logger, {\n      journeyId: result.journeyId,\n      err: failure\n    })",
-      "confidence": "verbatim"
+      "ref": "journeys/linear/features/commodity-type/controller.js:122-139, journeys/linear/features/commodity-type/controller.test.js:394-408, shared/kit.js:302-320",
+      "quote": "    expect(result.response.statusCode).toBe(500)\n    expect(result.view.context.recoverableError).toBe(true)\n    expect(result.view.context.values).toEqual({ commodityType: POTATOES })\n    expectOneSaveFallbackLogged(result.logger, {\n      journeyId: result.journeyId\n    })",
+      "confidence": "verbatim",
+      "note": "mechanism: the shared save helper logs the fallback with the failure as err only when the backend refusal was not already logged where it was raised; this test hands it one that was, so the fallback line carries the journey id alone."
     },
     {
       "id": "repo-plantsfrontend-p3-064",
       "statement": "A programming failure while saving the commodity type is not caught by the page: it escapes to the service-wide error handler.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.test.js:411-418",
+      "ref": "journeys/linear/features/commodity-type/controller.test.js:410-417",
       "quote": "  it('Should let a programming error escape to the promoted catch-all', async () => {\n    await expect(\n      driveHandler(post, {\n        payload: { commodityType: POTATOES },\n        saveFailure: new TypeError('programming failure')\n      })\n    ).rejects.toThrow(new TypeError('programming failure'))",
       "confidence": "verbatim"
     },
@@ -526,7 +527,7 @@
       "id": "repo-plantsfrontend-p3-065",
       "statement": "A commodity-type answer posted against a notification that has changed since the page was shown is refused and the page reopened with a stale-action marker, logged once.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.js:151, shared/kit.js:322-340",
+      "ref": "journeys/linear/features/commodity-type/controller.js:151, shared/kit.js:322-348",
       "quote": "      const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
       "confidence": "inferred",
       "note": "mechanism: the commodity-type POST route is wrapped by the shared page-route helper, which owns this behaviour for every page, so it follows that the commodity-type page has it; the helper itself is part 13's. No test in this slice exercises it on this page."
@@ -1003,7 +1004,7 @@
       "id": "repo-plantsfrontend-p3-123",
       "statement": "Nothing in this slice says whether a trader may change the commodity type of a notification that has already been submitted or is being amended: the page shows the same form and accepts the same post whatever the notification's status.",
       "kind": "behaviour",
-      "ref": "journeys/linear/features/commodity-type/controller.js:78-149, journeys/linear/features/commodity-type/controller.test.js:52-419",
+      "ref": "journeys/linear/features/commodity-type/controller.js:78-149, journeys/linear/features/commodity-type/controller.test.js:52-418",
       "quote": "",
       "confidence": "gap",
       "note": "Looked for a read-only branch, an amend check or a status check in the controller, its template and its unit and fit tests, and found none; the only status-dependent element on the page is the shared journey strip's Cancel amend control, which shared/kit.js owns. Changing the type of a submitted notification would drop its commodity lines under claim repo-plantsfrontend-p3-056."
@@ -1015,6 +1016,74 @@
       "ref": "journeys/linear/features/commodity-type/commodity-type.fit.spec.js:283-291",
       "quote": "    await radioFor(page, 'potatoes').check()\n    await saveAndContinue(page).click()\n\n    await expect(page).toHaveURL(DETAILS_URL_FROM_DASHBOARD)",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-125",
+      "statement": "Each time the entry guard sends a trader to the commodity-type page, the service counts one journey.entry.redirect event in its metrics.",
+      "kind": "non-functional",
+      "ref": "journeys/linear/flow/entry-guard.js:68",
+      "quote": "countEventInBackground('journey.entry.redirect')",
+      "confidence": "verbatim",
+      "note": "The entry guard is part 2's flow file, read here for context; this claim records only what the guard does when it lands a trader on this page."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-126",
+      "statement": "Save and return to overview with no commodity type chosen is refused like Save and continue: the trader stays on the page, answered 400, with 'Select what you are importing' beside the options and in the summary, and the type and lines already saved are kept.",
+      "kind": "behaviour",
+      "ref": "journeys/linear/features/commodity-type/controller.test.js:236-249, journeys/linear/features/commodity-type/commodity-type.fit.spec.js:244-263",
+      "quote": "  it('Should refuse no choice on Save and return to overview, keep the lines and save nothing', async () => {\n...\n    expect(result.response.statusCode).toBe(400)\n    expect(result.view.context.errors.commodityType).toBe(\n      SELECT_WHAT_YOU_ARE_IMPORTING\n    )\n    expect(result.view.context.hasLines).toBe(true)\n    expect(result.after).toEqual(result.before)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-127",
+      "statement": "Save and return to overview with a commodity type the service does not offer is refused at 400 with 'Select what you are importing', and nothing is saved.",
+      "kind": "rule",
+      "ref": "journeys/linear/features/commodity-type/controller.test.js:251-261, journeys/linear/features/commodity-type/commodity-type.fit.spec.js:265-281",
+      "quote": "  it('Should refuse a value the service does not offer on Save and return to overview', async () => {\n    const result = await driveHandler(post, {\n      payload: { commodityType: 'bulbs', exit: 'hub' }\n    })\n\n    expect(result.response.statusCode).toBe(400)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-128",
+      "statement": "The day counts in the option hints are not written into the copy: each hint quotes whatever number the timing-window rule hands it, in English and in Welsh, so the hints follow the 2-day and 4-day windows if they change.",
+      "kind": "constraint",
+      "ref": "journeys/linear/features/commodity-type/controller.js:37-41, journeys/linear/features/commodity-type/controller.js:56, journeys/linear/features/commodity-type/copy/copy.test.js:43-58",
+      "quote": "'Should quote whatever day count each %s hint is handed rather than a literal'",
+      "confidence": "verbatim",
+      "note": "mechanism: the controller maps potatoes to POTATO_DAYS_BEFORE_ARRIVAL and the other two types to PLANTS_WOOD_DAYS_AFTER_ARRIVAL and passes each to its hint function."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-129",
+      "statement": "Every commodity type the service offers has a label and a hint in both English and Welsh, and the copy holds a label or hint for no type the service does not offer.",
+      "kind": "constraint",
+      "ref": "journeys/linear/features/commodity-type/copy/copy.test.js:13-23",
+      "quote": "  it('Should label every commodity type the service offers, and no other', () => {\n    expect(Object.keys(copy.typeLabels)).toEqual([...commodityTypes()])\n    expect(Object.keys(cy.typeLabels)).toEqual([...commodityTypes()])\n  })\n\n  it('Should hint every commodity type the service offers, and no other', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-130",
+      "statement": "Every per-line field's list of categories names only categories the service offers.",
+      "kind": "constraint",
+      "ref": "services/commodities/commodities.test.js:219-226",
+      "quote": "  it('Should name only real categories in every allow-list', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-131",
+      "statement": "A trader who saves a commodity type on a notification with no commodity lines lands, in the browser, on the page that adds the first commodity line, with the commodity-type page on the trail.",
+      "kind": "behaviour",
+      "ref": "journeys/linear/features/commodity-type/commodity-type.fit.spec.js:41-44, journeys/linear/features/commodity-type/commodity-type.fit.spec.js:156-168",
+      "quote": "const DETAILS_URL_FROM_DASHBOARD = pageUrlWithTrail(DETAILS_PATH, [\n  TRAIL_START.dashboard,\n  'commodity-type'\n])\n...\n    await expect(page).toHaveURL(DETAILS_URL_FROM_DASHBOARD)",
+      "confidence": "verbatim",
+      "note": "The controller redirects to the commodities list (claim repo-plantsfrontend-p3-046); the hop from an empty list to the details page belongs to the commodities list page, which part 4 claims."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-132",
+      "statement": "A potato notification is asked for the expected time of arrival and the proposed place of landing, and never the arrival status or a consignor; a plants-for-planting or wood-and-cut-trees notification is asked for the arrival status and a consignor, and never a time or a place of landing. This is the fork the commodity-type answer opens.",
+      "kind": "rule",
+      "ref": "obligations/sections/arrival.js:7-18, obligations/sections/arrival.js:87-131, obligations/sections/parties.js:7-27, journeys/linear/test-support.js:245-267",
+      "quote": "// The one commodity type reg 24A gives a time and a place of landing.\nconst POTATOES = 'potatoes'",
+      "confidence": "verbatim",
+      "note": "The obligation sections belong to the obligation manifest part; this claim records only where each answer leads, read for context. Both branches go on to the commodities list next (flow.js about-the-consignment section)."
     }
   ]
 }

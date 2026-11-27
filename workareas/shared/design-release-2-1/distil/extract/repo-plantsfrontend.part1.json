@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 1, \"Notification list and its row actions\", read every file of src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/ in full (page.js 5 lines, controller.js 184, template.njk 133, notification-helper.js 177, notification-helper.test.js 272, dashboard.fit.spec.js 334, late-tag.test.js 31, controller.test.js 585, copy/copy.en.js 65, copy/copy.cy.js 66, copy/copy.test.js 82, view-model/sort-options.js 18, view-model/row/index.js 35, view-model/row/actions.js 74, view-model/row/index.test.js 71) and journeys/linear/flow/notification-action-slugs.js. For context it also read journeys/linear/features/review/lateness.js (part 10's), src/server/app/shared/layout.njk, shared/kit.js and shared/paging.js (part 13's), plus three files its slice points at but does not claim in their own right: shared/paths.js (the route and link paths the list builds), sets/high-risk-plants/set.js (SET_BASE '/high-risk-plants') and journeys/linear/flow/section-captions/ (the caption the list renders), and services/persistence/records/stub/marshal/list-item.js and stub/list-query.js, which are the source of the list row the view model reshapes and of its 20-row page. The part covers the list page served at the set root (caption, H1, intro, guidance sentence that never renders, start button, Your notifications heading, keyword search, results label, sort control, summary-card rows in order, status and Late tags, link and posting actions, empty state, pagination, the deleted and amend-refused banners), the four routes the feature owns (GET '/', POST /notifications, GET /start, POST /notifications/{journeyId}/amend), every copy key of the English and Welsh pair verbatim, the 16 tests of dashboard.fit.spec.js one by one, the two late-tag unit cases, and notification-helper.js, view-model/row/index.js and view-model/sort-options.js as mechanism claims. It stops at the task-list hub (part 2), the delete and cancel-amend confirmation pages the row actions link to (their own parts), and the lateness rule itself (part 10).",
+  "structure": "Part 1 read the dashboard feature folder of the high-risk plants set in full, at main 2f2b07f: page.js (the page descriptor, slug '' and maturity exploring), controller.js (four routes: GET / for the list, POST /notifications/{journeyId}/amend, POST /notifications to start a draft and GET /start, the front-door entry), template.njk (banners, caption, H1, intro, guidance link, start button, the search panel in a third column and the results column holding the results line, the sort form, one GOV.UK summary card per notification, the empty state and Previous/Next pagination), notification-helper.js (sort values and default, date and commodity formatting, page clamping, list query string, pagination links and results range wording), view-model/row/index.js (one card's cells), view-model/row/actions.js (the actions per status: draft, submitted, amend, anything else), view-model/sort-options.js, the copy pair copy/copy.en.js and copy/copy.cy.js, and the unit tests controller.test.js, notification-helper.test.js, late-tag.test.js, view-model/row/index.test.js and copy/copy.test.js, plus the 16 Playwright fit tests of dashboard.fit.spec.js. It also read flow/notification-action-slugs.js (amend, cancel-amend, copy, delete). It read shared/kit.js, shared/paging.js, shared/layout.njk and review/lateness.js for context only. Since the last extract (a88175f) the folder changed only in one test helper line (controller.test.js now submits rather than finalises a seeded notification) and kit.js gained an import block, which moved its line numbers; every earlier claim was re-checked against the code and kept, four with their kit.js line refs updated. It covers the list page at the set root with all its copy in English and Welsh, the status and Late tags, every row action with its href or post target and the states it appears for, the create and start entries with their logging, the amend post with its refusal banner, paging, sorting and search, and what the fit tests and unit tests prove or leave unproven.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p1-001",
@@ -216,7 +216,7 @@
       "id": "repo-plantsfrontend-p1-025",
       "statement": "A notification's Status row shows a coloured tag: \"Draft\" in blue, \"Submitted\" in green and \"Amend\" in yellow.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:25 and template.njk:82-87, with the tag map at src/server/app/shared/kit.js:52-69 and controller.test.js:301, 315-318, 338-341",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:25 and template.njk:82-87, with the tag map at src/server/app/shared/kit.js:59-76 and controller.test.js:301, 315-318, 338-341",
       "quote": "status: journeyStrip(journey).status  /  expect(row.status).toEqual({ text: 'Draft', classes: 'govuk-tag--blue' })",
       "confidence": "verbatim",
       "note": "The tag's words come from the shared journey-strip copy (Draft, Submitted, Amend, Deleted), which part 13 owns. The grey Deleted tag cannot appear on the list, because deleted notifications are filtered out."
@@ -461,7 +461,7 @@
       "id": "repo-plantsfrontend-p1-053",
       "statement": "All four of the list's routes need a signed-in session.",
       "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:159-184, with src/server/app/shared/kit.js:24 and 33",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:159-184, with src/server/app/shared/kit.js:31 and 40",
       "quote": "export const routeOptions = { auth: 'session' }",
       "confidence": "verbatim",
       "note": "The list route uses kit.pageRouteOptions, which adds the page descriptor to the same session requirement."
@@ -470,7 +470,7 @@
       "id": "repo-plantsfrontend-p1-054",
       "statement": "The list is laid out on the full page width rather than the two-thirds column the question pages use.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:78, with src/server/app/shared/kit.js:38-41 and controller.test.js:110-117",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:78, with src/server/app/shared/kit.js:45-57 and controller.test.js:110-117",
       "quote": "contentColumnClass: kit.surfaceClass('display')",
       "confidence": "verbatim",
       "note": "The display surface is govuk-grid-column-full; within it the search takes a third and the results two thirds."
@@ -768,7 +768,7 @@
       "id": "repo-plantsfrontend-p1-089",
       "statement": "The list page renders no back link and no journey status strip of its own, because it belongs to no one notification.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:77, with controller.test.js:110-120 and src/server/app/shared/kit.js:252-280",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:77, with controller.test.js:110-120 and src/server/app/shared/kit.js:259-287",
       "quote": "expect(view.context).toMatchObject({\n      pageTitle: copy.title,\n      copy,\n      contentColumnClass: SURFACES.display,\n      journeyStrip: null,",
       "confidence": "verbatim",
       "note": "The same test pins that the page offers no link to a notification's task list, because no notification owns the page."
@@ -781,6 +781,31 @@
       "quote": "export const previousAndNextLinks = ({ page, totalPages, labels }, hrefFor) => {\n  const minimumPagesToPaginate = 2\n  if (totalPages < minimumPagesToPaginate) {\n    return null\n  }",
       "confidence": "inferred",
       "note": "mechanism: both turn a page number and a total into previous and next links, one page at a time, and both answer nothing while everything fits on one page. The list imports its own, not the shared one; the shared helper is part 13's to claim."
+    },
+    {
+      "id": "repo-plantsfrontend-p1-091",
+      "statement": "When the list comes from the backend, a notification's commodity name, origin country, arrival date and consignor name reach its card as words a trader reads, such as \"Potatoes\", \"France\", \"5 Mar 2026\" and \"Acme Ltd\".",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js:415-435",
+      "quote": "it('Should carry the display cells through to the view', async () => {",
+      "confidence": "verbatim",
+      "note": "The backend row in the test carries commodity: { name: 'Potatoes' }, origin: { countryCode: 'FR' }, transport: { arrivalDate: '2026-03-05' } and consignor: { name: 'Acme Ltd' }; the reshaping into the list row is the persistence client's, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p1-092",
+      "statement": "A search that matches nothing offers no Previous or Next links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js:234-248, with notification-helper.js:129-131",
+      "quote": "resultsLabel: copy.search.noResults,\n      pagination: null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-093",
+      "statement": "The list page gives its view the shared chrome copy as well as its own, so the status tag words come from the shared copy.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.test.js:59-81",
+      "quote": "expect(context.copy).toBe(copy)\n    expect(context.pageTitle).toBe(copy.title)\n    expect(context.sharedCopy.journeyStrip.draft).toBe('Draft')",
+      "confidence": "verbatim"
     }
   ]
 }

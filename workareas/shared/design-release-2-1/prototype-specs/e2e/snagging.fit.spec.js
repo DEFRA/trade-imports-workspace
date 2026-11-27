@@ -4,7 +4,7 @@ const {
   url, urlFor, dateFromToday, saveAndContinue, clickAction, submitForm, chooseSpecies, fillDate,
   pickFromAutocomplete, fillDocument, fillCph, SPECIES, startNotification, answerOrigin, answerCommodity,
   answerReason, answerConsignmentDetails, answerAdditionalDetails, answerArrival, answerTransporter,
-  chooseAddress, CORE_ADDRESSES, answerContactAddress
+  chooseAddress, CORE_ADDRESSES
 } = require('./support/journey')
 
 // The live-animals snag list (snagging/snags.json): one test per snag, each
@@ -283,7 +283,7 @@ test.describe('identification details', () => {
 
   test('S17 Identification details: where saved animals appear after adding one', async ({ page, browser }) => {
     await saveAnimal(page, 1)
-    await expect(page.locator('main')).toContainText('Enter details for Bos taurus 2 of 2')
+    await expect(page.locator('main')).toContainText('Enter details for Domestic cattle (Bos taurus) 2 of 2')
     await shoot(page, 'S17', 'one-animal-saved')
     await shootMobile(browser, page, 'S17', 'one-animal-saved')
     await shootNoJs(browser, page, 'S17', 'one-animal-saved')
@@ -543,8 +543,7 @@ test.describe('notification submitted', () => {
     await fillCph(page)
     await saveAndContinue(page)
     await saveAndContinue(page)
-    await expect(page).toHaveURL(urlFor('/contact-address-for-consignment'))
-    await answerContactAddress(page)
+    await expect(page).toHaveURL(urlFor('/notification-hub'))
     await page.goto(url('/review-notification'))
     await shoot(page, 'S38', 'review-complete')
     await submitForm(page, 'Continue')

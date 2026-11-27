@@ -11854,10 +11854,21 @@ describe('distil', () => {
     reason: 'verified',
     claims: 2
   }
+  const countsOf = (sources) =>
+    Object.fromEntries(
+      ['pending', 'extracted', 'verified', 'stale', 'invalid'].map((state) => [
+        state,
+        sources.filter((source) => source.state === state).length
+      ])
+    )
   const statusWith = (sources) => ({
     ok: true,
     abs: '/ws',
     sources,
+    counts: countsOf(sources),
+    work: sources
+      .filter((source) => source.next !== 'none')
+      .map((source) => source.id),
     orphans: [],
     problems: [],
     summary: 'read'
@@ -13579,6 +13590,50 @@ describe('distil', () => {
   })
 
   describe('relays the workflow builds on', () => {
+    const statusDroppingPendingSource = {
+      ...statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
+      sources: [VERIFIED_SOURCE]
+    }
+
+    test('asks the status again when it dropped a source tim counted, then extracts that source', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusDroppingPendingSource,
+          'status again': statusWith([PENDING_SOURCE, VERIFIED_SOURCE])
+        }
+      )
+
+      expect({
+        asked: promptOf(run, 'status again').includes(
+          'tim counted 1 pending sources, but 0 were relayed'
+        ),
+        extracted: labelsOf(run).includes('repo:tests characterise')
+      }).toEqual({ asked: true, extracted: true })
+    })
+
+    test('stops with status-failed when the status drops a source twice, and extracts nothing', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusDroppingPendingSource,
+          'status again': statusDroppingPendingSource
+        }
+      )
+
+      expect({
+        stopped: run.result.stopped,
+        labels: labelsOf(run)
+      }).toEqual({
+        stopped: {
+          reason: 'status-failed',
+          detail:
+            "the status was relayed wrong twice: tim counted 1 pending sources, but 0 were relayed tim's work list names repo:tests, which were not relayed with a next step"
+        },
+        labels: ['status', 'status again']
+      })
+    })
+
     test('asks the extract check again when the merge relayed no verify ranges, then verifies every range', async () => {
       const run = await runDistil(
         {},

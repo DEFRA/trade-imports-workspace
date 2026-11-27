@@ -1,787 +1,765 @@
 {
   "source": "repo:backend",
-  "structure": "Part 3, Reading, listing, deleting and expiry. Read in full: NotificationController (266 lines) and NotificationService (548 lines), claiming only GET /notifications, GET /notifications/{ref}/fulfilments, GET /notifications/reference-numbers, POST /notifications/{ref}/soft-delete, DELETE /notifications and deleteExpired; NotificationRepository, NotificationSort, NotificationView and NotificationViewData (list item shape), NotificationFulfilmentsView, NotificationReferenceOnly, NotificationPageResponse (1-based paging), ReferenceNumberPageResponse (0-based paging), NotificationExpirySweeper, NotificationTtlConfig, AdminSecretFilter, and the admin.secret and notification.admin, notification.list and notification.ttl sections of application.yml. Tests read in full: NotificationControllerTest (1395 lines; the FindAll, FindFulfilments, FindAllReferenceNumbers, SoftDelete, Delete and replay-401 tests are claimed as proof, the create/replace/copy/submit/amend/cancel-amend/outbox-events tests belong to other parts), NotificationSortTest, NotificationExpirySweeperTest, NotificationExpirySweeperConditionTest, NotificationTtlConfigTest and NotificationExpiryIT. Covered: dashboard list scoping (none: status-filtered only), paging and fixed page size 25, the four sort options and fallback, the exact referenceNumber filter, list item fields; the fulfilment read; the reference-number list (admin page size 50, newest first); soft delete statuses, idempotency, refusals and events; hard DELETE all-or-nothing with audit; the admin-secret guard; draft expiry stamping, prod safeguards, sweep cadence, batch, lock and cascade. Claims 001-076 restate the earlier run of this part, re-verified against the source; 077-093 add test proofs and details that run missed.",
+  "structure": "Part 3, Accompanying documents, read on branch main. Read in full: the 13 files of src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/ (the Mongo records AccompanyingDocument and UploadSession with their repositories, the request bodies RegisterUploadRequest and ClaimUploadRequest, the response types AccompanyingDocumentDto, UploadSessionDto and DocumentListResponse, the enums DocumentType and ScanStatus, DocumentController with 8 endpoints and DocumentService), the 3 files of accompanyingdocument/file/ (FileStatus, UploadedFile, UploadedFileDto), the 3 files of cdp/uploader/ (CdpScanResultPayload, CdpScanResultForm with its lenient deserialiser, CdpScanResultFile) and s3/S3DocumentService.java. To answer how documents follow a notification, it also looked up the callers of DocumentService in notification/NotificationService.java (delete), notification/NotificationExpiryIndex.java (TTL index), outbox/OutboxService.java (only claimed, clean documents reach an event) and the documents bucket setting in application.yml, and checked docs/design-notes.md 'Accompanying documents and cdp-uploader' for the stated reasons. Covered: all 13 document types; every field of a document, a session and a file; the 8 endpoints (register session, get session by correlationId, claim, list, get, delete, scan-result callback, download file) with methods, paths, validation and status codes; the register, claim and scan flow with every ScanStatus and FileStatus; S3 download; document expiry and delete with the notification; and gaps on size and type limits and on copy and amend. Refs are file:line from the repo root; P stands for src/main/java/uk/gov/defra/trade/imports/animals.",
   "claims": [
     {
       "id": "repo-backend-p3-001",
-      "statement": "GET /notifications returns a paginated list of import notifications for the dashboard.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:158-172",
-      "quote": "@Operation(summary = \"List notifications\",\n        description = \"Returns a paginated list of import notifications. \"",
-      "confidence": "verbatim"
+      "statement": "An accompanying document's type is one of 13 values: ITAHC, VETERINARY_HEALTH_CERTIFICATE, SELF_DECLARATION, JOURNEY_LOG, IMPORT_PERMIT, CITES_PERMIT_OR_CERTIFICATE, AIR_WAYBILL, SEA_WAYBILL, RAIL_WAYBILL, BILL_OF_LADING, COMMERCIAL_INVOICE, PACKING_OR_SPECIES_LIST and OTHER.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/DocumentType.java:6-45",
+      "quote": "public enum DocumentType { ITAHC, VETERINARY_HEALTH_CERTIFICATE, SELF_DECLARATION, JOURNEY_LOG, IMPORT_PERMIT, CITES_PERMIT_OR_CERTIFICATE, AIR_WAYBILL, SEA_WAYBILL, RAIL_WAYBILL, BILL_OF_LADING, COMMERCIAL_INVOICE, PACKING_OR_SPECIES_LIST, OTHER",
+      "confidence": "verbatim",
+      "note": "The enum carries no separate code field: the API code is the constant name. Each label is only an OpenAPI description, so the user-facing wording lives in the frontend."
     },
     {
       "id": "repo-backend-p3-002",
-      "statement": "The dashboard list only ever includes notifications in DRAFT, SUBMITTED or AMEND status; soft-deleted (DELETED) notifications never appear in it.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:157-160",
-      "quote": "List<NotificationStatus> dashboardStatuses = List.of(\n            NotificationStatus.DRAFT, NotificationStatus.SUBMITTED, NotificationStatus.AMEND);",
+      "statement": "The document type ITAHC is described as 'ITAHC (Intra Trade Animal Health Certificate)'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:7-8",
+      "quote": "@Schema(description = \"ITAHC (Intra Trade Animal Health Certificate)\")\n  ITAHC,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-003",
-      "statement": "The dashboard list is not scoped to the calling user or organisation: the endpoint takes no user or organisation input, so every caller is served notifications from every trader. This is a weakness in access control on the list read.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:166-171; NotificationService.java:177-178",
-      "quote": "public NotificationPageResponse findAll(\n        @RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber)",
-      "confidence": "inferred",
-      "note": "Inferred from the absence of any user, organisation or actor parameter on the list endpoint and its repository query (findAllViewByStatusIn filters on status only). Stated in general terms on purpose."
+      "statement": "The document type VETERINARY_HEALTH_CERTIFICATE is described as 'Other veterinary certificate or veterinary declaration'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:10-11",
+      "quote": "@Schema(description = \"Other veterinary certificate or veterinary declaration\")\n  VETERINARY_HEALTH_CERTIFICATE,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-004",
-      "statement": "The dashboard list's page parameter is 1-based, defaults to 1 and must be at least 1.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:167",
-      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page",
-      "confidence": "verbatim",
-      "note": "The response status for page=0 is set by GlobalExceptionHandler, which another part reads."
+      "statement": "The document type SELF_DECLARATION is described as 'Self-declaration'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:13-14",
+      "quote": "@Schema(description = \"Self-declaration\")\n  SELF_DECLARATION,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-005",
-      "statement": "The dashboard list returns 25 notifications per page, set by configuration; the caller cannot choose the page size.",
-      "kind": "rule",
-      "ref": "src/main/resources/application.yml:141-142; NotificationService.java:161",
-      "quote": "list:\n    page-size: 25",
+      "statement": "The document type JOURNEY_LOG is described as 'Journey log'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:16-17",
+      "quote": "@Schema(description = \"Journey log\")\n  JOURNEY_LOG,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-006",
-      "statement": "The dashboard list supports four sort options: arrivalDate,desc (the default), arrivalDate,asc, createdAt,desc and createdAt,asc.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:161",
-      "quote": "Optional sort: arrivalDate,desc (default), arrivalDate,asc, createdAt,desc, createdAt,asc.",
+      "statement": "The document type IMPORT_PERMIT is described as 'Import permit or authorisation'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:19-20",
+      "quote": "@Schema(description = \"Import permit or authorisation\")\n  IMPORT_PERMIT,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-007",
-      "statement": "Sorting by arrivalDate orders on the transport arrival date of the notification, and sorting by createdAt orders on when the notification was created.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:10-11,33-34",
-      "quote": "private static final String ARRIVAL_DATE_FIELD = \"notification.transport.arrivalDate\";\n    private static final String CREATED_AT_FIELD = \"created\";",
+      "statement": "The document type CITES_PERMIT_OR_CERTIFICATE is described as 'CITES permit or certificate'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:22-23",
+      "quote": "@Schema(description = \"CITES permit or certificate\")\n  CITES_PERMIT_OR_CERTIFICATE,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-008",
-      "statement": "A missing, blank, malformed (not exactly field,direction) or unknown sort value falls back to arrival date, newest first, rather than being rejected.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:18-24,35-40",
-      "quote": "if (sortParam == null || sortParam.isBlank()) {\n            return defaultSort();\n        }",
-      "confidence": "verbatim",
-      "note": "NotificationSortTest.toSort_shouldDefaultToArrivalDateDescending_whenMissingOrInvalid proves null, empty and \"invalid\" all give arrival date descending."
+      "statement": "The document type AIR_WAYBILL is described as 'Air waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:25-26",
+      "quote": "@Schema(description = \"Air waybill\")\n  AIR_WAYBILL,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-009",
-      "statement": "The sort direction is ascending only when the direction part is \"asc\" (any case); any other direction value sorts descending.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:28-30",
-      "quote": "Sort.Direction sortDirection = \"asc\".equalsIgnoreCase(parts[1].trim())\n            ? Sort.Direction.ASC\n            : Sort.Direction.DESC;",
+      "statement": "The document type SEA_WAYBILL is described as 'Sea waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:28-29",
+      "quote": "@Schema(description = \"Sea waybill\")\n  SEA_WAYBILL,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-010",
-      "statement": "The dashboard list can be filtered by an optional referenceNumber, which is an exact match against a complete notification reference, not a partial search.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:162",
-      "quote": "Optional referenceNumber: exact match against a complete notification reference.",
+      "statement": "The document type RAIL_WAYBILL is described as 'Rail waybill'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:31-32",
+      "quote": "@Schema(description = \"Rail waybill\")\n  RAIL_WAYBILL,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-011",
-      "statement": "The referenceNumber filter is trimmed of surrounding whitespace, and a blank value is treated as no filter.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:163-164",
-      "quote": "String trimmedReference = StringUtils.trimToNull(referenceNumber);\n        if (trimmedReference != null) {",
+      "statement": "The document type BILL_OF_LADING is described as 'Bill of lading'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:34-35",
+      "quote": "@Schema(description = \"Bill of lading\")\n  BILL_OF_LADING,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-012",
-      "statement": "A reference filter that matches nothing (including a reference that does not exist, is soft-deleted, or is not in a valid reference format) returns 200 with an empty page, not an error.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:166-170; NotificationControllerTest.java:998-1009",
-      "quote": ".orElseGet(() -> Page.empty(pageable));",
-      "confidence": "verbatim",
-      "note": "findAll_shouldPassInvalidReferenceNumberToService proves the controller passes \"invalid-ref\" through and answers 200; the reference filter is not pattern-validated."
+      "statement": "The document type COMMERCIAL_INVOICE is described as 'Commercial invoice'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:37-38",
+      "quote": "@Schema(description = \"Commercial invoice\")\n  COMMERCIAL_INVOICE,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-013",
-      "statement": "The dashboard list offers no other filter or search: only page, sort and an exact referenceNumber are accepted, so there is no filter by status, date, commodity, country or free text.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:166-169",
-      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber",
-      "confidence": "inferred",
-      "note": "Inferred from the three request parameters being the endpoint's entire input."
+      "statement": "The document type PACKING_OR_SPECIES_LIST is described as 'Packing list or species list'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:40-41",
+      "quote": "@Schema(description = \"Packing list or species list\")\n  PACKING_OR_SPECIES_LIST,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-014",
-      "statement": "The dashboard list response carries content, page (1-based, echoing the request), size, numberOfElements, totalElements and totalPages.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java:14-29",
-      "quote": "public record NotificationPageResponse(\n    List<NotificationView> content,\n    int page,\n    int size,\n    int numberOfElements,\n    long totalElements,\n    int totalPages)",
-      "confidence": "verbatim",
-      "note": "page is the zero-based page number plus 1 (pageResult.getNumber() + 1). NotificationControllerTest.findAll_shouldReturnEmptyPage pins an empty page as page 1, size 25 and zero totals."
+      "statement": "The document type OTHER is described as 'Other supporting documents'.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/DocumentType.java:43-44",
+      "quote": "@Schema(description = \"Other supporting documents\")\n  OTHER",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-015",
-      "statement": "Each dashboard list item carries the notification's referenceNumber, concurrencyToken, status, created timestamp, origin, commodity, consignor, consignee and transport, as a flat object.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:22-43; NotificationViewData.java",
-      "quote": "String getReferenceNumber();\n\n    Long getConcurrencyToken();\n\n    NotificationStatus getStatus();\n\n    Instant getCreated();\n\n    @Value(\"#{target.notification?.origin}\")\n    Origin getOrigin();",
-      "confidence": "verbatim",
-      "note": "The other accessors are getCommodity, getConsignor, getConsignee and getTransport, each unwrapped from notification.*."
+      "statement": "The document types are the same list for every notification: nothing in the enum or the claim narrows the types by commodity, by the live-animals or germinal-products set, or by notification category.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentType.java:6; P/accompanyingdocument/DocumentService.java:63-79",
+      "quote": "public enum DocumentType {",
+      "confidence": "inferred",
+      "note": "Inferred from the claim setting any DocumentType without consulting the notification."
     },
     {
       "id": "repo-backend-p3-016",
-      "statement": "List items do not carry submittedAt, the updated timestamp, importer, destination, reason for import or the fulfilments payload, so a dashboard built on this endpoint cannot show those.",
+      "statement": "Accompanying documents are stored in their own MongoDB collection, accompanying_documents, apart from the notification record, and are linked to it by notificationReferenceNumber.",
       "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:20-44",
-      "quote": "public interface NotificationView {",
-      "confidence": "inferred",
-      "note": "Inferred from the projection's accessor list, which the response serialises directly (NotificationPageResponse javadoc: the wire response carries exactly the fields the projection exposes)."
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:26,41-42",
+      "quote": "@Document(collection = \"accompanying_documents\") ... @Indexed\n  private String notificationReferenceNumber;",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-017",
-      "statement": "The created timestamp on list items is an ISO-8601 instant in UTC with a Z suffix and sub-second precision, not a date or a numeric epoch.",
+      "statement": "An accompanying document records: id, version, notificationReferenceNumber, uploadId, correlationId, documentType, documentReference, dateOfIssue, scanStatus, claimed, files, created, updated and expireAt.",
       "kind": "data",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:937-938",
-      "quote": ".andExpect(jsonPath(\"$.content[0].created\").value(\"2026-07-21T00:30:00.456Z\"))",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:34-70",
+      "quote": "private String id; ... private Long version; ... private String notificationReferenceNumber; ... private String uploadId; ... private String correlationId; private DocumentType documentType; private String documentReference; private LocalDate dateOfIssue; private ScanStatus scanStatus; ... private boolean claimed = false; ... private List<UploadedFile> files = new ArrayList<>(); ... private Instant created; ... private Instant updated; private Instant expireAt;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-018",
-      "statement": "The dashboard list endpoint loads the whole stored notification for every row, a cost accepted because the endpoint is due to be replaced by an event-populated dashboard service.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:10-14",
-      "quote": "Accepted trade-off: this endpoint is being replaced by an event-populated dashboard service\n * and there are no live users to notice the cost.",
+      "statement": "Each accompanying document's uploadId is unique, and so is its correlationId.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:44-48",
+      "quote": "@Indexed(unique = true)\n  private String uploadId;\n\n  @Indexed(unique = true)\n  private String correlationId;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-019",
-      "statement": "GET /notifications/{referenceNumber}/fulfilments returns the notification's referenceNumber, concurrencyToken, status, created, submittedAt and its opaque fulfilments payload; it backs the frontend engine's rehydrate of a journey.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:174-185; NotificationFulfilmentsView.java:15-25",
-      "quote": "Returns the fulfilment-view projection (referenceNumber, status, dates, opaque fulfilments payload) of the notification at the given reference. Backs the frontend engine's rehydrate path.",
+      "statement": "An accompanying document is versioned for optimistic locking, and records when it was created and last updated.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:38-39,64-68",
+      "quote": "@Version\n  private Long version; ... @CreatedDate\n  private Instant created;\n\n  @LastModifiedDate\n  private Instant updated;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-020",
-      "statement": "The fulfilment read leaves out the server-only fields: the pre-amend notification and fulfilment snapshots and the expiry time.",
+      "statement": "A document holds a list of uploaded files, and is unclaimed until the trader's details are supplied.",
       "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationFulfilmentsView.java:7-11",
-      "quote": "Server-only fields\n * ({@code preAmendNotification}, {@code preAmendFulfilments}, {@code expireAt}) are\n * intentionally omitted so they aren't loaded on read.",
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:58-62",
+      "quote": "@Builder.Default\n  private boolean claimed = false;\n\n  @Builder.Default\n  private List<UploadedFile> files = new ArrayList<>();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-021",
-      "statement": "The fulfilment read returns created and submittedAt as exact ISO-8601 UTC instants with a Z suffix.",
+      "statement": "The date of issue is a calendar date with no time, stored as a YYYY-MM-DD string.",
       "kind": "data",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1129-1133",
-      "quote": ".andExpect(jsonPath(\"$.created\").value(\"2026-07-21T06:42:17.123Z\"))\n                .andExpect(jsonPath(\"$.submittedAt\").value(\"2026-07-21T14:09:05Z\"))",
-      "confidence": "verbatim"
+      "ref": "P/accompanyingdocument/AccompanyingDocument.java:54; docs/design-notes.md:8",
+      "quote": "private LocalDate dateOfIssue;",
+      "confidence": "verbatim",
+      "note": "The string storage is stated in design-notes.md line 8: 'Calendar dates (arrivalDate, exitDate, a document's dateOfIssue) are LocalDate, stored by LocalDateStringConverters as YYYY-MM-DD strings.'"
     },
     {
       "id": "repo-backend-p3-022",
-      "statement": "Reading the fulfilments of a reference that does not exist returns 404 with the detail \"Cannot find notification with reference number: <reference>\".",
-      "kind": "copy",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:41,151-155; NotificationControllerTest.java:1136-1149",
-      "quote": "\"Cannot find notification with reference number: \"",
+      "statement": "The trader supplies three details for a document when claiming it: the document type, the document reference and the date of issue, and all three are required.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:18-37",
+      "quote": "@NotNull ... DocumentType documentType, @NotBlank ... String documentReference, @NotNull ... LocalDate dateOfIssue",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-023",
-      "statement": "The fulfilment read returns a notification in any status, including a soft-deleted one.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:19",
-      "quote": "Optional<NotificationFulfilmentsView> findFulfilmentsViewByReferenceNumber(String referenceNumber);",
-      "confidence": "inferred",
-      "note": "Inferred: the lookup is by reference alone, with no status condition, unlike the dashboard list."
-    },
-    {
-      "id": "repo-backend-p3-024",
-      "statement": "The fulfilment read is not scoped to the caller: any caller who knows a reference number is served that notification's content. This is a weakness in access control on the read.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:181-185",
-      "quote": "public ResponseEntity<NotificationFulfilmentsView> findFulfilments(\n        @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber) {",
-      "confidence": "inferred",
-      "note": "Inferred from the endpoint taking only the reference and the admin-secret filter not covering it. Stated in general terms on purpose."
-    },
-    {
-      "id": "repo-backend-p3-025",
-      "statement": "The fulfilment read and soft delete only accept a path reference in the GBN-AG format: GBN-AG-, a two-digit year, a hyphen and six characters from digits and capital letters excluding I, L, O and U.",
+      "statement": "A document reference must not be blank.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:182,241; ReferenceNumberGenerator.java:20",
-      "quote": "public static final String REFERENCE_NUMBER_PATTERN = \"^GBN-AG-\\\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$\";",
-      "confidence": "verbatim",
-      "note": "The response a malformed reference gets comes from GlobalExceptionHandler, read by another part."
-    },
-    {
-      "id": "repo-backend-p3-026",
-      "statement": "GET /notifications/reference-numbers returns a paginated list of notification reference numbers only, without the notifications' content.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:187-198",
-      "quote": "Returns a paginated list of notification reference numbers without loading full documents",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:25",
+      "quote": "@NotBlank",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-backend-p3-027",
-      "statement": "The reference-number list's page parameter is 0-based, defaults to 0 and must be at least 0, and the page it reports is 0-based too, unlike the dashboard list, which is 1-based.",
+      "id": "repo-backend-p3-024",
+      "statement": "A document reference is at most 58 characters long.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:195; ReferenceNumberPageResponse.java:19",
-      "quote": "@RequestParam(defaultValue = \"0\") @Min(0) int page",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:26,47",
+      "quote": "@Size(max = ClaimUploadRequest.REFERENCE_MAX_LENGTH) ... static final int REFERENCE_MAX_LENGTH = 58;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-025",
+      "statement": "A document reference may contain only letters, digits, spaces, full stops, slashes and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:27,45",
+      "quote": "static final String REFERENCE_PATTERN = \"^[A-Za-z0-9 ./-]*$\";",
       "confidence": "verbatim",
-      "note": "NotificationControllerTest.findAllReferenceNumbers_shouldReturnEmptyPage pins page 0 for the default request."
+      "note": "The Javadoc gives the examples an air waybill '125-12345675' and a TRACES certificate 'CHEDA.GB.2026.1234567'."
+    },
+    {
+      "id": "repo-backend-p3-026",
+      "statement": "The date of issue has no range rule in the backend: any valid date, past or future, is accepted.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:33-37",
+      "quote": "@NotNull\n    @Schema(description = \"Date of issue on the physical document\", ... example = \"2026-01-15\")\n    LocalDate dateOfIssue",
+      "confidence": "inferred",
+      "note": "Inferred from the only constraint being @NotNull; no @Past or @PastOrPresent."
+    },
+    {
+      "id": "repo-backend-p3-027",
+      "statement": "The backend's validation errors carry no user-facing messages for the document details: the constraints use the default messages, so the wording a trader sees comes from the frontend.",
+      "kind": "copy",
+      "ref": "P/accompanyingdocument/ClaimUploadRequest.java:19-37",
+      "quote": "@NotNull ... @NotBlank\n    @Size(max = ClaimUploadRequest.REFERENCE_MAX_LENGTH)\n    @Pattern(regexp = ClaimUploadRequest.REFERENCE_PATTERN)",
+      "confidence": "inferred",
+      "note": "Inferred from no message attribute on any constraint."
     },
     {
       "id": "repo-backend-p3-028",
-      "statement": "The reference-number list returns 50 references per page, set by the admin page-size configuration.",
-      "kind": "rule",
-      "ref": "src/main/resources/application.yml:139-140; NotificationService.java:371",
-      "quote": "admin:\n    page-size: 50",
+      "statement": "An upload session is a separate record in its own collection, document_upload_sessions, holding the notification reference number, the uploadId, the correlationId and when it was created.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/UploadSession.java:22-54",
+      "quote": "@Document(collection = \"document_upload_sessions\") ... private String notificationReferenceNumber; ... private String uploadId; ... private String correlationId; ... private Instant created;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-029",
-      "statement": "The reference-number list is ordered by creation time, newest first.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:370-371",
-      "quote": "PageRequest.of(page, adminPageSize, Sort.by(Direction.DESC, \"created\"))",
+      "statement": "An upload session's uploadId is unique, and so is its correlationId.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/UploadSession.java:41-52",
+      "quote": "@Indexed(unique = true)\n  private String uploadId; ... @Indexed(unique = true)\n  private String correlationId;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-030",
-      "statement": "The reference-number list includes every stored notification in any status, soft-deleted ones included.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:36",
-      "quote": "Page<NotificationReferenceOnly> findAllProjectedBy(Pageable pageable);",
-      "confidence": "inferred",
-      "note": "Inferred: the query has no status condition."
+      "statement": "An upload session expires and is removed 24 hours after it was created, whether or not anything was uploaded through it.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/UploadSession.java:31,52-53",
+      "quote": "private static final String SESSION_RETENTION_PERIOD = \"24h\"; ... @CreatedDate\n  @Indexed(expireAfter = SESSION_RETENTION_PERIOD)\n  private Instant created;",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-031",
-      "statement": "The reference-number list response carries content (a list of reference strings), page, size, numberOfElements, totalElements and totalPages.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberPageResponse.java:6-12",
-      "quote": "public record ReferenceNumberPageResponse(\n    List<String> content,\n    int page,\n    int size,\n    int numberOfElements,\n    long totalElements,\n    int totalPages)",
+      "statement": "When registering an upload session, the uploadId is required, must be 1 to 100 characters and may contain only letters, digits, full stops, underscores and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:13-19",
+      "quote": "@NotBlank\n    @Pattern(regexp = \"^[A-Za-z0-9._-]+$\")\n    @Size(max = 100)\n    ... String uploadId,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-032",
-      "statement": "The reference-number list documents a 401 Unauthorised response but is not behind the admin secret or any other check, so any caller can list every reference. This is a weakness in access control.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:192; filter/AdminSecretFilter.java:48-58",
-      "quote": "@ApiResponse(responseCode = \"401\", description = \"Unauthorised\", content = @Content)",
-      "confidence": "inferred",
-      "note": "Inferred: the admin-secret filter skips every GET request. Stated in general terms on purpose."
+      "statement": "When registering an upload session, the correlationId is required, must be 1 to 100 characters and may contain only letters, digits, full stops, underscores and hyphens.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:21-27",
+      "quote": "@NotBlank\n    @Pattern(regexp = \"^[A-Za-z0-9._-]+$\")\n    @Size(max = 100)\n    ... String correlationId) {}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-033",
-      "statement": "POST /notifications/{referenceNumber}/soft-delete moves the notification to DELETED status and returns the updated notification with 200.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:231-247; NotificationControllerTest.java:1254-1270",
-      "quote": "Transitions notification status to DELETED (soft delete).",
+      "statement": "The caller opens the cdp-uploader session itself and then registers it here; the correlationId is the identifier the caller threaded through cdp-uploader's metadata, which the scan callback echoes back so the result can be matched to the session.",
+      "kind": "integration",
+      "ref": "P/accompanyingdocument/RegisterUploadRequest.java:9-11,24-25",
+      "quote": "Request body for registering an upload session the caller has already opened with cdp-uploader. ... \"Identifier the caller threaded through cdp-uploader's metadata, which the scan callback echoes back so the result can be matched to this session\"",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-034",
-      "statement": "Soft delete accepts a notification in DRAFT, SUBMITTED or AMEND status.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:349-354",
-      "quote": "if (notificationAggregate.getStatus() != NotificationStatus.DRAFT\n            && notificationAggregate.getStatus() != NotificationStatus.SUBMITTED\n            && notificationAggregate.getStatus() != NotificationStatus.AMEND) {",
+      "statement": "POST /notifications/{referenceNumber}/document-uploads registers an upload session for a notification and answers 201 Created with the session (notificationReferenceNumber, uploadId, correlationId) and a Location header of <base URL>/document-uploads/<uploadId>.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:75-103,321-327",
+      "quote": "@PostMapping(\"/notifications/{referenceNumber}/document-uploads\") ... return ResponseEntity.created(location).body(UploadSessionDto.from(session)); ... return URI.create(baseUrl + \"/document-uploads/\" + uploadId);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-035",
-      "statement": "The soft-delete API description says only DRAFT and SUBMITTED notifications can be deleted, which disagrees with the code, which also deletes AMEND notifications.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:233",
-      "quote": "Only DRAFT and SUBMITTED notifications can be deleted.",
-      "confidence": "verbatim",
-      "note": "Recorded as a discrepancy inside this source: the published OpenAPI text lags NotificationService.softDeleteNotification."
+      "statement": "Registering an upload session is refused with 400 for a validation error, 403 when the notification belongs to another organisation, 404 when the notification is not found and 409 when the session is already registered.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:81-86",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\" ... @ApiResponse(responseCode = \"404\", description = \"Notification not found\" ... @ApiResponse(responseCode = \"409\", description = \"Upload session already registered\"",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-036",
-      "statement": "Soft-deleting a notification that is already DELETED is a no-op that returns the notification unchanged with 200, so a repeated request after a lost response is safe.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:345-348",
-      "quote": "// Idempotent per REST DELETE convention — a repeat call after a lost response is a no-op.\n        if (notificationAggregate.getStatus() == NotificationStatus.DELETED) {\n            return notificationAggregate;\n        }",
+      "statement": "A second registration with an uploadId or a correlationId already in use is refused as a conflict, with the message 'An upload session already exists for uploadId <uploadId> or correlationId <correlationId>'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:193-212",
+      "quote": "} catch (DuplicateKeyException _) { ... throw new ConflictException(\n          \"An upload session already exists for uploadId \" + session.getUploadId()\n              + \" or correlationId \" + session.getCorrelationId());",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-037",
-      "statement": "Soft delete refuses any other status with 400 and the detail \"Cannot delete notification with status: <status>\"; with today's four statuses this refusal cannot be reached.",
-      "kind": "copy",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:352-353; NotificationStatus.java:4",
-      "quote": "\"Cannot delete notification with status: \" + notificationAggregate.getStatus()",
+      "statement": "Registering a session writes no accompanying document: a notification gains a document only when a claim or a scan result arrives.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:39-49,169-180",
+      "quote": "UploadSession session = UploadSession.builder() ... .build();\n\n    return saveSession(session);",
       "confidence": "verbatim",
-      "note": "Unreachable is inferred: NotificationStatus is DRAFT, SUBMITTED, AMEND, DELETED, and DELETED returns early. NotificationControllerTest.softDelete_shouldReturn400_whenNotificationNotInDeletableState mocks the service to throw this message for DELETED, which the real service no longer does."
+      "note": "design-notes.md line 62 gives the reason: the frontend opens a session every time it paints the upload page."
     },
     {
       "id": "repo-backend-p3-038",
-      "statement": "Soft-deleting a reference that does not exist returns 404 with the detail \"Cannot find notification with reference number: <reference>\".",
-      "kind": "copy",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:342-344; NotificationControllerTest.java:1272-1285",
-      "quote": "new NotFoundException(\n                CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER + referenceNumber)",
-      "confidence": "verbatim"
+      "statement": "A notification can hold several upload sessions at once, because sessions are unique only by uploadId and correlationId, never by notification.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/UploadSession.java:37-52",
+      "quote": "@Indexed\n  private String notificationReferenceNumber;",
+      "confidence": "inferred",
+      "note": "Inferred from the notification index being non-unique; design-notes.md line 63 states it: 'A notification can hold several open sessions'."
     },
     {
       "id": "repo-backend-p3-039",
-      "statement": "Soft delete keeps the notification record and its content; only its status changes to DELETED and its updated time is refreshed.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:289-290,359-365",
-      "quote": "notification.setStatus(targetStatus);\n                notification.setUpdated(Instant.now());",
-      "confidence": "inferred",
-      "note": "Inferred from writeWithOutbox saving the same aggregate with only status and updated changed. A soft delete from AMEND keeps the pre-amend snapshots and submittedAt, because NOTIFICATION_SUBMISSION_DELETED is not one of the SUBMISSION_EVENTS that clear them."
+      "statement": "Every document endpoint except the scan callback needs the Trade-Imports-Organisation-Id header, and checks that the notification belongs to that organisation before doing anything.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentController.java:92,98,130,135,163,168-169,196,198,226,229-230,254,256-257,305,308-309",
+      "quote": "@RequestHeader(TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER) String organisationId ... notificationService.requireTraderAccess(referenceNumber, organisationId);",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-040",
-      "statement": "Soft-deleting a DRAFT records a NotificationDeleted event; soft-deleting a SUBMITTED or AMEND notification records a NotificationSubmissionDeleted event, for publishing to other services.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:355-358; outbox/OutboxEventType.java:35-40",
-      "quote": "// DRAFT -> DELETED has no submission history; SUBMITTED/AMEND -> DELETED does.\n        OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.DRAFT\n            ? OutboxEventType.NOTIFICATION_DELETED\n            : OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "statement": "For endpoints addressed by uploadId (claim, get, delete, download), the organisation check finds the notification through the upload session, so an uploadId with no session is refused as not found with 'No upload session found with uploadId: <uploadId>'.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:146-152; P/accompanyingdocument/DocumentController.java:168-169",
+      "quote": "return uploadSessionRepository.findByUploadId(uploadId)\n        .map(UploadSession::getNotificationReferenceNumber)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with uploadId: \" + uploadId));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-041",
-      "statement": "Soft delete takes an optional actor body (id, source, userType, displayName, organisationId) and an optional x-cdp-request-id header, which it passes on as the event's actor and correlation id.",
-      "kind": "data",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:240-246; NotificationControllerTest.java:1301-1343",
-      "quote": "@RequestHeader(value = HEADER_TRACE_ID, required = false, defaultValue = \"\") String traceId,\n        @RequestBody(required = false) ActorRequest actorRequest)",
-      "confidence": "verbatim"
+      "statement": "Because uploadId endpoints reach the notification through the session, and sessions expire after 24 hours, a document whose session has expired can no longer be read, downloaded, deleted or claimed through the API: each answers 404.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:146-152; P/accompanyingdocument/UploadSession.java:31,52-53",
+      "quote": "private static final String SESSION_RETENTION_PERIOD = \"24h\"; ... .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with uploadId: \" + uploadId));",
+      "confidence": "inferred",
+      "note": "Inferred from the two facts together; not stated anywhere. The list endpoint, which goes by notification, still returns such a document. The reconciler may want to treat this as a constraint on how long a draft's documents stay usable."
     },
     {
       "id": "repo-backend-p3-042",
-      "statement": "Soft delete has no ownership or admin check: the endpoint is not behind the admin secret and does not compare the caller with the notification's owner. This is a weakness in access control.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:237; filter/AdminSecretFilter.java:48-58",
-      "quote": "@ApiResponse(responseCode = \"401\", description = \"Unauthorised\", content = @Content)",
-      "confidence": "inferred",
-      "note": "Inferred: the admin filter covers only DELETE requests and the replay POST, and the service makes no caller check. The documented 401 is never produced. Stated in general terms on purpose."
+      "statement": "GET /notifications/{referenceNumber}/document-upload-sessions/{correlationId} returns the upload session a notification opened under that correlationId, with 200, so the browser's return to the upload page can find it.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:113-138",
+      "quote": "@GetMapping(\"/notifications/{referenceNumber}/document-upload-sessions/{correlationId}\") ... description = \"Returns the upload session a notification opened under a correlationId\")",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-043",
-      "statement": "DELETE /notifications permanently removes the notifications named in a JSON array of reference numbers, together with their accompanying documents, and answers 204 No Content.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:253-265; NotificationService.java:431-434",
-      "quote": "notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers);\n        documentService.deleteForNotificationRefs(referenceNumbers);",
+      "statement": "A session is looked up by notification and correlationId together, so a correlationId cannot reach another notification's session; a miss answers 404 with 'No upload session found for notification <ref> with correlationId: <correlationId>'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:51-59",
+      "quote": ".findByNotificationReferenceNumberAndCorrelationId(\n            notificationReferenceNumber, correlationId)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found for notification \" + notificationReferenceNumber\n                + \" with correlationId: \" + correlationId));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-044",
-      "statement": "DELETE /notifications with an empty list is refused with 400 and nothing is deleted.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:259-261; NotificationControllerTest.java:1054-1066",
-      "quote": "if (referenceNumbers == null || referenceNumbers.isEmpty()) {\n            return ResponseEntity.badRequest().build();\n        }",
+      "statement": "Getting a session is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the session or notification is not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:119-122",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Session or notification not found\"",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-045",
-      "statement": "DELETE /notifications requires both an x-cdp-request-id header and a User-Id header; a request missing either is refused with 400 before anything is deleted.",
+      "statement": "On the register and get-session endpoints, the reference number in the path must match the notification reference number pattern, and the correlationId path value must be 1 to 100 letters, digits, full stops, underscores or hyphens.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:257-258; NotificationControllerTest.java:1068-1098",
-      "quote": "@RequestHeader(value = NotificationController.HEADER_TRACE_ID, required = true) String traceId,\n        @RequestHeader(value = NotificationController.HEADER_USER_ID, required = true) String userId)",
-      "confidence": "verbatim"
+      "ref": "P/accompanyingdocument/DocumentController.java:49,89,125-128",
+      "quote": "private static final String UPLOAD_SESSION_IDENTIFIER_PATTERN = \"^[A-Za-z0-9._-]{1,100}$\"; ... @PathVariable @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN)",
+      "confidence": "verbatim",
+      "note": "The reference number pattern itself is in the notification package (part 2)."
     },
     {
       "id": "repo-backend-p3-046",
-      "statement": "DELETE /notifications is all or nothing: if any listed reference does not exist, nothing is deleted and the caller gets 404 with the detail \"Cannot find notifications with reference numbers: <missing references, comma-separated>\".",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:382-394; NotificationControllerTest.java:1033-1052",
-      "quote": "throw new NotFoundException(\n                \"Cannot find notifications with reference numbers: \" + String.join(\", \", missing));",
+      "statement": "POST /document-uploads/{uploadId}/claim attaches the trader's document details (type, reference, date of issue) to a registered upload, marks the document claimed and answers 200 with the document.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:148-173; P/accompanyingdocument/DocumentService.java:61-79",
+      "quote": "@PostMapping(\"/document-uploads/{uploadId}/claim\") ... document.setDocumentType(request.documentType());\n    document.setDocumentReference(request.documentReference());\n    document.setDateOfIssue(request.dateOfIssue());\n    document.setClaimed(true);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-047",
-      "statement": "DELETE /notifications deletes notifications in any status: it has no status check.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377-398",
-      "quote": "public void deleteByReferenceNumbers(List<String> referenceNumbers, AuditContext auditContext) {",
-      "confidence": "inferred",
-      "note": "Inferred from the method checking existence only."
-    },
-    {
-      "id": "repo-backend-p3-048",
-      "statement": "Every DELETE /notifications request writes an audit record of action DELETE_NOTIFICATIONS with the result (SUCCESS, or FAILURE when a reference is missing), the references, their count, the trace id, the user id and a timestamp; the FAILURE record is kept even though the request fails.",
+      "statement": "Claiming is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the upload is not found; the uploadId path value must be 1 to 100 letters, digits, full stops, underscores or hyphens.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377,390-397,521-534",
-      "quote": "Audit auditRecord = Audit.builder()\n            .action(Action.DELETE_NOTIFICATIONS)\n            .result(result)\n            .notificationReferenceNumbers(referenceNumbers)\n            .numberOfNotifications(referenceNumbers.size())\n            .traceId(auditContext.traceId())\n            .userId(auditContext.userId())\n            .timestamp(Instant.now())\n            .build();",
-      "confidence": "verbatim",
-      "note": "The FAILURE record survives because the method is @Transactional(noRollbackFor = NotFoundException.class)."
-    },
-    {
-      "id": "repo-backend-p3-049",
-      "statement": "DELETE /notifications records no lifecycle event, so other services are not told that the notifications were removed.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377-398,431-434",
-      "quote": "private void deleteNotificationsAndDocuments(List<String> referenceNumbers) {",
-      "confidence": "inferred",
-      "note": "Inferred: neither deleteByReferenceNumbers nor deleteNotificationsAndDocuments calls the outbox service, unlike soft delete."
-    },
-    {
-      "id": "repo-backend-p3-050",
-      "statement": "DELETE requests to /notifications and POST requests to /notifications/{reference}/replay require the Trade-Imports-Animals-Admin-Secret header to match the configured admin secret.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:24,48-58",
-      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method)\n            && uri.startsWith(\"/notifications\");\n        boolean isReplayEndpoint = \"POST\".equalsIgnoreCase(method)\n            && uri.matches(\"/notifications/[^/]+/replay\");",
-      "confidence": "verbatim",
-      "note": "The class javadoc says \"Applied to DELETE /notifications requests only.\", which predates the replay guard. The DELETE match is a prefix match, so any DELETE under /notifications is guarded too."
-    },
-    {
-      "id": "repo-backend-p3-051",
-      "statement": "A guarded request with no admin secret header, or the wrong one, gets 401 with an empty body and never reaches the endpoint.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:35-42; NotificationControllerTest.java:1375-1383",
-      "quote": "response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);\n            return;",
+      "ref": "P/accompanyingdocument/DocumentController.java:154-161",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Upload not found\" ... @Pattern(regexp = UPLOAD_SESSION_IDENTIFIER_PATTERN) String uploadId,",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-backend-p3-052",
-      "statement": "When the configured admin secret is blank, every guarded request is refused with 401.",
+      "id": "repo-backend-p3-048",
+      "statement": "Claiming can be repeated: each claim replaces the type, reference and date of issue on the same document, so a repeated claim never creates a second document.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:35",
-      "quote": "if (tradeImportsAnimalsAdminSecret.isBlank()",
+      "ref": "P/accompanyingdocument/DocumentService.java:67-74,169-171",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session); ... return accompanyingDocumentRepository\n        .findByCorrelationId(session.getCorrelationId())",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 69: 'Claiming is repeatable: it replaces the details, so a repeated claim cannot produce a second document.' This is how a trader changes a document's details."
+    },
+    {
+      "id": "repo-backend-p3-049",
+      "statement": "A claim can arrive before the scan result: if no document exists yet for the session it creates one with scan status PENDING and no files.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:169-180",
+      "quote": ".orElseGet(() -> AccompanyingDocument.builder() ... .scanStatus(ScanStatus.PENDING)\n            .files(new ArrayList<>())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-050",
+      "statement": "A claim does not check the scan status: a document can be claimed while its scan is PENDING or after it was REJECTED.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:61-79",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session);\n\n    document.setDocumentType(request.documentType());",
+      "confidence": "inferred",
+      "note": "Inferred from claimUpload reading no scanStatus."
+    },
+    {
+      "id": "repo-backend-p3-051",
+      "statement": "A claim does not check the notification's status, so the backend lets documents be claimed on a notification in any state, including a submitted one.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:61-79; P/accompanyingdocument/DocumentController.java:168-170",
+      "quote": "notificationService.requireTraderAccess(\n        documentService.notificationReferenceNumberForUploadId(uploadId), organisationId);\n    AccompanyingDocument document = documentService.claimUpload(uploadId, request);",
+      "confidence": "inferred",
+      "note": "Inferred: requireTraderAccess checks only the organisation in what this part reads. Registering, deleting and the scan callback likewise read no notification status."
+    },
+    {
+      "id": "repo-backend-p3-052",
+      "statement": "POST /document-uploads/{pathSegment}/scan-results receives cdp-uploader's antivirus scan result and answers 204 No Content.",
+      "kind": "integration",
+      "ref": "P/accompanyingdocument/DocumentController.java:269-283",
+      "quote": "@PostMapping(\"/document-uploads/{pathSegment}/scan-results\") ... description = \"Receives the cdp-uploader antivirus scan result callback\") ... return ResponseEntity.noContent().build();",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-053",
-      "statement": "The admin secret is compared in constant time.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:37-39",
-      "quote": "!MessageDigest.isEqual(",
-      "confidence": "verbatim"
+      "statement": "The scan callback ignores its path segment and finds the session by the correlationId in the payload's metadata.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:265,275-281; P/cdp/uploader/CdpScanResultPayload.java:31-33",
+      "quote": "@param pathSegment the fixed segment the session's callback URL was opened with ... return metadata.get(\"correlationId\");",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 73: the path variable is always the literal 'pending'."
     },
     {
       "id": "repo-backend-p3-054",
-      "statement": "The admin secret is set from the TRADE_IMPORTS_ANIMALS_ADMIN_SECRET environment variable, with a local default when it is not set.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:128-130",
-      "quote": "secret: ${TRADE_IMPORTS_ANIMALS_ADMIN_SECRET:[REDACTED]}",
-      "confidence": "verbatim",
-      "note": "Default value redacted. A deployed environment that does not set the variable would fall back to that default."
+      "statement": "A scan callback with no correlationId, or a blank one, is refused as a bad request with 'Scan callback missing required correlationId in metadata'.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:214-221",
+      "quote": "throw new BadRequestException(\n          \"Scan callback missing required correlationId in metadata\");",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-055",
-      "statement": "Every GET endpoint and every POST other than replay, including soft delete and the reference-number list, is outside the admin-secret guard.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:57",
-      "quote": "return !isDeleteNotifications && !isReplayEndpoint;",
+      "statement": "A scan callback whose correlationId matches no session is refused as not found with 'No upload session found with correlationId: <correlationId>', so a result arriving after the session expired or was deleted writes nothing.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:85-87",
+      "quote": "UploadSession session = uploadSessionRepository.findByCorrelationId(correlationId)\n        .orElseThrow(() -> new NotFoundException(\n            \"No upload session found with correlationId: \" + correlationId));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-056",
-      "statement": "In non-prod environments, each newly created notification is stamped to expire a configured number of days after its creation time.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:436-448,454",
-      "quote": "notificationAggregate.setExpireAt(notificationAggregate.getCreated().plus(days, ChronoUnit.DAYS));",
+      "statement": "A scan result replaces the document's files with the files in the result and sets its scan status, creating the document if the claim has not arrived yet.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:88-94",
+      "quote": "AccompanyingDocument document = existingOrNewDocumentFor(session); ... document.setFiles(mapUploadedFiles(payload));\n    document.setScanStatus(resolveScanStatus(payload));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-057",
-      "statement": "The expiry window is set by the NOTIFICATION_TTL_DAYS environment variable and is unset by default, so by default no notification expires.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:145-149",
-      "quote": "# Defaults here are the prod-safe values: days unset (no stamping) and sweep disabled.\n  # Non-prod environments opt in via NOTIFICATION_TTL_DAYS and NOTIFICATION_TTL_SWEEP_ENABLED.\n  ttl:\n    days: ${NOTIFICATION_TTL_DAYS:}",
-      "confidence": "verbatim",
-      "note": "The code comments describe the window as 7 days (\"suit 7-day granularity\"), but 7 is not configured in this repo; the value comes from each environment's config."
+      "statement": "A document created by the scan callback is unclaimed and has no type, reference or date of issue until the trader claims it.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:169-180; P/accompanyingdocument/AccompanyingDocumentDto.java:28-31",
+      "quote": "\"Whether the trader's document details have been supplied; an upload the user walked away from stays unclaimed\"",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-058",
-      "statement": "No expiry is stamped when the running environment is prod (the ENVIRONMENT value \"prod\" in any case), even if a number of days is configured; any other name, including \"production\", counts as non-prod.",
+      "statement": "A scan result fails closed: the document is COMPLETE only when the result says exactly zero files were rejected; a missing or non-zero rejected count marks it REJECTED.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:77-80; NotificationService.java:443-446; NotificationTtlConfigTest.java:27-38",
-      "quote": "return \"prod\".equalsIgnoreCase(environment);",
+      "ref": "P/accompanyingdocument/DocumentService.java:233-238; P/cdp/uploader/CdpScanResultPayload.java:15-16",
+      "quote": "return rejectedCount != null && rejectedCount == 0\n        ? ScanStatus.COMPLETE\n        : ScanStatus.REJECTED;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-059",
-      "statement": "Expiry is anchored to creation: saving, submitting or amending a notification does not extend its expiry.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:439-441",
-      "quote": "Anchored to {@code created}, so a notification expires a fixed window after creation\n     * regardless of later activity.",
+      "statement": "A document's scan status is PENDING (uploaded and awaiting antivirus scanning), COMPLETE (scanned and clean) or REJECTED (virus or malware detected).",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/ScanStatus.java:6-16",
+      "quote": "\"File has been uploaded and is awaiting antivirus scanning\")\n  PENDING, ... \"Antivirus scan completed successfully — file is clean\")\n  COMPLETE, ... \"Antivirus scan rejected the file (virus or malware detected)\")\n  REJECTED",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-060",
-      "statement": "Expiry is not limited to drafts: a notification of any status, submitted ones included, is deleted once its expiry time passes.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:33-34",
-      "quote": "@Query(\"{ 'expireAt': { $ne: null, $lte: ?0 } }\")",
+      "statement": "A document's scan status moves from PENDING to COMPLETE or REJECTED only through a scan callback, and a later callback for the same session can move it again, since each one overwrites the status.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java:81-102,176",
+      "quote": ".scanStatus(ScanStatus.PENDING) ... document.setScanStatus(resolveScanStatus(payload));",
       "confidence": "inferred",
-      "note": "Inferred: the expiry query has no status condition, and stamping happens for every created notification. The partition scope calls it \"draft expiry\"; the code does not restrict it to drafts."
+      "note": "Inferred from handleScanResult being the only writer of scanStatus besides the PENDING default."
     },
     {
       "id": "repo-backend-p3-061",
-      "statement": "A copied notification gets its own expiry window counted from the copy's creation time.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:143,450-454",
-      "quote": "return createNotification(notificationCopyMapper.toCopyDto(source), correlationId, actor);",
-      "confidence": "inferred",
-      "note": "Inferred: copy goes through createNotification, which calls stampExpiry."
+      "statement": "The scan result's form section is read leniently: only values carrying a fileId are recorded as files, an object-shaped value with no fileId is dropped with a warning naming the field, and other values are ignored.",
+      "kind": "integration",
+      "ref": "P/cdp/uploader/CdpScanResultForm.java:46-72",
+      "quote": "if (isFileEntry(value)) {\n          form.addFileEntry(fieldName, context.readTreeAsValue(value, CdpScanResultFile.class));\n        } else if (value.isObject()) {\n          log.warn(\n              \"Scan result form field {} is an object with no fileId, so no file entry was\"\n                  + \" recorded for it\",",
+      "confidence": "verbatim",
+      "note": "mechanism: filters cdp-uploader's echoed form fields down to file entries."
     },
     {
       "id": "repo-backend-p3-062",
-      "statement": "A notification with no expiry time, such as one created before expiry shipped or in prod, is never deleted by the sweep.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:404-406; NotificationExpiryIT.java:104-115",
-      "quote": "Notifications with a {@code null} {@code expireAt}\n     * — including everything created before this feature shipped — are never selected.",
-      "confidence": "verbatim"
+      "statement": "The scan result payload carries an uploadStatus, a metadata map, a form section and numberOfRejectedFiles; each file entry carries fileId, filename, contentType, fileStatus, contentLength, checksumSha256, detectedContentType, s3Key, s3Bucket, hasError, errorCode and errorMessage, and unknown fields are tolerated.",
+      "kind": "integration",
+      "ref": "P/cdp/uploader/CdpScanResultPayload.java:19-23; P/cdp/uploader/CdpScanResultFile.java:27-40",
+      "quote": "String uploadStatus,\n    Map<String, String> metadata,\n    CdpScanResultForm form,\n    Integer numberOfRejectedFiles) ... @JsonIgnoreProperties(ignoreUnknown = true)\npublic record CdpScanResultFile(",
+      "confidence": "verbatim",
+      "note": "uploadStatus (e.g. 'ready') is only logged; nothing acts on it."
     },
     {
       "id": "repo-backend-p3-063",
-      "statement": "A notification is due for deletion once its expiry time is at or before the time of the sweep.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:26-34",
-      "quote": "Notifications due for automatic expiry: a non-null {@code expireAt} at or before {@code now}.",
-      "confidence": "verbatim"
+      "statement": "The scan callback is not authenticated, so anyone who can reach it with a known correlationId could post a result.",
+      "kind": "non-functional",
+      "ref": "P/accompanyingdocument/DocumentController.java:269-283; docs/design-notes.md:72",
+      "quote": "The scan-result callback is unauthenticated: anyone who can reach it with a known `correlationId` can post a result.",
+      "confidence": "verbatim",
+      "note": "Security finding, stated in general terms. The design note plans a shared secret or HMAC check when cdp-uploader supports callback authentication."
     },
     {
       "id": "repo-backend-p3-064",
-      "statement": "The expiry sweep runs only where notification.ttl.sweep.enabled is explicitly true (NOTIFICATION_TTL_SWEEP_ENABLED); it is off by default and absent when the setting is false or missing.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:27; application.yml:151-152; NotificationExpirySweeperConditionTest.java:32-46",
-      "quote": "@ConditionalOnProperty(prefix = \"notification.ttl.sweep\", name = \"enabled\", havingValue = \"true\")",
+      "statement": "Each uploaded file records filename, contentType, contentLength (bytes), s3Key, s3Bucket, fileStatus, checksumSha256, detectedContentType, hasError, errorCode and errorMessage, all copied from cdp-uploader's callback.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:20-75",
+      "quote": "String filename, ... String contentType, ... Long contentLength, ... String s3Key, ... String s3Bucket, ... FileStatus fileStatus, ... String checksumSha256, ... String detectedContentType, ... Boolean hasError, ... String errorCode, ... String errorMessage",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-065",
-      "statement": "Prod is protected from expiry by two independent safeguards: no expiry is stamped there, and the sweep does not run there.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:14-23",
-      "quote": "Prod is protected by two independent safeguards. Deleting a notification in prod would require\n * both to fail together:",
+      "statement": "A file's status is COMPLETE (scanned and clean) or REJECTED (rejected by the antivirus scan), read from cdp-uploader's lowercase 'complete' or 'rejected'.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/FileStatus.java:12-20",
+      "quote": "@JsonAlias(\"complete\")\n  @Schema(description = \"File was successfully scanned and is clean\")\n  COMPLETE,\n\n  @JsonAlias(\"rejected\")\n  @Schema(description = \"File was rejected by antivirus scan\")\n  REJECTED",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-066",
-      "statement": "The expiry sweep runs once an hour by default, measured from the end of the previous run.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:36; application.yml:153",
-      "quote": "@Scheduled(fixedDelayString = \"${notification.ttl.sweep.interval-ms:3600000}\")",
-      "confidence": "verbatim"
+      "statement": "A file's status is set only by cdp-uploader's callback; the backend never moves a file between COMPLETE and REJECTED itself.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:57-75",
+      "quote": ".fileStatus(f.fileStatus())",
+      "confidence": "inferred",
+      "note": "Inferred from UploadedFile being an immutable record built only from a callback entry."
     },
     {
       "id": "repo-backend-p3-067",
-      "statement": "Each sweep deletes at most 10 expired notifications by default; any more wait for the next run.",
-      "kind": "non-functional",
-      "ref": "src/main/resources/application.yml:154; NotificationService.java:411-424; NotificationExpiryIT.java:117-128",
-      "quote": "batch-size: 10",
+      "statement": "A refused file carries a machine-readable errorCode, one of cdp-uploader's FILE_* codes, and a human-readable errorMessage; both are null when there is no error.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:48-55",
+      "quote": "\"Machine-readable reason the file was refused, one of cdp-uploader's \"\n        + \"FILE_* codes; null when there is no error\") ... \"Human-readable error message if hasError is true; null otherwise\"",
       "confidence": "verbatim",
-      "note": "NotificationExpiryIT.deleteExpired_removesAtMostBatchSizePerRun proves three due notifications with batch 2 are removed as 2 then 1."
+      "note": "The FILE_* codes and messages are cdp-uploader's; this repo does not list them."
     },
     {
       "id": "repo-backend-p3-068",
-      "statement": "The expiry sweep permanently deletes each due notification together with its accompanying documents.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:400-424; NotificationExpiryIT.java:69-96",
-      "quote": "Deletes notifications whose {@code expireAt} has passed, cascading to their accompanying\n     * documents, up to {@code batchSize} per call.",
+      "statement": "A clean file is stored in S3 under the key '{uploadId}/{fileId}'; a rejected file has no S3 key because it was not kept in S3.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/file/UploadedFile.java:14-16,35-36",
+      "quote": "{@code s3Key} follows the pattern {@code \"{uploadId}/{fileId}\"} for complete files and is\n * {@code null} for rejected files (the file was not persisted to S3).",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-069",
-      "statement": "The expiry sweep writes no audit record, and leaves existing audit records that name the expired notification untouched.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:403-404; NotificationExpiryIT.java:97-101",
-      "quote": "unlike {@link #deleteByReferenceNumbers} it writes no audit\n     * record",
+      "statement": "The API never exposes a file's S3 key or bucket: a document's files in a response carry filename, contentType, contentLength, fileStatus, checksumSha256, detectedContentType, hasError, errorCode and errorMessage only.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/file/UploadedFileDto.java:6-10,13-40",
+      "quote": "Deliberately omits {@code s3Key} and {@code s3Bucket} — these are internal S3 storage\n * coordinates that no API consumer requires and must not be exposed in responses.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-070",
-      "statement": "The expiry sweep records no lifecycle event, so other services are not told that an expired notification was removed.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:411-424",
-      "quote": "deleteNotificationsAndDocuments(referenceNumbers);\n        return referenceNumbers.size();",
-      "confidence": "inferred",
-      "note": "Inferred: deleteExpired never calls the outbox service."
+      "statement": "In API responses a file's hasError is always true or false: an unknown value is reported as false.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/file/UploadedFileDto.java:49-51",
+      "quote": "hasError = hasError != null && hasError;",
+      "confidence": "verbatim",
+      "note": "mechanism: normalises hasError on uploaded file responses."
     },
     {
       "id": "repo-backend-p3-071",
-      "statement": "The expiry sweep tolerates documents disappearing mid-batch rather than failing, because another actor may remove them at the same time.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:404-405",
-      "quote": "tolerates documents vanishing mid-batch (a background sweep should not fail because\n     * another actor removed a row concurrently)",
+      "statement": "A document in an API response carries id, notificationReferenceNumber, uploadId, correlationId, documentType, documentReference, dateOfIssue, scanStatus, claimed, files, created and updated; expireAt and version are not returned.",
+      "kind": "data",
+      "ref": "P/accompanyingdocument/AccompanyingDocumentDto.java:15-34",
+      "quote": "String id,\n    String notificationReferenceNumber,\n    String uploadId, ... String correlationId,\n    DocumentType documentType,\n    String documentReference,\n    LocalDate dateOfIssue,\n    ScanStatus scanStatus, ... boolean claimed,\n    List<UploadedFileDto> files,\n    Instant created,\n    Instant updated)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-072",
-      "statement": "Only one service instance sweeps at a time: each run takes a shared lock named notification-expiry-sweeper, held at least 1 second and at most 30 seconds, and skips the run if the lock is held elsewhere.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:31,38-52; application.yml:155-156; NotificationExpirySweeperTest.java:90-110",
-      "quote": "static final String LOCK_NAME = \"notification-expiry-sweeper\";",
-      "confidence": "verbatim"
+      "statement": "GET /notifications/{referenceNumber}/document-uploads returns all of a notification's accompanying documents as {\"items\": [...]}, with 200, including unclaimed, pending and rejected ones.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:182-204; P/accompanyingdocument/DocumentListResponse.java:10-13; P/accompanyingdocument/DocumentService.java:113-118",
+      "quote": "@GetMapping(\"/notifications/{referenceNumber}/document-uploads\") ... return ResponseEntity.ok(new DocumentListResponse(items)); ... .findAllByNotificationReferenceNumber(notificationReferenceNumber);",
+      "confidence": "verbatim",
+      "note": "No filter on claimed or scanStatus, and no stated order, so the frontend decides what the trader sees."
     },
     {
       "id": "repo-backend-p3-073",
-      "statement": "When a sweep deletes notifications it logs \"Expiry sweeper deleted <n> notification(s)\"; a sweep that deletes nothing logs nothing.",
-      "kind": "copy",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:47-50; NotificationExpirySweeperTest.java:78-121",
-      "quote": "log.info(\"Expiry sweeper deleted {} notification(s)\", deleted);",
+      "statement": "Listing a notification's documents is refused with 400 for a validation error, 403 when the notification belongs to another organisation and 404 when the notification is not found; unlike register, the path reference number has no pattern check.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:188-196",
+      "quote": "@ApiResponse(responseCode = \"400\", description = \"Validation error\" ... @ApiResponse(responseCode = \"403\" ... @ApiResponse(responseCode = \"404\", description = \"Notification not found\" ... @PathVariable String referenceNumber,",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-074",
-      "statement": "A configured expiry window of zero or a negative number of days fails validation when the service starts, rather than stamping an expiry that has already passed.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:31-33,40; NotificationTtlConfigTest.java:61-83",
-      "quote": "Must be positive\n *                    when set — a non-positive value fails validation at startup rather than\n *                    stamping an already-elapsed {@code expireAt}",
+      "statement": "GET /document-uploads/{uploadId} returns one accompanying document with 200, and is refused with 403 for another organisation's notification and 404 when the upload is not found, with 'No accompanying document found with uploadId: <uploadId>' when the session exists but no document does.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:213-233; P/accompanyingdocument/DocumentService.java:139-144",
+      "quote": "@GetMapping(\"/document-uploads/{uploadId}\") ... new NotFoundException(\"No accompanying document found with uploadId: \" + uploadId));",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-075",
-      "statement": "Sweep settings that are zero, negative or missing fall back to safe defaults: batch size 10, interval 1 hour, lock held at least 1 second and at most 30 seconds.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:61-74; NotificationTtlConfigTest.java:40-48",
-      "quote": "if (batchSize <= 0) {\n        batchSize = 10;\n      }",
+      "statement": "DELETE /document-uploads/{uploadId} removes a document from its notification and answers 204 No Content; it is refused with 403 for another organisation's notification and 404 when the upload is not found.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentController.java:242-260",
+      "quote": "@DeleteMapping(\"/document-uploads/{uploadId}\") ... @ApiResponse(responseCode = \"204\", description = \"Document deleted\" ... @ApiResponse(responseCode = \"404\", description = \"Upload not found\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\"",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-076",
-      "statement": "The backend offers no read of a single notification's full content by reference other than the fulfilment view; a dashboard or check-answers page reading the stored notification fields has only the list item fields or the opaque fulfilments payload to use.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:158-210",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked at every GET mapping in NotificationController: /notifications, /{referenceNumber}/fulfilments, /reference-numbers and /{referenceNumber}/outbox-events. None returns the full notification aggregate by reference."
+      "statement": "Deleting a document also deletes its upload session, so a scan result arriving afterwards cannot bring the document back.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:104-111",
+      "quote": "accompanyingDocumentRepository.delete(document);\n    uploadSessionRepository.findByUploadId(uploadId).ifPresent(uploadSessionRepository::delete);",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 70 states the reason."
     },
     {
       "id": "repo-backend-p3-077",
-      "statement": "A test proves that GET /notifications with nothing stored answers 200 with an empty content array, page 1, size 25 and zero numberOfElements, totalElements and totalPages.",
+      "statement": "Deleting a document removes only its record; the file stays in the S3 documents bucket.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:890-907 (FindAll.findAll_shouldReturnEmptyPage)",
-      "quote": ".andExpect(jsonPath(\"$.content\").isEmpty())\n                .andExpect(jsonPath(\"$.page\").value(1))\n                .andExpect(jsonPath(\"$.size\").value(25))",
-      "confidence": "verbatim",
-      "note": "WebMvc slice test with the service mocked: it proves the wire shape and status, not the query."
+      "ref": "P/accompanyingdocument/DocumentService.java:104-111; P/s3/S3DocumentService.java:41-71",
+      "quote": "accompanyingDocumentRepository.delete(document);",
+      "confidence": "inferred",
+      "note": "Inferred: S3DocumentService has only a read (getObject); nothing in this part deletes an S3 object."
     },
     {
       "id": "repo-backend-p3-078",
-      "statement": "A test proves that each GET /notifications list item is serialised with its referenceNumber, status, origin country code and commodity name, and that the page, size, totalElements and totalPages are returned alongside.",
+      "statement": "GET /document-uploads/{uploadId}/file downloads the document's file, streamed from S3, as an attachment under its original filename (UTF-8 encoded), with 200.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:909-947 (FindAll.findAll_shouldReturnPageOfNotifications)",
-      "quote": ".andExpect(jsonPath(\"$.content[0].referenceNumber\").value(REF_1))\n                .andExpect(jsonPath(\"$.content[0].status\").value(\"DRAFT\"))\n                .andExpect(jsonPath(\"$.content[0].origin.countryCode\").value(\"GB\"))\n                .andExpect(jsonPath(\"$.content[0].commodity.name\").value(\"Live cattle\"))",
+      "ref": "P/accompanyingdocument/DocumentController.java:292-319,353-359",
+      "quote": "@GetMapping(\"/document-uploads/{uploadId}/file\") ... ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build());",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-079",
-      "statement": "Tests prove that the page, sort and referenceNumber query parameters of GET /notifications reach the list unchanged, including a referenceNumber that is not in a valid reference format.",
+      "statement": "A download is served with the content type the uploader declared, falling back to application/octet-stream when that value is not a valid media type.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:955-1009 (findAll_shouldPassPageParam, findAll_shouldPassSortParam, findAll_shouldPassReferenceNumberParam, findAll_shouldPassInvalidReferenceNumberToService)",
-      "quote": "verify(notificationService).findAll(1, \"createdAt,desc\", null);\n...\nverify(notificationService).findAll(1, null, \"invalid-ref\");",
+      "ref": "P/accompanyingdocument/DocumentController.java:313,343-351",
+      "quote": "return MediaType.parseMediaType(declared);\n    } catch (InvalidMediaTypeException _) { ... return MediaType.APPLICATION_OCTET_STREAM;",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-080",
-      "statement": "When the dashboard list is filtered by a reference that matches, the response holds exactly that one notification and reports a total of one.",
-      "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:166-170",
-      "quote": ".<Page<NotificationView>>map(notification ->\n                    new PageImpl<>(List.of(notification), pageable, 1))\n                .orElseGet(() -> Page.empty(pageable));",
-      "confidence": "verbatim"
+      "statement": "A download returns the document's first file only.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:154-161",
+      "quote": "UploadedFile file = document.getFiles().stream()\n        .findFirst()",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 71: the upload workflow gives each session one file, and nothing in this service enforces that."
     },
     {
       "id": "repo-backend-p3-081",
-      "statement": "Tests prove that GET /notifications/reference-numbers answers 200 with a list of reference strings and a 0-based page, and that a requested page number is passed through.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1152-1209 (FindAllReferenceNumbers)",
-      "quote": ".andExpect(jsonPath(\"$.content[0]\").value(REF_1))\n                .andExpect(jsonPath(\"$.content[1]\").value(REF_2))\n                .andExpect(jsonPath(\"$.page\").value(0))",
-      "confidence": "verbatim",
-      "note": "The tests' mocked size of 25 is fixture data; the configured admin page size is 50 (repo-backend-p3-028)."
+      "statement": "A download is refused as not found with 'No file found for uploadId: <uploadId>' when the document has no file yet, and with 'File for uploadId: <uploadId> was rejected and is not available for download' when its file was rejected.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:157-166",
+      "quote": "\"No file found for uploadId: \" + uploadId)); ... \"File for uploadId: \" + uploadId + \" was rejected and is not available for download\");",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-082",
-      "statement": "A test proves that DELETE /notifications with the admin secret, a trace id and a user id answers 204 and passes the trace id and user id on for the audit record.",
+      "statement": "Downloads are refused with 403 for another organisation's notification and 404 when the file is not found.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1015-1031 (Delete.delete_shouldReturn204_whenAllReferenceNumbersExist)",
-      "quote": ".andExpect(status().isNoContent());\n\n            verify(notificationService).deleteByReferenceNumbers(referenceNumbers, new AuditContext(\"trace-abc\", \"user-123\"));",
+      "ref": "P/accompanyingdocument/DocumentController.java:296-300",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"File not found\" ... @ApiResponse(responseCode = \"403\", description = \"Notification belongs to another organisation\"",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-083",
-      "statement": "The soft-delete controller test pins a 400 refusal with the detail \"Cannot delete notification with status: DELETED\", but the service treats a repeat soft delete of a DELETED notification as a successful no-op, so that refusal is never produced for DELETED in practice.",
-      "kind": "rule",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1287-1299; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:345-348",
-      "quote": ".thenThrow(new BadRequestException(\"Cannot delete notification with status: DELETED\"));",
-      "confidence": "inferred",
-      "note": "The test mocks the service, so it proves only that a BadRequestException maps to 400 with its message as detail. The real service returns early for DELETED (repo-backend-p3-036)."
+      "statement": "The browser uploads files straight to cdp-uploader, so this service never receives the uploaded bytes; it reads files only to stream a download from S3.",
+      "kind": "integration",
+      "ref": "docs/design-notes.md:60; P/s3/S3DocumentService.java:41-71",
+      "quote": "The browser uploads straight to cdp-uploader, so the uploaded bytes never arrive here; the only time this service handles them is a download, which streams from S3.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-084",
-      "statement": "The admin-secret guard applies to any DELETE request whose path begins with /notifications, not only to DELETE /notifications itself.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:52-53",
-      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method)\n            && uri.startsWith(\"/notifications\");",
+      "statement": "Downloads read from the S3 documents bucket set by CDP_DOCUMENTS_BUCKET, which defaults to trade-imports-animals-documents.",
+      "kind": "integration",
+      "ref": "P/s3/S3DocumentService.java:44-47; src/main/resources/application.yml:45",
+      "quote": "documents-bucket: ${CDP_DOCUMENTS_BUCKET:trade-imports-animals-documents}",
       "confidence": "verbatim",
-      "note": "The class comment says 'Applied to DELETE /notifications requests only.', which is narrower than the code and omits the replay endpoint the code also guards."
+      "note": "The download reads the configured bucket, not the s3Bucket recorded on the file."
     },
     {
       "id": "repo-backend-p3-085",
-      "statement": "The admin-secret check runs before almost every other request filter, so a refused request is turned away before any other request handling.",
+      "statement": "Each download is recorded as one S3 get-object call whose duration counts only time spent waiting on S3, and a client that stops reading part way is logged and recorded as a success, not an S3 failure.",
       "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:21",
-      "quote": "@Order(Ordered.HIGHEST_PRECEDENCE + 1)",
-      "confidence": "inferred",
-      "note": "Inferred from the filter's order, one step after the highest precedence."
+      "ref": "P/s3/S3DocumentService.java:28-92",
+      "quote": "recording one {@code s3/get-object} call whose duration is the time spent\n   * waiting on S3, not the time spent writing to {@code outputStream}. ... log.info(\"Client stopped reading document {} from S3\", s3Key, clientFailure);",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-086",
-      "statement": "Tests prove the admin-secret guard and the DELETE /notifications headers are checked with the secret supplied as the Trade-Imports-Animals-Admin-Secret header; every DELETE test sends it.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:50-54,1024,1045,1059,1076,1092",
-      "quote": ".header(\"Trade-Imports-Animals-Admin-Secret\", \"test-secret\")",
-      "confidence": "verbatim",
-      "note": "The test value is a test fixture, not a real secret. No test in this file sends DELETE /notifications without the secret; the 401 path is proven only for replay (repo-backend-p3-051)."
+      "statement": "The backend sets no limit on file size, file type or number of files per notification; any such limits are cdp-uploader's or the frontend's.",
+      "kind": "constraint",
+      "ref": "P/accompanyingdocument/; P/cdp/uploader/; P/s3/S3DocumentService.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in every file of this part: contentLength and contentType are recorded but never checked, and nothing counts a notification's documents."
     },
     {
       "id": "repo-backend-p3-087",
-      "statement": "A test proves that the expiry sweep leaves a notification that is not yet due, and its accompanying document, in place.",
+      "statement": "When notifications are deleted, all their accompanying documents and upload sessions are deleted with them.",
       "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationExpiryIT.java:69-96 (deleteExpired_removesDueNotificationAndDocuments_leavingAuditAndNonDueUntouched)",
-      "quote": "// Non-due notification and its document survive.\n        assertThat(notificationRepository.findByReferenceNumber(activeRef)).isPresent();",
+      "ref": "P/accompanyingdocument/DocumentService.java:128-137; P/notification/NotificationService.java:427-430",
+      "quote": "notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers);\n        documentService.deleteForNotificationReferenceNumbers(referenceNumbers);",
       "confidence": "verbatim"
     },
     {
       "id": "repo-backend-p3-088",
-      "statement": "When the expiry sweep finds notifications due, it logs \"Expiring <n> notification(s)\" before deleting them.",
-      "kind": "copy",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:421",
-      "quote": "log.info(\"Expiring {} notification(s)\", referenceNumbers.size());",
-      "confidence": "verbatim"
+      "statement": "A new accompanying document takes its notification's expiry time (expireAt) when first written, and has none if the notification has none or cannot be found, so it is removed by the same TTL rule as its notification.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:178,182-191; P/notification/NotificationExpiryIndex.java:31",
+      "quote": ".expireAt(notificationExpireAt(session.getNotificationReferenceNumber())) ... log.warn(\"Notification {} not found, so its new document has no expireAt\",",
+      "confidence": "verbatim",
+      "note": "design-notes.md line 45 adds that removal is not guaranteed to happen in the same pass as the notification, and writes no audit record or outbox event. How the notification's expiry is set is part 2's."
     },
     {
       "id": "repo-backend-p3-089",
-      "statement": "Each expiry sweep batch deletes its notifications and their documents in one transaction.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:411-412",
-      "quote": "@Transactional\n    public int deleteExpired(int batchSize) {",
-      "confidence": "verbatim"
+      "statement": "Only claimed documents whose scan is COMPLETE are passed on with a notification's published event, oldest first; unclaimed, pending and rejected documents are left out.",
+      "kind": "rule",
+      "ref": "P/accompanyingdocument/DocumentService.java:120-126; P/accompanyingdocument/AccompanyingDocumentRepository.java:14-16; P/outbox/OutboxService.java:83",
+      "quote": ".findAllByNotificationReferenceNumberAndScanStatusAndClaimedIsTrueOrderByCreatedAsc(\n            notificationReferenceNumber, ScanStatus.COMPLETE);",
+      "confidence": "verbatim",
+      "note": "How the documents are mapped into the event is part 4's."
     },
     {
       "id": "repo-backend-p3-090",
-      "statement": "The environment name used to decide whether expiry is stamped comes from the ENVIRONMENT variable and is \"local\" when that is not set.",
-      "kind": "constraint",
-      "ref": "src/main/resources/application.yml:150",
-      "quote": "environment: ${ENVIRONMENT:local}",
-      "confidence": "verbatim"
+      "statement": "Documents are not copied when a notification is copied: nothing in the document code or the notification package's copy path reads or writes accompanying documents.",
+      "kind": "behaviour",
+      "ref": "P/accompanyingdocument/DocumentService.java; P/notification/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for every use of DocumentService and AccompanyingDocument in src/main: only NotificationService delete, NotificationExpiryIndex and OutboxService use them. The code shows no copy of documents, but says nothing either way."
     },
     {
       "id": "repo-backend-p3-091",
-      "statement": "The interval between expiry sweeps can be set by notification.ttl.sweep.interval-ms, and falls back to one hour (3600000 ms) when it is not set.",
-      "kind": "constraint",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:36",
-      "quote": "@Scheduled(fixedDelayString = \"${notification.ttl.sweep.interval-ms:3600000}\")",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-backend-p3-092",
-      "statement": "No test in this slice proves the status filter or the sort order of GET /notifications against a real store: the list tests mock the service, and only the sort parsing is unit-tested.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:880-1010; NotificationSortTest.java",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked in NotificationControllerTest, NotificationSortTest and NotificationExpiryIT, the tests this part reads. Other integration tests outside this part may cover it."
-    },
-    {
-      "id": "repo-backend-p3-093",
-      "statement": "A path reference on the fulfilment read or soft delete that is not in the GBN-AG format is refused by request validation before any lookup; the status and message of that refusal are set by the shared error handler, not in this slice.",
+      "statement": "Documents are not part of a notification's amend snapshot: adding or removing a document does not count as a change to an amendment.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:38,182,241",
-      "quote": "@Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber",
-      "confidence": "inferred",
-      "note": "Inferred from @Validated on the controller and @Pattern on the path variable. GlobalExceptionHandler handles ConstraintViolationException; it is read by another part."
+      "ref": "docs/design-notes.md:33",
+      "quote": "Only the `notification` content sub-object is compared with its snapshot, both through the same deep clone, so uploaded documents and the opaque fulfilments payload never count as a change.",
+      "confidence": "verbatim",
+      "note": "The document code itself has no amend handling; documents attach to the reference number, so they stay with a notification through amend."
     }
   ]
 }

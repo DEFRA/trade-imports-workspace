@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 7 read, in full, the three consignment-parties features of the high-risk-plants linear journey bar the destination, and the party registry they share: journeys/linear/features/consignor-select/ (page.js, evaluation.js, fields.js, controller.js, controller.test.js, consignor-select.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js), journeys/linear/features/identification-numbers/ (page.js, evaluation.js, fields.js, controller.js, template.njk, controller.test.js, identification-numbers.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), journeys/linear/features/consignment-contact-select/ (page.js, evaluation.js, fields.js, controller.js, controller.test.js, consignment-contact-select.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js) and journeys/linear/parties/ (index.js, picked-party.js, picked-party.test.js). For context only, and claimed by other parts, it also read features/address-book-picker/template.njk, render.js, picker-routes.js, save-selection.js and controller-test-support.js (part 9's picker shell), obligations/sections/parties.js and contact.js (part 12's obligation manifest), and services/address-book/index.js and to-wire-address.js (outside the source's scope) to see what the shared picker does with a page's own settings. It covers three served pages - the consignor picker at slug consignors/select, the identification-numbers page at slug identification-numbers and the consignment contact picker at slug consignment/contact/select - with each page's route, heading, caption, description, fields, labels, hints, validation rules and verbatim error messages in English and Welsh, what each saves, where Save and continue, Save and return to hub, Cancel and return to hub and Back lead, the held-address panel and its edit link, the commodity-type scope rules for the consignor and the conditional identification numbers, the picked-party rules the pickers share (how a selection resolves to a record, a blank save, an id the book no longer holds, a record of another role, a soft-deleted record), the party registry's three parties and their edit slugs, and the 10 tests of consignor-select.fit.spec.js, the 6 of identification-numbers.fit.spec.js and the 11 of consignment-contact-select.fit.spec.js. It records one gap: nothing in the slice says what a picker page shows when the address book itself is unavailable while listing addresses.",
+  "structure": "Part 7 read, in full, three feature folders of the high-risk plants linear journey and its parties registry, at repo HEAD 2f2b07fd. consignor-select/ (page.js, fields.js, evaluation.js, controller.js, controller.test.js, consignor-select.fit.spec.js with 10 own tests, copy en/cy/test, view-model index and test) is a thin binding of the shared address-book picker shell at slug consignors/select, role CONSIGNOR, scoped by the consignor obligation. identification-numbers/ (page.js, fields.js, evaluation.js, controller.js, template.njk, controller.test.js, identification-numbers.fit.spec.js with 6 test declarations, three of them looped per commodity type, copy en/cy/test) is a hand-built form of four text inputs, each shown by its own obligation's scope, max 58 characters. consignment-contact-select/ (page.js, fields.js, evaluation.js, controller.js, controller.test.js, consignment-contact-select.fit.spec.js with 11 own tests, copy en/cy/test, view-model index and test) binds the same picker shell at consignment/contact/select with no role and its own return-control words. parties/ (index.js, picked-party.js, picked-party.test.js) registers the three copied-address answers and the copy-on-pick and display rules. Context only, claimed by parts 9 and 12: the picker shell's template.njk, render.js, picker-routes.js and save-selection.js, and obligations/sections/parties.js and contact.js. Since the earlier extract (repo head a88175f2) only the identification-numbers save-failure test changed, from an unavailable backend to a refused backend request; that claim is re-issued under a new id and every other kept claim still says the same thing.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p7-001",
@@ -461,14 +461,6 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-057",
-      "statement": "When saving the identification numbers fails because the backend is unavailable, the page comes back at status 500 with the recoverable-error banner and the numbers still in the inputs.",
-      "kind": "behaviour",
-      "ref": "identification-numbers/controller.js:74-90 and controller.test.js:214-226",
-      "quote": "    expect(result.response.statusCode).toBe(500)\n    expect(result.view.context.recoverableError).toBe(true)\n    expect(result.view.context.values).toEqual({ consignmentNumber: 'REF' })",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-plantsfrontend-p7-058",
       "statement": "A programming error while saving the identification numbers is not shown as a recoverable failure: it escapes to the service's catch-all.",
       "kind": "behaviour",
@@ -886,6 +878,48 @@
       "ref": "consignment-contact-select/controller.test.js:97-101",
       "quote": "  denmarkMatches: [\n    'copenhagen-exports-aps',\n    'aarhus-trading-aps',\n    'odense-supplies-aps'\n  ],",
       "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-108",
+      "statement": "When a backend request to save the identification numbers fails, the page comes back at status 500 with the recoverable-error banner and the numbers still in the inputs.",
+      "kind": "behaviour",
+      "ref": "identification-numbers/controller.js:72-87 and controller.test.js:214-226",
+      "quote": "  it('Should re-render a backend request failure at 500 with the banner and the value', async () => {\n    const failure = loggedBackendRefusal('save answers')",
+      "confidence": "verbatim",
+      "note": "Replaces repo-plantsfrontend-p7-057, whose statement named an unavailable backend; the test now drives a refused backend request."
+    },
+    {
+      "id": "repo-plantsfrontend-p7-109",
+      "statement": "A mandatory identification number made only of spaces is treated as blank and refused with that field's 'Enter …' message.",
+      "kind": "rule",
+      "ref": "identification-numbers/controller.test.js:108-125",
+      "quote": "      ['', 'required'],\n      [' '.repeat(3), 'required'],\n      ['x'.repeat(59), 'maxLength']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-110",
+      "statement": "A consignment number containing a hyphen, such as 'bad-reference', is refused by the letters, numbers and underscores rule.",
+      "kind": "rule",
+      "ref": "identification-numbers/controller.js:39 and controller.test.js:126-142",
+      "quote": "pattern(name, /^\\w*$/, copy.errors[name].pattern)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-111",
+      "statement": "The contact picker's Welsh words for its two return controls differ from the English ones, and its English return-control words are held as the design source sets them.",
+      "kind": "copy",
+      "ref": "consignment-contact-select/copy/copy.test.js:35-47",
+      "quote": "  it('Should hold the two return-control words as the design source sets them, with a Welsh draft that differs', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-112",
+      "statement": "A copied party's phone and email are taken from the address-book record's address, not from the record itself.",
+      "kind": "data",
+      "ref": "journeys/linear/parties/picked-party.js:9-10",
+      "quote": "  phone: chosen.address?.phone,\n  email: chosen.address?.email,",
+      "confidence": "verbatim",
+      "note": "mechanism: maps the address-book record's nested address contact fields onto the notification's party answer."
     }
   ]
 }

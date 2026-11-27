@@ -199,9 +199,23 @@ phase('Status')
 
 const STATUS_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'sources', 'orphans', 'problems', 'summary'],
+  required: ['ok', 'abs', 'sources', 'counts', 'work', 'orphans', 'problems', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when tim distil status exited 0' },
+    counts: {
+      type: 'object',
+      description: 'result.counts, exactly',
+      required: ['pending', 'extracted', 'verified', 'stale', 'invalid'],
+      properties: {
+        pending: { type: 'integer' },
+        extracted: { type: 'integer' },
+        verified: { type: 'integer' },
+        stale: { type: 'integer' },
+        invalid: { type: 'integer' }
+      },
+      additionalProperties: false
+    },
+    work: { ...STRINGS, description: 'The id of every entry of result.work, in order' },
     abs: { type: 'string', description: 'What git rev-parse --show-toplevel printed, exactly' },
     sources: {
       type: 'array',
@@ -228,18 +242,42 @@ const STATUS_SCHEMA = {
   additionalProperties: false
 }
 
-const status = await agent(
+const statusPrompt = (relayProblems) =>
   `You are the STATUS step of the DISTIL workflow for the workarea ${WORKAREA}. Run two commands and report what they print.
 ${guardRails(null)}
 1. \`git -C ${TILDE} rev-parse --show-toplevel\`. Report what it printed as \`abs\`, exactly.
 2. \`${timCommand('distil status')}\`.
 ${ENVELOPE_RULE}
 On success, copy every entry of \`result.sources\` in order: id, kind, slug, state, next (write null as "none"), reason,
-and claims from \`extract.claims\` when it is a number. Copy \`result.orphans\` exactly. ok is true.
-On failure, ok is false, sources and orphans are [], and problems holds every problem line.
-Change nothing. Return the structured output only.`,
-  light({ label: 'status', phase: 'Status', schema: STATUS_SCHEMA })
-)
+and claims from \`extract.claims\` when it is a number. Copy \`result.counts\` exactly, and the id of every entry of
+\`result.work\` in order. Copy \`result.orphans\` exactly. ok is true.
+On failure, ok is false, sources, work and orphans are [], every count is 0, and problems holds every problem line.${relayRetryNote(relayProblems)}
+Change nothing. Return the structured output only.`
+
+const runStatus = async (relayProblems) =>
+  agent(statusPrompt(relayProblems), light({ label: relayLabel('status', relayProblems ? 1 : 0), phase: 'Status', schema: STATUS_SCHEMA }))
+
+// Every source tim counted is relayed, in the state tim counted it, and every
+// source on tim's work list is relayed with a next step.
+const statusRelayProblems = (relayed) => {
+  if (!relayed || !relayed.ok) return []
+  const relayedStates = relayed.sources.reduce((tally, source) => ({ ...tally, [source.state]: (tally[source.state] ?? 0) + 1 }), {})
+  const stateProblems = Object.entries(relayed.counts)
+    .filter(([state, count]) => (relayedStates[state] ?? 0) !== count)
+    .map(([state, count]) => `tim counted ${count} ${state} sources, but ${relayedStates[state] ?? 0} were relayed`)
+  const withNextStep = new Set(relayed.sources.filter((source) => source.next !== 'none').map((source) => source.id))
+  const workMissing = relayed.work.filter((id) => !withNextStep.has(id))
+  return [
+    ...stateProblems,
+    ...(workMissing.length ? [`tim's work list names ${workMissing.join(', ')}, which were not relayed with a next step`] : [])
+  ]
+}
+
+let status = await runStatus(null)
+if (statusRelayProblems(status).length) {
+  log(`status: ${statusRelayProblems(status).join(' ')}. Asking again`)
+  status = await runStatus(statusRelayProblems(status))
+}
 
 const stoppedResult = (reason, detail, extra) => ({
   workarea: WORKAREA,
@@ -262,6 +300,9 @@ if (!status || !status.ok) {
       ? `tim distil status failed: ${status.problems.join(' ') || status.summary}`
       : 'the status agent returned nothing'
   )
+}
+if (statusRelayProblems(status).length) {
+  return stoppedResult('status-failed', `the status was relayed wrong twice: ${statusRelayProblems(status).join(' ')}`)
 }
 if (!isText(status.abs) || !status.abs.startsWith('/')) {
   return stoppedResult('status-failed', `the status agent reported the workspace root as ${JSON.stringify(status.abs)}, which is not an absolute path`)
@@ -1932,7 +1973,8 @@ const repoKeysNote = `Check each repo's GitHub slug with \`git -C ${TILDE}/<path
 const existingBacklogNote = (round) => {
   if (HAD_BACKLOG) {
     return `${BACKLOG_ABS} already exists: this is a re-distil. Keep every row id and remove no row. Rewrite todo and
-blocked rows to the requirements as they stand now; a blocked row whose blocker a ruling removed becomes todo. Never
+blocked rows to the requirements as they stand now, their dependsOn, externalDependsOn and theme included where a
+ruling changes what the row waits for or which theme carries it; a blocked row whose blocker a ruling removed becomes todo. Never
 change a row with any other status. The workflow compares every such row before and after you. A changed or removed
 row comes back to you as a problem to put right, and the run stops if it is still wrong after ${SEND_BACKS} send-backs.`
   }

@@ -1,6 +1,6 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 4 read the whole commodities feature folder of the high-risk plants set (src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/): page.js, fields.js, entry-index.js, evaluation.js, links.js, line-form.js; list/list.controller.js, list/list.njk, list/_cells.njk, list/table-rows.js and their unit tests (list.controller.test.js, table-rows.test.js); details/details.controller.js, details/details.njk and details.controller.test.js; copy/copy.en.js, copy/copy.cy.js and copy/copy.test.js; and fit/list.fit.spec.js (12 tests in two describes) and fit/details.fit.spec.js (18 tests in two describes). For context only it read the set-owned vocabulary service (services/commodities/index.js, claimed by part 3), the commodity obligation section (obligations/sections/commodity.js, claimed by part 12) and src/server/app/shared/kit.js (claimed by part 13), plus the few shared helpers the two pages render through: shared/save-actions.njk, shared/copy.en.js's saveActions block, shared/paths.js's route builders, lib/validate/validators.js's requiredMaxText and requiredIntegerInRange, flow/section-captions/copy/copy.en.js for the caption wording and fit/set-base.js and fit/high-risk-plants-journey.js for the two URL and helper constants its fit specs use. It covers the repeatable commodity collection as a user meets it: the commodities list page (slug 'commodities') with its route, caption, heading, table columns, per-row Change and Remove controls, Add another button, empty state, removal banner, save controls and collection floor; the commodities/details sub-page with its route for adding and for editing, its category question and every per-line field with label, hint, widget, width, cap, condition and error message in English and machine-draft Welsh; every validation rule and redirect on either page; the floor obligation and the absence of a ceiling; the four reshaping modules (entry-index.js, links.js, line-form.js, list/table-rows.js) as mechanism claims; and what each of the 30 fit tests proves. It stops at the commodity-type question itself and at the vocabulary service, which part 3 claims, and at the obligation manifest, which part 12 claims.",
+  "structure": "Part 4 read the commodities feature folder of the high-risk plants linear journey in full (src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/: page.js, fields.js, evaluation.js, entry-index.js, links.js, line-form.js, list/list.controller.js, list/list.njk, list/_cells.njk, list/table-rows.js, details/details.controller.js, details/details.njk, copy/copy.en.js, copy/copy.cy.js, and the unit tests list.controller.test.js, details.controller.test.js, table-rows.test.js and copy.test.js), plus as context only services/commodities/index.js (part 3), obligations/sections/commodity.js (part 12) and shared/kit.js (part 13). It covers two pages. The commodities list page (slug 'commodities', GET and POST at /notifications/{journeyId}/commodities) owns the commodityLines collection: a four-column table (Category, Genus or variety, Quantity, hidden Actions) with a Change link and a Remove button per row, an empty state, the 'Add another commodity' button, the removal banner after a commodity-type change, the 'Add at least one commodity' collection floor, no ceiling, and Save and continue alone. The commodity details sub-page (slug 'commodities/details', ?index=N to edit) asks the category radios first, then reveals the per-line fields that category asks for (genus type-ahead, species, commodity code, variety, quantity, intended use, EPPO code, size of the trees, phytosanitary treatments) with their labels, hints, widths, caps and verbatim errors, and saves by Save and continue or Save and add another. Claims also cover the guards on a forged or stale index, the trail-carrying redirects, save failures, the English and Welsh copy bundles key by key, the 12 tests of fit/list.fit.spec.js and the 18 of fit/details.fit.spec.js one claim each, and the four mechanism modules. The repo has moved since the earlier extract only in two test helper renames and in kit.js's save-fallback logging, so every kept claim still says the same thing.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p4-001",
@@ -1213,6 +1213,126 @@
       "quote": "{% from \"accessible-autocomplete/macro.njk\" import appAccessibleAutocomplete %}",
       "confidence": "inferred",
       "note": "It follows because the only enhanced control either template imports is the accessible-autocomplete macro: the 400-character treatments answer uses govukTextarea with no maxlength or character count, and every other field is a plain govukInput."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-146",
+      "statement": "A backend that cannot take a line's save on the details page is logged once at warn as a save fallback with the journey id and route, but, unlike a removal on the list page, without naming an action or the line's index.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:149-159 with src/server/app/shared/kit.js:302-325 (context only)",
+      "quote": "const { failure, value } = await kit.recoverableSave(\n    request,\n    write,\n    async () =>\n      buildView(request, h, { ...model, recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )\n  )",
+      "confidence": "inferred",
+      "note": "It follows because the details page passes no ids argument to recoverableSave, while the list page passes { action: 'remove-line', index }. kit.js itself is part 13's. No test pins the details page's log line."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-147",
+      "statement": "If the collection refuses to take a new line when a category is chosen, the trader is sent to the commodities list instead of the details page for the new line.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:161-167",
+      "quote": "return index === null ? listHref(request) : detailsHref(request, { index })",
+      "confidence": "inferred",
+      "note": "mechanism: reads the index the engine's append returns for a new commodity line. When the engine answers no index is the engine's, not this part's; no test covers the null branch."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-148",
+      "statement": "Opening the details page for a saved line shows that line's category already chosen among the category radios.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:48-54 and :93 with :114-127",
+      "quote": "checked: value === selected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-149",
+      "statement": "The genus type-ahead can show every genus the line's category offers as a drop-down list, without the trader having to type first.",
+      "kind": "behaviour",
+      "ref": "details/details.njk:45-48",
+      "quote": "showAllValues: true,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-150",
+      "statement": "Every per-line field on the details page has a small bold label, below the category question's medium legend.",
+      "kind": "constraint",
+      "ref": "details/details.njk:40, :55 and :66, with :27",
+      "quote": "label: { text: field.label, classes: \"govuk-label--s\" },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-151",
+      "statement": "Changing a saved line's category and pressing Save and add another does not start a new line: the line is rewritten to its new category and the trader is brought back to the details page for that same line to answer its new fields.",
+      "kind": "behaviour",
+      "ref": "details/details.controller.js:169-175 and :225-228",
+      "quote": "if (stored[CATEGORY] !== value[CATEGORY]) {\n    const model = modelFor(current, index, value)\n    return recategoriseLine(request, h, model, index, value[CATEGORY])\n  }",
+      "confidence": "inferred",
+      "note": "It follows because the category check runs before saveLine, the only place that reads action === 'add'. No test presses Save and add another with a changed category."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-152",
+      "statement": "The Welsh commodities table has the caption 'Y nwyddau rydych wedi’u hychwanegu', the column headings 'Categori', 'Genws neu fathogyn' and 'Nifer', the hidden heading 'Camau gweithredu', and the hidden row words 'nwydd 1', 'nwydd 2' and so on after 'Newid' and 'Tynnu'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:52-62",
+      "quote": "table: {\n      caption: 'Y nwyddau rydych wedi’u hychwanegu',\n      category: 'Categori',\n      genusOrVariety: 'Genws neu fathogyn',\n      quantity: 'Nifer',\n      actionsHidden: 'Camau gweithredu'\n    },\n    change: 'Newid',\n    changeHidden: (position) => `nwydd ${position}`,\n    remove: 'Tynnu',\n    removeHidden: (position) => `nwydd ${position}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-153",
+      "statement": "The Welsh removal banner is titled 'Nwyddau wedi’u tynnu' and reads 'Gwnaethom dynnu 1 nwydd nad yw’n <type>' for one line and 'Gwnaethom dynnu N o nwyddau nad ydynt yn <type>' for more.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:63-69",
+      "quote": "removed: {\n      title: 'Nwyddau wedi’u tynnu',\n      body: (count, typeLabel) =>\n        count === 1\n          ? `Gwnaethom dynnu 1 nwydd nad yw’n ${typeLabel}`\n          : `Gwnaethom dynnu ${count} o nwyddau nad ydynt yn ${typeLabel}`\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-154",
+      "statement": "The Welsh commodity-type names the removal banner can report are 'Tatws (hadyd neu fwyd)', 'Planhigion i’w plannu' and 'Pren a choed wedi’u torri', the same words the Welsh commodity-type question uses.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:9-13, pinned by copy/copy.test.js:57",
+      "quote": "potatoes: 'Tatws (hadyd neu fwyd)',\n    'plants-for-planting': 'Planhigion i’w plannu',\n    'wood-and-cut-trees': 'Pren a choed wedi’u torri'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p4-155",
+      "statement": "The nine Welsh category labels are 'Tatws hadyd', 'Tatws bwyd', 'Planhigion i’w plannu', 'Coed i’w plannu', 'Pren conwydd â rhisgl, neu risgl conwydd ar wahân', 'Pren conwydd heb risgl (o’r Eidal, Ffrainc, Portiwgal neu Sbaen)', 'Coed conwydd wedi’u torri sy’n uwch na 3 metr o daldra', 'Pren castanwydden bêr, onnen neu blanwydden sy’n cadw’r cyfan neu ran o’i arwyneb crwn naturiol' and 'Pren castanwydden bêr, onnen neu blanwydden yn sglodion nad ydynt wedi’u prosesu’n belenni nac yn friciau'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:14-29",
+      "quote": "'seed-potatoes': 'Tatws hadyd',\n    'ware-potatoes': 'Tatws bwyd',\n    'plants-for-planting': 'Planhigion i’w plannu',\n    'trees-for-planting': 'Coed i’w plannu',",
+      "confidence": "verbatim",
+      "note": "The quote shows the first four; the other five sit at copy.cy.js:19-28, each quoted verbatim in the statement."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-156",
+      "statement": "The fifteen Welsh genus labels are 'Castanea (castanwydden bêr)', 'Cedrus (cedrwydden)', 'Coffea (coffi)', 'Fraxinus (onnen)', 'Lavandula (lafant)', 'Nerium oleander (rhoswydden Ffrengig)', 'Olea europaea (olewydden)', 'Picea (pyrwydden)', 'Pinus (pinwydden)', 'Platanus (planwydden)', 'Polygala myrtifolia (amrywiol ddeiliog myrtwydd)', 'Prunus (eirin, ceirios ac ati)', 'Quercus (derwen)', 'Salvia rosmarinus (rhosmari)' and 'Ulmus (llwyfen)'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:30-46",
+      "quote": "Castanea: 'Castanea (castanwydden bêr)',\n    Cedrus: 'Cedrus (cedrwydden)',\n    Coffea: 'Coffea (coffi)',",
+      "confidence": "verbatim",
+      "note": "The quote shows the first three; the rest sit at copy.cy.js:34-45, each quoted verbatim in the statement."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-157",
+      "statement": "The Welsh category hints are 'Llwyni, planhigion ifanc, toriadau a phlanhigion eraill i’w plannu nad ydynt yn goed.' for plants for planting and 'Coed i’w plannu o unrhyw faint, gan gynnwys eginblanhigion a gwialenni. Byddwn yn gofyn am eu taldra.' for trees for planting, and the Welsh wood question hint is 'Nid oes angen hysbysu am bren sydd wedi’i drin â chadwolyn, oni bai ei fod yn goed conwydd wedi’u torri sy’n uwch na 3 metr.'",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:78-87",
+      "quote": "'plants-for-planting':\n        'Llwyni, planhigion ifanc, toriadau a phlanhigion eraill i’w plannu nad ydynt yn goed.',\n      'trees-for-planting':\n        'Coed i’w plannu o unrhyw faint, gan gynnwys eginblanhigion a gwialenni. Byddwn yn gofyn am eu taldra.'",
+      "confidence": "verbatim",
+      "note": "The wood hint sits at copy.cy.js:85-86, quoted in the statement."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-158",
+      "statement": "The nine Welsh per-line field hints are: genus 'Dechreuwch deipio i chwilio am genws.'; species 'Er enghraifft, Quercus robur. Rhowch enw’r rhywogaeth fel y mae’n ymddangos ar y pasbort planhigion.'; commodity code 'Cod nwyddau’r eitemau hyn o Dariff Masnach y DU. Er enghraifft, 0602 20 20.'; variety 'Er enghraifft, Maris Piper.'; quantity 'Er enghraifft, 250. Rhowch nifer y planhigion, cloron, coed neu unedau o bren fel rhif cyfan.'; intended use 'Er enghraifft, plannu, prosesu neu werthu’n ffres.'; EPPO code 'Cod EPPO y planhigyn. Er enghraifft, QUERO ar gyfer Quercus robur.'; tree size 'Rhowch y taldra mewn metrau. Er enghraifft, 3.5.'; treatments 'Disgrifiwch unrhyw driniaeth ffytoiechydol y mae’r pren wedi’i chael, er enghraifft triniaeth wres (HT) neu sychu odyn (KD).'",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:90-127",
+      "quote": "genus: {\n        label: 'Genws',\n        hint: 'Dechreuwch deipio i chwilio am genws.'\n      },",
+      "confidence": "verbatim",
+      "note": "The quote shows the first; the other eight hints sit at copy.cy.js:97-125, each quoted verbatim in the statement."
+    },
+    {
+      "id": "repo-plantsfrontend-p4-159",
+      "statement": "The Welsh required and length errors for the seven capped free-text fields are: 'Rhowch y rhywogaeth' and 'Rhaid i’r rhywogaeth fod yn N nod neu lai'; 'Rhowch y cod nwyddau' and 'Rhaid i’r cod nwyddau fod yn N nod neu lai'; 'Rhowch y mathogyn' and 'Rhaid i’r mathogyn fod yn N nod neu lai'; 'Rhowch y defnydd arfaethedig' and 'Rhaid i’r defnydd arfaethedig fod yn N nod neu lai'; 'Rhowch y cod EPPO' and 'Rhaid i’r cod EPPO fod yn N nod neu lai'; 'Rhowch faint y coed' and 'Rhaid i faint y coed fod yn N nod neu lai'; and 'Rhowch y triniaethau ffytoiechydol a roddwyd' and 'Rhaid i’r triniaethau ffytoiechydol fod yn N nod neu lai', where N is the field's cap.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:133-166",
+      "quote": "species: {\n        required: 'Rhowch y rhywogaeth',\n        maxLength: (max) => `Rhaid i’r rhywogaeth fod yn ${max} nod neu lai`\n      },",
+      "confidence": "verbatim",
+      "note": "The quote shows the first, and the rest sit at copy.cy.js:137-166 in the same shape."
     }
   ]
 }

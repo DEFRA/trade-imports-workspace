@@ -1,12 +1,12 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 7, \"Declaration, confirmation, delete and cancel amendment\": the four feature folders that end a live-animals notification, read in full from repos/trade-imports-animals-frontend on main — src/server/app/sets/live-animals/journeys/linear/features/{declaration,confirmation,delete-notification,cancel-amend}. Each folder holds page.js (id, slug, maturity), controller.js (Hapi routes and handlers), template.njk (Nunjucks, extending shared/layout.njk), copy/copy.en.js and copy/copy.cy.js, and a co-located Playwright fit spec; declaration also has test-support.js and confirmation also has outstanding.js. Four pages are covered. (1) Declaration, /notifications/{journeyId}/declaration (GET and POST, slug 'declaration', maturity 'detailing'): a statements-and-one-checkbox page rendered only by POSTing step=review from the review page — its GET always redirects — with one required confirmation checkbox, a date-of-declaration line, a Continue button, and seven refusal paths (already-submitted, opened-before-review, unknown-step, changed-since-review, review-not-recorded, review-refused, not-ready-to-submit) that all redirect to the confirmation or the review. (2) Confirmation, /notifications/{journeyId}/confirmation (GET only, maturity 'detailing'): a govukPanel carrying the reference number, a conditional outstanding-items section computed by outstanding.js, then three fixed sections — Transporting the consignment, How to view or amend this notification (dashboard link plus a POST button that starts a new notification), and Getting help (APHA email, telephone, APHA Service Desk email, opening hours, HMRC and call-charges links) — and no back link. (3) Delete, /notifications/{journeyId}/delete (GET and POST, slug 'delete', maturity 'detailing'): a question-as-H1 confirmation page with a warning Yes button and a secondary No button back to the dashboard, allowed only for a draft, submitted or amending notification, redirecting to the dashboard with ?deleted=1 on success. (4) Cancel amendment, /notifications/{journeyId}/cancel-amend (GET and POST, slug from the shared kit, maturity 'detailing'): the same two-button shape, allowed only while the notification is amending, restoring the submitted snapshot and returning to the notification view with ?cancelled=1. The part also covers every behaviour the four fit specs prove (declaration 398 lines, confirmation 190, delete-notification 105, cancel-amend 192), including the axe checks and the no-JavaScript cancel-amendment path, and key parity between each copy.cy.js and its English twin. Routes are read against src/server/app/shared/paths.js (pageRoutePath = /notifications/{journeyId}/<slug>) and the slug constants in src/server/app/shared/kit.js (CYA_SLUG = 'notification-view', CANCEL_AMEND_SLUG = 'cancel-amend'); the engine helpers softDeleteJourney and cancelAmendJourney in src/server/app/engine/journey.js are cited only where a controller's observable outcome depends on them. The part stops at the review page (part 6) and the notification list (part 4): copy owned by shared/, check-answers or dashboard is cited but not claimed.",
+  "structure": "Part 7, \"Declaration, confirmation, delete and cancel amendment\": the four feature folders that end a live-animals notification, read in full from repos/trade-imports-animals-frontend on main — src/server/app/sets/live-animals/journeys/linear/features/{declaration,confirmation,delete-notification,cancel-amend}. Each folder holds page.js (id, slug, maturity), controller.js (Hapi routes and handlers), template.njk (Nunjucks, extending shared/layout.njk), copy/copy.en.js and copy/copy.cy.js, and a co-located Playwright fit spec; declaration also has test-support.js and confirmation also has outstanding.js. Four pages are covered. (1) Declaration, /notifications/{journeyId}/declaration (GET and POST, slug 'declaration', maturity 'detailing'): a statements-and-one-checkbox page rendered only by POSTing step=review from the review page — its GET always redirects — with one required confirmation checkbox, a date-of-declaration line, a Continue button, and seven refusal paths (already-submitted, opened-before-review, unknown-step, changed-since-review, review-not-recorded, review-refused, not-ready-to-submit) that all redirect to the confirmation or the review. (2) Confirmation, /notifications/{journeyId}/confirmation (GET only, maturity 'detailing'): a govukPanel carrying the reference number, a conditional outstanding-items section computed by outstanding.js, then three fixed sections — Transporting the consignment, How to view or amend this notification (dashboard link plus a POST button that starts a new notification), and Getting help (APHA email, telephone, APHA Service Desk email, opening hours, HMRC and call-charges links) — and no back link. (3) Delete, /notifications/{journeyId}/delete (GET and POST, slug 'delete', maturity 'detailing'): a question-as-H1 confirmation page with a warning Yes button and a secondary No button back to the dashboard, allowed only for a draft, submitted or amending notification, redirecting to the dashboard with ?deleted=1 on success. (4) Cancel amendment, /notifications/{journeyId}/cancel-amend (GET and POST, slug from the shared kit, maturity 'detailing'): the same two-button shape, allowed only while the notification is amending, restoring the submitted snapshot and returning to the notification view with ?cancelled=1. The part also covers every behaviour the four fit specs prove (declaration 398 lines, confirmation 190, delete-notification 105, cancel-amend 192), including the axe checks and the no-JavaScript cancel-amendment path, and key parity between each copy.cy.js and its English twin. Routes are read against src/server/app/shared/paths.js (pageRoutePath = /notifications/{journeyId}/<slug>) and the slug constants in src/server/app/shared/kit.js (CYA_SLUG = 'notification-view', CANCEL_AMEND_SLUG = 'cancel-amend'); the engine helpers softDeleteJourney and cancelAmendJourney in src/server/app/engine/journey.js are cited only where a controller's observable outcome depends on them. The part stops at the review page (part 6) and the notification list (part 4): copy owned by shared/, check-answers or dashboard is cited but not claimed. Against the last extract (repo head dd970606), this read at main e09a93aa found only two changes in the slice: the declaration controller now asks the engine whether an error is a stale-concurrency refusal and holds its step names locally (same behaviour, new line numbers), and the declaration fit spec's unfinished-card list no longer has a contact-address card (seven cards, not eight).",
   "claims": [
     {
       "id": "repo-frontend-p7-001",
       "statement": "The declaration page lives at /notifications/{journeyId}/declaration and answers both GET and POST.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:224, src/server/app/sets/live-animals/journeys/linear/features/declaration/page.js:3",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:222, src/server/app/sets/live-animals/journeys/linear/features/declaration/page.js:3",
       "quote": "export const routes = kit.pageRoutes(page, { get, post })",
       "confidence": "verbatim",
       "note": "slug is 'declaration' and src/server/app/shared/paths.js:5 builds the path as `/notifications/{journeyId}/${slug}`."
@@ -15,7 +15,7 @@
       "id": "repo-frontend-p7-002",
       "statement": "Opening the declaration URL directly never shows the declaration page: a GET on a submitted notification redirects to its confirmation page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:88-96",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:86-92",
       "quote": "if (journey.status === state.SUBMITTED) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.alreadySubmitted,\n      target: pagePath(journey.journeyId, confirmationPage.slug)\n    })\n  }",
       "confidence": "verbatim"
     },
@@ -23,7 +23,7 @@
       "id": "repo-frontend-p7-003",
       "statement": "A GET on the declaration URL for any notification that is not submitted redirects to the review page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:97-101",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:93-97",
       "quote": "return logRefusalAndRedirect(request, h, {\n    journey,\n    refusal: DECLARATION_REFUSAL.openedBeforeReview,\n    target: reviewHref(journey.journeyId)\n  })",
       "confidence": "verbatim"
     },
@@ -31,7 +31,7 @@
       "id": "repo-frontend-p7-004",
       "statement": "A typed or bookmarked declaration URL sends the user to the review page instead.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:251-259",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:250-258",
       "quote": "test('sends a typed or bookmarked declaration URL back to the review', async ({\n    page\n  }) => {\n    await startNotification(page)\n\n    await page.goto(journeyUrl(page, 'declaration'))\n\n    await expect(page).toHaveURL(REVIEW_URL)\n  })",
       "confidence": "verbatim"
     },
@@ -39,23 +39,23 @@
       "id": "repo-frontend-p7-005",
       "statement": "The declaration page is shown only by posting step=review, which is what the review page's submit button does.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:216-220",
-      "quote": "if (payload.step === STEP_REVIEW) {\n    return render(h, journey, reviewedConcurrencyToken, {\n      declaration: ''\n    })\n  }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:214-218",
+      "quote": "if (payload.step === reviewStep) {\n    return render(h, journey, reviewedConcurrencyToken, {\n      declaration: ''\n    })\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p7-006",
       "statement": "A posted step that is neither review nor declare redirects to the review page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:181-187",
-      "quote": "if (payload.step !== STEP_REVIEW && payload.step !== STEP_DECLARE) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.unknownStep,\n      target: reviewHref(journey.journeyId)\n    })\n  }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:179-185",
+      "quote": "if (payload.step !== reviewStep && payload.step !== declareStep) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.unknownStep,\n      target: reviewHref(journey.journeyId)\n    })\n  }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p7-007",
       "statement": "A hand-crafted Continue posted from a browser that never opened the review page is sent back to the review and the declaration is not shown.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:261-272",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:260-271",
       "quote": "await postJourneyFormToDeclaration(page, { step: 'review' })\n\n    await expect(page).toHaveURL(REVIEW_URL)\n    await expect(page.getByRole('heading', { name: copy.title })).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -72,7 +72,7 @@
       "id": "repo-frontend-p7-009",
       "statement": "The declaration page has no caption or other content above its heading: the H1 is the first thing in the page content.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:161-165",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:160-164",
       "quote": "test('starts the page with the heading', async ({ page }) => {\n    const title = page.getByRole('heading', { level: 1, name: copy.title })\n    await expect(title).toBeVisible()\n    await expect(title.locator('xpath=preceding-sibling::*')).toHaveCount(0)\n  })",
       "confidence": "verbatim"
     },
@@ -80,7 +80,7 @@
       "id": "repo-frontend-p7-010",
       "statement": "The declaration page hides the journey strip.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:55-60",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:51-56",
       "quote": "...kit.base(copy.title, {\n      backLink: pagePath(journey.journeyId, kit.CYA_SLUG),\n      journey,\n      showJourneyStrip: false,\n      recoverableError\n    }),",
       "confidence": "verbatim"
     },
@@ -88,7 +88,7 @@
       "id": "repo-frontend-p7-011",
       "statement": "The declaration page's back link returns to the notification view (the review page).",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:56, src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:189-198",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:52, src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:188-197",
       "quote": "backLink: pagePath(journey.journeyId, kit.CYA_SLUG),",
       "confidence": "verbatim",
       "note": "kit.CYA_SLUG is 'notification-view' (src/server/app/shared/kit.js:69); the fit spec clicks the back link and expects the review URL."
@@ -196,7 +196,7 @@
       "id": "repo-frontend-p7-024",
       "statement": "Submitting the declaration without ticking the box is refused with the error \"Confirm that you have reviewed and comply with this declaration\".",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:31-34, controller.js:43-45",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:31-34, controller.js:39-41",
       "quote": "errors: {\n    declarationRequired:\n      'Confirm that you have reviewed and comply with this declaration'\n  }",
       "confidence": "verbatim",
       "note": "the rule is requiredOneOf('declaration', ['confirmed'], copy.errors.declarationRequired)."
@@ -205,7 +205,7 @@
       "id": "repo-frontend-p7-025",
       "statement": "A declaration submitted without the box ticked re-renders the page with HTTP 400.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:143-147",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:139-143",
       "quote": "if (errors) {\n    return render(h, journey, reviewedConcurrencyToken, values, {\n      errors\n    }).code(HTTP_STATUS_BAD_REQUEST)\n  }",
       "confidence": "verbatim"
     },
@@ -213,7 +213,7 @@
       "id": "repo-frontend-p7-026",
       "statement": "The declaration error appears both in the error summary and as the field's own error message, and the summary link moves focus to the still-unticked checkbox.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:167-187",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:166-186",
       "quote": "await declarationError.click()\n    await expect(\n      page.getByRole('checkbox', { name: copy.declarationLabel })\n    ).toBeFocused()\n    await expect(\n      page.getByRole('checkbox', { name: copy.declarationLabel })\n    ).not.toBeChecked()",
       "confidence": "verbatim"
     },
@@ -221,7 +221,7 @@
       "id": "repo-frontend-p7-027",
       "statement": "Below the checkbox the page shows \"Date of declaration:\" followed by today's date in bold.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:60, copy/copy.en.js:29, controller.js:63",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:60, copy/copy.en.js:29, controller.js:59",
       "quote": "<p class=\"govuk-body\">{{ copy.dateOfDeclaration }} <strong>{{ submissionDate }}</strong></p>",
       "confidence": "verbatim",
       "note": "submissionDate is formatMomentAsLongDay(new Date()), so it is the date the page was rendered, not a stored answer."
@@ -230,7 +230,7 @@
       "id": "repo-frontend-p7-028",
       "statement": "The date of declaration is shown as a long day-month-year date, such as \"3 November 2026\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:150-159",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:149-158",
       "quote": "await expect(date).toHaveText(/^\\d{1,2} [A-Z][a-z]+ \\d{4}$/)",
       "confidence": "verbatim"
     },
@@ -255,16 +255,25 @@
       "id": "repo-frontend-p7-031",
       "statement": "Submitting a ticked declaration saves the declaration answer and then submits the notification.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:112-119, 38",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:111-114, 34",
       "quote": "await state.commit(request, h, values)\n        return state.submitJourney(request, h, {\n          concurrencyToken: reviewedConcurrencyToken\n        })",
       "confidence": "verbatim",
       "note": "the page's meta declares collects: ['declaration'], so the ticked box is a stored answer."
     },
     {
+      "id": "repo-frontend-p1-043",
+      "statement": "The declaration page collects one answer, the declaration itself, which is a flow-only key rather than a notification obligation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:34",
+      "quote": "export const meta = { ...page, collects: ['declaration'] }",
+      "confidence": "verbatim",
+      "note": "'declaration' is also the first entry of FLOW_ONLY_KEYS, so it is stored in the flow-only cookie and is not part of the obligation manifest (that list lives outside this part's slice and was not re-read here)."
+    },
+    {
       "id": "repo-frontend-p7-032",
       "statement": "A successful submit redirects to the notification's confirmation page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:167",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:163",
       "quote": "return h.redirect(pagePath(journey.journeyId, confirmationPage.slug))",
       "confidence": "verbatim"
     },
@@ -272,7 +281,7 @@
       "id": "repo-frontend-p7-033",
       "statement": "After a notification is submitted, returning to its declaration URL shows the confirmation page instead, so a second submit cannot be made.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:204-215",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:203-214",
       "quote": "await expect(page).toHaveURL(CONFIRMATION_URL)\n    await page.goto(declarationUrl)\n    await expect(page).toHaveURL(CONFIRMATION_URL)",
       "confidence": "verbatim"
     },
@@ -280,7 +289,7 @@
       "id": "repo-frontend-p7-034",
       "statement": "A second submit posted after the notification was already submitted redirects to the confirmation page rather than submitting again.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:170-178",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:170-176",
       "quote": "if (journey.status === state.SUBMITTED) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.alreadySubmitted,\n      target: pagePath(journey.journeyId, confirmationPage.slug)\n    })\n  }",
       "confidence": "verbatim"
     },
@@ -288,7 +297,7 @@
       "id": "repo-frontend-p7-035",
       "statement": "When another browser tab submitted the same notification first, submitting the declaration still shows that notification's confirmation page with its reference number.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:230-241",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:229-240",
       "quote": "await expect(page).toHaveURL(CONFIRMATION_URL)\n    await expect(page.getByText(reference, { exact: true })).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -296,7 +305,7 @@
       "id": "repo-frontend-p7-036",
       "statement": "A declaration submitted after the notification changed since the review was shown is refused and the user is returned to the review page with a changed-notification banner.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:190-196, declaration.fit.spec.js:92-97",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:188-194, declaration.fit.spec.js:91-96",
       "quote": "if (reviewedConcurrencyToken !== journey.concurrencyToken) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.changedSinceReview,\n      target: reviewHref(journey.journeyId, { changed: true })\n    })\n  }",
       "confidence": "verbatim"
     },
@@ -304,7 +313,7 @@
       "id": "repo-frontend-p7-037",
       "statement": "The changed-notification refusal lands on the review URL with the query staleAction=1 and shows the shared stale-action banner, the current edited value and a draft review ending with Continue.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:36-38, 217-228",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:36-38, 216-227",
       "quote": "const CHANGED_REVIEW_URL = urlUnderBase(\n  '/notifications/[^/]+/notification-view\\\\?staleAction=1'\n)",
       "confidence": "verbatim",
       "note": "the banner text comes from sharedCopy.staleActionRejected.title, owned by shared/ and not claimed here."
@@ -313,7 +322,7 @@
       "id": "repo-frontend-p7-038",
       "statement": "A declaration submit whose concurrency token matches the notification but was never recorded as reviewed by this browser is refused and returns to the review page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:197-206",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:195-204",
       "quote": "if (\n    reviewedConcurrencyToken !==\n    (await reviewedConcurrencyTokenOf(request, journey.journeyId))\n  ) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.reviewNotRecorded,\n      target: reviewHref(journey.journeyId)\n    })\n  }",
       "confidence": "verbatim",
       "note": "mechanism: compares the posted token with the reviewed-concurrency-token the browser's session cookie holds for this notification."
@@ -322,7 +331,7 @@
       "id": "repo-frontend-p7-039",
       "statement": "A declaration submit is refused when the review itself was refused, and returns to the review page marked as refused.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:208-214",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:206-212",
       "quote": "if (await isReviewRefused(request, h)) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.reviewRefused,\n      target: reviewHref(journey.journeyId, { refused: true })\n    })\n  }",
       "confidence": "verbatim"
     },
@@ -330,7 +339,7 @@
       "id": "repo-frontend-p7-040",
       "statement": "A declaration that passes every check but whose notification is not ready to submit is refused and returns to the review page marked as refused.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:160-166",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:156-162",
       "quote": "if (!result.ok) {\n    return logRefusalAndRedirect(request, h, {\n      journey,\n      refusal: DECLARATION_REFUSAL.notReadyToSubmit,\n      target: reviewHref(journey.journeyId, { refused: true })\n    })\n  }",
       "confidence": "verbatim"
     },
@@ -338,25 +347,25 @@
       "id": "repo-frontend-p7-041",
       "statement": "A declaration ticked on a notification whose document is still being virus-scanned is refused, and the review page is shown as a draft with the still-scanning error in the summary and on that document's card.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:274-304",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:273-303",
       "quote": "await expect(page).toHaveURL(REFUSED_REVIEW_URL)\n    await expect(\n      errorSummaryLinks(page, documentsCopy.errors.someStillScanning, {\n        exact: true\n      })\n    ).toBeVisible()",
       "confidence": "verbatim",
       "note": "REFUSED_REVIEW_URL is '/notifications/[^/]+/notification-view\\?refused=1'; the message text is owned by the documents feature."
     },
     {
-      "id": "repo-frontend-p7-042",
-      "statement": "A declaration ticked on an incomplete notification is refused, and the review page's error summary lists one message for each unfinished card, in order: what are you importing, main import reason, commodity details, additional details, arrival details, transport details, consignment addresses, contact address.",
+      "id": "repo-frontend-p7-134",
+      "statement": "A declaration ticked on an incomplete notification is refused, and the review page's error summary lists one message for each unfinished card, in order: what are you importing, main import reason, commodity details, additional details, arrival details, transport details, consignment addresses. There is no contact-address card in the list.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:44-53, 306-322",
-      "quote": "await expect(errorSummary(page).getByRole('link')).toHaveText(\n      UNFINISHED_CARD_MESSAGES\n    )",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:44-52, 305-321",
+      "quote": "const UNFINISHED_CARD_MESSAGES = [\n  checkAnswersCopy.errors.cards.whatAreYouImporting,\n  checkAnswersCopy.errors.cards.mainImportReason,\n  checkAnswersCopy.errors.cards.commodityDetails,\n  checkAnswersCopy.errors.cards.additionalDetails,\n  checkAnswersCopy.errors.cards.arrivalDetails,\n  checkAnswersCopy.errors.cards.transportDetails,\n  checkAnswersCopy.errors.cards.consignmentAddresses\n]",
       "confidence": "verbatim",
-      "note": "the eight messages come from the check-answers copy (part 6); only the ordering and the refusal are claimed here."
+      "note": "replaces repo-frontend-p7-042, which listed eight cards ending with contact address; the contact address card has left the review since the last extract. The seven messages are check-answers copy (part 6); only the ordering and the refusal are claimed here."
     },
     {
       "id": "repo-frontend-p7-043",
       "statement": "A declaration ticked on an otherwise complete notification whose main import reason was left blank is refused and the review names only the main-import-reason card, showing that row as missing.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:332-337, 355-380",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:331-336, 354-379",
       "quote": "await expect(errorSummary(page).getByRole('link')).toHaveText([\n        cardMessage\n      ])",
       "confidence": "verbatim"
     },
@@ -364,7 +373,7 @@
       "id": "repo-frontend-p7-044",
       "statement": "A declaration ticked on an otherwise complete notification whose certified-for answer was left blank is refused and the review names only the additional-details card, showing certified-for as missing while the unweaned row still reads \"No\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:338-345, 355-380",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:337-344, 354-379",
       "quote": "{\n      question: 'certified-for answer',\n      unanswered: 'certifiedFor',\n      cardMessage: checkAnswersCopy.errors.cards.additionalDetails,\n      blankRowLabel: checkAnswersCopy.rows.certifiedFor,\n      answeredRowLabel: checkAnswersCopy.rows.unweaned,\n      answeredRowValue: 'No'\n    },",
       "confidence": "verbatim"
     },
@@ -372,7 +381,7 @@
       "id": "repo-frontend-p7-045",
       "statement": "A declaration ticked on an otherwise complete notification whose unweaned answer was left blank is refused and the review names only the additional-details card, showing unweaned as missing while the certified-for row still reads \"Slaughter\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:346-353, 355-380",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:345-352, 354-379",
       "quote": "{\n      question: 'unweaned answer',\n      unanswered: 'unweaned',\n      cardMessage: checkAnswersCopy.errors.cards.additionalDetails,\n      blankRowLabel: checkAnswersCopy.rows.unweaned,\n      answeredRowLabel: checkAnswersCopy.rows.certifiedFor,\n      answeredRowValue: 'Slaughter'\n    }",
       "confidence": "verbatim"
     },
@@ -380,7 +389,7 @@
       "id": "repo-frontend-p7-046",
       "statement": "Pressing Continue on the review page when the notification changed in another tab is refused and the review is redisplayed with the changed banner and the new value.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:383-397",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:382-396",
       "quote": "await expectChangedBanner(page)\n    await expect(page.getByText(EDITED_REFERENCE)).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -388,7 +397,7 @@
       "id": "repo-frontend-p7-047",
       "statement": "When saving or submitting the declaration fails recoverably, the declaration page is redisplayed with a recoverable-error state and HTTP 500.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:112-124",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:107-120",
       "quote": "() =>\n        render(h, journey, reviewedConcurrencyToken, values, {\n          recoverableError: true\n        }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
       "confidence": "verbatim"
     },
@@ -396,15 +405,15 @@
       "id": "repo-frontend-p7-048",
       "statement": "A stale concurrency token raised while submitting is treated the same as a notification changed since the review: the user is returned to the review with the changed banner.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:125-136",
-      "quote": "if (error?.code === STALE_CONCURRENCY_TOKEN) {\n      return {\n        failure: logRefusalAndRedirect(request, h, {\n          journey,\n          refusal: DECLARATION_REFUSAL.changedSinceReview,\n          target: reviewHref(journey.journeyId, { changed: true })\n        })\n      }\n    }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:121-130",
+      "quote": "if (state.isStaleConcurrencyRefusal(error)) {\n      return {\n        failure: logRefusalAndRedirect(request, h, {\n          journey,\n          refusal: DECLARATION_REFUSAL.changedSinceReview,\n          target: reviewHref(journey.journeyId, { changed: true })\n        })\n      }\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p7-049",
       "statement": "Every declaration refusal is logged as \"Declaration refused\" with the notification id, its status, the refusal reason and both concurrency tokens.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:74-86",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:70-80",
       "quote": "request.logger.info(\n    {\n      journeyId: journey.journeyId,\n      status: journey.status,\n      refusal,\n      concurrencyToken: journey.concurrencyToken,\n      postedConcurrencyToken: postedConcurrencyToken(request.payload ?? {})\n    },\n    'Declaration refused'\n  )",
       "confidence": "verbatim",
       "note": "the seven refusal reasons are already-submitted, opened-before-review, unknown-step, changed-since-review, review-not-recorded, review-refused and not-ready-to-submit."
@@ -413,10 +422,10 @@
       "id": "repo-frontend-p7-050",
       "statement": "A posted concurrency token that is absent or empty is treated as no token at all, so such a submit is refused as changed-since-review.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:69-72",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:65-68",
       "quote": "const postedConcurrencyToken = (payload) =>\n  payload.concurrencyToken == null || payload.concurrencyToken === ''\n    ? undefined\n    : Number(payload.concurrencyToken)",
       "confidence": "inferred",
-      "note": "mechanism: parses the posted token; it follows that undefined can never equal a real journey.concurrencyToken, so line 190's check refuses."
+      "note": "mechanism: parses the posted token; it follows that undefined can never equal a real journey.concurrencyToken, so the check at line 188 refuses."
     },
     {
       "id": "repo-frontend-p7-051",
@@ -430,7 +439,7 @@
       "id": "repo-frontend-p7-052",
       "statement": "The declaration page has no serious or critical accessibility violations.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:200-202",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js:199-201",
       "quote": "test('has no serious or critical axe violations', async ({ page }) => {\n    await expectNoSeriousOrCriticalViolations(page, 'Declaration')\n  })",
       "confidence": "verbatim"
     },
@@ -535,6 +544,15 @@
       "quote": "const itahcUploaded = state\n    .collectionView(answers, ['documents'], evaluation)\n    .some(({ entry }) => entry.accompanyingDocumentType === 'ITAHC')\n  return itahcUploaded ? [] : [copy.outstanding.documents]",
       "confidence": "verbatim",
       "note": "mechanism: reads the documents collection of the submitted answers and looks for accompanyingDocumentType 'ITAHC'."
+    },
+    {
+      "id": "repo-frontend-p7-135",
+      "statement": "A complete notification submitted with no ITAHC uploaded shows the \"Before the consignment is imported\" section on its confirmation page, with \"You still need to:\" and the item \"upload the ITAHC and any other required documents\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js:30-38, 140-159",
+      "quote": "await expect(\n    page.getByText(copy.outstanding.documents, { exact: true })\n  ).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "the fit spec's submitted beforeEach calls submitCompleteNotification(page) without withItahc, so the outstanding section is present."
     },
     {
       "id": "repo-frontend-p7-065",
@@ -1096,7 +1114,7 @@
       "id": "repo-frontend-p7-131",
       "statement": "Pressing Continue on an incomplete amendment is refused: the notification view is reloaded with the query refused=1, shows the \"There is a problem\" error summary naming the unfinished card, and keeps the Amend status strip.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:136-168",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:137-167",
       "quote": "await expect(page).toHaveURL(/\\/notification-view\\?refused=1$/)\n    await expect(\n      page.getByRole('heading', { name: sharedCopy.errorSummary.title })\n    ).toBeVisible()",
       "confidence": "verbatim",
       "note": "the test clears the arrival date at the port of entry, so the summary names the arrival-details card."

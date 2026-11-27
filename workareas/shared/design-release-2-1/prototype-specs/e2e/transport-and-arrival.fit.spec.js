@@ -2,7 +2,7 @@ const { test, expect } = require('./support/fixtures')
 const { capture } = require('./support/evidence')
 const {
   url, urlFor, expectHeading, expectErrorSummary, expectInlineError, expectBackLink, dateFromToday,
-  saveAndContinue, submitForm, pickFromAutocomplete, fillDate, SPECIES, startNotification, answerOrigin,
+  saveAndContinue, submitForm, clickAction, pickFromAutocomplete, fillDate, SPECIES, startNotification, answerOrigin,
   answerCommodity, answerReason, answerConsignmentDetails, answerArrival
 } = require('./support/journey')
 
@@ -146,6 +146,35 @@ test.describe('transporter details', () => {
     await expect(page).toHaveURL(urlFor('/upload-documents'))
   })
 
+  test('a chosen transporter is shown on its own, and can be changed or removed', async ({ page }, testInfo) => {
+    await page.locator('input[name="transporterId"][value="aberdeen-livestock"]').check()
+    await saveAndContinue(page)
+    await page.goto(url('/transporter'))
+    const main = page.locator('main')
+
+    await test.step('the selected transporter replaces the list', async () => {
+      await expect(main).toContainText(/Selected transporter\s+Aberdeen Livestock Ltd\s+15 Union Street, Aberdeen, AB11 5BN\s+Approval number: UK\/ABERDEEN\/T1\/00092001\s+Private/)
+      await expect(page.locator('input[type="radio"][name="transporterId"]')).toHaveCount(0)
+      await expect(main.getByRole('link', { name: /Change\s+transporter/ })).toHaveAttribute('href', url('/transporter?change=1'))
+      await capture(page, testInfo, 'selected')
+    })
+
+    await test.step('change shows the list again', async () => {
+      await main.getByRole('link', { name: /Change\s+transporter/ }).click()
+      await expect(page).toHaveURL(/\/transporter\?change=1$/)
+      await expect(page.locator('input[name="transporterId"]')).toHaveCount(8)
+    })
+
+    await test.step('remove clears the choice', async () => {
+      await page.goto(url('/transporter'))
+      await main.locator('button[name="action"][value="remove-transporter"]').click()
+      await expect(page).toHaveURL(urlFor('/transporter'))
+      await expect(main).not.toContainText('Selected transporter')
+      await expect(page.locator('input[name="transporterId"]')).toHaveCount(8)
+      await expect(page.locator('input[name="transporterId"]:checked')).toHaveCount(0)
+    })
+  })
+
   test('transporter is optional to proceed', async ({ page }) => {
     await saveAndContinue(page)
     await expect(page).toHaveURL(urlFor('/upload-documents'))
@@ -154,6 +183,19 @@ test.describe('transporter details', () => {
   test('the legacy transport-details path redirects to the transporter page', async ({ page }) => {
     await page.goto(url('/transport-details'))
     await expect(page).toHaveURL(urlFor('/transporter'))
+  })
+})
+
+test.describe('germinal transporter details', () => {
+  test('the live-animal authorisation guidance is not shown for germinal products', async ({ page }, testInfo) => {
+    await page.goto(url('/create-notification?category=germinal-products'))
+    await page.goto(url('/transporter'))
+    await expectHeading(page, 'Transporter details')
+    const intro = page.locator('.app-transporter-page__intro')
+    await expect(intro).toHaveText('This is the person or company responsible for transporting the consignment.')
+    await expect(page.locator('main').getByRole('link', { name: /economic activity/ })).toHaveCount(0)
+    await expect(page.locator('input[name="transporterId"]')).toHaveCount(8)
+    await capture(page, testInfo, 'germinal')
   })
 })
 
@@ -181,39 +223,87 @@ test.describe('add a transporter', () => {
     await capture(page, testInfo, 'error')
   })
 
-  test('private transporter: every required field is named, then it is added and selectable', async ({ page }, testInfo) => {
+  test('private transporter: name and postcode, an address from the list, then contact details', async ({ page }, testInfo) => {
     await page.locator('input[name="transporterType"][value="private"]').check()
     await submitForm(page, 'Continue')
     await expect(page).toHaveURL(urlFor('/transporter/add/private'))
-    await expect(page).toHaveTitle('Add a private transporter - Import notification service - GOV.UK')
-    await expectHeading(page, 'Add a private transporter')
+    const main = page.locator('main')
+
+    await test.step('the first step asks for a name and a UK postcode', async () => {
+      await expect(page).toHaveTitle('Add a private transporter - Import notification service - GOV.UK')
+      await expectHeading(page, 'Add a private transporter')
+      await expect(main).toContainText('Add a new transporter')
+      await expect(page.getByLabel('Name or organisation name', { exact: true })).toBeVisible()
+      await expect(page.getByLabel('Enter a UK postcode')).toHaveAccessibleDescription('For example, AB12 3CD')
+      await expect(main.locator('button[name="action"]')).toHaveText(['Find address', 'Enter address manually', 'Cancel and return to dashboard'])
+      await expectBackLink(page, url('/transporter/add'))
+      await capture(page, testInfo, 'postcode')
+      await clickAction(page, 'find')
+      await expectErrorSummary(page, ['Enter a postcode'])
+      await capture(page, testInfo, 'postcode-error')
+    })
+
+    await test.step('the postcode lists its addresses', async () => {
+      await page.getByLabel('Name or organisation name', { exact: true }).fill('Hill Haulage')
+      await page.getByLabel('Enter a UK postcode').fill('M1 1AL')
+      await clickAction(page, 'find')
+      await expect(page).toHaveTitle('Select an address - Import notification service - GOV.UK')
+      await expectHeading(page, 'Select an address')
+      await expect(page.locator('#address-result option')).toHaveText([
+        '2 addresses found',
+        'FLAT 105 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL',
+        'FLAT 606 OXID HOUSE, 78 NEWTON STREET, MANCHESTER, M1 1AL'
+      ])
+      await capture(page, testInfo, 'results')
+      await clickAction(page, 'choose')
+      await expectErrorSummary(page, ['Select an address'])
+      await capture(page, testInfo, 'results-error')
+    })
+
+    await test.step('the chosen address fills the details step', async () => {
+      await page.locator('#address-result').selectOption('ch-M11AL-0')
+      await clickAction(page, 'choose')
+      await expectHeading(page, 'Add a private transporter')
+      await expect(page.getByLabel('Name or organisation name', { exact: true })).toHaveValue('Hill Haulage')
+      await expect(page.getByLabel('Address line 1', { exact: true })).toHaveValue('FLAT 105 OXID HOUSE')
+      await expect(page.getByLabel('Address line 2 (optional)', { exact: true })).toHaveValue('78 NEWTON STREET')
+      await expect(page.getByLabel('Town or city', { exact: true })).toHaveValue('MANCHESTER')
+      await expect(page.getByLabel('Postcode or Zip code', { exact: true })).toHaveValue('M1 1AL')
+      await expect(page.getByLabel('Country', { exact: true })).toHaveValue('United Kingdom')
+      await capture(page, testInfo, 'details')
+    })
+
+    await test.step('contact details are required, then it is added and selectable', async () => {
+      await submitForm(page, 'Save and continue')
+      await expectErrorSummary(page, ['Enter an email address', 'Enter a phone number'])
+      await capture(page, testInfo, 'error')
+      await page.getByLabel('Email address', { exact: true }).fill('hill@example.com')
+      await page.getByLabel('Phone number', { exact: true }).fill('01434 600000')
+      await submitForm(page, 'Save and continue')
+      await expect(page).toHaveURL(urlFor('/transporter'))
+      await expect(main).toContainText('Hill haulage transporter added')
+      await expect(main).toContainText('Hill Haulage')
+      await capture(page, testInfo, 'transporter-added')
+    })
+  })
+
+  test('private transporter: enter address manually shows every field, and names each blank one', async ({ page }, testInfo) => {
+    await page.locator('input[name="transporterType"][value="private"]').check()
+    await submitForm(page, 'Continue')
+    await clickAction(page, 'manual')
     for (const label of ['Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number']) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible()
     }
     await expect(page.getByLabel('Country', { exact: true })).toHaveValue('United Kingdom')
-    await expect(page.locator('main')).toContainText('Enter contact details')
     await expect(page.locator('main')).toContainText('For international numbers include the country code')
-    await expectBackLink(page, url('/transporter/add'))
-    await capture(page, testInfo)
+    await capture(page, testInfo, 'manual')
 
     await submitForm(page, 'Save and continue')
     await expectErrorSummary(page, [
       'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',
       'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'
     ])
-    await capture(page, testInfo, 'error')
-
-    await page.getByLabel('Name or organisation name', { exact: true }).fill('Hill Haulage')
-    await page.getByLabel('Address line 1', { exact: true }).fill('1 Farm Lane')
-    await page.getByLabel('Town or city', { exact: true }).fill('Hexham')
-    await page.getByLabel('Postcode or Zip code', { exact: true }).fill('NE46 1AA')
-    await page.getByLabel('Email address', { exact: true }).fill('hill@example.com')
-    await page.getByLabel('Phone number', { exact: true }).fill('01434 600000')
-    await submitForm(page, 'Save and continue')
-    await expect(page).toHaveURL(urlFor('/transporter'))
-    await expect(page.locator('main')).toContainText('Hill haulage transporter added')
-    await expect(page.locator('main')).toContainText('Hill Haulage')
-    await capture(page, testInfo, 'transporter-added')
+    await capture(page, testInfo, 'manual-error')
   })
 
   test('private transporter: cancel leaves the journey for the dashboard', async ({ page }) => {
@@ -225,38 +315,49 @@ test.describe('add a transporter', () => {
     await expectHeading(page, 'Import notification service')
   })
 
-  test('commercial transporter: authorisation number, address search or manual entry', async ({ page }, testInfo) => {
+  test('commercial transporter: authorisation number first, then a Northern Ireland postcode or manual entry', async ({ page }, testInfo) => {
     await page.locator('input[name="transporterType"][value="commercial"]').check()
     await submitForm(page, 'Continue')
     await expect(page).toHaveURL(urlFor('/transporter/add/commercial'))
-    await expect(page).toHaveTitle('Add a commercial transporter - Import notification service - GOV.UK')
-    await expectHeading(page, 'Add a commercial transporter')
     const main = page.locator('main')
-    await expect(main).toContainText('Help with transporter authorisation')
-    await expect(page.getByLabel('Transporter authorisation number')).toBeVisible()
-    await expect(page.getByLabel('Name or organisation name', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Search for an address')).toBeVisible()
-    await expect(page.getByLabel('Address line 1', { exact: true })).toBeHidden()
-    await capture(page, testInfo)
 
-    await test.step('enter address manually reveals the address fields, fixed to Northern Ireland', async () => {
-      await main.getByRole('button', { name: 'Enter address manually' }).click()
+    await test.step('the first step asks for the authorisation number', async () => {
+      await expect(page).toHaveTitle('Add a commercial transporter - Import notification service - GOV.UK')
+      await expectHeading(page, 'Add a commercial transporter')
+      await expect(main).toContainText('Help with transporter authorisation')
+      await expect(page.getByLabel('Transporter authorisation number')).toBeVisible()
+      await expect(page.getByLabel('Name or organisation name', { exact: true })).toHaveCount(0)
+      await capture(page, testInfo)
+      await clickAction(page, 'transporter-continue')
+      await expectErrorSummary(page, ['Enter a transporter authorisation number'])
+      await capture(page, testInfo, 'authorisation-error')
+    })
+
+    await test.step('then a UK postcode, with a Northern Ireland example', async () => {
+      await page.getByLabel('Transporter authorisation number').fill('UK/BELFAST/T1/00012345')
+      await clickAction(page, 'transporter-continue')
+      await expect(page.getByLabel('Enter a UK postcode')).toHaveAccessibleDescription('For example, BT1 5GS')
+      await capture(page, testInfo, 'postcode')
+      await page.getByLabel('Enter a UK postcode').fill('BT1 5GS')
+      await clickAction(page, 'find')
+      await expect(page.locator('#address-result option')).toHaveText(['1 address found', 'NICKY WILSON CITY HALL, DONEGALL SQUARE, BELFAST, BT1 5GS'])
+      await capture(page, testInfo, 'results')
+    })
+
+    await test.step('enter address manually shows the address fields, fixed to Northern Ireland', async () => {
+      await clickAction(page, 'manual')
       await expect(page.getByLabel('Address line 1', { exact: true })).toBeVisible()
       await expect(page.locator('#transporter-commercial-country')).toHaveValue('Northern Ireland')
       await capture(page, testInfo, 'manual-address')
-    })
-
-    await test.step('every required field is named', async () => {
       await submitForm(page, 'Save and continue')
       await expectErrorSummary(page, [
-        'Enter a transporter authorisation number', 'Enter a name or organisation name', 'Enter address line 1',
-        'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'
+        'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',
+        'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'
       ])
       await capture(page, testInfo, 'error')
     })
 
     await test.step('a complete commercial transporter is added', async () => {
-      await page.getByLabel('Transporter authorisation number').fill('UK/BELFAST/T1/00012345')
       await page.getByLabel('Name or organisation name', { exact: true }).fill('Lough Livestock Ltd')
       await page.getByLabel('Address line 1', { exact: true }).fill('2 Quay Street')
       await page.getByLabel('Town or city', { exact: true }).fill('Belfast')
@@ -265,8 +366,8 @@ test.describe('add a transporter', () => {
       await page.getByLabel('Phone number', { exact: true }).fill('028 9000 0000')
       await submitForm(page, 'Save and continue')
       await expect(page).toHaveURL(urlFor('/transporter'))
-      await expect(page.locator('main')).toContainText('Lough livestock ltd transporter added')
-      await expect(page.locator('main')).toContainText('UK/BELFAST/T1/00012345')
+      await expect(main).toContainText('Lough livestock ltd transporter added')
+      await expect(main).toContainText('UK/BELFAST/T1/00012345')
     })
   })
 })

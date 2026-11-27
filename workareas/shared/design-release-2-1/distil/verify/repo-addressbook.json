@@ -1,1806 +1,2174 @@
 {
   "source": "repo:addressbook",
-  "extractHash": "fab8ad22f3f78131bb7c82d3b746d9691a03ca781f4e5b1ed888477f0d9e6ee8",
+  "extractHash": "21c99ca2ca194f899e55881b4222ef5a1b5da64c9e208d2d23379ea505821563",
   "verdicts": [
     {
       "id": "repo-addressbook-p1-001",
       "holds": true,
-      "reason": "Address.java:18 Javadoc says 'An untyped, organisation-owned address-book entry'; the entity has no type/role field (lines 44-79) and OperatorMapperTest:148 shows no operatorType. The no-operator-type part leans on the field list rather than the quote, but follows."
+      "reason": "Address.java:18-19 has the 'An organisation-owned address-book entry' Javadoc and @Document(collection = \"addresses\") verbatim."
     },
     {
       "id": "repo-addressbook-p1-002",
       "holds": true,
-      "reason": "Address.java:18-19 quote found verbatim; the entity's fields are all flat scalars."
+      "reason": "Address.java:30-67 declares exactly these fields with these types: id, the nine strings, List<AddressRole> roles, organisationId, AddressStatus status, Instant createdAt/modifiedAt/expireAt and Long version. The quote is a subset but the statement follows from the file."
     },
     {
       "id": "repo-addressbook-p1-003",
       "holds": true,
-      "reason": "Address.java:44-79 declares exactly these 16 fields with @Id, @CreatedDate, @LastModifiedDate and @Version as quoted (annotations elided in the quote, but the field list is exact)."
+      "reason": "Address.java:18 Javadoc says roles can be null or empty; the field has no constraint, and the request carries @NotEmpty (AddressRequest.java:95)."
     },
     {
       "id": "repo-addressbook-p1-004",
       "holds": true,
-      "reason": "Address.java:21-22 Javadoc quoted verbatim."
+      "reason": "Address.java:58-62 has @CreatedDate createdAt and @LastModifiedDate modifiedAt; that Spring Data auditing sets them is the annotations' meaning."
     },
     {
       "id": "repo-addressbook-p1-005",
       "holds": true,
-      "reason": "Address.java:24 quote verbatim; createdAt is @CreatedDate (line 70) and MongoConfig.java:31 has @EnableMongoAuditing, so createdAt is set automatically on first save."
+      "reason": "Address.java:66-67 '@Version private Long version;'. Optimistic locking is a sound inference from Spring Data @Version; the note starts with mechanism:."
     },
     {
       "id": "repo-addressbook-p1-006",
       "holds": true,
-      "reason": "Address.java:24-25: 'audit only: nothing reads it to refresh anything'. Statement's 'any other behaviour' is a mild broadening of 'refresh anything', acceptable."
+      "reason": "Address.java:20-22 @CompoundIndex name org_status_created, def {'organisationId': 1, 'status': 1, 'createdAt': -1} verbatim."
     },
     {
       "id": "repo-addressbook-p1-007",
       "holds": true,
-      "reason": "Address.java:78-79 @Version Long version; OperatorMapper.java:22 ignores version in toResponse. Optimistic locking from Spring Data @Version is a sound inference, correctly marked inferred."
+      "reason": "Address.java:24 @EqualsAndHashCode(onlyExplicitlyIncluded = true) and :30-32 @EqualsAndHashCode.Include on id. Mechanism note present."
     },
     {
       "id": "repo-addressbook-p1-008",
       "holds": true,
-      "reason": "Address.java:31 quote verbatim; OperatorResponse.java:9-10 and OperatorMapper.java:10-11 say the same."
+      "reason": "AddressStatus.java:3-10: enum ACTIVE, DELETED with the Javadoc quoted verbatim."
     },
     {
       "id": "repo-addressbook-p1-009",
       "holds": true,
-      "reason": "AddressRequest.java:11-12 'Create/update request body. The wire is camelCase...' and line 34 schema 'Create or replace'."
+      "reason": "README.md line 151 under Wire conventions quoted verbatim; AddressMapper ignores status and derives deleted; AddressMapperTest serialisation test proves no status property."
     },
     {
       "id": "repo-addressbook-p1-010",
       "holds": true,
-      "reason": "AddressRequest.java:36 @NotBlank(message = \"Enter a name\"); proven by AddressRequestValidationTest:82."
+      "reason": "AddressRequest.java:16 Javadoc verbatim; the record components at :27-113 are these ten fields plus the hidden, refused type and role (claimed in p1-051). Ref lines are loose (15-27 covers the Javadoc and record header)."
     },
     {
       "id": "repo-addressbook-p1-011",
       "holds": true,
-      "reason": "AddressRequest.java:37 @Size(min = 1, max = 255, message = \"Name must be 255 characters or less\"); test lines 104-108 (256 chars rejected)."
+      "reason": "AddressRequest.java:18-19 Javadoc verbatim; AddressMapperTest.java:115-155 sends id, organisationId OTHER-ORG, status DELETED, deleted true and both timestamps, and asserts id, status, organisationId, createdAt and modifiedAt null on the entity."
     },
     {
       "id": "repo-addressbook-p1-012",
       "holds": true,
-      "reason": "AddressRequest.java:38-43 description and example as quoted (also operators.yml AddressRequest.name). The response schema calls it just 'Display name' (OperatorResponse.java:28)."
+      "reason": "AddressRequest.java:28 @NotBlank(message = \"Enter a name or organisation\"); test case 'blank name' at AddressRequestValidationTest.java:38-42."
     },
     {
       "id": "repo-addressbook-p1-013",
       "holds": true,
-      "reason": "AddressRequest.java:45 verbatim; test line 83-87."
+      "reason": "AddressRequest.java:29 verbatim; over-length test at 256 (validation test :73-76) and at-max 255 passes (:178)."
     },
     {
       "id": "repo-addressbook-p1-014",
       "holds": true,
-      "reason": "AddressRequest.java:46 verbatim; test line 109-113."
+      "reason": "AddressRequest.java:30-35 @Schema description and example verbatim."
     },
     {
       "id": "repo-addressbook-p1-015",
       "holds": true,
-      "reason": "AddressRequest.java:47-52 description and example verbatim."
+      "reason": "AddressRequest.java:37 verbatim; test 'blank addressLine1' :43-47."
     },
     {
       "id": "repo-addressbook-p1-016",
       "holds": true,
-      "reason": "AddressRequest.java:54-56 verbatim; no @NotBlank so optional; test lines 114-118."
+      "reason": "AddressRequest.java:38 verbatim; over-length test :77-81."
     },
     {
       "id": "repo-addressbook-p1-017",
       "holds": true,
-      "reason": "AddressRequest.java:57 verbatim; test lines 88-92."
+      "reason": "AddressRequest.java:39-44 verbatim."
     },
     {
       "id": "repo-addressbook-p1-018",
       "holds": true,
-      "reason": "AddressRequest.java:58 verbatim; test lines 119-123 (101 chars rejected)."
+      "reason": "AddressRequest.java:46-48: only @Size(max = 255) with that message, no @NotBlank, so optional. Test :82-86."
     },
     {
       "id": "repo-addressbook-p1-019",
       "holds": true,
-      "reason": "AddressRequest.java:59-64 description and example verbatim."
+      "reason": "AddressRequest.java:49 verbatim; test :48-52."
     },
     {
       "id": "repo-addressbook-p1-020",
       "holds": true,
-      "reason": "AddressRequest.java:66-68 verbatim; no @NotBlank; test lines 124-128."
+      "reason": "AddressRequest.java:50 verbatim; over-length at 101 (:87-91), at-max 100 passes (:182)."
     },
     {
       "id": "repo-addressbook-p1-021",
       "holds": true,
-      "reason": "AddressRequest.java:69 verbatim; test line 93-94."
+      "reason": "AddressRequest.java:51-56 verbatim."
     },
     {
       "id": "repo-addressbook-p1-022",
       "holds": true,
-      "reason": "AddressRequest.java:70 verbatim; test lines 129-133."
+      "reason": "AddressRequest.java:58-60 verbatim; no @NotBlank so optional; test :92-96."
     },
     {
       "id": "repo-addressbook-p1-023",
       "holds": true,
-      "reason": "AddressRequest.java:71-76 description and example verbatim."
+      "reason": "AddressRequest.java:61 verbatim; test :53-57."
     },
     {
       "id": "repo-addressbook-p1-024",
       "holds": true,
-      "reason": "Sound inference: postcode (AddressRequest.java:69-77) carries only @NotBlank and @Size, no @Pattern, and nothing in the record depends on countryCode."
+      "reason": "AddressRequest.java:62 verbatim; no @Pattern on postcode (read in full), so format unchecked; the note says so. Test :97-101."
     },
     {
       "id": "repo-addressbook-p1-025",
       "holds": true,
-      "reason": "AddressRequest.java:78 verbatim; test lines 95-99."
+      "reason": "AddressRequest.java:63-68 verbatim."
     },
     {
       "id": "repo-addressbook-p1-026",
       "holds": true,
-      "reason": "AddressRequest.java:30-31 Javadoc verbatim; no @Size on countryCode (78-83); AddressRequestValidationTest:198-202 accepts a 50-character value."
+      "reason": "AddressRequest.java:70 verbatim; tests 'blank countryCode' and 'missing countryCode' (null) at :58-67."
     },
     {
       "id": "repo-addressbook-p1-027",
       "holds": true,
-      "reason": "AddressRequest.java:80-82 and OperatorResponse.java:39-41 descriptions verbatim; mirrored in operators.yml AddressRequest and OperatorResponse schemas."
+      "reason": "AddressRequest.java:70-75 has only @NotBlank and description 'Country code (stored as given)'; AddressRequestValidationTest.java:196-203 accepts repeatedText(50) for every AddressRole. Conflict with README correctly recorded, not settled."
     },
     {
       "id": "repo-addressbook-p1-028",
       "holds": true,
-      "reason": "AddressRequest.java:84 verbatim; test line 100."
+      "reason": "README.md lines 147-148 quoted verbatim; statement correctly frames it as the README's statement."
     },
     {
       "id": "repo-addressbook-p1-029",
       "holds": true,
-      "reason": "AddressRequest.java:85 verbatim; test lines 134-138."
+      "reason": "README.md Role rules line 193 verbatim; the @EnumSource test at :196-203 runs for each of the 5 roles."
     },
     {
       "id": "repo-addressbook-p1-030",
       "holds": true,
-      "reason": "AddressRequest.java:86-91 description and example verbatim."
+      "reason": "AddressRequest.java:76 verbatim; test :68-69."
     },
     {
       "id": "repo-addressbook-p1-031",
       "holds": true,
-      "reason": "AddressRequestValidationTest.java:204-210 has the cv-044 comment and the 'call the office' request, asserted valid. The statement rightly scopes the ruling attribution to the test's citation; main code cites cv-044 only for type/role."
+      "reason": "AddressRequest.java:77 verbatim; over-length 21 (:102-106), at-max 20 passes (:186)."
     },
     {
       "id": "repo-addressbook-p1-032",
       "holds": true,
-      "reason": "AddressRequest.java:93 verbatim; test lines 101-102."
+      "reason": "AddressRequestValidationTest.java:231-236 asserts no violations for phone 'call the office'; no @Pattern on phone."
     },
     {
       "id": "repo-addressbook-p1-033",
       "holds": true,
-      "reason": "AddressRequest.java:94 verbatim; test lines 145-149 ('not-an-email' rejected)."
+      "reason": "AddressRequest.java:78-83 verbatim."
     },
     {
       "id": "repo-addressbook-p1-034",
       "holds": true,
-      "reason": "AddressRequest.java:95 verbatim; test lines 139-143 and the at-max case at line 188."
+      "reason": "AddressRequest.java:85 verbatim; test :70-71."
     },
     {
       "id": "repo-addressbook-p1-035",
       "holds": true,
-      "reason": "AddressRequest.java:96-101 description and example verbatim."
+      "reason": "AddressRequest.java:86 verbatim; 'malformed email' test with 'not-an-email' at :112-116."
     },
     {
       "id": "repo-addressbook-p1-036",
       "holds": true,
-      "reason": "AddressRequest.java:26-28 Javadoc verbatim. 'keyed by field name' is supported by lines 22-23 ('errors map keyed type / role'). The wire shape is rightly deferred to part 2."
+      "reason": "AddressRequest.java:87 verbatim; overLengthValidEmail is 64+1+63+1+63+1+62 = 255 chars (:21-23, case :107-111), maxLengthValidEmail is 254 chars and passes (:25-27, :187)."
     },
     {
       "id": "repo-addressbook-p1-037",
       "holds": true,
-      "reason": "AddressRequest.java:19-24 Javadoc and line 103 @Null(message = \"type is not a supported field\"); test lines 151-155 ('IMPORTER' rejected on type)."
+      "reason": "AddressRequest.java:88-93 verbatim."
     },
     {
       "id": "repo-addressbook-p1-038",
       "holds": true,
-      "reason": "AddressRequest.java:106 @Null(message = \"role is not a supported field\"); test lines 156-160 ('consignor')."
+      "reason": "AddressRequest.java:95 verbatim; tests 'missing roles' and 'empty roles' :117-126. The one request record serves create and replace, and README line 153 says required on create and update."
     },
     {
       "id": "repo-addressbook-p1-039",
       "holds": true,
-      "reason": "AddressRequest.java:20-24 @Schema(hidden = true) and 'never mapped onto the entity'; OperatorMapper.java:31 and 45 ignore type and role; operators.yml AddressRequest schema has no type or role property."
+      "reason": "AddressRequest.java:21-22 Javadoc and :116 compact constructor map null to List.of(); the 'missing roles' test gets the @NotEmpty message."
     },
     {
       "id": "repo-addressbook-p1-040",
       "holds": true,
-      "reason": "AddressRequest.java:14-17 verbatim. 'status' is not in the Javadoc list, but AddressRequest has no status component and OperatorMapperTest:165-205 sends status \"DELETED\" and asserts it is dropped, so the statement holds."
+      "reason": "AddressRequest.java:116 distinct() keeps first-occurrence order; test roles_collapseRepeatsToTheFirstOfEach at :223-229 proves CONSIGNOR, PLACE_OF_ORIGIN."
     },
     {
       "id": "repo-addressbook-p1-041",
       "holds": true,
-      "reason": "Sound inference from AddressRequest.java:15-16 (fail-on-unknown-properties off) and the mapper test's failOnUnknownProperties(false) mirror of JacksonConfig (OperatorMapperTest:28)."
+      "reason": "AddressRequest.java:96 verbatim; AddressRoleNamesValidator.java:16-20 requires non-null exact enum names; tests unknown (TRANSPORTER), lower-case, null and blank (' ') at :127-146 all keyed roles."
     },
     {
       "id": "repo-addressbook-p1-042",
       "holds": true,
-      "reason": "OperatorMapper.java:27-29 Javadoc verbatim; lines 32-38 and 46-52 ignore those targets."
+      "reason": "README.md Design notes line 383 quoted verbatim; roles is List<String> at AddressRequest.java:107. Mechanism note present."
     },
     {
       "id": "repo-addressbook-p1-043",
       "holds": true,
-      "reason": "OperatorMapper.java:42-43 'Applies a full replace of client-supplied fields'; OperatorMapperTest:207-256 asserts addressLine2 and county become null when omitted."
+      "reason": "Test validate_reportsOnlyTheRolesViolationForAnUnknownRoleAlone (:214-221) asserts exactly one violation path 'roles'; RolesHeldTogetherValidator uses knownRoles(), which filters unknown names; README line 384 quoted verbatim."
     },
     {
       "id": "repo-addressbook-p1-044",
       "holds": true,
-      "reason": "OperatorMapperTest:250-255 asserts id, organisationId, status, createdAt unchanged and version 2L unchanged (line 255, not in the quote but in the ref range)."
+      "reason": "AddressRole.java:5-19 has the five constants and the Javadoc quoted verbatim."
     },
     {
       "id": "repo-addressbook-p1-045",
       "holds": true,
-      "reason": "OperatorResponse.java:22-64 components and operators.yml OperatorResponse properties (347-395) match the 14 fields exactly."
+      "reason": "AddressRole.java:10-19 @Schema descriptions verbatim."
     },
     {
       "id": "repo-addressbook-p1-046",
       "holds": true,
-      "reason": "OperatorResponse.java:16-18 quote verbatim; operators.yml required list (396-408) has every field but addressLine2 and county; compact constructor guards the rest."
+      "reason": "README.md Role rules table (lines 189-190) verbatim; AddressRole.java assigns SENDING to PLACE_OF_ORIGIN and CONSIGNOR, RECEIVING to the other three; RoleGroup.java has SENDING and RECEIVING."
     },
     {
       "id": "repo-addressbook-p1-047",
       "holds": true,
-      "reason": "OperatorMapper.java:22 verbatim; OperatorResponse has no such components; OperatorMapperTest:146 asserts no status key."
+      "reason": "README.md Role rules lines 183-185 verbatim; RoleGroup is package-private and not in any schema."
     },
     {
       "id": "repo-addressbook-p1-048",
       "holds": true,
-      "reason": "OperatorResponse.java:13-14 and OperatorMapper.java:23 verbatim; OperatorMapperTest:53-77 proves false for ACTIVE and true for DELETED."
+      "reason": "RolesHeldTogether.java:20 default message verbatim; validator reports on 'roles' via ClassLevelViolations.reportOn; test 'sending and receiving roles' :147-151. README line 158-160 says on create and update."
     },
     {
       "id": "repo-addressbook-p1-049",
       "holds": true,
-      "reason": "OperatorResponse.java:16-17 Javadoc verbatim; constructor lines 66-78 use Objects.requireNonNull; OperatorMapperTest:104-125 proves a NullPointerException on a null phone. 'server error' is the Javadoc's 'server bug'; the HTTP status mapping is part 2's."
+      "reason": "AddressTestSupport.java:74-78 lists both combinations; validate_findsNoViolationForRolesOneAddressCanHoldTogether (:205-212) asserts no violations."
     },
     {
       "id": "repo-addressbook-p1-050",
       "holds": true,
-      "reason": "OperatorResponse.java:23-27 description and example verbatim."
+      "reason": "AddressRequest.java:101-105 description string verbatim (ref says 97-106, which spans the @ArraySchema)."
     },
     {
       "id": "repo-addressbook-p1-051",
       "holds": true,
-      "reason": "OperatorResponse.java:47-50 description verbatim."
+      "reason": "AddressRequest.java:108-113 verbatim; @Schema(hidden = true) keeps them out of the document; tests 'stray type' and 'stray role' :152-161."
     },
     {
       "id": "repo-addressbook-p1-052",
       "holds": true,
-      "reason": "OperatorResponse.java:55-63 '(UTC)' with format date-time; OperatorMapperTest:142-143 serialise to '2026-07-01T09:00:00Z' and 154-163 assert textual not epoch (the test mirrors JacksonConfig rather than using it, so this is the documented production contract)."
+      "reason": "README.md line 161 verbatim; addressType is no request component and Address.java has no type field. AddressMapperTest.java:116-155 shows other unknown properties (status, deleted) deserialise without error, supporting 'ignored'."
     },
     {
       "id": "repo-addressbook-p1-053",
       "holds": true,
-      "reason": "OperatorResponse.java:21 and AddressRequest.java:34 schema descriptions verbatim."
+      "reason": "aFullyPopulatedValidRequestHasNoViolations (:29-34) sets addressLine2 and county and expects no violations; fieldAtMaximumLengthHasNoViolations (:176-194) covers each length-capped field at its max. Wording 'including the optional addressLine2 and county' means a request that also fills them."
     },
     {
       "id": "repo-addressbook-p1-054",
       "holds": true,
-      "reason": "OperatorMapperTest.java:148-151 verbatim; OperatorResponse has no such components."
+      "reason": "Parameterised test at :164-174 asserts containsExactly(message) on the expected property; README Design notes line 382 quoted verbatim for every-missing-field-at-once."
     },
     {
       "id": "repo-addressbook-p1-055",
       "holds": true,
-      "reason": "operators.yml:339-346 required list verbatim; addressLine2 and county are absent from it."
+      "reason": "README.md line 152 verbatim. 'nothing is saved' is from the roles bullet at line 156, not the quoted line; loose ref, but the statement holds for the request rules, and the note defers the HTTP shape to part 2."
     },
     {
       "id": "repo-addressbook-p1-056",
       "holds": true,
-      "reason": "operators.yml email property (333-338) has no format; grep finds no 'format: email' anywhere in the file, while AddressRequest.java:94 carries @Email. Sound inference."
+      "reason": "AddressResponse.java:22-73 has exactly these 15 components; AddressMapper.java:17 ignores status, version, expireAt; AddressMapperTest.java:80-113 asserts the exact property set on the serialised JSON."
     },
     {
       "id": "repo-addressbook-p1-057",
       "holds": true,
-      "reason": "AddressStatus.java:8-11 enum ACTIVE, DELETED."
+      "reason": "AddressMapper.java:18 expression verbatim; tests at AddressMapperTest.java:37-63 prove false for ACTIVE and true for DELETED."
     },
     {
       "id": "repo-addressbook-p1-058",
       "holds": true,
-      "reason": "AddressStatus.java:3-6 Javadoc verbatim. The quote says '200 + DELETED'; the statement's 'deleted true' follows from line 6 (a derived deleted boolean is emitted instead)."
+      "reason": "AddressResponse.java:16-18 Javadoc verbatim; AddressMapperTest toResponse_mapsOptionalFieldsWhenAbsent (:65-78) and AddressResponseTest compactConstructor_allowsNullOptionalFields (:52-58). Note: roles is also null-tolerant (reads as empty), covered by p1-060."
     },
     {
       "id": "repo-addressbook-p1-059",
       "holds": true,
-      "reason": "README 'Soft delete (tombstones)' section, both quoted sentences verbatim."
+      "reason": "AddressResponse.java:75-86 Objects.requireNonNull on the 11 named fields with the field name as message; RecordNullGuards asserts the NPE message equals the component name; README line 382 quoted verbatim. Mechanism note present."
     },
     {
       "id": "repo-addressbook-p1-060",
       "holds": true,
-      "reason": "README 'Soft delete (tombstones)' last line verbatim."
+      "reason": "AddressResponse.java:51-53 description verbatim and :87 maps null roles to List.of(); AddressResponseTest compactConstructor_readsNullRolesAsAnEmptyList (:60-65) asserts empty."
     },
     {
       "id": "repo-addressbook-p1-061",
       "holds": true,
-      "reason": "README.md lines 163-164 state the database and collection verbatim; Address.java:33 @Document(collection = \"addresses\"); application.yml:11 database: ${MONGO_DATABASE:trade-imports-address-book}."
+      "reason": "AddressResponse.java:23-27 has description 'Opaque address identifier', requiredMode REQUIRED and example '665f1c2ab3e4d51a2c9d0e77' on id, verbatim."
     },
     {
       "id": "repo-addressbook-p1-062",
       "holds": true,
-      "reason": "Address.java:27-36: Javadoc says the single compound index org_status_created serves every production read, org-scoped, status-bounded (ACTIVE), newest-first; @CompoundIndex def {'organisationId': 1, 'status': 1, 'createdAt': -1}."
+      "reason": "AddressResponse.java:38-42 describes countryCode as 'ISO 3166-1 alpha-2 country code' with example 'GB'. The note is right: AddressRequest.java:72 says 'Country code (stored as given)' and only @NotBlank applies."
     },
     {
       "id": "repo-addressbook-p1-063",
       "holds": true,
-      "reason": "application.yml:12 auto-index-creation: true; Address.java:28-29 says it is built while the collection is empty; OperatorIndexIT comment confirms auto-index-creation builds indexes at context startup."
+      "reason": "AddressResponse.java:56-73 carries all four descriptions verbatim: 'Organisation that owns this address', 'True when the address has been soft-deleted', 'Creation timestamp (UTC)', 'Last modification timestamp (UTC)'."
     },
     {
       "id": "repo-addressbook-p1-064",
       "holds": true,
-      "reason": "README.md Indexes section, lines 268-270, quoted verbatim."
+      "reason": "AddressMapperTest.java:106-111 asserts roles serialise as 'IMPORTER','CONSIGNEE' (the stored order) and createdAt as '2026-07-01T09:00:00Z'. Quote found at line 110."
     },
     {
       "id": "repo-addressbook-p1-065",
       "holds": true,
-      "reason": "application.yml:13-14 defaults primaryPreferred and majority via MONGO_READ_PREFERENCE and MONGO_WRITE_CONCERN. The note about MongoConfig's Javadoc saying 'secondary (configurable)' is accurate (MongoConfig.java:24)."
+      "reason": "AddressMapper.java:21-29 ignores id, organisationId, status, createdAt, modifiedAt, version and expireAt on toEntity; AddressMapperTest.java:116-166 proves the copied fields and that roles map to enums in order. It is mapper code, and the note correctly starts with mechanism:."
     },
     {
       "id": "repo-addressbook-p1-066",
       "holds": true,
-      "reason": "MongoConfig.java:22-28 Javadoc quoted verbatim; ssl.enabled: true at application.yml:20-21 is hard-coded, and MongoConfig:66-70 applies the trust-store SSL context. The AWS IAM part rests on the Javadoc only; the connection string itself is supplied by CDP and not in the repo."
+      "reason": "AddressMapperTest.java:168-190 updateEntity_replacesAllMutableFieldsAndClearsOmittedOptionals asserts every field overwritten and addressLine2 and county null. It is mapper code that would want a mechanism: note."
     },
     {
       "id": "repo-addressbook-p1-067",
       "holds": true,
-      "reason": "application.yml:15-19 pool settings quoted verbatim, each with an environment override; wired in MongoConfig.connectionPoolSettings."
+      "reason": "AddressMapperTest.java:184-189 asserts id, organisationId, status, createdAt, modifiedAt and version unchanged after updateEntity; expireAt is ignored by the inherited toEntity configuration (AddressMapper.java:28,31). Mapper code without a mechanism: note."
     },
     {
       "id": "repo-addressbook-p1-068",
       "holds": true,
-      "reason": "compose/mongo/10-init.js is six comment lines only, including the quoted line; the example targets a template database, no address data."
+      "reason": "README.md Wire conventions says 'An update replaces the roles.'; AddressMapperTest.java:192-202 proves the stored roles become the request's. Design-notes mechanism (TARGET_IMMUTABLE) matches AddressMapper.java:14."
     },
     {
       "id": "repo-addressbook-p1-069",
       "holds": true,
-      "reason": "README.md 'Address expiry (non-prod only)' line 249-250, quoted verbatim."
+      "reason": "README.md 'Example — create an address' sends exactly those fields, roles [CONSIGNEE, IMPORTER], with the Trade-Imports-Organisation-Id header and no addressLine2 or county."
     },
     {
       "id": "repo-addressbook-p1-070",
       "holds": true,
-      "reason": "README.md table row for ADDRESS_TTL_DAYS quoted verbatim; application.yml:31 days: ${ADDRESS_TTL_DAYS:} (empty default, bound as null per AddressTtlConfigTest)."
+      "reason": "AddressMapper.java:11-14 sets unmappedTargetPolicy and unmappedSourcePolicy to ReportingPolicy.ERROR. The inference that an unmapped property fails compilation is sound MapStruct behaviour; the note marks it as a mechanism."
     },
     {
       "id": "repo-addressbook-p1-071",
       "holds": true,
-      "reason": "README states 'Updates and deletes keep the original expireAt'; OperatorMapper.java:52 ignores expireAt on updateEntity and OperatorService.delete only flips status."
-    },
-    {
-      "id": "repo-addressbook-p1-072",
-      "holds": true,
-      "reason": "AddressTtlConfig.java:26-28 Javadoc quoted and @Positive Integer days at line 35; AddressTtlConfigTest binding_rejectsZeroDays and binding_rejectsNegativeDays fail the context with BindValidationException."
-    },
-    {
-      "id": "repo-addressbook-p1-073",
-      "holds": true,
-      "reason": "README table row for ADDRESS_TTL_EXPIRY_ENABLED quoted verbatim; application.yml:33-34 default false; AddressExpiryIndex is @ConditionalOnProperty havingValue true and creates the index on ApplicationReadyEvent."
-    },
-    {
-      "id": "repo-addressbook-p1-074",
-      "holds": true,
-      "reason": "AddressExpiryIndex.java:44-47 quoted verbatim: index on expireAt ASC with expire(Duration.ZERO)."
-    },
-    {
-      "id": "repo-addressbook-p1-075",
-      "holds": true,
-      "reason": "README lines 257-261 quoted verbatim; backed by OperatorService.stampExpiry (days null or isProd returns) and AddressExpiryIndex.createIndex (isProd returns)."
-    },
-    {
-      "id": "repo-addressbook-p1-076",
-      "holds": true,
-      "reason": "AddressExpiryIndex.java:40-43: if ttlConfig.isProd() it logs the quoted warning and returns without creating the index."
-    },
-    {
-      "id": "repo-addressbook-p1-077",
-      "holds": true,
-      "reason": "AddressTtlConfig.java:38-40 isProd uses equalsIgnoreCase on environment.strip(); application.yml:32 environment: ${ENVIRONMENT:local}."
-    },
-    {
-      "id": "repo-addressbook-p1-078",
-      "holds": false,
-      "reason": "Overreaches on 'missing'. README only says ENVIRONMENT 'must not be blank — the service fails to start if it is'. In the running service a missing ENVIRONMENT does not stop start-up: application.yml:32 defaults it to 'local', which isProd treats as non-prod. AddressTtlConfigTest.binding_rejectsAMissingEnvironment fails only in a bare test context with no application.yml default. A set-but-blank value does fail @NotBlank. See missed claim repo-addressbook-p1-078-m1."
-    },
-    {
-      "id": "repo-addressbook-p1-079",
-      "holds": true,
-      "reason": "application.yml:26-28 comment quoted verbatim; AddressTtlConfig.java:23-24 says the same."
-    },
-    {
-      "id": "repo-addressbook-p1-080",
-      "holds": true,
-      "reason": "AddressExpiryIndex.java:22-23 quoted verbatim; AddressExpiryIT proves an undated address stays."
-    },
-    {
-      "id": "repo-addressbook-p1-081",
-      "holds": true,
-      "reason": "AddressExpiryIndex.java:25 quoted verbatim."
-    },
-    {
-      "id": "repo-addressbook-p1-082",
-      "holds": true,
-      "reason": "README.md Soft delete section, lines 239-240, quoted verbatim."
-    },
-    {
-      "id": "repo-addressbook-p1-083",
-      "holds": true,
-      "reason": "AddressRequestValidationTest: aFullyPopulatedValidRequestHasNoViolations (72-77) and the seven blank cases in invalidFields (79-102) asserted by the parameterised test at 163-175; class Javadoc quote at 19-21."
-    },
-    {
-      "id": "repo-addressbook-p1-084",
-      "holds": true,
-      "reason": "AddressRequestValidationTest invalidFields over-length cases (103-143) and fieldsAtMaximumLength (177-195): name 255, addressLine1 255, addressLine2 255, townOrCity 100, county 100, postcode 12, phone 20, email 254; quoted lines present."
-    },
-    {
-      "id": "repo-addressbook-p1-085",
-      "holds": true,
-      "reason": "AddressRequestValidationTest:145-160 malformed email, stray type IMPORTER and role consignor; 197-210 countryCode of 50 characters and free-text phone 'call the office' accepted; method names quoted verbatim."
-    },
-    {
-      "id": "repo-addressbook-p1-086",
-      "holds": true,
-      "reason": "AddressRequestValidationTest.java:28-29 quoted verbatim. The test names OperatorCrudIT, which does not exist under that name (the create IT is AddressCrudIT); the ruling citation itself is accurate."
-    },
-    {
-      "id": "repo-addressbook-p1-087",
-      "holds": true,
-      "reason": "OperatorMapperTest: toResponse_copiesEveryField... (52-70), toResponse_derivesDeletedTrueForATombstone (72-77), toResponse_mapsOptionalFieldsWhenAbsent (79-102), toResponse_failsLoudWhenARequiredFieldIsNull with message 'phone' (104-125), and json.has(\"status\") false (146)."
-    },
-    {
-      "id": "repo-addressbook-p1-088",
-      "holds": true,
-      "reason": "OperatorMapperTest.request_deserialisesFromCamelCaseAndMapsOntoAnEntityIgnoringServerFields (165-205): body carries id, organisationId, status, deleted, createdAt, modifiedAt; entity id, status, organisationId, createdAt, modifiedAt are null (deleted has no entity field)."
-    },
-    {
-      "id": "repo-addressbook-p1-089",
-      "holds": true,
-      "reason": "OperatorResponseTest guardedFieldsRejectNull lists exactly those 11 fields (61-74) asserted by compactConstructor_rejectsNullOnGuardedFields; compactConstructor_allowsNullOptionalFields (84-105) covers addressLine2 and county."
-    },
-    {
-      "id": "repo-addressbook-p1-090",
-      "holds": true,
-      "reason": "AddressExpiryIndexTest: bean absent when not configured or false, present when true (36-53); createIndex outside prod keys expireAt 1 with name address_expire_at_ttl and expireAfterSeconds 0 (86-104); in prod no interaction with MongoTemplate (106-118)."
-    },
-    {
-      "id": "repo-addressbook-p1-091",
-      "holds": true,
-      "reason": "AddressTtlConfigTest covers each named case: isProd any case and whitespace (24-36), missing and blank environment fail (52-76), days null when absent or empty (78-98), zero and negative days fail (107-131). These run in a bare context without application.yml defaults."
-    },
-    {
-      "id": "repo-addressbook-p1-092",
-      "holds": true,
-      "reason": "AddressExpiryIT.post_givesTheNewAddressAnExpireAtSevenDaysAhead (71-105) with address-book.ttl.days=7, asserts $.expireAt does not exist and stored expireAt is between now+7d bounds."
-    },
-    {
-      "id": "repo-addressbook-p1-093",
-      "holds": true,
-      "reason": "AddressExpiryIT.expiredAddresses_areRemovedByMongoWhileUndatedAndUnexpiredOnesStay (107-130): expired ACTIVE and DELETED removed, undated and future ones remain."
-    },
-    {
-      "id": "repo-addressbook-p1-094",
-      "holds": true,
-      "reason": "OperatorIndexIT:35 containsExactlyInAnyOrder(\"_id_\", \"org_status_created\"), 42-47 key order, 67-68 explain plan contains org_status_created and not COLLSCAN."
-    },
-    {
-      "id": "repo-addressbook-p1-095",
-      "holds": true,
-      "reason": "OperatorIndexIT.java:20-22 quoted verbatim. 'Previously keyed by CRN and type' is read from the old index name crn_status_type_created and 're-keyed org-for-crn'; a sound inference, though tagged verbatim and kind rule."
-    },
-    {
-      "id": "repo-addressbook-p1-096",
-      "holds": true,
-      "reason": "Gap confirmed: Address.java fields are id, name, addressLine1-2, townOrCity, county, postcode, countryCode, phone, email, organisationId, status, createdAt, modifiedAt, expireAt, version; AddressRequest adds only @Null type and role. No fax, separate contact name or usage marker."
-    },
-    {
-      "id": "repo-addressbook-p1-097",
-      "holds": true,
-      "reason": "Gap confirmed: Address and AddressRequest hold countryCode only, @NotBlank with no list or pattern (AddressRequest.java:30-31, 78-83); README:136-137 says display names come from reference-data / the frontend."
+      "reason": "Gap confirmed: AddressRequest.java:70-75 has only @NotBlank(message = \"Select a country\") on countryCode, and no validator in address/ checks it against a list or a 2-letter shape."
     },
     {
       "id": "repo-addressbook-p2-001",
       "holds": true,
-      "reason": "README.md API overview table lines 120-123 quoted verbatim; OperatorController @PostMapping, @GetMapping/@PutMapping/@DeleteMapping(\"/{operator-id}\")."
+      "reason": "AddressController.java @PostMapping create with @Valid @RequestBody AddressRequest; addresses.yml post operationId create-address, summary and required AddressRequest body as quoted."
     },
     {
       "id": "repo-addressbook-p2-002",
       "holds": true,
-      "reason": "api-contract.locked.yaml:44, 84, 145, 246 carry those operationIds; README says OperatorComplianceIT fails the build if operationIds diverge from the lock."
+      "reason": "AddressController.create returns ResponseEntity.created(location).body(addressMapper.toResponse(created)); addresses.yml 201 'Created' with AddressResponse."
     },
     {
       "id": "repo-addressbook-p2-003",
       "holds": true,
-      "reason": "operators.yml:24-28 and the same header parameter at 66-70, 129-133, 236-240, all required: true; controller takes @RequestHeader on each handler."
+      "reason": "AddressController.create builds the URI with ServletUriComponentsBuilder.fromCurrentRequest().path(\"/{address-id}\").buildAndExpand(created.getId()); addresses.yml Location 'Absolute URI of the created address'."
     },
     {
       "id": "repo-addressbook-p2-004",
       "holds": true,
-      "reason": "operators.yml:241-246 quoted verbatim."
+      "reason": "AddressCrudIT.java:60-68 post_shouldResolveTheLocationHeaderIdToTheCreatedAddress; createdResourceId in IntegrationBase.java:374-379 takes the last segment of the Location header."
     },
     {
       "id": "repo-addressbook-p2-005",
       "holds": true,
-      "reason": "operators.yml:285-286 AddressRequest description quoted; controller create (190) and update (312) both take @Valid @RequestBody AddressRequest; put and post requestBody both $ref AddressRequest."
+      "reason": "Quote is the create Javadoc in AddressController; AddressService.create sets organisationId from the header parameter (line 113) after toEntity ignores it."
     },
     {
       "id": "repo-addressbook-p2-006",
       "holds": true,
-      "reason": "OperatorController.java:200 ResponseEntity.created(location).body(...); 201 documented at 149-160."
+      "reason": "AddressService.java:114 address.setStatus(AddressStatus.ACTIVE); AddressServiceTest create_setsTheGivenOrganisationIdAndActiveStatus; AddressCrudIT.java:45 asserts deleted false."
     },
     {
       "id": "repo-addressbook-p2-007",
       "holds": true,
-      "reason": "OperatorController.java:194-199 fromCurrentRequest().path(\"/{operator-id}\").buildAndExpand(created.getId()); AddressCrudIT asserts Location contains /organisation/{org}/addresses/."
+      "reason": "AddressCrudIT.java:26-58 asserts id exists, the sent fields, organisationId, deleted false, createdAt and modifiedAt present."
     },
     {
       "id": "repo-addressbook-p2-008",
       "holds": true,
-      "reason": "operators.yml:252 'Absolute URI of the created address' and api-contract.locked.yaml:269 'Relative URI of the created address'; both present."
+      "reason": "AddressCrudIT.java:214-236 post_shouldIgnoreEchoedReadOnlyAndUnknownFields: 201, id not the echoed one, deleted false, createdAt not 2020 and stored createdAt after 2020-01-01."
     },
     {
       "id": "repo-addressbook-p2-009",
       "holds": true,
-      "reason": "AddressCrudIT.crudRoundTrip (320-412) takes the id from the Location suffix at line 349 and uses it for get, put and delete."
+      "reason": "AddressServiceTest.java:128-141 asserts id, createdAt and modifiedAt null on the persisted entity. Note correctly marks it mechanism:."
     },
     {
       "id": "repo-addressbook-p2-010",
       "holds": true,
-      "reason": "OperatorController.java:135-136 Javadoc quoted; OperatorService.create:129 address.setOrganisationId(organisationId) from the header value passed by the controller."
+      "reason": "AddressService.java:101-104 Javadoc and stampExpiry lines 123-129 (Instant.now().plus(days, DAYS)); AddressServiceTest create_inANonProdEnvironmentWithTtlDaysSetsExpireAtThatManyDaysAhead."
     },
     {
       "id": "repo-addressbook-p2-011",
       "holds": true,
-      "reason": "OperatorService.java:25-26 Javadoc quoted verbatim, cites cv-010."
+      "reason": "AddressService.java:125 'if (days == null || ttlConfig.isProd()) { return; }'; AddressServiceTest create_withNoTtlDaysConfiguredLeavesExpireAtUnset and create_inProdNeverSetsExpireAtEvenWithTtlDaysConfigured."
     },
     {
       "id": "repo-addressbook-p2-012",
       "holds": true,
-      "reason": "OperatorService.java:130 address.setStatus(AddressStatus.ACTIVE); AddressCrudIT asserts stored status ACTIVE."
+      "reason": "AddressServiceTest.java:267-294: the two update tests assert expireAt kept at 2026-07-21T09:15:27Z and left null, both with TTL 7 in dev."
     },
     {
       "id": "repo-addressbook-p2-013",
       "holds": true,
-      "reason": "OperatorService.java:26-27 quoted; OperatorServiceTest.create_neverSetsServerFieldsFromTheRequestAndLeavesIdForMongo asserts id, createdAt and modifiedAt null before save."
+      "reason": "AddressService.java:119 log line verbatim; AddressServiceTest create_logsTheNewAddressIdAndOrganisationId asserts the formatted message."
     },
     {
       "id": "repo-addressbook-p2-014",
       "holds": true,
-      "reason": "OperatorController.java:136-137 quoted; AddressCrudIT.post_shouldIgnoreEchoedReadOnlyAndUnknownFields (216-255) asserts 201, id not the echoed value, deleted false, createdAt not 2020 and stored createdAt after 2020."
+      "reason": "AddressService.java:118,167,194 countChange CREATE/UPDATE/DELETE; AddressServiceTest create_countsOneCreate, update_countsOneUpdate, update_ofADeletedAddressCountsNoUpdate, delete_ofAnActiveAddressCountsOneDelete, delete_ofAnAlreadyDeletedAddressCountsNoDelete prove counter address.change with tag change."
     },
     {
       "id": "repo-addressbook-p2-015",
       "holds": true,
-      "reason": "Same test sends \"somethingUnknown\": \"ignored\" and expects 201; AddressRequest Javadoc says fail-on-unknown-properties is off."
+      "reason": "@Timed controller.<op>.time on each controller handler and service.<op>.time on each service method; AddressTimingIT.java:18-49 asserts only the operation's two timers move by one."
     },
     {
       "id": "repo-addressbook-p2-016",
       "holds": true,
-      "reason": "AddressCrudIT.post_shouldRejectStrayTypeOrRoleFieldsWithPerFieldErrors (182-214): 400, validation-error type, errors.type and errors.role exist, nothing saved."
+      "reason": "Gap confirmed: AddressTimingIT.java holds one test that only counts Micrometer timers; createdAt and modifiedAt are asserted in AddressCrudIT, AddressUpdateIT:190-204 and AddressDeleteIT:26-43."
     },
     {
       "id": "repo-addressbook-p2-017",
       "holds": true,
-      "reason": "AddressCrudIT:77-87 asserts exactly those fields. The list is what the test checks, not the full response: county, postcode and email are also returned (OperatorResponse), just not asserted here."
+      "reason": "AddressController get handler and addresses.yml get-address, summary 'Fetch one address, including tombstones', 200 'The address (deleted false or true)'."
     },
     {
       "id": "repo-addressbook-p2-018",
       "holds": true,
-      "reason": "AddressCrudIT.java:85 quoted; also asserted in the round trip get at 357."
+      "reason": "AddressGetIT.java:15-42 asserts every listed field, roles[0] CONSIGNEE, roles[1] IMPORTER, length 2, and deleted false."
     },
     {
       "id": "repo-addressbook-p2-019",
       "holds": true,
-      "reason": "AddressCrudIT.post_shouldAcceptCountryCodeAsGivenAndFreeStringPhone (257-287) asserts response and stored countryCode FR."
+      "reason": "addresses.yml AddressResponse required list matches and omits roles; roles description says empty when none. Holds as a claim about the generated document, but AddressResponse.java:47-54 marks roles REQUIRED in its annotation, which the generated yml does not reflect (recorded as a missed claim)."
     },
     {
       "id": "repo-addressbook-p2-020",
       "holds": true,
-      "reason": "api-contract.locked.yaml:23-26 quoted verbatim; operators.yml:324 and 374 cite cv-011."
+      "reason": "addresses.yml AddressResponse id 'Opaque address identifier' example 665f1c2ab3e4d51a2c9d0e77; createdAt and modifiedAt format date-time with the UTC descriptions."
     },
     {
       "id": "repo-addressbook-p2-021",
       "holds": true,
-      "reason": "api-contract.locked.yaml:331-334 has maxLength 2; operators.yml:322-326 has only minLength 1, and AddressRequest has @NotBlank alone on countryCode, so the service accepts longer values (the validation test accepts 50 characters)."
+      "reason": "AddressController get Javadoc quoted verbatim; AddressGetIT get_shouldReturn200WithDeletedTrue_whenAddressIsTombstoned; AddressServiceTest get_ofADeletedAddressReturnsItWithStatusDeleted."
     },
     {
       "id": "repo-addressbook-p2-022",
       "holds": true,
-      "reason": "AddressCrudIT.java:282 quoted verbatim."
+      "reason": "README.md Wire conventions line verbatim."
     },
     {
       "id": "repo-addressbook-p2-023",
       "holds": true,
-      "reason": "AddressCrudIT.post_shouldReturn400_whenCountryCodeIsBlank (289-317): 400, problem+json, errors.countryCode exists, no active addresses saved."
+      "reason": "AddressGetIT.java:54-63 asserts 404, problem+json, not-found type, title 'Resource Not Found', status 404 and no errors."
     },
     {
       "id": "repo-addressbook-p2-024",
       "holds": true,
-      "reason": "AddressCrudIT.java:100-133 posts an empty addressLine1 and email 'not-an-email', expects 400 validation-error with errors.addressLine1 and errors.email present and errors.address_line_1 absent, then asserts activeAddressesFor(ORGANISATION_ID) is empty. Quote verbatim at 128-130."
+      "reason": "AddressService.java:26-31 ADDRESS_NOT_FOUND Javadoc verbatim; service.get uses findByIdAndOrganisationId; AddressServiceTest get_forAnotherOrganisationsIdReturnsEmpty; controller throws NotFoundException on empty."
     },
     {
       "id": "repo-addressbook-p2-025",
       "holds": true,
-      "reason": "AddressCrudIT.java:135-150 sends '{\"name\":', expects 400, type .../bad-request, $.errors absent, and no saved address; GlobalExceptionHandler.java:89-103 maps HttpMessageNotReadableException to bad-request. Quote verbatim at 146-147."
+      "reason": "README 'Soft delete (tombstones)' bullets verbatim, and the get Javadoc says 'A 404 is therefore NOT a deletion signal: only the tombstone is'."
     },
     {
       "id": "repo-addressbook-p2-026",
       "holds": true,
-      "reason": "operators.yml:247-280 lists 201, 400 'Validation error, or a missing identity header', 404 'Path orgId does not match the caller's organisation header' and 500 'Unexpected server error' for POST. Matches the controller's @ApiResponses at 148-185."
+      "reason": "README 'Soft delete (tombstones)': 'Outside prod it can also mean the address has expired (see below).'"
     },
     {
       "id": "repo-addressbook-p2-027",
       "holds": true,
-      "reason": "OperatorService.java:138-149 Javadoc (quote verbatim) and stampExpiry sets Instant.now().plus(days, DAYS); OperatorServiceTest create_inANonProdEnvironmentWithTtlDaysSetsExpireAtThatManyDaysAhead proves 7 days ahead in 'dev'."
+      "reason": "AddressController @PutMapping update with @Valid AddressRequest; addresses.yml update-address 'Replace an address's mutable fields', 200 'Updated address with bumped modifiedAt'."
     },
     {
       "id": "repo-addressbook-p2-028",
       "holds": true,
-      "reason": "OperatorService.java:145-147 returns early when days is null or ttlConfig.isProd(); OperatorServiceTest create_withNoTtlDaysConfiguredLeavesExpireAtUnset and create_inProdNeverSetsExpireAtEvenWithTtlDaysConfigured prove both branches."
+      "reason": "AddressService.java:144-147 'Replaces every client-supplied field'; AddressUpdateIT.java:47-88 asserts addressLine2 and county null after a body without them."
     },
     {
       "id": "repo-addressbook-p2-029",
       "holds": true,
-      "reason": "OperatorService.java:120-121 quote verbatim; README.md:254 'Updates and deletes keep the original expireAt'; OperatorServiceTest update_keepsTheExpireAtSetWhenTheAddressWasCreated and update_ofAnAddressWithNoExpireAtLeavesItUnsetEvenWithTtlDaysConfigured prove the update half. The delete half rests on README and the code (delete only flips status), not on a test."
+      "reason": "AddressUpdateIT.java:59,70,85-86 sends IMPORTER, CONSIGNEE and asserts that order in the response and store; README 'An update replaces the roles.'"
     },
     {
       "id": "repo-addressbook-p2-030",
       "holds": true,
-      "reason": "README.md:254 quote verbatim; OperatorResponse in operators.yml:347-408 has no expireAt property."
+      "reason": "AddressService.java:144-147 Javadoc verbatim; AddressServiceTest update_appliesAllRequestFieldValuesAndPreservesTheServerOwnedFields asserts id, organisationId, status and createdAt kept."
     },
     {
       "id": "repo-addressbook-p2-031",
       "holds": true,
-      "reason": "OperatorController.java:203-204 Javadoc quote verbatim; get() at 240-251 returns the mapped address from operatorService.get, which (OperatorService.java:162-164) does not filter on status."
+      "reason": "AddressUpdateIT.java:190-204 asserts createdAt millis equal and modifiedAt after baseline."
     },
     {
       "id": "repo-addressbook-p2-032",
       "holds": true,
-      "reason": "AddressGetIT.java:40-63 asserts id, name, addressLine1, townOrCity, postcode, countryCode, phone, email, organisationId, createdAt, modifiedAt and deleted false. Quote verbatim at 59-62. The fixture has no addressLine2 or county, so those two are not asserted, which the statement correctly leaves out."
+      "reason": "AddressController update Javadoc: '{@code modifiedAt} is bumped on success (audit only).' The update handler takes no If-Match or timestamp precondition, so the reading is sound."
     },
     {
       "id": "repo-addressbook-p2-033",
       "holds": true,
-      "reason": "OperatorController.java:204-205 quote verbatim; AddressGetIT.java:65-78 saves a DELETED address and expects 200 with deleted true."
+      "reason": "AddressService.java:158-162 filters out DELETED before throwing NotFoundException; controller Javadoc quoted verbatim; AddressUpdateIT put_shouldReturn404_whenTargetIsTombstone asserts 404, not-found type and no errors; AddressServiceTest update_ofADeletedAddressThrowsNotFound."
     },
     {
       "id": "repo-addressbook-p2-034",
       "holds": true,
-      "reason": "AddressGetIT.java:80-93 expects 404, problem+json, type .../not-found, title 'Resource Not Found', status 404, errors absent. Quote verbatim."
+      "reason": "AddressUpdateIT.java:171-176 put_shouldReturn404_whenIdIsUnknown; AddressServiceTest update_ofAnotherOrganisationsIdThrowsNotFound."
     },
     {
       "id": "repo-addressbook-p2-035",
       "holds": true,
-      "reason": "OperatorService.java:151-156 Javadoc quote verbatim (cv-010); get uses findByIdAndOrganisationId so a cross-org id returns empty, mapped to the same NotFoundException as an unknown id in the controller; OperatorServiceTest get_forADifferentOrganisationReturnsEmptySoTheControllerCan404 proves the empty result."
+      "reason": "AddressCrudIT role and field refusal tests assert validation-error type, errors keys and activeAddressesFor empty; AddressUpdateIT put_shouldReturn400... tests assert stored values unchanged."
     },
     {
       "id": "repo-addressbook-p2-036",
       "holds": true,
-      "reason": "OperatorController.java:206-207 'A 404 is therefore NOT a deletion signal: only the tombstone is.' verbatim; README Soft delete section says the same ('Only a 200 response with deleted: true means the user deleted this address'); locked contract description repeats 'A 404 is not a deletion signal'."
+      "reason": "addresses.yml and AddressController declare 409 'Concurrent update conflict'; AddressUpdateIT.java:206-218 forces OptimisticLockingFailureException and asserts 409 with the conflict type and title 'Conflict'."
     },
     {
       "id": "repo-addressbook-p2-037",
       "holds": true,
-      "reason": "README.md Soft delete section: 'Outside prod it can also mean the address has expired (see below).' verbatim."
+      "reason": "AddressUpdateIT.java:220-231 asserts a stale save throws OptimisticLockingFailureException after a PUT. Note marks it mechanism:."
     },
     {
       "id": "repo-addressbook-p2-038",
       "holds": true,
-      "reason": "operators.yml:34-52 lists only 200, 404 and 500 for GET by id; quote verbatim. Controller @ApiResponses at 216-238 agree. The note is accurate: list, POST, PUT and DELETE each document a 400."
+      "reason": "AddressService.java:168 log line verbatim; AddressServiceTest update_logsTheAddressIdAndOrganisationId."
     },
     {
       "id": "repo-addressbook-p2-039",
       "holds": true,
-      "reason": "AddressUpdateIT.java:22-25 class Javadoc quote verbatim; put_shouldReplaceAllFieldsAndClearOmittedOptionals_whenBodyIsValid (62-95) saves addressLine2 'Unit 3' and county 'Highland', PUTs a body without them, and asserts both are null after."
+      "reason": "AddressController delete returns ResponseEntity.noContent(); addresses.yml delete-address 'Soft-delete an address (tombstone)', 204 'Soft-deleted (or already deleted — idempotent)'."
     },
     {
       "id": "repo-addressbook-p2-040",
       "holds": true,
-      "reason": "OperatorController.java:263 '@return 200 with the updated address and its bumped modifiedAt' verbatim; update() returns operatorMapper.toResponse(updated) with the default 200."
+      "reason": "AddressController delete Javadoc verbatim; AddressDeleteIT.java:26-43 asserts DELETED, createdAt equal and modifiedAt after; AddressServiceTest delete_flipsAnActiveAddressToADeletedTombstone."
     },
     {
       "id": "repo-addressbook-p2-041",
       "holds": true,
-      "reason": "OperatorServiceTest update_appliesAllRequestFieldValuesAndPreservesTheServerOwnedFields asserts all nine request fields on the updated entity; quoted lines present verbatim."
+      "reason": "AddressDeleteIT.java:45-62 asserts totalItems 0, items empty, then GET 200 deleted true; README 'Tombstones are excluded from list results.'"
     },
     {
       "id": "repo-addressbook-p2-042",
       "holds": true,
-      "reason": "OperatorService.java:167-169 Javadoc quote verbatim; the same unit test asserts id, organisationId, status ACTIVE and createdAt are kept on both the returned and persisted entity."
+      "reason": "AddressService.java:187-190 returns early for DELETED; AddressDeleteIT.java:64-86 asserts second 204, no save and modifiedAt unchanged; AddressServiceTest delete_isIdempotentForAnAlreadyDeletedTombstone."
     },
     {
       "id": "repo-addressbook-p2-043",
       "holds": true,
-      "reason": "OperatorController.java:254-255 quote verbatim; AddressUpdateIT put_shouldBumpModifiedAtAndPreserveCreatedAt_whenReplaceSucceeds (181-205) asserts createdAt equal to the millisecond and modifiedAt after the baseline."
+      "reason": "AddressDeleteIT.java:88-95 asserts 404, problem+json, not-found type and status 404."
     },
     {
       "id": "repo-addressbook-p2-044",
       "holds": true,
-      "reason": "AddressUpdateIT.java:23-25 quote verbatim; put_shouldReturn400PerFieldErrorsAndLeaveRowUntouched_whenBodyIsInvalid (97-135) expects validation-error with errors.addressLine1 and errors.email and asserts name, addressLine1 and email unchanged in the store. Both handlers take @Valid AddressRequest."
+      "reason": "AddressDeleteIT.java:97-121: deleteAddressAs(orgId, callerOrganisationId, id) per IntegrationBase.java:351-355, called (OTHER_ORG, OTHER_ORG) and (ORGANISATION_ID, OTHER_ORG); both 404 and the row stays ACTIVE."
     },
     {
       "id": "repo-addressbook-p2-045",
       "holds": true,
-      "reason": "AddressCrudIT.java:152-180 PUTs content \"\" to a live address and expects 400, problem+json, type .../bad-request and errors absent. Quote verbatim at 175-179."
+      "reason": "AddressDeleteIT.java:123-141 asserts the stale save with ACTIVE throws OptimisticLockingFailureException and the row stays DELETED. Note marks it mechanism:."
     },
     {
       "id": "repo-addressbook-p2-046",
       "holds": true,
-      "reason": "AddressUpdateIT.java:137-148 PUTs to UNKNOWN_ID and expects 404 with type .../not-found. Quote verbatim."
+      "reason": "AddressService.java:188 and 195 log lines verbatim; AddressServiceTest delete_ofAnActiveAddressLogsTheAddressIdAndOrganisationId and delete_ofAnAlreadyDeletedAddressLogsThatItWasLeftUnchanged."
     },
     {
       "id": "repo-addressbook-p2-047",
       "holds": true,
-      "reason": "OperatorService.java:170-171 Javadoc quote verbatim; OperatorServiceTest update_ofACrossOrgIdIs404BecauseTheStoreReturnsEmpty proves NotFoundException when the scoped lookup is empty. The cross-org case is proven at service level, not through the API in AddressUpdateIT."
+      "reason": "README 'Soft delete (tombstones)' 'Why soft delete' sentence verbatim."
     },
     {
       "id": "repo-addressbook-p2-048",
       "holds": true,
-      "reason": "OperatorService.java:183-184 filter on status != DELETED then NotFoundException, verbatim; AddressUpdateIT put_shouldReturn404_whenTargetIsTombstone (150-179) expects 404, not-found type, status 404, errors absent; AddressCrudIT round trip at 388-395 PUT on tombstone is 404."
+      "reason": "README: 'In prod, addresses, transporters and their tombstones are retained indefinitely (~1 KB each).' The statement narrows it to addresses, which follows."
     },
     {
       "id": "repo-addressbook-p2-049",
       "holds": true,
-      "reason": "AddressUpdateIT put_shouldReturn409ConflictProblem_whenOptimisticLockingFails (207-226) expects 409, type .../conflict, title 'Conflict'; operators.yml:104-109 '409: Concurrent update conflict' verbatim. The IT simulates the conflict by making the spied repository's save throw, not with a real race."
+      "reason": "addresses.yml: each of the four operations declares orgId path, Trade-Imports-Organisation-Id header required, and address-id for get, put and delete; create and put 400 mention a missing header, delete 400 'Missing org header', create 404 'Path orgId does not match the caller's organisation header'. get declares no 400, which the statement does not deny (p2-050 records it)."
     },
     {
       "id": "repo-addressbook-p2-050",
       "holds": true,
-      "reason": "AddressUpdateIT.java:228-249: comment quoted verbatim at 230; a snapshot taken before an API PUT then saved directly throws OptimisticLockingFailureException. As the note says, this proves the store-level @Version check, not a stale write through the API (the API has no client-supplied version)."
+      "reason": "addresses.yml get-address lists only 200, 404 and 500, and AddressController.java:263-283 declares no 400 ApiResponse on get, while create (208), update (320) and delete (378) each declare one. The inference is sound and correctly flagged."
     },
     {
       "id": "repo-addressbook-p2-051",
       "holds": true,
-      "reason": "AddressUpdateIT.java:251-275 and AddressDeleteIT.java:187-211 are the same test: a stale pre-delete copy with status set back to ACTIVE throws OptimisticLockingFailureException on save, and the stored status stays DELETED. Quote verbatim. Store-level, not via the API."
+      "reason": "Create, get, put and delete each declare '500': Unexpected server error with the Problem schema in addresses.yml and AddressController. The get and delete 404s read 'Unknown id, or an id outside the caller's organisation scope' and the put 404 adds 'or a tombstone'. The line refs are loose but right."
     },
     {
       "id": "repo-addressbook-p2-052",
       "holds": true,
-      "reason": "operators.yml:82-115 lists 200, 400 'Validation error, or a missing org header', 404 'Unknown id, an id outside the caller's organisation scope, or a tombstone' (quoted verbatim), 409 'Concurrent update conflict' and 500."
+      "reason": "The quote is the GlobalExceptionHandler.java:20-22 Javadoc, and problemResponse (157-161) sets MediaType.APPLICATION_PROBLEM_JSON. The test asserts the content type at 54-55. IdentityHeaderFilter's own rejections are problem+json too."
     },
     {
       "id": "repo-addressbook-p2-053",
       "holds": true,
-      "reason": "README Soft delete section quote verbatim; OperatorController.java:320-321 and OperatorService.java:194-196 say the same, and delete() at 218-219 sets DELETED and saves."
+      "reason": "Problem.java:10-17 matches the quote verbatim: @JsonInclude(NON_NULL), with type, title and status REQUIRED. The addresses.yml Problem schema requires status, title and type. 'Left empty' means null here, which is what NON_NULL drops."
     },
     {
       "id": "repo-addressbook-p2-054",
       "holds": true,
-      "reason": "OperatorController.java:334 @ApiResponse 204 quote verbatim and 365 ResponseEntity.noContent(); AddressDeleteIT delete_shouldReturn204AndTombstoneRow_whenAddressIsLive (49-72) expects 204."
+      "reason": "ValidationProblem.java:8-20 has the same five fields plus Map<String, List<String>> errors marked REQUIRED. The addresses.yml ValidationProblem has errors as an object of string arrays, with errors in its required list."
     },
     {
       "id": "repo-addressbook-p2-055",
       "holds": true,
-      "reason": "AddressDeleteIT.java:68-70 asserts status DELETED, createdAt unchanged to the millisecond and modifiedAt after the pre-delete value. Quote verbatim at 69-70."
+      "reason": "The quote is verbatim in README 'Design notes' (line 377), and GlobalExceptionHandler.java:28-29 says the same. It holds for a cross-organisation address id: findByIdAndOrganisationId is empty, so the answer is the same 'Address not found'. The path-mismatch case is different: see p2-067."
     },
     {
       "id": "repo-addressbook-p2-056",
       "holds": true,
-      "reason": "OperatorService.java:196-198 Javadoc quote verbatim."
+      "reason": "MDC_TRACE_ID = \"trace.id\" is at GlobalExceptionHandler.java:35, and every handler passes MDC.get(...) into the body. The test at GlobalExceptionHandlerTest.java:204-211 asserts traceId is null when the MDC has none, and NON_NULL leaves it out of the body."
     },
     {
       "id": "repo-addressbook-p2-057",
       "holds": true,
-      "reason": "AddressDeleteIT delete_shouldExcludeFromListAndFlagDeletedOnGet_whenAddressIsTombstoned (74-101) expects list totalItems 0 and items empty, then GET by id 200 with deleted true. Quote verbatim at 91-92; AddressCrudIT 379-386 also fetches the tombstone with deleted true."
+      "reason": "GlobalExceptionHandler.java:51-59 builds PROBLEM_BASE + \"validation-error\", \"Validation Error\", 400 and \"Validation failed for one or more fields\". AddressCrudIT:169-184 asserts the type, title and status but not the detail."
     },
     {
       "id": "repo-addressbook-p2-058",
       "holds": true,
-      "reason": "OperatorService.java:200-202 quote verbatim and 214-216 early return on DELETED; AddressDeleteIT delete_shouldBeIdempotent204WithNoSecondSave_whenAlreadyDeleted verifies never().save and unchanged modifiedAt; AddressCrudIT 397-411 and OperatorServiceTest delete_isIdempotentForAnAlreadyDeletedTombstone agree."
+      "reason": "The errors map is keyed by error.getField(), the Java name (GlobalExceptionHandler.java:44-47). The AddressCrudIT.java:179-181 quote is verbatim."
     },
     {
       "id": "repo-addressbook-p2-059",
       "holds": true,
-      "reason": "AddressDeleteIT.java:136-147 expects 404, problem+json, type .../not-found and status 404. Quote verbatim."
+      "reason": "computeIfAbsent(...).add(...) appends each message to one list per field (GlobalExceptionHandler.java:45-47). The test at GlobalExceptionHandlerTest.java:71-81 asserts containsExactly(\"must not be blank\", \"size must be at most 255\")."
     },
     {
       "id": "repo-addressbook-p2-060",
       "holds": true,
-      "reason": "AddressDeleteIT.java:149-185: whenCrossOrgPathUsed uses OTHER_ORG in both path and header (the caller's own org), whenHeaderOrgMismatchesPath uses ORGANISATION_ID path with OTHER_ORG header; both expect 404 and assert the address is still ACTIVE. Quote verbatim."
+      "reason": "The quote is GlobalExceptionHandler.java:24-26. Every non-validation 400 handler, and IdentityHeaderFilter's header 400s, build bad-request with title 'Bad Request', and the IntegrationBase badRequestProblemWithNoErrors matcher asserts no errors key."
     },
     {
       "id": "repo-addressbook-p2-061",
       "holds": true,
-      "reason": "OperatorController.java:323-324 'The UI reaches this only via the delete-confirmation page.' verbatim. As the note says, it is the backend's statement about its consumer."
+      "reason": "handleMessageNotReadable (GlobalExceptionHandler.java:82-95) gives the detail \"Malformed JSON request body\". AddressCrudIT:186-198 covers the malformed POST (nothing saved) and the empty PUT body with the bad-request matcher. The detail text is asserted by neither IT but comes from the handler code."
     },
     {
       "id": "repo-addressbook-p2-062",
       "holds": true,
-      "reason": "operators.yml:139-159 lists 204 (quoted), 400 'Missing org header', 404 'Unknown id, or an id outside the caller's organisation scope' and 500; no 409. Controller @ApiResponses 333-356 agree."
+      "reason": "handleTypeMismatch is at GlobalExceptionHandler.java:66-79, and the detail is \"Invalid value for parameter '\" + ex.getName() + \"'\". The test at GlobalExceptionHandlerTest.java:157-170 asserts the detail contains 'page'."
     },
     {
       "id": "repo-addressbook-p2-063",
       "holds": true,
-      "reason": "Inference is sound: OperatorService.delete calls repository.save (218-219, quoted verbatim), the entity is versioned, and GlobalExceptionHandler.handleOptimisticLocking (105-119) is a global @RestControllerAdvice mapping to 409; operators.yml documents no 409 for delete. No test drives a concurrent delete through the API, as the note says."
+      "reason": "handleBadRequestException (GlobalExceptionHandler.java:114-122) uses ex.getMessage() as the detail. The test at 83-102 asserts the detail equals the exception message."
     },
     {
       "id": "repo-addressbook-p2-064",
       "holds": true,
-      "reason": "Gap confirmed: OperatorController has exactly five handlers (list, create, get, update, delete), operators.yml has only those paths and methods, and update filters out DELETED (OperatorService.java:183). No restore operation exists."
+      "reason": "The quote is verbatim from GlobalExceptionHandlerTest.java:119-121, in the test handleValidationException_andBadRequestException_shouldProduceDistinct400Shapes."
     },
     {
       "id": "repo-addressbook-p2-065",
       "holds": true,
-      "reason": "README API overview wire conventions bullet quoted verbatim; OperatorComplianceIT.java:82-84 asserts deleted false and $.status absent."
+      "reason": "The README Design notes line 378 is verbatim. addresses.yml declares create and update 400 as anyOf ValidationProblem or Problem, matching AddressController.java:214-217 and 326-329."
     },
     {
       "id": "repo-addressbook-p2-066",
       "holds": true,
-      "reason": "operators.yml:385-387 quote verbatim; OperatorComplianceIT.java:82 comment cites cv-016."
+      "reason": "handleNotFoundException (GlobalExceptionHandler.java:125-134) builds not-found and 'Resource Not Found' with ex.detail(). NotFoundException.addressNotFound has the detail 'Address not found' (24-28). The test at GlobalExceptionHandlerTest:124-141 asserts all three."
     },
     {
       "id": "repo-addressbook-p2-067",
-      "holds": true,
-      "reason": "operators.yml:347-395 OperatorResponse properties are exactly the fourteen listed; description quoted verbatim at 347-348."
+      "holds": false,
+      "reason": "The quote is in GlobalExceptionHandlerTest.java:247-263, but that test builds the mismatch exception by hand with detail 'Address not found'. Over HTTP, IdentityHeaderFilter.java:78-89 catches a path orgId that differs from the header before any handler runs, and answers detail \"Resource not found\" (NotFoundException.organisationMismatch(pathOrgId, organisationId, \"Resource not found\")). So a real path mismatch does not get exactly the unknown-address body. The equality holds only for the controller's own OrganisationScope check, which the filter pre-empts. The statement overreaches as current observable behaviour."
     },
     {
       "id": "repo-addressbook-p2-068",
       "holds": true,
-      "reason": "operators.yml:396-408 required list quoted verbatim: every property except addressLine2 and county."
+      "reason": "NotFoundException.java:3-7 Javadoc and organisationMismatch (51-59) are verbatim. The handler logs at warn with ex.getMessage() (GlobalExceptionHandler.java:128), and the tests at GlobalExceptionHandlerTest:213-245 assert both log messages."
     },
     {
       "id": "repo-addressbook-p2-069",
       "holds": true,
-      "reason": "operators.yml:350-353 id description 'Opaque address identifier' and example verbatim."
+      "reason": "handleOptimisticLocking (GlobalExceptionHandler.java:98-111) builds 409 with conflict, 'Conflict' and 'The resource was modified by another request'. The unit test asserts all three. AddressUpdateIT:206-218 asserts the type and title over HTTP."
     },
     {
       "id": "repo-addressbook-p2-070",
       "holds": true,
-      "reason": "operators.yml:388-395 createdAt and modifiedAt are type string, format date-time, with descriptions quoted verbatim."
+      "reason": "handleException(RuntimeException) (GlobalExceptionHandler.java:137-150) builds internal-error, 'Internal Server Error' and the quoted detail, and calls log.error(..., ex). The unit test asserts the type, title and detail."
     },
     {
       "id": "repo-addressbook-p2-071",
       "holds": true,
-      "reason": "OperatorComplianceIT.java:86-87 quote verbatim (runtime: address_line_1 and operatorType absent on the create response). Loose ref: transporterCategory is asserted absent only on the AddressRequest schema (161-167), not the response; the response schema in operators.yml:347-395 does lack it, so the statement still holds. 'No snake_case forms' is tested for address_line_1 only, backed by the cv-001 camelCase wire."
+      "reason": "GlobalExceptionHandler.java:49 logs warn with traceId and errors.keySet() only, and no throwable. The test at 265-293 asserts '[email]' is present, the value is absent and there is no throwable proxy. The README line 379 is verbatim."
     },
     {
       "id": "repo-addressbook-p2-072",
       "holds": true,
-      "reason": "GlobalExceptionHandler.java:34-35 Javadoc quote verbatim; the handler keys the map by FieldError.getField() at 52-55."
+      "reason": "Lines 69, 85, 101, 117 and 128 each call log.warn with the traceId, ex.getMessage() and ex. The quoted strings are verbatim, though the cited line numbers are off by one."
     },
     {
       "id": "repo-addressbook-p2-073",
       "holds": true,
-      "reason": "GlobalExceptionHandler.java:20-22 quote verbatim and problemResponse (168-171) sets APPLICATION_PROBLEM_JSON on every handler. 'Every' is slightly broad: the handler's own Javadoc (144-146) says Spring maps a missing-route 404 itself (claimed separately in p2-092); for the address operations it holds."
+      "reason": "AddressController.java:239, 291, 359 and 406 log exactly the quoted strings at info, and no body is logged."
     },
     {
       "id": "repo-addressbook-p2-074",
       "holds": true,
-      "reason": "Problem.java:10-17 quote verbatim, with @JsonInclude(NON_NULL) so null detail/traceId are omitted; operators.yml:434-451 requires status, title, type. 'Empty' means null here."
+      "reason": "README lines 128-131 are verbatim."
     },
     {
       "id": "repo-addressbook-p2-075",
       "holds": true,
-      "reason": "ValidationProblem.java:8-20 Javadoc quote verbatim, errors Map<String, List<String>> marked REQUIRED; operators.yml:409-433 requires errors, status, title, type with errors as additionalProperties arrays of strings."
+      "reason": "README Wire conventions lines 146 and 152 are verbatim."
     },
     {
       "id": "repo-addressbook-p2-076",
       "holds": true,
-      "reason": "GlobalExceptionHandler.java:42 PROBLEM_BASE quoted verbatim; class Javadoc at 21-22 calls them 'CDP problem-family type URIs'."
+      "reason": "AddressCrudIT.java:97-110 posts addressType ORIGIN_OR_CONSIGNOR, then asserts 201, no addressType in the response or on GET, roles [PLACE_OF_ORIGIN] (the sample body's roles) and one saved address. The README line 161 is verbatim."
     },
     {
       "id": "repo-addressbook-p2-077",
       "holds": true,
-      "reason": "GlobalExceptionHandler.java:30-32 quote verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-078",
-      "holds": true,
-      "reason": "OperatorController.java:55-58 quote verbatim (cv-040); class Javadoc 36-41 cites cv-010 and cv-040 together and says a mismatch is a 404 with no existence disclosure."
-    },
-    {
-      "id": "repo-addressbook-p2-079",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:44-67: ValidationProblem with PROBLEM_BASE + 'validation-error', 'Validation Error', 400, 'Validation failed for one or more fields' and the errors map. Quote verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-080",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:51-56 computeIfAbsent into an ArrayList per field in FieldError order; GlobalExceptionHandlerTest.java:73-85 asserts containsExactly in order. Quote verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-081",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:55 adds error.getDefaultMessage() unchanged; GlobalExceptionHandlerTest.java:69-70 quote verbatim. Note correctly flags the messages as test fixtures."
-    },
-    {
-      "id": "repo-addressbook-p2-082",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:89-103 builds a Problem (no errors field) with 'bad-request', 'Bad Request', 'Malformed JSON request body'; quote verbatim. GlobalExceptionHandlerTest 191-209 asserts type and traceId only; the title and detail rest on the code."
-    },
-    {
-      "id": "repo-addressbook-p2-083",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:69-87 detail \"Invalid value for parameter '\" + ex.getName() + \"'\" verbatim, type bad-request; GlobalExceptionHandlerTest.java:171-189 asserts 400 and detail contains 'page'."
-    },
-    {
-      "id": "repo-addressbook-p2-084",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:121-130 maps BadRequestException to problem(BAD_REQUEST, \"bad-request\", \"Bad Request\", ex.getMessage(), traceId); Problem has no errors field. GlobalExceptionHandlerTest.java:87-109 proves type, title and detail."
-    },
-    {
-      "id": "repo-addressbook-p2-085",
-      "holds": true,
-      "reason": "Quote verbatim at GlobalExceptionHandler.java:24-28, which also states the anyOf-not-oneOf reason. GlobalExceptionHandlerTest.java:111-132 proves distinct types; OperatorComplianceIT.java:186-188 asserts anyOf for POST and PUT."
-    },
-    {
-      "id": "repo-addressbook-p2-086",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:132-142 verbatim; GlobalExceptionHandlerTest.java:134-153 proves type, title and pass-through detail. Kind is closer to behaviour than copy, but the claim is right."
-    },
-    {
-      "id": "repo-addressbook-p2-087",
-      "holds": true,
-      "reason": "Every NotFoundException in the single-address path uses \"Address not found\": OperatorController.java:66 (authoriseOrg mismatch) and :249 (get), OperatorService.java:184 (update, incl. tombstone filter) and :212 (delete)."
-    },
-    {
-      "id": "repo-addressbook-p2-088",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:105-119 maps OptimisticLockingFailureException to 409 conflict with the quoted title and detail; GlobalExceptionHandlerTest.java:211-226 proves it."
-    },
-    {
-      "id": "repo-addressbook-p2-089",
-      "holds": true,
-      "reason": "GlobalExceptionHandler.java:144-161 handles RuntimeException with the quoted type, title and detail; GlobalExceptionHandlerTest.java:155-169 proves it. 'Any other unexpected error' is limited to RuntimeExceptions not handled elsewhere, per the Javadoc."
-    },
-    {
-      "id": "repo-addressbook-p2-090",
-      "holds": true,
-      "reason": "Sound inference: the handler at :148-161 logs ex.getMessage() and passes only the fixed string as detail; the unit test feeds 'boom' and asserts the fixed detail."
-    },
-    {
-      "id": "repo-addressbook-p2-091",
-      "holds": true,
-      "reason": "OperatorComplianceIT.java:112-126 sends x-cdp-request-id and asserts $.traceId; handlers read MDC trace.id, filled from the tracing header (application.yml cdp.tracing.header-name defaults to x-cdp-request-id, overridable by TRACING_HEADER). Problem is @JsonInclude(NON_NULL), so traceId is omitted when absent; GlobalExceptionHandlerTest.java:228-236 asserts null."
-    },
-    {
-      "id": "repo-addressbook-p2-092",
-      "holds": true,
-      "reason": "Javadoc at GlobalExceptionHandler.java:144-147 says verbatim that Spring framework exceptions such as a missing-route 404 are mapped by Spring itself."
-    },
-    {
-      "id": "repo-addressbook-p2-093",
-      "holds": true,
-      "reason": "OperatorRepository.java:9-11 Javadoc quoted verbatim; the interface extends the bare Repository and declares only save, deleteAll, findByIdAndOrganisationId and org-scoped page queries. (deleteAll exists, unscoped, but is not a by-id delete.)"
-    },
-    {
-      "id": "repo-addressbook-p2-094",
-      "holds": true,
-      "reason": "OperatorRepository.java:20 declares findByIdAndOrganisationId; OperatorService.java:163, 182 and 211 use it for get, update and delete."
-    },
-    {
-      "id": "repo-addressbook-p2-095",
-      "holds": true,
-      "reason": "README.md:245 verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-096",
-      "holds": true,
-      "reason": "@Timed annotations at OperatorController.java:186, 239, 307 and 357 with the quoted names."
-    },
-    {
-      "id": "repo-addressbook-p2-097",
-      "holds": true,
-      "reason": "README.md:211-219 quoted verbatim. Parameter names are not in the README sentence but OperatorComplianceIT.java:234 (assertOperationParametersMatch) compares parameter name and in, so the statement holds."
-    },
-    {
-      "id": "repo-addressbook-p2-098",
-      "holds": true,
-      "reason": "OperatorComplianceIT.java:162-171: request property keySet equals the locked set, excludes operatorType/transporterCategory; response excludes status and contains deleted."
-    },
-    {
-      "id": "repo-addressbook-p2-099",
-      "holds": true,
-      "reason": "Sound inference: the divergence gate (OperatorComplianceIT.java:206-237) compares path keys, methods, operationIds, schema property names, parameter name/in and the 400 anyOf refs, never constraints or descriptions. Locked yaml has countryCode maxLength 2 (line 333) and 'Relative URI' Location wording (line 269), which differ from the generated spec and are not compared."
-    },
-    {
-      "id": "repo-addressbook-p2-100",
-      "holds": true,
-      "reason": "README.md:229-231 verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-101",
-      "holds": true,
-      "reason": "AddressCrudIT.java:323-414 crudRoundTrip test asserts 201 with Location, get deleted false, put 200, delete 204, get 200 deleted true, put on tombstone 404, repeat delete 204 with status DELETED and modifiedAt unchanged."
-    },
-    {
-      "id": "repo-addressbook-p2-102",
-      "holds": true,
-      "reason": "README.md:200 verbatim."
-    },
-    {
-      "id": "repo-addressbook-p2-103",
-      "holds": true,
-      "reason": "Gap confirmed: grep of src/main/java finds only @CreatedDate (and auditing for modifiedAt); no CreatedBy, LastModifiedBy or actor field; the service and controller record no user on create, update or delete."
+      "reason": "A search of AddressUpdateIT.java for \"id\", \"deleted\", \"organisationId\" and \"createdAt\" body keys finds nothing. Its tests (put_shouldReplaceAllFields..., the 400s, the 404s, bumping modifiedAt, the 409) send no echoed read-only fields, so the gap is real."
     },
     {
       "id": "repo-addressbook-p3-001",
       "holds": true,
-      "reason": "OperatorController.java:44 @RequestMapping and :84-87 @GetMapping with operationId list-addresses; quote verbatim apart from elision."
+      "reason": "AddressController.java:45 has @RequestMapping(\"/organisation/{orgId}/addresses\"), and 74-77 has @GetMapping with operationId list-addresses and the quoted summary."
     },
     {
       "id": "repo-addressbook-p3-002",
       "holds": true,
-      "reason": "OperatorController.java:121 @RequestHeader(ORGANISATION_ID_HEADER) and :129 authoriseOrg before the service call at :131."
+      "reason": "README line 137 is verbatim, and the controller has @RequestParam(defaultValue = \"1\") int page (115-116)."
     },
     {
       "id": "repo-addressbook-p3-003",
       "holds": true,
-      "reason": "authoriseOrg throws NotFoundException (controller :64-68), mapped to a 404 problem; the contract documents it at operators.yml:211-216 and controller :103-109."
+      "reason": "ListPaging.java:18-22 is verbatim, and the handler sets ex.getMessage() as the detail. AddressListIT:152-157 asserts 0 and -1 give the bad-request shape. The note rightly says the detail text is not asserted."
     },
     {
       "id": "repo-addressbook-p3-004",
       "holds": true,
-      "reason": "OperatorController.java:131 passes sessionOrg, and every repository query pins organisationId ?0."
+      "reason": "ListPaging.java:8-10 constants are verbatim, servedPageSize returns DEFAULT_PAGE_SIZE for null (31-34), and README line 138 says the same."
     },
     {
       "id": "repo-addressbook-p3-005",
       "holds": true,
-      "reason": "OperatorController.java:122-126 and operators.yml:179-187 (required false, default 1, minimum 1)."
+      "reason": "ListPaging.java:35-38 throws rather than clamps, with the quoted message. AddressListIT:173-178 asserts 0, 101 and -1 give the bad-request shape."
     },
     {
       "id": "repo-addressbook-p3-006",
       "holds": true,
-      "reason": "OperatorController.java:127 and operators.yml:188-192 (required false, string)."
+      "reason": "The AddressController.java:57-62 Javadoc quote is verbatim. A non-numeric value raises MethodArgumentTypeMismatchException, which becomes bad-request. AddressListIT:193-196 (page=abc) and the pageSize 'abc' case prove it."
     },
     {
       "id": "repo-addressbook-p3-007",
       "holds": true,
-      "reason": "OperatorController.java:81 and :128; Javadoc says 'ISO alpha-2', and the locked contract (line 23, D1) states ISO 3166-1 alpha-2, so the fuller name is supported. Not validated as such by the server."
+      "reason": "IntegrationBase badRequestProblemWithNoErrors asserts exactly the quoted matchers. The list paging, unknown role (AddressListIT:307-312), unknown searchRole (AddressSearchIT:327-330) and missing header (AddressListIT:198-201) tests all use it."
     },
     {
       "id": "repo-addressbook-p3-008",
       "holds": true,
-      "reason": "The words 'optional ISO alpha-2 country code (FE-resolved, cv-048)' are at OperatorController.java:81 and OperatorService.java:64; the 'cv-048:' prefix in the quote is the extractor's label, not source text. Statement follows from FE-resolved."
+      "reason": "AddressListIT:180-191 has @CsvSource({\"1, 1, 3\", \"100, 3, 1\"}) over 3 seeded addresses, asserting pageSize, item count and totalPages."
     },
     {
       "id": "repo-addressbook-p3-009",
       "holds": true,
-      "reason": "README.md:142 verbatim; api-contract.locked.yaml:20 says the same. The controller declares no page-size parameter."
+      "reason": "AddressPageResponse.java has five REQUIRED components, and the addresses.yml AddressPageResponse requires all five. README lines 149-150 are verbatim."
     },
     {
       "id": "repo-addressbook-p3-010",
       "holds": true,
-      "reason": "OperatorController.java:73-74 and OperatorPageResponse.java:27 cite cv-025 with that wording."
+      "reason": "AddressPageResponse.java:19 description is verbatim. The service returns pageSize = ListPaging.servedPageSize(requested), and AddressListIT:79-91 asserts pageSize 25 with no request."
     },
     {
       "id": "repo-addressbook-p3-011",
       "holds": true,
-      "reason": "OperatorService.java:44 @Value default 25; application.yml's address-book block (lines 28-33) holds only ttl settings, no list.page-size. OperatorComplianceIT.java:106 sees pageSize 25."
+      "reason": "The descriptions are verbatim. OrganisationScopedListQuery.java:44-45 uses exactCount over the same query, and AddressListIT:159-171 asserts totalItems 30 and totalPages 4 at pageSize 8. The mechanism note is correct."
     },
     {
       "id": "repo-addressbook-p3-012",
       "holds": true,
-      "reason": "OperatorService.java:69-71 verbatim."
+      "reason": "AddressService.java:76-77 maps each item with addressMapper::toResponse. AddressListIT:135 asserts every item's deleted is false."
     },
     {
       "id": "repo-addressbook-p3-013",
       "holds": true,
-      "reason": "OperatorController.java:71-73 Javadoc verbatim; type mismatch handler (GlobalExceptionHandler.java:74-87) and BadRequestException handler both return a Problem with no errors."
+      "reason": "AddressService.java:72 sorts createdAt DESC then id DESC, and AddressListIT asserts the first item is 'Address 29'. 'Ties broken by id, newest first' reads id descending, which is close enough."
     },
     {
       "id": "repo-addressbook-p3-014",
       "holds": true,
-      "reason": "operators.yml:205-210 and OperatorController.java:98 verbatim."
+      "reason": "The list method's parameters (AddressController.java:109-163) and the addresses.yml list-addresses parameters are orgId, the header, page, pageSize, q, countryCode, role and searchRole, with no sort. The inference is sound."
     },
     {
       "id": "repo-addressbook-p3-015",
       "holds": true,
-      "reason": "operators.yml:217-222 and the RuntimeException handler."
+      "reason": "AddressListIT:117-121 is verbatim (retainAll, then isEmpty). AddressSearchIT:219-248 proves page 1 and page 2 together cover all 30 ids at 25 + 5."
     },
     {
       "id": "repo-addressbook-p3-016",
       "holds": true,
-      "reason": "operators.yml:205-222: 400, 404 and 500 all application/problem+json with Problem schema; handlers set APPLICATION_PROBLEM_JSON."
+      "reason": "AddressListIT:203-213 is verbatim."
     },
     {
       "id": "repo-addressbook-p3-017",
       "holds": true,
-      "reason": "OperatorListIT.java:227-243 list_shouldReturnEmptyItems_whenPageIsBeyondTheLast, quote verbatim."
+      "reason": "AddressListQuery.java:10 Javadoc is verbatim, and AddressListQueryImpl passes AddressStatus.ACTIVE, which OrganisationScopedListQuery.java:40 applies to both the page and the count. AddressListIT:124-137 proves it."
     },
     {
       "id": "repo-addressbook-p3-018",
       "holds": true,
-      "reason": "README.md:138-139 verbatim; OperatorPageResponse.java:7 Javadoc; OperatorComplianceIT.java:90-110 proves it."
+      "reason": "AddressSearchIT:169-184 (countryCodeSearchExcludesSoftDeletedRows) and 199-217 (searchIsOrgScopedAndExcludesSoftDeletedForQueryPath) exist with those names and assert only the live address."
     },
     {
       "id": "repo-addressbook-p3-019",
       "holds": true,
-      "reason": "OperatorPageResponse.java:17-20 verbatim; the compact constructor List.copyOf(items) means it is never null."
+      "reason": "AddressListIT:139-150 asserts totalItems 2 and every organisationId equal to ORGANISATION_ID. AddressSearchIT:151-167 excludes the other organisation's FR address, and OrganisationScopedListQuery.java:39 adds the organisationId clause."
     },
     {
       "id": "repo-addressbook-p3-020",
       "holds": true,
-      "reason": "OperatorPageResponse.java:21-25 verbatim."
+      "reason": "AddressListIT:216-232 seeds 'No Roles' (roles null) and 'Empty Roles' (empty list) and lists all 5 live addresses, leaving out the deleted one and the other organisation's. README line 141 is verbatim."
     },
     {
       "id": "repo-addressbook-p3-021",
       "holds": true,
-      "reason": "OperatorPageResponse.java:26-30 verbatim."
+      "reason": "SEARCHABLE_FIELDS at AddressListQueryImpl.java:18-19 is verbatim, and ListMatchCriteria.textMatching uses regex(pattern, \"i\"). The AddressSearchIT partialWordSearch tests cover name, townOrCity, postcode, addressLine1, addressLine2 and county."
     },
     {
       "id": "repo-addressbook-p3-022",
       "holds": true,
-      "reason": "OperatorPageResponse.java:31-35 verbatim; 'across all pages' follows from result.getTotalElements() at OperatorService.java:85."
+      "reason": "SearchTerms.java:15 is verbatim. AddressSearchIT asserts 'gree' finds 'Green Farm', and 'iv2' finds the sample address, whose postcode is IV2 3JH (AddressTestSupport SAMPLE_POSTCODE)."
     },
     {
       "id": "repo-addressbook-p3-023",
       "holds": true,
-      "reason": "OperatorPageResponse.java:36-40 verbatim."
+      "reason": "The calls listAddresses(\"q\", \"green valley\") (AddressSearchIT:47) and (\"q\", \"GREEN la\") (75) are verbatim. The phrase-only inference follows from Pattern.quote of the whole term, and the note says no reorder test exists."
     },
     {
       "id": "repo-addressbook-p3-024",
       "holds": true,
-      "reason": "OperatorService.java:84-85 passes the request's page, not result.getNumber()."
+      "reason": "AddressSearchIT:141-149 is verbatim, and Pattern.quote at SearchTerms.java:15 is the reason."
     },
     {
       "id": "repo-addressbook-p3-025",
       "holds": true,
-      "reason": "README.md:135 verbatim (names pageSize); OperatorPageResponse.java:7-9 Javadoc."
+      "reason": "RequestedListFilters.java:21 is verbatim, and AddressService.java:88 skips TextMatching when the term is empty. The mechanism note is correct and says whitespace-only q is untested."
     },
     {
       "id": "repo-addressbook-p3-026",
       "holds": true,
-      "reason": "OperatorService.java:53-55 Javadoc verbatim; README.md:242 'Tombstones are excluded from list results.'"
+      "reason": "AddressController.java:140-141 declares a plain String q, and the addresses.yml q schema is type string with no minLength or maxLength. The inference is sound."
     },
     {
       "id": "repo-addressbook-p3-027",
       "holds": true,
-      "reason": "All four repository queries (OperatorRepository.java:22-48) take organisationId ?0 and status ?1; OperatorService.java:96-112 passes AddressStatus.ACTIVE on every branch."
+      "reason": "README line 140 is verbatim. AddressSearchIT:121-139 and AddressRepositoryIT listLiveAddresses_shouldMatchAnyOfTheCountryCodes_whenSeveralAreGiven (line 73) prove it."
     },
     {
       "id": "repo-addressbook-p3-028",
       "holds": true,
-      "reason": "README.md:119 verbatim; OperatorService.java:77 sorts createdAt DESC."
+      "reason": "ListMatchCriteria.java:28-30 is verbatim: an exact $in with no regex or case folding. README lines 147-148 say the code is stored as 2 characters. The note's lower-case inference is flagged as untested."
     },
     {
       "id": "repo-addressbook-p3-029",
       "holds": true,
-      "reason": "OperatorService.java:77 verbatim; the stability inference is flagged in the note and is sound."
+      "reason": "The countryCode parameter is List<String> with no constraint (AddressController.java:146-147), unlike role and searchRole, which bind List<AddressRole>. RequestedListFilters only trims it. The inference is sound."
     },
     {
       "id": "repo-addressbook-p3-030",
       "holds": true,
-      "reason": "Sound inference: the single Pageable at OperatorService.java:73-77 is passed to every query branch, and the controller declares no sort parameter."
+      "reason": "RequestedListFilters.java:22-26 trims and filters out empty codes. The README line 390 phrase is verbatim, and the mechanism note is present."
     },
     {
       "id": "repo-addressbook-p3-031",
       "holds": true,
-      "reason": "OperatorService.java:56-57 Javadoc verbatim; README.md:267-268 agrees."
+      "reason": "The AddressController.java:150 parameter description is verbatim. AddressListQueryImpl applies roles as Criteria.where(\"roles\").in(roles), and the cited AddressListIT tests prove it."
     },
     {
       "id": "repo-addressbook-p3-032",
       "holds": true,
-      "reason": "OperatorRepository.java:25-29 regex over name, townOrCity, postcode only; README.md:130 verbatim. (The combined query also ORs countryCode, but that is the countryCode parameter, not q.)"
+      "reason": "README line 141 is verbatim, and the addresses.yml AddressRole enum is PLACE_OF_ORIGIN, CONSIGNOR, PLACE_OF_DESTINATION, CONSIGNEE and IMPORTER, the schema both role and searchRole use."
     },
     {
       "id": "repo-addressbook-p3-033",
       "holds": true,
-      "reason": "Sound inference from the three regex fields in OperatorRepository.java:25-29; AddressSearchIT.java:48-64 proves addressLine1 exclusion only, as the note says."
+      "reason": "README.md:141 says 'an address with no roles never matches it'; AddressListIT list_shouldNotReturnAddressesWithNoRoles_whenARoleIsGiven seeds NO_ROLES and EMPTY_ROLES addresses and neither is returned; AddressRepositoryIT parameterised test saves a roles(null) address that is not kept."
     },
     {
       "id": "repo-addressbook-p3-034",
       "holds": true,
-      "reason": "'$options': 'i' on each regex, OperatorRepository.java:27-29 and 39-41."
+      "reason": "README.md:141 quote is verbatim; AddressListIT list_shouldPageAndCountOverTheAddressesHoldingTheRoles asserts totalItems 3 and totalPages 2 for role CONSIGNOR at pageSize 2."
     },
     {
       "id": "repo-addressbook-p3-035",
       "holds": true,
-      "reason": "OperatorService.java:115-117 verbatim; AddressSearchIT 'gree' and 'inver' prove in-word partial match."
+      "reason": "AddressController.java:148-155 binds role as List<AddressRole> and documents a 400 for an unknown value; AddressListIT list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenARoleIsUnknown sends TRANSPORTER and expects badRequestProblemWithNoErrors."
     },
     {
       "id": "repo-addressbook-p3-036",
       "holds": true,
-      "reason": "Pattern.quote at OperatorService.java:116 wraps the term in \\Q..\\E, so regex metacharacters are literal."
+      "reason": "RequestedListFilters.java:27-28 applies distinct() to roles and searchRoles; README.md:390 says 'roles without repeats'. Note already starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-037",
       "holds": true,
-      "reason": "Sound inference: the whole trimmed term is one quoted literal (OperatorService.java:116); AddressSearchIT.java:84-113 proves the contiguous phrase case, as the note says."
+      "reason": "README.md:142 quote verbatim; AddressController.java:156-163 parameter description agrees; both AddressSearchIT tests named assert exactly the holders of the search role(s)."
     },
     {
       "id": "repo-addressbook-p3-038",
       "holds": true,
-      "reason": "q.trim() at OperatorService.java:116."
+      "reason": "AddressSearchIT list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenASearchRoleIsUnknown has the quoted line verbatim."
     },
     {
       "id": "repo-addressbook-p3-039",
       "holds": true,
-      "reason": "OperatorService.java:93 hasQuery false for blank q; with no countryCode it falls to findByOrganisationIdAndStatus at :96-99, and with a countryCode to the country-only query."
+      "reason": "AddressSearchIT list_shouldIgnoreABlankSearchRole_whenOtherSearchRolesAreGiven sends searchRole CONSIGNOR and '' and expects 200 with totalItems 1; RequestedListFilterSupport.java:16-18 drops nulls. Note starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-040",
       "holds": true,
-      "reason": "OperatorRepository.java:33 equality match on countryCode (after the service trims it, OperatorService.java:112). Exact match holds for the country-only path; the combined path ORs it, which p3-044 records."
+      "reason": "AddressListQueryImpl.java:44-48 puts the matches in one orOperator; README.md:140 quote verbatim; the AddressSearchIT and AddressRepositoryIT tests named prove the union."
     },
     {
       "id": "repo-addressbook-p3-041",
       "holds": true,
-      "reason": "OperatorRepository.java:33 and :42 match countryCode by plain equality ('countryCode': ?2 / ?3) with no $options or collation; grep of src/main finds no collation anywhere, so Mongo's default case-sensitive equality applies. Sound inference, correctly marked inferred."
+      "reason": "AddressListQueryImpl.java:39-50 adds the roles clause as a separate clause that OrganisationScopedListQuery.java:41-42 ANDs in; README.md:141 says 'It narrows the search (q, countryCode and searchRole)'; AddressListIT and AddressSearchIT narrowing tests confirm."
     },
     {
       "id": "repo-addressbook-p3-042",
       "holds": true,
-      "reason": "OperatorService.java:103 and :112 both pass countryCode.trim() to the repository; OperatorServiceTest list_withWhitespacePaddedCountryCodeTrimsBeforeSearching confirms ' FR ' becomes 'FR'."
+      "reason": "README.md:389 Design notes, quote verbatim."
     },
     {
       "id": "repo-addressbook-p3-043",
       "holds": true,
-      "reason": "OperatorService.java:94 quote is exact; with no q, lines 96-99 fall back to findByOrganisationIdAndStatus. With q present a blank countryCode takes the q-only branch, which is still unfiltered by country, so the statement holds."
+      "reason": "README.md:389 quote verbatim; AddressListQueryImpl.java:18-19 SEARCHABLE_FIELDS lists name, address lines, town, county and postcode, not roles."
     },
     {
       "id": "repo-addressbook-p3-044",
       "holds": true,
-      "reason": "Quote is verbatim at README.md:131; OperatorRepository.java:37-42 puts countryCode inside the same $or as the three regex matches, and AddressSearchIT combinedQueryAndCountryCodeMatchesTextOrCountryCode proves it."
+      "reason": "README.md:391 quote verbatim."
     },
     {
       "id": "repo-addressbook-p3-045",
       "holds": true,
-      "reason": "Quote is verbatim at docs/openapi/api-contract.locked.yaml:18."
+      "reason": "RequestedListFilters.java:7 Javadoc quote verbatim and :21-28 normalise each filter; RequestedListFilterSupport.java:16-18 returns an empty stream for null and filters out null elements. Note starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-046",
       "holds": true,
-      "reason": "OperatorController.java:119-128 declares only page, q and countryCode request params; both contracts list only those query params. Inference sound."
+      "reason": "ListMatchCriteria.java:37-43 throws 'A match needs at least one value' for an empty list, used by InCountries and HoldingAnyRole (ListCriteria.java:39-54); TextMatching requires a non-null pattern (ListCriteria.java:28-32); AddressService.java:86-99 adds a match only for a non-empty filter. Note starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-047",
       "holds": true,
-      "reason": "OperatorService.java:81-85 builds totalItems and totalPages from the filtered queryPage result; AddressSearchIT asserts totalItems 1 for a search over several addresses (lines 60-62)."
+      "reason": "README.md:388 quote verbatim; OrganisationScopedListQuery.java:38-42 always adds organisationId and status clauses then the extra ones. Note starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-048",
       "holds": true,
-      "reason": "Quote is exact at OperatorController.java:130; it logs q != null, not the term."
+      "reason": "AddressController.java:166-174 logs page, pageSize, q != null, countryCodes, roles and searchRoles via log.info; the quote is verbatim."
     },
     {
       "id": "repo-addressbook-p3-049",
       "holds": true,
-      "reason": "@Timed(\"controller.listOperators.time\") at OperatorController.java:118 and meterRegistry.timer(\"controller.listOperators.query.time\") at OperatorService.java:87 (sample started at 79). Quote joins two fragments with '...', both verbatim."
+      "reason": "IdentityHeaderFilter.java:24-26 Javadoc quote verbatim, :39 the header name; README.md:97-100 and :121-123 agree."
     },
     {
       "id": "repo-addressbook-p3-050",
       "holds": true,
-      "reason": "api-contract.locked.yaml:200-206 gives page default 1 with no minimum (quote verbatim); operators.yml page schema has minimum: 1. Note correct that the service rejects page < 1 regardless."
+      "reason": "IdentityHeaderFilter.java:66-71 rejects a blank or null header with the quoted detail and returns before the chain; IdentityHeaderFilterTest organisationIdIsRequiredOnEveryOperation loops GET, POST, PUT, DELETE; AddressScopingIT and AddressListIT confirm."
     },
     {
       "id": "repo-addressbook-p3-051",
       "holds": true,
-      "reason": "OperatorListIT.java:75-90 asserts exactly those values, quote verbatim."
+      "reason": "IdentityHeaderFilter.java:46-47 pattern ^[A-Za-z0-9_-]{1,64}$ and :72-76 detail 'Invalid ' + header; IdentityHeaderFilterTest invalidOrganisationIdValueIsRejectedWith400 asserts 400."
     },
     {
       "id": "repo-addressbook-p3-052",
       "holds": true,
-      "reason": "OperatorListIT.java:92-128 asserts 5 items on page 2 and an empty intersection with page 1's ids; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:43-44 type, :129-145 writes Problem with traceId from MDC (null left out by NON_NULL at :53); IdentityHeaderFilterTest asserts title, no errors key, not 401/403 and traceId from MDC."
     },
     {
       "id": "repo-addressbook-p3-053",
       "holds": true,
-      "reason": "OperatorListIT.java:130-146 seeds 3 ACTIVE plus 1 DELETED and asserts totalItems 3, 3 items, all deleted false; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:78-90 returns 404 before chain.doFilter on a mismatch; README.md:111 quote verbatim; IdentityHeaderFilterTest pathOrgMismatchReturns404BeforeTheChainRuns asserts chain not called."
     },
     {
       "id": "repo-addressbook-p3-054",
       "holds": true,
-      "reason": "OperatorListIT.java:148-162 seeds an OTHER_ORG address and asserts totalItems 2 and every organisationId equal to the caller's; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:45 NOT_FOUND_TYPE, :80-88 title 'Resource Not Found' and detail from refusal; IdentityHeaderFilterTest asserts type and detail 'Resource not found'."
     },
     {
       "id": "repo-addressbook-p3-055",
       "holds": true,
-      "reason": "OperatorListIT.java:164-180 is parameterised over \"0\" and \"-1\" and asserts the bad-request type, title, status 400 and no errors; quote verbatim."
+      "reason": "AddressScopingIT forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404 asserts 404 for get, list, put, delete and post, the address still ACTIVE and only one stored for ORG_A. The update's unchanged state is not asserted field by field, but the filter halts before any handler, so the statement follows."
     },
     {
       "id": "repo-addressbook-p3-056",
       "holds": true,
-      "reason": "OperatorListIT.java:182-198 sends page_size=5 and pageSize=5 and asserts 25 items and pageSize 25; quote verbatim."
+      "reason": "AddressScopingIT missingOrgHeaderOnPostIsAPlatformAuthRejection400AndPersistsNothing quoted verbatim."
     },
     {
       "id": "repo-addressbook-p3-057",
       "holds": true,
-      "reason": "OperatorListIT.java:200-213 sends page=abc and asserts 400, bad-request type and no errors map; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:137-138 logs once at warn in reject(); IdentityHeaderFilterTest pathOrgMismatchLogsBothOrganisationIdsAndAnswersResourceNotFound has the quoted message exactly; AddressScopingIT asserts a single event."
     },
     {
       "id": "repo-addressbook-p3-058",
       "holds": true,
-      "reason": "OperatorListIT.java:215-225 calls the list with no header and asserts 400, problem+json, bad-request type and no errors; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:92-97 puts organisationId in MDC around the chain and removes it in finally; the four IdentityHeaderFilterTest tests named prove presence, removal after success and after a throw, and no field values in log lines."
     },
     {
       "id": "repo-addressbook-p3-059",
       "holds": true,
-      "reason": "AddressSearchIT.java:48-65 seeds Green Farm, Blue Barn and North Depot (addressLine1 Green Lane), searches gree and asserts one result that is not the line-1-only address; quote verbatim."
+      "reason": "IdentityHeaderFilter.java:56-59 shouldNotFilter and :125-127 isOrganisationPath; IdentityHeaderFilterTest nonOrganisationPathsBypassTheFilterEntirely uses /health."
     },
     {
       "id": "repo-addressbook-p3-060",
       "holds": true,
-      "reason": "AddressSearchIT.java:67-81 searches inver and asserts the single Inverness match; quote verbatim."
+      "reason": "README.md:380 quote verbatim; IdentityHeaderFilter.java:109-123 falls back to requestURI minus context path; IdentityHeaderFilterTest missingOrganisationIdWithRequestUriOnly_writesBadRequestProblem. Note starts mechanism:."
     },
     {
       "id": "repo-addressbook-p3-061",
       "holds": true,
-      "reason": "AddressSearchIT.java:83-113 runs both 'green valley' and 'GREEN' against Green Valley Livestock Farm, each with totalItems 1; quote is two verbatim fragments joined by '...'."
+      "reason": "AddressController.java:164-165 (and :237-238 for create) call OrganisationScope.authorise with ADDRESS_NOT_FOUND ('Address not found', AddressService.java:31); OrganisationScope.java:29-37 logs one warn naming resource, resource id, path org and caller org and throws NotFoundException; OrganisationScopeTest names both cases."
     },
     {
       "id": "repo-addressbook-p3-062",
       "holds": true,
-      "reason": "AddressSearchIT.java:115-129 searches iv2 and asserts the IV2 3JH match; quote verbatim."
+      "reason": "AddressRepository.java:7-12 extends bare Repository with only save and findByIdAndOrganisationId; README.md:102-106 quote verbatim; AddressRepositoryIT findByIdAndOrganisationId_shouldReturnEmpty_whenOrganisationDiffers. Stated in general terms."
     },
     {
       "id": "repo-addressbook-p3-063",
       "holds": true,
-      "reason": "AddressSearchIT.java:131-143 searchTermIsTreatedAsLiteralNotRegex asserts totalItems 0 for q '.*'; quote verbatim."
+      "reason": "OrganisationScopedListQuery.java:38-42 always adds organisationId and status clauses; README.md:105-106 quote verbatim; the three AddressRepositoryIT tests named confirm other-org and deleted rows are left out."
     },
     {
       "id": "repo-addressbook-p3-064",
       "holds": true,
-      "reason": "AddressSearchIT.java:145-162 seeds FR, GB and other-org FR, asserts totalItems 1 (so GB excluded) and that the other org's id is absent; quote verbatim."
+      "reason": "AddressScopingIT orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsAddress matches the quote: empty list, 404 for get, put and delete."
     },
     {
       "id": "repo-addressbook-p3-065",
       "holds": true,
-      "reason": "AddressSearchIT.java:164-178 seeds an ACTIVE and a DELETED FR address and asserts totalItems 1 without the deleted id; quote verbatim."
+      "reason": "AddressScopingIT a404ForAnotherOrgsLiveAddressHasTheSameProblemBodyAsA404ForAnUnknownId asserts equal bodies and no instance key; AddressService.java:26-30 Javadoc quote verbatim; README.md:377 agrees."
     },
     {
       "id": "repo-addressbook-p3-066",
       "holds": true,
-      "reason": "AddressSearchIT.java:180-204 seeds Paris Depot (FR) and France Freight (GB), sends q France with countryCode FR and asserts both ids and totalItems 2; quote verbatim."
+      "reason": "AddressScopingIT anotherOrganisationsAddressIdLogsTheAddressIdAndTheCallersOrganisationId asserts a single GlobalExceptionHandler line ending with the quoted text."
     },
     {
       "id": "repo-addressbook-p3-067",
       "holds": true,
-      "reason": "AddressSearchIT.java:206-223 seeds a live, a deleted and an other-org 'Green' address and asserts only the live one; quote verbatim."
+      "reason": "AddressService.java:111-114 sets organisationId from the header argument; AddressScopingIT organisationIdIsStampedOnCreateAndScopesReads asserts the stored org and that get and list under ORG_A find it."
     },
     {
       "id": "repo-addressbook-p3-068",
       "holds": true,
-      "reason": "AddressSearchIT.java:225-273 asserts 25 then 5 and that the union equals all 30 ids; quote verbatim. The test sends q green with countryCode GB, so it runs the combined-search path; the statement does not overreach."
+      "reason": "README.md:87-88 quote verbatim, table at :90-95 names the upstream owners; IdentityHeaderFilter.java:31-32 points to the trust boundary. Stated in general terms, as the security rule requires."
     },
     {
       "id": "repo-addressbook-p3-069",
       "holds": true,
-      "reason": "OperatorRepositoryIT.java:40-51 seeds org A FR, org B FR and org A deleted FR and asserts one org-A result; quote verbatim."
+      "reason": "docs/openapi/addresses.yml securitySchemes Trade-Imports-Organisation-Id type apiKey with the quoted description (around line 1020-1024); the list get operation declares 200, 400, 404 and 500 (around lines 531-557)."
     },
     {
       "id": "repo-addressbook-p3-070",
       "holds": true,
-      "reason": "OperatorRepositoryIT.java:53-64 calls searchByQueryAndCountryCode for ORG_A with Paris/FR and asserts the single org-A result; quote verbatim."
+      "reason": "README.md:351-352 quote verbatim; AddressTtlConfig.java:8-9 'Automatic expiry of addresses in non-prod environments'."
     },
     {
       "id": "repo-addressbook-p3-071",
       "holds": true,
-      "reason": "OperatorServiceTest list_scopesTheQueryToTheActiveOrgNewestFirstAndTranslatesToA0BasedPage calls list(ORG, 2, ...) and asserts pageNumber 1, size 25 and createdAt DESC; quote verbatim."
+      "reason": "application.yml:28 days: ${ADDRESS_TTL_DAYS:} (empty default); README.md:356 table row verbatim; AddressTtlConfig.java:26-27 'null disables stamping'; AddressTtlConfigTest binding tests named exist."
     },
     {
       "id": "repo-addressbook-p3-072",
       "holds": true,
-      "reason": "OperatorServiceTest list_usesTheConfiguredPageSizeNotAValuePassedByTheCaller builds the service with size 10 and asserts both captured size and response pageSize are 10; quote verbatim."
+      "reason": "AddressTtlConfig.java:35 @Positive Integer days and :27-28 Javadoc quote verbatim; AddressTtlConfigTest binding_rejectsZeroDaysSoNothingIsStampedAlreadyExpired and binding_rejectsNegativeDays exist."
     },
     {
       "id": "repo-addressbook-p3-073",
       "holds": true,
-      "reason": "The three named tests in OperatorServiceTest assert 25 items/totalPages 2, 5 items/totalPages 2, and BadRequestException for page 0; quote verbatim."
+      "reason": "application.yml:31 enabled: ${ADDRESS_TTL_EXPIRY_ENABLED:false}; README.md:357 row verbatim; ExpiryIndexes.java:32 @ConditionalOnProperty havingValue true; ExpiryIndexesTest bean tests named exist."
     },
     {
       "id": "repo-addressbook-p3-074",
       "holds": true,
-      "reason": "The five named OperatorServiceTest tests stub searchByQuery, searchByCountryCode and searchByQueryAndCountryCode for those inputs and verify trimmed values; quote verbatim from list_withWhitespacePaddedQueryTrimsBeforeSearching."
+      "reason": "application.yml:29 environment: ${ENVIRONMENT:local}; AddressTtlConfig.java:38-40 isProd quote verbatim; AddressTtlConfigTest isProd and binding tests named exist."
     },
     {
       "id": "repo-addressbook-p3-075",
-      "holds": true,
-      "reason": "list_withBlankQueryFallsBackToUnfilteredListing and list_withBlankCountryCodeFallsBackToUnfilteredListing verify findByOrganisationIdAndStatus is called; quote verbatim."
+      "holds": false,
+      "reason": "Overreaches on 'missing'. The service fails to start on a blank ENVIRONMENT (README.md:365, @NotBlank at AddressTtlConfig.java:35, binding_rejectsABlankEnvironment). But application.yml:29 defaults an unset ENVIRONMENT to 'local', so a missing ENVIRONMENT variable starts the service as non-prod. binding_rejectsAMissingEnvironment binds without application.yml, so it proves a missing property, not a missing variable. Replaced by repo-addressbook-p3-075-m1."
     },
     {
       "id": "repo-addressbook-p3-076",
-      "holds": false,
-      "reason": "Refuted: AddressScopingIT.forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404 performs get(\"/organisation/{orgId}/addresses\", ORG_A).header(ORG_HEADER, ORG_B) and expects isNotFound(), so the list's path-mismatch 404 is proven by a test (in part 4's file). The note anticipated this; the gap as stated does not exist in the repo."
+      "holds": true,
+      "reason": "AddressService.java:123-129 returns without stamping when days is null or isProd(); README.md:361 quote verbatim; AddressTtlConfig.java:15-17 'Stamping guard'."
     },
     {
       "id": "repo-addressbook-p3-077",
       "holds": true,
-      "reason": "Gap confirmed: AddressSearchIT, OperatorRepositoryIT and OperatorServiceTest only ever send upper-case FR or ' FR '; no test sends a lower-case countryCode."
+      "reason": "ExpiryIndexes.java:32 conditional bean and :41-49 warn-and-return in prod, quote verbatim at :44; README.md:362-363; ExpiryIndexesTest createIndexes_inProdCreatesNothingEvenWhenExpiryIsEnabled."
     },
     {
       "id": "repo-addressbook-p3-078",
       "holds": true,
-      "reason": "Gap confirmed: only partialWordSearchMatchesNameCaseInsensitively proves an addressLine1-only match is excluded; no test seeds a term only in county, addressLine2, phone or email."
+      "reason": "AddressService.java:128 quote verbatim; README.md:387 counts from the moment of creation; AddressExpiryIT post_givesTheNewAddressAnExpireAtSevenDaysAhead checks the window with days=7."
     },
     {
       "id": "repo-addressbook-p3-079",
       "holds": true,
-      "reason": "Gap confirmed: OperatorController.java:127-128 has no validation on q or countryCode, and both operators.yml and api-contract.locked.yaml give these query params schema type string only, with no maxLength."
+      "reason": "README.md:356 'not returned on the wire'; AddressExpiryIT asserts jsonPath $.expireAt doesNotExist."
+    },
+    {
+      "id": "repo-addressbook-p3-080",
+      "holds": true,
+      "reason": "README.md:356 'Updates and deletes keep the original expireAt' verbatim; AddressService.java:101-104 Javadoc says a later update or soft delete leaves it as is, and stampExpiry runs only in create."
+    },
+    {
+      "id": "repo-addressbook-p3-081",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:35 name and :51-56 index on expireAt ASC with expire(Duration.ZERO), quote verbatim; AddressExpiryIT ttlIndex_isOnExpireAtAndExpiresDocumentsAtThatTime asserts key expireAt and expireAfterSeconds 0."
+    },
+    {
+      "id": "repo-addressbook-p3-082",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:36 quote verbatim and :48 creates it on Transporter.class; ExpiryIndexesTest applicationReady_createsTheTtlIndexesOnBothDocumentsWhenExpiryIsEnabled exists."
+    },
+    {
+      "id": "repo-addressbook-p3-083",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:41-42 @EventListener(ApplicationReadyEvent.class) on createIndexes, quote verbatim."
+    },
+    {
+      "id": "repo-addressbook-p3-084",
+      "holds": true,
+      "reason": "README.md:357 quote verbatim; AddressExpiryIT expiredAddresses_areRemovedByMongoWhileUndatedAndUnexpiredOnesStay removes both the expired ACTIVE and expired DELETED records."
+    },
+    {
+      "id": "repo-addressbook-p3-085",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:24-25 Javadoc quote verbatim; AddressExpiryIT keeps the undated and the future-dated addresses."
+    },
+    {
+      "id": "repo-addressbook-p3-086",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:27 quote verbatim."
+    },
+    {
+      "id": "repo-addressbook-p3-087",
+      "holds": true,
+      "reason": "ExpiryIndexes.java:21-23 quote verbatim; application.yml:12 auto-index-creation: true is why."
+    },
+    {
+      "id": "repo-addressbook-p3-088",
+      "holds": true,
+      "reason": "Address.java:20-22 @CompoundIndex quote verbatim; README.md:369-370; AddressIndexIT via IntegrationBase.java:401-406 asserts organisationId ASC, status ASC, createdAt DESC."
+    },
+    {
+      "id": "repo-addressbook-p3-089",
+      "holds": true,
+      "reason": "IntegrationBase.java:394-395 containsExactlyInAnyOrder('_id_', 'org_status_created') and :425-426 winning plan contains org_status_created and not COLLSCAN; AddressExpiryIT @AfterEach drops the TTL indexes, so the note holds."
+    },
+    {
+      "id": "repo-addressbook-p3-090",
+      "holds": true,
+      "reason": "README.md:371-373 quote verbatim."
+    },
+    {
+      "id": "repo-addressbook-p3-091",
+      "holds": true,
+      "reason": "README.md:386 Design notes, quote verbatim."
+    },
+    {
+      "id": "repo-addressbook-p3-092",
+      "holds": true,
+      "reason": "application.yml:13 read-preference defaults to primaryPreferred and MongoConfig.java:46,58 applies it; the quote is from MongoConfigIT.java:44-45 (mongoClient_shouldUsePrimaryPreferredReadPreference), not from application.yml or MongoConfig, so the ref is loose but includes the test."
+    },
+    {
+      "id": "repo-addressbook-p3-093",
+      "holds": true,
+      "reason": "application.yml:14 has write-concern: ${MONGO_WRITE_CONCERN:majority}; MongoConfig.java:47,59 applies it; MongoConfigIT mongoClient_shouldHaveCorrectWriteConcern checks it."
+    },
+    {
+      "id": "repo-addressbook-p3-094",
+      "holds": true,
+      "reason": "application.yml:11 database default trade-imports-address-book and :20-21 ssl.enabled true; MongoConfig.java:61-65 applies the TrustStoreConfiguration SSL context (log names the TRUSTSTORE_* certificates); MongoConfigIT mongoTemplate_shouldBeConfigured asserts the database name."
+    },
+    {
+      "id": "repo-addressbook-p3-095",
+      "holds": true,
+      "reason": "application.yml:16-19 quoted verbatim (min 10, max 100, wait 2000 ms, idle 60000 ms); MongoConfig.java:26-40 builds the pool from them."
     },
     {
       "id": "repo-addressbook-p4-001",
       "holds": true,
-      "reason": "Quote exact at IdentityHeaderFilter.java:65."
+      "reason": "Transporter.java:21 @Document(collection = \"transporters\"); README MongoDB section lists collections addresses and transporters."
     },
     {
       "id": "repo-addressbook-p4-002",
       "holds": true,
-      "reason": "Quote exact in the class Javadoc at IdentityHeaderFilter.java:26."
+      "reason": "Transporter.java:17-20 Javadoc quoted verbatim; README:5-7 says the same."
     },
     {
       "id": "repo-addressbook-p4-003",
       "holds": true,
-      "reason": "grep of src/main for getHeader and @RequestHeader finds only the organisation header (filter line 92, controller lines 121/189/242/310/360) and RequestTracingFilter's trace header. Inference sound; quote verbatim at the cited controller lines."
+      "reason": "Transporter.java:32-71 holds exactly these fields plus id; quote is at :54-60."
     },
     {
       "id": "repo-addressbook-p4-004",
       "holds": true,
-      "reason": "shouldNotFilter at IdentityHeaderFilter.java:83-85 returns !isOrganisationPath(...), and isOrganisationPath (155-157) is startsWith(\"/organisation/\"); quote verbatim."
+      "reason": "Transporter.java:62-66 @CreatedDate/@LastModifiedDate; TransporterMapper.java:27-28 ignores createdAt and modifiedAt from the request; TransporterServiceTest.create_neverSetsServerFieldsFromTheRequest asserts both null before save."
     },
     {
       "id": "repo-addressbook-p4-005",
       "holds": true,
-      "reason": "Quote exact at IdentityHeaderFilter.java:156; IdentityHeaderFilterTest.nonOrganisationPathsBypassTheFilterEntirely covers /health."
+      "reason": "Transporter.java:70-71 @Version; TransporterDeleteIT:53-64 quoted verbatim, stale save throws OptimisticLockingFailureException and the transporter stays deleted. Note carries mechanism:."
     },
     {
       "id": "repo-addressbook-p4-006",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:92-96 rejects with 400 and returns without calling the chain; quote exact at line 94. Filter runs before DispatcherServlet, so before any handler."
+      "reason": "TransporterController.java:341-347 and addresses.yml:106-111 declare 409 Concurrent update conflict with a Problem body. The note rightly says it is documented only."
     },
     {
       "id": "repo-addressbook-p4-007",
       "holds": true,
-      "reason": "isBlank at IdentityHeaderFilter.java:176-178 is value == null || value.isBlank(), used at line 93 for the same 400; quote exact."
+      "reason": "TransporterRequest.java:23 quoted verbatim; TransporterRequestValidationTest 'blank name' proves it."
     },
     {
       "id": "repo-addressbook-p4-008",
       "holds": true,
-      "reason": "BAD_REQUEST_TYPE at lines 69-70 and the reject call at line 94 give exactly that type, title and detail; quote verbatim fragment of line 94."
+      "reason": "TransporterRequest.java:24 quoted verbatim; 'over-length name' (256) proves it."
     },
     {
       "id": "repo-addressbook-p4-009",
       "holds": true,
-      "reason": "ORGANISATION_ID_VALUE at IdentityHeaderFilter.java:72-73 is ^[A-Za-z0-9_-]{1,64}$; quote verbatim."
+      "reason": "TransporterRequest.java:32 quoted verbatim; 'blank addressLine1' proves it."
     },
     {
       "id": "repo-addressbook-p4-010",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:97-104 rejects a non-matching value with 400; quote exact at line 97. IdentityHeaderFilterTest.invalidOrganisationIdValueIsRejectedWith400 uses a value with spaces."
+      "reason": "TransporterRequest.java:33 quoted verbatim; 'over-length addressLine1' proves it."
     },
     {
       "id": "repo-addressbook-p4-011",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:98-103 passes BAD_REQUEST_TYPE, \"Bad Request\" and \"Invalid \" + ORGANISATION_ID_HEADER; quote verbatim across lines 102-103."
+      "reason": "TransporterRequest.java:41-43: only @Size(max = 255) with the quoted message, no @NotBlank, so optional. No test drives it, as the note says."
     },
     {
       "id": "repo-addressbook-p4-012",
       "holds": true,
-      "reason": "reject() at lines 169-173 builds Problem(type, title, status, detail, traceId) and sets application/problem+json; quote exact. RFC 9457 is named in IdentityHeaderFilterTest's Javadoc, not the filter, but the shape is as stated."
+      "reason": "TransporterRequest.java:44 quoted verbatim; 'blank townOrCity' proves it."
     },
     {
       "id": "repo-addressbook-p4-013",
       "holds": true,
-      "reason": "Quote verbatim at AddressScopingIT.java:33-34; IdentityHeaderFilterTest asserts doesNotContainKey(\"errors\")."
+      "reason": "TransporterRequest.java:45 quoted verbatim; 'over-length townOrCity' (101) proves it."
     },
     {
       "id": "repo-addressbook-p4-014",
       "holds": true,
-      "reason": "Quote exact in IdentityHeaderFilterTest.missingOrganisationId_writesBadRequestProblemAndHaltsTheChain."
+      "reason": "TransporterRequest.java:53-55: only @Size(max = 100) with the quoted message, so optional."
     },
     {
       "id": "repo-addressbook-p4-015",
       "holds": true,
-      "reason": "Filter reads MDC trace.id (line 166) into the Problem (169) and serialises with NON_NULL inclusion (line 79, quote exact), so a null traceId is omitted."
+      "reason": "TransporterRequest.java:56 quoted verbatim; no @Pattern on postcode, so no format check; 'blank postcode' proves it."
     },
     {
       "id": "repo-addressbook-p4-016",
       "holds": true,
-      "reason": "Quote exact at OperatorController.java:44."
+      "reason": "TransporterRequest.java:57 quoted verbatim; 'over-length postcode' (13) proves it."
     },
     {
       "id": "repo-addressbook-p4-017",
       "holds": true,
-      "reason": "Quote verbatim from the class Javadoc at OperatorController.java:36-38; every handler calls authoriseOrg."
+      "reason": "TransporterRequest.java:65-71: only @NotBlank(\"Select a country\"), no @Size or list check; schema description says 'stored as given'. The commercial GB-NIR rule is a class-level constraint, claimed separately."
     },
     {
       "id": "repo-addressbook-p4-018",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:107-116 extracts the path orgId and rejects a mismatch with 404 before chain.doFilter; quote exact at line 108."
+      "reason": "TransporterRequest.java:72 quoted verbatim; no @Pattern on phone; 'blank phone' proves it."
     },
     {
       "id": "repo-addressbook-p4-019",
       "holds": true,
-      "reason": "String.equals at IdentityHeaderFilter.java:108 and OperatorController.java:65 is exact and case-sensitive; no test exercises a case-only difference. Sound inference."
+      "reason": "TransporterRequest.java:73 quoted verbatim; 'over-length phone' (21) proves it."
     },
     {
       "id": "repo-addressbook-p4-020",
       "holds": true,
-      "reason": "NOT_FOUND_TYPE at line 71 and the reject call at 109-114 give that type, title and detail; quote verbatim."
+      "reason": "TransporterRequest.java:81 quoted verbatim; 'blank email' proves it."
     },
     {
       "id": "repo-addressbook-p4-021",
       "holds": true,
-      "reason": "Quote verbatim from the authoriseOrg Javadoc at OperatorController.java:55-57; the filter and AddressScopingIT both use 404."
+      "reason": "TransporterRequest.java:82 quoted verbatim; 'malformed email' (not-an-email) proves it."
     },
     {
       "id": "repo-addressbook-p4-022",
       "holds": true,
-      "reason": "OperatorController.java:64-68 authoriseOrg throws NotFoundException(\"Address not found\") on mismatch; called at 129, 191, 244, 313, 362. The filter rejects a mismatch first (IdentityHeaderFilter.java:107-116), so the defence-in-depth note is sound."
+      "reason": "TransporterRequest.java:83 quoted verbatim; no test drives it."
     },
     {
       "id": "repo-addressbook-p4-023",
       "holds": true,
-      "reason": "Every handler takes @RequestHeader(ORGANISATION_ID_HEADER) (lines 121, 189, 242, 310, 360, required by default); IdentityHeaderFilterTest:118 loops GET/POST/PUT/DELETE and asserts a 400 for each."
+      "reason": "TransporterRequest.java:91 quoted verbatim; 'missing type' proves it; README Transporters Rules says type is required."
     },
     {
       "id": "repo-addressbook-p4-024",
       "holds": true,
-      "reason": "Service calls pass sessionOrg: list(sessionOrg,...) :131, create(request, sessionOrg) :193, get(operatorId, sessionOrg) :248, update(..., sessionOrg) :315, delete(operatorId, sessionOrg) :364."
+      "reason": "TransporterRequest.java:96 quoted verbatim; 'over-length approval number' (51) proves it; no @Pattern, so no format check."
     },
     {
       "id": "repo-addressbook-p4-025",
       "holds": true,
-      "reason": "Javadoc at OperatorController.java:135-137 quoted verbatim; AddressScopingIT:190-193 asserts the stored organisationId is ORG_A."
+      "reason": "TransporterRequest.java:102-104 @Null with the quoted message and @Schema(hidden = true); 'stray roles' proves it."
     },
     {
       "id": "repo-addressbook-p4-026",
       "holds": true,
-      "reason": "Quote verbatim at AddressScopingIT.java:28-30; lines 84-100 assert 404 on GET, PUT and DELETE of A's id under B's own path with B's header."
+      "reason": "TransporterRequest.java:105-107 @Null with the quoted message, hidden; 'stray role' proves it."
     },
     {
       "id": "repo-addressbook-p4-027",
       "holds": true,
-      "reason": "AddressScopingIT.java:230-233 compares the two problem bodies for equality and asserts neither has an instance key. Note: only the fetch (GET) is proven, under the caller's own path; the class Javadoc (lines 29-30) states the general rule."
+      "reason": "TransporterRequest.java:15-16 Javadoc quoted verbatim; TransporterController.java:183-185 says server-assigned fields are ignored, not rejected."
     },
     {
       "id": "repo-addressbook-p4-028",
       "holds": true,
-      "reason": "Gap confirmed: IdentityHeaderFilterTest.pathOrgMismatchReturns404BeforeTheChainRuns checks only status and type, AddressScopingIT.forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404 checks only status, and the byte-identical test compares two in-scope misses. The filter writes its own body (IdentityHeaderFilter.java:52-56, 159-174) while an in-scope miss goes through GlobalExceptionHandler.handleNotFoundException. Kind 'rule' is loose for a gap, but the claim stands."
+      "reason": "TransporterRequest.java:12-13 quoted verbatim; TransporterResponse.java:9 says the same; TransporterMapperTest response_serialises... lists camelCase names."
     },
     {
       "id": "repo-addressbook-p4-029",
       "holds": true,
-      "reason": "README.md:85 quoted verbatim; IdentityHeaderFilter.java:33-35 says it treats the header as the authenticated organisation id."
+      "reason": "TransporterType.java:10-13 quoted verbatim; addresses.yml TransporterType enum PRIVATE, COMMERCIAL."
     },
     {
       "id": "repo-addressbook-p4-030",
       "holds": true,
-      "reason": "README.md:85-86 'Tenant isolation relies entirely on a trusted-forwarded-header contract:' verbatim."
+      "reason": "TransporterCrudIT.java:87-91 quoted verbatim; asserts only status 400, as the note says."
     },
     {
       "id": "repo-addressbook-p4-031",
       "holds": true,
-      "reason": "README responsibility table row 1 verbatim; the README says 'calling BFF', which the statement renders as 'calling frontend', a fair paraphrase."
+      "reason": "TransporterApprovalRequirement.java:21 default message quoted verbatim; validator :12-18 reports it on approvalNumber when commercial and null or blank; unit test and TransporterCrudIT (errors.approvalNumber, stored count zero) prove it."
     },
     {
       "id": "repo-addressbook-p4-032",
       "holds": true,
-      "reason": "README table rows 2-3: strip client-supplied header and set it from the verified session, both owned by the same upstream hop; IdentityHeaderFilter.java:44-46 says the same."
+      "reason": "TransporterApprovalRequirementValidator.java:19-21 quoted verbatim; unit and IT tests prove it."
     },
     {
       "id": "repo-addressbook-p4-033",
       "holds": true,
-      "reason": "README table row 4 ('Block direct pod/port access without passing through the gateway | CDP network policy') and line 105 quoted verbatim."
+      "reason": "Sound inference from validator :12-13: a blank value is not counted as having one, so the private branch at :19 does not fire. Untested, as the note says."
     },
     {
       "id": "repo-addressbook-p4-034",
       "holds": true,
-      "reason": "README.md:105-109 quoted verbatim ('deferred for this ticket'); stated in general terms with no exploit detail."
+      "reason": "CommercialTransporterCountry.java:21 message quoted verbatim; validator :11-21 compares to GB-NIR and reports on countryCode; unit and IT tests prove it."
     },
     {
       "id": "repo-addressbook-p4-035",
       "holds": true,
-      "reason": "Gap confirmed: the part's tests cover only the in-service filter; a grep of the repo outside src for the header name finds only README, OpenAPI files and review docs, none showing header stripping or network policy."
+      "reason": "Sound inference: CommercialTransporterCountryValidator.java:18 uses String.equals with no trim or case folding."
     },
     {
       "id": "repo-addressbook-p4-036",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:118-123 puts organisationId in MDC in a try and removes it in finally; MDC_ORGANISATION_ID = \"organisationId\" at line 66."
+      "reason": "README Transporters Rules quoted verbatim; validator :15-17 returns true for non-commercial; aPrivateTransporterMayBeInAnyCountry (ES) proves it."
     },
     {
       "id": "repo-addressbook-p4-037",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:167 log.warn with detail and traceId only; detail is a fixed string, so no address data can appear. The no-PII test (256-283) backs it."
+      "reason": "README Transporters Rules quoted verbatim; the countryCode refusal is also a 400 keyed by countryCode in the next README bullet; TransporterCrudIT checks errors.approvalNumber and errors.countryCode."
     },
     {
       "id": "repo-addressbook-p4-038",
       "holds": true,
-      "reason": "IdentityHeaderFilter.java:61 @Order(Ordered.HIGHEST_PRECEDENCE + 1) verbatim; it is a servlet filter, so it runs before the dispatcher and handlers."
+      "reason": "TransporterRequestValidationTest.java:21-29 holds both tests; the commercial fixture has approval number UK/BELF/T2/00104115 and GB-NIR."
     },
     {
       "id": "repo-addressbook-p4-039",
       "holds": true,
-      "reason": "Class-level @SecurityRequirement(name = \"Trade-Imports-Organisation-Id\") at OperatorController.java:46 applies to every operation in the controller."
+      "reason": "TransporterMapperTest.java:57-83 asserts exactly these 16 property names; TransporterResponse record has exactly these components."
     },
     {
       "id": "repo-addressbook-p4-040",
-      "holds": false,
-      "reason": "The statement overreaches: only list (lines 103-105) and create (171-173) document the path-mismatch 404; fetch, replace and delete describe their 404 as an unknown or out-of-scope id, fetch documents no 400 at all, and no operation documents the 400 for a malformed header. The note admits this but the statement claims it for 'the address operations'. Replaced by missed claim repo-addressbook-p4-040-m1."
+      "holds": true,
+      "reason": "TransporterResponse.java:9-10 quoted verbatim; TransporterCrudIT.java:34-35 asserts roles and addressType do not exist."
     },
     {
       "id": "repo-addressbook-p4-041",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:57-80 asserts chain not called, 400, application/problem+json, type/title/status, detail containing the header name, no errors key, and status not 401/403."
+      "reason": "TransporterMapper.java:18-20 quoted verbatim; TransporterStatus.java:5 'The enum is never on the wire'; mapper tests prove deleted true and false."
     },
     {
       "id": "repo-addressbook-p4-042",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:82-96 sets no servletPath (request URI only) and asserts 400 problem+json with the chain halted; test 57-80 covers the servlet-path case."
+      "reason": "TransporterMapper.java:17 quoted verbatim; TransporterResponse has no expireAt or version component."
     },
     {
       "id": "repo-addressbook-p4-043",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:98-114 header \"   \" yields 400 with bad-request type and no errors key."
+      "reason": "TransporterResponse.java:15-16 quoted verbatim; compact constructor :70-83 requires the rest; TransporterResponseTest proves both sides; addresses.yml required list matches."
     },
     {
       "id": "repo-addressbook-p4-044",
-      "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:116-136 loops the four methods, asserts chain halted, 400 and detail containing the header name."
+      "holds": false,
+      "reason": "The inference is wrong. JacksonConfig sets no NON_NULL inclusion, and TransporterMapperTest.response_serialises... lists addressLine2 and county as JSON properties for a stored transporter that has neither set, so null fields are written as null. Spring's jsonPath doesNotExist passes on a null value, so TransporterCrudIT.java:33 does not show the property is absent. A private transporter reads back with approvalNumber: null. See missed claim repo-addressbook-p4-044-m1."
     },
     {
       "id": "repo-addressbook-p4-045",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:138-153: POST /organisation/org-42/addresses with header org-42 calls the chain with organisationId=org-42 in MDC."
+      "reason": "TransporterResponse.java:21-25 description and example 665f1c2ab3e4d51a2c9d0e77 quoted verbatim."
     },
     {
       "id": "repo-addressbook-p4-046",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:155-168: trace id put in MDC is echoed as traceId in the 400 body."
+      "reason": "TransporterController.java:74-107 operationId list-transporters, summary quoted verbatim, 200/400/404/500 descriptions match the note; README Transporters table."
     },
     {
       "id": "repo-addressbook-p4-047",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:170-183: GET /health with no header calls the chain and the response body is empty."
+      "reason": "TransporterController.java:192-248: create-transporter, 201 with Location 'Absolute URI of the created transporter' built from the current request plus id; addresses.yml matches."
     },
     {
       "id": "repo-addressbook-p4-048",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:185-202: header org-b on /organisation/org-a/addresses gives 404 with not-found type and the chain not called."
+      "reason": "TransporterController.java:208-217 quoted verbatim, anyOf ValidationProblem, Problem; update declares 'Validation error, or a missing org header' at :326."
     },
     {
       "id": "repo-addressbook-p4-049",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:204-217 asserts MDC organisationId is null after a passing request."
+      "reason": "TransporterController.java:261-262 summary quoted verbatim; Javadoc :251-253 says a DELETED transporter is a 200 with deleted true; TransporterDeleteIT proves it."
     },
     {
       "id": "repo-addressbook-p4-050",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:219-239: chain throws ServletException, which propagates, and MDC organisationId is null afterwards."
+      "reason": "TransporterController.java:251-254 Javadoc quoted verbatim; TransporterServiceTest.get_forAnotherOrganisationsIdReturnsEmpty proves the service side."
     },
     {
       "id": "repo-addressbook-p4-051",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:241-254 header 'not valid because of spaces' gives 400; the test asserts status only."
+      "reason": "TransporterController.java:315-323 update-transporter, summary quoted verbatim, 200 'Updated transporter with bumped modifiedAt'; TransporterCrudIT.updateReplacesEveryMutableFieldAndBumpsModifiedAt proves it."
     },
     {
       "id": "repo-addressbook-p4-052",
       "holds": true,
-      "reason": "IdentityHeaderFilterTest.java:256-283 asserts every log event omits 'Highland Livestock Ltd' and 'secret@example.com'. Note the request carries neither value, so the test proves only that a rejection log holds no such data, not that data in a request is filtered."
+      "reason": "TransporterService.java:151-154 Javadoc quoted verbatim; mapper ignores those targets; TransporterMapperTest asserts id, organisationId and status kept; CrudIT asserts createdAt unchanged."
     },
     {
       "id": "repo-addressbook-p4-053",
       "holds": true,
-      "reason": "AddressScopingIT.java:73-108: B's own list is empty (totalItems 0), GET/PUT/DELETE of A's id under B's path are 404, and A then fetches it with deleted false."
+      "reason": "Sound inference: updateEntity inherits toEntity's config with MapStruct's default null handling (set to null), and TransporterMapperTest.java:105-119 shows a commercial row updated with a private request becoming PRIVATE with approvalNumber null. Untested through PUT, as the note says."
     },
     {
       "id": "repo-addressbook-p4-054",
       "holds": true,
-      "reason": "AddressScopingIT.java:110-149: GET one, list, PUT, DELETE and POST on A's path with B's header all 404; repository shows A's address ACTIVE and activeAddressesFor(ORG_A) is a single element."
+      "reason": "TransporterService.java:163-168 filters DELETED out and throws NotFound; controller :334-340 404 description quoted verbatim; update_ofADeletedTransporterThrowsNotFound proves it."
     },
     {
       "id": "repo-addressbook-p4-055",
       "holds": true,
-      "reason": "AddressScopingIT.java:151-159 asserts 400, problem+json content type, bad-request type and no errors."
+      "reason": "TransporterController.java:384-422 delete-transporter answers ResponseEntity.noContent(); :386 quoted verbatim; 400 'Missing org header' and 404 descriptions match the note."
     },
     {
       "id": "repo-addressbook-p4-056",
       "holds": true,
-      "reason": "AddressScopingIT.java:161-169 same assertions with header \"   \"."
+      "reason": "TransporterController.java:373-375 Javadoc quoted verbatim; TransporterService.java:196-197 sets DELETED and saves (modifiedAt bumped by @LastModifiedDate); delete_flipsAnActiveTransporterToADeletedTombstone proves the status."
     },
     {
       "id": "repo-addressbook-p4-057",
       "holds": true,
-      "reason": "AddressScopingIT.java:171-184: POST with no header is 400 problem+json with no errors, and activeAddressesFor(ORG_A) is empty."
+      "reason": "TransporterDeleteIT.java:20-28: after delete, list totalItems 0 and get 200 with deleted true; README soft-delete section says the rules hold for transporters."
     },
     {
       "id": "repo-addressbook-p4-058",
       "holds": true,
-      "reason": "AddressScopingIT.java:186-205: stored organisationId is ORG_A, the fetch returns organisationId ORG_A, and A's list has totalItems 1."
+      "reason": "TransporterDeleteIT.deletingAnAlreadyDeletedTransporterChangesNothing deletes twice (204 both) and asserts modifiedAt unchanged; TransporterService.delete returns early when status is DELETED (lines 192-194)."
     },
     {
       "id": "repo-addressbook-p4-059",
       "holds": true,
-      "reason": "AddressScopingIT.java:207-234: crossOrg and unknown problem bodies are equal, and neither has an instance key."
+      "reason": "TransporterDeleteIT.delete_shouldReturn404NotFoundProblem_whenIdIsUnknown asserts 404, Content-Type application/problem+json and type https://api.cdp.defra.cloud/problems/not-found."
     },
     {
       "id": "repo-addressbook-p4-060",
       "holds": true,
-      "reason": "OperatorController.java:38 quote verbatim, :57 cites cv-040 for 404 never 403; IdentityHeaderFilter.java:23-24 cites cv-010 for the trusted-forwarded-header identity contract. The note rightly says the ruling texts are not in this slice."
+      "reason": "README 'Transporters' Rules: \"A soft-deleted transporter's approval number is unaffected by the delete.\" verbatim; the service's delete changes only status."
+    },
+    {
+      "id": "repo-addressbook-p4-061",
+      "holds": true,
+      "reason": "TransporterService.create sets organisationId and status ACTIVE (lines 119-128); controller Javadoc at 183-185 says organisationId is stamped from the identity header, never from the body."
+    },
+    {
+      "id": "repo-addressbook-p4-062",
+      "holds": true,
+      "reason": "TransporterCrudIT.expectPrivateTransporter asserts name, addressLine1, countryCode, type PRIVATE, organisationId and deleted false (plus no approvalNumber, roles or addressType)."
+    },
+    {
+      "id": "repo-addressbook-p4-063",
+      "holds": true,
+      "reason": "TransporterCrudIT.aCreatedCommercialTransporterReadsBackWithItsApprovalNumberAndFixedCountry asserts type COMMERCIAL, approvalNumber and countryCode NORTHERN_IRELAND_COUNTRY_CODE."
+    },
+    {
+      "id": "repo-addressbook-p4-064",
+      "holds": true,
+      "reason": "TransporterRequest.java:100 example = \"UK/BELF/T2/00104115\" and TransporterTestSupport.java:16 SAMPLE_APPROVAL_NUMBER; the note correctly says no format is checked."
+    },
+    {
+      "id": "repo-addressbook-p4-065",
+      "holds": true,
+      "reason": "addresses.yml list-transporters pageSize description \"Transporters a page, from 1 to 100 (default 25)\", page default 1; README says same bounds and default as /addresses."
+    },
+    {
+      "id": "repo-addressbook-p4-066",
+      "holds": true,
+      "reason": "TransporterController Javadoc lines 58-62 says exactly this; TransporterServiceTest proves page 0 and pageSize 0 are BadRequestException."
+    },
+    {
+      "id": "repo-addressbook-p4-067",
+      "holds": true,
+      "reason": "TransporterPageResponse @Schema \"Paginated list of live transporters (never a bare array)\" with items, page, pageSize ('Page size served: the requested one, else the default'), totalItems ('Total number of matching transporters'), totalPages."
+    },
+    {
+      "id": "repo-addressbook-p4-068",
+      "holds": true,
+      "reason": "TransporterService.java:70-74 sorts DESC createdAt then DESC id; TransporterCrudIT.newestTransporterIsFirstOnTheList proves it."
+    },
+    {
+      "id": "repo-addressbook-p4-069",
+      "holds": true,
+      "reason": "TransporterListQuery Javadoc 'One page of the organisation's ACTIVE transporters'; TransporterListQueryImpl passes TransporterStatus.ACTIVE and organisationId to listLive; TransporterDeleteIT shows a deleted one leaves the list."
+    },
+    {
+      "id": "repo-addressbook-p4-070",
+      "holds": true,
+      "reason": "Controller @Parameter description for q and SEARCHABLE_FIELDS in TransporterListQueryImpl; TransporterSearchIT tests name, approval number and the five address fields case-insensitively."
+    },
+    {
+      "id": "repo-addressbook-p4-071",
+      "holds": true,
+      "reason": "Sound inference: SEARCHABLE_FIELDS lists name, addressLine1, addressLine2, townOrCity, county, postcode, approvalNumber only."
+    },
+    {
+      "id": "repo-addressbook-p4-072",
+      "holds": true,
+      "reason": "RequestedTransporterListFilters trims searchTerm; TransporterServiceTest.list_passesTheSearchTermAsAPartialMatchPattern expects .*\\QUK/BELF\\E.* (literal quoting). Mechanism note present."
+    },
+    {
+      "id": "repo-addressbook-p4-073",
+      "holds": true,
+      "reason": "Controller countryCode @Parameter text quoted verbatim; RequestedTransporterListFilters trims and drops blanks; service test drops ' ', null and trims ' GB-NIR '."
+    },
+    {
+      "id": "repo-addressbook-p4-074",
+      "holds": true,
+      "reason": "Controller searchType @Parameter text quoted verbatim; README searchType row agrees; TransporterSearchIT searchType tests prove it."
+    },
+    {
+      "id": "repo-addressbook-p4-075",
+      "holds": true,
+      "reason": "TransporterListQueryImpl.extraClauses wraps every match in one orOperator; TransporterSearchIT q=green + searchType COMMERCIAL returns both."
+    },
+    {
+      "id": "repo-addressbook-p4-076",
+      "holds": true,
+      "reason": "Controller type @Parameter 'Keeps only transporters of any of these types. Repeatable. Narrows the search (q, countryCode and searchType).'; README 'across every page'; type is a separate AND clause in extraClauses."
+    },
+    {
+      "id": "repo-addressbook-p4-077",
+      "holds": true,
+      "reason": "TransporterSearchIT unknown type and searchType tests use badRequestProblemWithNoErrors (IntegrationBase: 400, problem+json, bad-request type, title Bad Request, no errors)."
+    },
+    {
+      "id": "repo-addressbook-p4-078",
+      "holds": true,
+      "reason": "TransporterSearchIT.list_shouldIgnoreABlankSearchType_whenOtherSearchTypesAreGiven; RequestedTransporterListFilters drops absent elements and applies distinct() to types and searchTypes. Mechanism note present."
+    },
+    {
+      "id": "repo-addressbook-p4-079",
+      "holds": true,
+      "reason": "InCountries and OfType use ListMatchCriteria.nonEmptyCopyOf; TransporterService.matchesOf adds a match only when its list is non-empty. The quoted message is in TransporterListCriteriaTest:16/23 (and ListMatchCriteria.java:40), not TransporterListCriteria.java: loose ref."
+    },
+    {
+      "id": "repo-addressbook-p4-080",
+      "holds": true,
+      "reason": "TransporterController class Javadoc lines 38-43 quoted verbatim; addresses.yml securitySchemes description matches. The note's 'missing header is a 400 on every operation' is not shown in this slice (get-transporter documents no 400)."
+    },
+    {
+      "id": "repo-addressbook-p4-081",
+      "holds": true,
+      "reason": "TransporterScopingIT.forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404: get, list, put, delete and post with mismatched header all 404; transporter stays ACTIVE and only one exists."
+    },
+    {
+      "id": "repo-addressbook-p4-082",
+      "holds": true,
+      "reason": "TransporterScopingIT.orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsTransporter: list empty, get/put/delete 404, and org A still reads it with deleted false."
+    },
+    {
+      "id": "repo-addressbook-p4-083",
+      "holds": true,
+      "reason": "TransporterService.java:26-31 TRANSPORTER_NOT_FOUND = \"Transporter not found\" with Javadoc 'a cross-organisation request and an unknown id are deliberately indistinguishable'."
+    },
+    {
+      "id": "repo-addressbook-p4-084",
+      "holds": true,
+      "reason": "TransporterScopingIT.organisationIdIsStampedOnCreateAndScopesReads asserts stored organisationId, response organisationId and list totalItems 1."
+    },
+    {
+      "id": "repo-addressbook-p4-085",
+      "holds": true,
+      "reason": "Transporter.java:22-24 @CompoundIndex org_status_created {'organisationId': 1, 'status': 1, 'createdAt': -1}; TransporterIndexIT asserts only _id_ and org_status_created and the list query uses it. Caveat: with expiry enabled outside prod ExpiryIndexes also adds transporter_expire_at_ttl (claim p3-082), so 'one index besides _id' holds for the declared/default set only."
+    },
+    {
+      "id": "repo-addressbook-p4-086",
+      "holds": true,
+      "reason": "TransporterService.stampExpiry (lines 130-136) sets expireAt now+days unless days null or prod; TransporterMapper ignores expireAt on toEntity/updateEntity and delete only sets status, so the date is kept."
+    },
+    {
+      "id": "repo-addressbook-p4-087",
+      "holds": false,
+      "reason": "Not a true gap: README:347 in this slice says the expiry rules hold for transporters exactly as for addresses, and ExpiryIndexes.java creates transporter_expire_at_ttl on the transporters' expireAt when expiry is enabled (already claimed as p3-082). TransporterIndexIT runs with expiry off."
+    },
+    {
+      "id": "repo-addressbook-p4-088",
+      "holds": true,
+      "reason": "README Soft delete section: \"In prod, addresses, transporters and their tombstones are retained indefinitely (~1 KB each).\""
+    },
+    {
+      "id": "repo-addressbook-p4-089",
+      "holds": true,
+      "reason": "@Timed names at TransporterController.java:108, 232, 284, 355, 408 and timer controller.listTransporters.query.time at TransporterService.java:85."
+    },
+    {
+      "id": "repo-addressbook-p4-090",
+      "holds": true,
+      "reason": "TransporterController.java:166-174 logs q != null, page, pageSize, countryCodes, types and searchTypes; service logs Created/Updated/Soft-deleted transporter {id}. Statement omits searchTypes but is otherwise accurate."
+    },
+    {
+      "id": "repo-addressbook-p4-091",
+      "holds": true,
+      "reason": "addresses.yml TransporterRequest required list is addressLine1, countryCode, email, name, phone, postcode, townOrCity, type."
+    },
+    {
+      "id": "repo-addressbook-p4-092",
+      "holds": true,
+      "reason": "addresses.yml TransporterRequest gives minLength 0 for name, addressLine1, townOrCity, postcode, phone, email (and optional fields), countryCode minLength 1; TransporterRequest.java has @NotBlank and @Schema minLength = 1 (line 28 etc.). Sound inference."
+    },
+    {
+      "id": "repo-addressbook-p4-093",
+      "holds": true,
+      "reason": "addresses.yml tags lines 11-12 and TransporterController.java:46 @Tag verbatim."
+    },
+    {
+      "id": "repo-addressbook-p4-094",
+      "holds": true,
+      "reason": "TransporterResponse Javadoc: tombstone is a derived deleted boolean, never the status enum; mapper ignores status, version and expireAt in toResponse; no approval-state field exists in Transporter. Sound inference."
+    },
+    {
+      "id": "repo-addressbook-p5-001",
+      "holds": true,
+      "reason": "README 'OpenAPI contract' section: 'The API surface is locked and tested on every mvn verify' and the locked-contract table row lists exactly these items."
+    },
+    {
+      "id": "repo-addressbook-p5-002",
+      "holds": true,
+      "reason": "README table row for docs/openapi/addresses.yml: 'springdoc-generated spec for the whole service, addresses and transporters, committed for downstream consumers'."
+    },
+    {
+      "id": "repo-addressbook-p5-003",
+      "holds": true,
+      "reason": "api-contract.locked.yaml lines 1-4 and 41-43: openapi 3.0.3, title trade-imports-address-book, version 1.0.0, server http://localhost:8089 'Local dev'."
+    },
+    {
+      "id": "repo-addressbook-p5-004",
+      "holds": true,
+      "reason": "Locked contract tags lines 44-48 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-005",
+      "holds": true,
+      "reason": "Locked contract description 'Wire conventions' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-006",
+      "holds": true,
+      "reason": "Locked contract 'Identity' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-007",
+      "holds": true,
+      "reason": "Locked contract global security [- Trade-Imports-Organisation-Id: []] and components.securitySchemes apiKey in header with that description."
+    },
+    {
+      "id": "repo-addressbook-p5-008",
+      "holds": true,
+      "reason": "Locked contract 'Soft delete' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-009",
+      "holds": true,
+      "reason": "Locked contract 'Search' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-010",
+      "holds": true,
+      "reason": "Locked contract 'Pagination' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-011",
+      "holds": true,
+      "reason": "Locked contract 'Country codes' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-012",
+      "holds": true,
+      "reason": "Locked contract 'Roles' paragraph states each listed rule."
+    },
+    {
+      "id": "repo-addressbook-p5-013",
+      "holds": true,
+      "reason": "Locked contract 'Roles' paragraph: 'A role is what a notification can choose the address for, a party or a place'."
+    },
+    {
+      "id": "repo-addressbook-p5-014",
+      "holds": true,
+      "reason": "Locked contract 'Listing by role' paragraph verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-015",
+      "holds": true,
+      "reason": "Paths at lines 52, 196, 335 and 479 are the only four path keys."
+    },
+    {
+      "id": "repo-addressbook-p5-016",
+      "holds": true,
+      "reason": "Locked contract list-addresses: summary, operationId and parameters orgId, header, page, pageSize, q, countryCode, role, searchRole as stated."
+    },
+    {
+      "id": "repo-addressbook-p5-017",
+      "holds": true,
+      "reason": "list-addresses responses 200 AddressPageResponse, 400 with that description, 404 orgId mismatch, 500; all errors problem+json Problem."
+    },
+    {
+      "id": "repo-addressbook-p5-018",
+      "holds": true,
+      "reason": "Both list operations: page int32 default 1; pageSize int32 default 25, minimum 1, maximum 100."
+    },
+    {
+      "id": "repo-addressbook-p5-019",
+      "holds": true,
+      "reason": "Both list operations: q type string; countryCode type array of string."
+    },
+    {
+      "id": "repo-addressbook-p5-020",
+      "holds": true,
+      "reason": "list-addresses role and searchRole: array items $ref AddressRole."
+    },
+    {
+      "id": "repo-addressbook-p5-021",
+      "holds": true,
+      "reason": "create-address summary, operationId, orgId and header parameters, required AddressRequest body."
+    },
+    {
+      "id": "repo-addressbook-p5-022",
+      "holds": true,
+      "reason": "create-address 201 with Location 'Relative URI of the created address' and AddressResponse, 400 'Validation error, or a missing identity header', 404, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-023",
+      "holds": true,
+      "reason": "get-address summary, operationId, parameters, 200 'The address (deleted false or true)', 404, 500; no 400 declared, as the note says."
+    },
+    {
+      "id": "repo-addressbook-p5-024",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:376-436: summary, operationId update-address, the three parameters, required AddressRequest body, 200 'Updated address with bumped modifiedAt', 400, 404 (unknown, out of scope, tombstone), 409 'Concurrent update conflict' and 500 all match."
+    },
+    {
+      "id": "repo-addressbook-p5-025",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:437-478: delete-address summary, parameters, 204 'Soft-deleted (or already deleted — idempotent)', 400 'Missing org header', 404 unknown or out of scope, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-026",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:197-254: list-transporters summary and the eight parameters, the query ones required: false, type and searchType arrays of TransporterType."
+    },
+    {
+      "id": "repo-addressbook-p5-027",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:255-279: 200 TransporterPageResponse, the quoted 400 description verbatim, 404 path orgId mismatch, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-028",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:280-334: create-transporter, required TransporterRequest body, 201 with Location 'Absolute URI of the created transporter', 400 'Validation error, or a missing identity header', 404, 500. The note on relative vs absolute matches line 590 vs 307."
+    },
+    {
+      "id": "repo-addressbook-p5-029",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:53-92: get-transporter summary, parameters, 200 'The transporter (deleted false or true)', 404, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-030",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:93-153: update-transporter summary, parameters, required body, 200 bumped modifiedAt, 400, 404 incl. tombstone, 409, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-031",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:154-195: delete-transporter summary, parameters, 204 idempotent, 400 missing org header, 404, 500."
+    },
+    {
+      "id": "repo-addressbook-p5-032",
+      "holds": true,
+      "reason": "Quote verbatim at api-contract.locked.yaml:127-135 (update-transporter); the same anyOf shape at 314-322, 410-418 and 597-605 (the create 400s say 'missing identity header' rather than 'org header', which the statement does not contradict)."
+    },
+    {
+      "id": "repo-addressbook-p5-033",
+      "holds": true,
+      "reason": "README.md:378 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-034",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:626-633 enum verbatim; AddressRole is referenced by AddressRequest.roles (676), AddressResponse.roles (752), role (530) and searchRole (537)."
+    },
+    {
+      "id": "repo-addressbook-p5-035",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:781-785 enum verbatim; referenced at 247, 254, 824 and 860."
+    },
+    {
+      "id": "repo-addressbook-p5-036",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:634-685: the ten properties and the eight-item required list verbatim; addressLine2 and county absent from it."
+    },
+    {
+      "id": "repo-addressbook-p5-037",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:635-671: every max and min length as stated (name/addressLine1/addressLine2 255, townOrCity/county 100, postcode 12, countryCode 2, phone 20, email 254; min 1 on required strings, 0 on addressLine2 and county)."
+    },
+    {
+      "id": "repo-addressbook-p5-038",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:672-676 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-039",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:727-762: the fifteen properties with the stated types, and no required key under AddressResponse."
+    },
+    {
+      "id": "repo-addressbook-p5-040",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:763-780 and 873-890: items arrays of AddressResponse / TransporterResponse plus page, pageSize, totalItems, totalPages, each integer int32."
+    },
+    {
+      "id": "repo-addressbook-p5-041",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:786-836: the eleven properties and the eight-item required list verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-042",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:786-827: lengths match AddressRequest's; countryCode (812-814) has minLength 1 and no maxLength; approvalNumber maxLength 50 (and no minLength). Ref range starts at 812 rather than 786 but the claim holds."
+    },
+    {
+      "id": "repo-addressbook-p5-043",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:837-872: the sixteen properties with the stated types; like AddressResponse it declares no required list."
+    },
+    {
+      "id": "repo-addressbook-p5-044",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:710-726: five properties, status int32, required status, title, type."
+    },
+    {
+      "id": "repo-addressbook-p5-045",
+      "holds": true,
+      "reason": "api-contract.locked.yaml:686-709: Problem's five properties plus errors (object, additionalProperties array of string); required errors, status, title, type."
+    },
+    {
+      "id": "repo-addressbook-p5-046",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:107-110 verbatim; ApiDocs.COMMITTED_ARTIFACT is docs/openapi/addresses.yml (ApiDocs.java:16)."
+    },
+    {
+      "id": "repo-addressbook-p5-047",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:111-113 compares the file's text with isEqualTo; ApiDocs.renderCommittedForm (35-39) removes servers and dumps with SnakeYAML BLOCK flow style and no line splitting (67-72)."
+    },
+    {
+      "id": "repo-addressbook-p5-048",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:123-125: livePaths.keySet() isEqualTo lockedPaths.keySet()."
+    },
+    {
+      "id": "repo-addressbook-p5-049",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:127-144: for each locked path, HTTP method sets compared and each method's operationId compared."
+    },
+    {
+      "id": "repo-addressbook-p5-050",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:285-328: schema name sets compared (304-306); a schema with an enum has its enum compared (309-314); otherwise property key sets compared (324-326)."
+    },
+    {
+      "id": "repo-addressbook-p5-051",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:366-404: lists of {name, in} maps compared with isEqualTo (order-sensitive) for every locked operation. The note is right: schema is not compared."
+    },
+    {
+      "id": "repo-addressbook-p5-052",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:157-166 names the four operations; 406-441 asserts anyOf present, oneOf absent, two branches, sorted refs equal to the locked ones, and refs ending /ValidationProblem and /Problem."
+    },
+    {
+      "id": "repo-addressbook-p5-053",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:168-178 and 192-216: locked values isNotEmpty, then live isEqualTo locked, for role, searchRole, AddressRequest.roles and AddressResponse.roles."
+    },
+    {
+      "id": "repo-addressbook-p5-054",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:180-190 with the same helper: type, searchType, TransporterRequest.type and TransporterResponse.type."
+    },
+    {
+      "id": "repo-addressbook-p5-055",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:218-226 verbatim: locked contains roles, live containsExactlyInAnyOrderElementsOf locked."
+    },
+    {
+      "id": "repo-addressbook-p5-056",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:228-236 verbatim, same shape for type."
+    },
+    {
+      "id": "repo-addressbook-p5-057",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:238-246 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-058",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:92-104 asserts the quoted lines. Slightly loose: pageSchema (355-363) takes the first component schema whose name contains 'Page' and has items, which may be AddressPageResponse or TransporterPageResponse, so the top-level-object check is of 'a page schema', not specifically the address one; the AddressPageResponse ref check is specific to the address list."
+    },
+    {
+      "id": "repo-addressbook-p5-059",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:27-46: both the POST and the GET of the created address run expectCamelCaseLiveAddress with the quoted assertions."
+    },
+    {
+      "id": "repo-addressbook-p5-060",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:48-61: one address created, then isMap, items array, page 1, pageSize DEFAULT_PAGE_SIZE, totalItems 1, totalPages 1 (and items[0].name is the created name)."
+    },
+    {
+      "id": "repo-addressbook-p5-061",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:63-74: 404, Content-Type application/problem+json, the not-found type URI, traceId equal to the x-cdp-request-id sent, no errors."
+    },
+    {
+      "id": "repo-addressbook-p5-062",
+      "holds": true,
+      "reason": "ApiContractComplianceIT.java:76-90: blank addressLine1 on POST gives 400 problem+json, type VALIDATION_ERROR_TYPE, traceId echoed, errors.addressLine1 present and errors.address_line_1 absent."
+    },
+    {
+      "id": "repo-addressbook-p5-063",
+      "holds": true,
+      "reason": "Sound inference: the assertions in ApiContractComplianceIT.java:106-246 cover only what the statement lists, matching README.md:307-313; nothing compares maxLength, parameter schema, response codes, summaries or info. The note's info description difference is confirmed (locked 'Address-book API contract.' vs OpenApiConfig.java:27)."
+    },
+    {
+      "id": "repo-addressbook-p5-064",
+      "holds": true,
+      "reason": "README.md:315-319 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-065",
+      "holds": true,
+      "reason": "OpenApiArtifactGeneratorIT.java:27-60: @EnabledIfSystemProperty openapi.generate=true, RANDOM_PORT, integration-test profile, three Mongo auto-configs excluded (and MongoConfig filtered out of the scan), AddressRepository, TransporterRepository and MongoTemplate @MockitoBean, writes renderCommittedForm(fetchLive) to COMMITTED_ARTIFACT. Note correctly starts with mechanism:."
+    },
+    {
+      "id": "repo-addressbook-p5-066",
+      "holds": true,
+      "reason": "README.md:321-323 verbatim."
+    },
+    {
+      "id": "repo-addressbook-p5-067",
+      "holds": true,
+      "reason": "README.md:325-327 and application-local.yml:30-35; application.yml:111-115 sets both enabled: false. Among the service's runtime profiles this is right; the test resource application-integration-test.yml:75-77 also enables api-docs (outside this slice), which is how the ITs fetch /v3/api-docs."
+    },
+    {
+      "id": "repo-addressbook-p5-068",
+      "holds": true,
+      "reason": "README.md:41-42 verbatim; compose.yml:63 sets SPRING_PROFILES_ACTIVE: local."
+    },
+    {
+      "id": "repo-addressbook-p5-069",
+      "holds": true,
+      "reason": "application-local.yml:5-25: exposure include health,info,metrics,env; show-details when-authorized; mongodb ssl enabled false; root and service package at DEBUG (the Mongo driver, Spring and Spring web loggers default to WARN/INFO, so 'logs at DEBUG' is slightly broad)."
+    },
+    {
+      "id": "repo-addressbook-p5-070",
+      "holds": true,
+      "reason": "JacksonConfig.java:9-12 Javadoc verbatim and line 24 LOWER_CAMEL_CASE."
+    },
+    {
+      "id": "repo-addressbook-p5-071",
+      "holds": true,
+      "reason": "JacksonConfig.java:14-15 verbatim and line 25 failOnUnknownProperties(false)."
+    },
+    {
+      "id": "repo-addressbook-p5-072",
+      "holds": true,
+      "reason": "JacksonConfig.java:26 disables WRITE_DATES_AS_TIMESTAMPS; the inference to ISO-8601 text is sound and the note says why. It is a serialiser setting, so arguably wants a mechanism: note, but it states wire output, so fine as a rule."
+    },
+    {
+      "id": "repo-addressbook-p5-073",
+      "holds": true,
+      "reason": "README.md:381 verbatim; OpenApiConfig.java:51-54 builds the ModelResolver from objectMapper.copy(). 'cannot drift' overstates slightly what the README says ('could drift' otherwise) but follows from it. A configuration mechanism; its note does not start with mechanism:, which reconcile may want."
+    },
+    {
+      "id": "repo-addressbook-p5-074",
+      "holds": true,
+      "reason": "OpenApiConfig.java:22-49: @Info title, version, description as quoted; one Server http://localhost:8089 'Local dev'; APIKEY scheme in HEADER named IdentityHeaderFilter.ORGANISATION_ID_HEADER; addSecurityItem as a global requirement. The note's info difference is confirmed."
     }
   ],
   "missed": [
     {
-      "id": "repo-addressbook-p1-016-m1",
-      "statement": "The optional fields addressLine2 and county accept an empty string: they carry only a maximum length, with no minimum, so an empty value passes validation rather than being rejected.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:54, 66; docs/openapi/operators.yml (AddressRequest.addressLine2 and county)",
-      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\") ... @Size(max = 100, message = \"County must be 100 characters or less\") ... maxLength: 255 minLength: 0 ... maxLength: 100 minLength: 0",
-      "confidence": "inferred",
-      "note": "Inferred from @Size with no min and the published minLength 0, against minLength 1 on every required field. Whether an empty string is stored as empty or normalised to absent is not shown in this slice."
+      "id": "repo-addressbook-p1-010-m1",
+      "statement": "The API describes the request body as 'Create or replace an address in the caller's address book'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:26",
+      "quote": "@Schema(description = \"Create or replace an address in the caller's address book\")",
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-addressbook-p1-078-m1",
-      "statement": "In the running service an unset ENVIRONMENT does not stop start-up: application.yml defaults it to \"local\", which counts as non-prod, so expiry can apply. Only an ENVIRONMENT that is set but blank fails start-up.",
+      "id": "repo-addressbook-p1-018-m1",
+      "statement": "The API describes addressLine2 in the request as 'Second line of the postal address'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:47",
+      "quote": "@Schema(description = \"Second line of the postal address\", maxLength = 255)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-056-m1",
+      "statement": "The API describes the response as 'An address in the caller's organisation-scoped address book', and its name field as 'Display name'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:21,28",
+      "quote": "@Schema(description = \"An address in the caller's organisation-scoped address book\")\npublic record AddressResponse(\n...\n    @Schema(description = \"Display name\", requiredMode = Schema.RequiredMode.REQUIRED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-019-m1",
+      "statement": "The code and the generated API document disagree on whether a response's roles is required: AddressResponse marks roles as required (and always sends a list, empty when none), but docs/openapi/addresses.yml leaves roles out of the AddressResponse required list.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java:47-55; docs/openapi/addresses.yml AddressResponse required list",
+      "quote": "arraySchema =\n                @Schema(\n                    description =\n                        \"The roles a notification can choose this address for; empty when it has\"\n                            + \" none\",\n                    requiredMode = Schema.RequiredMode.REQUIRED))\n        List<AddressRole> roles,",
+      "confidence": "inferred",
+      "note": "Inferred from comparing the annotation with the yml: springdoc appears not to carry requiredMode from an @ArraySchema's arraySchema into the required list. In practice the field is always present because the compact constructor turns null into an empty list."
+    },
+    {
+      "id": "repo-addressbook-p2-067-m1",
+      "statement": "Over HTTP, a path orgId that differs from the organisation header is refused by the header filter before any controller runs. Its 404 detail is \"Resource not found\", so it differs from an unknown-address 404, whose detail is \"Address not found\". The equal bodies that GlobalExceptionHandlerTest proves apply only to the controller's own organisation check, which the filter reaches first.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:78-89; src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/NotFoundException.java:24-28",
+      "quote": "NotFoundException.organisationMismatch(pathOrgId, organisationId, \"Resource not found\");",
+      "confidence": "inferred",
+      "note": "Inferred from the filter running at HIGHEST_PRECEDENCE + 1 on every /organisation/ path before the controller's OrganisationScope.authorise call. The detail differs, and type, title and status are the same. Reconcile should decide whether the two 404 details should match, given the README's 'no existence disclosure' aim."
+    },
+    {
+      "id": "repo-addressbook-p3-075-m1",
+      "statement": "A blank ENVIRONMENT stops the service starting. An unset ENVIRONMENT variable does not: application.yml defaults it to local, which is read as non-prod.",
       "kind": "constraint",
-      "ref": "src/main/resources/application.yml:32; src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:35-40",
-      "quote": "environment: ${ENVIRONMENT:local}",
-      "confidence": "inferred",
-      "note": "Inferred from the placeholder default plus @NotBlank on environment. AddressTtlConfigTest's missing-environment failure runs in a bare context without this default, so it does not show what the deployed service does."
-    },
-    {
-      "id": "repo-addressbook-p1-092-m1",
-      "statement": "The expiry integration test proves, against a real Mongo, that the address_expire_at_ttl index is keyed on expireAt ascending with expireAfterSeconds 0.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java:57-69",
-      "quote": "void ttlIndex_isOnExpireAtAndExpiresDocumentsAtThatTime() ... assertThat(ttlIndex.get(\"key\", Document.class)).isEqualTo(new Document(\"expireAt\", 1)); assertThat(ttlIndex.get(\"expireAfterSeconds\", Number.class).longValue()).isZero();",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-addressbook-p2-083-m1",
-      "statement": "The wrong-type parameter handler exists so that a non-numeric query or path parameter is a 400 rather than a 500: without it Spring's type-mismatch exception would reach the catch-all RuntimeException handler and return an internal error.",
-      "kind": "behaviour",
-      "ref": "GlobalExceptionHandler.java:69-73",
-      "quote": "A query/path parameter that could not be bound to its target type (e.g. a non-numeric\n   * {@code page} or {@code page_size}) — 400 bad-request, NO errors map. Without this, Spring's\n   * {@link MethodArgumentTypeMismatchException} would fall through to the 500 handler.",
+      "ref": "README.md:365; AddressTtlConfig.java:35; application.yml:29; AddressTtlConfigTest binding_rejectsABlankEnvironment",
+      "quote": "`ENVIRONMENT` must not be blank — the service fails to start if it is. ... environment: ${ENVIRONMENT:local}",
       "confidence": "verbatim",
-      "note": "The Javadoc still names page_size, which is not a request parameter today (page size is server-configured, cv-025); only page is."
+      "note": "Corrects repo-addressbook-p3-075, whose 'missing' rests on a binding test that runs without application.yml."
     },
     {
-      "id": "repo-addressbook-p2-085-m1",
-      "statement": "A validation failure is logged as a warning with the framework exception's full message, which can include the submitted field values, so personal data from a rejected address may reach the logs.",
+      "id": "repo-addressbook-p3-083-m1",
+      "statement": "Each TTL index the service creates at start-up is logged at info with the index name and the record type it is on.",
       "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:49",
-      "quote": "log.warn(\"Validation error (trace: {}): {}\", traceId, ex.getMessage());",
-      "confidence": "inferred",
-      "note": "Inferred: Spring's MethodArgumentNotValidException message lists each field error with its rejected value. Recorded in general terms as a logging concern."
-    },
-    {
-      "id": "repo-addressbook-p2-089-m1",
-      "statement": "An unexpected error is logged at error level with its message and full stack trace and the trace id; every 4xx problem is logged only as a warning.",
-      "kind": "non-functional",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:151 (and :49, 77, 93, 109, 125, 136)",
-      "quote": "log.error(\"Unexpected error (trace: {}): {}\", traceId, ex.getMessage(), ex);",
+      "ref": "ExpiryIndexes.java:56",
+      "quote": "log.info(\"Expiry TTL index {} is in place on {}\", indexName, documentType.getSimpleName());",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-addressbook-p3-070-m1",
-      "statement": "Tested at the database: finding an address by id is organisation-scoped. It returns the address for its own organisation and nothing when asked under another organisation.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java:20-38 findByIdAndOrganisationId_returnsAddress_whenOrganisationMatches, findByIdAndOrganisationId_returnsEmpty_whenOrganisationDiffers",
-      "quote": "assertThat(operatorRepository.findByIdAndOrganisationId(orgA1.getId(), ORG_B)).isEmpty();",
-      "confidence": "verbatim",
-      "note": "Part 3 names OperatorRepositoryIT in its read list, but the extract claims only its two search tests."
-    },
-    {
-      "id": "repo-addressbook-p4-018-m1",
-      "statement": "The identity filter checks in a fixed order: a missing or blank header is a 400, then a malformed header is a 400, and only a well-formed header is compared with the path orgId for the 404. A malformed header on another organisation's path therefore gets a 400, not a 404.",
-      "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:92-116",
-      "quote": "if (!ORGANISATION_ID_VALUE.matcher(organisationId).matches()) {",
+      "id": "repo-addressbook-p4-044-m1",
+      "statement": "A transporter response writes every field, optional ones included: an unset addressLine2, county or approvalNumber appears in the JSON as null rather than being left out, because the response's JSON has all 16 properties even for a stored transporter with no addressLine2 or county.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapperTest.java:57-81; TransporterTestSupport.java:43-60; src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java",
+      "quote": "assertThat(propertyNames(json))\n        .containsExactlyInAnyOrder(\n            \"id\",\n            \"name\",\n            \"addressLine1\",\n            \"addressLine2\",",
       "confidence": "inferred",
-      "note": "Follows from the sequence of early returns in doFilterInternal; no test covers a malformed header on a mismatched path."
+      "note": "storedTransporter sets no addressLine2 or county, yet both are property names in the serialised JSON; JacksonConfig sets no NON_NULL inclusion. Corrects repo-addressbook-p4-044."
     },
     {
-      "id": "repo-addressbook-p3-052-m1",
-      "statement": "Tested: page 2 of 30 addresses also follows newest-first order, starting with Address 4, and reports page 2, totalItems 30 and totalPages 2.",
-      "kind": "behaviour",
-      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:107-118 list_shouldReturnRemaining5OnPage2WithDisjointIds_when30AddressesSeeded",
-      "quote": ".andExpect(jsonPath(\"$.page\").value(2))\n            .andExpect(jsonPath(\"$.totalItems\").value(30))\n            .andExpect(jsonPath(\"$.totalPages\").value(2))\n            .andExpect(jsonPath(\"$.items[0].name\").value(\"Address 4\"))",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-addressbook-p4-040-m1",
-      "statement": "The published API contract documents the identity rejections unevenly: list and create document a 404 for a path orgId that does not match the organisation header; fetch, replace and delete describe their 404 only as an unknown or out-of-scope id (replace adds a tombstone); list, create, replace and delete document a 400 for a missing header, fetch documents no 400; and no operation documents the 400 for a malformed header, though the filter returns one on every operation.",
-      "kind": "integration",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:96-109,161-177,224-230,275-291,335-348",
-      "quote": "description = \"An out-of-range or non-numeric page, or a missing org header\",",
-      "confidence": "verbatim",
-      "note": "Replaces refuted repo-addressbook-p4-040. Other quotes: create 400 'Validation error, or a missing identity header'; fetch 404 'Unknown id, or an id outside the caller's organisation scope'; delete 400 'Missing org header'."
-    },
-    {
-      "id": "repo-addressbook-p4-038-m1",
-      "statement": "The filter checks the header in a fixed order: missing or blank first, then well-formedness, then the path match. So a malformed header on another organisation's path gets a 400, not a 404, and only a well-formed header reaches the path comparison.",
+      "id": "repo-addressbook-p4-033-m1",
+      "statement": "A request with no type that carries an approval number is refused on approvalNumber with \"A private transporter must not have an approval number\" as well as on type, because the approval rule treats anything not COMMERCIAL as private.",
       "kind": "rule",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:92-116",
-      "quote": "if (!ORGANISATION_ID_VALUE.matcher(organisationId).matches()) {",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterApprovalRequirementValidator.java:14-21",
+      "quote": "boolean isCommercial = request.type() == TransporterType.COMMERCIAL;",
       "confidence": "inferred",
-      "note": "Inferred from the order of the three early-return checks in doFilterInternal; no test exercises a malformed header on a mismatched path."
+      "note": "Inferred from the validator: a null type makes isCommercial false, so a non-blank approval number takes the private branch. Not tested."
     },
     {
-      "id": "repo-addressbook-p4-042-m1",
-      "statement": "The path orgId the filter compares is the first path segment after /organisation/, taken from the servlet path, or, when that is empty, from the request URI with any context path removed.",
+      "id": "repo-addressbook-p4-034-m1",
+      "statement": "A commercial transporter sent with a blank country code gets two errors on countryCode: \"Select a country\" and \"A commercial transporter must be in Northern Ireland\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/CommercialTransporterCountryValidator.java:15-21; TransporterRequest.java:65",
+      "quote": "if (NORTHERN_IRELAND_COUNTRY_CODE.equals(request.countryCode())) {\n      return true;\n    }\n    return ClassLevelViolations.reportOn(context, \"countryCode\");",
+      "confidence": "inferred",
+      "note": "Inferred: the field @NotBlank and the class-level commercial check both run and neither defers to the other. Not tested; how the problem body shows two messages on one field is not in this slice."
+    },
+    {
+      "id": "repo-addressbook-p4-052-m1",
+      "statement": "Replacing a transporter keeps its optimistic-locking version from the stored row, so a write that lands between the replace's read and its save makes the replace fail rather than be overwritten.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapper.java:29,33-34; src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterMapperTest.java:105-119",
+      "quote": "assertThat(existing.getVersion()).isEqualTo(2L);",
+      "confidence": "verbatim",
+      "note": "mechanism: the mapper ignores version on the transporter document, so updateEntity leaves the stored @Version in place before save."
+    },
+    {
+      "id": "repo-addressbook-p4-072-m1",
+      "statement": "A q that is absent, empty or only spaces adds no text search: the term is trimmed to empty and no text match is built, so with no countryCode or searchType either, every live transporter (of any kept types) is listed.",
       "kind": "behaviour",
-      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:126-153",
-      "quote": "return slash < 0 ? path.substring(start) : path.substring(start, slash);",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/RequestedTransporterListFilters.java:22; src/main/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterService.java:96-100",
+      "quote": "searchTerm = searchTerm == null ? \"\" : searchTerm.trim();",
+      "confidence": "verbatim",
+      "note": "mechanism: trims the list's search term and skips the text match when it is empty. TransporterService.matchesOf adds TextMatching only when !requested.searchTerm().isEmpty()."
+    },
+    {
+      "id": "repo-addressbook-p5-050-m1",
+      "statement": "The build also fails when the live API docs or the locked contract declare no components or no component schemas, or when any non-enum component schema on either side declares no properties map.",
+      "kind": "constraint",
+      "ref": "repos/trade-imports-address-book/src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java:289-323",
+      "quote": ".as(\"schema %s must declare properties on live /v3/api-docs\", name)\n              .isInstanceOf(Map.class);\n          assertThat(lockedProps)\n              .as(\"schema %s must declare properties on the locked contract\", name)",
       "confidence": "verbatim"
     }
   ]

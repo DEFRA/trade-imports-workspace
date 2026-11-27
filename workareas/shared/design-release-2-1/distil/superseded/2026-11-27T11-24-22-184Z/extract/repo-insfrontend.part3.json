@@ -1,0 +1,1148 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 3, address book add, edit and journey handshake, read in full from repos/trade-imports-ins-frontend: features/address-book/add/ (add.controller.js 152 lines, add.njk 118), edit/ (edit.controller.js 138, edit.njk 111), fields.js (field rules and the Joi rule set), address-countries.js (country list for the select, GB pinned first), handshake-context.js and journey-registry.js (the journey handshake with the animals frontend), copy/copy.en.js and copy.cy.js (add, edit, form, errors and success-banner keys claimed; list, view and delete keys left to part 2), lib/validate/ (index.js, run.js, validators.js, calendar.js: the shared Joi validators), services/countries/ (client.js, index.js, stub.js: reference-data countries with a process-wide cache and a four-country stub) and services/address-book/client.js (create and update calls with organisation scoping), plus the fit specs add.fit.spec.js (19 tests once the required and max-length loops expand) and edit.fit.spec.js (7 tests) with their helpers address-form.js and axe.js. To ground what the read files call, I also looked at shared/kit.js (error summary, page title, organisation check), shared/paths.js, services/address-book/index.js (API error mapping), features/address-book/address-id-params.js, stored-address.js, success-banner.js, common/constants/journey-set-bases.js and common/helpers/set-base-url.js. Covered: the add page at /address-book/add (heading, two section headings, nine fields with labels, hint, autocomplete, widths and required/optional, country options and their source, save and cancel, Cache-Control), the edit page at /address-book/{id}/edit (id check, prefill, back link, save, cancel, not-found and deleted handling), every validation rule and its English and Welsh message, how the error summary links to fields and values are preserved, server-side validation and failure states, the create and update payloads and organisation scoping, the success banners, the handshake (one registered journey type gbn-ag to the animals frontend's live-animals set, four query parameters, all-or-none rule, session storage, hidden fields, the cancel label, the return URL with handshake-token and addressId), the shared validators and calendar helpers the address form does and does not use, and every test in both fit specs. Gaps recorded where the slice is silent: no caption, no handshake on edit, no fit test of the handshake, no postcode or phone format rule, no verification of the handshake token.",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p3-001",
+      "statement": "The add address page is served at /address-book/add for GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:3; src/server/app/features/address-book/add/add.controller.js:152",
+      "quote": "export const addressAddPath = () => '/address-book/add'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-002",
+      "statement": "The add and edit pages need a signed-in session: their routes use the 'session' auth strategy.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:8,65-68",
+      "quote": "export const routeOptions = { auth: 'session' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-003",
+      "statement": "The add page's heading (h1) and page title are 'Add address details'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/add/add.njk:9; copy/copy.en.js:47",
+      "quote": "title: 'Add address details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-004",
+      "statement": "The add and edit pages have no caption above the heading.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/add/add.njk:9; edit/edit.njk:9",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ copy.add.title }}</h1>",
+      "confidence": "inferred",
+      "note": "Inferred from the templates: only an h1 is rendered, no govuk-caption element."
+    },
+    {
+      "id": "repo-insfrontend-p3-005",
+      "statement": "The add page groups its fields under two section headings: 'Enter address details' above the address fields and 'Enter contact details' above email and phone.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/add/add.njk:20,83; copy/copy.en.js:30-31",
+      "quote": "addressHeading: 'Enter address details',\n    contactHeading: 'Enter contact details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-006",
+      "statement": "The add page asks, in order: name, address line 1, address line 2, town or city, county, postcode, country, then email address, then phone number.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/add/add.njk:22-104",
+      "quote": "id: \"name\" ... id: \"addressLine1\" ... id: \"addressLine2\" ... id: \"townOrCity\" ... id: \"county\" ... id: \"postcode\" ... id: \"countryCode\" ... id: \"email\" ... id: \"phone\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-007",
+      "statement": "The name field is labelled 'Name or organisation name', is required and accepts up to 255 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:33; src/server/app/features/address-book/fields.js:13",
+      "quote": "name: 'Name or organisation name'; name: { maxLength: 255, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-008",
+      "statement": "Address line 1 is labelled 'Address line 1', is required and accepts up to 255 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:34; fields.js:14",
+      "quote": "addressLine1: 'Address line 1'; addressLine1: { maxLength: 255, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-009",
+      "statement": "Address line 2 is labelled 'Address line 2 (optional)', is optional and accepts up to 255 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:35; fields.js:15",
+      "quote": "addressLine2: 'Address line 2 (optional)'; addressLine2: { maxLength: 255, required: false }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-010",
+      "statement": "Town or city is labelled 'Town or city', is required and accepts up to 100 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:36; fields.js:16",
+      "quote": "townOrCity: 'Town or city'; townOrCity: { maxLength: 100, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-011",
+      "statement": "County is labelled 'County (optional)', is optional and accepts up to 100 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:37; fields.js:17",
+      "quote": "county: 'County (optional)'; county: { maxLength: 100, required: false }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-012",
+      "statement": "Postcode is labelled 'Postcode or Zip code', is required and accepts up to 12 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:38; fields.js:18",
+      "quote": "postcode: 'Postcode or Zip code'; postcode: { maxLength: 12, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-013",
+      "statement": "Country is a select labelled 'Country' and is required.",
+      "kind": "data",
+      "ref": "add/add.njk:73-81; copy/copy.en.js:39; fields.js:19",
+      "quote": "countryCode: 'Country'; countryCode: { required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-014",
+      "statement": "Phone is labelled 'Phone number', is required and accepts up to 20 characters.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:40; fields.js:20",
+      "quote": "phone: 'Phone number'; phone: { maxLength: 20, required: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-015",
+      "statement": "Email is labelled 'Email address', is required, accepts up to 254 characters and must be a valid email address.",
+      "kind": "data",
+      "ref": "copy/copy.en.js:41; fields.js:21",
+      "quote": "email: 'Email address'; email: { maxLength: 254, required: true, email: true }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-016",
+      "statement": "The phone field has the hint 'For international numbers include the country code' on both add and edit.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:43; add/add.njk:100-102; edit/edit.njk:83-85",
+      "quote": "phoneHint: 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-017",
+      "statement": "No field other than phone has a hint on the add or edit page.",
+      "kind": "copy",
+      "ref": "add/add.njk:22-104; edit/edit.njk:14-97",
+      "quote": "hint: {\n        text: copy.form.phoneHint\n      },",
+      "confidence": "inferred",
+      "note": "Inferred: phone is the only govukInput with a hint parameter."
+    },
+    {
+      "id": "repo-insfrontend-p3-018",
+      "statement": "Only the email field sets an autocomplete attribute ('email'); name, address lines, town, county, postcode and phone set none.",
+      "kind": "constraint",
+      "ref": "add/add.njk:90; edit/edit.njk:95",
+      "quote": "autocomplete: \"email\",",
+      "confidence": "inferred",
+      "note": "Inferred from the templates: autocomplete appears only on email. GDS address and telephone autocomplete tokens are not set."
+    },
+    {
+      "id": "repo-insfrontend-p3-019",
+      "statement": "On the add page, name and both address lines are full width; town, county, postcode, country and phone are half width; email is full width.",
+      "kind": "constraint",
+      "ref": "add/add.njk:51,60,69,79,99",
+      "quote": "classes: \"govuk-!-width-one-half\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-020",
+      "statement": "The add and edit forms switch off browser validation and carry a CSRF token as a hidden 'crumb' field.",
+      "kind": "constraint",
+      "ref": "add/add.njk:11-12; edit/edit.njk:11-12",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-021",
+      "statement": "The country select's first option is a blank placeholder 'Select a country', so no country is chosen by default.",
+      "kind": "data",
+      "ref": "address-countries.js:28-30; copy/copy.en.js:44",
+      "quote": "return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]; countryPlaceholder: 'Select a country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-022",
+      "statement": "The country list always puts United Kingdom (GB) first, followed by every other country from reference data with GB removed from its original position.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-countries.js:5-19",
+      "quote": "const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' } ... const withoutGb = countries.filter((country) => country.code !== 'GB')\n\n  return [GB_COUNTRY, ...withoutGb]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-023",
+      "statement": "Each country option shows the country name and submits its ISO alpha-2 code.",
+      "kind": "data",
+      "ref": "address-countries.js:21-26",
+      "quote": "value: country.code,\n    text: country.name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-024",
+      "statement": "Countries come from the reference data service's GET /countries endpoint, with the trace id header.",
+      "kind": "integration",
+      "ref": "src/server/app/services/countries/client.js:5-23",
+      "quote": "const url = new URL(`${referenceDataUrl}/countries`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-025",
+      "statement": "The country list is fetched once per running instance and then reused for every later request; it is not refreshed.",
+      "kind": "non-functional",
+      "ref": "src/server/app/services/countries/index.js:6-22",
+      "quote": "if (isStubMode() || loaded) {\n    return\n  }\n  try {\n    countries = await fetchCountries()\n    loaded = true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-026",
+      "statement": "When the reference data service cannot be reached, the add and edit pages fail with a 503 'Reference data unavailable' error rather than showing the form.",
+      "kind": "behaviour",
+      "ref": "services/countries/index.js:16-21; add/add.controller.js:81-84",
+      "quote": "throw Boom.serverUnavailable('Reference data unavailable', {\n      dataset: 'countries',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-027",
+      "statement": "When reference data returns an empty country list, the add and edit pages fail with a 503 'Reference data unavailable' error.",
+      "kind": "behaviour",
+      "ref": "address-countries.js:10-14",
+      "quote": "if (!countries?.length) {\n    throw Boom.serverUnavailable('Reference data unavailable', {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-028",
+      "statement": "In stub mode the country list is a fixed set of four: United Kingdom, France, Germany and Ireland.",
+      "kind": "data",
+      "ref": "src/server/app/services/countries/stub.js:1-6",
+      "quote": "{ code: 'GB', name: 'United Kingdom' },\n  { code: 'FR', name: 'France' },\n  { code: 'DE', name: 'Germany' },\n  { code: 'IE', name: 'Ireland' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-029",
+      "statement": "If loading the add form fails for an unexpected (non-HTTP) reason, the add page still renders with a recoverable error message, an empty country list and a 500 status.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:81-92",
+      "quote": "logger.error({ err }, 'Failed to load address form countries')\n    return buildView(h, {\n      formValues: formValuesOf(),\n      countryItems: [],\n      recoverableError: true,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-030",
+      "statement": "A search term that matches a country name exactly (ignoring case and surrounding spaces) resolves to that country's code.",
+      "kind": "rule",
+      "ref": "address-countries.js:32-51",
+      "quote": "Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name\n * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.",
+      "confidence": "verbatim",
+      "note": "Lives in address-countries.js (this part's read) but serves the address book list search (part 2)."
+    },
+    {
+      "id": "repo-insfrontend-p3-031",
+      "statement": "The add page response is sent with 'Cache-Control: no-store' so the browser does not cache it.",
+      "kind": "non-functional",
+      "ref": "add/add.controller.js:56",
+      "quote": ".header('Cache-Control', 'no-store')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-032",
+      "statement": "The edit page response does not set 'Cache-Control: no-store', unlike the add page.",
+      "kind": "non-functional",
+      "ref": "edit/edit.controller.js:40-54",
+      "quote": "h.view(view, {\n    ...kit.base(copy.edit.title, {",
+      "confidence": "inferred",
+      "note": "Inferred: the edit buildView has no header call."
+    },
+    {
+      "id": "repo-insfrontend-p3-033",
+      "statement": "The add page opens with every field blank.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:76-78; fields.js:26-27",
+      "quote": "formValues: formValuesOf(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-034",
+      "statement": "The add page's main button is 'Save and continue'.",
+      "kind": "copy",
+      "ref": "add/add.njk:107; copy/copy.en.js:48",
+      "quote": "save: 'Save and continue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-035",
+      "statement": "Outside a journey, the add page's secondary button is 'Cancel and return to address book'.",
+      "kind": "copy",
+      "ref": "add/add.njk:108-113; copy/copy.en.js:49",
+      "quote": "cancel: 'Cancel and return to address book',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-036",
+      "statement": "Cancel is a secondary button that submits the form with cancel=true; the server then redirects without validating or saving anything.",
+      "kind": "behaviour",
+      "ref": "add/add.njk:108-113; add/add.controller.js:137-142",
+      "quote": "if (payload.cancel) {\n    return redirectAfterCancel(h, handshake)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-037",
+      "statement": "Cancelling the add page outside a journey returns the user to the address book at /address-book.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:66-69",
+      "quote": ": h.redirect(addressBookPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-038",
+      "statement": "The add page has no back link, in or out of a journey.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:48",
+      "quote": "...kit.base(copy.add.title, { recoverableError }),",
+      "confidence": "inferred",
+      "note": "Inferred: kit.base is called without a backLink, whereas edit passes one."
+    },
+    {
+      "id": "repo-insfrontend-p3-039",
+      "statement": "Submitting add or edit needs an organisation on the signed-in session; without one the request is refused with 403 'Organisation could not be identified'.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:57-63; add/add.controller.js:143; edit/edit.controller.js:63,82",
+      "quote": "throw Boom.forbidden('Organisation could not be identified')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-040",
+      "statement": "Cancelling the add page does not need an organisation: the cancel check runs before the organisation check.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:140-143",
+      "quote": "if (payload.cancel) {\n    return redirectAfterCancel(h, handshake)\n  }\n  const orgId = kit.requireOrganisationId(request)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-041",
+      "statement": "Every field is validated on submit and all errors are reported together, not just the first.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/run.js:9-14",
+      "quote": "abortEarly: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-042",
+      "statement": "Only one error message is shown per field: the first one found.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/run.js:1-7",
+      "quote": "return field != null && errors[field] === undefined\n      ? { ...errors, [field]: detail.message }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-043",
+      "statement": "Text fields are trimmed of surrounding spaces before validation, so a field of only spaces counts as empty, and the trimmed values are what is saved.",
+      "kind": "rule",
+      "ref": "lib/validate/validators.js:65-93; run.js:10-14; add/add.controller.js:98-110",
+      "quote": "Joi.string()\n      .trim()\n      .required()",
+      "confidence": "inferred",
+      "note": "Inferred: validate runs with convert: true and the controller saves the returned value, which Joi has trimmed."
+    },
+    {
+      "id": "repo-insfrontend-p3-044",
+      "statement": "Leaving the name empty shows 'Enter a name'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:70-72; fields.js:47",
+      "quote": "required: 'Enter a name',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-045",
+      "statement": "A name over 255 characters shows 'Name must be 255 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:72; fields.js:13,33-34",
+      "quote": "maxLength: (max) => `Name must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-046",
+      "statement": "Leaving address line 1 empty shows 'Enter address line 1'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:75",
+      "quote": "required: 'Enter address line 1',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-047",
+      "statement": "Address line 1 over 255 characters shows 'Address line 1 must be 255 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:76",
+      "quote": "maxLength: (max) => `Address line 1 must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-048",
+      "statement": "Address line 2 over 255 characters shows 'Address line 2 must be 255 characters or fewer'; leaving it blank is allowed.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:78-80; fields.js:42-43,49",
+      "quote": "maxLength: (max) => `Address line 2 must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-049",
+      "statement": "Leaving town or city empty shows 'Enter a town or city'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:82",
+      "quote": "required: 'Enter a town or city',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-050",
+      "statement": "Town or city over 100 characters shows 'Town or city must be 100 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:83",
+      "quote": "maxLength: (max) => `Town or city must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-051",
+      "statement": "County over 100 characters shows 'County must be 100 characters or fewer'; leaving it blank is allowed.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:85-87; fields.js:51",
+      "quote": "maxLength: (max) => `County must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-052",
+      "statement": "Leaving postcode empty shows 'Enter a postcode'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:89",
+      "quote": "required: 'Enter a postcode',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-053",
+      "statement": "A postcode over 12 characters shows 'Postcode must be 12 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:90",
+      "quote": "maxLength: (max) => `Postcode must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-054",
+      "statement": "The postcode's format is not checked: any text up to 12 characters is accepted, UK or not.",
+      "kind": "rule",
+      "ref": "fields.js:52; lib/validate/validators.js:10,105-106",
+      "quote": "requiredTextRule('postcode'),",
+      "confidence": "inferred",
+      "note": "Inferred: a UK postcode validator exists in lib/validate but the address rules do not use it, matching the 'Postcode or Zip code' label."
+    },
+    {
+      "id": "repo-insfrontend-p3-055",
+      "statement": "Not choosing a country shows 'Enter a country'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:92-94; fields.js:53",
+      "quote": "required: 'Enter a country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-056",
+      "statement": "The submitted country must be one of the codes in the current country list; any other value is rejected with the same message 'Enter a country'.",
+      "kind": "rule",
+      "ref": "fields.js:53; lib/validate/validators.js:134-148; add/add.controller.js:98-101",
+      "quote": "requiredOneOf('countryCode', countryCodes, errors.countryCode.required),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-057",
+      "statement": "Leaving phone empty shows 'Enter a telephone number'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:96",
+      "quote": "required: 'Enter a telephone number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-058",
+      "statement": "A phone number over 20 characters shows 'Telephone number must be 20 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:97",
+      "quote": "maxLength: (max) => `Telephone number must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-059",
+      "statement": "The phone number's format is not checked: any text up to 20 characters is accepted.",
+      "kind": "rule",
+      "ref": "fields.js:54; lib/validate/validators.js:111-132",
+      "quote": "requiredTextRule('phone'),",
+      "confidence": "inferred",
+      "note": "Inferred: a ukPhone validator (allowed characters, 7 to 15 digits) exists in lib/validate but the address rules do not use it. Field label says 'Phone number' while errors say 'Telephone number'."
+    },
+    {
+      "id": "repo-insfrontend-p3-060",
+      "statement": "Leaving email empty shows 'Enter an email address'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:100",
+      "quote": "required: 'Enter an email address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-061",
+      "statement": "An email that is not a valid address shows 'Enter an email address in the correct format'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:101; fields.js:55-59",
+      "quote": "format: 'Enter an email address in the correct format',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-062",
+      "statement": "Email format checking does not check the top-level domain against a known list.",
+      "kind": "rule",
+      "ref": "lib/validate/validators.js:86",
+      "quote": ".email({ tlds: { allow: false } })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-063",
+      "statement": "An email over 254 characters shows 'Email address must be 254 characters or fewer'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:102",
+      "quote": "maxLength: (max) => `Email address must be ${max} characters or fewer`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-064",
+      "statement": "Validation errors show a GOV.UK error summary titled 'There is a problem' at the top of the page.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:30-43; shared/copy.en.js:30-31; add/add.njk:7",
+      "quote": "errorSummary: {\n    title: 'There is a problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-065",
+      "statement": "Each error summary entry links to its field by the field's id (for example #name), and following the link moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:28,41; fit/address-form.js:55-66",
+      "quote": "const anchorHref = (field) => `#${field}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-066",
+      "statement": "Each field in error also shows its error message inline above the field.",
+      "kind": "behaviour",
+      "ref": "add/add.njk:27; edit/edit.njk:20",
+      "quote": "errorMessage: errors.name and { text: errors.name }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-067",
+      "statement": "When validation fails, the page is shown again with every value the user entered kept, including valid ones, and a 400 status.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:102-109; edit/edit.controller.js:96-103",
+      "quote": "return buildView(h, {\n        formValues,\n        countryItems: countryItemsOf(countries),\n        errors,\n        handshake\n      }).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-068",
+      "statement": "If the address book service rejects a save as invalid (a 400 with field errors), the form is shown again with the service's first message for each field, the entered values kept and a 400 status.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:119-126; edit/edit.controller.js:114-122; services/address-book/index.js:22-31",
+      "quote": "errors: mapApiErrorsToFormErrors(err.body),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-069",
+      "statement": "If the save fails for any other reason, the form is shown again with a recoverable error message, the entered values kept and a 500 status.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:127-133; edit/edit.controller.js:123-130",
+      "quote": "logger.error({ err, orgId }, 'Failed to create address')\n    return buildView(h, {\n      formValues,\n      countryItems: await loadCountryItems(),\n      recoverableError: true,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-070",
+      "statement": "Saving a new address sends a POST to the address book service at /organisation/{organisation id}/addresses.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:12-20,67-76",
+      "quote": "const base = `${addressBookUrl}/organisation/${encodeURIComponent(orgId)}/addresses`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-071",
+      "statement": "The create and update requests send a JSON body of exactly the nine form fields: name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email, with blank optional fields sent as empty strings.",
+      "kind": "integration",
+      "ref": "fields.js:12-27; add/add.controller.js:110,148; client.js:71",
+      "quote": "export const formValuesOf = (source = {}) =>\n  Object.fromEntries(FIELDS.map((field) => [field, source[field] ?? '']))",
+      "confidence": "inferred",
+      "note": "Inferred: the controller builds formValues from FIELDS only, validates them and sends the validated value as the body."
+    },
+    {
+      "id": "repo-insfrontend-p3-072",
+      "statement": "Every address book request carries the signed-in user's organisation id both in the path and in a 'Trade-Imports-Organisation-Id' header, so addresses are scoped to the user's organisation.",
+      "kind": "integration",
+      "ref": "services/address-book/client.js:7,22-27",
+      "quote": "// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the orgId in the path (cv-010).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-073",
+      "statement": "Security: the address book service relies on the organisation identity the frontend passes it, with no further authentication of its own, so the frontend's session is the only guard on organisation scoping.",
+      "kind": "constraint",
+      "ref": "services/address-book/client.js:22",
+      "quote": "the address book trusts it with no further authentication",
+      "confidence": "verbatim",
+      "note": "Recorded in general terms only."
+    },
+    {
+      "id": "repo-insfrontend-p3-074",
+      "statement": "The address book client refuses to make any request without an organisation id.",
+      "kind": "rule",
+      "ref": "services/address-book/client.js:13-17",
+      "quote": "'Cannot reach the address book without an organisation: the signed-in session carries none'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-075",
+      "statement": "In stub mode, add and edit save to an in-memory stub address book instead of the address book service.",
+      "kind": "integration",
+      "ref": "services/address-book/index.js:6",
+      "quote": "const addressBook = () => (isStubMode() ? stub : client)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-076",
+      "statement": "After adding an address outside a journey, the user is sent to the address book at /address-book.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:61-64",
+      "quote": ": h.redirect(addressBookPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-077",
+      "statement": "After adding an address outside a journey, the address book shows a success banner '{name} added to your address book', shown once.",
+      "kind": "copy",
+      "ref": "add/add.controller.js:111-113; copy/copy.en.js:25; success-banner.js:1-6",
+      "quote": "added: (name) => `${name} added to your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-078",
+      "statement": "The success banner's title is 'Success'.",
+      "kind": "copy",
+      "ref": "copy/copy.en.js:24",
+      "quote": "title: 'Success',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-079",
+      "statement": "The edit page is served at /address-book/{id}/edit for GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:6-7; edit/edit.controller.js:134-138",
+      "quote": "export const addressEditRoutePath = () => `${addressRoutePath()}/edit`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-080",
+      "statement": "An edit URL whose id is not a 24-character hexadecimal id shows the page not found error.",
+      "kind": "rule",
+      "ref": "features/address-book/address-id-params.js:6-23",
+      "quote": "const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/ ... failAction: () => {\n      throw Boom.notFound()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-081",
+      "statement": "The edit page loads the address from the address book for the user's organisation; an address that does not exist for that organisation, or is marked deleted, shows the page not found error.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:62-79; stored-address.js:6-23",
+      "quote": "if (address.deleted) {\n    throw Boom.notFound()\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-082",
+      "statement": "Any other failure loading the address for edit shows a 500 error page.",
+      "kind": "behaviour",
+      "ref": "stored-address.js:14-23; edit/edit.controller.js:74-78",
+      "quote": "logUnexpected()\n  return Boom.internal()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-083",
+      "statement": "The edit page's heading (h1) and page title are 'Edit address details'.",
+      "kind": "copy",
+      "ref": "edit/edit.njk:9; copy/copy.en.js:53",
+      "quote": "title: 'Edit address details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-084",
+      "statement": "The edit page has a back link to the address's view page at /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:45-48",
+      "quote": "backLink: addressPath(id),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-085",
+      "statement": "The edit page pre-fills every field from the stored address, with any missing value shown blank.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:67-73; fields.js:26-27",
+      "quote": "formValues: formValuesOf(address),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-086",
+      "statement": "Every field can be changed on the edit page; none is read-only, and the same validation rules and messages apply as on add.",
+      "kind": "rule",
+      "ref": "edit/edit.njk:14-97; edit/edit.controller.js:92-95",
+      "quote": "addressRules(countries.map((country) => country.code)),",
+      "confidence": "inferred",
+      "note": "Inferred: every field is a plain input or select with no disabled or readonly attribute, and edit validates with the same addressRules."
+    },
+    {
+      "id": "repo-insfrontend-p3-087",
+      "statement": "The edit page has no section headings; it asks in order: name, address line 1, address line 2, town or city, county, postcode, country, phone number, then email address.",
+      "kind": "data",
+      "ref": "edit/edit.njk:14-97",
+      "quote": "id: \"countryCode\" ... id: \"phone\" ... id: \"email\"",
+      "confidence": "verbatim",
+      "note": "Phone and email are in the opposite order from the add page, which shows email before phone."
+    },
+    {
+      "id": "repo-insfrontend-p3-088",
+      "statement": "On the edit page, text fields are two-thirds width, postcode is a 10-character width and country is default width.",
+      "kind": "constraint",
+      "ref": "edit/edit.njk:19,64,68-75",
+      "quote": "classes: \"govuk-input--width-10\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-089",
+      "statement": "The edit page's main button is 'Save changes' and its secondary button is 'Cancel'.",
+      "kind": "copy",
+      "ref": "edit/edit.njk:99-107; copy/copy.en.js:54-55",
+      "quote": "save: 'Save changes',\n    cancel: 'Cancel'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-090",
+      "statement": "Cancelling an edit returns the user to the address book at /address-book, not to the address's view page, and saves nothing.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:85-87",
+      "quote": "if (payload.cancel) {\n    return h.redirect(addressBookPath())\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-091",
+      "statement": "Saving an edit sends a PUT to the address book service at /organisation/{organisation id}/addresses/{id}.",
+      "kind": "integration",
+      "ref": "services/address-book/client.js:88-97",
+      "quote": "method: 'PUT',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-092",
+      "statement": "After saving an edit, the user is sent to the address book at /address-book with a success banner '{name} updated in your address book'.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:104-106; copy/copy.en.js:26",
+      "quote": "updated: (name) => `${name} updated in your address book`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-093",
+      "statement": "If the address is no longer found when an edit is saved, the user sees the page not found error.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js:111-113",
+      "quote": "if (err.status === HTTP_STATUS_NOT_FOUND) {\n      throw Boom.notFound()\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-094",
+      "statement": "The edit page does not support the journey handshake: it has no journey hidden fields and always returns to the address book.",
+      "kind": "behaviour",
+      "ref": "edit/edit.controller.js; edit/edit.njk",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in edit.controller.js and edit.njk: neither reads or carries handshake context. Whether a journey user should be able to edit an address and return is not stated."
+    },
+    {
+      "id": "repo-insfrontend-p3-095",
+      "statement": "One journey is registered for the handshake: journey type 'gbn-ag'.",
+      "kind": "data",
+      "ref": "features/address-book/journey-registry.js:4-17",
+      "quote": "export const JOURNEY_TYPES = Object.freeze({\n  GBN_AG: 'gbn-ag'\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-096",
+      "statement": "The 'gbn-ag' journey returns to the animals frontend, at its configured base URL plus the '/live-animals' journey set base.",
+      "kind": "integration",
+      "ref": "journey-registry.js:12-16; common/constants/journey-set-bases.js:1-3; common/helpers/set-base-url.js:14-17",
+      "quote": "baseUrlConfigKey: 'tradeImportsAnimalsFrontend.baseUrl',\n    setBase: SET_BASES.LIVE_ANIMALS,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-097",
+      "statement": "The return path into the journey is /notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}, with both ids URL-encoded.",
+      "kind": "integration",
+      "ref": "journey-registry.js:8-9,38-40",
+      "quote": "'/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-098",
+      "statement": "A journey sends the user to the add page with four query parameters: journey-type, notification-id, fulfilment-id and handshake-token.",
+      "kind": "integration",
+      "ref": "handshake-context.js:43-49",
+      "quote": "journeyType: queryValue(request, 'journey-type'),\n    notificationId: queryValue(request, 'notification-id'),\n    fulfilmentId: queryValue(request, 'fulfilment-id'),\n    handshakeToken: queryValue(request, 'handshake-token')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-099",
+      "statement": "Handshake parameter values are trimmed, and a blank value counts as absent.",
+      "kind": "rule",
+      "ref": "handshake-context.js:7-15",
+      "quote": "return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-100",
+      "statement": "The handshake parameters must be sent all together or not at all: some but not all of them gives a 400 'Incomplete journey handshake' error.",
+      "kind": "rule",
+      "ref": "handshake-context.js:23-29",
+      "quote": "if (!journeyType || !notificationId || !fulfilmentId || !handshakeToken) {\n    throw Boom.badRequest('Incomplete journey handshake')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-101",
+      "statement": "A handshake with a journey type that is not registered shows the page not found error.",
+      "kind": "rule",
+      "ref": "handshake-context.js:31-33",
+      "quote": "if (!isKnownJourneyType(journeyType)) {\n    throw Boom.notFound()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-102",
+      "statement": "The return URL is never taken from the request: it is built on the server from the registered journey's configured base URL and path template, so a journey cannot send the user back to an arbitrary address.",
+      "kind": "rule",
+      "ref": "journey-registry.js:30-55",
+      "quote": "const url = new URL(\n    `${buildSetBaseUrl(entry.baseUrlConfigKey, entry.setBase)}${returnPath}`\n  )",
+      "confidence": "inferred",
+      "note": "Inferred: the only check on the return destination is that the journey type is in the registry; the ids are encoded into a fixed template."
+    },
+    {
+      "id": "repo-insfrontend-p3-103",
+      "statement": "The address book does not verify the handshake token, notification id or fulfilment id; it only carries them and passes them back to the journey.",
+      "kind": "behaviour",
+      "ref": "handshake-context.js; journey-registry.js:47-49",
+      "quote": "if (context.handshakeToken) {\n    url.searchParams.set('handshake-token', context.handshakeToken)\n  }",
+      "confidence": "inferred",
+      "note": "Inferred: no code in the slice checks the token's value; verifying it is presumably the journey frontend's job on return."
+    },
+    {
+      "id": "repo-insfrontend-p3-104",
+      "statement": "Opening the add page with a valid handshake stores the journey context in the user's session; opening it with no handshake parameters clears any stored journey context.",
+      "kind": "behaviour",
+      "ref": "handshake-context.js:5,51-57,90-98; add/add.controller.js:72",
+      "quote": "storeHandshakeContext(request, null)\n  return null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-105",
+      "statement": "In journey mode the add form carries the journey context as hidden fields (journey-type, notification-id, fulfilment-id, handshake-token) so it survives the submit.",
+      "kind": "behaviour",
+      "ref": "add/add.njk:13-18",
+      "quote": "<input type=\"hidden\" name=\"journey-type\" value=\"{{ handshakeContext.journeyType }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-106",
+      "statement": "On submit, journey context in the form takes precedence and is re-stored in the session; if the form carries none, the context stored in the session is used, and a stored context with an unregistered journey type is discarded.",
+      "kind": "behaviour",
+      "ref": "handshake-context.js:69-88",
+      "quote": "const fromPayload = readHandshakePayload(request.payload)\n  if (fromPayload) {\n    storeHandshakeContext(request, fromPayload)\n    return fromPayload\n  }\n  return validatedSessionContext(request)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-107",
+      "statement": "In journey mode the add page keeps the same heading, fields and 'Save and continue' button; the only visible difference is the cancel button, which reads 'Cancel and return to address page'.",
+      "kind": "copy",
+      "ref": "add/add.njk:108-109; copy/copy.en.js:50",
+      "quote": "cancelToJourney: 'Cancel and return to address page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-108",
+      "statement": "Saving a new address in journey mode sends the user back to the journey's return URL with the handshake-token and the new address's id as 'addressId' added to the query.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:61-64; journey-registry.js:47-52",
+      "quote": "? h.redirect(buildReturnUrl(handshake, { addressId: created.id }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-109",
+      "statement": "Saving in journey mode shows no success banner in the address book.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:111-113",
+      "quote": "if (!handshake) {\n      setSuccessBanner(request, copy.successBanner.added(created.name))\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-110",
+      "statement": "Cancelling the add page in journey mode sends the user back to the journey's return URL with the handshake-token but no addressId.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:66-69",
+      "quote": "? h.redirect(buildReturnUrl(handshake))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-111",
+      "statement": "In journey mode, validation errors and save failures re-show the add form still in journey mode.",
+      "kind": "behaviour",
+      "ref": "add/add.controller.js:103-133",
+      "quote": "errors,\n        handshake\n      }).code(HTTP_STATUS_BAD_REQUEST)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-112",
+      "statement": "Only the animals frontend's live-animals journey is registered; there is no handshake entry for the plants journey or any other journey.",
+      "kind": "data",
+      "ref": "journey-registry.js:11-17; common/constants/journey-set-bases.js:1-3",
+      "quote": "LIVE_ANIMALS: '/live-animals'",
+      "confidence": "gap",
+      "note": "Looked in journey-registry.js and journey-set-bases.js: only gbn-ag and live-animals exist."
+    },
+    {
+      "id": "repo-insfrontend-p3-113",
+      "statement": "Welsh copy for the address book is a machine draft that has not been reviewed by a translator and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-114",
+      "statement": "In Welsh, the add page heading is 'Ychwanegu manylion cyfeiriad', its buttons are 'Cadw a pharhau', 'Canslo a dychwelyd i’r llyfr cyfeiriadau' and, in journey mode, 'Canslo a dychwelyd i’r dudalen gyfeiriad'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:48-53",
+      "quote": "title: 'Ychwanegu manylion cyfeiriad',\n    save: 'Cadw a pharhau',\n    cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',\n    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-115",
+      "statement": "In Welsh, the edit page heading is 'Golygu manylion cyfeiriad' and its buttons are 'Cadw’r newidiadau' and 'Canslo'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:54-58",
+      "quote": "title: 'Golygu manylion cyfeiriad',\n    save: 'Cadw’r newidiadau',\n    cancel: 'Canslo'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-116",
+      "statement": "In Welsh, the form section headings are 'Rhowch fanylion y cyfeiriad' and 'Rhowch fanylion cyswllt', the phone hint is 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad' and the country placeholder is 'Dewiswch wlad'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:31-47",
+      "quote": "addressHeading: 'Rhowch fanylion y cyfeiriad',\n    contactHeading: 'Rhowch fanylion cyswllt', ... phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',\n    countryPlaceholder: 'Dewiswch wlad'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-117",
+      "statement": "In Welsh, the field labels are 'Enw neu enw’r sefydliad', 'Llinell gyfeiriad 1', 'Llinell gyfeiriad 2 (dewisol)', 'Tref neu ddinas', 'Sir (dewisol)', 'Cod post neu god zip', 'Gwlad', 'Rhif ffôn' and 'Cyfeiriad e-bost'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:34-44",
+      "quote": "name: 'Enw neu enw’r sefydliad',\n      addressLine1: 'Llinell gyfeiriad 1',\n      addressLine2: 'Llinell gyfeiriad 2 (dewisol)',\n      townOrCity: 'Tref neu ddinas',\n      county: 'Sir (dewisol)',\n      postcode: 'Cod post neu god zip',\n      countryCode: 'Gwlad',\n      phone: 'Rhif ffôn',\n      email: 'Cyfeiriad e-bost'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-118",
+      "statement": "In Welsh, the required-field errors are 'Rhowch enw', 'Rhowch linell gyfeiriad 1', 'Rhowch dref neu ddinas', 'Rhowch god post', 'Rhowch wlad', 'Rhowch rif ffôn' and 'Rhowch gyfeiriad e-bost', and the email format error is 'Rhowch gyfeiriad e-bost yn y fformat cywir'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:71-106",
+      "quote": "required: 'Rhowch enw', ... required: 'Rhowch linell gyfeiriad 1', ... required: 'Rhowch dref neu ddinas', ... required: 'Rhowch god post', ... required: 'Rhowch wlad' ... required: 'Rhowch rif ffôn', ... required: 'Rhowch gyfeiriad e-bost',\n      format: 'Rhowch gyfeiriad e-bost yn y fformat cywir',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-119",
+      "statement": "In Welsh, the maximum-length errors follow the pattern 'Rhaid i… fod yn {max} nod neu lai' for each field (for example 'Rhaid i’r enw fod yn 255 nod neu lai').",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:74-104",
+      "quote": "maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-120",
+      "statement": "In Welsh, the success banner title is 'Llwyddiant' and the added and updated messages are '{name} wedi’i ychwanegu at eich llyfr cyfeiriadau' and '{name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau'.",
+      "kind": "copy",
+      "ref": "copy/copy.cy.js:25-29",
+      "quote": "title: 'Llwyddiant',\n    added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,\n    updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-121",
+      "statement": "The shared validators also offer a UK postcode format check, a vehicle registration check, a UK phone check (only digits and + ( ) - . , ; and spaces, 7 to 15 digits), whole-number ranges, dates and 24-hour times; the address form uses none of them.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/validators.js:10-15,95-306",
+      "quote": "const POSTCODE = /^[A-Za-z]{1,2}\\d[A-Za-z\\d]?\\s*\\d[A-Za-z]{2}$/\nconst VEHICLE_REG = /^[A-Za-z]{2}\\d{2}\\s?[A-Za-z]{3}$/\nconst PHONE_ALLOWED = /^[0-9+()\\-.,;\\s]+$/\nconst TIME_24_HOUR = /^([01]\\d|2[0-3]):[0-5]\\d$/\nconst UK_PHONE_MIN_DIGITS = 7\nconst UK_PHONE_MAX_DIGITS = 15",
+      "confidence": "verbatim",
+      "note": "Shared library in this part's read; its default messages live in shared/copy (part 4)."
+    },
+    {
+      "id": "repo-insfrontend-p3-122",
+      "statement": "Shared date validation accepts dates typed as day/month/year with a four-digit year, rejects impossible dates such as 31 February, and treats a date split into day, month and year boxes as invalid when only some boxes are filled.",
+      "kind": "rule",
+      "ref": "src/server/app/lib/validate/calendar.js:3-23,49-61; validators.js:199-241",
+      "quote": "const DATE_TEXT_SHAPE = /^\\d{1,2}\\/\\d{1,2}\\/\\d{4}$/",
+      "confidence": "verbatim",
+      "note": "Not used by the address form; recorded because the shared library is in this part's read."
+    },
+    {
+      "id": "repo-insfrontend-p3-123",
+      "statement": "Fit test: the add page renders the heading 'Add address details', every field label, the phone hint, a country select with no value chosen and United Kingdom as one option.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/add.fit.spec.js:22-47 'renders every field, hints and populated country options'",
+      "quote": "test('renders every field, hints and populated country options'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-124",
+      "statement": "Fit test: the add page has no serious or critical axe accessibility violations against WCAG 2.0, 2.1 and 2.2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "fit/add.fit.spec.js:49-54 'has no serious or critical axe violations'; fit/axe.js:4-6",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-125",
+      "statement": "Fit tests (seven, one per required field): leaving name, address line 1, town or city, postcode, country, phone or email empty shows its required message in the error summary, the link focuses the field, the field is still empty and the other entered values are kept.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js:58-78 'empty ${label} links to and focuses the preserved field'; fit/address-form.js:68-76",
+      "quote": "test(`empty ${label} links to and focuses the preserved field`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-126",
+      "statement": "Fit tests (eight, one per text field): a value one character over the maximum for name, both address lines, town, county, postcode, phone or email shows its maximum-length message, the link focuses the field and the over-long value is kept.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js:80-101 '${label} over ${maxLength} characters links to and focuses the preserved value'; fit/address-form.js:78-127",
+      "quote": "test(`${label} over ${maxLength} characters links to and focuses the preserved value`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-127",
+      "statement": "Fit test: on the add page, an email of 'not-an-email' is rejected with 'Enter an email address in the correct format' and the value is kept.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js:103-116 'rejects a malformed email address'",
+      "quote": "test('rejects a malformed email address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-128",
+      "statement": "Fit test: the add page in its validation error state has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "fit/add.fit.spec.js:118-132 'validation error page has no serious or critical axe violations'",
+      "quote": "test('validation error page has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-129",
+      "statement": "Fit test: saving a valid address goes to /address-book, shows 'Highland Livestock Ltd added to your address book' and lists the new address in the table.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js:136-157 'saves a valid address, shows a confirmation banner and lists the new address'",
+      "quote": "'Highland Livestock Ltd added to your address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-130",
+      "statement": "Fit test: 'Cancel and return to address book' goes to /address-book and the typed name is not saved.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js:160-175 'returns to the address book without creating an address'",
+      "quote": "test('returns to the address book without creating an address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-131",
+      "statement": "Fit test: the edit page shows the heading 'Edit address details', pre-fills every field from the stored address, shows the phone hint, and has a 'Back' link to /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js:36-51 'prefills every field from the stored address'",
+      "quote": "test('prefills every field from the stored address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-132",
+      "statement": "Fit test: the edit page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "fit/edit.fit.spec.js:53-57 'has no serious or critical axe violations'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Edit address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-133",
+      "statement": "Fit test: when an edit is rejected because the name was cleared, the page keeps the user's other edits (a changed town) rather than re-showing the stored address.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js:59-80 'a rejected save keeps the edits rather than the stored address'",
+      "quote": "test('a rejected save keeps the edits rather than the stored address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-134",
+      "statement": "Fit test: on the edit page, a malformed email is rejected with 'Enter an email address in the correct format' and the value is kept.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js:82-96 'a malformed email is rejected and the value preserved'",
+      "quote": "test('a malformed email is rejected and the value preserved'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-135",
+      "statement": "Fit test: the edit page in its validation error state has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "fit/edit.fit.spec.js:98-111 'the validation error state has no serious or critical axe violations'",
+      "quote": "test('the validation error state has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-136",
+      "statement": "Fit test: saving edits goes to /address-book, shows '{new name} updated in your address book' and lists the address under its new name only.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js:113-132 'saving changes confirms them on the address book'",
+      "quote": "page.getByText('Glen Tanar Estate updated in your address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-137",
+      "statement": "Fit test: 'Cancel' on the edit page goes to /address-book without saving, and the address keeps its stored name.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js:134-147 'Cancel returns to the address book without saving'",
+      "quote": "test('Cancel returns to the address book without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p3-138",
+      "statement": "No fit test covers the journey handshake: arriving from a journey, the journey cancel label, the return URL, or the addressId handed back.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js; fit/edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both fit specs: neither passes journey-type or any handshake parameter."
+    },
+    {
+      "id": "repo-insfrontend-p3-139",
+      "statement": "No fit test covers the address book service rejecting a save as invalid, the recoverable error state, or the reference data service being unavailable.",
+      "kind": "behaviour",
+      "ref": "fit/add.fit.spec.js; fit/edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both fit specs: every test runs against the stub happy path or frontend validation."
+    },
+    {
+      "id": "repo-insfrontend-p3-140",
+      "statement": "No fit test covers editing an address id that does not exist, is deleted or is malformed.",
+      "kind": "behaviour",
+      "ref": "fit/edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in edit.fit.spec.js: all tests use the one seeded address."
+    }
+  ]
+}

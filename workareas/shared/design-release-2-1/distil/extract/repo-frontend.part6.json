@@ -1,12 +1,12 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 6 of repo:frontend read the live-animals set's one review page in full: the check-answers feature folder at src/server/app/sets/live-animals/journeys/linear/features/check-answers/ — page.js (id/slug/maturity), controller.js (the GET handler, the error summary assembly, the error precedence and which states hide answer errors), template.njk (the whole rendered page: view header, import reference numbers, section loop, summary-card loop, species blocks, groups and the foot form), refusal.js (the Continue refusal rules, unlisted-species errors and document-scan errors), review-href.js (the review URL's staleAction and refused flags), reviewed.js (recording the reviewed concurrency token), copy/copy.en.js and copy/copy.cy.js in full, every file under view-model/ (index.js, view-header.js, species-errors.js, invalid-parties.js, applicability.js, incomplete-cards.js; sections/about-consignment.js, description-of-goods.js, transport-and-arrival.js, documents.js, addresses.js, contact-address.js; cards/documents.js, cards/consignment/origin-of-import.js, what-are-you-importing.js, main-import-reason.js, additional-details.js, commodity-cards.js, cards/consignment/species/species-block.js, identification-details-table.js, identifier-columns.js, cards/movement/arrival-details.js, transport-details.js, cards/addresses/consignment-addresses.js, contact-address.js; rows/change-link.js, summary-row.js, value-text.js, party-row.js) and all 1,685 lines of check-answers.fit.spec.js. It covers the review page's route and maturity, its heading and title in every notification state, the view header (status tag, date line, Amend/Copy as new/Delete, import reference numbers), the six numbered sections and their anchors, every card and every row with its key, value formatting, change-link target and link text, the incomplete-card treatment and all ten Complete messages, the species and party error restatements, the invalid-party case, the Continue refusal rules and the states that hold errors silently, every behaviour the fit spec proves, and key parity between copy.cy.js and copy.en.js. The question pages that capture these answers, the shared layout, error-summary partial and journey strip, the commodities/addresses/documents/transport feature folders, the task rows and the obligations are other parts' and are only cited here where the review page's own files reach into them.",
+  "structure": "Part 6 read the whole check-answers feature folder of repos/trade-imports-animals-frontend at src/server/app/sets/live-animals/journeys/linear/features/check-answers/: page.js, controller.js, template.njk, refusal.js, review-href.js, reviewed.js, copy/copy.en.js and copy/copy.cy.js, every file under view-model/ (index.js, view-header.js, incomplete-cards.js, invalid-parties.js, species-errors.js, applicability.js, sections/ (5 files), cards/documents.js, cards/movement/ (2), cards/addresses/consignment-addresses.js, cards/consignment/ (5 plus species/ with 3), rows/ (4)) and check-answers.fit.spec.js (1617 lines, every test). It covers the one review page, /notifications/<ref>/notification-view: its titles and headings by notification state, the view header for draft and submitted notifications (status tag, Amend / Copy as new / Delete, date line, import reference numbers), the five numbered sections in order (About the consignment, Description of the goods, Transport and arrival, Uploaded documents, Addresses), every card and row with its key, value formatting and Change link, species blocks and the identification details table, the incomplete-card messages and error summary, the invalid-party and species error restatements, the refusal rules for Continue and when errors are held silently, the foot controls, the fit spec's proofs, and Welsh copy parity. Since the earlier extract the repo removed the contact address from the review: there is no sixth section, no Contact address card, no contact address error or invalid-party message, and no party row on the review carries an Edit details link; the claims that said otherwise are dropped or reissued under new ids.",
   "claims": [
     {
       "id": "repo-frontend-p6-001",
       "statement": "A trader reaches the review page at /notifications/<notification reference>/notification-view, and the page answers GET only.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/page.js:1-5 and controller.js:258",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/page.js:1-5 and controller.js:257",
       "quote": "export const notificationViewPage = {\n  id: 'notification-view',\n  slug: 'notification-view',\n  maturity: 'detailing'\n}  /  export const routes = pageRoutes(page, { get: renderAndRecordReviewed })",
       "confidence": "verbatim",
       "note": "The slug is also the shared CYA_SLUG ('notification-view', src/server/app/shared/kit.js:69), which the change links use as their return marker. The fit spec navigates to `${BASE}/notifications/GBN-0000-0000-0000/notification-view`."
@@ -23,10 +23,10 @@
       "id": "repo-frontend-p6-003",
       "statement": "For a draft or a submitted notification the page's H1 and browser title are the notification reference itself, not a question.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:156-160 and template.njk:36",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:155-159 and template.njk:36",
       "quote": "const header = viewHeader(journey)\n  const title = header ? header.reference : reviewTitle(journey)\n  return h.view(view, {\n    pageTitle: title,\n    heading: title,  /  <h1 class=\"govuk-heading-l govuk-!-display-inline-block govuk-!-margin-right-3\">{{ viewHeader.reference }}</h1>",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1149-1156 and :1342-1354 prove the H1 and the title for a draft and for a submitted notification."
+      "note": "check-answers.fit.spec.js:1082-1089 and :1274-1286 prove the H1 and the title for a draft and for a submitted notification."
     },
     {
       "id": "repo-frontend-p6-004",
@@ -43,13 +43,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:108-111 and copy/copy.en.js:3",
       "quote": "const reviewTitle = (journey) =>\n  journey.status === state.AMEND && journey.answersDifferFromSubmitted\n    ? copy.resubmittingTitle\n    : copy.title  /  resubmittingTitle: 'Review before re-submitting'",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1636-1645 proves the heading and title change once an answer changes."
+      "note": "check-answers.fit.spec.js:1568-1577 proves the heading and title change once an answer changes, and :1510-1515 shows an amendment with its arrival date cleared is headed 'Review before re-submitting'."
     },
     {
       "id": "repo-frontend-p6-006",
       "statement": "Putting a changed answer back on an amendment returns the heading and title to 'Review your notification', and a fresh amendment raised after a cancelled one opens with that heading too.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1647-1657, :1667-1684",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1579-1589, :1596-1617",
       "quote": "test('is headed and titled for reviewing again once the changed answer is put back'",
       "confidence": "verbatim"
     },
@@ -57,7 +57,7 @@
       "id": "repo-frontend-p6-007",
       "statement": "Opening the review of a notification reference that does not exist answers 404 and shows the standard 'Page not found' page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1540-1555",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1472-1487",
       "quote": "expect(response.status()).toBe(404)\n    await expect(\n      page.getByRole('heading', { level: 1, name: '404', exact: true })\n    ).toBeVisible()\n    await expect(page.getByText('Page not found')).toBeVisible()",
       "confidence": "verbatim"
     },
@@ -68,13 +68,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:93-99",
       "quote": "const backLinkFor = (request, journey) =>\n  trailBackLink(request, {\n    fallback:\n      journey.status === state.AMEND\n        ? hubPath(journey.journeyId)\n        : dashboardPath()\n  })",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:869-876 and :1300-1306 prove Back goes to the list at BASE."
+      "note": "check-answers.fit.spec.js:802-809 and :1232-1238 prove Back goes to the list at BASE."
     },
     {
       "id": "repo-frontend-p6-009",
       "statement": "Opening the review of anything but a submitted notification records that the trader has seen the notification as it stands, so that a later change can be reported to them.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:249-256 and reviewed.js:3-9",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:248-255 and reviewed.js:3-9",
       "quote": "if (journey.status !== state.SUBMITTED) {\n    await recordReviewed(request, h, journey)\n  }  /  export const recordReviewed = (request, h, journey) =>\n  session.setReviewedConcurrencyToken(\n    h,\n    journey.journeyId,\n    journey.concurrencyToken,\n    request\n  )",
       "confidence": "verbatim",
       "note": "mechanism: stores the journey's concurrency token in the session against the journey id, so the page the trader saw can be compared with the stored record later."
@@ -86,13 +86,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/review-href.js:4-20",
       "quote": "// `changed` raises the shared \"notification has been updated\" banner (`staleAction`).\nexport const reviewHref = (\n  journeyId,\n  { changed = false, refused = false } = {}\n) => {\n  const query = new URLSearchParams()\n  if (changed) {\n    query.set('staleAction', '1')\n  }\n  if (refused) {\n    query.set('refused', '1')\n  }",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1018, :1082 and :1095 prove a refused Continue lands back on `${reviewUrl}?refused=1`."
+      "note": "check-answers.fit.spec.js:951, :1015 and :1028 prove a refused Continue lands back on `${reviewUrl}?refused=1`."
     },
     {
       "id": "repo-frontend-p6-011",
       "statement": "A draft or submitted notification shows a view header (reference, status tag, action buttons, date line and import reference numbers); in any other state the page shows the journey strip instead.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:84-100 and controller.js:169-170",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:84-100 and controller.js:164-165",
       "quote": "export const viewHeader = (journey) => {\n  if (journey.status !== DRAFT && journey.status !== SUBMITTED) {\n    return null\n  }  /  journeyStrip: header ? null : journeyStrip(journey),\n    viewHeader: header,",
       "confidence": "verbatim"
     },
@@ -103,22 +103,22 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:91 and template.njk:37",
       "quote": "status: journeyStrip(journey).status,  /  {{ govukTag({ text: viewHeader.status.text, classes: viewHeader.status.classes }) }}",
       "confidence": "verbatim",
-      "note": "The tag's words come from the shared journey strip (sharedCopy.journeyStrip), outside this part. check-answers.fit.spec.js:1149-1152 and :1342-1350 prove the Draft and Submitted tags."
+      "note": "The tag's words come from the shared journey strip (sharedCopy.journeyStrip), outside this part. check-answers.fit.spec.js:1082-1085 and :1274-1282 prove the Draft and Submitted tags."
     },
     {
       "id": "repo-frontend-p6-013",
       "statement": "A draft's view header carries the line 'Date created: <date>' in the long day format.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:24-36 and copy/copy.en.js:104",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:24-36 and copy/copy.en.js:100",
       "quote": "dateCreated: (date) => `Date created: ${date}`  /  return instant ? datedLineFor(formatMomentAsLongDay(new Date(instant))) : null",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1158-1171 proves the line for a draft."
+      "note": "check-answers.fit.spec.js:1091-1104 proves the line for a draft."
     },
     {
       "id": "repo-frontend-p6-014",
       "statement": "A submitted notification's view header carries 'Date submitted: <date>' instead, and the date is unchanged by a reload.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:26-30, copy/copy.en.js:105 and check-answers.fit.spec.js:1509-1516",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:26-30, copy/copy.en.js:101 and check-answers.fit.spec.js:1441-1448",
       "quote": "dateSubmitted: (date) => `Date submitted: ${date}`  /  test('shows the same submitted date after a reload'",
       "confidence": "verbatim"
     },
@@ -135,7 +135,7 @@
       "id": "repo-frontend-p6-016",
       "statement": "A draft's view header offers 'Copy as new' then 'Delete notification', and offers no 'Amend this notification'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:38-44 and check-answers.fit.spec.js:1173-1180",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:38-44 and check-answers.fit.spec.js:1106-1113",
       "quote": "const amendAction = (journey) =>\n  journey.status === SUBMITTED\n    ? {\n        text: copy.viewHeader.amend,  /  await expect(headerControls(page)).toHaveText([\n      sharedCopy.notificationActions.copy.text,\n      sharedCopy.notificationActions.delete.text\n    ])",
       "confidence": "verbatim",
       "note": "The Copy as new and Delete button words come from the shared notification actions copy, outside this part."
@@ -144,7 +144,7 @@
       "id": "repo-frontend-p6-017",
       "statement": "A submitted notification's view header offers 'Amend this notification', then 'Copy as new', then 'Delete notification', in that order.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:103, template.njk:50-63 and check-answers.fit.spec.js:1369-1376",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:99, template.njk:50-63 and check-answers.fit.spec.js:1301-1312",
       "quote": "amend: 'Amend this notification'  /  await expect(headerControls(page)).toHaveText([\n      copy.viewHeader.amend,\n      sharedCopy.notificationActions.copy.text,\n      sharedCopy.notificationActions.delete.text\n    ])",
       "confidence": "verbatim"
     },
@@ -160,7 +160,7 @@
       "id": "repo-frontend-p6-019",
       "statement": "'Amend this notification' submits a form of its own to the notification's /amend path carrying only the cross-site request token, and opens the amendment review.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:39-43 and check-answers.fit.spec.js:1382-1419",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:39-43 and check-answers.fit.spec.js:1314-1351",
       "quote": "<form id=\"view-header-amend\" method=\"post\" action=\"{{ viewHeader.actions.amend.postAction }}\" novalidate>\n        <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n      </form>  /  expect(await fieldNamesOf(amend.form)).toEqual(['crumb'])",
       "confidence": "verbatim"
     },
@@ -168,7 +168,7 @@
       "id": "repo-frontend-p6-020",
       "statement": "'Copy as new' submits a separate form to the notification's /copy path carrying the request token, the concurrency token and a copy origin of 'notification-view', and opens a different draft notification's overview.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:44-48 and check-answers.fit.spec.js:1182-1212",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:44-48 and check-answers.fit.spec.js:1115-1145",
       "quote": "<input type=\"hidden\" name=\"copyOrigin\" value=\"notification-view\" />  /  expect(await fieldNamesOf(form)).toEqual([\n      'crumb',\n      'concurrencyToken',\n      'copyOrigin'\n    ])",
       "confidence": "verbatim"
     },
@@ -176,7 +176,7 @@
       "id": "repo-frontend-p6-021",
       "statement": "'Delete notification' in the view header is a warning-styled control linking to the notification's delete page, and opens the delete confirmation from a draft, a submitted notification and an amendment review.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:18-22 and check-answers.fit.spec.js:1403-1408, :885-892, :1214-1218, :1476-1480, :1630-1634",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:18-22 and check-answers.fit.spec.js:1335-1340, :818-825, :1147-1151, :1408-1412, :1562-1566",
       "quote": "export const deleteButtonFor = (journey) => ({\n  text: sharedCopy.notificationActions.delete.text,\n  href: pagePath(journey.journeyId, notificationActionSlugs.delete),\n  classes: 'govuk-button--warning'\n})",
       "confidence": "verbatim"
     },
@@ -184,7 +184,7 @@
       "id": "repo-frontend-p6-022",
       "statement": "Amend, Copy as new and Delete all work with JavaScript turned off.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1220-1234, :1421-1452",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1153-1167, :1353-1384",
       "quote": "test('Amend this notification opens the amendment review when JavaScript is off'",
       "confidence": "verbatim"
     },
@@ -192,7 +192,7 @@
       "id": "repo-frontend-p6-023",
       "statement": "The view header holds an 'Import reference numbers' section, labelled as its own region by that heading.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:108, template.njk:69-73",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:104, template.njk:69-73",
       "quote": "heading: 'Import reference numbers'  /  <section aria-labelledby=\"import-reference-numbers-heading\">\n      <h2 class=\"govuk-heading-m\" id=\"import-reference-numbers-heading\">{{ viewHeader.importReferences.heading }}</h2>",
       "confidence": "verbatim"
     },
@@ -200,7 +200,7 @@
       "id": "repo-frontend-p6-024",
       "statement": "The import reference numbers section opens with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.', whose icon reads 'Warning' to a screen reader.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:101, :109-110 and view-model/view-header.js:54-58",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:97, :105-106 and view-model/view-header.js:54-58",
       "quote": "warning:\n      'You must use the correct reference and code on the customs declaration or your consignment will be delayed.'  /  warningIcon: 'Warning'",
       "confidence": "verbatim"
     },
@@ -208,7 +208,7 @@
       "id": "repo-frontend-p6-025",
       "statement": "The import reference numbers section lists two rows: 'Notification reference' showing the notification's own reference, and 'Customs document code' showing the fixed value C640.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:52-71 and check-answers.fit.spec.js:132-139",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.js:52-71 and check-answers.fit.spec.js:120-127",
       "quote": "const customsDocumentCode = 'C640'  /  await expect(summaryValues(section)).toHaveText([reference, 'C640'])",
       "confidence": "verbatim"
     },
@@ -216,7 +216,7 @@
       "id": "repo-frontend-p6-026",
       "statement": "The import reference numbers are shown as plain text with no button beside them, with JavaScript on or off, so there is no copy-to-clipboard control.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1236-1243, :1488-1501",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1169-1176, :1420-1433",
       "quote": "await expect(section.getByRole('button')).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -224,7 +224,7 @@
       "id": "repo-frontend-p6-027",
       "statement": "The import references warning appears once on the page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1503-1507",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1435-1439",
       "quote": "test('is headed by the import references warning alone', async ({ page }) => {\n    await expect(\n      main(page).getByText(copy.importReferences.warning)\n    ).toHaveCount(1)",
       "confidence": "verbatim"
     },
@@ -237,12 +237,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-029",
-      "statement": "The review lists six numbered sections in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Addresses', '6. Contact address'.",
+      "id": "repo-frontend-p6-140",
+      "statement": "The review lists five numbered sections in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Addresses'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:12-19, view-model/index.js:37-72 and check-answers.fit.spec.js:416-430",
-      "quote": "sections: {\n    aboutTheConsignment: '1. About the consignment',\n    descriptionOfTheGoods: '2. Description of the goods',\n    transportAndArrival: '3. Transport and arrival',\n    documents: '4. Uploaded documents',\n    addresses: '5. Addresses',\n    contactAddress: '6. Contact address'\n  }",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:12-18, view-model/index.js:35-61 and check-answers.fit.spec.js:404-417",
+      "quote": "sections: {\n    aboutTheConsignment: '1. About the consignment',\n    descriptionOfTheGoods: '2. Description of the goods',\n    transportAndArrival: '3. Transport and arrival',\n    documents: '4. Uploaded documents',\n    addresses: '5. Addresses'\n  }  /  test('numbers the five sections in order'",
+      "confidence": "verbatim",
+      "note": "Replaces the earlier six-section claim: the Contact address section is no longer built (view-model/index.js returns five sections)."
     },
     {
       "id": "repo-frontend-p6-030",
@@ -253,19 +254,19 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-031",
-      "statement": "The six sections' in-page anchors are about-the-consignment, description-of-the-goods, transport-and-arrival, documents-section, consignment-addresses and contact-address-section.",
+      "id": "repo-frontend-p6-141",
+      "statement": "The five sections' in-page anchors are about-the-consignment, description-of-the-goods, transport-and-arrival, documents-section and consignment-addresses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:18, description-of-goods.js:16, transport-and-arrival.js:16, documents.js:15, addresses.js:17, contact-address.js:17",
-      "quote": "anchor: 'about-the-consignment'  /  anchor: 'description-of-the-goods'  /  anchor: 'transport-and-arrival'  /  anchor: 'documents-section'  /  anchor: 'consignment-addresses'  /  anchor: 'contact-address-section'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:18, description-of-goods.js:16, transport-and-arrival.js:16, documents.js:15, addresses.js:17",
+      "quote": "anchor: 'about-the-consignment'  /  anchor: 'description-of-the-goods'  /  anchor: 'transport-and-arrival'  /  anchor: 'documents-section'  /  anchor: 'consignment-addresses'",
       "confidence": "verbatim",
       "note": "Two section anchors deliberately differ from the card anchor of the same name: the documents section is 'documents-section' while its card anchor is 'documents', and the addresses section is 'consignment-addresses' while its card anchor is 'addresses'."
     },
     {
-      "id": "repo-frontend-p6-032",
-      "statement": "On a notification with nothing but the entry page answered the page's headings read, in order: the error summary title, the reference, 'Import reference numbers', '1. About the consignment', 'Origin of import', 'What are you importing?', 'Main import reason', '2. Description of the goods', 'Additional details', '3. Transport and arrival', 'Arrival details', 'Transport details', '4. Uploaded documents', 'Document 1', '5. Addresses', 'Consignment addresses', '6. Contact address', 'Contact address' — so every card title sits straight under its section heading.",
+      "id": "repo-frontend-p6-142",
+      "statement": "On a notification with nothing but the entry page answered the page's headings read, in order: the error summary title, the reference, 'Import reference numbers', '1. About the consignment', 'Origin of import', 'What are you importing?', 'Main import reason', '2. Description of the goods', 'Additional details', '3. Transport and arrival', 'Arrival details', 'Transport details', '4. Uploaded documents', 'Document 1', '5. Addresses', 'Consignment addresses' — so every card title sits straight under its section heading.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:463-518",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:451-502",
       "quote": "test('puts every card title straight under its section heading, with no other heading between them'",
       "confidence": "verbatim",
       "note": "The same test pins the levels: the reference is the only h1, the section headings and the error summary and import references headings are h2, and the card titles are h3."
@@ -274,7 +275,7 @@
       "id": "repo-frontend-p6-033",
       "statement": "Every summary card is a region named by its own title, which is a third-level heading.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:85-88 and check-answers.fit.spec.js:1454-1468",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:85-88 and check-answers.fit.spec.js:1386-1400",
       "quote": "<section class=\"govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}\"{% if card.anchor %} id=\"{{ card.anchor }}\" tabindex=\"-1\"{% endif %} aria-labelledby=\"{{ cardTitleId }}\">\n        <div class=\"govuk-summary-card__title-wrapper\">\n          <h3 class=\"govuk-summary-card__title\" id=\"{{ cardTitleId }}\">{{ card.title }}</h3>",
       "confidence": "verbatim"
     },
@@ -282,7 +283,7 @@
       "id": "repo-frontend-p6-034",
       "statement": "The About the consignment section holds three cards in this order: 'Origin of import', 'What are you importing?' and 'Main import reason'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:20-41 and copy/copy.en.js:21-23",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:20-41 and copy/copy.en.js:20-22",
       "quote": "cards: [\n    await originOfImportCard({\n...\n    whatAreYouImportingCard({\n...\n    await mainImportReasonCard({",
       "confidence": "verbatim"
     },
@@ -290,7 +291,7 @@
       "id": "repo-frontend-p6-035",
       "statement": "The Origin of import card holds three rows in this order: 'Country of origin', 'Region of origin code' and 'Internal reference number'.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/origin-of-import.js:27-36 and check-answers.fit.spec.js:209-213",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/origin-of-import.js:27-36 and check-answers.fit.spec.js:197-201",
       "quote": "rows: [\n    row(\n      copy.rows.countryOfOrigin,\n...\n    row(copy.rows.regionCode, answers.regionOfOriginCode),\n    row(copy.rows.internalReference, answers.internalReferenceNumber)\n  ]",
       "confidence": "verbatim"
     },
@@ -307,7 +308,7 @@
       "id": "repo-frontend-p6-037",
       "statement": "The Region of origin code row reads the stored code back with its country prefix, such as 'FR-IDF75' for IDF75 entered against France.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:193-214",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:173-210",
       "quote": "await expect(rowFor(page, copy.rows.regionCode)).toContainText('FR-IDF75')",
       "confidence": "verbatim",
       "note": "The prefixing is done where the answer is stored, outside this part; the review restates what is stored."
@@ -332,7 +333,7 @@
       "id": "repo-frontend-p6-040",
       "statement": "For a transit import the Main import reason card shows the port of exit first and the destination country after it.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/main-import-reason.js:44-58 and check-answers.fit.spec.js:630-679",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/main-import-reason.js:44-58 and check-answers.fit.spec.js:614-663",
       "quote": "const transitExitRows = async (answers, scope) => [\n  ...(await portRows(answers, scope)),\n  ...(await destinationCountryRows(answers, scope))\n]",
       "confidence": "verbatim",
       "note": "The fit spec pins the row keys to ['Main import reason', 'Port of exit', 'Destination country'] for a transit."
@@ -344,13 +345,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/main-import-reason.js:49-58",
       "quote": "const otherExitRows = async (answers, scope) => [\n  ...(await destinationCountryRows(answers, scope)),\n  ...exitDateRows(answers, scope),\n  ...(await portRows(answers, scope))\n]",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:681-709 proves a temporary admission for horses shows the exit date and the port of exit and no destination country."
+      "note": "check-answers.fit.spec.js:665-693 proves a temporary admission for horses shows the exit date and the port of exit and no destination country."
     },
     {
       "id": "repo-frontend-p6-042",
       "statement": "For a reason that asks for none of them — a re-entry — none of the destination country, exit date or port of exit rows appear at all.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:711-728",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:695-712",
       "quote": "test('leaves all three rows off the review for a reason that asks none of them'",
       "confidence": "verbatim"
     },
@@ -361,13 +362,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/main-import-reason.js:36-38 and cards/movement/arrival-details.js:73-76",
       "quote": "const portLabelOf = async (answers) =>\n  (await ports.label(answers.portOfExit)) ?? answers.portOfExit",
       "confidence": "verbatim",
-      "note": "mechanism: falls back from the reference-data label to the stored code. check-answers.fit.spec.js:622-623 shows the label form 'Port of Dover - GB DVR'."
+      "note": "mechanism: falls back from the reference-data label to the stored code. check-answers.fit.spec.js:607 shows the label form 'Port of Dover - GB DVR'."
     },
     {
       "id": "repo-frontend-p6-044",
       "statement": "Every date on the review reads back as day/month/year with no leading zeros, such as 27/3/2026, and a blank date is left blank rather than called 'Not applicable'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:26-28 and check-answers.fit.spec.js:702",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:26-28 and check-answers.fit.spec.js:686",
       "quote": "/** A blank date comes back blank, not as \"Not applicable\". */\nexport const dateText = (value) =>\n  isBlank(value) ? null : `${value.day}/${value.month}/${value.year}`",
       "confidence": "verbatim"
     },
@@ -375,7 +376,7 @@
       "id": "repo-frontend-p6-045",
       "statement": "The Description of the goods section holds one card per commodity group, titled by that group's heading (its commodity code), followed by the 'Additional details' card.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/description-of-goods.js:18-32, view-model/cards/consignment/commodity-cards.js:23-25 and check-answers.fit.spec.js:357-408",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/description-of-goods.js:18-32, view-model/cards/consignment/commodity-cards.js:23-25 and check-answers.fit.spec.js:345-396",
       "quote": "buildCommodityGroups(linesOf(answers, evaluation)).map(\n    ({ heading, lines }, position) => ({\n      title: heading,",
       "confidence": "verbatim",
       "note": "The fit spec proves one card per commodity code, each holding only its own species blocks."
@@ -392,7 +393,7 @@
       "id": "repo-frontend-p6-047",
       "statement": "A commodity card's Change link opens the commodity details page and reads 'Change commodity <card title>' to a screen reader.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/commodity-cards.js:27-34 and copy/copy.en.js:94",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/commodity-cards.js:27-34 and copy/copy.en.js:90",
       "quote": "commodity: (title) => `commodity ${title}`",
       "confidence": "verbatim"
     },
@@ -403,13 +404,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-block.js:63-85, view-model/species-errors.js:14 and template.njk:96-99",
       "quote": "export const speciesBlockAnchor = (lineIndex) => `species-block-${lineIndex}`  /  anchor: speciesBlockAnchor(index),\n    heading: speciesName,",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:331-338 proves two cattle species sit under one commodity card as two blocks."
+      "note": "check-answers.fit.spec.js:319-326 proves two cattle species sit under one commodity card as two blocks."
     },
     {
       "id": "repo-frontend-p6-049",
       "statement": "A species block's first row is 'Number of animals', with its own Change link to the commodity details page reading 'Change number of animals for <species>'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-block.js:46-57 and copy/copy.en.js:95",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-block.js:46-57 and copy/copy.en.js:91",
       "quote": "numberOfAnimals: (species) => `number of animals for ${species}`",
       "confidence": "verbatim"
     },
@@ -417,7 +418,7 @@
       "id": "repo-frontend-p6-050",
       "statement": "A species block adds a 'Number of packages (when required)' row only for a commodity code that asks for a package count.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-block.js:58-61, view-model/applicability.js:30-31 and copy/copy.en.js:49",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-block.js:58-61, view-model/applicability.js:30-31 and copy/copy.en.js:47",
       "quote": "...(packagesApply(entry.commodityCode)\n    ? [row(copy.rows.numberOfPackages, entry.numberOfPackages)]\n    : [])  /  numberOfPackages: 'Number of packages (when required)'",
       "confidence": "verbatim"
     },
@@ -425,7 +426,7 @@
       "id": "repo-frontend-p6-051",
       "statement": "A species block that has identified animals shows an 'Identification details' heading one level below the species heading, with a Change link to the animal identification page reading 'Change identification details for <species>'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:100-108, view-model/cards/consignment/species/species-block.js:18-44, copy/copy.en.js:75, :96 and check-answers.fit.spec.js:301-306",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:100-108, view-model/cards/consignment/species/species-block.js:18-44, copy/copy.en.js:72, :92 and check-answers.fit.spec.js:289-294",
       "quote": "<h5 class=\"govuk-heading-s\">{{ copy.identificationDetails.heading }}</h5>  /  identificationDetails: (species) => `identification details for ${species}`",
       "confidence": "verbatim"
     },
@@ -433,7 +434,7 @@
       "id": "repo-frontend-p6-052",
       "statement": "The identification details table's first column is headed 'Animal' and names each animal '<species display name> <number from 1>'; the other columns are the identifier fields in scope for that commodity and species that at least one animal has a value for.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/identification-details-table.js:24-33, identifier-columns.js:4-11, copy/copy.en.js:74 and check-answers.fit.spec.js:307-313",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/identification-details-table.js:24-33, identifier-columns.js:4-11, copy/copy.en.js:71 and check-answers.fit.spec.js:295-301",
       "quote": "head: [\n      { text: copy.identificationDetails.animalColumn },\n      ...columns.map(([, label]) => ({ text: label }))\n    ]  /  animalColumn: 'Animal'",
       "confidence": "verbatim",
       "note": "mechanism: drops identifier columns no animal filled in. The fit spec proves the columns ['Animal', 'Microchip'] and the first cell 'Felis catus 1' for cats identified by microchip."
@@ -450,7 +451,7 @@
       "id": "repo-frontend-p6-054",
       "statement": "The 'Additional details' card shows the 'Certified for' row with the chosen certification purpose's label.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-details.js:31-35 and copy/copy.en.js:38",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-details.js:31-35 and copy/copy.en.js:36",
       "quote": "row(\n      copy.rows.certifiedFor,\n      certification.certificationLabel(answers.animalsCertifiedFor) ?? ''\n    )  /  certifiedFor: 'Certified for'",
       "confidence": "verbatim"
     },
@@ -458,7 +459,7 @@
       "id": "repo-frontend-p6-055",
       "statement": "The 'Additional details' card adds an 'Includes unweaned animals' row reading 'Yes' or 'No' only when a chosen commodity asks about unweaned animals.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-details.js:36-43, view-model/applicability.js:24-25 and copy/copy.en.js:5, :39",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-details.js:36-43, view-model/applicability.js:24-25 and copy/copy.en.js:5, :37",
       "quote": "...(unweanedApplies(answers)\n      ? [\n          row(\n            copy.rows.unweaned,\n            copy.yesNo[answers.containsUnweanedAnimals] ?? ''\n          )\n        ]\n      : [])  /  yesNo: { yes: 'Yes', no: 'No' }",
       "confidence": "verbatim"
     },
@@ -474,7 +475,7 @@
       "id": "repo-frontend-p6-057",
       "statement": "The 'Arrival details' card holds five rows in this order: 'Port of entry', 'Arrival date at port of entry', 'Means of transport to the port of entry', 'Transport identification' and 'Transport document reference'.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js:72-87, copy/copy.en.js:50-55 and check-answers.fit.spec.js:92-98",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js:72-87, copy/copy.en.js:48-53 and check-answers.fit.spec.js:89-95",
       "quote": "rows: [\n    row(\n      copy.rows.portOfEntry,\n...\n    row(copy.rows.arrivalDate, dateText(answers.arrivalDateAtPort)),\n    row(\n      copy.rows.meansOfTransport,\n      meansOfTransportLabel(answers.meansOfTransport)\n    ),\n    row(copy.rows.transportIdentification, answers.transportIdentification),\n    row(\n      copy.rows.transportDocumentReference,\n      answers.transportDocumentReference\n    )\n  ]",
       "confidence": "verbatim"
     },
@@ -482,7 +483,7 @@
       "id": "repo-frontend-p6-058",
       "statement": "When transit countries are in scope the Arrival details card ends with a 'Transit countries' sub-heading holding the row 'Countries that the consignment will travel through', listing the countries' labels separated by commas, with its own Change link to the transit countries page reading 'Change transit countries'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js:18-49, copy/copy.en.js:31, :53, :93 and check-answers.fit.spec.js:933-967",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js:18-49, copy/copy.en.js:29, :51, :88 and check-answers.fit.spec.js:866-900",
       "quote": "heading: copy.groups.transitCountries,\n      rows: [\n        {\n          ...row(copy.rows.transitedCountries, labels.join(', ')),  /  transitedCountries: 'Countries that the consignment will travel through'",
       "confidence": "verbatim",
       "note": "The fit spec proves the sub-heading is a fourth-level heading inside the card and the row reads 'France, Belgium'."
@@ -491,7 +492,7 @@
       "id": "repo-frontend-p6-059",
       "statement": "A draft by road with no transit country added reads the transit countries row back as 'Not applicable', shows no 'Complete arrival details' message and continues to the declaration.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:909-931",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:842-864",
       "quote": "test('a draft by road with no transit country added continues to the declaration'",
       "confidence": "verbatim"
     },
@@ -499,7 +500,7 @@
       "id": "repo-frontend-p6-060",
       "statement": "The 'Transport details' card holds five rows in this order: 'Name', 'Address', 'Country', 'Approval number' and 'Type'.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js:31-36, :55-58 and check-answers.fit.spec.js:976-982",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js:31-36, :55-58 and check-answers.fit.spec.js:909-915",
       "quote": "const transporterRows = (transporter) => [\n  row(copy.rows.name, transporter?.name),\n  transporterAddressRow(transporter),\n  row(copy.rows.country, transporter?.address?.country),\n  row(copy.rows.approvalNumber, transporter?.approvalNumber)\n]",
       "confidence": "verbatim"
     },
@@ -523,7 +524,7 @@
       "id": "repo-frontend-p6-063",
       "statement": "A saved private transporter with no approval number reads 'Not applicable' on that row, and its stored country is read back as entered.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:969-989",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:902-922",
       "quote": "test('shows Not applicable on the approval number of a saved private transporter that has none, and its stored country'",
       "confidence": "verbatim"
     },
@@ -531,7 +532,7 @@
       "id": "repo-frontend-p6-064",
       "statement": "The Uploaded documents section holds one card per uploaded document, in upload order, titled 'Document 1', 'Document 2' and on.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:71-78 and copy/copy.en.js:78",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:71-78 and copy/copy.en.js:75",
       "quote": "documentN: (n) => `Document ${n}`  /  return documents.map(({ index, entry }) =>\n    documentCard({\n...\n      number: index + 1,",
       "confidence": "verbatim"
     },
@@ -539,7 +540,7 @@
       "id": "repo-frontend-p6-065",
       "statement": "A document card holds four rows in this order: 'Document reference', 'Document type' (the type's label), 'Date of issue' and 'Attachment' (the uploaded file's name).",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:29-37, copy/copy.en.js:68-71 and check-answers.fit.spec.js:555-571",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:29-37, copy/copy.en.js:65-68 and check-answers.fit.spec.js:539-555",
       "quote": "const documentRows = (entry) => [\n  row(copy.rows.documentReference, entry.accompanyingDocumentReference),\n  row(\n    copy.rows.documentType,\n    documentsCopy.types[entry.accompanyingDocumentType]\n  ),\n  row(copy.rows.dateOfIssue, dateText(entry.accompanyingDocumentDateOfIssue)),\n  row(copy.rows.attachment, entry.filename)\n]",
       "confidence": "verbatim",
       "note": "The document type labels live in the documents feature's copy, outside this part."
@@ -548,7 +549,7 @@
       "id": "repo-frontend-p6-066",
       "statement": "With nothing uploaded the documents section still shows a single 'Document 1' card, holding only a 'Document reference' row that reads 'Not applicable'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:61-70 and check-answers.fit.spec.js:526-553, :1518-1533",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:61-70 and check-answers.fit.spec.js:510-537, :1450-1465",
       "quote": "if (documents.length === 0) {\n    return [\n      documentCard({\n        changeContext,\n        readOnly,\n        number: 1,\n        rows: [row(copy.rows.documentReference, null)]\n      })\n    ]\n  }",
       "confidence": "verbatim"
     },
@@ -556,7 +557,7 @@
       "id": "repo-frontend-p6-067",
       "statement": "Each document card's Change link opens the accompanying documents page and reads 'Change document <number>'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:17-25, copy/copy.en.js:90 and check-answers.fit.spec.js:542-552",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:17-25, copy/copy.en.js:86 and check-answers.fit.spec.js:526-536",
       "quote": "document: (n) => `document ${n}`  /  await expect(changeLink).toHaveAttribute(\n      'href',\n      /\\/notifications\\/[^/]+\\/accompanying-documents\\?from=(?:[^#]*%2C)?notification-view$/\n    )",
       "confidence": "verbatim"
     },
@@ -564,7 +565,7 @@
       "id": "repo-frontend-p6-068",
       "statement": "The Addresses section holds one card, 'Consignment addresses', with a row for each consignment party, keyed 'Place of origin', 'Consignor', 'Consignee', 'Importer' and 'Place of destination'.",
       "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:59-64 and copy/copy.en.js:62-66",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:59-64 and copy/copy.en.js:59-63",
       "quote": "...PARTIES.map((party) =>\n      partyRow(copy.rows[party.id], parties[party.id], {\n        errorText: partyErrors[party.id]\n      })\n    ),",
       "confidence": "verbatim",
       "note": "The row order is the PARTIES list's order, which is defined in the addresses feature outside this part; the five labels above are the keys copy.rows carries for party ids."
@@ -573,7 +574,7 @@
       "id": "repo-frontend-p6-069",
       "statement": "A party row shows the party's name in bold on its own line, then its address lines and its country, one per line.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js:11-34 and check-answers.fit.spec.js:285-290",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js:11-34 and check-answers.fit.spec.js:273-278",
       "quote": "return [\n    `<strong>${escapeHtml(namedAddress.name)}</strong>`,\n    ...[...addressParts(namedAddress.address), namedAddress.address?.country]\n      .filter((part) => !isBlank(part))\n      .map(escapeHtml)\n  ]",
       "confidence": "verbatim"
     },
@@ -589,34 +590,26 @@
       "id": "repo-frontend-p6-071",
       "statement": "A party whose stored address no longer passes the address rules shows its error message in its own row, prefixed by a visually hidden 'Error:' and followed by the address details when there are any.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js:23-34 and copy/copy.en.js:115",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js:23-34 and copy/copy.en.js:111",
       "quote": "const errorMarkup = (errorText) =>\n  '<p class=\"govuk-error-message\">' +\n  `<span class=\"govuk-visually-hidden\">${escapeHtml(copy.errors.prefix)}</span> ` +\n  `${escapeHtml(errorText)}</p>`  /  prefix: 'Error:'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-072",
-      "statement": "The invalid-party messages are 'Correct the address details for the place of origin', '... for the consignor', '... for the consignee', '... for the importer', '... for the place of destination' and 'Correct the contact address details for this consignment'.",
+      "id": "repo-frontend-p6-143",
+      "statement": "The invalid-party messages are 'Correct the address details for the place of origin', '... for the consignor', '... for the consignee', '... for the importer' and '... for the place of destination', one per consignment party and no other.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:135-143",
-      "quote": "parties: {\n      placeOfOrigin: 'Correct the address details for the place of origin',\n      consignor: 'Correct the address details for the consignor',\n      consignee: 'Correct the address details for the consignee',\n      importer: 'Correct the address details for the importer',\n      placeOfDestination:\n        'Correct the address details for the place of destination',\n      contactAddress: 'Correct the contact address details for this consignment'\n    }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:130-137",
+      "quote": "parties: {\n      placeOfOrigin: 'Correct the address details for the place of origin',\n      consignor: 'Correct the address details for the consignor',\n      consignee: 'Correct the address details for the consignee',\n      importer: 'Correct the address details for the importer',\n      placeOfDestination:\n        'Correct the address details for the place of destination'\n    }",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-073",
-      "statement": "A party role the trader has not answered yet is never reported as invalid; only answered roles are checked, and they are checked against the address book's country list.",
+      "id": "repo-frontend-p6-144",
+      "statement": "A party role the trader has not answered yet is never reported as invalid; only the answered consignment parties are checked, against the address book's country list.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/invalid-parties.js:12-24",
-      "quote": "/** An unanswered role is not an error: the user has not had a chance to answer. */\nexport const invalidPartyErrors = async (answers = {}) => {\n  const answered = ALL_PARTIES.filter((party) => answers[party.id])\n  if (answered.length === 0) {\n    return {}\n  }\n  const countryCodes = (await addressBookCountries()).map(({ code }) => code)",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/invalid-parties.js:10-21",
+      "quote": "/** An unanswered role is not an error: the user has not had a chance to answer. */\nexport const invalidPartyErrors = async (answers = {}) => {\n  const answered = PARTIES.filter((party) => answers[party.id])\n  if (answered.length === 0) {\n    return {}\n  }\n  const countryCodes = (await addressBookCountries()).map(({ code }) => code)",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:894-907 proves a new notification shows no consignor error, only the hidden 'Missing'."
-    },
-    {
-      "id": "repo-frontend-p6-074",
-      "statement": "The contact address is checked for validity alongside the five consignment parties.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/invalid-parties.js:10",
-      "quote": "const ALL_PARTIES = [...PARTIES, CONTACT_PARTY]",
-      "confidence": "verbatim"
+      "note": "check-answers.fit.spec.js:827-840 proves a new notification shows no consignor error, only the hidden 'Missing'. Only the five PARTIES are checked; no contact party is checked any more."
     },
     {
       "id": "repo-frontend-p6-075",
@@ -631,7 +624,7 @@
       "id": "repo-frontend-p6-076",
       "statement": "The Consignment addresses card adds a 'County parish holding (CPH) number' row, showing the CPH as it is displayed, only when a chosen commodity asks for one.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:65-67, view-model/applicability.js:27-28 and copy/copy.en.js:67",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:65-67, view-model/applicability.js:27-28 and copy/copy.en.js:64",
       "quote": "...(cphApplies(answers)\n      ? [row(copy.rows.cph, displayedCphNumber(answers.countyParishHoldingCph))]\n      : [])  /  cph: 'County parish holding (CPH) number'",
       "confidence": "verbatim"
     },
@@ -639,51 +632,19 @@
       "id": "repo-frontend-p6-077",
       "statement": "The Consignment addresses card ends with a 'Permanent address' sub-heading holding one row per animal that has a saved permanent address, keyed by that animal's label; an animal with none contributes no row, and no saved addresses at all leaves the sub-heading out.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:14-21, copy/copy.en.js:32 and check-answers.fit.spec.js:248-294",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:14-21, copy/copy.en.js:30 and check-answers.fit.spec.js:236-302",
       "quote": "const rows = permanentAddresses\n    .filter(({ permanentAddress }) => permanentAddress)\n    .map(({ label, permanentAddress }) => partyRow(label, permanentAddress))\n  return rows.length > 0\n    ? [{ heading: copy.groups.permanentAddress, rows }]\n    : []  /  permanentAddress: 'Permanent address'",
       "confidence": "verbatim",
       "note": "The fit spec proves the rows are keyed by the animal's common name and number, such as 'Domestic Cat 1' and 'Domestic Cat 2'."
     },
     {
-      "id": "repo-frontend-p6-078",
-      "statement": "The Contact address section holds one card, 'Contact address', with a single row also keyed 'Contact address'.",
-      "kind": "data",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js:21-33 and copy/copy.en.js:28, :58",
-      "quote": "id: 'contactAddress',\n  title: copy.cards.contactAddress,\n...\n  rows: [\n    partyRow(copy.rows.contactAddress, parties.contactAddress, {",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p6-079",
-      "statement": "The contact address row carries an 'Edit details' link, reading 'Edit details contact address' to a screen reader, that opens the contact party's edit page and returns to the review.",
+      "id": "repo-frontend-p6-145",
+      "statement": "Each editable card carries exactly one Change link, named 'Change <card name>' to a screen reader, and on a new notification those eight links read, in card order: origin of import, what are you importing, main import reason, additional details, arrival details, transport details, document 1, consignment addresses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js:34-46, view-model/rows/party-row.js:36-49 and copy/copy.en.js:77",
-      "quote": "editDetails: 'Edit details'  /  edit: readOnly\n        ? undefined\n        : {\n            href: partyEditHref(\n              journeyId,\n              CONTACT_PARTY,\n              CYA_SLUG,\n              reviewPageTrail\n            ),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p6-080",
-      "statement": "Editing the contact address from the review and saving returns to the review with the edit shown; cancelling returns to the review with the address unchanged.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:831-861",
-      "quote": "test('edits a chosen contact address from the review, returning to the review showing the edit, or unchanged when cancelled'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p6-081",
-      "statement": "The Contact address card's own Change link opens the consignment contact select page and reads 'Change contact address'.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js:22-31, copy/copy.en.js:88 and check-answers.fit.spec.js:813-829",
-      "quote": "await expect(changeLink).toHaveAttribute(\n      'href',\n      /\\/consignment\\/contact\\/select\\?from=/\n    )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p6-082",
-      "statement": "Each editable card carries exactly one Change link, named 'Change <card name>' to a screen reader, and on a new notification those nine links read, in card order: origin of import, what are you importing, main import reason, additional details, arrival details, transport details, document 1, consignment addresses, contact address.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:769-793, :1245-1258 and copy/copy.en.js:6, :79-97",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:753-776, :1178-1191 and copy/copy.en.js:6, :76-93",
       "quote": "change: 'Change'  /  test('has one Change link per card, named for its card, in card order, and none on a row of a new notification'",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:664-666 proves a row such as the destination country carries no Change link of its own."
+      "note": "check-answers.fit.spec.js:648-650 proves a row such as the destination country carries no Change link of its own, and :778-794 proves the Consignment addresses card's Change link opens the addresses page."
     },
     {
       "id": "repo-frontend-p6-083",
@@ -697,7 +658,7 @@
       "id": "repo-frontend-p6-084",
       "statement": "Every Change link from the review carries the review as its return marker (from=notification-view), and after the trader saves the changed page they go on to the journey's next page rather than back to the review.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:27-39 and check-answers.fit.spec.js:736-767",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:27-39 and check-answers.fit.spec.js:720-751",
       "quote": "href: withTrail(pagePath(journeyId, slug), changeLinkTrail),\n      text: copy.change,\n      visuallyHiddenText  /  await expect(page).toHaveURL(\n      urlUnderBase('/notifications/[^/]+/commodities')\n    )",
       "confidence": "verbatim"
     },
@@ -705,7 +666,7 @@
       "id": "repo-frontend-p6-085",
       "statement": "A read-only review (a submitted notification) carries no Change or Edit details links at all.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:41-42 and check-answers.fit.spec.js:1535-1537",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:41-42 and check-answers.fit.spec.js:1467-1469",
       "quote": "export const editableActions = ({ readOnly, actions }) =>\n  readOnly ? {} : { actions }  /  await expect(page.getByRole('link', { name: copy.change })).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -713,7 +674,7 @@
       "id": "repo-frontend-p6-086",
       "statement": "A row whose answer is blank because it does not apply reads 'Not applicable'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:4-7, view-model/rows/value-text.js:12, :31 and check-answers.fit.spec.js:230-232",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:4-7, view-model/rows/value-text.js:12, :31 and check-answers.fit.spec.js:218-220",
       "quote": "export const row = (key, value) => ({\n  key: { text: key },\n  value: isBlank(value) ? notApplicableCell() : { text: valueText(value) }\n})  /  export const notApplicableCell = () => ({ text: NOT_APPLICABLE, empty: true })",
       "confidence": "verbatim",
       "note": "The words 'Not applicable' come from the service-wide shared copy, outside this part."
@@ -722,7 +683,7 @@
       "id": "repo-frontend-p6-087",
       "statement": "A blank row inside a card that is carrying an error is shown with no visible text and a visually hidden 'Missing' instead of 'Not applicable', so an outstanding answer does not read as one that does not apply.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:95-128, view-model/rows/value-text.js:33-36, copy/copy.en.js:4 and check-answers.fit.spec.js:224-240, :997-1009",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:94-127, view-model/rows/value-text.js:33-36, copy/copy.en.js:4 and check-answers.fit.spec.js:212-228, :930-942",
       "quote": "/** A cell with no visible text and a visually hidden \"Missing\". */\nexport const missingCell = () => ({\n  html: `<span class=\"govuk-visually-hidden\">${escapeHtml(copy.missing)}</span>`\n})  /  missing: 'Missing'",
       "confidence": "verbatim",
       "note": "Blanking applies to the card's own rows and to the rows of its groups."
@@ -731,7 +692,7 @@
       "id": "repo-frontend-p6-088",
       "statement": "An unfinished card shows its message as an error paragraph inside the card, prefixed by a visually hidden 'Error:', and the card is given an error style.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:8-14, :86, :92 and check-answers.fit.spec.js:1047-1051",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:8-14, :86, :92 and check-answers.fit.spec.js:980-984",
       "quote": "{% macro cardError(text) %}\n  {% if text %}\n    <p class=\"govuk-error-message\">\n      <span class=\"govuk-visually-hidden\">{{ copy.errors.prefix }}</span> {{ text }}\n    </p>\n  {% endif %}\n{% endmacro %}  /  <section class=\"govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}\"",
       "confidence": "verbatim"
     },
@@ -739,7 +700,7 @@
       "id": "repo-frontend-p6-089",
       "statement": "The Origin of import card is unfinished when the origin task row is not ready, and then shows 'Complete origin of import'; its in-page anchor is origin-of-import.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:16 and copy/copy.en.js:117",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:16 and copy/copy.en.js:113",
       "quote": "{ id: 'originOfImport', anchor: 'origin-of-import', rows: ['origin'] }  /  originOfImport: 'Complete origin of import'",
       "confidence": "verbatim"
     },
@@ -747,7 +708,7 @@
       "id": "repo-frontend-p6-090",
       "statement": "The 'What are you importing?' card is unfinished when the commodities task row is not ready, and then shows 'Complete what are you importing?'; its in-page anchor is what-are-you-importing.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:17-21 and copy/copy.en.js:120",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:17-21 and copy/copy.en.js:116",
       "quote": "{\n    id: 'whatAreYouImporting',\n    anchor: 'what-are-you-importing',\n    rows: ['commodities']\n  }  /  whatAreYouImporting: 'Complete what are you importing?'",
       "confidence": "verbatim"
     },
@@ -755,7 +716,7 @@
       "id": "repo-frontend-p6-091",
       "statement": "The Main import reason card is unfinished when the import reason task row is not ready, and then shows 'Complete main import reason'; its in-page anchor is main-import-reason.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:22-26 and copy/copy.en.js:118",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:22-26 and copy/copy.en.js:114",
       "quote": "{\n    id: 'mainImportReason',\n    anchor: 'main-import-reason',\n    rows: ['importReason']\n  }  /  mainImportReason: 'Complete main import reason'",
       "confidence": "verbatim"
     },
@@ -763,16 +724,16 @@
       "id": "repo-frontend-p6-092",
       "statement": "The commodity cards are unfinished when either the consignment details or the animal identification task row is not ready, and then the page reports 'Complete commodity details' against the commodity-details anchor, falling back to the description-of-the-goods section heading when no commodity card is on the page.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:27-33, :84-93 and copy/copy.en.js:121",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:27-32, :83-92 and copy/copy.en.js:117",
       "quote": "{\n    id: 'commodityDetails',\n    anchor: 'commodity-details',\n    fallbackAnchor: 'description-of-the-goods',\n    rows: ['consignmentDetails', 'animalIdentification']\n  }  /  commodityDetails: 'Complete commodity details'",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1121-1124 and :1266 prove the fallback link target '#description-of-the-goods' on a notification with no commodity line."
+      "note": "check-answers.fit.spec.js:1054-1056 and :1199 prove the fallback link target '#description-of-the-goods' on a notification with no commodity line."
     },
     {
       "id": "repo-frontend-p6-093",
       "statement": "The 'Complete commodity details' message is the one card message that never appears on a card, because a commodity card carries no card id to attach it to.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:117-121, view-model/cards/consignment/commodity-cards.js:24-26 and check-answers.fit.spec.js:1273-1275",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:116-120, view-model/cards/consignment/commodity-cards.js:24-26 and check-answers.fit.spec.js:1205-1207",
       "quote": "const known = cardById.get(card.id)\n  if (!known) {\n    return card\n  }  /  const cardsShowingTheirMessage = unfinishedCards.filter(\n      ([card]) => card !== 'commodityDetails'\n    )",
       "confidence": "verbatim"
     },
@@ -780,7 +741,7 @@
       "id": "repo-frontend-p6-094",
       "statement": "The Additional details card is unfinished when the additional details task row is not ready, and then shows 'Complete additional details'; its in-page anchor is additional-details.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:34-38 and copy/copy.en.js:119",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:33-37 and copy/copy.en.js:115",
       "quote": "{\n    id: 'additionalDetails',\n    anchor: 'additional-details',\n    rows: ['additionalDetails']\n  }  /  additionalDetails: 'Complete additional details'",
       "confidence": "verbatim"
     },
@@ -788,7 +749,7 @@
       "id": "repo-frontend-p6-095",
       "statement": "The Arrival details card is unfinished when either the arrival details or the transit countries task row is not ready, and then shows 'Complete arrival details'; its in-page anchor is arrival-details.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:39-42 and copy/copy.en.js:122",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:38-42 and copy/copy.en.js:118",
       "quote": "{\n    id: 'arrivalDetails',\n    anchor: 'arrival-details',\n    rows: ['arrivalDetails', 'transitCountries']\n  }  /  arrivalDetails: 'Complete arrival details'",
       "confidence": "verbatim"
     },
@@ -796,7 +757,7 @@
       "id": "repo-frontend-p6-096",
       "statement": "The Transport details card is unfinished when the transporter task row is not ready, and then shows 'Complete transport details'; its in-page anchor is transport-details.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:43-47 and copy/copy.en.js:123",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:43-47 and copy/copy.en.js:119",
       "quote": "{\n    id: 'transportDetails',\n    anchor: 'transport-details',\n    rows: ['transporter']\n  }  /  transportDetails: 'Complete transport details'",
       "confidence": "verbatim"
     },
@@ -804,7 +765,7 @@
       "id": "repo-frontend-p6-097",
       "statement": "The documents card is unfinished when the documents task row is not ready, and then shows 'Complete documents'; its in-page anchor is documents.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:48 and copy/copy.en.js:126",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:48 and copy/copy.en.js:121",
       "quote": "{ id: 'documents', anchor: 'documents', rows: ['documents'] }  /  documents: 'Complete documents'",
       "confidence": "verbatim"
     },
@@ -812,32 +773,24 @@
       "id": "repo-frontend-p6-098",
       "statement": "The Consignment addresses card is unfinished when the addresses task row is not ready, and then shows 'Complete consignment addresses'; its in-page anchor is addresses.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:49-53 and copy/copy.en.js:124",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:49-53 and copy/copy.en.js:120",
       "quote": "{\n    id: 'consignmentAddresses',\n    anchor: 'addresses',\n    rows: ['addresses']\n  }  /  consignmentAddresses: 'Complete consignment addresses'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-099",
-      "statement": "The Contact address card is unfinished when the contact task row is not ready, and then shows 'Complete contact address for this consignment'; its in-page anchor is contact-address.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:54 and copy/copy.en.js:125",
-      "quote": "{ id: 'contactAddress', anchor: 'contact-address', rows: ['contact'] }  /  contactAddress: 'Complete contact address for this consignment'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-frontend-p6-100",
-      "statement": "The ten review cards are checked, and listed, in page order: origin of import, what are you importing, main import reason, commodity details, additional details, arrival details, transport details, documents, consignment addresses, contact address.",
+      "id": "repo-frontend-p6-146",
+      "statement": "The nine review cards are checked, and listed, in page order: origin of import, what are you importing, main import reason, commodity details, additional details, arrival details, transport details, documents, consignment addresses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:11-55, :75-80",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:11-54, :74-79",
       "quote": "/**\n * The review page's cards in page order, each with the task rows whose answers\n * it shows and the id the error summary links to.\n */",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:1260-1294 proves eight of them in that order in the error summary of a new draft (origin and documents are ready on a new draft)."
+      "note": "check-answers.fit.spec.js:1193-1226 proves seven of them in that order in the error summary of a new draft (origin and documents are ready on a new draft)."
     },
     {
       "id": "repo-frontend-p6-101",
       "statement": "The error summary names every unfinished card, each entry linking to that card's own place on the page, and the same message appears on the card itself.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1034-1052, :1260-1294",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:967-985, :1193-1226",
       "quote": "test('lists every unfinished card in the error summary, each linking to its card with its message on the card'",
       "confidence": "verbatim"
     },
@@ -854,7 +807,7 @@
       "id": "repo-frontend-p6-103",
       "statement": "Only the first card of a repeated card id takes the anchor the error summary links to, so a notification with several document cards still has one target for the documents error.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:138-148",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js:137-147",
       "quote": "const anchored = new Set()\n  return sections.map((section) => ({\n    ...section,\n    cards: section.cards.map((card) => {\n      const carriesAnchor = !anchored.has(card.id)\n      anchored.add(card.id)",
       "confidence": "verbatim"
     },
@@ -862,7 +815,7 @@
       "id": "repo-frontend-p6-104",
       "statement": "Where several kinds of error could be reported against one card, the page shows them in this order of precedence: an invalid stored answer, then a document scan problem, then an unlisted species, then an unfinished card, then a species block short of its details.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:186-198, :236-244",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:185-197, :235-243",
       "quote": "const mergeCardErrorsByPrecedence = ({\n  invalid,\n  scan,\n  unlisted,\n  incomplete,\n  speciesBlocks\n}) => ({\n  ...invalid,\n  ...scan,\n  ...unlisted,\n  ...incomplete,\n  ...speciesBlocks\n})",
       "confidence": "verbatim",
       "note": "mechanism: later spreads win, so the last-named kind replaces an earlier message for the same card key."
@@ -871,7 +824,7 @@
       "id": "repo-frontend-p6-105",
       "statement": "A species the notification still owes a count for is reported as 'Enter the number of animals for <species>', and one that has a count but no identifier as 'Enter at least 1 animal identifier for <species>'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/species-errors.js:22-27 and copy/copy.en.js:128-131",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/species-errors.js:22-27 and copy/copy.en.js:124-126",
       "quote": "noCount: (species) => `Enter the number of animals for ${species}`,\n      noIdentifier: (species) =>\n        `Enter at least 1 animal identifier for ${species}`",
       "confidence": "verbatim"
     },
@@ -879,7 +832,7 @@
       "id": "repo-frontend-p6-106",
       "statement": "A species error's summary entry links to that species' own block on the page, and following it moves keyboard focus to the block.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/species-errors.js:16-20, template.njk:97 and check-answers.fit.spec.js:340-354",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/species-errors.js:16-20, template.njk:97 and check-answers.fit.spec.js:328-342",
       "quote": "/** The in-page target for a per-species error key, or undefined for any other key. */\nexport const speciesBlockHref = (key) =>\n  key.startsWith(KEY_PREFIX)\n    ? `#${speciesBlockAnchor(key.slice(KEY_PREFIX.length))}`\n    : undefined",
       "confidence": "verbatim",
       "note": "The fit spec proves each of two cattle species short of an identifier is named separately and focuses its own block."
@@ -896,7 +849,7 @@
       "id": "repo-frontend-p6-108",
       "statement": "When Continue is refused on a draft holding species that reference data no longer lists, the 'What are you importing?' card shows '<latin name> (<code>) can no longer be selected. Select a species from the list.', naming every such species.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:47-65 and copy/copy.en.js:132-133",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:47-65 and copy/copy.en.js:127-128",
       "quote": "notListed: (speciesWithCodes) =>\n        `${speciesWithCodes} can no longer be selected. Select a species from the list.`  /  const speciesWithCodes = unlisted\n    .map(({ code, latinName }) => `${latinName} (${code})`)\n    .join(', ')",
       "confidence": "verbatim"
     },
@@ -929,7 +882,7 @@
       "id": "repo-frontend-p6-112",
       "statement": "A document whose scan rejected it marks its card as soon as the review opens, with the documents feature's 'some rejected' message, and the error summary entry links to that card.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:94-96 and check-answers.fit.spec.js:573-594",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:94-96 and check-answers.fit.spec.js:557-578",
       "quote": "if (hasRejectedDocuments(withStatus)) {\n    return { documents: documentsCopy.errors.someRejected }\n  }",
       "confidence": "verbatim",
       "note": "The message's words live in the documents feature's copy, outside this part."
@@ -938,7 +891,7 @@
       "id": "repo-frontend-p6-113",
       "statement": "A document still being scanned leaves its card unmarked until Continue is refused, and only then shows the documents feature's 'still scanning' message.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:97-103, controller.js:219-223 and check-answers.fit.spec.js:596-617",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:97-103, controller.js:219-221 and check-answers.fit.spec.js:580-601",
       "quote": "if (\n    includePending &&\n    withStatus.some((doc) => doc.scanStatus === SCAN_STATUS.PENDING)\n  ) {\n    return { documents: documentsCopy.errors.someStillScanning }\n  }  /  await documentScanCardErrors(request, answers, {\n        includePending: refused\n      })",
       "confidence": "verbatim"
     },
@@ -966,13 +919,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:108-110",
       "quote": "if (journey.status === state.SUBMITTED) {\n    return false\n  }",
       "confidence": "verbatim",
-      "note": "A submitted notification shows no Continue button at all (check-answers.fit.spec.js:1377-1379)."
+      "note": "A submitted notification shows no Continue button at all (check-answers.fit.spec.js:1309-1311)."
     },
     {
       "id": "repo-frontend-p6-117",
       "statement": "A refused Continue keeps the trader on the review page, which then shows the error summary.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1086-1099",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1019-1032",
       "quote": "test('refuses Continue and keeps the trader on the review page'",
       "confidence": "verbatim"
     },
@@ -980,7 +933,7 @@
       "id": "repo-frontend-p6-118",
       "statement": "A refused Continue on an unfinished notification shows each unfinished card's Complete message on the card and leaves its blank answers blank with the hidden 'Missing', at desktop and at phone width alike.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1011-1032",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:944-965",
       "quote": "test('shows the unfinished card with its Complete line and leaves the blank answer with a hidden Missing after a refused Continue at desktop and phone width'",
       "confidence": "verbatim"
     },
@@ -988,7 +941,7 @@
       "id": "repo-frontend-p6-119",
       "statement": "A submitted notification's view, and an amendment the trader has not yet been refused on, hold every answer error silently: no error summary and no card error messages.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:206-245 and check-answers.fit.spec.js:1578-1588",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:206-245 and check-answers.fit.spec.js:1510-1520",
       "quote": "const readOnly = journey.status === state.SUBMITTED\n  const refused = request.query.refused === '1'\n  const hidesAnswerErrors =\n    readOnly || (journey.status === state.AMEND && !refused)",
       "confidence": "verbatim"
     },
@@ -996,7 +949,7 @@
       "id": "repo-frontend-p6-120",
       "statement": "Continue on an amendment with a missing answer reveals the error summary naming that answer's card.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1590-1601",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1522-1533",
       "quote": "test('Continue on an amendment with a missing answer shows the error summary naming the arrival date'",
       "confidence": "verbatim"
     },
@@ -1004,7 +957,7 @@
       "id": "repo-frontend-p6-121",
       "statement": "The error summary takes keyboard focus only when Continue has just been refused, not when the review is merely opened with outstanding answers.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:245, :166-174",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:244, :166-173",
       "quote": "disableAutoFocus: !refused",
       "confidence": "verbatim"
     },
@@ -1012,7 +965,7 @@
       "id": "repo-frontend-p6-122",
       "statement": "A draft review ends with 'Continue' alone in its last block, with nothing after it.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:98-100, template.njk:130-131 and check-answers.fit.spec.js:432-461, :1296-1298",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:94-96, template.njk:130-131 and check-answers.fit.spec.js:419-449, :1228-1230",
       "quote": "submit: {\n    button: 'Continue'\n  }  /  await expect(formControls(lastBlock)).toHaveText([copy.submit.button])",
       "confidence": "verbatim"
     },
@@ -1020,25 +973,25 @@
       "id": "repo-frontend-p6-123",
       "statement": "An amendment review ends with 'Continue', then 'Cancel amend' linking to the cancel-amendment page, then 'Delete notification'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:101-106, :179-181, template.njk:130-138 and check-answers.fit.spec.js:1604-1628",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:101-106, :178-180, template.njk:130-138 and check-answers.fit.spec.js:1536-1560",
       "quote": "const cancelAmendButtonFor = (journey) => {\n  const cancelAmend = cancelAmendControl(journey)\n  return cancelAmend\n    ? { ...cancelAmend, classes: 'govuk-button--secondary' }\n    : null\n}  /  await expect(reviewFootControls(page)).toHaveText([\n      copy.submit.button,\n      sharedCopy.journeyStrip.cancelAmend,\n      sharedCopy.notificationActions.delete.text\n    ])",
       "confidence": "verbatim",
-      "note": "The Delete button at the foot is shown only while the notification is being amended (controller.js:179-180)."
+      "note": "The Delete button at the foot is shown only while the notification is being amended (controller.js:178-179)."
     },
     {
       "id": "repo-frontend-p6-124",
       "statement": "Continue submits the review to the declaration page, carrying the request token, the concurrency token and a step marker of 'review'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:126-129 and controller.js:164",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:126-129 and controller.js:163",
       "quote": "<form method=\"post\" action=\"{{ declarationHref }}\" novalidate>\n      <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n      <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n      <input type=\"hidden\" name=\"step\" value=\"review\" />",
       "confidence": "verbatim",
-      "note": "check-answers.fit.spec.js:909-931 proves a complete draft reaches the declaration page from Continue."
+      "note": "check-answers.fit.spec.js:842-864 proves a complete draft reaches the declaration page from Continue."
     },
     {
       "id": "repo-frontend-p6-125",
       "statement": "After an amendment is cancelled the submitted view shows a success banner headed 'Success' reading 'The amendment has been cancelled and the submitted version restored.'",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:113-119, :231 and copy/copy.en.js:7-11",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:113-119, :230 and copy/copy.en.js:7-11",
       "quote": "cancelAmend: {\n    successTitle: 'Success',\n    successBody:\n      'The amendment has been cancelled and the submitted version restored.'\n  }  /  amendmentCancelled: readOnly && request.query.cancelled === '1',",
       "confidence": "verbatim",
       "note": "The banner is only raised for a submitted notification opened with cancelled=1. The template read here does not render it, so it is drawn by the shared layout outside this part."
@@ -1047,7 +1000,7 @@
       "id": "repo-frontend-p6-126",
       "statement": "The review page accepts being rendered with a recoverable error to report, but the page gives no message for it.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:131, :178, :200-204 and template.njk",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:131, :177, :199-203 and template.njk",
       "quote": "recoverableError = false  /  recoverableError,",
       "confidence": "gap",
       "note": "Searched template.njk, copy.en.js and copy.cy.js for a recoverable-error heading, body or key and found none; the flag is passed to the view and must be rendered by the shared layout, which this part does not read."
@@ -1056,7 +1009,7 @@
       "id": "repo-frontend-p6-127",
       "statement": "The review page's error summary, journey strip, success banner and Back link are drawn by the service's shared layout rather than by the page's own template.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:1, :32-33 and controller.js:166-182",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:1, :32-33 and controller.js:164-181",
       "quote": "{% extends \"shared/layout.njk\" %}  /  {% block journeyContent %}\n  {% include \"shared/error-summary.njk\" %}",
       "confidence": "verbatim",
       "note": "The shared layout and error-summary partial are another part's slice; this page only supplies their data."
@@ -1065,18 +1018,18 @@
       "id": "repo-frontend-p6-128",
       "statement": "The review page has no serious or critical accessibility violations as a new draft, as an unfinished draft after a refused Continue, as a draft reached from the overview, as a submitted notification and as an amendment.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:878-883, :1126-1134, :1308-1312, :1470-1474, :1659-1661",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:811-816, :1059-1067, :1240-1244, :1402-1406, :1591-1593",
       "quote": "await expectNoSeriousOrCriticalViolations(page, 'Check answers')",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p6-129",
-      "statement": "The Welsh copy file carries the same key tree as the English one — every section, card, group, row, hidden text, error and view-header key, including the five functions documentN, hidden.document, hidden.commodity, hidden.numberOfAnimals and hidden.identificationDetails — with no key missing and none extra.",
+      "id": "repo-frontend-p6-147",
+      "statement": "The Welsh copy file carries the same key tree as the English one — every section, card, group, row, hidden text, error and view-header key, and every function key (documentN, hidden.document, hidden.commodity, hidden.numberOfAnimals, hidden.identificationDetails, viewHeader.dateCreated, viewHeader.dateSubmitted, errors.species.noCount, errors.species.noIdentifier, errors.species.notListed) — with no key missing and none extra.",
       "kind": "constraint",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js:1-147 against copy/copy.en.js:1-145",
-      "quote": "sections: {\n    aboutTheConsignment: '1. Am y llwyth',",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js:2-140 against copy/copy.en.js:1-139",
+      "quote": "sections: {\n    aboutTheConsignment: '1. Am y llwyth',\n    descriptionOfTheGoods: '2. Disgrifiad o’r nwyddau',\n    transportAndArrival: '3. Cludiant a chyrraedd',\n    documents: '4. Dogfennau wedi’u huwchlwytho',\n    addresses: '5. Cyfeiriadau'\n  }",
       "confidence": "verbatim",
-      "note": "Compared key by key in reading order; the two files differ only in their values. The repo's copy-parity test enforces this."
+      "note": "Compared key by key in reading order; the two files differ only in their values and in the Welsh file's opening machine-draft comment. Both dropped their contact address keys together."
     },
     {
       "id": "repo-frontend-p6-130",
@@ -1115,7 +1068,7 @@
       "id": "repo-frontend-p6-134",
       "statement": "A numeric answer is read back as its digits, and a species block's rows show the stored number of animals for that line.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:16-24 and check-answers.fit.spec.js:390-406",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:16-24 and check-answers.fit.spec.js:386-393",
       "quote": "if (typeof value === 'number') {\n    return value.toString()\n  }",
       "confidence": "verbatim"
     },
@@ -1123,25 +1076,25 @@
       "id": "repo-frontend-p6-135",
       "statement": "The 'Main import reason' row's key and the Main import reason card's title are the same words, 'Main import reason'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:22, :40",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:21, :38",
       "quote": "mainImportReason: 'Main import reason'",
       "confidence": "verbatim",
       "note": "Recorded as the source states it; whether a card should repeat its own title as a row key is for the reconciler."
     },
     {
-      "id": "repo-frontend-p6-136",
-      "statement": "Two row keys repeat the words of the card they sit on: 'Contact address' is the only row of the 'Contact address' card, and 'Type' is the last row of the 'Transport details' card beside the transporter's own name, address, country and approval number.",
+      "id": "repo-frontend-p6-148",
+      "statement": "The 'Type' row is the last row of the 'Transport details' card, after the transporter's own name, address, country and approval number.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:58, :61 and view-model/cards/movement/transport-details.js:57",
-      "quote": "contactAddress: 'Contact address',\n    country: 'Country',\n    approvalNumber: 'Approval number',\n    type: 'Type'",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:58 and view-model/cards/movement/transport-details.js:55-58",
+      "quote": "rows: [\n    ...transporterRows(activeTransporter(answers, scope)),\n    row(copy.rows.type, answers.transporterType)\n  ]  /  type: 'Type'",
       "confidence": "verbatim",
-      "note": "Recorded so the reconciler can see the duplication between a card title and a row key."
+      "note": "Recorded so the reconciler can see the bare 'Type' key beside the transporter's details."
     },
     {
       "id": "repo-frontend-p6-137",
       "statement": "The review page carries no caption above its heading: a draft or submitted notification is headed by its reference and a status tag, and any other state is headed by the page title with the journey strip supplying the status instead.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:35-77 and controller.js:169-170",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:35-77 and controller.js:164-165",
       "quote": "{% if viewHeader %}\n    <h1 class=\"govuk-heading-l govuk-!-display-inline-block govuk-!-margin-right-3\">{{ viewHeader.reference }}</h1>\n...\n  {% else %}\n    <h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  {% endif %}",
       "confidence": "verbatim",
       "note": "Searched the template and both copy files for a caption or section-name key above the heading and found none; the question pages of a section carry section captions, the review does not."
@@ -1150,7 +1103,7 @@
       "id": "repo-frontend-p6-138",
       "statement": "A trader opens the review from the notification's overview, and opens a submitted notification's view from the notification list's View link for that reference.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1137-1147, :1315-1325",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1074-1080, :1247-1257",
       "quote": "await page\n    .getByRole('link', {\n      name: `View ${dashboardCopy.actionHidden(reference)}`\n    })\n    .click()",
       "confidence": "verbatim",
       "note": "The overview's own review row and the list's View link belong to the hub and dashboard features, which are other parts; this claim records only that both reach this page."
@@ -1159,10 +1112,53 @@
       "id": "repo-frontend-p6-139",
       "statement": "The review is only offered to a trader once the notification is ready to be checked; a notification that is not shows the review but has Continue refused.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:111-113 and check-answers.fit.spec.js:1086-1099",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js:111-113 and check-answers.fit.spec.js:1019-1032",
       "quote": "if (!scope.readyForCheckYourAnswers) {\n    return true\n  }",
       "confidence": "verbatim",
       "note": "The readyForCheckYourAnswers gate itself is set by the journey flow, which is another part; the review only reads it."
+    },
+    {
+      "id": "repo-frontend-p6-149",
+      "statement": "No row on the review carries an 'Edit details' link: the consignment party rows and the permanent address rows are built without one, so the review's only change controls are its Change links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/consignment-addresses.js:14-21, :59-64 and view-model/rows/party-row.js:36-57",
+      "quote": "partyRow(copy.rows[party.id], parties[party.id], {\n        errorText: partyErrors[party.id]\n      })  /  .map(({ label, permanentAddress }) => partyRow(label, permanentAddress))  /  const editAction = (lines, edit) =>\n  lines && edit",
+      "confidence": "inferred",
+      "note": "Inferred because partyRow only adds an Edit details action when given an `edit` option, and no caller in the feature passes one; the copy key editDetails ('Edit details') is still carried in both copy files but nothing on the page renders it."
+    },
+    {
+      "id": "repo-frontend-p6-150",
+      "statement": "The Addresses section is the review's last section and its Consignment addresses card is the last card, sitting straight before the block that holds Continue.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:52-61 and check-answers.fit.spec.js:419-449",
+      "quote": "test('titles the page by its reference and ends with the Addresses section, then Continue alone in the last block with nothing after it'  /  lastBlock.locator('xpath=preceding-sibling::*[1]').getByRole('heading', {\n        name: copy.cards.consignmentAddresses,\n        level: 3\n      })",
+      "confidence": "verbatim",
+      "note": "The review has no Contact address section or card."
+    },
+    {
+      "id": "repo-frontend-p6-151",
+      "statement": "On a new notification the Main import reason and Additional details cards are named in the error summary and on each card; left blank through 'Save and return to overview', both are still accepted on their pages and are then named again when Continue is refused.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:987-1017",
+      "quote": "test('accepts the main import reason and additional details left blank by Save and return to overview, then names both cards when Continue is refused'",
+      "confidence": "verbatim",
+      "note": "The shared helper expectMainImportReasonAndAdditionalDetailsNamed holds the exact assertions; it lives in the fit support file, outside this part."
+    },
+    {
+      "id": "repo-frontend-p6-152",
+      "statement": "Continue on a notification with no commodity line is refused, and the error summary names 'Complete what are you importing?' linking to the What are you importing? card, which shows the same message, and 'Complete commodity details' linking to the Description of the goods section heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1034-1057",
+      "quote": "test('refuses submit of a notification with no commodity line and names what is missing from the commodity selection and the commodity details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p6-153",
+      "statement": "A draft review keeps a Change link on every card.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js:1178-1191",
+      "quote": "test('keeps a Change link on every card'",
+      "confidence": "verbatim"
     }
   ]
 }

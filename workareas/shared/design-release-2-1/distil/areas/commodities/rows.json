@@ -2,89 +2,35 @@
   "area": "commodities",
   "rows": [
     {
-      "title": "Germinal Commodity details lists its errors by question, with temperature and a blank weight raising none",
-      "detail": "A germinal trader fixing several species should read one question at a time, so the germinal set's Commodity details page lists every total gross weight error before every number of packages error, species by species, each linked to its own field. On the germinal set the total gross weight and the storage temperature are optional, so a blank weight and an unanswered temperature save and raise no error, and only the weight and the package count can put a message in the summary.",
+      "title": "Germinal Commodity details lists its errors by question",
+      "detail": "On the germinal set's Commodity details page the error summary lists its errors by question, in the order each species block asks them: every quantity error, species by species, then every number of packages error, then every total gross weight error. The temperature is optional, so an unanswered temperature, like a blank number of packages or a blank total gross weight, saves with no error.",
       "acceptanceCriteria": [
-        "On a germinal-products notification, pressing Save and continue on Commodity details with errors on several species lists every Total gross weight error, species by species, before every Number of packages error, each linking to its own field. (prototype:dr2-1-source prototype-dr2-1-source-p3-042; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, ruling-sam-2026-10-09-p1-057; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-051)",
-        "On a germinal-products notification, Commodity details with no temperature chosen, a blank total gross weight and a valid number of packages for every chosen species saves and moves the trader on, with no error summary on the page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, ruling-sam-2026-10-09-p1-023; c-232)",
-        "On a germinal-products notification, the Commodity details error summary lists only Total gross weight and Number of packages messages, however the temperature question is answered. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, ruling-sam-2026-10-09-p1-023; c-232)"
+        "Pressing Save and continue on germinal Commodity details with errors on several species lists every Quantity (unit/pieces) error, species by species, then every Number of packages error, then every Total gross weight error, each linking to its own field. (prototype:dr2-1-source prototype-dr2-1-source-p3-093; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-044; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-057; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-004)",
+        "Germinal Commodity details with no temperature chosen, a blank total gross weight, a blank number of packages and a valid quantity for every chosen species saves and moves the trader on, with no error summary on the page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-023; c-232, c-234, c-462)",
+        "The germinal Commodity details error summary lists only Quantity (unit/pieces), Number of packages and Total gross weight messages, however the temperature question is answered. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-023; c-232, c-462)"
       ],
       "requirements": ["req-1762"],
       "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p3-042"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-021, -p1-023, -p1-057 (c-232)"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p12-051"
-        }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-021, -p1-023, -p1-057" },
+        { "source": "ruling:sam-2026-11-27", "ref": "ruling-sam-2026-11-27-p1-004" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p3-093" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p4-044" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "This is the commodities area's half of an existing row: the error-ordering and optional-field rule for the germinal set's Commodity details page. The germinal-products area drafts the other half of the same row, the germinal weight and packages validation rules (req-1784 to req-1789), so the combiner should merge the two drafts into existingRow inc-177 rather than keep a separate row, keeping that row's id, its theme germinal-products, its dependency on the germinal Commodity details questions row (inc-017) and its external dependency on the commodities-and-reason row inc-018. The page it changes is the germinal set's own copy of Commodity details, which carries no weight or packages fields until that questions row lands, so this row cannot be observed before it: the combiner keeps the dependency. c-232 is ruled: the germinal total gross weight and storage temperature are optional, so no blank-weight or blank-temperature message is built and the withdrawn claims behind those messages are not restated. The live-animals half of the error-ordering rule (req-114) is the design-snagging theme's, split off early.",
+      "notes": "The commodities area's half of the existing germinal Commodity details checks row: the error summary ordered by question, and an unanswered temperature, a blank number of packages and a blank total gross weight saving. The germinal-products area drafts the quantity and weight rules on the same page; keep them in one row, since they share one page and one set of checks. Depends on the germinal Commodity details questions row (inc-017), which adds the quantity, number of packages and weight fields. c-232 and c-462 make the germinal total gross weight and temperature optional, so no blank-weight or blank-temperature message is built; c-234 makes the quantity the required count, so quantity errors come first. ruling:sam-2026-11-27 claim 4 keeps the weight per species, so its errors come last in each species block. The live-animals half of the ordering rule (req-114) belongs to the split-off design-snagging theme and is not drafted here.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/consignment-details",
-        "tests:tests/animals/e2e/germinal-products"
+        "tests:page-objects/germinal-products",
+        "tests:tests/animals/e2e/germinal-products/commodity-details.spec.ts"
       ],
       "shared": [],
       "existingRow": "inc-177"
-    },
-    {
-      "title": "The germinal overview marks Commodity details complete once every species has a package count",
-      "detail": "The overview's task tags tell a germinal trader what is left to do. Germinal lines are counted by packages, so the Commodity details task is complete once every chosen species has a valid number of packages and any total gross weight entered is valid. The total gross weight and the storage temperature are optional on this set, so leaving either blank does not hold the task back, and a notification with no species chosen still has the task to do.",
-      "acceptanceCriteria": [
-        "On a germinal-products notification, the overview's Commodity details task shows the Complete tag when every chosen species has a whole number of packages from 1 to 1,000, with total gross weight and temperature left blank. (prototype:dr2-1-source prototype-dr2-1-source-p3-024, prototype-dr2-1-source-p3-054; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, ruling-sam-2026-10-09-p1-023; c-232; c-234)",
-        "On a germinal-products notification, the overview's Commodity details task shows the 'To do' tag while any chosen species has no number of packages, or has a total gross weight entered that is not valid, such as 0. (prototype:dr2-1-source prototype-dr2-1-source-p3-054; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-053)",
-        "On a germinal-products notification with no species chosen, the overview's Commodity details task shows the 'To do' tag. (prototype:dr2-1-source prototype-dr2-1-source-p3-054; confluence:6497338582 confluence-6497338582-p1-108)"
-      ],
-      "requirements": ["req-1763"],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p3-024, -p3-054"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-021, -p1-023, -p1-057 (c-232, c-234, c-279)"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p12-053"
-        },
-        {
-          "source": "confluence:6497338582",
-          "ref": "confluence-6497338582-p1-108"
-        }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "This is the commodities area's half of an existing row: the Commodity details completeness rule on the germinal overview. Only that overview shows a task tag, so the combiner should merge these three criteria into existingRow inc-099, the germinal overview row the notification-hub area drafts the rest of, keeping inc-099's id, its theme germinal-products and its dependencies on the germinal Commodity details questions row (inc-017) and the germinal Commodity details validation row (inc-177). It cannot be observed before the germinal overview and the germinal Commodity details fields exist, so the combiner keeps those dependencies. It is the germinal half of the completeness rule whose live-animals half (req-126) is already met. c-232 is ruled: the total gross weight and the temperature are optional and do not hold the task back, so the prototype's bar of a weight above 0 and a chosen temperature is not built, and the withdrawn claims behind it are not restated. c-234 is ruled: a germinal line's quantity is its number of packages, a whole number from 1 and at most 1,000, the limit the germinal validation row sets.",
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub",
-        "frontend:src/server/app/sets/germinal-products/obligations/sections/commodities",
-        "tests:tests/animals/e2e/germinal-products"
-      ],
-      "shared": [],
-      "existingRow": "inc-099"
     }
   ],
   "unobservable": [],
-  "splitOff": [
-    {
-      "requirement": "req-110",
-      "theme": "commodities-and-reason",
-      "why": "It changes the headings on the live-animals Commodity details page, naming each commodity group's heading '<commodity name> (<commodity code>)' instead of the bare code, which is the consignment-details feature folder (frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details) and its page object and spec in the tests repo, all three inside theme commodities-and-reason's touches."
-    }
-  ]
+  "splitOff": []
 }

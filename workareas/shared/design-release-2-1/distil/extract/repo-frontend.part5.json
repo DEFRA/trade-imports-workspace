@@ -1,6 +1,6 @@
 {
   "source": "repo:frontend",
-  "structure": "Part 5, the overview task list and the notification actions, read eleven files of repos/trade-imports-animals-frontend in full: the hub feature folder (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, hub.fit.spec.js, 538 lines), the notification-actions feature folder (page.js, controller.js, notification-actions.fit.spec.js), and two live-animals flow files (flow/task-rows.js, flow/notification-action-slugs.js). Supporting reads for route and constant values only, not claimed beyond what the slice shows: src/server/app/shared/paths.js (hubRoutePath, pageRoutePath, pagePath, hubPath, dashboardPath), src/server/app/shared/trail.js:12-16 (TRAIL_START.overview is 'overview', so the trail parameter reads ?from=overview), src/server/app/shared/kit.js:71 (CANCEL_AMEND_SLUG is 'cancel-amend'), src/server/app/sets/live-animals/journeys/linear/features/delete-notification/page.js:3 (slug 'delete'), features/check-answers/page.js:3 (slug 'notification-view') and features/check-answers/controller.js:258 (its only registered route), and shared/copy.en.js:51-64 for the shared button strings the two fit specs drive. The part covers one page, the overview at GET /notifications/{journeyId} (its H1 'Overview', the 'Your commodities' totals section, the 'Notification task list' of six numbered section groups holding twelve task rows, and the Review and submit / Return to dashboard button pair), the twelve task rows' titles, hint, link targets and the two status words a row can show, every behaviour the 23 hub fit tests prove, the four notification action slugs (amend, cancel-amend, copy, delete) of which this feature registers only POST /notifications/{journeyId}/copy, that route's success, no-copy, recoverable-failure and stale-token outcomes, the four notification-actions fit tests, and Welsh key parity for the hub's copy. It stops before the confirmation pages the actions lead to (part 7), the dashboard that renders the Copy as new button, the check-answers review page, and the generic flow, gate and status layers under src/server/app/flow and src/server/app/bridge.",
+  "structure": "Part 5, the overview task list and the notification actions, read eleven files of repos/trade-imports-animals-frontend (main at e09a93aa) in full: the hub feature folder (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, hub.fit.spec.js, 537 lines), the notification-actions feature folder (page.js, controller.js, notification-actions.fit.spec.js), and two live-animals flow files (flow/task-rows.js, flow/notification-action-slugs.js). Supporting reads for route and constant values only, from the earlier extract of this slice and not claimed beyond what the slice shows: shared/paths.js (hubRoutePath, pageRoutePath, pagePath, hubPath, dashboardPath), shared/trail.js (TRAIL_START.overview is 'overview', so the trail reads ?from=overview), shared/kit.js (CANCEL_AMEND_SLUG is 'cancel-amend'), delete-notification/page.js (slug 'delete'), check-answers/page.js (slug 'notification-view') and shared/copy.en.js for the shared button strings the fit specs drive. The part covers one page, the overview at GET /notifications/{journeyId}: its H1 'Overview' with no caption, the 'Your commodities' totals section, the 'Notification task list' of five numbered section groups holding eleven task rows, and the Review and submit / Return to dashboard button pair. It covers the eleven rows' titles, the one hint, link targets and the two status words a row can show, every behaviour the 22 hub fit tests prove, the four notification action slugs (amend, cancel-amend, copy, delete) of which this feature registers only POST /notifications/{journeyId}/copy, that route's success, no-copy, recoverable-failure and stale-token outcomes, the four notification-actions fit tests, and Welsh key parity for the hub's copy. Since the earlier extract the contact address task and its '6. Contact address' section have been removed from the journey, so the claims on six sections, twelve rows, the contact row's title and the ten rows open from the start are replaced. It stops before the confirmation pages the actions lead to (part 7), the dashboard that renders the Copy as new button, the check-answers review page, and the generic flow, gate and status layers under src/server/app/flow and src/server/app/bridge.",
   "claims": [
     {
       "id": "repo-frontend-p5-001",
@@ -128,13 +128,13 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p5-016",
-      "statement": "The task list is grouped into six numbered sections headed, in order, \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Addresses\" and \"6. Contact address\", with nothing after them.",
+      "id": "repo-frontend-p5-082",
+      "statement": "The task list is grouped into five numbered sections headed, in order, \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\" and \"5. Addresses\", with nothing after them.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:19-26, hub.fit.spec.js:151-163",
-      "quote": "groups: {\n    'about-the-consignment': '1. About the consignment',\n    'description-of-the-goods': '2. Description of the goods',\n    'transport-and-arrival': '3. Transport and arrival',\n    documents: '4. Documents',\n    'consignment-parties': '5. Addresses',\n    'contact-address': '6. Contact address'\n  },",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:19-25, hub.fit.spec.js:151-163",
+      "quote": "groups: {\n    'about-the-consignment': '1. About the consignment',\n    'description-of-the-goods': '2. Description of the goods',\n    'transport-and-arrival': '3. Transport and arrival',\n    documents: '4. Documents',\n    'consignment-parties': '5. Addresses'\n  },",
       "confidence": "verbatim",
-      "note": "The fifth group's heading is \"5. Addresses\" while the task row inside it is titled \"Consignment addresses\" (see the addresses row claim)."
+      "note": "The fit test is titled 'the task list is headed \"Notification task list\" over the five numbered design sections in order, with nothing after them'. The fifth group's heading is \"5. Addresses\" while the task row inside it is titled \"Consignment addresses\". There is no contact address section."
     },
     {
       "id": "repo-frontend-p5-017",
@@ -151,13 +151,13 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:83-95",
       "quote": "journeySections()\n    .map((section) => ({ section, rows: taskRowsOfSection(section) }))\n    .filter(({ rows }) => rows.length > 0)",
       "confidence": "inferred",
-      "note": "The eight journey sections live in another part's flow/journey-flow.js; the hub's own copy names only the six that carry rows."
+      "note": "The journey sections live in another part's flow/journey-flow.js; the hub's own copy names only the five that carry rows."
     },
     {
       "id": "repo-frontend-p5-019",
       "statement": "The \"Main import reason\" task sits in the first section, \"1. About the consignment\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:180-183",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:180-182",
       "quote": "await expect(\n      sectionRegion(page, 'about-the-consignment').getByRole('link')\n    ).toContainText([copy.rows.importReason.title])",
       "confidence": "verbatim"
     },
@@ -165,24 +165,24 @@
       "id": "repo-frontend-p5-020",
       "statement": "The second section lists its tasks in the order \"Commodity details\", \"Identification details\", \"Additional details\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:280-292",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:279-291",
       "quote": "await expect(\n      sectionRegion(page, 'description-of-the-goods').getByRole('link')\n    ).toHaveText([\n      copy.rows.consignmentDetails.title,\n      copy.rows.animalIdentification.title,\n      copy.rows.additionalDetails.title\n    ])",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-frontend-p5-021",
-      "statement": "The overview's task list holds twelve rows: origin, commodities, import reason, commodity details, identification details, additional details, arrival details, transit countries, transport details, documents, consignment addresses and contact.",
+      "id": "repo-frontend-p5-083",
+      "statement": "The overview's task list holds eleven rows: origin, commodities, import reason, commodity details, identification details, additional details, arrival details, transit countries, transport details, documents and consignment addresses. There is no contact address task.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:28-73",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-71",
       "quote": "export const taskRows = [\n  { id: 'origin', pages: [originPage] },",
       "confidence": "verbatim",
-      "note": "The twelve row ids in task-rows.js match the twelve keys of copy.rows in the hub's copy.en.js exactly; two of them (animalIdentification, transitCountries) are conditional and may be hidden."
+      "note": "The eleven row ids in task-rows.js match the eleven keys of copy.rows in the hub's copy.en.js exactly; two of them (animalIdentification, transitCountries) are conditional and may be hidden."
     },
     {
       "id": "repo-frontend-p5-022",
       "statement": "The origin task is titled \"Where is this consignment coming from?\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:28-30",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:27-29",
       "quote": "origin: {\n      title: 'Where is this consignment coming from?'\n    },",
       "confidence": "verbatim"
     },
@@ -190,7 +190,7 @@
       "id": "repo-frontend-p5-023",
       "statement": "The commodities task is titled \"What are you importing?\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:31-33",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:30-32",
       "quote": "commodities: {\n      title: 'What are you importing?'\n    },",
       "confidence": "verbatim"
     },
@@ -198,7 +198,7 @@
       "id": "repo-frontend-p5-024",
       "statement": "The import reason task is titled \"Main import reason\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:34-36",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:33-35",
       "quote": "importReason: {\n      title: 'Main import reason'\n    },",
       "confidence": "verbatim"
     },
@@ -206,7 +206,7 @@
       "id": "repo-frontend-p5-025",
       "statement": "The commodity numbers task is titled \"Commodity details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:37-39",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:36-38",
       "quote": "consignmentDetails: {\n      title: 'Commodity details'\n    },",
       "confidence": "verbatim"
     },
@@ -214,7 +214,7 @@
       "id": "repo-frontend-p5-026",
       "statement": "The additional details task is titled \"Additional details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:40-42",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:39-41",
       "quote": "additionalDetails: {\n      title: 'Additional details'\n    },",
       "confidence": "verbatim"
     },
@@ -222,7 +222,7 @@
       "id": "repo-frontend-p5-027",
       "statement": "The animal identification task is titled \"Identification details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:43-45",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:42-44",
       "quote": "animalIdentification: {\n      title: 'Identification details'\n    },",
       "confidence": "verbatim"
     },
@@ -230,7 +230,7 @@
       "id": "repo-frontend-p5-028",
       "statement": "The arrival task is titled \"Arrival details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:46-48",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:45-47",
       "quote": "arrivalDetails: {\n      title: 'Arrival details'\n    },",
       "confidence": "verbatim"
     },
@@ -238,7 +238,7 @@
       "id": "repo-frontend-p5-029",
       "statement": "The transit countries task is titled \"Transit countries\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:49-51",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:48-50",
       "quote": "transitCountries: {\n      title: 'Transit countries'\n    },",
       "confidence": "verbatim"
     },
@@ -246,7 +246,7 @@
       "id": "repo-frontend-p5-030",
       "statement": "The transporter task is titled \"Transport details\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:52-54",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:51-53",
       "quote": "transporter: {\n      title: 'Transport details'\n    },",
       "confidence": "verbatim"
     },
@@ -254,7 +254,7 @@
       "id": "repo-frontend-p5-031",
       "statement": "The addresses task is titled \"Consignment addresses\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:55-58",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:54-57",
       "quote": "addresses: {\n      title: 'Consignment addresses',",
       "confidence": "verbatim"
     },
@@ -262,24 +262,16 @@
       "id": "repo-frontend-p5-032",
       "statement": "The consignment addresses task carries the hint \"Consignor or Exporter, Consignee, Importer and Place of Destination\", and it is the only task on the overview with a hint.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:57, hub.fit.spec.js:294-313",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:56, hub.fit.spec.js:293-312",
       "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination'",
       "confidence": "verbatim",
       "note": "The fit test asserts the hint is the accessible description of that row's link, followed by the status word, and that every other row's link has only its status word as its accessible description."
     },
     {
-      "id": "repo-frontend-p5-033",
-      "statement": "The contact task is titled \"Contact address for this consignment\".",
-      "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:59-61",
-      "quote": "contact: {\n      title: 'Contact address for this consignment'\n    },",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-frontend-p5-034",
       "statement": "The documents task is titled \"Upload documents\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:62-64",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:58-60",
       "quote": "documents: {\n      title: 'Upload documents'\n    }",
       "confidence": "verbatim"
     },
@@ -305,7 +297,7 @@
       "id": "repo-frontend-p5-037",
       "statement": "The overview never shows a task as unavailable: no \"Cannot start yet\" status is rendered, and every task shown reads Complete or To do.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:392-415, with the helper at :48-54",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:391-414, with the helper at :48-54",
       "quote": "test('leads the secondary Return to dashboard button, with no task shut as Cannot start yet', async ({",
       "confidence": "verbatim"
     },
@@ -330,16 +322,16 @@
       "id": "repo-frontend-p5-040",
       "statement": "The identification details task and the transit countries task are the only conditional tasks, so they are the only two that can be absent from the overview.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:56-64",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:54-63",
       "quote": "    id: 'animalIdentification',\n    pages: [animalIdentificationPage],\n    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: hasAnyCommodityLine\n  },",
       "confidence": "verbatim",
-      "note": "The transit countries row is `{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true }` at :64, with no `applies`, so it is hidden only while its page's gate is shut; the gate itself lives in the transport feature, another part."
+      "note": "The transit countries row is `{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true }` at :63, with no `applies`, so it is hidden only while its page's gate is shut; the gate itself lives in the transport feature, another part."
     },
     {
       "id": "repo-frontend-p5-041",
       "statement": "While no commodity has been chosen the identification details task is absent from the overview, and the \"2. Description of the goods\" heading is still shown.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:251-264",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:250-263",
       "quote": "test('overview: when no commodity is chosen, the animal identification row is absent', async ({",
       "confidence": "verbatim"
     },
@@ -347,7 +339,7 @@
       "id": "repo-frontend-p5-042",
       "statement": "Once a commodity that carries identifiers is chosen, the identification details task appears on the overview as a link.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:266-278",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:265-277",
       "quote": "test('overview: when a commodity carrying identifiers is chosen, the animal identification row appears', async ({",
       "confidence": "verbatim"
     },
@@ -358,29 +350,29 @@
       "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:120-149",
       "quote": "test('renders navigation copy and the task statuses of a newly entered journey', async ({",
       "confidence": "verbatim",
-      "note": "The same test asserts the Overview heading and all six section headings are visible."
+      "note": "The same test asserts the Overview heading and all five section headings are visible."
     },
     {
-      "id": "repo-frontend-p5-044",
-      "statement": "Ten tasks can be opened from the overview before any commodity is chosen: origin, commodities, import reason, commodity details, additional details, arrival details, transport details, consignment addresses, contact and documents.",
+      "id": "repo-frontend-p5-084",
+      "statement": "Nine tasks can be opened from the overview before any commodity is chosen: origin, commodities, import reason, commodity details, additional details, arrival details, transport details, consignment addresses and documents, and each shown task reads Complete or To do.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:185-211",
-      "quote": "const openFromTheStart = [\n      copy.rows.origin,\n      copy.rows.commodities,\n      copy.rows.importReason,\n      copy.rows.consignmentDetails,\n      copy.rows.additionalDetails,\n      copy.rows.arrivalDetails,\n      copy.rows.transporter,\n      copy.rows.addresses,\n      copy.rows.contact,\n      copy.rows.documents\n    ]",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:185-210",
+      "quote": "const openFromTheStart = [\n      copy.rows.origin,\n      copy.rows.commodities,\n      copy.rows.importReason,\n      copy.rows.consignmentDetails,\n      copy.rows.additionalDetails,\n      copy.rows.arrivalDetails,\n      copy.rows.transporter,\n      copy.rows.addresses,\n      copy.rows.documents\n    ]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-045",
       "statement": "The commodity details task links to the consignment-details page, and while no commodity is chosen opening it leads the trader to the \"What are you importing?\" question instead.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:234-249 and :336-351",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:233-248 and :335-350",
       "quote": "await expect(\n      details.getByRole('link', { name: copy.rows.consignmentDetails.title })\n    ).toHaveAttribute('href', /\\/consignment-details\\?from=overview$/)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-frontend-p5-046",
-      "statement": "Opening the arrival details task from the overview with only the country of origin answered shows the port of entry question, and saving it leads on to the commodity search.",
+      "statement": "Opening the arrival details task from the overview with only the country of origin answered shows the port of entry question, and saving it with Save and continue leads on to the \"What are you importing?\" commodity search.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:213-232",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:212-231",
       "quote": "test('saving arrival details with only the country of origin answered opens What are you importing?', async ({",
       "confidence": "verbatim"
     },
@@ -388,7 +380,7 @@
       "id": "repo-frontend-p5-047",
       "statement": "Leaving a question page with \"Cancel and return to overview\" returns the trader to the overview with the answers unsaved, so the commodity details task still reads \"To do\" while the commodities task reads \"Complete\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:84-90 and :336-351",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:84-90 and :335-350",
       "quote": "await page\n    .getByRole('link', { name: sharedCopy.saveActions.cancelAndReturnToHub })\n    .click()\n  await expectHub(page)",
       "confidence": "verbatim",
       "note": "shared/copy.en.js:64 gives cancelAndReturnToHub the words 'Cancel and return to overview'."
@@ -397,7 +389,7 @@
       "id": "repo-frontend-p5-048",
       "statement": "Saving a question page with \"Save and return to overview\" returns the trader to the overview, and the task whose answers were saved then reads \"Complete\" while the other tasks keep their statuses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:76-82 and :353-367",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:76-82 and :352-366",
       "quote": "test('reads Complete once the numbers are saved, leaving the other rows alone', async ({",
       "confidence": "verbatim",
       "note": "shared/copy.en.js:63 gives saveAndReturnToHub the words 'Save and return to overview'."
@@ -406,7 +398,7 @@
       "id": "repo-frontend-p5-049",
       "statement": "A task's completeness is measured over the answers assigned to it, so the commodities task ignores each commodity line's identifiers, number of animals and number of packages.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:30-43",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-42",
       "quote": "    id: 'commodities',\n    pages: [commoditiesPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        except: [\n          'animalIdentifiers',\n          'numberOfAnimalsQuantity',\n          'numberOfPackages'\n        ]\n      }\n    ]",
       "confidence": "verbatim"
     },
@@ -414,7 +406,7 @@
       "id": "repo-frontend-p5-050",
       "statement": "The commodity details task is complete when every commodity line has its number of animals and number of packages, and nothing else.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:45-54",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:44-53",
       "quote": "    id: 'consignmentDetails',\n    pages: [consignmentDetailsPage],\n    parts: [\n      {\n        collection: 'commodityLines',\n        only: ['numberOfAnimalsQuantity', 'numberOfPackages']\n      }\n    ]",
       "confidence": "verbatim"
     },
@@ -422,7 +414,7 @@
       "id": "repo-frontend-p5-051",
       "statement": "The identification details task is complete when every commodity line has its animal identifiers, and it does not apply at all while the notification has no commodity line.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:56-61",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:54-60",
       "quote": "    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],\n    conditional: true,\n    applies: hasAnyCommodityLine",
       "confidence": "verbatim"
     },
@@ -430,7 +422,7 @@
       "id": "repo-frontend-p5-052",
       "statement": "A single-species notification can reach the review with no animal identifier saved, and its identification details task still reads \"Complete\".",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:429-442",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:428-441",
       "quote": "test('a single-species notification reaches the review with no identifier saved', async ({",
       "confidence": "verbatim"
     },
@@ -438,7 +430,7 @@
       "id": "repo-frontend-p5-053",
       "statement": "The consignment addresses task covers two pages, the addresses page and the CPH number page, and stays short of complete until every addressable animal has a permanent address even when both pages' answers are given.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:67-71, with rowStatus at :86-94",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:66-70, with rowStatus at :84-92",
       "quote": "    id: 'addresses',\n    pages: [addressesPage, cphNumberPage],\n    extraAnswerGiven: everyAddressableAnimalHasPermanentAddress",
       "confidence": "verbatim",
       "note": "rowStatus turns a fulfilled row whose extraAnswerGiven is false into IN_PROGRESS, which the hub renders as the \"To do\" tag."
@@ -447,7 +439,7 @@
       "id": "repo-frontend-p5-054",
       "statement": "A task that does not apply to the notification is reported as not applicable rather than as part-answered, which is what lets a conditional task be hidden.",
       "kind": "rule",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:86-94",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:84-92",
       "quote": "export const rowStatus = (row, answers, inScope, evaluation) => {\n  if (!rowApplies(row, answers, evaluation)) {\n    return NA\n  }",
       "confidence": "verbatim",
       "note": "mechanism: computes a task row's status from its assigned answers, the notification's scope and the obligation evaluation."
@@ -456,7 +448,7 @@
       "id": "repo-frontend-p5-055",
       "statement": "The overview ends with two buttons in order: a primary \"Review and submit\" and a secondary \"Return to dashboard\".",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:12-13, template.njk:43-54, hub.fit.spec.js:392-415",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:12-13, template.njk:43-54, hub.fit.spec.js:391-414",
       "quote": "reviewAndSubmit: 'Review and submit',\n  returnToDashboard: 'Return to dashboard',",
       "confidence": "verbatim",
       "note": "The fit test also measures the first against the GOV.UK primary button style and the second against govuk-button--secondary."
@@ -465,7 +457,7 @@
       "id": "repo-frontend-p5-056",
       "statement": "\"Review and submit\" leads to the notification view at /notifications/{journeyId}/notification-view?from=overview.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:48-49, hub.fit.spec.js:375-390",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:48-49, hub.fit.spec.js:374-389",
       "quote": "const reviewHref = (journeyId) =>\n  fromOverview(pagePath(journeyId, notificationViewPage.slug))",
       "confidence": "verbatim",
       "note": "The fit test asserts the href matches /\\/notifications\\/[^/]+\\/notification-view\\?from=overview$/."
@@ -474,7 +466,7 @@
       "id": "repo-frontend-p5-057",
       "statement": "\"Review and submit\" opens the review whatever state the notification is in: with only the country of origin answered it reaches the draft review, and it does so again once every answer section is complete.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:375-390 and :417-427",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:374-389 and :416-426",
       "quote": "test('opens the review from a notification with only the origin answered', async ({",
       "confidence": "verbatim"
     },
@@ -491,7 +483,7 @@
       "id": "repo-frontend-p5-059",
       "statement": "\"Return to dashboard\" leads to the set's own notification list at the set base, and clicking it takes the trader there.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:129, hub.fit.spec.js:315-328",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:129, hub.fit.spec.js:314-327",
       "quote": "dashboardHref: dashboardPath()",
       "confidence": "verbatim",
       "note": "shared/paths.js:15 gives `dashboardPath = () => setBase()`; the fit test asserts the button's href is the set base and that clicking it lands there."
@@ -500,7 +492,7 @@
       "id": "repo-frontend-p5-060",
       "statement": "The overview has no back link.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:315-320",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:314-319",
       "quote": "await expect(backLink(page)).toHaveCount(0)",
       "confidence": "verbatim"
     },
@@ -517,7 +509,7 @@
       "id": "repo-frontend-p5-062",
       "statement": "The overview has no serious or critical accessibility violations, whether nothing but the origin is answered, the notification is part complete, or the commodity totals are showing.",
       "kind": "non-functional",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:350, :444-454 and :527-537",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js:349, :443-453 and :526-536",
       "quote": "await expectNoSeriousOrCriticalViolations(page, 'Hub with commodity totals')",
       "confidence": "verbatim"
     },
@@ -534,7 +526,7 @@
       "id": "repo-frontend-p5-064",
       "statement": "Of those four actions the notification-actions feature itself serves only copy, as a POST to /notifications/{journeyId}/copy.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:58-65",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:59-66",
       "quote": "export const routes = [\n  {\n    method: 'POST',\n    path: pageRoutePath(notificationActionSlugs.copy),\n    options: kit.pageRouteOptions(notificationActionsPage),\n    handler: copyPost\n  }\n]",
       "confidence": "verbatim",
       "note": "Amend, cancel amend and delete are served by their own features, which other parts cover."
@@ -551,7 +543,7 @@
       "id": "repo-frontend-p5-066",
       "statement": "Copying a notification succeeds by taking the trader straight to the new draft's overview.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:39-42",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:41-43",
       "quote": "return copied\n      ? h.redirect(hubPath(copied.journeyId))\n      : h.redirect(dashboardPath())",
       "confidence": "verbatim"
     },
@@ -559,7 +551,7 @@
       "id": "repo-frontend-p5-067",
       "statement": "A copy that produces no new notification sends the trader back to the notification list rather than showing an error.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:39-42",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:41-43",
       "quote": "      : h.redirect(dashboardPath())",
       "confidence": "inferred",
       "note": "The branch is reached when copyJourney returns nothing; nothing is logged on it."
@@ -568,7 +560,7 @@
       "id": "repo-frontend-p5-068",
       "statement": "A copy request carries where it was started from, and the service distinguishes a copy started on the notification view from one started on the notification list.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:15-23",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:16-24",
       "quote": "const originPath = (request) =>\n  request.payload?.copyOrigin === 'notification-view'\n    ? pagePath(request.params.journeyId, 'check-answers')\n    : dashboardPath()",
       "confidence": "verbatim",
       "note": "mechanism: reads the posted copyOrigin field to pick where a refused or failed copy returns the trader."
@@ -577,7 +569,7 @@
       "id": "repo-frontend-p5-069",
       "statement": "When a copy cannot be saved, the trader is shown the page they started from again, carrying a recoverable-error message, with an HTTP 500 status: the notification view if the copy was started there, otherwise the notification list.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:20-38",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:21-40",
       "quote": "const recoverCopy = (request, h) =>\n  request.payload?.copyOrigin === 'notification-view'\n    ? renderNotificationView(request, h, { recoverableError: true })\n    : renderDashboard(request, h, { recoverableError: true })",
       "confidence": "verbatim"
     },
@@ -585,16 +577,16 @@
       "id": "repo-frontend-p5-070",
       "statement": "A copy posted against a notification that has moved on since the page was loaded is refused, and the trader is returned to where they started with a stale-action marker in the URL (?staleAction=1).",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:43-55",
-      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      request.logger.info(\n        {\n          journeyId: request.params.journeyId,\n          reason: 'stale-concurrency-token'\n        },\n        'Copy refused as stale'\n      )\n      return h.redirect(`${originPath(request)}?staleAction=1`)\n    }",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:44-55",
+      "quote": "if (isStaleConcurrencyRefusal(error)) {\n      request.logger.info(\n        {\n          journeyId: request.params.journeyId,\n          reason: 'stale-concurrency-token'\n        },\n        'Copy refused as stale'\n      )\n      return h.redirect(`${originPath(request)}?staleAction=1`)\n    }",
       "confidence": "verbatim",
-      "note": "The refusal is logged once at info with the notification's id and the reason."
+      "note": "The refusal is logged once at info with the notification's id and the reason. Which errors count as a stale refusal is decided by the engine's isStaleConcurrencyRefusal, outside this part."
     },
     {
       "id": "repo-frontend-p5-071",
       "statement": "A copy refused as stale that was started on the notification view sends the trader to /notifications/{journeyId}/check-answers, a path the service serves no page at, so the refusal does not land on the review page it means to.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:17",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:18",
       "quote": "    ? pagePath(request.params.journeyId, 'check-answers')",
       "confidence": "inferred",
       "note": "'check-answers' appears as a path nowhere else in src/server: the review page's slug is 'notification-view' (features/check-answers/page.js:3) and its only route comes from pageRoutes(page, ...) at features/check-answers/controller.js:258. The copy handler's own success and failure paths use the page objects' slugs rather than this literal."
@@ -603,7 +595,7 @@
       "id": "repo-frontend-p5-072",
       "statement": "A copy request carries the version of the notification it was started from, so a trader's copy can be checked against the record's current version.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:25-33",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:27-34",
       "quote": "const concurrencyToken =\n    request.payload?.concurrencyToken != null\n      ? Number(request.payload.concurrencyToken)\n      : undefined",
       "confidence": "verbatim",
       "note": "mechanism: reads the posted concurrencyToken field and passes it as a number to copyJourney; a request without one passes nothing."
@@ -680,10 +672,18 @@
       "id": "repo-frontend-p5-079",
       "statement": "The overview is offered in Welsh with every English key translated: the Welsh copy carries the same key tree as the English, with no key missing and none extra.",
       "kind": "copy",
-      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js:2-67 against copy/copy.en.js:1-66",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js:2-63 against copy/copy.en.js:1-62",
       "quote": "title: 'Trosolwg',",
       "confidence": "verbatim",
-      "note": "Both files hold title, commodityTotals (heading, animalsLabel, animalsCaption, animalsRegionLabel, packagesLabel, packagesCaption, packagesRegionLabel), reviewAndSubmit, returnToDashboard, statuses (complete, toDo), taskListHeading, groups (the six section ids) and rows (the twelve row ids, with hint only under addresses). The Welsh file is headed 'MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'"
+      "note": "Both files hold title, commodityTotals (heading, animalsLabel, animalsCaption, animalsRegionLabel, packagesLabel, packagesCaption, packagesRegionLabel), reviewAndSubmit, returnToDashboard, statuses (complete, toDo), taskListHeading, groups (the five section ids) and rows (the eleven row ids, with hint only under addresses). The Welsh file is headed 'MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'"
+    },
+    {
+      "id": "repo-frontend-p11-003",
+      "statement": "A user reaches the arrival details page from the overview task list by the link \"Arrival details\".",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:45-47 with hub.fit.spec.js:217-223",
+      "quote": "arrivalDetails: {\n      title: 'Arrival details'\n    } … await page\n      .getByRole('link', { name: copy.rows.arrivalDetails.title, exact: true })\n      .click()",
+      "confidence": "verbatim"
     }
   ]
 }

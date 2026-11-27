@@ -1,0 +1,178 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "repos/trade-imports-ins-frontend at 406e300 (main, EUDPA-675): the Import Notification Service front door, a Hapi + Nunjucks + govuk-frontend Node app. All paths below are from the repo root. Its user-facing pages live in src/server/app/features/: dashboard/ (the notifications dashboard at /, ~525 lines with its fit spec; reads the ins-backend read model through src/server/app/services/ins-backend/) and address-book/ (list /address-book, add /address-book/add, view /address-book/{id}, edit /address-book/{id}/edit, delete /address-book/{id}/delete, ~2,600 lines with copy, view models, the handshake to a journey (handshake-context.js, journey-registry.js) and 5 fit specs; backed by src/server/app/services/address-book/ and services/countries/). features/index.js registers those six controllers; src/server/app/routes.js adds features/address-lookup-spike/ (a postcode lookup spike, ~550 lines) only in dev or local environments. Shared pieces: src/server/app/shared/ (layout.njk, copy.en.js/copy.cy.js, kit.js, paths.js, error.njk, error-summary.njk, ~390 lines), src/server/app/auth/unauthorised.njk, src/server/auth/ (sign-in, sign-out, organisation routes, stub sign-in, ~300 lines), src/plugins/auth.js and csrf.js, src/server/app/lib/validate/ (validators, ~420 lines), src/server/common/constants/journey-set-bases.js (where the animals and plants journeys live), the repo-level fit/ smoke spec and sign-in helper, and the feature docs in src/server/app/docs/ (~940 lines). Every page's copy has English and Welsh files. In scope: the dashboard and address book features, shared layout and copy, the journey handshake to the animals frontend, and the fit specs. Left out: the vitest unit tests (*.test.js; behaviour is read from the source they test), src/config/ and src/server/common/helpers/ infrastructure (logging, redis, metrics, CSP, static files), src/client/stylesheets, health check, build and lint config, lighthouse config and generated reports, coverage/, test-results/ and playwright-report/. No rulings ledger (no decisions.json or equivalent) exists in the repo; the docs folder is the nearest record of intent. Cut into 5 parts by what a user sees: dashboard; address book list, view and delete; address book add, edit and handshake; shared layout, sign-in and docs; the dev-only address lookup spike.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Notifications dashboard",
+      "scope": "The dashboard page at / and everything it shows: the notification list, its columns, statuses, search or filter, empty state and links into the animals and plants journeys, plus the ins-backend client and stub it reads and its fit spec. Stops at the shared layout and header (part 4).",
+      "read": [
+        "src/server/app/features/dashboard/controller.js",
+        "src/server/app/features/dashboard/template.njk",
+        "src/server/app/features/dashboard/view-model/list.js",
+        "src/server/app/features/dashboard/copy/copy.en.js",
+        "src/server/app/features/dashboard/copy/copy.cy.js",
+        "src/server/app/features/dashboard/dashboard.fit.spec.js",
+        "src/server/app/services/ins-backend/client.js",
+        "src/server/app/services/ins-backend/index.js",
+        "src/server/app/services/ins-backend/stub.js",
+        "src/server/common/constants/journey-set-bases.js",
+        "src/server/app/shared/paths.js"
+      ],
+      "covers": [
+        "The dashboard page (GET /, and any query parameters it handles): its title, heading, caption, every table column, status tag and label, link, button, search or filter field with label, hint and error, pagination, and the empty-state message 'No notifications found' path",
+        "How each notification row links out: to the notification view, to the animals or plants journey (journey-set-bases.js), and to creating a new notification",
+        "What the dashboard reads from ins-backend (fields, statuses, filters, sort, organisation scoping) and what the stub serves when ins-backend is not used",
+        "Every test in dashboard.fit.spec.js (AC1 to AC5 and the axe check): what each proves a user can do",
+        "Welsh copy differences only where copy.cy.js keys differ in shape from copy.en.js"
+      ],
+      "prefix": "repo-insfrontend-p1"
+    },
+    {
+      "part": 2,
+      "title": "Address book list, view and delete",
+      "scope": "The address book list at /address-book, the address details page at /address-book/{id} and the delete confirmation at /address-book/{id}/delete, with the success banner, the address book service client and stub, and their fit specs. The add and edit pages and the handshake belong to part 3, even though they share copy.en.js.",
+      "read": [
+        "src/server/app/features/address-book/list/list.controller.js",
+        "src/server/app/features/address-book/list/list.njk",
+        "src/server/app/features/address-book/view-model/list.js",
+        "src/server/app/features/address-book/view/view.controller.js",
+        "src/server/app/features/address-book/view/view.njk",
+        "src/server/app/features/address-book/delete/delete.controller.js",
+        "src/server/app/features/address-book/delete/delete.njk",
+        "src/server/app/features/address-book/stored-address.js",
+        "src/server/app/features/address-book/address-id-params.js",
+        "src/server/app/features/address-book/success-banner.js",
+        "src/client/javascripts/address-book-success-banner.js",
+        "src/server/app/features/address-book/copy/copy.en.js",
+        "src/server/app/features/address-book/copy/copy.cy.js",
+        "src/server/app/services/address-book/client.js",
+        "src/server/app/services/address-book/index.js",
+        "src/server/app/services/address-book/stub.js",
+        "src/server/app/features/address-book/fit/list.fit.spec.js",
+        "src/server/app/features/address-book/fit/view.fit.spec.js",
+        "src/server/app/features/address-book/fit/delete.fit.spec.js",
+        "src/server/app/features/address-book/fit/axe.js",
+        "src/server/app/features/address-book/fit/seed-address.js"
+      ],
+      "covers": [
+        "The address book list page: heading, intro, the Name, Address and Country columns, row links and actions, the add-an-address link or button, the empty state with an option to add one, pagination when there are more than 25 addresses, and the success banner after add, edit or delete",
+        "The address details page: heading, every summary-list row (each address block field against its label), the change and delete actions, the back or return link, and the not-found path for an unknown or malformed id",
+        "The delete confirmation page: heading, what it shows of the address being deleted, the confirm and cancel actions, what happens on confirm (deleted, banner) and on cancel (nothing deleted)",
+        "What the address book service client sends and receives for list, get and delete (fields, organisation scoping, errors) and what the stub does",
+        "Every test in list.fit.spec.js, view.fit.spec.js and delete.fit.spec.js",
+        "The list, view and delete keys of copy.en.js and copy.cy.js only"
+      ],
+      "prefix": "repo-insfrontend-p2"
+    },
+    {
+      "part": 3,
+      "title": "Address book add, edit and journey handshake",
+      "scope": "The add address page at /address-book/add and the edit page at /address-book/{id}/edit: their fields, countries list, validation and error messages, what they save, and the handshake that lets a journey (the animals frontend) send a user to add an address and get them back. List, view and delete belong to part 2.",
+      "read": [
+        "src/server/app/features/address-book/add/add.controller.js",
+        "src/server/app/features/address-book/add/add.njk",
+        "src/server/app/features/address-book/edit/edit.controller.js",
+        "src/server/app/features/address-book/edit/edit.njk",
+        "src/server/app/features/address-book/fields.js",
+        "src/server/app/features/address-book/address-countries.js",
+        "src/server/app/features/address-book/handshake-context.js",
+        "src/server/app/features/address-book/journey-registry.js",
+        "src/server/app/features/address-book/copy/copy.en.js",
+        "src/server/app/features/address-book/copy/copy.cy.js",
+        "src/server/app/lib/validate/index.js",
+        "src/server/app/lib/validate/run.js",
+        "src/server/app/lib/validate/validators.js",
+        "src/server/app/lib/validate/calendar.js",
+        "src/server/app/services/countries/client.js",
+        "src/server/app/services/countries/index.js",
+        "src/server/app/services/countries/stub.js",
+        "src/server/app/services/address-book/client.js",
+        "src/server/app/features/address-book/fit/add.fit.spec.js",
+        "src/server/app/features/address-book/fit/edit.fit.spec.js",
+        "src/server/app/features/address-book/fit/address-form.js",
+        "src/server/app/features/address-book/fit/axe.js"
+      ],
+      "covers": [
+        "The add address page: heading, caption, every field (name, address lines, town, county, postcode, country, telephone, email and any other in fields.js) with its label, hint, autocomplete, whether it is required, the country options and where they come from, the save and cancel actions",
+        "Every validation rule on add and edit with its error message verbatim, how the error summary links and focuses the field, and that entered values are preserved",
+        "The edit page: how it pre-fills each field from the stored address, what changes are allowed, save and cancel without saving, and the confirmation on the address book",
+        "The journey handshake: which journeys are registered (journey-registry.js), the parameters a journey sends, how the return URL is checked, what the page shows differently when reached from a journey, and where the user is sent on save or cancel",
+        "What add and edit send to the address book service (create and update payloads, organisation scoping)",
+        "Every test in add.fit.spec.js and edit.fit.spec.js",
+        "The add, edit and validation keys of copy.en.js and copy.cy.js only"
+      ],
+      "prefix": "repo-insfrontend-p3"
+    },
+    {
+      "part": 4,
+      "title": "Shared layout, sign-in and feature docs",
+      "scope": "Everything a user sees around every page: the layout, header, service name, navigation, phase banner, footer, language toggle, error and unauthorised pages, and sign-in, sign-out and organisation switching; plus the repo's own feature and architecture docs, the README and the end-to-end smoke fit spec. The pages' own content belongs to parts 1 to 3.",
+      "read": [
+        "README.md",
+        "src/server/app/docs/README.md",
+        "src/server/app/docs/features.md",
+        "src/server/app/docs/architecture.md",
+        "src/server/app/docs/services.md",
+        "src/server/app/docs/add-a-page.md",
+        "src/server/app/docs/testing.md",
+        "src/server/app/shared/layout.njk",
+        "src/server/app/shared/copy.js",
+        "src/server/app/shared/copy.en.js",
+        "src/server/app/shared/copy.cy.js",
+        "src/server/app/shared/copy-leaves.js",
+        "src/server/app/shared/kit.js",
+        "src/server/app/shared/paths.js",
+        "src/server/app/shared/error.njk",
+        "src/server/app/shared/error-summary.njk",
+        "src/server/app/auth/unauthorised.njk",
+        "src/server/app/features/index.js",
+        "src/server/app/routes.js",
+        "src/server/router.js",
+        "src/server/auth/index.js",
+        "src/server/auth/controller.js",
+        "src/server/auth/stub-sign-in.js",
+        "src/plugins/auth.js",
+        "src/plugins/csrf.js",
+        "src/config/nunjucks/context/context.js",
+        "src/client/javascripts/application.js",
+        "fit/smoke.fit.spec.js",
+        "fit/sign-in.js",
+        "~/git/defra/trade-imports-workspace/docs/repos/trade-imports-ins-frontend.md"
+      ],
+      "covers": [
+        "The layout on every page: page title pattern, service name, header links, primary navigation items and which is current (paths.js inDashboardSection, inAddressBookSection), phase banner, footer links, language toggle, skip link and sign-out link",
+        "Every shared copy key in copy.en.js and copy.cy.js",
+        "The error page and unauthorised page: heading and body copy for each status",
+        "Sign-in, sign-in callback, sign-out and organisation routes (/auth/sign-in, /auth/sign-in-oidc, /auth/sign-out, /auth/sign-out-oidc, /auth/organisation): what a user sees and where each sends them; which routes need sign-in; the stub sign-in page and its fields",
+        "The full route table: every route features/index.js and routes.js register, and which are dev or local only",
+        "Every test in fit/smoke.fit.spec.js",
+        "Every rule or decision the docs record about the dashboard, address book, journey handshake or copy (features.md, architecture.md, services.md, add-a-page.md, testing.md)"
+      ],
+      "prefix": "repo-insfrontend-p4"
+    },
+    {
+      "part": 5,
+      "title": "Address lookup spike (dev only)",
+      "scope": "The postcode and address lookup spike in features/address-lookup-spike/, registered only in dev or local environments, with the address lookup client and stub. It is not a live page; claim it as what exists today, marked as dev-only.",
+      "read": [
+        "src/server/app/features/address-lookup-spike/controller.js",
+        "src/server/app/features/address-lookup-spike/template.njk",
+        "src/server/app/features/address-lookup-spike/detect-search-mode.js",
+        "src/server/app/features/address-lookup-spike/map-to-address-fields.js",
+        "src/server/app/features/address-lookup-spike/is-dev-or-local.js",
+        "src/server/app/features/address-lookup-spike/copy/copy.en.js",
+        "src/server/app/features/address-lookup-spike/copy/copy.cy.js",
+        "src/server/app/services/address-lookup/client.js",
+        "src/server/app/services/address-lookup/index.js",
+        "src/server/app/services/address-lookup/stub.js"
+      ],
+      "covers": [
+        "The spike page's route, heading, search field with label, hint and errors, how it decides between postcode and free-text search, the results list, the select action, and how a chosen result maps onto the address book fields",
+        "The environments it is registered in and what the lookup client calls and the stub returns",
+        "Every copy key in the spike's copy.en.js and copy.cy.js"
+      ],
+      "prefix": "repo-insfrontend-p5"
+    }
+  ]
+}

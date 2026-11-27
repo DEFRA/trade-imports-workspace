@@ -1,6 +1,6 @@
 {
   "source": "repo:tests",
-  "structure": "Part 9: animals e2e/journeys — what is stored and what is published. Read in full: the 4 specs under tests/animals/e2e/journeys/persistence (persistence-notification.spec.ts, persistence-multi-commodity.spec.ts, persistence-accompanying-document.spec.ts, api-seed-parity.spec.ts), the 3 under tests/animals/e2e/journeys/dynamics (notification-data.spec.ts, notification-data-gaps.spec.ts, notification-events.spec.ts), tests/animals/security/backend/notification-submission.spec.ts, and the models and support the eight rest on: domain/animals/models/db (notification-document.ts, accompanying-document.ts, outbox-event-document.ts), domain/animals/models/api (notification.ts, notification-status.ts, notification-fulfilments.ts), domain/animals/models/dynamics/importer-notification.ts, domain/ins/models/db (aggregated-notification-document.ts, address-document.ts), domain/animals/constants (commodity-lines.ts, journey-commodity-line-answers.ts, document-types.ts, commodity-names.ts, journey-options.ts read as context), every file of adapters/http (rest-client, frontend-form-client, notification-api-client, ins-notification-api-client, address-book-api-client, reference-data-api-client, animals-dynamics-client, dataverse-client, organisation, expect-api-refusal), adapters/db/mongodb-client.ts, adapters/queue/sqs-client.ts, flows/animals/seeded-journey.ts, flows/animals/seed-form-steps.ts, fixtures/seed-context.ts, fixtures/security.ts, bin/seed-notification.ts, utils/dynamics/animals-polls.ts, config/dynamics.ts, config/dataverse.ts and resources/outbox-events (notification-submitted-outbox-event.json, paths.ts). Counted by Bash grep, the eight specs hold 17 test() declarations, not the 57 the partition's covers names (persistence-notification 2 not 6, persistence-multi-commodity 1 not 4, persistence-accompanying-document 1 not 4, api-seed-parity 4 not 10, notification-data 3 not 11, notification-data-gaps 2 not 9, notification-events 3 not 11, backend security 1 not 2); none of them generates tests in a loop, so every declaration is claimed by its title and the count difference is recorded as a gap. Covered: what a notification, its commodity lines and its accompanying documents hold once stored in Mongo; the parity rule the API seed is held to and where the suite lets a seeded and a browser-driven notification differ; what reaches PIMS Dynamics, which columns the suite proves and which it records as empty with test.fixme; the outbox event, aggregated notification and address document shapes the models carry; the notification API wire shape and endpoint surface; and the one backend security test.",
+  "structure": "Part 9, animals e2e/journeys: what is stored and what is published. Read in full at main c433e6b: the 4 persistence specs (persistence-notification 2 tests, persistence-multi-commodity 1, persistence-accompanying-document 1, api-seed-parity 4), the 3 dynamics specs (notification-data 4 tests in two describe groups, the second a compose-only check on the submission outbox event; notification-data-gaps 2; notification-events 3) and the backend security spec (1), 18 tests in all with none generated in a loop, 5 of them fixme. Also read in full the models they assert against: the stored notification, accompanying document and outbox event documents, the notification API, status and fulfilments shapes, the PIMS Dynamics importer notification row, and the INS aggregated notification and address documents; the commodity line, commodity line answer and document type constants; every file in adapters/http, adapters/db and adapters/queue; flows/animals/seeded-journey.ts and seed-form-steps.ts; fixtures/seed-context.ts; bin/seed-notification.ts; utils/dynamics/animals-polls.ts; config/dynamics.ts and config/dataverse.ts; and resources/outbox-events (the canned submission event and its path). flows/animals/outbox.ts, commodity-names.ts and journey-options.ts were read where the specs import them. Claims cover what a stored notification, its commodity lines, species and animal identifiers, parties and transport hold; the stored-keys rule that leaves no consignment contact; what an accompanying document stores; the API-seed parity rule and how the seed posts the journey; what reaches PIMS Dynamics, what is left empty and the fixme gaps; the submission outbox event's exchanged document fields; the outbox, Dynamics, INS read model and address shapes; credential handling and organisation scoping in general terms; and the model fields no test asserts. Since the 26 November extract the contact address left the stored notification, the seed steps, the Dynamics specs and the GBN-AG field-tracing comments, and a submission outbox test was added; claims about those were replaced with new ids.",
   "claims": [
     {
       "id": "repo-tests-p9-001",
@@ -32,8 +32,9 @@
       "statement": "A notification walked as far as the declaration page, but not declared, is stored with status DRAFT.",
       "kind": "behaviour",
       "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:16 'draft notification persists as DRAFT up to declaration'",
-      "quote": "expect(doc.status).toBe('DRAFT');",
-      "confidence": "verbatim"
+      "quote": "expect(doc.status).toBe(notificationStatuses.draft);",
+      "confidence": "verbatim",
+      "note": "notificationStatuses.draft is 'DRAFT' (domain/animals/models/api/notification-status.ts:2)."
     },
     {
       "id": "repo-tests-p9-005",
@@ -56,7 +57,7 @@
       "id": "repo-tests-p9-007",
       "statement": "A notification stores the country of origin as the country's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:63",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:62",
       "quote": "expect(notification.origin.countryCode).toBe(answers.countryCode.value);",
       "confidence": "verbatim"
     },
@@ -64,25 +65,25 @@
       "id": "repo-tests-p9-008",
       "statement": "A notification stores whether the origin needs a region code as the string 'yes' or 'no', not as a boolean.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:64",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:63",
       "quote": "expect(notification.origin.requiresRegionCode).toBe('yes');",
       "confidence": "verbatim",
-      "note": "notification-document.ts:62 types requiresRegionCode as string, and seed-form-steps.ts:98 posts the answer lowercased."
+      "note": "notification-document.ts:62 types requiresRegionCode as string, and seed-form-steps.ts:89 posts the answer lowercased."
     },
     {
       "id": "repo-tests-p9-009",
       "statement": "A notification stores the region of origin as the country code and the region suffix joined by a hyphen, not as the suffix the trader typed.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:65",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:64",
       "quote": "expect(notification.origin.regionOfOriginCode).toBe(`${answers.countryCode.value}-${answers.regionCode}`);",
       "confidence": "verbatim",
-      "note": "mechanism: joins the country code to the region suffix the origin page captures separately (seed-form-steps.ts:99 posts regionOfOriginCodeSuffix on its own)."
+      "note": "mechanism: joins the country code to the region suffix the origin page captures separately (seed-form-steps.ts:90 posts regionOfOriginCodeSuffix on its own)."
     },
     {
       "id": "repo-tests-p9-010",
       "statement": "A notification stores the trader's own internal reference number.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:66",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:65",
       "quote": "expect(notification.origin.internalReference).toBe(answers.internalReference);",
       "confidence": "verbatim"
     },
@@ -90,7 +91,7 @@
       "id": "repo-tests-p9-011",
       "statement": "A notification stores a commodities list with one entry per commodity code chosen, each entry holding a name, the commodity code, a description, the total number of animals, the total number of packages and a species list.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:67-87",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:66-86",
       "quote": "expect(notification.commodities).toEqual([\n        {\n          name: storedCommodityNames[cowLine.species.commodityCode],\n          commodityCode: cowLine.species.commodityCode,\n          description: 'Live bovine animals',\n          totalNoOfAnimals: cowLine.noOfAnimals,\n          totalNoOfPackages: cowLine.noOfPackages,\n          species: [",
       "confidence": "verbatim"
     },
@@ -106,7 +107,7 @@
       "id": "repo-tests-p9-013",
       "statement": "A cattle commodity entry is stored with the description 'Live bovine animals'.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:71",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:70",
       "quote": "description: 'Live bovine animals',",
       "confidence": "verbatim"
     },
@@ -114,7 +115,7 @@
       "id": "repo-tests-p9-014",
       "statement": "A stored species entry holds the species' Latin name twice, once as its value and once as its text.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:76-77",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:75-76",
       "quote": "value: cowLine.species.latinName,\n              text: cowLine.species.latinName,",
       "confidence": "verbatim"
     },
@@ -122,7 +123,7 @@
       "id": "repo-tests-p9-015",
       "statement": "A stored species entry holds the species' common name alongside its Latin name.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:78",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:77",
       "quote": "commonName: cowLine.species.commonName,",
       "confidence": "verbatim"
     },
@@ -130,7 +131,7 @@
       "id": "repo-tests-p9-016",
       "statement": "A stored species entry holds its own number of animals and number of packages, as well as the commodity's totals.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:79-80",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:78-79",
       "quote": "noOfAnimals: cowLine.noOfAnimals,\n              noOfPackages: cowLine.noOfPackages,",
       "confidence": "verbatim"
     },
@@ -138,7 +139,7 @@
       "id": "repo-tests-p9-017",
       "statement": "A stored species entry repeats the first animal's ear tag and passport as fields of its own, beside the full list of animal identifiers.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:81-83",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:80-82",
       "quote": "earTag: cowLine.earTag,\n              passport: cowLine.passportNumber,\n              animalIdentifiers: [{ earTag: cowLine.earTag, passport: cowLine.passportNumber, tattoo: cowLine.tattoo }],",
       "confidence": "verbatim",
       "note": "mechanism: duplicates the first animal-identifier unit's values onto the species line. domain/animals/models/api/notification.ts:42-45 says so of the wire shape: \"`earTag`, `passport` and `microchip` hold the line's first animal-identifier unit; `animalIdentifiers` holds every unit.\""
@@ -147,7 +148,7 @@
       "id": "repo-tests-p9-018",
       "statement": "A stored species entry holds one animal-identifier unit per animal, each unit carrying the identifiers that species needs — for cattle an ear tag, a passport and a tattoo.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:83",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:82",
       "quote": "animalIdentifiers: [{ earTag: cowLine.earTag, passport: cowLine.passportNumber, tattoo: cowLine.tattoo }],",
       "confidence": "verbatim"
     },
@@ -163,7 +164,7 @@
       "id": "repo-tests-p9-020",
       "statement": "A notification stores the reason for import as the answer's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:88",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:87",
       "quote": "expect(notification.reasonForImport).toBe(answers.importReason.value);",
       "confidence": "verbatim"
     },
@@ -171,7 +172,7 @@
       "id": "repo-tests-p9-021",
       "statement": "A notification stores the purpose in the internal market as the answer's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:89",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:88",
       "quote": "expect(notification.purposeInInternalMarket).toBe(answers.internalMarketPurpose.value);",
       "confidence": "verbatim"
     },
@@ -179,7 +180,7 @@
       "id": "repo-tests-p9-022",
       "statement": "A notification stores what the animals are certified for under additional details, as the answer's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:90",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:89",
       "quote": "expect(notification.additionalDetails.certifiedFor).toBe(answers.certifiedFor.value);",
       "confidence": "verbatim"
     },
@@ -187,7 +188,7 @@
       "id": "repo-tests-p9-023",
       "statement": "A notification stores the unweaned-animals answer under additional details, lowercased to 'yes' or 'no'.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:91",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:90",
       "quote": "expect(notification.additionalDetails.unweanedAnimals).toBe(answers.unweanedAnimals.toLowerCase());",
       "confidence": "verbatim"
     },
@@ -195,7 +196,7 @@
       "id": "repo-tests-p9-024",
       "statement": "A party on a notification is stored as a copy of the address-book record with no link back to it: the stored party carries no address id.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:92",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:91",
       "quote": "expect(notification.consignor).not.toHaveProperty('addressId');",
       "confidence": "verbatim",
       "note": "domain/animals/models/db/notification-document.ts:12-15 states the same: \"A copy of the address-book record picked for the role, with no link back to it. An unanswered role has none of these fields, so every field is optional.\""
@@ -204,7 +205,7 @@
       "id": "repo-tests-p9-025",
       "statement": "A stored party holds the chosen address-book record's name, email and phone, and an address holding address line 1, town or city, postcode and country code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:93-103",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:92-102",
       "quote": "expect(notification.consignor).toMatchObject({\n        name: consignor.name,\n        email: consignor.email,\n        phone: consignor.phone,\n        address: {\n          addressLine1: consignor.addressLine1,\n          townOrCity: consignor.townOrCity,\n          postcode: consignor.postcode,\n          countryCode: consignor.countryCode,\n        },\n      });",
       "confidence": "verbatim"
     },
@@ -217,19 +218,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p9-027",
-      "statement": "A notification stores six parties separately: place of destination, consignee, importer, place of origin, consignor, and the consignment contact.",
-      "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:104-108",
-      "quote": "expect(notification.destination).toMatchObject({ name: destination.name, address: { postcode: destination.postcode } });\n      expect(notification.consignee).toMatchObject({ name: consignee.name, address: { postcode: consignee.postcode } });\n      expect(notification.importer).toMatchObject({ name: importer.name, address: { postcode: importer.postcode } });\n      expect(notification.placeOfOrigin).toMatchObject({ name: placeOfOrigin.name, address: { postcode: placeOfOrigin.postcode } });\n      expect(notification.consignment).toMatchObject({ name: contact.name, address: { postcode: contact.postcode } });",
-      "confidence": "verbatim",
-      "note": "The contact address is stored under the key `consignment`."
-    },
-    {
       "id": "repo-tests-p9-028",
       "statement": "The names, emails, phones and addresses a notification stores are read back from the address book by name, so the stored party must match the live address-book record.",
       "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:42-47",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:42-46",
       "quote": "const consignor = await addressBookApi.findByName(answers.parties.consignor);",
       "confidence": "verbatim",
       "note": "adapters/http/address-book-api-client.ts:116-122 refuses unless exactly one live address holds the name."
@@ -238,16 +230,16 @@
       "id": "repo-tests-p9-029",
       "statement": "A submitted notification that has never been amended holds no pre-amend snapshot.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:109",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:108",
       "quote": "expect(doc.preAmendNotification).toBeUndefined();",
       "confidence": "verbatim",
-      "note": "domain/animals/models/db/notification-document.ts:106 calls it a \"Pre-amend snapshot of notification content. Present only during an in-flight amendment.\""
+      "note": "domain/animals/models/db/notification-document.ts:123 calls it a \"Pre-amend snapshot of notification content. Present only during an in-flight amendment.\""
     },
     {
       "id": "repo-tests-p9-030",
       "statement": "A notification stores the CPH number as one unbroken string of the county, parish and holding digits, with no separators.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:110",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:109",
       "quote": "expect(notification.cphNumber).toBe(CPH_NUMBER);",
       "confidence": "verbatim",
       "note": "mechanism: joins the three CPH boxes. domain/animals/constants/journey-options.ts:30-32 builds CPH_NUMBER as `${CPH.county}${CPH.parish}${CPH.holding}` from { county: '12', parish: '345', holding: '6789' }, and keeps a separate slash-separated CPH_NUMBER_DISPLAY for display."
@@ -256,7 +248,7 @@
       "id": "repo-tests-p9-031",
       "statement": "A notification stores the port of entry under transport, as the port's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:111",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:110",
       "quote": "expect(notification.transport.portOfEntry).toBe(answers.pointOfEntry.value);",
       "confidence": "verbatim"
     },
@@ -264,7 +256,7 @@
       "id": "repo-tests-p9-032",
       "statement": "A notification stores the means of transport under transport, as the answer's code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:112",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:111",
       "quote": "expect(notification.transport.meansOfTransport).toBe(answers.meansOfTransport.value);",
       "confidence": "verbatim"
     },
@@ -272,7 +264,7 @@
       "id": "repo-tests-p9-033",
       "statement": "A notification stores the transport identification and the transport document reference under transport.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:113-114",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:112-113",
       "quote": "expect(notification.transport.transportIdentification).toBe(answers.transportIdentification);\n      expect(notification.transport.transportDocumentReference).toBe(answers.transportDocumentReference);",
       "confidence": "verbatim"
     },
@@ -280,7 +272,7 @@
       "id": "repo-tests-p9-034",
       "statement": "A notification stores the transited countries as a list of country codes, in the order the trader added them.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:115",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:114",
       "quote": "expect(notification.transport.transitedCountries).toEqual(answers.transitedCountries.map(({ value }) => value));",
       "confidence": "verbatim"
     },
@@ -288,7 +280,7 @@
       "id": "repo-tests-p9-035",
       "statement": "A notification stores the chosen transporter's display name under transport.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:116",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:115",
       "quote": "expect(notification.transport.transporter?.name).toBe(answers.transporter.display);",
       "confidence": "verbatim"
     },
@@ -296,7 +288,7 @@
       "id": "repo-tests-p9-036",
       "statement": "A notification stores the transporter's type as 'Commercial' for the journey's default transporter.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:117",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:116",
       "quote": "expect(notification.transport.transporter?.type).toBe('Commercial');",
       "confidence": "verbatim"
     },
@@ -312,7 +304,7 @@
       "id": "repo-tests-p9-038",
       "statement": "A notification stores the arrival date as a YYYY-MM-DD calendar date, not as the text the trader typed into the date field.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:118",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:117",
       "quote": "expect(notification.transport.arrivalDate).toBe(toIsoDate(parseAppDateText(answers.arrivalDate)));",
       "confidence": "verbatim",
       "note": "domain/animals/models/db/notification-document.ts:80 says \"A calendar date, stored as a `YYYY-MM-DD` string.\""
@@ -321,7 +313,7 @@
       "id": "repo-tests-p9-039",
       "statement": "Once submitted, the notification view shows the reference number and a status tag reading 'Submitted', and offers neither a Change link nor a Continue button.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:123-127",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:122-126",
       "quote": "await expect(animalsPages.notificationView.viewHeader.statusTag).toHaveText('Submitted');\n    await expect(animalsPages.notificationView.changeLink(/^Change/)).toHaveCount(0);\n    await expect(animalsPages.notificationView.continueButton).toHaveCount(0);",
       "confidence": "verbatim"
     },
@@ -505,30 +497,21 @@
       "ref": "tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:48-50",
       "quote": "expect(seededDoc.status).toBe(browserDoc.status);\n    expect(seededDoc.notification).toEqual(browserDoc.notification);\n    expect(seededDoc.fulfilments).toEqual(browserDoc.fulfilments);",
       "confidence": "inferred",
-      "note": "Follows because each test reads two whole documents and asserts only these three members; the stored document also holds _id, referenceNumber, created, updated and _class (notification-document.ts:101-112)."
+      "note": "Follows because each test reads two whole documents and asserts only these three members; the stored document also holds _id, referenceNumber, created, updated and _class (notification-document.ts:118-129)."
     },
     {
       "id": "repo-tests-p9-062",
       "statement": "The API seed cannot produce a notification with an accompanying document, because its form client sends no files, so parity is never proven for an uploaded document.",
       "kind": "constraint",
-      "ref": "flows/animals/seed-form-steps.ts:193-195",
+      "ref": "flows/animals/seed-form-steps.ts:184-186",
       "quote": "if (answers.accompanyingDocument) {\n    throw new Error('The seeded journey cannot upload an accompanying document: the form client sends no files.');\n  }",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p9-063",
-      "statement": "A seeded notification is made by posting the frontend's own save-and-continue forms in journey order: origin, a commodity search per line then the species choice, consignment details, commodity identification, import reason, additional details, the five party selections, the permanent address where a species needs one, the addresses page, the CPH number, the port of entry, the transit countries, the transporter, and the consignment contact.",
-      "kind": "behaviour",
-      "ref": "flows/animals/seed-form-steps.ts:94-208",
-      "quote": "const unlocked = [originStep(answers), ...commoditySteps(answers)];\n  if (stage === 'unlocked') {\n    return unlocked;\n  }\n  const parties = await resolveParties(partyNamesFrom(answers));\n  const throughArrival = [\n    ...unlocked,\n    ...consignmentSteps(answers, leaveUnanswered),\n    ...addressSteps(parties, answers),\n    arrivalStep(answers),\n  ];\n  return stage === 'partial' ? throughArrival : [...throughArrival, ...transportSteps(answers), contactStep(parties)];",
-      "confidence": "verbatim",
-      "note": "mechanism: turns one set of notification answers into the form fields each page expects, so a seeded notification exercises the same routes the browser does."
     },
     {
       "id": "repo-tests-p9-064",
       "statement": "A notification is created by posting to the live-animals set's notifications path, and the frontend answers with a redirect to the new notification's origin page carrying its reference number.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:24-52",
+      "ref": "flows/animals/seeded-journey.ts:22-49",
       "quote": "export const CREATE_PATH = `${SET_BASES.liveAnimals}/notifications`;\nexport const CREATED_AT_ORIGIN = new RegExp(`^${CREATE_PATH}/(?<referenceNumber>[^/?]+)/origin${OPTIONAL_RETURN_AND_TRAIL_PATTERN}$`);",
       "confidence": "verbatim"
     },
@@ -536,7 +519,7 @@
       "id": "repo-tests-p9-065",
       "statement": "A seeded draft can be left at one of three stages: unlocked (origin and commodity answered, which opens the other tasks), partial (on through arrival) or ready (every section answered, so the draft can be declared).",
       "kind": "behaviour",
-      "ref": "flows/animals/seed-form-steps.ts:23-27",
+      "ref": "flows/animals/seed-form-steps.ts:14-18",
       "quote": "/**\n * How far a seeded draft is answered. `unlocked` answers origin and commodity, which opens the other tasks;\n * `partial` goes on through arrival; `ready` answers every section, so the draft can be declared.\n */\nexport type DraftStage = 'unlocked' | 'partial' | 'ready';",
       "confidence": "verbatim"
     },
@@ -544,7 +527,7 @@
       "id": "repo-tests-p9-066",
       "statement": "Declaring a notification takes two posts to the declaration page — one marked as the review step and one marked as the declaration, each carrying a concurrency token read from the page before it — and the second redirects to the confirmation page.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:104-113, seed-form-steps.ts:210-215",
+      "ref": "flows/animals/seeded-journey.ts:102-111, seed-form-steps.ts:201-206",
       "quote": "export const declarationStep: { reviewSlug: string; slug: string; review: FormFields; declare: FormFields } = {\n  reviewSlug: 'notification-view',\n  slug: 'declaration',\n  review: { step: 'review' },\n  declare: { step: 'declare', declaration: 'confirmed' },\n};",
       "confidence": "verbatim"
     },
@@ -552,7 +535,7 @@
       "id": "repo-tests-p9-067",
       "statement": "Declaring a draft that is not finished is refused: the post redirects back to the notification view with a refused marker in the query string.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:91-97",
+      "ref": "flows/animals/seeded-journey.ts:89-95",
       "quote": "{ redirectsTo: /\\/notification-view\\?refused=1$/ },",
       "confidence": "verbatim"
     },
@@ -560,7 +543,7 @@
       "id": "repo-tests-p9-068",
       "statement": "Amending, cancelling an amendment and deleting a notification are each a post to the notification's own path, redirecting respectively to the notification view, to the notification view with a cancelled marker, and to a page with a deleted marker.",
       "kind": "behaviour",
-      "ref": "flows/animals/seeded-journey.ts:121-135",
+      "ref": "flows/animals/seeded-journey.ts:119-133",
       "quote": "await this.forms.postForm(`${CREATE_PATH}/${referenceNumber}/cancel-amend`, {}, { redirectsTo: /\\/notification-view\\?cancelled=1$/ });\n  }\n\n  async softDelete(referenceNumber: string): Promise<void> {\n    await this.forms.postForm(`${CREATE_PATH}/${referenceNumber}/delete`, {}, { redirectsTo: /\\?deleted=1$/ });",
       "confidence": "verbatim"
     },
@@ -626,7 +609,7 @@
       "id": "repo-tests-p9-076",
       "statement": "A notification published to PIMS Dynamics names the signed-in user who submitted it, by display name.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:61",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:63",
       "quote": "expect.soft(row.defraimp_submittedbydisplayname, 'submitted by').toBe(defaultUser.displayName);",
       "confidence": "verbatim",
       "note": "The default signed-in identity is 'Andrew Farmer' (config/users.ts:5-25)."
@@ -635,7 +618,7 @@
       "id": "repo-tests-p9-077",
       "statement": "A notification published to PIMS Dynamics names its country of origin by the country's display name, through a lookup rather than a code.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:63",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:65",
       "quote": "expect.soft(formattedValue(row, '_defraimp_countryoforiginid_value'), 'country of origin').toBe(answers.countryCode.display);",
       "confidence": "verbatim"
     },
@@ -643,7 +626,7 @@
       "id": "repo-tests-p9-078",
       "statement": "A notification published to PIMS Dynamics says whether the consignment includes unweaned animals as a true or false flag, and a 'no' answer arrives as false.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:64",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:66",
       "quote": "expect.soft(row.defraimp_commoditiesincludenonablactedanimals, 'unweaned animals').toBe(false);",
       "confidence": "verbatim"
     },
@@ -651,7 +634,7 @@
       "id": "repo-tests-p9-079",
       "statement": "A notification published to PIMS Dynamics carries each of the five parties — consignor, place of destination, place of origin, consignee and importer — as a company name, an address line 1, a city and a country lookup.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:65-94",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:67-96",
       "quote": "expect.soft(row.defraimp_consignorcompanyname, 'consignor').toBe(answers.parties.consignor);\n    expect.soft(row.defraimp_consignoraddressaddressline1, 'consignor address line 1').toBe(consignor.addressLine1);\n    expect.soft(row.defraimp_consignoraddresscity, 'consignor city').toBe(consignor.townOrCity);",
       "confidence": "verbatim"
     },
@@ -659,7 +642,7 @@
       "id": "repo-tests-p9-080",
       "statement": "PIMS Dynamics names countries in full: Switzerland, Ireland, and 'United Kingdom of Great Britain and Northern Ireland' for GB.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:18-22",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:20-24",
       "quote": "const PIMS_COUNTRY_LABELS: Record<string, string> = {\n  CH: 'Switzerland',\n  GB: 'United Kingdom of Great Britain and Northern Ireland',\n  IE: 'Ireland',\n};",
       "confidence": "verbatim",
       "note": "mechanism: maps the address book's country code to the label PIMS returns, so the test can compare the two. The labels are PIMS's, not the service's."
@@ -668,7 +651,7 @@
       "id": "repo-tests-p9-081",
       "statement": "A notification published to PIMS Dynamics carries the arrival date, whose date part is the arrival date stored by the service.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:95",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:97",
       "quote": "expect.soft(row.defraimp_arrivaldate?.slice(0, 10), 'arrival date').toBe(toIsoDate(parseAppDateText(answers.arrivalDate)));",
       "confidence": "verbatim"
     },
@@ -676,7 +659,7 @@
       "id": "repo-tests-p9-082",
       "statement": "A notification published to PIMS Dynamics carries the port of entry as its code, not its name.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:96",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:98",
       "quote": "expect.soft(row.defraimp_portofentry, 'point of entry').toBe(answers.pointOfEntry.value);",
       "confidence": "verbatim"
     },
@@ -684,7 +667,7 @@
       "id": "repo-tests-p9-083",
       "statement": "A notification published to PIMS Dynamics names the means of transport to the entry point in PIMS's own words: Aeroplane, Railway Wagon, Road Vehicle or Ship.",
       "kind": "copy",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:24-29",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:26-31",
       "quote": "const PIMS_MEANS_OF_TRANSPORT_LABELS: Record<string, string> = {\n  AIRPLANE: 'Aeroplane',\n  RAILWAY: 'Railway Wagon',\n  ROAD_VEHICLE: 'Road Vehicle',\n  VESSEL: 'Ship',\n};",
       "confidence": "verbatim",
       "note": "mechanism: maps the service's means-of-transport code to the label PIMS stores. It also records the service's four codes: AIRPLANE, RAILWAY, ROAD_VEHICLE, VESSEL."
@@ -693,7 +676,7 @@
       "id": "repo-tests-p9-084",
       "statement": "A notification published to PIMS Dynamics names the transporter by company name.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:100",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:102",
       "quote": "expect.soft(row.defraimp_transportercompanyname, 'transporter').toBe(answers.transporter.display);",
       "confidence": "verbatim"
     },
@@ -701,7 +684,7 @@
       "id": "repo-tests-p9-085",
       "statement": "The rest of the transporter published to PIMS Dynamics — approval number, type, address lines 1 and 2 and country — comes from the transporter's reference record rather than the trader's answers, so the suite proves only that each is filled in.",
       "kind": "rule",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:101-106",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:103-108",
       "quote": "// The rest of the transporter comes from its reference record, not the answers, so only its presence is asserted.\n    expect.soft(row.defraimp_transporterapprovalnumber, 'transporter approval number').not.toBeNull();",
       "confidence": "verbatim"
     },
@@ -709,7 +692,7 @@
       "id": "repo-tests-p9-086",
       "statement": "When the trader answers only what the journey requires, the region of origin code, the internal reference, the number of packages and the transited countries reach PIMS Dynamics empty, because neither PIMS nor the gateway fills them in by default.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:108-112",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:110-114",
       "quote": "// The optional answers left blank, only in columns that neither PIMS nor the gateway can fill in by default.\n    expect.soft(row.defraimp_commoditiesregionoforigin, 'region of origin code').toBeNull();\n    expect.soft(row.defraimp_traderreference, 'internal reference').toBeNull();\n    expect.soft(row.defraimp_commoditiesnumberofpackages, 'number of packages').toBeNull();\n    expect.soft(row.defraimp_routetransitingstates, 'transited countries').toBeNull();",
       "confidence": "verbatim",
       "note": "The test that proves this is 'a notification submitted with only the mandatory answers is stored in PIMS Dynamics'."
@@ -718,7 +701,7 @@
       "id": "repo-tests-p9-087",
       "statement": "When the trader gives an internal reference, it reaches PIMS Dynamics as the trader reference.",
       "kind": "behaviour",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:127 'a notification submitted with every answer is stored in PIMS Dynamics with its internal reference'",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:129 'a notification submitted with every answer is stored in PIMS Dynamics with its internal reference'",
       "quote": "expect.soft(row.defraimp_traderreference, 'internal reference').toBe(answers.internalReference);",
       "confidence": "verbatim"
     },
@@ -726,53 +709,26 @@
       "id": "repo-tests-p9-088",
       "statement": "A 'yes' answer to unweaned animals does not reach PIMS Dynamics: the record is not written from the message the service publishes.",
       "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:115-116 'answering yes to unweaned animals is stored in PIMS Dynamics'",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:117-118 'answering yes to unweaned animals is stored in PIMS Dynamics'",
       "quote": "test.fixme(true, 'PIMS Dynamics does not yet write isOrHasUnweanedAnimals from the 0.1.0 message to the record');",
       "confidence": "verbatim",
       "note": "The test is written and marked fixme, so the behaviour is specified but not proven."
     },
     {
-      "id": "repo-tests-p9-089",
-      "statement": "A long list of answers the journey requires does not reach PIMS Dynamics at all: the contact address, the species Latin and common names, every party's postcode, phone and email, the CPH number, the transport document reference, the reason for import, the internal market purpose, what the animals are certified for, the number of animals, the ear tag and the transport identification are all left empty.",
-      "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:19-25",
-      "quote": "test.fixme(true, 'PIMS Dynamics leaves these mandatory answers empty; the likely cause of each is in the comments');",
-      "confidence": "verbatim",
-      "note": "The test's own title names every one of them. It is marked fixme, so none is proven today."
-    },
-    {
       "id": "repo-tests-p9-090",
       "statement": "Four optional answers do not reach PIMS Dynamics either: the region of origin code, the transited countries, the number of packages and the passport number.",
       "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:92-97 'the region of origin code, transited countries, number of packages and passport number are stored in PIMS Dynamics'",
-      "quote": "test.fixme(true, 'PIMS Dynamics leaves these optional answers empty; the likely cause of each is in the comments');",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:73-81 'the region of origin code, transited countries, number of packages and passport number are stored in PIMS Dynamics'",
+      "quote": "'PIMS Dynamics leaves these optional answers empty; the field mapping and likely causes are in the workspace docs/analysis/pims-dynamics-field-gaps.md',",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p9-091",
-      "statement": "Each field the suite expects PIMS Dynamics to hold is traced to the place in the published notification document it should come from, and to the message version that added it: v0.3.0 for the issuer's postal address and the region of origin code, v0.2.0 for the species names, each party's postcode, phone and email and the transit countries, and v0.1.0 for the clauses carrying the purpose, internal market purpose and certification.",
-      "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:40-89",
-      "quote": "// [FROM v0.3.0]\n    // exchangedDocument.issuer.postalAddress\n...\n    // [FROM v0.2.0]\n    // specifiedConsignment.includedConsignmentItem[].includedTradeLineItem[].scientificName and commonName\n...\n    // [FROM v0.1.0: OPTION NOT MATCHED?]\n    // exchangedDocument.firstSignatoryAuthentication.includedClause[] where identifier is PURPOSE",
-      "confidence": "verbatim",
-      "note": "The markers 'OPTION NOT MATCHED?' and 'NOT MAPPED?' record the suite's own reading of why each field is empty: either the option set does not match the value sent, or the field is not mapped at all."
     },
     {
       "id": "repo-tests-p9-092",
       "statement": "The animal identifiers published to PIMS Dynamics are expected in one free-text identification column, with the ear tag and the passport number each appearing within it rather than in fields of their own.",
       "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:87, 121",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:69, 97",
       "quote": "expect.soft(row.defraimp_identificationofanimalstext, 'ear tag').toContain(cowLine.earTag);\n...\n    expect.soft(row.defraimp_identificationofanimalstext, 'passport number').toContain(cowLine.passportNumber);",
       "confidence": "verbatim"
-    },
-    {
-      "id": "repo-tests-p9-093",
-      "statement": "The contact address is expected to reach PIMS Dynamics as one free-text block holding the address line, the town and the postcode together.",
-      "kind": "integration",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:42-44",
-      "quote": "for (const part of [contact.addressLine1, contact.townOrCity, contact.postcode]) {\n      expect.soft(row.defraimp_personresponsibleaddress, `contact address ${part}`).toContain(part);\n    }",
-      "confidence": "verbatim",
-      "note": "PIMS calls the consignment contact the 'person responsible'."
     },
     {
       "id": "repo-tests-p9-094",
@@ -811,7 +767,7 @@
       "id": "repo-tests-p9-098",
       "statement": "The PIMS Dynamics tests run with Playwright tracing switched off, because a trace would record the bearer token and client secret the API calls carry.",
       "kind": "non-functional",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:14-16",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:16-18",
       "quote": "// Traces record APIRequestContext calls with their headers and form bodies: the bearer token and client secret.\n// Top level because Playwright rejects test.use({ trace }) inside a describe group.\ntest.use({ trace: 'off' });",
       "confidence": "verbatim",
       "note": "Security finding area: credential handling in test artefacts. Named in general terms only."
@@ -847,7 +803,7 @@
       "id": "repo-tests-p9-102",
       "statement": "The PIMS Dynamics row a test read is attached to its report as JSON, so the published record can be inspected after the run.",
       "kind": "non-functional",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:31-32",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:33-34",
       "quote": "const attachRow = (row: AnimalsDynamicsImporterNotification): Promise<void> =>\n  test.info().attach('pims-dynamics-row.json', { body: JSON.stringify(row, null, 2), contentType: 'application/json' });",
       "confidence": "verbatim"
     },
@@ -909,18 +865,10 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-tests-p9-110",
-      "statement": "The published exchanged document carries the notification's identifier, the trader's own assigned id, a notification status code, a version id, an issue date and time, the issuer, a list of signed clauses, and a list of referenced documents.",
-      "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:48-57",
-      "quote": "export type GbnAgExchangedDocument = {\n  identifier: string;\n  traderAssignedId?: string;\n  notificationStatusCode?: string;\n  versionId?: number;\n  issueDateTime?: string;\n  issuer?: GbnAgTradeParty;\n  firstSignatoryAuthentication?: { includedClause: GbnAgClause[] };\n  referenceDocument?: GbnAgReferencedDocument[];\n};",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-tests-p9-111",
       "statement": "The published specified consignment carries the consignor, consignee, despatch, delivery, importer and carrier parties, the origin country, the unloading base port, the final destination, the main carriage transport movements, the transit countries, whether the consignment holds unweaned animals, and the consignment items.",
       "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:128-142",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:139-153",
       "quote": "export type GbnAgSpecifiedConsignment = {\n  consignorParty?: GbnAgTradeParty;\n  consigneeParty?: GbnAgTradeParty;\n  despatchParty?: GbnAgTradeParty;\n  deliveryParty?: GbnAgTradeParty;\n  importer?: GbnAgTradeParty;\n  carrier?: GbnAgTradeParty;\n  originCountry?: GbnAgTradeCountry;\n  unloadingBaseportLocation?: GbnAgLogisticsLocation;\n  finalDestinationLocation?: GbnAgLogisticsLocation;\n  mainCarriageLogisticsTransportMovement?: GbnAgLogisticsTransportMovement[];\n  transitTradeCountry?: GbnAgTradeCountry[];\n  isOrHasUnweanedAnimals?: boolean | null;\n  includedConsignmentItem?: GbnAgConsignmentItem[];\n};",
       "confidence": "verbatim"
     },
@@ -928,7 +876,7 @@
       "id": "repo-tests-p9-112",
       "statement": "A published trade line item carries a description, the scientific and common species names, a product unit quantity per delivery, an item quantity per package, and the individual animals, each with a name and a list of identifiers.",
       "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:110-122",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:126-133",
       "quote": "export type GbnAgTradeLineItem = {\n  description?: string[];\n  scientificName?: string;\n  commonName?: string;\n  specifiedLineTradeDelivery?: { productUnitQuantity: { content: number } }[];\n  physicalReferencedLogisticsPackage?: { itemQuantity: number }[];\n  individualTradeProductInstance?: GbnAgTradeProductInstance[];\n};",
       "confidence": "verbatim"
     },
@@ -936,16 +884,16 @@
       "id": "repo-tests-p9-113",
       "statement": "Each animal identifier is published as a type code and a content value, so the kind of identifier (ear tag, passport and so on) travels as a code beside the number.",
       "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:104-108",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:115-119",
       "quote": "export type GbnAgAnimalIdentifier = {\n  typeCode: string;\n  content: string;\n  urlId?: string | null;\n};",
       "confidence": "verbatim",
-      "note": "notification-data-gaps.spec.ts:86 and :120 name EAR_TAG and PASSPORT as two of those type codes."
+      "note": "No test in this slice reads the identifier type codes, so which codes are sent is not proven here."
     },
     {
       "id": "repo-tests-p9-114",
       "statement": "A published party carries an identifier, a URL id, a name, a party role code and a list of party type codes, each coded value being a value with an optional URL id and name.",
       "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:42-71",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:42-82",
       "quote": "export type GbnAgTradeParty = {\n  identifier?: string;\n  urlId?: string;\n  name?: string;\n  partyRoleCode?: CodedValue;\n  partyTypeCode?: CodedValue[];\n};",
       "confidence": "verbatim"
     },
@@ -953,7 +901,7 @@
       "id": "repo-tests-p9-115",
       "statement": "A published country carries a code, its subordinate country sub-divisions and a region of origin code; a published location carries an identifier, a URL id, a name and a type code; and a published transport movement carries a numeric mode code and the transport contract documents.",
       "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts:73-102",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:84-113",
       "quote": "export type GbnAgTradeCountry = {\n  code?: CodedValue;\n  subordinateTradeCountrySubDivision?: GbnAgTradeCountrySubDivision[] | null;\n  regionOfOriginCode?: string | null;\n};",
       "confidence": "verbatim"
     },
@@ -964,7 +912,7 @@
       "ref": "resources/outbox-events/notification-submitted-outbox-event.json:9-14",
       "quote": "\"data\": {\n    \"referenceNumber\": \"GBN-AG-26-001\",\n    \"status\": \"SUBMITTED\",\n    \"pointOfEntry\": \"GBLHR\",\n    \"commodities\": [{ \"speciesName\": \"Bos taurus\", \"numberOfAnimals\": 12 }]\n  },",
       "confidence": "verbatim",
-      "note": "An ambiguity recorded, not settled: outbox-event-document.ts:9 types `data` as GbnAgEventData, and the canned file also carries an eventId and a publishedAt that the model does not. The reconciler should decide which shape is current."
+      "note": "An ambiguity recorded, not settled: outbox-event-document.ts:9 types `data` as GbnAgEventData, the model names the event type uk.gov.defra.imports.notification.NotificationSubmitted (outbox-event-document.ts:155) where the canned file says NotificationSubmitted, and the canned file also carries an eventId and a publishedAt that the model does not. No spec in this slice reads the canned file. The reconciler should decide which shape is current."
     },
     {
       "id": "repo-tests-p9-117",
@@ -1012,7 +960,7 @@
       "id": "repo-tests-p9-122",
       "statement": "The notification API also carries a concurrency token, the created and updated times, and the time the notification was submitted.",
       "kind": "data",
-      "ref": "domain/animals/models/api/notification.ts:109-115",
+      "ref": "domain/animals/models/api/notification.ts:108-113",
       "quote": "  status?: NotificationStatus;\n  created?: string;\n  updated?: string;\n  submittedAt?: string | null;\n  fulfilments?: PersistedFulfilmentEntry[];\n  concurrencyToken?: number;",
       "confidence": "verbatim"
     },
@@ -1097,7 +1045,7 @@
       "id": "repo-tests-p9-132",
       "statement": "A stored notification document also carries its own id, its reference number, a fulfilments list, a status, created and updated timestamps and a class marker, and the reference number can be null.",
       "kind": "data",
-      "ref": "domain/animals/models/db/notification-document.ts:101-112",
+      "ref": "domain/animals/models/db/notification-document.ts:118-129",
       "quote": "export type NotificationDocument = {\n  _id: ObjectId;\n  referenceNumber: string | null;\n  notification: NotificationContent;\n  fulfilments?: unknown[];",
       "confidence": "verbatim"
     },
@@ -1105,7 +1053,7 @@
       "id": "repo-tests-p9-133",
       "statement": "A notification can also store a destination country, a port of exit and an exit date, which no test in this slice asserts.",
       "kind": "data",
-      "ref": "domain/animals/models/db/notification-document.ts:94-99",
+      "ref": "domain/animals/models/db/notification-document.ts:93-97",
       "quote": "  purposeInInternalMarket?: string;\n  destinationCountry?: string;\n  portOfExit?: string;\n  /** A calendar date, stored as a `YYYY-MM-DD` string. */\n  exitDate?: string;",
       "confidence": "gap",
       "note": "Searched all eight specs in this part for destinationCountry, portOfExit and exitDate: none appears. Nothing here says whether the animals journey ever fills them."
@@ -1129,15 +1077,6 @@
       "note": "persistence-accompanying-document.spec.ts asserts filename, contentType, contentLength, s3Key, detectedContentType and checksumSha256, and leaves s3Bucket and fileStatus unread."
     },
     {
-      "id": "repo-tests-p9-136",
-      "statement": "No test in this slice asserts the outbox event the service publishes: the event document model and the canned submission event are read by no test here.",
-      "kind": "integration",
-      "ref": "domain/animals/models/db/outbox-event-document.ts, resources/outbox-events/notification-submitted-outbox-event.json",
-      "quote": "",
-      "confidence": "gap",
-      "note": "What reaches Dynamics is proven through the PIMS table, not through the event. The GBN-AG paths in notification-data-gaps.spec.ts's comments are the only trace of the event's shape in a spec, and they are comments, not assertions."
-    },
-    {
       "id": "repo-tests-p9-137",
       "statement": "No test in this slice asserts the aggregated notification document or the address document the INS read model holds.",
       "kind": "data",
@@ -1150,7 +1089,7 @@
       "id": "repo-tests-p9-138",
       "statement": "No test in this slice proves what the fulfilments list holds: parity compares one notification's fulfilments with another's, and the stored field is typed as a list of unknowns.",
       "kind": "data",
-      "ref": "tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:50, domain/animals/models/db/notification-document.ts:105",
+      "ref": "tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:50, domain/animals/models/db/notification-document.ts:122",
       "quote": "  fulfilments?: unknown[];",
       "confidence": "gap",
       "note": "The parity test asserts the two documents' fulfilments are equal without saying what either holds, so nothing here records which obligations a submitted notification fulfils."
@@ -1202,25 +1141,25 @@
       "id": "repo-tests-p9-144",
       "statement": "The permanent address is asked once per animal, not once per commodity line: the form carries a field set per line and animal.",
       "kind": "rule",
-      "ref": "flows/animals/seed-form-steps.ts:65-92",
+      "ref": "flows/animals/seed-form-steps.ts:56-83",
       "quote": "    for (let unitIndex = 0; unitIndex < line.noOfAnimals; unitIndex += 1) {\n      const key = `${lineIndex}-${unitIndex}`;\n      form[`option-${key}`] = address.origin;",
       "confidence": "verbatim",
-      "note": "mechanism: indexes the permanent address form fields by commodity line and animal. The identification and consignment-details forms are indexed by commodity line alone (seed-form-steps.ts:29-63)."
+      "note": "mechanism: indexes the permanent address form fields by commodity line and animal. The identification and consignment-details forms are indexed by commodity line alone (seed-form-steps.ts:20-54)."
     },
     {
       "id": "repo-tests-p9-145",
       "statement": "A notification's answers are refused before any page is posted when they contradict each other: a region of origin code must be given exactly when the origin requires one.",
       "kind": "rule",
-      "ref": "domain/animals/constants/journey-options.ts:95-104",
+      "ref": "domain/animals/constants/journey-options.ts:92-93",
       "quote": "/** Throws when the answers contradict each other: a region code is given exactly when the origin requires one. */\nexport const assertConsistentAnswers = (answers: NotificationAnswers): void => {",
       "confidence": "verbatim",
-      "note": "mechanism: a guard on the answer set the seeded journey builds from, not a rule the frontend enforces. Recorded because the seeded journey runs it before posting (seed-form-steps.ts:192)."
+      "note": "mechanism: a guard on the answer set the seeded journey builds from, not a rule the frontend enforces. Recorded because the seeded journey runs it before posting (seed-form-steps.ts:183)."
     },
     {
       "id": "repo-tests-p9-146",
       "statement": "A seeded journey can leave the main import reason, what the animals are certified for, or the unweaned-animals question unanswered, so a draft with a named question missing can be made.",
       "kind": "behaviour",
-      "ref": "flows/animals/seed-form-steps.ts:119-125",
+      "ref": "flows/animals/seed-form-steps.ts:110-116",
       "quote": "/** Questions the seeded trader leaves unchosen. */\nexport type UnansweredQuestion = 'mainImportReason' | 'certifiedFor' | 'unweaned';",
       "confidence": "verbatim"
     },
@@ -1228,10 +1167,10 @@
       "id": "repo-tests-p9-147",
       "statement": "A seeded journey picks each party by its address-book id, not by its name, resolving the name to an id through the address book first.",
       "kind": "integration",
-      "ref": "flows/animals/seed-form-steps.ts:146-153, flows/animals/seeded-journey.ts:194-200",
+      "ref": "flows/animals/seed-form-steps.ts:137-145, flows/animals/seeded-journey.ts:179-191",
       "quote": "    { slug: 'consignors/select', form: { party: parties.consignor } },\n    { slug: 'destinations/select', form: { party: parties.placeOfDestination } },\n    { slug: 'place-of-origin/select', form: { party: parties.placeOfOrigin } },\n    { slug: 'consignees/select', form: { party: parties.consignee } },\n    { slug: 'importers/select', form: { party: parties.importer } },",
       "confidence": "verbatim",
-      "note": "The consignment contact is picked separately, under the field name contactAddress (seed-form-steps.ts:181-184)."
+      "note": "The five parties are resolved by name in one pass (seeded-journey.ts:179-183), and each resolved id is remembered for the rest of the run."
     },
     {
       "id": "repo-tests-p9-148",
@@ -1251,22 +1190,152 @@
       "note": "Security finding area: organisation scoping. Named in general terms only; the specs that use the second organisation sit in other parts."
     },
     {
-      "id": "repo-tests-p9-150",
-      "statement": "The eight specs in this slice declare 17 tests between them, not the 57 the partition's covers names, and none of them generates tests in a loop.",
-      "kind": "non-functional",
-      "ref": "distil/extract/repo-tests.partition.json parts[8].covers, first entry",
-      "quote": "Every test in the 8 specs named in read, by its title: persistence-notification.spec.ts (6 test declarations), persistence-multi-commodity.spec.ts (4), persistence-accompanying-document.spec.ts (4), api-seed-parity.spec.ts (10), notification-data.spec.ts (11), notification-data-gaps.spec.ts (9), notification-events.spec.ts (11) and the backend security spec (2)",
-      "confidence": "gap",
-      "note": "Counted with Bash grep -c '^\\s*test(' on each file: 2, 1, 1, 4, 3, 2, 3 and 1. Every declaration is claimed above by its title. Either the partition counted assertions rather than tests, or the repo has moved since it was cut; recorded so the verifier does not read the shortfall as a missed test."
+      "id": "repo-tests-p9-152",
+      "statement": "A notification stores five parties separately, each copied from the address book: place of destination, consignee, importer, place of origin and consignor.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:92-106",
+      "quote": "expect(notification.destination).toMatchObject({ name: destination.name, address: { postcode: destination.postcode } });\n      expect(notification.consignee).toMatchObject({ name: consignee.name, address: { postcode: consignee.postcode } });\n      expect(notification.importer).toMatchObject({ name: importer.name, address: { postcode: importer.postcode } });\n      expect(notification.placeOfOrigin).toMatchObject({ name: placeOfOrigin.name, address: { postcode: placeOfOrigin.postcode } });",
+      "confidence": "verbatim",
+      "note": "The consignor is asserted in full just above (lines 92-102); the other four by name and postcode."
     },
     {
-      "id": "repo-tests-p9-151",
-      "statement": "Six of the 17 tests in this slice are marked as expected failures, so what they describe is specified but not proven: the unweaned-animals flag reaching Dynamics, the two groups of Dynamics fields left empty, the amendment reaching version 2, and the deletion deactivating the record.",
-      "kind": "non-functional",
-      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:116, notification-data-gaps.spec.ts:25 and :97, notification-events.spec.ts:62 and :97",
-      "quote": "test.fixme(true, 'PIMS Dynamics leaves these mandatory answers empty; the likely cause of each is in the comments');",
+      "id": "repo-tests-p9-153",
+      "statement": "A submitted notification's stored content holds no section beyond fifteen named ones: origin, commodities, reason for import, additional details, place of origin, consignor, consignee, importer, destination, CPH number, transport, purpose in the internal market, destination country, port of exit and exit date.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:107, domain/animals/models/db/notification-document.ts:100-116",
+      "quote": "expect(STORED_NOTIFICATION_KEYS).toEqual(expect.arrayContaining(Object.keys(notification)));",
       "confidence": "verbatim",
-      "note": "Five fixme tests out of the eight Dynamics tests; the three that pass prove only the record's creation, its status, version and submission date, the parties, the journey columns and the internal reference."
+      "note": "The assertion is one-way: every stored key must be in the list, but not every listed key need be stored."
+    },
+    {
+      "id": "repo-tests-p9-154",
+      "statement": "A stored notification holds no consignment contact: the contact is not among the sections the stored content may hold, and the notification API's wire shape carries no contact party either.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/notification-document.ts:59-98, domain/animals/models/api/notification.ts:91-114",
+      "quote": "  importer?: StoredParty;\n  destination?: StoredParty;\n  cphNumber?: string;",
+      "confidence": "inferred",
+      "note": "Follows from the stored-keys rule (persistence-notification.spec.ts:107) and both models listing only the five parties; no test in this slice names a contact address any more."
+    },
+    {
+      "id": "repo-tests-p9-155",
+      "statement": "A seeded notification is made by posting the frontend's own save-and-continue forms in journey order: origin, a commodity search per line then the species choice, consignment details, commodity identification, import reason, additional details, the five party selections, the permanent address where a species needs one, the addresses page, the CPH number, the port of entry, the transit countries where given, the transporter, then the accompanying documents and addresses pages with nothing posted, to reach check your answers.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seed-form-steps.ts:85-199",
+      "quote": "const continueToCheckYourAnswersSteps = (): SeedStep[] => [\n  { slug: 'accompanying-documents', form: {} },\n  { slug: 'addresses', form: {} },\n];",
+      "confidence": "verbatim",
+      "note": "mechanism: turns one set of notification answers into the form fields each page expects, so a seeded notification exercises the same routes the browser does."
+    },
+    {
+      "id": "repo-tests-p9-156",
+      "statement": "When a seeded draft is finished in the browser, Continue on the addresses page leads straight to the notification view, Continue there leads to the declaration page, and confirming the declaration leads to the confirmation page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:157-169",
+      "quote": "    await animalsPages.addresses.continueButton.click();\n    await animalsPages.notificationView.viewHeader.reference.waitFor(pageLoadWait);\n    await animalsPages.notificationView.continueButton.click();\n    await animalsPages.declaration.heading.waitFor(pageLoadWait);\n    await animalsPages.declaration.confirmation.check();\n    await animalsPages.declaration.continueButton.click();\n    await animalsPages.confirmation.heading.waitFor(pageLoadWait);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p9-157",
+      "statement": "A long list of answers the journey requires does not reach PIMS Dynamics: the species Latin and common names, every party's postcode, phone and email, the CPH number, the transport document reference, the reason for import, the internal market purpose, what the animals are certified for, the number of animals, the ear tag and the transport identification are all left empty.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:19 'the species names, party postcodes, phones and emails, CPH number, transport document and identification, reason for import, internal market purpose, certified for, number of animals and ear tag are stored in PIMS Dynamics'",
+      "quote": "'PIMS Dynamics leaves these mandatory answers empty; the field mapping and likely causes are in the workspace docs/analysis/pims-dynamics-field-gaps.md',",
+      "confidence": "verbatim",
+      "note": "The test is marked fixme, so none is proven today. It expects the reason for import, internal market purpose and certified-for as PIMS option-set labels matching the answers' display text."
+    },
+    {
+      "id": "repo-tests-p9-158",
+      "statement": "Why each expected field is empty in PIMS Dynamics, and how each maps from the published notification, is recorded outside this repo, in the workspace's PIMS Dynamics field-gaps analysis.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts:25-28, 78-81",
+      "quote": "the field mapping and likely causes are in the workspace docs/analysis/pims-dynamics-field-gaps.md",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p9-159",
+      "statement": "Submitting a notification records exactly one submission event in the animals backend's outbox collection, found by the aggregate id Imports.Notification.GBN-AG.<reference number> and the event type uk.gov.defra.imports.notification.NotificationSubmitted.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:158, flows/animals/outbox.ts:30-48, domain/animals/models/db/outbox-event-document.ts:155-157",
+      "quote": "export const NOTIFICATION_SUBMITTED = 'uk.gov.defra.imports.notification.NotificationSubmitted';\n\nexport const aggregateIdFor = (referenceNumber: string): string => `Imports.Notification.GBN-AG.${referenceNumber}`;",
+      "confidence": "verbatim",
+      "note": "flows/animals/outbox.ts, not named in this part's read, is read because the spec uses it: it polls the 'outbox' collection of 'trade-imports-animals-backend' until exactly one event matches, sorted by aggregate version."
+    },
+    {
+      "id": "repo-tests-p9-160",
+      "statement": "For a notification with only the mandatory answers, the submission event's exchanged document carries exactly six fields: the identifier, the trader-assigned id, the notification status code, the version id, the issue date and time, and the signed clauses.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:151 'the NotificationSubmitted outbox GBN-AG payload for the mandatory answers carries exactly the declared exchanged document fields'",
+      "quote": "expect(Object.keys(submitted.data.exchangedDocument).sort()).toEqual([\n      'firstSignatoryAuthentication',\n      'identifier',\n      'issueDateTime',\n      'notificationStatusCode',\n      'traderAssignedId',\n      'versionId',\n    ]);",
+      "confidence": "verbatim",
+      "note": "The exchanged document carries no issuer: neither the model nor the test names one."
+    },
+    {
+      "id": "repo-tests-p9-161",
+      "statement": "The published exchanged document can carry seven fields: the notification's identifier, the trader's own assigned id, a notification status code, a version id, an issue date and time, a list of signed clauses, and a list of referenced documents.",
+      "kind": "integration",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:48-68",
+      "quote": "export type GbnAgExchangedDocument = {\n  identifier: string;\n  traderAssignedId?: string;\n  notificationStatusCode?: string;\n  versionId?: number;\n  issueDateTime?: string;\n  firstSignatoryAuthentication?: { includedClause: GbnAgClause[] };\n  referenceDocument?: GbnAgReferencedDocument[];\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p9-162",
+      "statement": "The referenced documents list is left out of the submission event when the notification has no accompanying document.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:157-166",
+      "quote": "await animalsJourney.submitNotification(MANDATORY_ANSWERS);",
+      "confidence": "inferred",
+      "note": "Follows because the mandatory answers carry no accompanying document and the exact six-field list omits referenceDocument, the seventh field the model allows (outbox-event-document.ts:55)."
+    },
+    {
+      "id": "repo-tests-p9-163",
+      "statement": "The submission-event assertion runs only against the Docker Compose stack, because it reads Mongo directly.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:146-149",
+      "quote": "skipUnlessComposeEnvironment('outbox assertions read Mongo directly, which only the compose stack exposes');",
+      "confidence": "verbatim",
+      "note": "The opposite of the PIMS Dynamics tests in the same file, which skip on the compose stack."
+    },
+    {
+      "id": "repo-tests-p9-164",
+      "statement": "No test in this slice asserts the submission event's specified consignment, its actor, its status changes or its metadata: only the field names of its exchanged document are checked.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:151-167, domain/animals/models/db/outbox-event-document.ts:1-40",
+      "quote": "",
+      "confidence": "gap",
+      "note": "flows/animals/outbox.ts holds an expected actor, but only animals-admin specs, outside this source's scope, compare against it."
+    },
+    {
+      "id": "repo-tests-p9-165",
+      "statement": "Five of the 18 tests in this slice are marked as expected failures, so what they describe is specified but not proven: the unweaned-animals flag reaching Dynamics, the two groups of Dynamics fields left empty, the amendment reaching version 2, and the deletion deactivating the record.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:118, notification-data-gaps.spec.ts:25 and :78, notification-events.spec.ts:62 and :97",
+      "quote": "test.fixme(true, 'The amendment never moves the PIMS Dynamics record to version 2; the cause is being investigated');",
+      "confidence": "verbatim",
+      "note": "Five fixme tests of the eight PIMS Dynamics tests; the three that run prove the record's creation, status, version and submission date, the parties and journey columns, and the internal reference. The 18 tests: persistence-notification 2, multi-commodity 1, accompanying-document 1, api-seed-parity 4, notification-data 4, notification-data-gaps 2, notification-events 3, backend security 1; none generated in a loop."
+    },
+    {
+      "id": "repo-tests-p9-166",
+      "statement": "The address book search can also be given country codes, and an address in any of those countries matches the search as well as one matching the search words.",
+      "kind": "integration",
+      "ref": "adapters/http/address-book-api-client.ts:88-114",
+      "quote": "   * Every live address of the organisation matching the search, from every page, once each, newest first.\n   * An address in any of the `countryCodes` also matches.",
+      "confidence": "verbatim",
+      "note": "Each country code is sent as a repeated countryCode query parameter. No test in this slice passes one; the party-picker specs that do sit in other parts."
+    },
+    {
+      "id": "repo-tests-p9-167",
+      "statement": "A PIMS Dynamics test sets up its Dynamics client before the journey runs, so a missing Dynamics or Dataverse setting fails the test at once rather than after the journey.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:49-50, adapters/http/animals-dynamics-client.ts:12-15",
+      "quote": "// Built first: a missing ANIMALS_DYNAMICS_URL / DATAVERSE_* secret fails here, before the journey.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p9-168",
+      "statement": "Seeding a notification from the command line first makes sure the shared journey addresses exist in the address book, so the party pickers can find them by name.",
+      "kind": "behaviour",
+      "ref": "bin/seed-notification.ts:89-92",
+      "quote": "      // Idempotent — matches Playwright's globalSetup so the party pickers can\n      // find the shared journey fixtures by name.\n      await ensureE2eAddressBook(addressBook);",
+      "confidence": "verbatim"
     }
   ]
 }

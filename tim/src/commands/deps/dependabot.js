@@ -51,7 +51,7 @@ export const register = (program, { timVersion }) => {
   program
     .command('dependabot <repo>')
     .description(
-      "Generate a repo's .github/dependabot.yml from config/dependency-sets.json: a group for each set the repo moves on its own, an ignore for each set the nightly job moves across repos, and the cooldown. Prints the file unless you ask to write or check it."
+      "Generate a repo's .github/dependabot.yml from config/dependency-sets.json: for an npm repo, a group for each set the repo moves on its own, an ignore for each set the nightly job moves across repos and each hold, and the cooldown; for a Java repo, Maven updates with an ignore for each Maven hold. Prints the file unless you ask to write or check it."
     )
     .option('--write', 'Write the file into the repo')
     .option(
@@ -60,13 +60,15 @@ export const register = (program, { timVersion }) => {
     )
     .addHelpText(
       'after',
-      '\nThe repo must be in scope for the sets (see defaults.repos in config/dependency-sets.json) and cloned under repos/.\n' +
+      '\nThe repo must be in scope for the sets (see defaults.repos in config/dependency-sets.json) or for Maven updates (see maven.repos), and cloned under repos/.\n' +
+        'A repo in maven.repos gets Maven and GitHub Actions updates set by maven.dependabot, and an ignore for each Maven hold that lists it.\n' +
         "tim is the workspace's own tim folder: its file is the workspace's .github/dependabot.yml, with npm updates for /tim and GitHub Actions updates for the workspace's workflows and composite actions.\n" +
         '\nExamples:\n' +
         '  tim deps dependabot trade-imports-animals-frontend\n' +
         '  tim deps dependabot trade-imports-animals-frontend --write\n' +
         '  tim deps dependabot trade-imports-animals-frontend --check --json\n' +
-        '  tim deps dependabot tim --write'
+        '  tim deps dependabot tim --write\n' +
+        '  tim deps dependabot trade-imports-animals-backend --write'
     )
     .action(
       makeRunAction({

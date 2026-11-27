@@ -170,4 +170,23 @@ describe('#shareBody', () => {
       '**PR head:** `eeeeeeee`. The commits after `cccccccc` are counted below by the items they closed, but have not been re-reviewed.'
     ])
   })
+
+  test('Should give no head line when the head is a shorter form of the commit re-reviewed', () => {
+    const body = shareBody({
+      ...commentOnly,
+      verdict: 'APPROVED',
+      notes: 'all closed',
+      reviewedSha: 'aaaaaaaa',
+      reReviewedSha: 'cccccccc',
+      headSha: 'ccccccc',
+      items: [item('Major', 'Fix', 'Done')],
+      summary: true
+    })
+
+    expect(body.split('\n').slice(5, 8)).toEqual([
+      '**First reviewed at:** `aaaaaaaa`',
+      '**Re-reviewed at:** `cccccccc`',
+      ''
+    ])
+  })
 })

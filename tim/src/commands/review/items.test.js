@@ -160,3 +160,84 @@ describe('tim review items mark', () => {
     ])
   })
 })
+
+describe('tim review items edit', () => {
+  const editSteps = (...options) => [
+    {
+      command: 'items edit',
+      args: [
+        ticketReviewId,
+        '--repo',
+        'trade-imports-animals-backend',
+        '--item',
+        '2',
+        ...options
+      ]
+    }
+  ]
+
+  test('Should replace the fix and keep every other field of the item', async () => {
+    const run = await runTimOnLedger([
+      'edit',
+      ticketReviewId,
+      '--repo',
+      'trade-imports-animals-backend',
+      '--item',
+      '2',
+      '--fix',
+      'Must: split it in two. One way: extract the parser',
+      '--json'
+    ])
+
+    expect(envelopeOf(run).result.item).toEqual({
+      id: 2,
+      file: 'src/main/java/Notification.java',
+      line: '30',
+      severity: 'Major',
+      category: 'correctness',
+      issue: 'Tab\there, a newline\nthere and a back\\slash',
+      fix: 'Must: split it in two. One way: extract the parser',
+      disposition: 'Fix',
+      status: 'Not Done',
+      notes: null
+    })
+  })
+
+  test('Should replace the issue and the fix together and name both in its line', async () => {
+    const runs = await withStagedLedger((staged) =>
+      runSteps(
+        staged,
+        editSteps('--issue', 'Parses twice', '--fix', 'Must: parse once')
+      )
+    )
+
+    expect(runs[0].stdout).toBe(
+      'Edited #2 in trade-imports-animals-backend: Issue and Fix replaced\n'
+    )
+  })
+
+  test.each([
+    {
+      name: 'neither text',
+      options: [],
+      message: 'Give --issue, --fix or both.'
+    },
+    { name: 'an empty fix', options: ['--fix', ''], message: '--fix required' }
+  ])(
+    'Should refuse $name and leave the items as they were',
+    async ({ options, message }) => {
+      const runs = await withStagedLedger((staged) =>
+        runSteps(staged, editSteps(...options))
+      )
+
+      expect(runs).toEqual([
+        {
+          exitCode: ERROR,
+          stdout: '',
+          stderr: `${message}\n`,
+          filesWritten: {}
+        }
+      ])
+    }
+  )
+})

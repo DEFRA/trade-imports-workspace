@@ -134,8 +134,11 @@ export const itemCountLines = (items, itemsFileName) => [
   itemCountSentence(items.length, itemsFileName)
 ]
 
+const isSameCommit = (oneSha, otherSha) =>
+  oneSha.startsWith(otherSha) || otherSha.startsWith(oneSha)
+
 const headLines = ({ headSha, readSha, unreviewedWords }) =>
-  headSha === '' || headSha === readSha
+  headSha === '' || isSameCommit(headSha, readSha)
     ? []
     : [
         `**PR head:** \`${headSha}\`. The commits after \`${readSha}\` are counted below by the items they closed, but have not been ${unreviewedWords}.`

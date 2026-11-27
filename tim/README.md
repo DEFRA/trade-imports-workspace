@@ -738,6 +738,7 @@ tim review items list EUDPA-1234 --filter pending --json
 tim review items add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "..." --fix "..."
 tim review items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
 tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim review items edit EUDPA-1234 --repo trade-imports-stub --item 3 --fix "Must: return 404. One way: map NotFound in the handler."
 tim review items counts EUDPA-1234
 ```
 
@@ -745,7 +746,7 @@ tim review items counts EUDPA-1234
   `workareas/reviews/<review-id>/file-reviews/<repo>/`, in the workspace
   tim runs in. `init` prints the file's path, `add` the new todo's id and
   `verdict` nothing. A todo's line is stored as a number.
-- `items list|counts|add|mark|status` read and change
+- `items list|counts|add|mark|status|edit` read and change
   `workareas/reviews/<review-id>/items.<repo>.json`. `list` prints one
   tab-separated line per item (repo, id, file, line, severity, category,
   issue, fix, disposition, status, notes); `add` prints the new id, with
@@ -756,6 +757,10 @@ tim review items counts EUDPA-1234
   the notes there, separated by `; `, so a walk's decision stays beside
   the fix's commit. It skips a note the notes already hold, and an empty
   note changes nothing.
+- `edit` replaces an item's issue, its fix or both, and leaves its
+  disposition, status and notes, for a finding a later reading shows to
+  be wrong. It prints `Edited #N in <repo>: Issue and Fix replaced`,
+  naming the fields it replaced, and refuses an empty text or neither.
 - `--json` gives the envelope: the items for `list`, the review id, repo,
   breakdown and total for `counts`, and the item written for the others.
 - Every refusal exits 1, as the scripts they replace did.
@@ -2409,6 +2414,28 @@ it for npm drift and for the cross-repo sets that are waiting.
   `read: false`.
 - `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`,
   with `fetched` on each repo under `--fetch`.
+
+### `tim deps versions` — every published version of a package
+
+```bash
+tim deps versions @axe-core/playwright
+tim deps versions org.springdoc:springdoc-openapi-starter-webmvc-ui
+tim deps versions org.springframework.boot:spring-boot-starter-parent --json
+```
+
+Lists every version a package has published, one a line, prereleases
+included, in the order the registry gives them. The nightly hold re-check
+uses it to find a release a hold has not been tried against.
+
+- An npm package name reads the npm registry: `npm_config_registry` when
+  set, else the public registry.
+- A Maven `groupId:artifactId` reads its `maven-metadata.xml` on Maven
+  Central: `MAVEN_CENTRAL_URL` when set, else
+  `https://repo1.maven.org/maven2`.
+- A name that is neither, such as a wildcard, exits 2 before any registry
+  is asked.
+- `--json` gives `{package, ecosystem, versions}`, with `ecosystem` `npm`
+  or `maven`.
 
 ### `tim deps policy` — can an upgrade merge on green CI
 

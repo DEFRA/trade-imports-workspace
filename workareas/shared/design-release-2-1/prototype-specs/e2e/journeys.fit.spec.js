@@ -4,7 +4,8 @@ const {
   url, urlFor, expectHeading, expectErrorSummary, expectBackLink, readReference, dateFromToday,
   saveAndContinue, clickAction, submitForm, chooseSpecies, fillDate, fillDocument, fillCph,
   SPECIES, startNotification, answerOrigin, answerReason, answerAdditionalDetails, answerArrival,
-  answerTransitCountries, answerTransporter, chooseAddress, CORE_ADDRESSES, answerContactAddress
+  answerTransitCountries, answerTransporter, chooseAddress, CORE_ADDRESSES,
+  answerGerminalCommodityDetails, answerGrossWeight
 } = require('./support/journey')
 
 // End-to-end walks of the DR2.1 notification journey, one per branch the
@@ -16,13 +17,32 @@ const HUB_ROWS = [
   'What are you importing?',
   'Main import reason',
   'Commodity details',
+  'Identification details',
   'Additional details',
   'Arrival details',
   'Transport details',
   'Upload documents',
-  'Roles and addresses',
-  'Contact address for this consignment'
+  'Consignment addresses'
 ]
+
+const GERMINAL_HUB_ROWS = [
+  'Where is this consignment coming from?',
+  'What are you importing?',
+  'Main import reason',
+  'Commodity details',
+  'Total gross weight',
+  'Identification details',
+  'Arrival details',
+  'Transport details',
+  'Upload documents',
+  'Consignment addresses'
+]
+
+const HUB_SECTIONS = ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Addresses']
+
+const REVIEW_SECTIONS = ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Addresses']
+
+const LIVE_ANIMAL_INSPECTION_STAY = ['the time stated on the health certificate', '48 hours if no time is specified']
 
 function hubRow (page, name) {
   return page.locator('.app-notification-hub-tasklist__item').filter({
@@ -57,17 +77,22 @@ async function walk (page, testInfo, j) {
 
   await test.step('commodity details', async () => {
     await expect(page).toHaveURL(urlFor('/consignment-details'))
-    for (const s of j.species) {
-      if (j.germinal) {
-        await page.locator(`input[name="netWeight[${s.id}]"]`).fill('2.5')
-        await page.locator(`input[name="numberOfPackages[${s.id}]"]`).fill('4')
-      } else {
+    if (j.germinal) {
+      await answerGerminalCommodityDetails(page, j.counts, { packages: j.packages })
+    } else {
+      for (const s of j.species) {
         await page.locator(`input[name="numberOfAnimals[${s.id}]"]`).fill(String(j.counts[s.id]))
       }
+      await saveAndContinue(page)
     }
-    if (j.germinal) await page.locator('input[name="storageTemperature"][value="Frozen"]').check()
-    await saveAndContinue(page)
   })
+
+  if (j.germinal) {
+    await test.step('total gross weight', async () => {
+      await expect(page).toHaveURL(urlFor('/consignment-gross-weight'))
+      await answerGrossWeight(page, j.grossWeight)
+    })
+  }
 
   if (j.identifiers) {
     await test.step('identification details', async () => {
@@ -123,11 +148,7 @@ async function walk (page, testInfo, j) {
     await expect(page).toHaveURL(urlFor('/roles-and-addresses'))
     await capture(page, testInfo, `${j.id}-complete`)
     await saveAndContinue(page)
-  })
-
-  await test.step('contact address', async () => {
-    await expect(page).toHaveURL(urlFor('/contact-address-for-consignment'))
-    await answerContactAddress(page)
+    await expect(page).toHaveURL(urlFor('/notification-hub'))
   })
 
   return reference
@@ -137,9 +158,12 @@ async function reviewAndSubmit (page, testInfo, j, reference) {
   await test.step('hub shows every task complete', async () => {
     await page.goto(url('/notification-hub'))
     await expectHeading(page, 'Overview')
-    for (const row of j.hubRows || HUB_ROWS) {
+    const rows = (j.hubRows || HUB_ROWS).flatMap((row) => (j.transit && row === 'Arrival details') ? [row, 'Transit countries'] : [row])
+    await expect(page.locator('.app-notification-hub-tasklist__item a')).toHaveText(rows)
+    for (const row of rows) {
       await expect(hubRow(page, row)).toContainText('Complete')
     }
+    if (j.hubTotals) await expect(page.locator('main')).toContainText(j.hubTotals)
     await capture(page, testInfo, `${j.id}-complete`)
   })
 
@@ -150,9 +174,7 @@ async function reviewAndSubmit (page, testInfo, j, reference) {
     await expectHeading(page, 'Review your notification')
     await expect(page.locator('.govuk-error-summary')).toHaveCount(0)
     const main = page.locator('main')
-    for (const section of ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Consignment addresses', '6. Contact address']) {
-      await expect(main).toContainText(section)
-    }
+    await expect(main.getByRole('heading', { level: 2, name: /^\d\./ })).toHaveText(REVIEW_SECTIONS)
     await expect(main).toContainText(reference)
     for (const text of j.reviewContains) await expect(main).toContainText(text)
     await capture(page, testInfo, `${j.id}-complete`)
@@ -188,6 +210,8 @@ async function reviewAndSubmit (page, testInfo, j, reference) {
     await expect(main).toContainText('Your reference number')
     await expect(main).toContainText(reference)
     await expect(main).toContainText('Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.')
+    await expect(main).toContainText('The animals or consignment may need to be inspected.')
+    await expect(main.locator('[aria-labelledby="submitted-transport-heading"] li')).toHaveText(j.germinal ? [] : LIVE_ANIMAL_INSPECTION_STAY)
     await expect(main).toContainText('You can view or change this notification from your dashboard.')
     await expect(main.getByRole('link', { name: 'Return to your dashboard' })).toHaveAttribute('href', url())
     await expect(main.getByRole('link', { name: 'Create a new notification' })).toHaveAttribute('href', url('/create-notification'))
@@ -231,16 +255,16 @@ const JOURNEYS = [
     arrival: { means: 'Air', port: { search: 'Heathrow', option: 'Heathrow' } },
     transporter: 'aberdeen-livestock',
     cph: true,
-    hubRows: [...HUB_ROWS, 'Identification details'],
-    reviewContains: ['FR-75', 'CATTLE-2026-01', 'Bos Taurus', 'Breeding', 'Further keeping', '12/345/6789', 'Aberdeen Livestock Ltd']
+    reviewContains: ['FR-75', 'CATTLE-2026-01', 'Domestic cattle (Bos taurus)', 'Breeding', '12/345/6789', 'Aberdeen Livestock Ltd']
   },
   {
     id: 'poultry-rail',
-    title: 'poultry by rail: no identification, transit countries',
+    title: 'poultry by rail: flock identification, transit countries',
     species: [SPECIES.chicken],
     counts: { [SPECIES.chicken.id]: 400 },
     origin: { search: 'Germ', country: 'Germany' },
     reason: { reason: 'Transit', exitPort: 'Holyhead POE - GBHLY', transitCountry: 'Republic of Ireland' },
+    identifiers: (page) => identifyAnimals(page, SPECIES.chicken.id, ['flock-id'], 1),
     additional: { purpose: 'Slaughter' },
     arrival: { means: 'Rail', port: { search: 'Dover', option: 'Dover' }, transportId: 'EU-RAIL-77' },
     transit: [{ search: 'Belg', option: 'Belgium' }, { search: 'Fran', option: 'France' }],
@@ -271,8 +295,7 @@ const JOURNEYS = [
       await page.locator(`#${p}-phone`).fill('01904 000000')
       await saveAndContinue(page)
     },
-    hubRows: [...HUB_ROWS, 'Identification details'],
-    reviewContains: ['Spain', 'Companion animal not for resale or rehoming', 'Felis Catus', '4 High Street']
+    reviewContains: ['Spain', 'Companion animal not for resale or rehoming', 'Domestic cat (Felis catus)', '4 High Street']
   },
   {
     id: 'horse-sea',
@@ -285,14 +308,15 @@ const JOURNEYS = [
     additional: { purpose: 'Registered equine animal' },
     arrival: { means: 'Sea', port: { search: 'Holyhead', option: 'Holyhead' }, transportId: 'STENA ADVENTURER' },
     transporter: 'roadtrain-ltd',
-    hubRows: [...HUB_ROWS, 'Identification details'],
-    reviewContains: ['Temporary admission horses', 'Holyhead POE - GBHLY', 'Registered equine animal', 'Roadtrain Ltd']
+    reviewContains: ['Temporary admission horses', 'Holyhead POE - GBHLY', 'Roadtrain Ltd']
   },
   {
     id: 'germinal-semen',
-    title: 'germinal products: bovine semen with donor identification',
+    title: 'germinal products: bovine semen with quantity, packages, gross weight and donor identification',
     category: 'germinal-products',
     germinal: true,
+    counts: { [SPECIES.cattleSemen.id]: 20 },
+    packages: { [SPECIES.cattleSemen.id]: 4 },
     species: [SPECIES.cattleSemen],
     origin: { search: 'Neth', country: 'Netherlands' },
     reason: { reason: 'Internal market', purpose: 'Breeding' },
@@ -307,8 +331,9 @@ const JOURNEYS = [
     arrival: { means: 'Road', port: { search: 'Dover', option: 'Dover' }, transportId: 'NL-12-AB' },
     transit: [{ search: 'Belg', option: 'Belgium' }],
     transporter: 'portuguese-livestock',
-    hubRows: HUB_ROWS.filter((row) => row !== 'Additional details').concat('Identification details'),
-    reviewContains: ['Netherlands', 'Cattle, Semen', 'BULL-007', 'Portuguese Livestock Lda']
+    hubRows: GERMINAL_HUB_ROWS,
+    hubTotals: /20\s+Units\/pieces\s+Total quantity in this consignment\s+4\s+Packages\/boxes\s+Total number of packages in this consignment/,
+    reviewContains: ['Netherlands', 'Cattle, Semen', /Total gross weight\s+12.5 kg/, /Temperature\s+Frozen/, /Quantity \(unit\/pieces\)\s+20/, /Number of packages\s+4/, 'BULL-007', 'Portuguese Livestock Lda']
   }
 ]
 
@@ -333,10 +358,12 @@ test.describe('the notification hub', () => {
     await expect(main).toContainText('Total number of animals in this consignment')
     await expect(main).toContainText('Total number of packages in this consignment')
     await expect(main.getByRole('heading', { name: 'Notification tasklist' })).toBeVisible()
-    for (const heading of ['1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address']) {
+    for (const heading of HUB_SECTIONS) {
       await expect(main.getByRole('heading', { name: heading })).toBeVisible()
     }
-    for (const row of HUB_ROWS) {
+    const freshRows = HUB_ROWS.filter((row) => row !== 'Identification details')
+    await expect(page.locator('.app-notification-hub-tasklist__item a')).toHaveText(freshRows)
+    for (const row of freshRows) {
       await expect(hubRow(page, row)).toContainText('To do')
     }
     await expect(main).toContainText('Consignor or Exporter, Consignee, Importer and Place of Destination')
@@ -370,8 +397,7 @@ test.describe('the notification hub', () => {
       'Complete additional details',
       'Complete arrival details',
       'Complete transport details',
-      'Complete roles and addresses',
-      'Complete contact address for this consignment'
+      'Complete consignment addresses'
     ])
     const main = page.locator('main')
     await expect(main).toContainText('Missing')

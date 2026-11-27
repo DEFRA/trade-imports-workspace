@@ -166,6 +166,23 @@ async function answerConsignmentDetails (page, counts) {
   await saveAndContinue(page)
 }
 
+/** Germinal commodity details: quantity per species, optional packages, storage temperature. */
+async function answerGerminalCommodityDetails (page, quantities, { packages = {}, temperature = 'Frozen' } = {}) {
+  for (const [speciesId, value] of Object.entries(quantities)) {
+    await page.locator(`input[name="numberOfPackages[${speciesId}]"]`).fill(String(value))
+  }
+  for (const [speciesId, value] of Object.entries(packages)) {
+    await page.locator(`input[name="germinalPackages[${speciesId}]"]`).fill(String(value))
+  }
+  if (temperature) await page.locator(`input[name="storageTemperature"][value="${temperature}"]`).check()
+  await saveAndContinue(page)
+}
+
+async function answerGrossWeight (page, weight = '12.5') {
+  await page.locator('#gross-weight').fill(String(weight))
+  await saveAndContinue(page)
+}
+
 async function answerAdditionalDetails (page, { purpose = 'Slaughter', unweaned } = {}) {
   if (purpose) await page.locator(`input[name="certificationPurpose"][value="${purpose}"]`).check()
   if (unweaned) await page.locator(`input[name="unweanedAnimals"][value="${unweaned}"]`).check()
@@ -228,11 +245,6 @@ async function fillCph (page, { county = '12', parish = '345', holding = '6789' 
   await page.locator('#cph-number-holding').fill(holding)
 }
 
-async function answerContactAddress (page, id = 'aberdeen-livestock-union-street') {
-  await page.locator(`input[name="contactAddressId"][value="${id}"]`).check()
-  await saveAndContinue(page)
-}
-
 module.exports = {
   BASE,
   url,
@@ -258,6 +270,8 @@ module.exports = {
   answerCommodity,
   answerReason,
   answerConsignmentDetails,
+  answerGerminalCommodityDetails,
+  answerGrossWeight,
   answerAdditionalDetails,
   answerArrival,
   answerTransitCountries,
@@ -265,6 +279,5 @@ module.exports = {
   fillDocument,
   CORE_ADDRESSES,
   chooseAddress,
-  fillCph,
-  answerContactAddress
+  fillCph
 }

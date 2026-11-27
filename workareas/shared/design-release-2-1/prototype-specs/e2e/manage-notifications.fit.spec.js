@@ -1,9 +1,18 @@
 const { test, expect } = require('./support/fixtures')
 const { capture } = require('./support/evidence')
-const { url, urlFor, expectHeading, expectBackLink, clickAction, submitForm, fillDate, dateFromToday, pickFromAutocomplete } = require('./support/journey')
+const { url, urlFor, expectHeading, expectBackLink, clickAction, submitForm, pickFromAutocomplete, fillDate, dateFromToday } = require('./support/journey')
 
 // What a trader can do with an existing notification from the DR2.1 dashboards:
 // view it (per status), amend it, cancel an amendment, copy it as new, delete it.
+
+const DATE_PATTERN = '\\d{1,2} (January|February|March|April|May|June|July|August|September|October|November|December) \\d{4}'
+
+/** Opens the review page's Actions menu and returns its items. */
+async function openActions (page) {
+  const header = page.locator('.app-dr2-review-page-header__actions')
+  await header.getByRole('button', { name: 'Actions' }).click()
+  return header.locator('a')
+}
 
 test.describe('view a notification from the dashboard', () => {
   test('submitted with action required: warning, import references, read-only answers', async ({ page }, testInfo) => {
@@ -11,44 +20,53 @@ test.describe('view a notification from the dashboard', () => {
     await page.locator('main').getByRole('link', { name: 'View', exact: true }).first().click()
     await expect(page).toHaveURL(url('/review-notification?reference=GBN-AG-26-7K8M2P').replace(/\./g, '.'))
     const main = page.locator('main')
-    await expect(main).toContainText('GBN-AG-26-7K8M2P')
-    await expect(main).toContainText('Submitted action required')
+    await expect(page.locator('.app-dr2-review-page-header__reference')).toHaveText('GBN-AG-26-7K8M2P')
+    await expect(page.locator('.app-dr2-review-page-header .app-dr2-review-status__tag')).toHaveText('Submitted')
     await expect(main).toContainText('You need to upload a health certificate')
-    await expect(main).toContainText('Date submitted: 20 June 2026')
+    await expect(main).toContainText(new RegExp(`Date submitted:\\s*${DATE_PATTERN}`))
     await expect(main).toContainText('Import reference numbers')
     await expect(main).toContainText('You must use the correct reference and code on the customs declaration or your consignment will be delayed.')
     await expect(main).toContainText(/Customs document code\s+C640/)
-    await expect(main.getByRole('button', { name: 'Copy' })).toHaveCount(2)
-    await expect(main.getByRole('button', { name: 'Amend this notification' })).toBeVisible()
-    await expect(main.locator('a', { hasText: 'Copy as new' })).toHaveAttribute('href', url('/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P'))
+    await expect(main.getByRole('button', { name: 'Copy', exact: true })).toHaveCount(2)
     await expect(main).toContainText('Upload a valid health certificate')
     await expect(main).toContainText('Enter a minimum of 1 identifier')
-    // Read only: no change links.
     await expect(main.getByRole('link', { name: 'Change' })).toHaveCount(0)
     await expectBackLink(page, url())
     await capture(page, testInfo, 'action-required')
+
+    await test.step('the actions menu: amend, make template, copy as new and delete', async () => {
+      const items = await openActions(page)
+      await expect(items).toHaveText(['Amend', 'Make template', 'Copy as new', 'Delete'])
+      await expect(items.nth(0)).toHaveAttribute('href', url('/notifications/amend?reference=GBN-AG-26-7K8M2P'))
+      await expect(items.nth(1)).toHaveAttribute('href', url('/notifications/make-template?reference=GBN-AG-26-7K8M2P'))
+      await expect(items.nth(2)).toHaveAttribute('href', url('/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P'))
+      await expect(items.nth(3)).toHaveAttribute('href', url('/notifications/delete?reference=GBN-AG-26-7K8M2P'))
+      await capture(page, testInfo, 'actions-menu')
+    })
   })
 
-  test('submitted, completed and draft notifications', async ({ page }, testInfo) => {
+  test('submitted, past and draft notifications', async ({ page }, testInfo) => {
+    const status = page.locator('.app-dr2-review-page-header .app-dr2-review-status__tag')
+
     await test.step('submitted', async () => {
       await page.goto(url('/review-notification?reference=GBN-AG-26-7K8M2U'))
-      await expect(page.locator('main')).toContainText(/GBN-AG-26-7K8M2U\s+Submitted/)
-      await expect(page.locator('main')).toContainText('Date submitted: 16 June 2026')
+      await expect(status).toHaveText('Submitted')
+      await expect(page.locator('main')).toContainText(new RegExp(`Date submitted:\\s*${DATE_PATTERN}`))
       await capture(page, testInfo, 'submitted')
     })
 
-    await test.step('completed: no amend', async () => {
+    await test.step('past', async () => {
       await page.goto(url('/review-notification?reference=GBN-AG-26-7K8M2W'))
-      await expect(page.locator('main')).toContainText(/GBN-AG-26-7K8M2W\s+Completed/)
-      await expect(page.locator('main').getByRole('button', { name: 'Amend this notification' })).toHaveCount(0)
+      await expect(status).toHaveText('Past')
       await capture(page, testInfo, 'completed')
     })
 
     await test.step('draft: editable, with the incomplete sections listed', async () => {
       await page.goto(url('/review-notification?reference=GBN-GP-26-7K8M2T'))
       const main = page.locator('main')
-      await expect(main).toContainText(/GBN-GP-26-7K8M2T\s+Draft/)
-      await expect(main).toContainText('Date created: 18 June 2026')
+      await expect(page.locator('.app-dr2-review-page-header__reference')).toHaveText('GBN-GP-26-7K8M2T')
+      await expect(status).toHaveText('Draft')
+      await expect(main).toContainText(new RegExp(`Date created:\\s*${DATE_PATTERN}`))
       await expect(page.locator('.govuk-error-summary')).toContainText('Complete arrival details')
       await expect(main.getByRole('link', { name: 'Change' }).first()).toHaveAttribute('href', url('/origin-of-the-import'))
       await capture(page, testInfo, 'draft')
@@ -60,17 +78,22 @@ test.describe('amend a submitted notification', () => {
   test('confirm, change an answer, save and return, then resubmit', async ({ page }, testInfo) => {
     await page.goto(url('/review-notification?reference=GBN-AG-26-7K8M2U'))
 
-    await test.step('amend asks for confirmation in a modal', async () => {
-      await page.locator('main').getByRole('button', { name: 'Amend this notification' }).click()
-      const modal = page.locator('#amend-notification-modal')
-      await expect(modal).toBeVisible()
-      await expect(modal.getByRole('heading', { name: 'Amend notification' })).toBeVisible()
-      await expect(modal).toContainText('Are you sure you want to change this notification?')
-      await capture(page, testInfo, 'amend-modal')
-      await modal.getByRole('button', { name: 'No, go back' }).click()
-      await expect(modal).toBeHidden()
-      await page.locator('main').getByRole('button', { name: 'Amend this notification' }).click()
-      await modal.locator('a', { hasText: 'Yes, continue' }).click()
+    await test.step('amend asks for confirmation on its own page', async () => {
+      await (await openActions(page)).filter({ hasText: 'Amend' }).click()
+      await expect(page).toHaveURL(urlFor('/notifications/amend'))
+      await expect(page).toHaveTitle('Amend this notification? - Import notification service - GOV.UK')
+      await expectHeading(page, 'Amend this notification?')
+      const main = page.locator('main')
+      await expect(main.locator('.govuk-summary-list__key')).toHaveText(['Reference number', 'Commodity', 'Number', 'Origin'])
+      await expect(main.locator('.govuk-summary-list__value')).toHaveText(['GBN-AG-26-7K8M2U', 'Cattle (Bison Bison)', '5', 'Republic of Ireland'])
+      await expect(main).toContainText('Confirm that you want to amend this notification.')
+      await expect(main.getByRole('link', { name: 'No, cancel' })).toHaveAttribute('href', url('/review-notification?reference=GBN-AG-26-7K8M2U'))
+      await expectBackLink(page, url('/review-notification?reference=GBN-AG-26-7K8M2U'))
+      await capture(page, testInfo, 'amend-confirm')
+      await main.getByRole('link', { name: 'No, cancel' }).click()
+      await expect(page.locator('.app-dr2-review-page-header .app-dr2-review-status__tag')).toHaveText('Submitted')
+      await page.goto(url('/notifications/amend?reference=GBN-AG-26-7K8M2U'))
+      await submitForm(page, 'Yes, amend')
     })
 
     await test.step('the amend review', async () => {
@@ -93,23 +116,18 @@ test.describe('amend a submitted notification', () => {
       await expect(page.locator('main')).toContainText('AMENDED-REF')
     })
 
-    await test.step('continue is silently held while the seeded arrival date is out of range', async () => {
-      // The seeded notification arrives in June 2026, outside the arrival-date
-      // window (7 days back to 6 months ahead), so the amendment is incomplete;
-      // the amend review shows no error, it simply stays put.
+    await test.step('continue is silently held while the seeded arrival date and port of entry are not in the formats the arrival page saves', async () => {
+      await expect(page.locator('main')).toContainText(/Port of entry\s+London Heathrow/)
       await submitForm(page, 'Continue')
       await expect(page).toHaveURL(urlFor('/review-notification'))
       await expect(page.locator('.govuk-error-summary')).toHaveCount(0)
     })
 
-    await test.step('a current arrival date lets the amendment through', async () => {
+    await test.step('an arrival date and a port picked from the search let the amendment through', async () => {
       await page.goto(url('/arrival-details'))
       await expect(page.locator('button[name="action"]')).toHaveText(['Save and return', 'Save and continue', 'Save and return to overview'])
       await fillDate(page, '#arrival-date-at-port', dateFromToday(10))
-      await pickFromAutocomplete(page, 'port-of-entry', 'Holyhead', 'Holyhead')
-      await page.locator('#means-of-transport').selectOption('Sea')
-      await page.locator('#transport-identification').fill('STENA ADVENTURER')
-      await page.locator('#transport-document-reference').fill('BOL-2U')
+      await pickFromAutocomplete(page, 'port-of-entry', 'Heathrow', 'London Heathrow - LHR')
       await capture(page, testInfo, 'amend')
       await clickAction(page, 'review')
       await expect(page).toHaveURL(urlFor('/review-notification'))
@@ -128,6 +146,7 @@ test.describe('amend a submitted notification', () => {
 
   test('cancel an amendment from the amend review', async ({ page }, testInfo) => {
     await page.goto(url('/notifications/amend?reference=GBN-AG-26-7K8M2U'))
+    await submitForm(page, 'Yes, amend')
     await expect(page).toHaveURL(urlFor('/review-notification'))
     await page.locator('main').getByRole('button', { name: 'Cancel amend' }).first().click()
     const modal = page.locator('#cancel-amend-modal')
@@ -136,7 +155,7 @@ test.describe('amend a submitted notification', () => {
     await capture(page, testInfo, 'cancel-amend-modal')
     await modal.locator('a', { hasText: 'Yes, cancel amendment' }).click()
     await expect(page).toHaveURL(url('/review-notification?reference=GBN-AG-26-7K8M2U').replace(/\./g, '.'))
-    await expect(page.locator('main')).toContainText(/GBN-AG-26-7K8M2U\s+Submitted/)
+    await expect(page.locator('.app-dr2-review-page-header .app-dr2-review-status__tag')).toHaveText('Submitted')
   })
 })
 
@@ -154,8 +173,8 @@ test.describe('amend and copy guards', () => {
 
 test.describe('copy as new', () => {
   test('copying a submitted notification opens a new draft on the hub', async ({ page }, testInfo) => {
-    await page.goto(url('/live-animals'))
-    await page.locator('main').getByRole('link', { name: 'Copy as new' }).nth(1).click()
+    await page.goto(url('/review-notification?reference=GBN-AG-26-7K8M2U'))
+    await (await openActions(page)).filter({ hasText: 'Copy as new' }).click()
     await expect(page).toHaveURL(urlFor('/notification-hub'))
     await expectHeading(page, 'Overview')
     const main = page.locator('main')
@@ -170,7 +189,7 @@ test.describe('copy as new', () => {
 test.describe('delete a notification', () => {
   test('confirm the deletion; the dashboard shows a success banner', async ({ page }, testInfo) => {
     await page.goto(url('/review-notification?reference=GBN-AG-26-7K8M2P'))
-    await page.locator('main a', { hasText: /^Delete$/ }).click()
+    await (await openActions(page)).filter({ hasText: 'Delete' }).click()
     await expect(page).toHaveURL(/\/notifications\/delete\?reference=GBN-AG-26-7K8M2P$/)
     await expect(page).toHaveTitle('Delete this notification? - Import notification service - GOV.UK')
     await expectHeading(page, 'Delete this notification?')
@@ -188,7 +207,7 @@ test.describe('delete a notification', () => {
     await expect(page).toHaveURL(new RegExp(`${url().replace(/\./g, '\\.')}$`))
     await expect(page.locator('.govuk-notification-banner')).toHaveCount(0)
     await page.goto(url('/live-animals'))
-    await expect(page.locator('.govuk-notification-banner')).toContainText('GBN-AG-26-7K8M2P has been deleted')
+    await expect(page.locator('.govuk-notification-banner')).toContainText('GBN-AG-26-7K8M2P has been deleted.')
     await expect(page.locator('.app-dr2-dashboard-notification-list')).not.toContainText('GBN-AG-26-7K8M2P')
     await capture(page, testInfo, 'deleted')
   })

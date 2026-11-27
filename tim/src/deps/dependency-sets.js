@@ -30,7 +30,11 @@ const MAVEN_COORDINATE = /^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$/
 export const holdEcosystemOf = (packageName) =>
   MAVEN_COORDINATE.test(packageName) ? 'maven' : 'npm'
 
-const heldPackageName = z
+/**
+ * An exact npm package name or a Maven `groupId:artifactId`, with no
+ * wildcard.
+ */
+export const exactPackageName = z
   .string()
   .refine(
     (name) => NPM_PACKAGE_NAME.test(name) || MAVEN_COORDINATE.test(name),
@@ -55,7 +59,7 @@ const unreadableVersionsMessage = ({ package: name }) =>
  */
 export const holdSchema = z
   .object({
-    package: heldPackageName,
+    package: exactPackageName,
     versions: z
       .string()
       .regex(
@@ -67,7 +71,7 @@ export const holdSchema = z
     failingTest: z
       .string()
       .min(1, 'must name the test or check the new version breaks'),
-    clashesWith: heldPackageName.optional(),
+    clashesWith: exactPackageName.optional(),
     link: z.url('must be a URL').optional(),
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD')
   })

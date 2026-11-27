@@ -140,10 +140,14 @@ The hold's `versions` range stops Dependabot proposing any release in it,
 patches included, so the job checks for a fix itself, at most once a night
 for each hold:
 
-1. When `npm view <package> versions` lists a release the hold has not been
+1. When `tim deps versions <package>` lists a release the hold has not been
    tried against, or the package it clashes with has a new release, the job
    opens a draft nightly pull request on `chore/EUDPA-802-<package>-<version>`
-   that moves only that package, and watches CI with `gh pr checks`.
+   that moves only that package, and watches CI with `gh pr checks`. For an
+   npm package the command reads the npm registry. For a Maven
+   `groupId:artifactId` it reads that artifact's `maven-metadata.xml` on
+   Maven Central, and the branch names the artifactId alone, because a
+   branch name cannot hold a colon.
 2. When the check the hold's `failingTest` names is green, it lifts the hold
    with `tim deps lift`, regenerates each repo's Dependabot config and raises
    the lift the way the hold was raised: one branch name, the workspace pull
@@ -180,6 +184,41 @@ so the next major has less to do.
 
 Merges are squash merges: `gh pr merge <number> --squash`. A job deletes the
 branch only after the merge.
+
+### One merge at a time in a repo that deploys
+
+A repo deploys on merge when `DEFRA/cdp-app-deployments` has a file for it
+under `environments/dev/`. Today that is every service repo in `repos.json`,
+the routing proxy and the plants prototype included. Each push to its `main`
+publishes an image, and CDP deploys it to dev. The dev services run one
+instance each and every deployment runs its family's e2e suites against
+them, so two deployments close together fail each other's runs.
+
+Across all of those repos, a job merges one pull request at a time. Before it
+merges the next one, in any of them, it waits for:
+
+1. the merge's Publish run to finish green:
+   `gh run list --repo DEFRA/<repo> --workflow publish.yml --commit <merge sha>`,
+   then `gh run watch <run id> --repo DEFRA/<repo>`
+2. the dev deployment to appear: a commit to the service's file, dated after
+   the Publish run finished, in
+   `gh api "repos/DEFRA/cdp-app-deployments/commits?path=environments/dev/<public or protected>/<repo>.json&per_page=1"`.
+   This is a read. A job never writes to `cdp-app-deployments` (CLAUDE.md
+   rule 3)
+3. 20 minutes more, for the deployment's test runs to finish. A repo with no
+   run after a deployment in
+   [`docs/testing/e2e-tests-cdp.md`](../../docs/testing/e2e-tests-cdp.md),
+   such as the routing proxy and the plants prototype, skips this wait
+
+When the Publish run fails, or the deployment has not appeared 30 minutes
+after the run finished, the job merges nothing more in those repos that night
+and reports it in the digest.
+
+A repo with no file under `environments/dev/` does not deploy on merge, so a
+job merges there on green without waiting: this workspace (tim),
+`trade-imports-ins-tests`, `trade-imports-performance-tests` and
+`trade-imports-schemas`. The tests repo publishes the test-suite image CDP
+runs, but CDP does not deploy it as a service.
 
 When every check is green, the branch is up to date and the merge is still
 refused with "the base branch policy prohibits the merge", the job pushes an

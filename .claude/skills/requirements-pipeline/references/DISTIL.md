@@ -17,7 +17,7 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 | 5. Plan the reconcile areas from every source's partition | The workflow | [`../workflow/distil/briefs/area-plan.md`](../workflow/distil/briefs/area-plan.md) and [`areas.schema.json`](areas.schema.json) |
 | 6. Reconcile each area, one agent an area, merged by tim, then one cross-area pass | The workflow | [`../workflow/distil/briefs/reconcile.md`](../workflow/distil/briefs/reconcile.md) and [`reconcile-part.schema.json`](reconcile-part.schema.json) |
 | 7. Challenge every question against precedence and the rulings, and apply the verdicts | The workflow | [`../workflow/distil/briefs/question-challenge.md`](../workflow/distil/briefs/question-challenge.md) and [`challenge.schema.json`](challenge.schema.json) |
-| 8. Draft rows per area, then combine them into `backlog.json` | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) |
+| 8. Draft rows per area, combine them into `backlog.json`, then review the finished rows and merge those that suit combining | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) and [`../workflow/distil/briefs/combine-review.md`](../workflow/distil/briefs/combine-review.md) |
 | 9. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
 | 10. Save the report | The main session | [Section 5](#5-save-the-report) |
 | 11. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
@@ -100,6 +100,11 @@ defined in [`sources.schema.json`](sources.schema.json):
 - **Copy a document** into `workareas/<workarea>/sources/` and make the copy the `locator`.
 - **Copy an image**, or a folder of them, into `workareas/<workarea>/sources/`, and make the file or folder the
   `locator`. Its `scope` names the screens that matter.
+- **Fetch a Jira ticket** with `tim backlog from-ticket <KEY>`. It writes the ticket file the source's `locator`
+  names, with the description, comments, linked Confluence pages, parent, links, subtasks and attachments, and a
+  `sources.json` with the ticket as a `ticket` source. It finds a ticket's existing workarea from its key, so
+  running it again refreshes the ticket file and keeps the `sources.json` you have edited.
+  `tim backlog from-ticket <KEY> --check` says whether the ticket has changed in Jira since.
 - **A `web` source's `locator` is its URL.** Its `scope` names the pages that matter.
 - **A ruling** is written up as in [section 6](#6-answer-the-questions).
 
@@ -261,6 +266,13 @@ What each key does, and every stage, are in [`../workflow/README.md`](../workflo
    send-backs. A requirement whose criterion one environment cannot observe goes in the combiner's
    `reconcileProblems`. The workflow then runs the cross-area pass, the challenge and the combiner once more, with
    those requirements sent back. Any still open go to the report as a step before building.
+   A combine review follows. `tim backlog combine-candidates` lists the rows still to build that share their code or
+   wait only on each other. With none, no agent runs and the backlog is untouched. Otherwise one Opus agent merges
+   each candidate unless the rows' notes give a reason to stand alone, as
+   [`combine-review.md`](../workflow/distil/briefs/combine-review.md) says. A row merged away keeps its id, becomes
+   `merged-into` and carries a note naming the row it went into. The review runs with up to 2 send-backs: the
+   [workflow README](../workflow/README.md)'s combine review row lists what sends one back. The report says how many
+   rows became how many.
 8. **Report.** The report agent drafts the report to [`REPORT.md`](REPORT.md) and returns it as text. One retry.
    Anything wrong with its inputs comes back in `reportIssues`, never in the report.
 
@@ -280,7 +292,9 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
 - **Every source is extracted in depth.** Characterise, cut into parts, one agent per part reading its slice in
   full, merge: that is the only extract path, for every source on every run, and its agents run on Opus by default.
   A small source is simply one part. There is no lighter path because a thin extract caps everything downstream: a
-  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back.
+  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back. The one
+  deliberate exception is [ticket mode](TICKET.md) for one ready ticket. An escalated ticket arrives here with its
+  `sources.json` already written.
 - **Exhaustive within a part.** A page or field seen in a part's slice and not claimed is a defect.
 - **Characterise first, extract second.** The partition writes the source's `structure` before any part is
   extracted, and every part writes its own before its first claim.
@@ -341,8 +355,9 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
 - **Every adopted `new` or `change` requirement sits in exactly one increment** that is built or still to build:
   `todo`, `blocked`, `done` or `deferred`. A `dropped`, `rejected` or `merged-into` row covers nothing.
   `tim distil coverage` checks this once `backlog.json` exists.
-- **Rows are thin full-stack slices, combined** where building them apart would repeat the same set-up (see
-  [`SHAPE.md`](SHAPE.md)).
+- **Rows are thin full-stack slices, combined by default at every stage that creates rows.** Each row carries a
+  fixed cost (a ticket, a branch, a plan, its reviews, the ladder, pull requests and CI), so a row stands alone
+  only with a reason in its notes. See [`SHAPE.md`](SHAPE.md#rows-are-combined-by-default).
 - **Themes build in parallel.** Boundaries are drawn at feature-folder granularity from what each row touches.
   Shared files (a journey's flow, the layout, shared copy) go in a foundation theme in an early wave. A theme holding
   most of the rows is a smell.
@@ -366,6 +381,7 @@ launch reads them as a re-distil.
 | `challenge-failed` | The challenge verdicts were still not applied after 2 send-backs | Read `detail` and run `tim distil coverage <workarea> --json`. Launch again: every question is challenged afresh |
 | `snapshot-failed` | `tim distil backlog-snapshot` could not save the backlog's rows | Run `tim backlog check <workarea> --json` and make `backlog.json` parse, then launch again |
 | `consolidate-failed` | `backlog.json` still had problems after 2 send-backs | Read `detail`. Launch again: the consolidator starts from the file on disk. If a changed row is named, restore it from `distil/backlog-snapshot.before.json` first |
+| `combine-review-failed` | The combine review's candidates step failed, or `backlog.json` still had problems after 2 send-backs of the review | Read `detail`. The files stay as the check left them. Launch again: the review starts from the file on disk. If a row removed or changed is named, restore it from `distil/backlog-snapshot.combined.json` first |
 | `report-failed` | The report agent returned nothing, twice | Launch again. It runs reconcile and consolidate again over the files on disk, keeping every id and every row built or set aside, then drafts the report |
 
 Resume a run with `resumeFromRunId` only when it stopped at a session limit.

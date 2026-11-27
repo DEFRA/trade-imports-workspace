@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, lstatSync } from 'node:fs'
 import { join, relative, dirname, sep } from 'node:path'
-import { load as yamlLoad } from 'js-yaml'
+import { loadYaml } from '../../utils/yaml.js'
 import picomatch from 'picomatch'
 import { TimError } from '../../errors.js'
 
@@ -216,7 +216,7 @@ const parseFrontMatterGlobs = (raw, relRulePath) => {
   const body = raw.slice(frontMatterMatch[0].length)
   let parsed
   try {
-    parsed = yamlLoad(frontMatterMatch[1])
+    parsed = loadYaml(frontMatterMatch[1])
   } catch (error) {
     throw new TimError(
       'PARSE',

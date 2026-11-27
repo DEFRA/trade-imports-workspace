@@ -1,53 +1,25 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
-  cpSync,
-  mkdirSync,
-  readFileSync,
-  realpathSync,
-  rmSync,
-  writeFileSync
-} from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
-import {
-  createCliWorkspace,
-  envelopeOf,
-  runTimInWorkspace
-} from '../../test-support/tim-cli.js'
-
-const here = dirname(fileURLToPath(import.meta.url))
-const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
+  backlogPathIn,
+  readBacklogRows,
+  writeBacklogRows
+} from '../../backlog/__fixtures__/backlog-file.js'
+import { row } from '../../backlog/__fixtures__/backlog-rows.js'
+import { makeWorkareaWorkspace } from '../../backlog/__fixtures__/workarea-workspace.js'
+import { envelopeOf, runTimInWorkspace } from '../../test-support/tim-cli.js'
 
 const WORKAREA = 'shared/demo'
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
-
+let held
 let workspace
 
-const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
+const backlogPath = () => backlogPathIn(workspace, WORKAREA)
 
-const writeBacklog = (rows) => {
-  mkdirSync(dirname(backlogPath()), { recursive: true })
-  writeFileSync(
-    backlogPath(),
-    JSON.stringify({ programme: 'demo', increments: rows })
-  )
-}
+const writeBacklog = (rows) => writeBacklogRows(workspace, WORKAREA, rows)
 
-const readRows = () =>
-  JSON.parse(readFileSync(backlogPath(), 'utf8')).increments
+const readRows = () => readBacklogRows(workspace, WORKAREA)
 
 const idsOnDisk = () => readRows().map((candidate) => candidate.id)
 
@@ -61,14 +33,12 @@ const runTim = (args) =>
   runTimInWorkspace(workspace, ['backlog', ...args, '--json'])
 
 beforeEach(() => {
-  workspace = realpathSync(createCliWorkspace('tim-edit-'))
-  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
-  mkdirSync(dirname(schemaCopy), { recursive: true })
-  cpSync(realSchemaPath, schemaCopy)
+  held = makeWorkareaWorkspace({ backlogSchemas: true })
+  workspace = held.root
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  held.remove()
 })
 
 describe('tim backlog move', () => {

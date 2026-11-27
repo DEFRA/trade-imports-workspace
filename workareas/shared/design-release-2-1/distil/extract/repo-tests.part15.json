@@ -1,0 +1,1071 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 15 of repos/trade-imports-ins-tests: INS transporters, INS accessibility and INS security. Read in full: the 4 transporter specs and their runner under tests/ins/e2e/features/transporters (transporter-type.spec.ts 3 tests, private-transporter.spec.ts 5, commercial-transporter.spec.ts 5, transporter-record.spec.ts 4 — 17 literal test() declarations, not the 21 the partition's covers names; run-transporters.ts declares no test, only the two shared expectations the private and commercial specs both call); the 9 specs under tests/ins/a11y plus its README (address-book-initial-state 2, address-book-filled-state 2, address-book-error-state 3, address-book-list-views 2, address-book-viewports 1 declaration generated twice by a viewport loop, dashboard-views 3, dashboard-viewports 1 generated twice, sign-in 2, a11y-scan-detects-violations 1 test plus 1 test.fail — 21 tests at run time from 19 literal declarations, not the 37 the covers names; several tests scan many pages through test.step, 37 being closer to the number of scans than the number of tests); and the 2 specs under tests/ins/security/address-book (address-book.spec.ts 1 test, address-book-auth.spec.ts 1 test — 2 declarations, not the 6 the covers names). Support code read as context: page-objects/ins/address-book/{transporter-type-page,transporter-form-page,private-transporter-page,commercial-transporter-page,transporter-view-page,list-page,delete-page}.ts, page-objects/ins/index.ts, page-objects/shared/base-page.ts, and (reached from those) shared-form-fields.ts and record-page.ts; domain/ins/constants/{transporter-types,transporter-form,trader-transporter}.ts and (reached from those) address-form.ts and address-book-types.ts; fixtures/{a11y,security,ui}.ts; utils/{a11y-utils,a11y-exclusions,narrow-page-scan}.ts and (reached from a spec) next-page-scan.ts; config/zap.ts; docs/a11y.md and docs/security.md; and the transporter to* methods of flows/ins/journey.ts. Covered: the transporter type question and its two options; the private and commercial transporter forms, their fields, their country rule and what saving stores; the transporter's own page, its rows and its Edit/Delete/Back controls; the Transporter tab's column order and search; every INS page and state scanned for accessibility with its viewport, rule set and exclusion; what the two INS security specs put through the ZAP proxy and how the run is gated; and the gaps — no transporter validation message, no country list, no reference-data lookup, no transporter page scanned for accessibility or driven through ZAP, and no proven transporter edit or delete.",
+  "claims": [
+    {
+      "id": "repo-tests-p15-001",
+      "statement": "Choosing Transporter on the address book's address type question opens a transporter type question of its own at /address-book/add/transporter?start=true.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-type.spec.ts:12-17, page-objects/ins/address-book/transporter-type-page.ts:7",
+      "quote": "await insJourney.chooseAddressType(addressTypes.transporter);\n\n    const typePage = insPages.transporterType;\n    await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(typePage.expectedUrl)}\\\\?start=true$`));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-002",
+      "statement": "The transporter type question carries the caption 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:9, tests/ins/e2e/features/transporters/transporter-type.spec.ts:18",
+      "quote": "caption: 'Add a new transporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-003",
+      "statement": "The transporter type question's level-one heading is 'Choose a transporter type'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:10, page-objects/ins/address-book/transporter-type-page.ts:13-15",
+      "quote": "title: 'Choose a transporter type',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-004",
+      "statement": "The transporter type question shows the warning 'Check the transporter list before adding new transporters to avoid duplicates.'",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:11, tests/ins/e2e/features/transporters/transporter-type.spec.ts:20",
+      "quote": "warning: 'Check the transporter list before adding new transporters to avoid duplicates.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-005",
+      "statement": "The transporter type question offers exactly two radio options, labelled 'Private transporter' and 'Commercial', in that order.",
+      "kind": "data",
+      "ref": "domain/ins/constants/transporter-types.ts:15-22, tests/ins/e2e/features/transporters/transporter-type.spec.ts:21-23",
+      "quote": "export const transporterTypeOptions: readonly { transporterType: TransporterType; label: string; hint?: string }[] = [\n  { transporterType: transporterTypes.private, label: 'Private transporter' },\n  {\n    transporterType: transporterTypes.commercial,\n    label: 'Commercial',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-006",
+      "statement": "The Commercial option's hint reads 'This can only be a commercial transporter from Northern Ireland.' and the Private transporter option has no hint.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:16-21, tests/ins/e2e/features/transporters/transporter-type.spec.ts:22-27",
+      "quote": "hint: 'This can only be a commercial transporter from Northern Ireland.',",
+      "confidence": "verbatim",
+      "note": "The spec asserts a hint only where the option declares one, so the Private option is proven to carry none only in that the suite never expects one."
+    },
+    {
+      "id": "repo-tests-p15-007",
+      "statement": "The transporter type question's only submit control is a button reading 'Continue'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/transporter-type-page.ts:29-31, tests/ins/e2e/features/transporters/transporter-type.spec.ts:28",
+      "quote": "return this.page.getByRole('button', { name: 'Continue', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-008",
+      "statement": "Back on the transporter type question returns the trader to the address book's address type question.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-type.spec.ts:30-33",
+      "quote": "await typePage.linkBack.click();\n\n    await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(insPages.addressBookAddressType.expectedUrl)}$`));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-009",
+      "statement": "Opening the ordinary add address form while Transporter is the stored chosen address type sends the trader back to the address type question instead of the form.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-type.spec.ts:36-49",
+      "quote": "await insPages.addressBookAdd.open();\n\n    await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(insPages.addressBookAddressType.expectedUrl)}$`));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-010",
+      "statement": "Continuing on the transporter type question with no option chosen keeps the trader on the page and shows the refusal 'Select what kind of transporter it is' both as the radio group's error and in the error summary.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/transporter-types.ts:12, tests/ins/e2e/features/transporters/transporter-type.spec.ts:59-63",
+      "quote": "error: 'Select what kind of transporter it is',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-011",
+      "statement": "The error summary link for that refusal moves focus to the first option, Private transporter.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-type.spec.ts:63-64",
+      "quote": "await typePage.errorSummaryLink(transporterTypeQuestion.error).click();\n    await expect(typePage.radio(transporterTypes.private)).toBeFocused();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-012",
+      "statement": "A transporter's type is held as one of two values, PRIVATE or COMMERCIAL.",
+      "kind": "data",
+      "ref": "domain/ins/constants/transporter-types.ts:1-4",
+      "quote": "export const transporterTypes = {\n  private: 'PRIVATE',\n  commercial: 'COMMERCIAL',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-013",
+      "statement": "Choosing Private transporter and continuing opens the private transporter form at /address-book/add/transporter/private.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/private-transporter-page.ts:10, flows/ins/journey.ts:102-110",
+      "quote": "readonly expectedUrl = '/address-book/add/transporter/private';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-014",
+      "statement": "The private transporter form's level-one heading is 'Add a private transporter'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/private-transporter-page.ts:12-14, tests/ins/e2e/features/transporters/private-transporter.spec.ts:17",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Add a private transporter' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-015",
+      "statement": "Both transporter forms carry the same caption as the type question, 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/transporter-form-page.ts:20-22, tests/ins/e2e/features/transporters/private-transporter.spec.ts:16, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:19",
+      "quote": "get caption(): Locator {\n    return this.page.getByText(transporterTypeQuestion.caption, { exact: true });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-016",
+      "statement": "A transporter form is split under two level-two section headings, 'Address' and 'Contact details'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:18-19, page-objects/ins/address-book/shared-form-fields.ts:7-9",
+      "quote": "await expect(formPage.sectionHeading('Address')).toBeVisible();\n    await expect(formPage.sectionHeading('Contact details')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-017",
+      "statement": "A transporter form asks for the same Standard Address Block and contact fields as the ordinary address form, labelled 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'.",
+      "kind": "data",
+      "ref": "domain/ins/constants/address-form.ts:1-11, page-objects/ins/address-book/shared-form-fields.ts:5-57, page-objects/ins/address-book/transporter-form-page.ts:19",
+      "quote": "export const ADDRESS_FORM_FIELD_LABELS = {\n  name: 'Name or organisation',\n  addressLine1: 'Address line 1',\n  addressLine2: 'Address line 2 (optional)',\n  townOrCity: 'Town or city',\n  county: 'County (optional)',\n  postcode: 'Postcode or Zip code',\n  country: 'Country',\n  email: 'Email address',\n  phone: 'Phone number',\n} as const;",
+      "confidence": "verbatim",
+      "note": "The labels come from the shared address form constants; the transporter form page object extends AddressBookSharedFormFields, so a transporter form is proven to use the same labels rather than its own."
+    },
+    {
+      "id": "repo-tests-p15-018",
+      "statement": "Two of a transporter form's fields are optional, address line 2 and county; the label says so.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-form.ts:4-6",
+      "quote": "addressLine2: 'Address line 2 (optional)',\n  townOrCity: 'Town or city',\n  county: 'County (optional)',",
+      "confidence": "inferred",
+      "note": "Read from the labels: only those two carry '(optional)'. The transporter specs fill them but never prove a save without them."
+    },
+    {
+      "id": "repo-tests-p15-019",
+      "statement": "The private transporter form's country is a select the trader chooses from, not a fixed value.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:20, page-objects/ins/address-book/private-transporter-page.ts:16-19",
+      "quote": "await expect(formPage.selectCountry).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-020",
+      "statement": "A private transporter is saved with the country the trader chose, and the suite exercises 'United Kingdom'.",
+      "kind": "data",
+      "ref": "domain/ins/constants/trader-transporter.ts:8-18, tests/ins/e2e/features/transporters/private-transporter.spec.ts:60",
+      "quote": "export const privateTransporterDetails = (name: string, country: string = 'United Kingdom'): PrivateTransporterDetails => ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-021",
+      "statement": "Back on the private transporter form returns to the transporter type question with Private transporter still chosen.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:22-25",
+      "quote": "await formPage.linkBack.click();\n\n    await expect(insPages.transporterType.heading).toBeVisible();\n    await expect(insPages.transporterType.radio(transporterTypes.private)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-022",
+      "statement": "Opening either transporter form directly with no transporter type chosen sends the trader to the transporter type question.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/run-transporters.ts:19-29, tests/ins/e2e/features/transporters/private-transporter.spec.ts:28-30, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:30-32",
+      "quote": "await formPage.open();\n\n  await expect(pages.page).toHaveURL(new RegExp(`${escapeRegex(insPages.transporterType.expectedUrl)}$`));\n  await expect(insPages.transporterType.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-023",
+      "statement": "A transporter form's save control is a button reading 'Save and continue'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/transporter-form-page.ts:24-26",
+      "quote": "return this.page.getByRole('button', { name: 'Save and continue' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-024",
+      "statement": "A transporter form's cancel control is a button reading 'Cancel and return to address book'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:28, page-objects/ins/address-book/transporter-form-page.ts:28-30",
+      "quote": "export const transporterCancelLabel = 'Cancel and return to address book';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-025",
+      "statement": "Cancelling a transporter form after entering a name lands the trader on the address book filtered to transporters and stores no transporter.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/run-transporters.ts:39-44, tests/ins/e2e/features/transporters/private-transporter.spec.ts:32-42, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:34-44",
+      "quote": "await formPage.cancelAndReturnToAddressBook.click();\n\n  await expect(pages.page).toHaveURL(insPages.addressBookList.tabUrlPattern(transporterTab));\n  expect(await addressBookApi.listTransporters(name)).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-026",
+      "statement": "Saving a transporter lands the trader on the address book filtered to transporters, at /address-book?addressType=TRANSPORTER.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:55, page-objects/ins/address-book/list-page.ts:23-25",
+      "quote": "return new RegExp(`${escapeRegex(this.expectedUrl)}\\\\?addressType=${tab.addressType}$`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-027",
+      "statement": "Saving a transporter shows a success banner reading '<transporter name> added to your address book'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:56, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:59",
+      "quote": "await expect(insPages.addressBookList.successBanner).toContainText(`${name} added to your address book`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-028",
+      "statement": "A saved private transporter is stored with type PRIVATE, no approval number and the country code GB.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:57-60",
+      "quote": "expect(stored.type).toBe(transporterTypes.private);\n    expect(stored.approvalNumber).toBeFalsy();\n    expect(stored.countryCode).toBe('GB');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-029",
+      "statement": "The address book's Transporter tab shows a private transporter's type as the word 'Private' and its approval number as 'Not applicable'.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/transporter-types.ts:30, tests/ins/e2e/features/transporters/private-transporter.spec.ts:64-65",
+      "quote": "export const notApplicableApprovalNumber = 'Not applicable';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-030",
+      "statement": "A saved transporter is scoped to the organisation that saved it: another organisation's address book lists none by that name.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:67, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:70",
+      "quote": "expect(await isolatedOrganisationAddressBookApi.listTransporters(name)).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-031",
+      "statement": "The Transporter tab's search finds a saved private transporter by its name, by its type word 'Private', by part of its address and by its country name.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:79-84",
+      "quote": "for (const term of [name, 'Private', 'Carrier Close', 'United Kingdom']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-032",
+      "statement": "Choosing Commercial and continuing opens the commercial transporter form at /address-book/add/transporter/commercial.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/commercial-transporter-page.ts:11, flows/ins/journey.ts:102-110",
+      "quote": "readonly expectedUrl = '/address-book/add/transporter/commercial';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-033",
+      "statement": "The commercial transporter form's level-one heading is 'Add a commercial transporter'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/commercial-transporter-page.ts:13-15, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:20",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Add a commercial transporter' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-034",
+      "statement": "The commercial transporter form asks for an approval number, in a field labelled 'Approval number', which the private form does not have.",
+      "kind": "data",
+      "ref": "domain/ins/constants/transporter-form.ts:1, page-objects/ins/address-book/commercial-transporter-page.ts:17-19, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:21",
+      "quote": "export const TRANSPORTER_APPROVAL_NUMBER_LABEL = 'Approval number';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-035",
+      "statement": "The commercial transporter form's country is fixed to Northern Ireland and shown rather than chosen: its country control is disabled and reads 'Northern Ireland'.",
+      "kind": "rule",
+      "ref": "page-objects/ins/address-book/commercial-transporter-page.ts:21-24, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:22",
+      "quote": "/** The country select is disabled and fixed: this reads the Northern Ireland label it shows. */\n  get countryDisplay(): Locator {\n    return this.page.getByLabel('Country', { exact: true });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-036",
+      "statement": "A commercial transporter's fixed country is an owner ruling, stored as the code GB-NIR and shown as the words 'Northern Ireland' by both the address book and the journey.",
+      "kind": "rule",
+      "ref": "domain/ins/constants/transporter-types.ts:32-35",
+      "quote": "/** A commercial transporter's country is fixed by the ruling: the code the address book stores it\n * under, and the word both the address book and the journey show for it. */\nexport const COMMERCIAL_TRANSPORTER_COUNTRY_CODE = 'GB-NIR';\nexport const COMMERCIAL_TRANSPORTER_COUNTRY_NAME = 'Northern Ireland';",
+      "confidence": "verbatim",
+      "note": "The suite records this as a ruling in prose only; the repo holds no rulings ledger."
+    },
+    {
+      "id": "repo-tests-p15-037",
+      "statement": "Back on the commercial transporter form returns to the transporter type question with Commercial still chosen.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:24-27",
+      "quote": "await expect(insPages.transporterType.radio(transporterTypes.commercial)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-038",
+      "statement": "A saved commercial transporter is stored with type COMMERCIAL, the approval number the trader entered, and the country code GB-NIR.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:60-63",
+      "quote": "expect(stored.type).toBe(transporterTypes.commercial);\n    expect(stored.approvalNumber).toBe(approvalNumber);\n    expect(stored.countryCode).toBe(COMMERCIAL_TRANSPORTER_COUNTRY_CODE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-039",
+      "statement": "The Transporter tab shows a commercial transporter's type as the word 'Commercial' and shows its approval number as entered.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:38-41, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:67-68",
+      "quote": "export const transporterTypeFilterLabels: Record<TransporterType, string> = {\n  [transporterTypes.commercial]: 'Commercial',\n  [transporterTypes.private]: 'Private',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-040",
+      "statement": "The Transporter tab's search finds a saved commercial transporter by its name, by its type word 'Commercial', by part of its address, by its approval number and by 'Northern Ireland'.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:83-88",
+      "quote": "for (const term of [name, 'Commercial', 'Shore Road', approvalNumber, COMMERCIAL_TRANSPORTER_COUNTRY_NAME]) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-041",
+      "statement": "An approval number of the form NI/TA/<digits> is accepted and stored unchanged.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:54, tests/ins/e2e/features/transporters/transporter-record.spec.ts:26",
+      "quote": "const approvalNumber = `NI/TA/${Date.now()}`;",
+      "confidence": "verbatim",
+      "note": "The suite proves only that what is entered comes back; no format rule is asserted."
+    },
+    {
+      "id": "repo-tests-p15-042",
+      "statement": "The address book's Transporter tab lists transporters in its own column order: Name, Address, Approval number, Type.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/list-page.ts:87-98",
+      "quote": "/** The Transporter tab's own column order: Name, Address, Approval number, Type. */\n  transporterAddressCell(name: string): Locator {\n    return this.row(name).getByRole('cell').nth(1);\n  }",
+      "confidence": "verbatim",
+      "note": "mechanism: indexes a listed row's cells to read a transporter's address, approval number and type; the order differs from the other tabs' Name, Roles, Address, Country."
+    },
+    {
+      "id": "repo-tests-p15-043",
+      "statement": "A newly saved transporter appears in the Transporter tab's listing and a search for its name returns exactly one row.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:62-63, tests/ins/e2e/features/transporters/commercial-transporter.spec.ts:65-66",
+      "quote": "await insPages.addressBookList.search(name, { submitWith: 'button' });\n    await expect(insPages.addressBookList.bodyRows).toHaveCount(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-044",
+      "statement": "A transporter has a page of its own at /address-book/transporter/<transporter id>, separate from an address's page.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/transporter-view-page.ts:5-7, tests/ins/e2e/features/transporters/transporter-record.spec.ts:38-40",
+      "quote": "expectedUrl(transporterId: string): string {\n    return `/address-book/transporter/${transporterId}`;\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-045",
+      "statement": "A transporter's page is headed with the transporter's name as its level-one heading.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/transporter-view-page.ts:9-11, tests/ins/e2e/features/transporters/transporter-record.spec.ts:41",
+      "quote": "heading(transporterName: string): Locator {\n    return this.page.getByRole('heading', { level: 1, name: transporterName });\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-046",
+      "statement": "A transporter's page shows its address block and its contact details as summary list rows.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:42-43, page-objects/ins/address-book/record-page.ts:8-14",
+      "quote": "await expect(insPages.addressBookTransporterView.summaryListValues.filter({ hasText: '14 Haulage Way' })).toBeVisible();\n    await expect(insPages.addressBookTransporterView.summaryListValues.filter({ hasText: 'ops@highland.example' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-047",
+      "statement": "A commercial transporter's page shows an 'Approval number' row with its value, and shows Northern Ireland as its country.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:55-58",
+      "quote": "await expect(keys.filter({ hasText: 'Approval number' })).toBeVisible();\n    await expect(insPages.addressBookTransporterView.summaryListValues.filter({ hasText: 'NI/TA/RECORD/0001' })).toBeVisible();\n    await expect(insPages.addressBookTransporterView.summaryListValues.filter({ hasText: 'Northern Ireland' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-048",
+      "statement": "A private transporter's page shows no 'Approval number' row at all.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:65",
+      "quote": "await expect(insPages.addressBookTransporterView.summaryListKeys.filter({ hasText: 'Approval number' })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-049",
+      "statement": "A transporter's page offers Edit and Delete controls that lead to /edit and /delete under that same transporter's own address.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:74-81, page-objects/ins/address-book/transporter-view-page.ts:13-19",
+      "quote": "await expect(insPages.addressBookTransporterView.btnEdit).toHaveAttribute(\n      'href',\n      `${insPages.addressBookTransporterView.expectedUrl(created.id)}/edit`,\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-050",
+      "statement": "Back on a transporter's page returns the trader to the address book filtered to transporters.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:90-92",
+      "quote": "await insPages.addressBookTransporterView.linkBack.click();\n\n    await expect(pages.page).toHaveURL(insPages.addressBookList.tabUrlPattern(transporterTab));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-051",
+      "statement": "A transporter record holds a name, address line 1, town or city, postcode, country code, phone, email and type, with an approval number only for a commercial one.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:6-27, domain/ins/constants/trader-transporter.ts:34-47",
+      "quote": "countryCode: type === transporterTypes.commercial ? COMMERCIAL_TRANSPORTER_COUNTRY_CODE : UNITED_KINGDOM_COUNTRY_CODE,\n  phone: details.phone,\n  email: details.email,\n  type,\n  ...('approvalNumber' in details ? { approvalNumber: details.approvalNumber } : {}),",
+      "confidence": "verbatim",
+      "note": "mechanism: reshapes a transporter form's details into the address book API's create request, and derives the country code from the type rather than from an answer."
+    },
+    {
+      "id": "repo-tests-p15-052",
+      "statement": "Transporters can be created straight through the address book API, so a transporter is a record of the address book rather than of a notification.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:36, fixtures/ui.ts:179-188",
+      "quote": "const created = await addressBookApi.createTransporter(privateTransporter(name));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-053",
+      "statement": "Editing a transporter and deleting one are not proven: the suite proves only that the transporter's page links to its edit and delete addresses.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/transporters/transporter-record.spec.ts:68-82",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in all four transporter specs and in run-transporters.ts: no test opens /address-book/transporter/<id>/edit or /delete, and none asserts what either page shows or does."
+    },
+    {
+      "id": "repo-tests-p15-054",
+      "statement": "No validation message is proven for either transporter form: the refusals for a missing name, address line 1, town or city, postcode, country, email address or phone number on a transporter form are unasserted.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/transporters/, domain/ins/constants/address-form.ts:29-37",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for ADDRESS_FORM_VALIDATION_MESSAGES in the transporters folder: no match. Only the type question's own refusal is proven. The shared address-form messages exist ('Enter a name or organisation' and the rest) but no transporter test shows them."
+    },
+    {
+      "id": "repo-tests-p15-055",
+      "statement": "No field length or format limit is proven for any transporter field.",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/transporters/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "No maxlength, character count or format assertion anywhere in the four transporter specs."
+    },
+    {
+      "id": "repo-tests-p15-056",
+      "statement": "The list of countries the private transporter form offers is not proven: no test asserts which entries the country select holds, their order or their source.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/transporters/private-transporter.spec.ts:20, page-objects/ins/address-book/shared-form-fields.ts:43-49",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The page object exposes countryOptions and selectedCountryOption, and the private transporter spec uses neither; it only selects 'United Kingdom' by label."
+    },
+    {
+      "id": "repo-tests-p15-057",
+      "statement": "No reference-data lookup is proven for a transporter's country: the transporter specs never call the reference data service, so where the private form's country list comes from is untested.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/transporters/, fixtures/ui.ts:189-191",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The ui fixture offers a referenceDataApi client; no transporter spec destructures it. The commercial form needs no lookup at all, its country being fixed in code."
+    },
+    {
+      "id": "repo-tests-p15-058",
+      "statement": "Every INS accessibility test is run against the WCAG 2.2 AA rule set, selected by the five axe tags wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:12-15",
+      "quote": "export const WCAG_STANDARD = {\n  name: 'WCAG 2.2 AA',\n  tags: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-059",
+      "statement": "A pass of the accessibility scans is not full conformance: axe automates only part of the standard, and only 2.5.8 Target Size among the new WCAG 2.2 criteria.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:6-11",
+      "quote": "Tags are discrete filters — all five are needed\n * for AA — and axe only automates part of the standard (only 2.5.8 Target\n * Size among the new 2.2 criteria), so a pass isn't full conformance.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-060",
+      "statement": "Every INS accessibility test carries the tag @a11y, so the accessibility scans are selected as a suite of their own.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-initial-state.spec.ts:3, tests/ins/a11y/dashboard-views.spec.ts:7",
+      "quote": "test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-061",
+      "statement": "The INS pages scanned for accessibility are the dashboard and the address book, each in its blank, filled and error states where it has them, plus the sign-in pages and the narrow-viewport views of the longer pages.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/README.md:3",
+      "quote": "Accessibility tests for the INS frontend: the dashboard and the address book, each page scanned in its blank, filled and error states where it has them, plus the sign-in pages and the narrow-viewport views of the longer pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-062",
+      "statement": "The blank 'Choose an address type' page and the blank add address form are each scanned for accessibility violations.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-initial-state.spec.ts:4-14",
+      "quote": "test('the blank Choose an address type page has no accessibility violations', async ({ insJourney, runA11yScan }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-063",
+      "statement": "The add address form is scanned again once fully entered, with an optional address line 2 and county and with its roles ticked.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-filled-state.spec.ts:7-14",
+      "quote": "test('the add address form has no accessibility violations when fully entered', async ({ insPages, insJourney, runA11yScan }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-064",
+      "statement": "An address's view page is scanned twice, once for a record with the required fields only and once for a record that also has address line 2 and a county.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-filled-state.spec.ts:25-36",
+      "quote": "await test.step('View address (required fields only)', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-065",
+      "statement": "The edit address page filled with a stored address, and the delete address confirmation page, are each scanned for accessibility violations.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-filled-state.spec.ts:37-47",
+      "quote": "await test.step('Edit address, filled with the stored address', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-066",
+      "statement": "The 'Choose an address type' page, the add address form and the edit address form are each scanned again with their error summary showing.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-error-state.spec.ts:6-36",
+      "quote": "test('the edit address form has no accessibility violations when errors are shown', async ({ insPages, addressBookApi, runA11yScan }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-067",
+      "statement": "The address book list is scanned populated, and again with the success banner showing after an address has been added.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-list-views.spec.ts:15-25",
+      "quote": "await test.step('Address book with the success banner', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-068",
+      "statement": "The address book list's second page is scanned, reached by seeding nine addresses and following Next page until the address carries page=2.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-list-views.spec.ts:28-36, utils/next-page-scan.ts:5-9",
+      "quote": "await expect(nextPageLink.page()).toHaveURL(/[?&]page=2(?:&|$)/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-069",
+      "statement": "The address book pages are scanned again at two narrow viewports, 320 by 568 portrait and 568 by 320 landscape: the populated list, the blank address type question, the blank add form, the add form with validation errors and the edit form filled with a stored address.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/address-book-viewports.spec.ts:6-52, fixtures/a11y.ts:33-44",
+      "quote": "narrowPortrait: { width: 320, height: 568 },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-070",
+      "statement": "At a narrow viewport a page must also not scroll sideways outside its tables, which the suite checks before each scan.",
+      "kind": "non-functional",
+      "ref": "utils/narrow-page-scan.ts:19-22",
+      "quote": "await expect.soft(scrollsSidewaysOutsideTables(page), `${page.url()} scrolls sideways`).resolves.toBe(false);",
+      "confidence": "verbatim",
+      "note": "mechanism: hides every table, measures the document's scroll width against its client width, then restores the tables' display."
+    },
+    {
+      "id": "repo-tests-p15-071",
+      "statement": "320 CSS pixels wide is scanned because it is the WCAG 1.4.10 Reflow width, a 1280px desktop at 400% zoom, and govuk-frontend's smallest breakpoint.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:24-33",
+      "quote": "320 CSS px is the WCAG 1.4.10 Reflow width (a 1280px desktop at 400% zoom)\n   * and govuk-frontend's smallest breakpoint;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-072",
+      "statement": "Landscape is scanned as well as portrait because a portrait-only scan misses layout that breaks on rotation (WCAG 1.3.4 Orientation) and the 256 CSS pixel height half of WCAG 1.4.10 Reflow.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:36-43",
+      "quote": "a portrait-only scan misses layout that breaks on rotation (WCAG 1.3.4\n   * Orientation) and the other half of 1.4.10 Reflow (the 256 CSS px\n   * \"horizontal scroll\" height threshold, alongside the narrow viewport's\n   * 320 CSS px width one).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-073",
+      "statement": "The INS dashboard is scanned in its default populated list view, in a sorted view, and the service's 404 'Page not found' page is scanned too.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/dashboard-views.spec.ts:12-33",
+      "quote": "await test.step('Page not found', async () => {\n      await pages.page.goto('/no-such-page');\n      await pages.page.getByRole('heading', { name: '404' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-074",
+      "statement": "The INS dashboard is scanned with a search that matches a submitted notification's reference and again with a search that matches nothing.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/dashboard-views.spec.ts:35-56",
+      "quote": "await test.step('Dashboard (search no-match)', async () => {\n      await insPages.dashboard.searchForReference(noMatchReferenceNumber);\n      await insPages.dashboard.noSearchResults.waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-075",
+      "statement": "The INS dashboard's paginated view is scanned only where there is more than one page of notifications; the test skips itself otherwise.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/dashboard-views.spec.ts:58-72",
+      "quote": "test.skip(\n        !hasPagination,\n        'Requires more than one page of notifications (seeded in compose; CDP environments normally have sufficient data).',\n      );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-076",
+      "statement": "The INS dashboard is scanned again at both narrow viewports.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/dashboard-viewports.spec.ts:8-17",
+      "quote": "test(`the dashboard has no accessibility violations at ${viewportName}`, async ({ insPages, runA11yScan }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-077",
+      "statement": "The sign-in page is scanned on first load, from a cold session with no stored sign-in.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/sign-in.spec.ts:4-20",
+      "quote": "test.use({ storageState: COLD_START });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-078",
+      "statement": "The sign-in page with an error is scanned with the sign-in stub's own error summary list excluded, because that markup belongs to the stub and not to the service.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/sign-in.spec.ts:6, tests/ins/a11y/sign-in.spec.ts:21-25",
+      "quote": "const stubErrorSummaryList = '.govuk-error-summary__list';",
+      "confidence": "verbatim",
+      "note": "This is the only exclusion any INS accessibility scan applies."
+    },
+    {
+      "id": "repo-tests-p15-079",
+      "statement": "The unauthorised page is scanned for accessibility violations.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/sign-in.spec.ts:28-32",
+      "quote": "test('the unauthorised page has no accessibility violations', async ({ pages, runA11yScan }) => {\n    await pages.signInError.openUnauthorised();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-080",
+      "statement": "The accessibility scan is itself proven to work: injecting an unnamed button and two adjacent 8-pixel links into the dashboard makes it report the button-name and target-size rules.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/a11y-scan-detects-violations.spec.ts:9-16, utils/a11y-utils.ts:66-82",
+      "quote": "expect(violations.map(({ id }) => id)).toEqual(expect.arrayContaining(['button-name', 'target-size']));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-081",
+      "statement": "A scan that finds a violation fails its test, which the suite proves with a deliberately failing test that injects an unnamed button.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/a11y-scan-detects-violations.spec.ts:18-26",
+      "quote": "test.fail('the a11y scan fixture fails the test when the page has a violation', async ({ page, runA11yScan }) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-082",
+      "statement": "A test that takes the scan but never runs it fails, so a page cannot silently go unscanned.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:78-79",
+      "quote": "if (results.length === 0) throw new Error('No accessibility scans were run. Call runA11yScan() at least once.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-083",
+      "statement": "Each scan that finds violations attaches them to the test report as JSON, named by the page's path, and the failure message lists every page that failed with each violation's severity, rule, description, node count and help link.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:81-93, utils/a11y-utils.ts:84-106",
+      "quote": "await testInfo.attach(`accessibility-violations: ${path}`, {\n          body: JSON.stringify(violations, null, 2),\n          contentType: 'application/json',\n        });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-084",
+      "statement": "An accessibility test is allowed five minutes, because it walks several pages and scans each.",
+      "kind": "non-functional",
+      "ref": "fixtures/a11y.ts:56-58",
+      "quote": "const A11Y_SCAN_TIMEOUT_MS = 5 * 60 * 1000;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-085",
+      "statement": "A scan waits for the page's DOM to be ready and then allows a bounded settling period for network activity, never blocking indefinitely.",
+      "kind": "non-functional",
+      "ref": "utils/a11y-utils.ts:41-48",
+      "quote": "// Reliable baseline: DOM is parsed and ready.\n  await page.waitForLoadState('domcontentloaded');\n\n  // Best effort: allow extra settling, but never block indefinitely.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-086",
+      "statement": "Scanning runs in axe's legacy mode by default, which skips the temporary blank window axe opens and so does not test content inside cross-origin iframes.",
+      "kind": "non-functional",
+      "ref": "utils/a11y-utils.ts:10-21, utils/a11y-utils.ts:51",
+      "quote": "setLegacyMode() skips that mechanism entirely, at the cost of not\n   * testing cross-origin iframes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-087",
+      "statement": "The empty dashboard, the empty address book and the address book's load-failure state are deliberately not scanned for accessibility.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/README.md:8",
+      "quote": "- Not scanned: the empty dashboard and address book (they need an organisation with no data) and the address book's load-failure state.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-088",
+      "statement": "A state is given a scan of its own only where its value outweighs the test set-up it needs; states reachable only behind disproportionate set-up are skipped.",
+      "kind": "rule",
+      "ref": "tests/ins/a11y/README.md:7",
+      "quote": "- Not every reachable state is worth a dedicated scan — weigh the state's value against the test infrastructure it needs. Skip states that only exist behind disproportionate setup (e.g. seeding a real external queue to reach one rarely-used dialog).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-089",
+      "statement": "No transporter page is scanned for accessibility: neither the transporter type question, nor the private or commercial transporter form, nor a transporter's own page, nor the Transporter tab of the address book.",
+      "kind": "non-functional",
+      "ref": "tests/ins/a11y/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched every file under tests/ins/a11y for 'transporter': no match. The README's statement of what is not scanned does not mention them either."
+    },
+    {
+      "id": "repo-tests-p15-090",
+      "statement": "The INS notification type page is not scanned for accessibility, although the suite has a page object for it.",
+      "kind": "non-functional",
+      "ref": "page-objects/ins/index.ts:13, page-objects/ins/index.ts:20",
+      "quote": "",
+      "confidence": "gap",
+      "note": "No file under tests/ins/a11y opens insPages.notificationType; the README's not-scanned note does not cover it."
+    },
+    {
+      "id": "repo-tests-p15-091",
+      "statement": "The only accessibility exclusions the suite keeps as reusable selectors are two animals pages' conditional-reveal radios, the origin page's region of origin code requirement radio and the import reason page's radios, so no INS scan uses one.",
+      "kind": "non-functional",
+      "ref": "utils/a11y-exclusions.ts:1-3, docs/a11y.md:9-12",
+      "quote": "export const govukConditionalRevealRadioOnOrigin = '#regionOfOriginCodeRequirement';\n\nexport const govukConditionalRevealRadiosOnReason = 'input[name=\"reasonForImport\"][aria-controls]';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-092",
+      "statement": "Those radios are excluded because govuk-frontend sets aria-expanded on a conditional-reveal radio input and axe's aria-allowed-attr rule rejects it: an upstream disagreement in component code the service does not own, not a defect in the service.",
+      "kind": "constraint",
+      "ref": "docs/a11y.md:5-7",
+      "quote": "govuk-frontend's conditional-reveal radios set `aria-expanded` on the radio input in its `radios.mjs`, and axe's `aria-allowed-attr` rule rejects that. This is an upstream disagreement in component code the service does not own, not a defect in the service.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-093",
+      "statement": "The accessibility documentation's exclusion table names selectors conditionalRadioInput and conditionalReasonRadios, which are not the names the exclusions file exports, so a reader following the table cannot find them.",
+      "kind": "constraint",
+      "ref": "docs/a11y.md:9-12, utils/a11y-exclusions.ts:1-3",
+      "quote": "| `conditionalRadioInput`   | Origin of import | The region of origin code requirement radio opens a conditional reveal.                   |",
+      "confidence": "inferred",
+      "note": "Read by comparing the table's selector column with the file's two exported names, govukConditionalRevealRadioOnOrigin and govukConditionalRevealRadiosOnReason."
+    },
+    {
+      "id": "repo-tests-p15-094",
+      "statement": "Security testing is a dynamic scan with OWASP ZAP as a proxy, with Playwright driving real authenticated journeys through it rather than letting ZAP crawl.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:3",
+      "quote": "A DAST (Dynamic Application Security Testing) scan using [OWASP ZAP](https://www.zaproxy.org/) as a proxy. Playwright drives real authenticated journeys through it rather than letting ZAP crawl, so it observes what a real session touches and then attacks that.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-095",
+      "statement": "Security coverage is traffic-driven: a route no spec drives is invisible to the scan, which is why the attacking corpus is curated by hand.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:5",
+      "quote": "Coverage is therefore **traffic-driven**: a route no spec drives is invisible to the scan. That is why the `@active` corpus is curated by hand rather than generated.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-096",
+      "statement": "There are two security profiles: a passive one that runs the whole end-to-end suite without attacking, and an attacking one that runs only the curated corpus and is for deliberate use against the local stack.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:9-12, config/zap.ts:11",
+      "quote": "| `security`        | The e2e suite, excluding `@active` | No — passive only | Cheap, run broadly              |\n| `security:active` | The `@active` suite only           | Yes               | Deliberate; docker-compose only |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-097",
+      "statement": "The attacking profile is refused on the deployed CDP environments, because the curated corpus deletes records and the attack re-fires each deletion with fuzzed payloads.",
+      "kind": "constraint",
+      "ref": "docs/security.md:26",
+      "quote": "**`security:active` is refused on CDP.** The `@active` suite deletes notifications, documents and DLQ messages, and the active scan re-fires each with fuzzed payloads — fine against a disposable stack, destructive against a shared one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-098",
+      "statement": "Both INS security specs carry the tag @active, so they run only under the attacking profile and are left out of the passive one.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:7, tests/ins/security/address-book/address-book-auth.spec.ts:7, docs/security.md:14",
+      "quote": "test.describe('Security scan (ins)', { tag: '@active' }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-099",
+      "statement": "The INS security scan puts the address book's whole record lifecycle in scope: opening the list, adding an address, opening a tab and filtering it by a role, then viewing, editing and deleting that record by its own address.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:8-36, docs/security.md:75",
+      "quote": "`address-book.spec.ts` adds one address through `/address-book/add`, and views, edits and deletes it through `/address-book/{addressId}`; the `addressId` dataDrivenNode has nothing to fold without them. It also opens a tab and filters it by a role, so the scan reaches the list's `addressType` and `role` parameters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-100",
+      "statement": "The INS security scan also puts the INS dashboard in scope, opened once at the end of the address book lifecycle.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:38",
+      "quote": "await insPages.dashboard.open();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-101",
+      "statement": "The INS security scan puts the add address page's cross-service handshake query parameters in scope, and the service answers a handshake it does not recognise with 'Page not found'.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book.spec.ts:40-41, docs/security.md:76",
+      "quote": "await insPages.addressBookAdd.open({ query: unregisteredJourneyHandshake });\n    await expect(pages.page.getByText('Page not found')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-102",
+      "statement": "Only the refused side of the handshake guard is in scope for the security scan; a scan of an accepted handshake waits on being able to seed a real token.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:76",
+      "quote": "Only the rejected-guard path is provable here; extend it to a real accepted token if seeding one becomes possible.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-103",
+      "statement": "The second INS security spec puts the sign-in round trip in scope: reaching the sign-in page from an address book page, a refused sign-in showing its error summary, a successful sign-in returning to the page first asked for, and signing out.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/address-book/address-book-auth.spec.ts:8-21",
+      "quote": "await animalsJourney.toSignIn((attemptSignIn) => insPages.addressBookAddressType.open({ attemptSignIn }));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-104",
+      "statement": "That same spec holds the suite's only check that the INS frontend renders a sign-out link.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:74",
+      "quote": "It also holds the only check that INS renders a sign-out link: if the sign-out step fails, check that first before assuming the route moved.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-105",
+      "statement": "The INS frontend's sign-out link reads 'Log out'.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:65-67",
+      "quote": "return this.page.getByRole('link', { name: 'Log out', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-106",
+      "statement": "The service's own sign-in and sign-in callback handlers are in scope for the scan even though the sign-in stub itself is only observed and never attacked, because the callback and its redirect parameter outlive the stub.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:68",
+      "quote": "A temporary sign-in stub we do not own. Observed passively, never attacked. Our own `/auth/sign-in` and `/auth/sign-in-oidc` handlers **are** in scope — the OIDC callback and its `redirect` parameter outlive the stub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-107",
+      "statement": "The INS side of the scan covers two declared areas, the INS frontend and the address book service.",
+      "kind": "non-functional",
+      "ref": "config/zap.ts:38-43, docs/security.md:55-58",
+      "quote": "ins: ['ins', 'address-book'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-108",
+      "statement": "The address book service's own API is scanned as well as the frontend, because every API client in the suite is built from Playwright's request fixture and so inherits the project's proxy.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:60",
+      "quote": "The three APIs are scanned all the same: every API client here is built from Playwright's own `request` fixture, which inherits the project's proxy, so the specs' seeding and assertion calls reach ZAP as real traffic.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-109",
+      "statement": "Diagnostic endpoints are left out of the scan rather than scanned: health and static assets on the web front ends, and the full actuator set on the Java services.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:62",
+      "quote": "Diagnostics are excluded rather than scanned: `/health` and static assets on the Node contexts, and the full actuator set (`/health`, `/info`, `/metrics`, `/cache`, `/env`) on the three Java services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-110",
+      "statement": "A security run fails on any of three conditions: an alert rated as a failure, a scan cut short at its sixty-minute ceiling, or a declared area that no traffic reached.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:80-84",
+      "quote": "- **A context with no traffic.** Declared but undriven means its activeScan job scanned nothing and reported clean. Active profile only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-111",
+      "statement": "A scan that finishes exactly at the time ceiling is treated as cut short, because an incomplete scan reporting nothing is a false clean.",
+      "kind": "rule",
+      "ref": "docs/security.md:83",
+      "quote": "A scan that finishes at the ceiling was cut short, and an incomplete scan reporting no findings is a false clean.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-112",
+      "statement": "The proxy listens on a configurable port, 9095 by default, deliberately outside the workspace's two growing port ranges, and its API key is taken from the environment with a local development placeholder.",
+      "kind": "non-functional",
+      "ref": "config/zap.ts:13-18",
+      "quote": "export const zapPort = process.env.ZAP_PORT || '9095';",
+      "confidence": "verbatim",
+      "note": "The default API key in config/zap.ts is a local development placeholder; its value is [REDACTED] here."
+    },
+    {
+      "id": "repo-tests-p15-113",
+      "statement": "The scan treats anything other than an exact request for the attacking profile as passive, so it fails safe.",
+      "kind": "rule",
+      "ref": "config/zap.ts:26-33",
+      "quote": "Fails safe: anything other\n// than an explicit, exact 'security:active' is treated as passive, not the\n// reverse.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-114",
+      "statement": "A per-domain attacking run narrows the no-traffic gate to that domain's own declared areas and the report says the run was scoped; the full run leaves every declared area gated.",
+      "kind": "rule",
+      "ref": "config/zap.ts:35-55, docs/security.md:36",
+      "quote": "Full `security:active` is the authoritative clean bill of health. Per-domain active sets `ZAP_SCOPE` so the no-traffic gate only covers that domain's contexts; the report callout marks the run as scoped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-115",
+      "statement": "A run with an unrecognised domain scope is refused outright, naming the domains it accepts.",
+      "kind": "rule",
+      "ref": "config/zap.ts:50-52",
+      "quote": "throw new Error(`Unknown ZAP_SCOPE '${domain}'. Expected one of: ${Object.keys(ZAP_SCOPE_CONTEXTS).join(', ')}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-116",
+      "statement": "The scheduled attacking run is manual only: the nightly schedule stays switched off until an end-to-end run has been verified, and its report is published behind a password because the site it goes to is otherwise public, with reports older than seven days pruned.",
+      "kind": "non-functional",
+      "ref": "docs/security.md:28",
+      "quote": "The GitHub Action is manual dispatch only; the nightly schedule stays disabled pending a verified end-to-end run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-117",
+      "statement": "No transporter route is driven through the security proxy, so the transporter type question, both transporter forms and a transporter's own page fall outside the scan's traffic-driven coverage.",
+      "kind": "non-functional",
+      "ref": "tests/ins/security/, zap/automation-context.yaml",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched every file under tests/ins/security and the ZAP context plan for 'transporter': no match. Stated in general terms only, as the brief requires."
+    },
+    {
+      "id": "repo-tests-p15-118",
+      "statement": "The address book's delete confirmation page asks 'Delete this address?', tells the trader to confirm, warns that deletions are permanent and cannot be undone, and offers 'Yes, delete' and 'No, cancel'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/delete-page.ts:9-27",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Delete this address?' });",
+      "confidence": "verbatim",
+      "note": "Read from the delete page object this part's a11y and security specs both drive; there is no separate transporter delete page object."
+    },
+    {
+      "id": "repo-tests-p15-119",
+      "statement": "The address book list is headed 'Address book', introduced with 'Manage your addresses for use across all your import notifications', and offers an 'Add a new address' button, a collapsible 'Filter addresses' section holding a Search box and a Search button, a results line, a 'Clear search' link and tabs grouped as 'Address types'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:13-114",
+      "quote": "return this.page.getByText('Manage your addresses for use across all your import notifications', { exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-120",
+      "statement": "The address book's search can be submitted either with the Search button or by pressing Enter in the search box.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/list-page.ts:152-160",
+      "quote": "if (submitWith === 'enter') {\n      await this.inputSearch.press('Enter');\n    } else {\n      await this.btnSearch.click();\n    }",
+      "confidence": "verbatim",
+      "note": "mechanism: opens the filter section first where the search box is collapsed, then fills and submits it. Every transporter search in this part submits with the button."
+    },
+    {
+      "id": "repo-tests-p15-121",
+      "statement": "A listed record is reached by a link reading 'View <record name>'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/list-page.ts:116-122",
+      "quote": "return this.page.getByRole('link', { name: `View ${name}`, exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-122",
+      "statement": "Every INS page reached in this part carries the same frame controls: Home, About, a Dashboard link, an Address book link, the signed-in user's email address and the sign-out link.",
+      "kind": "copy",
+      "ref": "page-objects/shared/base-page.ts:53-75",
+      "quote": "get linkAddressBook(): Locator {\n    return this.page.getByRole('link', { name: 'Address book', exact: true });\n  }",
+      "confidence": "inferred",
+      "note": "Read from the base page every INS page object extends; no test in this part asserts the frame controls on a transporter page."
+    },
+    {
+      "id": "repo-tests-p15-123",
+      "statement": "A record's page is reachable with a return address, so the page a trader came from can be carried through viewing, editing and deleting it.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/address-book/record-page.ts:21-24",
+      "quote": "async openWithReturn(recordId: string, returnTo: string): Promise<void> {\n    await this.navigateToInsFrontend(urlWithReturn(this.expectedUrl(recordId), returnTo));",
+      "confidence": "inferred",
+      "note": "mechanism: builds a record's address with a return marker. The transporter view page inherits it, but no test in this part opens a transporter with a return."
+    },
+    {
+      "id": "repo-tests-p15-124",
+      "statement": "Signing in with more than one organisation prompts the trader to pick one, and a test that does not say which is refused.",
+      "kind": "rule",
+      "ref": "page-objects/shared/base-page.ts:239-249",
+      "quote": "throw new Error('Signed-in identity has more than one organisation but no organisationSbi was provided to select one.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-125",
+      "statement": "A refused sign-in offers a 'try again' link, and the suite treats a sign-in that fails twice as a hard failure.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/base-page.ts:191-202",
+      "quote": "throw new Error(`Sign-in failed twice: \"${new SignInErrorPage(this.page).headingName}\" was shown again after trying again.`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-126",
+      "statement": "Each organisation's address book records are cleaned up one by one after every test, so one test's transporters never show in another's listing.",
+      "kind": "non-functional",
+      "ref": "fixtures/ui.ts:179-188",
+      "quote": "const api = new RecordTrackingAddressBookApiClient(request);\n    await use(api);\n    await api.deleteTrackedRecordsOneByOne();",
+      "confidence": "verbatim",
+      "note": "mechanism: tracks every record a test created through the API and deletes each after the test."
+    },
+    {
+      "id": "repo-tests-p15-127",
+      "statement": "Organisation scoping is proven against a fresh, randomly named organisation each run rather than a second fixed one.",
+      "kind": "non-functional",
+      "ref": "fixtures/ui.ts:184-188",
+      "quote": "const api = new RecordTrackingAddressBookApiClient(request, { organisationId: `e2e-isolated-organisation-${randomUUID()}` });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-128",
+      "statement": "The INS frontend is addressed by its own base URL, separate from the animals frontend, the admin and the plants frontend, and a run with it unset is refused.",
+      "kind": "integration",
+      "ref": "page-objects/shared/base-page.ts:11-23, page-objects/shared/base-page.ts:164-167",
+      "quote": "throw new Error(`${envVar} is not set. Ensure Playwright config applies project base URLs before running tests.`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p15-129",
+      "statement": "The address book's Transporter tab is labelled 'Transporter', its panel is headed 'Transporter addresses', and its type filter offers Commercial and Private.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:81-85",
+      "quote": "export const transporterTab: TypeBackedAddressBookTab = {\n  addressType: addressTypes.transporter,\n  label: 'Transporter',\n  panelHeading: 'Transporter addresses',\n  typeFilterOptions: [transporterTypes.commercial, transporterTypes.private],\n};",
+      "confidence": "verbatim",
+      "note": "This part's transporter specs use the tab only for its address type in a URL; no test here asserts the panel heading or the type filter's options."
+    },
+    {
+      "id": "repo-tests-p15-130",
+      "statement": "The address type question's Transporter option carries the hint 'Private, Commercial', naming the two types the next question asks for.",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:143",
+      "quote": "{ addressType: addressTypes.transporter, label: 'Transporter', hint: 'Private, Commercial' },",
+      "confidence": "verbatim"
+    }
+  ]
+}

@@ -41,15 +41,45 @@ const readBody = async ({ body, file }) => {
   }
 }
 
-const confirmCommentLanded = async (client, key, comment) => {
-  const comments = await client.getComments(key)
-  if (!comments.some(({ id }) => id === comment.id)) {
+const confirmCommentLanded = async (
+  client,
+  key,
+  comment,
+  { requiredText = null } = {}
+) => {
+  const landed = (await client.getComments(key)).find(
+    ({ id }) => id === comment.id
+  )
+  if (!landed) {
     throw new TimError(
       'UNKNOWN',
       `Jira accepted the comment, but ${key} does not show comment ${comment.id}. Check the ticket in Jira.`
     )
   }
+  if (requiredText !== null && landed.body?.trim() !== requiredText) {
+    throw new TimError(
+      'UNKNOWN',
+      `Jira accepted the edit, but comment ${comment.id} on ${key} does not hold the new text. Check the ticket in Jira.`
+    )
+  }
   return comment
+}
+
+const writeComment = async (client, { key, text, replaceCommentId }) => {
+  if (replaceCommentId === undefined) {
+    const comment = await client.addComment(key, text)
+    return {
+      mode: 'commented',
+      comment: await confirmCommentLanded(client, key, comment)
+    }
+  }
+  const comment = await client.editComment(key, replaceCommentId, text)
+  return {
+    mode: 'edited',
+    comment: await confirmCommentLanded(client, key, comment, {
+      requiredText: text
+    })
+  }
 }
 
 /**
@@ -59,18 +89,31 @@ const confirmCommentLanded = async (client, key, comment) => {
  * has a comment with the same text is left alone, so a retry never posts a
  * duplicate.
  *
- * @param {{key: string, body?: string, file?: string, confirm: boolean}} args
- * @returns {Promise<{mode: 'dry-run'|'commented'|'unchanged', key: string, body: string, comment?: object}>}
- * @throws {TimError} USAGE for a malformed key, an unreadable file or an empty comment; UNKNOWN when the read-back misses the comment
+ * With `replaceCommentId`, `confirm` edits that comment in place instead of
+ * adding one, and the read-back checks that the comment now holds the text.
+ *
+ * @param {{key: string, body?: string, file?: string, confirm: boolean, replaceCommentId?: string}} args
+ * @returns {Promise<{mode: 'dry-run'|'commented'|'edited'|'unchanged', key: string, body: string, replaceCommentId?: string, comment?: object}>}
+ * @throws {TimError} USAGE for a malformed key, an unreadable file or an empty comment; UNKNOWN when the read-back misses the comment or its new text
  */
-export const runComment = async ({ key, body, file, confirm }) => {
+export const runComment = async ({
+  key,
+  body,
+  file,
+  confirm,
+  replaceCommentId
+}) => {
   const issueKey = parseIssueKey(key)
   const text = await readBody({ body, file })
   if (!text) {
     throw new TimError('USAGE', 'The comment is empty. Give some text.')
   }
   const client = createJiraClient()
-  const summary = { key: issueKey, body: text }
+  const summary = {
+    key: issueKey,
+    body: text,
+    ...(replaceCommentId === undefined ? {} : { replaceCommentId })
+  }
 
   const existing = (await client.getComments(issueKey)).find(
     (comment) => comment.body?.trim() === text
@@ -78,11 +121,9 @@ export const runComment = async ({ key, body, file, confirm }) => {
   if (existing) return { mode: 'unchanged', ...summary, comment: existing }
   if (!confirm) return { mode: 'dry-run', ...summary }
 
-  const comment = await client.addComment(issueKey, text)
   return {
-    mode: 'commented',
     ...summary,
-    comment: await confirmCommentLanded(client, issueKey, comment)
+    ...(await writeComment(client, { key: issueKey, text, replaceCommentId }))
   }
 }
 
@@ -90,9 +131,14 @@ export const renderCommentResult = (result) => {
   if (result.mode === 'unchanged') {
     return `${result.key} already has this comment (${result.comment.id}). Nothing changed.`
   }
+  if (result.mode === 'edited') {
+    return `Edited comment ${result.comment.id} on ${result.key}. Checked on Jira.`
+  }
   if (result.mode === 'dry-run') {
     return [
-      `Would add this comment to ${result.key}:`,
+      result.replaceCommentId === undefined
+        ? `Would add this comment to ${result.key}:`
+        : `Would replace comment ${result.replaceCommentId} on ${result.key} with this text:`,
       '',
       result.body,
       '',

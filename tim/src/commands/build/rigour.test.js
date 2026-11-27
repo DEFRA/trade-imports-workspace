@@ -1,25 +1,17 @@
-import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
-import {
-  cpSync,
-  mkdtempSync,
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-  realpathSync
-} from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
-import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import { row as backlogRow } from '../../backlog/__fixtures__/backlog-rows.js'
+import { makeWorkareaWorkspace } from '../../backlog/__fixtures__/workarea-workspace.js'
 import { renderRigourText } from './rigour.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 const WORKAREA = 'shared/demo'
 
+let held
 let workspace
 
 const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
@@ -46,29 +38,16 @@ const runTim = (args) =>
 
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail: 'An importer sees their own notifications.',
-  acceptanceCriteria: ['The list shows only their own.'],
-  dependsOn: [],
-  kind: 'feat',
-  repos: ['frontend', 'tests'],
-  status: 'todo',
-  ...overrides
-})
+const row = (overrides = {}) =>
+  backlogRow({ kind: 'feat', repos: ['frontend', 'tests'], ...overrides })
 
 beforeEach(() => {
-  workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-build-rigour-')))
-  markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
-  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
-  mkdirSync(dirname(schemaCopy), { recursive: true })
-  cpSync(realSchemaPath, schemaCopy)
+  held = makeWorkareaWorkspace({ backlogSchemas: true })
+  workspace = held.root
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  held.remove()
 })
 
 describe('tim build rigour', () => {

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import { renderDependabotConfig } from './dependabot.js'
 import {
   AXE_HOLD,
@@ -14,6 +14,15 @@ const renderParsed = (dependencySets = fixtureDependencySets()) =>
       dependencySets
     })
   )
+
+const setIgnore = (dependencyName) => ({
+  'dependency-name': dependencyName,
+  'update-types': [
+    'version-update:semver-major',
+    'version-update:semver-minor',
+    'version-update:semver-patch'
+  ]
+})
 
 const npmUpdate = (config) =>
   config.updates.find((update) => update['package-ecosystem'] === 'npm')
@@ -53,14 +62,14 @@ describe('#renderDependabotConfig', () => {
     })
   })
 
-  test('Should ignore every member of a cross-repo set and nothing for a set with no members', () => {
+  test('Should ignore every version update of each cross-repo set member, and nothing for a set with no members', () => {
     const config = renderParsed()
 
     expect(npmUpdate(config).ignore).toEqual([
-      { 'dependency-name': 'playwright' },
-      { 'dependency-name': 'playwright-core' },
-      { 'dependency-name': '@playwright/*' },
-      { 'dependency-name': 'govuk-frontend' }
+      setIgnore('playwright'),
+      setIgnore('playwright-core'),
+      setIgnore('@playwright/*'),
+      setIgnore('govuk-frontend')
     ])
   })
 
@@ -80,10 +89,10 @@ describe('#renderDependabotConfig', () => {
     const config = renderParsed(fixtureDependencySetsHolding([AXE_HOLD]))
 
     expect(npmUpdate(config).ignore).toEqual([
-      { 'dependency-name': 'playwright' },
-      { 'dependency-name': 'playwright-core' },
-      { 'dependency-name': '@playwright/*' },
-      { 'dependency-name': 'govuk-frontend' },
+      setIgnore('playwright'),
+      setIgnore('playwright-core'),
+      setIgnore('@playwright/*'),
+      setIgnore('govuk-frontend'),
       { 'dependency-name': '@axe-core/playwright', versions: ['4.14.x'] }
     ])
   })
@@ -102,7 +111,7 @@ describe('#renderDependabotConfig', () => {
         (entry) => entry['dependency-name'] === 'govuk-frontend'
       )
     ).toEqual([
-      { 'dependency-name': 'govuk-frontend' },
+      setIgnore('govuk-frontend'),
       { 'dependency-name': 'govuk-frontend', versions: ['6.7.x'] }
     ])
   })

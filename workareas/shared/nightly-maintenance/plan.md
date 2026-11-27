@@ -6,13 +6,15 @@ catch-up, then small nightly runs.
 
 Written 13 Nov 2026. Updated 18 Nov 2026, after the tooling under `tools/`
 moved into tim, 19 Nov 2026, after Dependabot PRs got E2E and the
-hold-back rule was agreed, and 20 Nov 2026, after Node and Playwright moved.
+hold-back rule was agreed, 20 Nov 2026, after Node and Playwright moved,
+and 25 Nov 2026, after the digest job was written.
 
 ## Shape
 
-- **Where it runs:** one Claude Code session on the always-on Mac Studio,
-  started inside tmux or screen so it outlives the SSH connection that opened
-  it. This machine does nothing else, so the jobs own the workspace clone and
+- **Where it runs:** one ordinary interactive Claude Code session on the
+  always-on Mac Studio, opened at the workspace root over SSH and left open.
+  The jobs fire while it is idle, and you can watch them work in that window.
+  This machine does nothing else, so the jobs own the workspace clone and
   its `repos/`. `CronCreate` registers the jobs. Recurring jobs expire after
   7 days, so `/nightly-start` re-registers them all in one command.
 - **What triggers work:** Dependabot raises the PRs. The nightly job fixes
@@ -38,12 +40,16 @@ hold-back rule was agreed, and 20 Nov 2026, after Node and Playwright moved.
 On the Mac Studio, over SSH:
 
 ```bash
-tmux new -s nightly            # or: screen -S nightly
 cd ~/git/defra/trade-imports-workspace
 claude                         # auto mode
 /nightly-start
-# detach: Ctrl-b d (tmux) or Ctrl-a d (screen), then close the laptop
+# leave the session open: the jobs fire while it is idle, in this window
 ```
+
+- `/nightly-start` offers to run one job straight away, so you can watch it
+  work without waiting for its cron.
+- Closing the SSH connection ends the session, and the jobs with it. Keep
+  the connection open.
 
 - Stop the Mac sleeping: `sudo pmset -a sleep 0`, or "Prevent automatic
   sleeping" in Energy settings. Turn off automatic macOS update installs.
@@ -62,7 +68,7 @@ claude                         # auto mode
 | 0.2 | `config/dependency-sets.json` and `tim deps dependabot <repo> [--write\|--check]`, which generates each repo's Dependabot groups, ignores and cooldown. | Done on the branch. animals-frontend's generated config is on its own branch |
 | 0.3 | Unattended mode on `tim govuk` and `tim npm`. See 0.3 below. | Built and tested on the branch; proven live by step 1.5 |
 | 0.4 | `/nightly-start` and `tim nightly check\|stopped`. | Done on the branch |
-| 0.5 | `tim nightly check` refuses a session that is not inside tmux or screen, so a `/nightly-start` from a bare SSH shell does not die when the laptop closes. | Done on the branch |
+| 0.5 | `tim nightly check` does not require tmux or screen: the jobs run in an ordinary session you watch over SSH. Changes under the workspace's `workareas/` do not fail `clean-checkouts`. | Done on `chore/EUDPA-802-nightly-check-ignores-workareas` |
 
 ### 0.3 Unattended mode in tim
 
@@ -101,7 +107,7 @@ step starts, and turned on there.
 
 | # | Job | Merges? |
 |---|---|---|
-| 2.1 | Digest only: open bot PRs, red `main` builds, sets waiting on readiness, `npm outdated` drift. Run it for a few nights to prove the session and cron mechanics. | No |
+| 2.1 | Digest only: open bot PRs, red `main` builds, sets waiting on readiness, `npm outdated` drift. Run it for a few nights to prove the session and cron mechanics. **Written 25 Nov:** the `nightly-digest` skill, with `tim deps drift` for the drift and the cross-repo sets behind, turned on in `config/nightly-jobs.json` at 05:53. Waiting on `/nightly-start` on the always-on Mac. | No |
 | 2.2 | `ci-is-enough` Dependabot PRs: fix if red, hold back the one package that breaks a group (see below), merge if green. | Yes |
 | 2.3 | `changelog-driven`: govuk-frontend and every major, one version per night in semver order, with deprecations applied as minors arrive. Merges only when every evidence row is clean. | Sometimes |
 | 2.4 | Sets across repos: readiness check on peer ranges, one branch name, merge only when every repo is green. | Sometimes |
@@ -188,25 +194,41 @@ scheduling if the 7-day restart becomes a chore.
   Dependabot's `cooldownDays` moved from 3 to 7 to match, so it no longer
   proposes a release npm then refuses; tim's README says to keep the two
   equal. defra-id-stub waits on the Sonar decision above.
-- **The workspace has no `main` ruleset.** `gh api
-  repos/DEFRA/trade-imports-workspace/rulesets` returns `[]`, and it is not in
-  `config/main-branch-rules.json`, so nothing stops a red or out-of-date
-  pull request being merged there. If one is added, require only checks
-  that run on every pull request (the `e2e` jobs and `smoke / Smoke run`),
-  not tim CI's `build`, which its path filter skips outside `tim/`.
-- **A tests-repo PR and its service PR merged together turn the tests
-  repo's `main` red for one run.** On 20 Nov ins-tests #112 and
-  animals-frontend #484 (EUDPA-696) merged at 16:19; ins-tests' `main` E2E
-  started at 16:24 and pulled `animals-frontend:latest` before #484's
-  Publish had pushed it, so 12 specs ran the new tests against the old page.
-  Rerunning after the Publish was green. Merge the service first and wait
-  for its Publish, or have the nightly digest treat a red tests-repo `main`
-  that follows a paired merge as "rerun", not "broken".
-- **Nightly jobs must search the workspace's own pull requests.** Its
-  Dependabot PRs (tim and GitHub Actions) are not in `repos.json`, so when
-  the deps-fix and digest skills are written their PR search must include
-  `DEFRA/trade-imports-workspace`.
+- **The workspace's `main` ruleset: decided, 25 Nov.** `gh api
+  repos/DEFRA/trade-imports-workspace/rulesets` returned `[]`, and it is not
+  in `config/main-branch-rules.json`, so nothing stopped a red or
+  out-of-date pull request being merged there. Your call: add one that
+  requires only checks that run on every pull request (the `e2e` jobs and
+  `smoke / Smoke run`), not tim CI's `build`, which its path filter skips
+  outside `tim/`.
+- **Paired tests-repo and service merges: decided, 25 Nov.** On 20 Nov
+  ins-tests #112 and animals-frontend #484 (EUDPA-696) merged at 16:19;
+  ins-tests' `main` E2E started at 16:24 and pulled
+  `animals-frontend:latest` before #484's Publish had pushed it, so 12
+  specs ran the new tests against the old page. Rerunning after the Publish
+  was green. Your call: both. Merge the service first and wait for its
+  Publish, then the tests-repo PR; the rule is in
+  `docs/testing/e2e-tests-gh-actions.md` ("Merging a tests-repo change with
+  its service change"). And the digest reports a red tests-repo `main` that
+  started before a paired service's Publish finished as "rerun", not
+  "broken".
+- **Nightly jobs search the workspace's own pull requests: done, 25 Nov.**
+  Its Dependabot PRs (tim and GitHub Actions) are not in `repos.json`. The
+  digest skill reads `DEFRA/trade-imports-workspace` beside every
+  `repos.json` repo; the deps-fix skill must do the same when it is
+  written.
 - **Workspace root Dependabot: done, 20 Nov.** See 1.6 (#313).
-- Whether a Dependabot `ignore` entry for govuk-frontend and Playwright also
-  stops their security updates. If it does, the nightly job must watch
-  advisories for them.
+- **Security updates for the cross-repo sets: settled, 25 Nov.** It did:
+  GitHub's docs say an `ignore` entry applies to "version updates and
+  security updates", and `update-types` only narrows version updates. So
+  `tim deps dependabot` now writes each govuk-frontend and Playwright ignore
+  entry with all three `version-update:semver-*` update types, which blocks
+  every version update and lets security updates through. A hold keeps its
+  `versions` range, which still blocks security fixes inside it; `tim deps
+  hold --help` and tim's README say so. A security pull request for a set
+  member lands in one repo only and must not be merged alone, because the
+  set moves in every repo on one branch name. So the digest reads every
+  repo's open Dependabot alerts and lists any on a set member or a held
+  package under "Needs you", with the version that fixes it (nightly-digest
+  step 6). Each repo's committed `.github/dependabot.yml` needs
+  regenerating to pick up the new entries.

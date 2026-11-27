@@ -1,6 +1,7 @@
 import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
+import { editNotes } from './row-notes.js'
 import { followRef } from './schema-ref.js'
 import { pickUpAwaiting, splitOffOf } from './split-off.js'
 import {
@@ -8,14 +9,10 @@ import {
   externalDependencyProblems,
   themeProblems
 } from './themes.js'
+import { checkTicketBacklog } from './ticket-backlog.js'
 import { validateJson } from './validate-json.js'
 
-/**
- * The statuses the build never picks up. Named as a deny-list, so a status
- * nobody expected is picked up and seen rather than silently skipped
- * (requirements-pipeline BUILD.md, "Buildability is status and dependencies").
- * Every one is a status backlog.schema.json allows; a test holds them to it.
- */
+/** The statuses the build never picks up. */
 export const WITHHELD_STATUSES = new Set([
   'done',
   'deferred',
@@ -259,13 +256,13 @@ const envelopeProblems = (root, backlog, errors) =>
   )
 
 /**
- * Every way a backlog departs from backlog.schema.json, the one shape the
- * distiller writes and the build loop reads, plus the rules a schema cannot
- * hold: ids are unique, every dependency names another row in the backlog
- * without a cycle, every repo a row merges into is one of its own repos and
- * one the envelope names, and the theme rules in `themes.js`. Given a way to
- * read another workarea's backlog, every `externalDependsOn` must name a row
- * that backlog has.
+ * Every way a backlog departs from backlog.schema.json, plus the rules a
+ * schema cannot hold: ids are unique, every dependency names another row in
+ * the backlog without a cycle, every repo a row merges into is one of its own
+ * repos and one the envelope names, the theme rules in `themes.js` and the
+ * ticket-backlog rules in `ticket-backlog.js`. Given a way to read another
+ * workarea's backlog, every `externalDependsOn` must name a row that backlog
+ * has.
  *
  * @param {unknown} backlog - The parsed backlog.json
  * @param {object} schema - The parsed backlog.schema.json
@@ -273,10 +270,18 @@ const envelopeProblems = (root, backlog, errors) =>
  * @param {(workarea: string) => object|null} [options.readWorkareaBacklog] -
  *   Another workarea's parsed backlog, or null when it has none. Left out,
  *   `externalDependsOn` is not followed
- * @returns {{problems: string[], counts: Record<string, number>, total: number}}
+ * @param {{record: object|null, schema: object}} [options.intakeRecord] - The parsed
+ *   intake.json (null when the workarea has none) and its schema. Left out, a
+ *   ticket backlog is not held to its record
+ * @returns {{problems: string[], counts: Record<string, number>, total: number, intake?: object}}
+ *   `intake` summarises the record of a ticket backlog that has one
  * @throws {TimError} PARSE when the schema uses a keyword tim cannot check
  */
-export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
+export const checkBacklog = (
+  backlog,
+  schema,
+  { readWorkareaBacklog, intakeRecord } = {}
+) => {
   const errors = validateJson(schema, backlog)
   if (lacksIncrementsList(errors)) {
     return { problems: [NO_INCREMENTS], counts: {}, total: 0 }
@@ -299,6 +304,7 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
       ...mergeProblems(row, where, repoKeys)
     ]
   }
+  const ticketBacklog = checkTicketBacklog(backlog, intakeRecord)
   const problems = [
     ...envelopeProblems(schema, backlog, errors),
     ...duplicateIds(rows).map((id) => `${id} appears more than once.`),
@@ -306,7 +312,7 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
   ]
   const cycle = findCycle(dependencyEdges(rows))
   if (cycle) problems.push(`A dependsOn cycle: ${cycle.join(' → ')}.`)
-  problems.push(...themeProblems(backlog))
+  problems.push(...themeProblems(backlog), ...ticketBacklog.problems)
   if (readWorkareaBacklog) {
     problems.push(
       ...externalDependencyProblems(backlog, readWorkareaBacklog),
@@ -314,7 +320,12 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
       ...pickUpProblems(backlog, readWorkareaBacklog)
     )
   }
-  return { problems, counts: countByStatus(rows), total: rows.length }
+  return {
+    problems,
+    counts: countByStatus(rows),
+    total: rows.length,
+    ...(ticketBacklog.summary ? { intake: ticketBacklog.summary } : {})
+  }
 }
 
 const splitOffDependencyProblems = (backlog, readWorkareaBacklog) =>
@@ -343,8 +354,7 @@ const NO_OTHER_BACKLOGS = () => null
 /**
  * The first row, in file order, that is not withheld, whose every
  * dependency is `done`, and whose every `externalDependsOn` row is `done` in
- * its own workarea's backlog — the same rule the BUILD phase's derive step
- * states.
+ * its own workarea's backlog.
  *
  * @param {{increments: object[]}} backlog
  * @param {object} [options]
@@ -397,6 +407,38 @@ const mergeRefsFor = (row, refs) => {
   return { ...(row.merge ?? {}), ...refs }
 }
 
+/**
+ * The repos a row builds, replaced. Every key must be one the envelope
+ * declares, and a repo the row merges a ref into cannot be taken away, or the
+ * merge would name a repo the row no longer builds.
+ *
+ * @param {object} row - The increment before the change
+ * @param {string[]} keys - The repo keys to set
+ * @param {object} backlog - The backlog, read for its envelope `repos`
+ * @returns {string[]} The repo keys to write
+ * @throws {TimError} USAGE
+ */
+const reposFor = (row, keys, backlog) => {
+  const declared = Object.keys(backlog.repos ?? {})
+  const unknown = keys.filter((key) => !declared.includes(key))
+  if (unknown.length) {
+    throw new TimError(
+      'USAGE',
+      `The backlog declares no ${unknown.join(', ')}, so ${row.id} can't build it. Its repos are: ${declared.join(', ') || 'none'}.`
+    )
+  }
+  const dropped = Object.keys(row.merge ?? {}).filter(
+    (repoKey) => !keys.includes(repoKey)
+  )
+  if (dropped.length) {
+    throw new TimError(
+      'USAGE',
+      `${row.id} merges a ref into ${dropped.join(', ')}, so that repo can't be taken off its repos. Clear the merge ref first.`
+    )
+  }
+  return keys
+}
+
 const dependenciesFor = (row, ids, backlog) => {
   const known = new Set(backlog.increments.map((candidate) => candidate.id))
   const unknown = ids.filter((id) => !known.has(id))
@@ -415,7 +457,8 @@ const dependenciesFor = (row, ids, backlog) => {
 /**
  * Apply one set of build-state changes to one row, returning the new backlog
  * and what changed. Scalar fields are replaced; `note` and `openQuestion`
- * append; `pr` adds a pull request or merges into the one with the same url;
+ * append; `removeOpenQuestion` removes the open question at that position,
+ * counting from 1, before any `openQuestion` is added; `pr` adds a pull request or merges into the one with the same url;
  * `merge` sets a ref per repo key, keeping the row's other merge refs;
  * `dependsOn` replaces the row's dependencies with other rows of this backlog;
  * `attempt` replaces how far the last failed attempt got, or clears it when
@@ -426,9 +469,9 @@ const dependenciesFor = (row, ids, backlog) => {
  * @param {object} args
  * @param {{increments: object[]}} args.backlog
  * @param {string} args.id
- * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none', rigour?: string|'none'}} args.changes
+ * @param {{status?: string, commit?: string, ticket?: string, branch?: string, note?: string, openQuestion?: string, removeOpenQuestion?: number, pr?: {url: string}, merge?: Record<string, string>, dependsOn?: string[], attempt?: object|'none', rigour?: string|'none'}} args.changes
  * @returns {{backlog: object, changed: Record<string, {before: unknown, after: unknown}>}}
- * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, or a dependency is the row itself or not in the backlog
+ * @throws {TimError} NOT_FOUND when the id is not in the backlog; USAGE when a merge names a repo the row does not build, a dependency is the row itself or not in the backlog, or the row has no open question at `removeOpenQuestion`
  */
 export const setRowFields = ({ backlog, id, changes }) => {
   const index = backlog.increments.findIndex((row) => row.id === id)
@@ -443,12 +486,23 @@ export const setRowFields = ({ backlog, id, changes }) => {
   if (changes.note !== undefined) {
     after.notes = appendTo(before.notes, changes.note)
   }
+  if (changes.removeOpenQuestion !== undefined) {
+    after.openQuestions = editNotes({
+      backlog,
+      id,
+      remove: [changes.removeOpenQuestion],
+      field: 'openQuestions'
+    }).notes
+  }
   if (changes.openQuestion !== undefined) {
-    after.openQuestions = appendTo(before.openQuestions, changes.openQuestion)
+    after.openQuestions = appendTo(after.openQuestions, changes.openQuestion)
   }
   if (changes.pr !== undefined) after.prs = upsertPr(before.prs, changes.pr)
   if (changes.merge !== undefined) {
     after.merge = mergeRefsFor(before, changes.merge)
+  }
+  if (changes.repos !== undefined) {
+    after.repos = reposFor(before, changes.repos, backlog)
   }
   if (changes.dependsOn !== undefined) {
     after.dependsOn = dependenciesFor(before, changes.dependsOn, backlog)

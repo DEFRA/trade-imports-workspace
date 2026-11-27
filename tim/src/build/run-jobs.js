@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { load as yamlLoad } from 'js-yaml'
+import { loadYaml } from '../utils/yaml.js'
 import { run } from '../exec/exec.js'
 import { TimError } from '../errors.js'
 
@@ -20,7 +20,7 @@ const readAt = async (repoPath, commit, file) => {
     )
   }
   try {
-    return yamlLoad(stdout) ?? {}
+    return loadYaml(stdout) ?? {}
   } catch (error) {
     throw new TimError(
       'PARSE',

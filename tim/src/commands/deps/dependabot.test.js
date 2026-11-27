@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import yaml from 'js-yaml'
+import * as yaml from 'js-yaml'
 import { z } from 'zod'
 import { renderDependabotText } from './dependabot.js'
 import { runTimInWorkspace, envelopeOf } from '../../test-support/tim-cli.js'

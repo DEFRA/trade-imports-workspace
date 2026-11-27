@@ -27,7 +27,16 @@ const problemsOf = (value) => {
   }
 }
 
-const repo = (folder) => ({ folder, path: `/workspace/repos/${folder}` })
+// A repo's key and its folder are different strings in a real envelope — `tests`
+// against `trade-imports-ins-tests` — so the fixture keeps them different too,
+// or a lookup by the wrong one passes here and fails in a run.
+const keyOf = (folder) => folder.replace(/^trade-imports-/, '')
+
+const repo = (folder) => ({
+  key: keyOf(folder),
+  folder,
+  path: `/workspace/repos/${folder}`
+})
 
 const sampleGates = () =>
   parseGates(
@@ -154,7 +163,7 @@ describe('the workspace gates.json', () => {
         run: 'tim build duplication',
         cwd: 'tim'
       },
-      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' },
+      { name: 'unit', phase: 'unit', run: 'coverage', cwd: 'tim' },
       {
         name: 'coverage',
         phase: 'unit',
@@ -428,7 +437,7 @@ describe('parseGates', () => {
               phase: 'e2e',
               run: 'test:docker-compose',
               scope: ['tests/ins/'],
-              scopeFrom: 'pr-scope',
+              scopeFrom: 'gate',
               forRepos: ['tests']
             }
           ]
@@ -445,7 +454,7 @@ describe('parseGates', () => {
     const problems = problemsOf(
       gatesWith({
         tests: {
-          rungs: [{ ...unitRung('unit', 'test'), scopeFrom: 'pr-scope' }]
+          rungs: [{ ...unitRung('unit', 'test'), scopeFrom: 'gate' }]
         }
       })
     )
@@ -579,9 +588,19 @@ describe('planRungs', () => {
     ])
   })
 
-  test('refuses a phase that no repo in the backlog has rungs for', () => {
+  test('plans no rungs for a phase the repos have none of, when they have rungs in another', () => {
     const plan = planRungs({
       gates: sampleGates(),
+      repos: [repo('plants-backend')],
+      phase: 'fit'
+    })
+
+    expect(plan).toEqual([])
+  })
+
+  test('refuses a phase when no repo in the backlog has rungs in any phase', () => {
+    const plan = planRungs({
+      gates: gatesWith({ 'plants-backend': { rungs: [] } }),
       repos: [repo('plants-backend')],
       phase: 'fit'
     })
@@ -602,7 +621,7 @@ describe('planRungs', () => {
               name: 'e2e',
               phase: 'e2e',
               run: 'test:docker-compose',
-              scopeFrom: 'pr-scope',
+              scopeFrom: 'gate',
               forRepos
             }
           ]
@@ -677,5 +696,186 @@ describe('loadGates', () => {
     )
 
     rmSync(root, { recursive: true, force: true })
+  })
+})
+
+describe('planRungs under a narrowed e2e run', () => {
+  const narrowedGates = () =>
+    parseGates(
+      gatesWith({
+        'plants-frontend': { rungs: [unitRung('unit', 'test')] },
+        tests: {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'gate',
+              forRepos: ['plants-frontend']
+            }
+          ]
+        },
+        perftests: {
+          rungs: [
+            {
+              name: 'e2e-k6',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              exclusive: true,
+              forRepos: ['plants-frontend']
+            }
+          ]
+        }
+      })
+    )
+
+  const everyRepo = [repo('plants-frontend'), repo('tests'), repo('perftests')]
+
+  const e2eRungs = (plan) => plan.filter(({ phase }) => phase === 'e2e')
+
+  const planWith = (e2eScope) =>
+    e2eRungs(
+      planRungs({
+        gates: narrowedGates(),
+        repos: everyRepo,
+        phase: 'e2e',
+        e2eScope
+      })
+    )
+
+  test('narrows a scopeFrom rung to the spec files its own repo changed', () => {
+    expect(
+      planWith({
+        changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+        specsByRepo: { tests: ['tests/plants/a.spec.ts'] }
+      })
+    ).toEqual([
+      expect.objectContaining({
+        repo: 'tests',
+        name: 'e2e',
+        scope: ['tests/plants/a.spec.ts', '--pass-with-no-tests']
+      })
+    ])
+  })
+
+  test('gives a rung its own repo’s specs and never another repo’s', () => {
+    const plan = planWith({
+      changedByRepo: {
+        'plants-frontend': ['fit/origin.fit.spec.js'],
+        tests: ['tests/plants/origin.spec.ts']
+      },
+      specsByRepo: {
+        'plants-frontend': ['fit/origin.fit.spec.js'],
+        tests: ['tests/plants/origin.spec.ts']
+      }
+    })
+
+    expect(plan).toEqual([
+      expect.objectContaining({
+        repo: 'tests',
+        scope: ['tests/plants/origin.spec.ts', '--pass-with-no-tests']
+      })
+    ])
+  })
+
+  test('adds the covered specs named for that repo, and no others', () => {
+    const [run] = planWith({
+      changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      specsByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      coveredSpecsByRepo: {
+        tests: ['tests/plants/covered.spec.ts'],
+        perftests: ['src/k6/ignored.spec.ts']
+      }
+    })
+
+    expect(run.scope).toEqual([
+      'tests/plants/a.spec.ts',
+      'tests/plants/covered.spec.ts',
+      '--pass-with-no-tests'
+    ])
+  })
+
+  test('plans no rung for a repo the change never touched', () => {
+    expect(planWith({ changedByRepo: {}, specsByRepo: {} })).toEqual([])
+  })
+
+  test('keeps a rung that names its own scope, such as the k6 suite, when its repo changed', () => {
+    expect(
+      planWith({
+        changedByRepo: { perftests: ['src/k6/journeys.js'] },
+        specsByRepo: { perftests: [] }
+      })
+    ).toEqual([
+      expect.objectContaining({ repo: 'perftests', name: 'e2e-k6', scope: [] })
+    ])
+  })
+
+  test('plans no k6 rung when the change touched no performance file', () => {
+    const plan = planWith({
+      changedByRepo: { tests: ['tests/plants/a.spec.ts'] },
+      specsByRepo: { tests: ['tests/plants/a.spec.ts'] }
+    })
+
+    expect(plan.map(({ repo: folder }) => folder)).toEqual(['tests'])
+  })
+})
+
+describe('planRungs looks a narrowed repo up by its key, not its folder', () => {
+  const realisticGates = () =>
+    parseGates(
+      gatesWith({
+        'trade-imports-plants-frontend': {
+          rungs: [unitRung('unit', 'test')]
+        },
+        'trade-imports-ins-tests': {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'gate',
+              forRepos: ['trade-imports-plants-frontend']
+            }
+          ]
+        }
+      })
+    )
+
+  const plan = (e2eScope) =>
+    planRungs({
+      gates: realisticGates(),
+      repos: [
+        repo('trade-imports-plants-frontend'),
+        repo('trade-imports-ins-tests')
+      ],
+      phase: 'e2e',
+      e2eScope
+    }).filter(({ phase }) => phase === 'e2e')
+
+  test('finds the changed specs filed under the repo key', () => {
+    expect(
+      plan({
+        changedByRepo: { 'ins-tests': ['tests/plants/a.spec.ts'] },
+        specsByRepo: { 'ins-tests': ['tests/plants/a.spec.ts'] }
+      })
+    ).toEqual([
+      expect.objectContaining({
+        scope: ['tests/plants/a.spec.ts', '--pass-with-no-tests']
+      })
+    ])
+  })
+
+  test('runs a covered spec for a repo whose own files the change never touched', () => {
+    expect(
+      plan({
+        changedByRepo: { 'ins-tests': [] },
+        specsByRepo: { 'ins-tests': [] },
+        coveredSpecsByRepo: { 'ins-tests': ['tests/plants/covered.spec.ts'] }
+      })
+    ).toEqual([
+      expect.objectContaining({
+        scope: ['tests/plants/covered.spec.ts', '--pass-with-no-tests']
+      })
+    ])
   })
 })

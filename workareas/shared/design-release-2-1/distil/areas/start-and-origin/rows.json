@@ -2,83 +2,64 @@
   "area": "start-and-origin",
   "rows": [
     {
-      "title": "The germinal products origin page's Back link follows where the notification started",
-      "detail": "A trader can reach the germinal products origin page from four places, and the Back link has to take them back to the one they came from rather than always to the same page. Started from the 'What are you importing?' question, Back returns to that question with Germinal products (semen, ova, embryos) still selected. Started from the germinal products notifications list's own 'Create new', Back returns to that list. Opened from the notification's overview, Back returns to the overview. Opened while a saved germinal products template is being edited, Back returns to that template's review. This is the germinal half of the origin Back link: the live-animals half is built on its own branch with the notification type question and templates.",
+      "title": "The germinal products origin page's Back link returns to wherever the notification was started from",
+      "detail": "A trader reaches the germinal products set's 'Origin of the import' page three ways: by choosing germinal products on the question that asks what they are importing, by creating a notification from the germinal products set's own notifications list, and by opening the origin task from a notification's overview. Back should take them to whichever of those they came from, so leaving the page never drops them into another set's pages or onto a list they never visited. The live animals set already works this way; the germinal set's copy of the page needs its own answers because its list and its start are its own.",
       "acceptanceCriteria": [
-        "On a germinal products notification started from the type question, the germinal products origin page's Back link goes to the 'What are you importing?' question, which shows Germinal products (semen, ova, embryos) already selected (prototype:dr2-1-source prototype-dr2-1-source-p2-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; conflicts:c-007)",
-        "On a germinal products notification started from the germinal products notifications list's own 'Create new', the germinal products origin page's Back link goes to that list (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)",
-        "Opened from a germinal products notification's overview, the germinal products origin page's Back link goes to that overview (prototype:dr2-1-source prototype-dr2-1-source-p2-028-m1; conflicts:c-011)",
-        "Opened while a saved germinal products template is being edited, the germinal products origin page's Back link goes to that template's review (prototype:dr2-1-source prototype-dr2-1-source-p2-028; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-049)"
+        "Choosing germinal products on the 'What are you importing?' question and continuing, the germinal products 'Origin of the import' page shows a Back link that goes to that question. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; prototype:dr2-1-source prototype-dr2-1-source-p2-028; conflicts:c-007)",
+        "Starting a notification from the germinal products set's own notifications list, the germinal products 'Origin of the import' page shows a Back link that goes to that list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)",
+        "Opening the origin task from a germinal products notification's overview, the 'Origin of the import' page shows a Back link that goes to that overview. (prototype:dr2-1-source prototype-dr2-1-source-p2-028; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014)",
+        "Following the germinal products 'Origin of the import' page's Back link leaves the answers already saved against the notification as they were. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)"
       ],
       "requirements": ["req-1740"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-028, p2-028-m1" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-005" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-014, p1-057" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-049" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-104" }
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p12-005 (TRACE G action 17 snapshot; TRACE C action 16 snapshot)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-028 (app/routes.js:10586-10600 getOriginBackLink)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-014, p1-057"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-104 (the germinal set's own list at its root)"
+        },
+        {
+          "source": "ruling:interaction-designer-2026-11-09",
+          "ref": "ruling-interaction-designer-2026-11-09-p1-010 (templates dropped for now)"
+        }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "req-1740 already sits in inc-186 (germinal-products theme) alongside the templates area's req-1875 and req-1876. Drafted here as this area's part only, unchanged in substance from inc-186's four Back-link criteria: the combiner merges it back into inc-186, keeps that id, its wider title and detail, its repos (backend joins from req-1875 and req-1876), its dependsOn (inc-182) and its externalDependsOn on the split-off type-question-and-templates workarea (inc-150, inc-151, inc-154 to inc-161, inc-164, inc-165). Not split off: the code is the germinal products set's own origin page and journey (frontend:src/server/app/sets/germinal-products), which the germinal-products theme owns; no split-off theme touches it, and the split-off origin-page and design-snagging themes touch only the live-animals and plants origin folders. Two clauses reach outside this row's code and are ordering needs, not criteria that cannot be observed: the type-question clause needs the notification type question, which is the split-off type-question-and-templates branch's, reached through externalDependsOn and never dependsOn; the template-review clause needs germinal template mode, which inc-186 itself builds from req-1876.",
+      "dependsOn": ["inc-141", "inc-176"],
+      "notes": [
+        "This area's part of inc-186 only. req-1740 already sits in inc-186 (theme germinal-products) alongside the templates area's req-1875 and req-1876: the combiner merges this draft back into inc-186 and keeps that id, its wider title and detail, its repos (backend joins from req-1875 and req-1876), its dependsOn (inc-182) and its externalDependsOn on the split-off type-question and type-question-and-templates workareas (inc-150, inc-151, inc-154 to inc-161, inc-164, inc-165).",
+        "Rewrite needed in inc-186: templates are no longer a Back destination (ruling:interaction-designer-2026-11-09 ruling-interaction-designer-2026-11-09-p1-010 dropped templates for now), so inc-186's title clause about returning to a template's review and its last acceptance criterion ('Opened while a saved germinal products template is being edited, the germinal products origin page's Back link goes to that template's review') are replaced by the three destinations above. req-1740's statement now names only the type question, the germinal set's own notifications list and the notification overview.",
+        "Ordering: the germinal set's origin page itself is built by inc-176 and the germinal set's root list by inc-141, so both must land before the Back link can be seen; inc-186's existing dependsOn inc-182 stays. The Back-to-the-type-question destination needs the type question, which the split-off type-question theme owns, and inc-186's externalDependsOn already names it.",
+        "Not split off: the code is the germinal products set's own origin feature folder and journey flow under frontend:src/server/app/sets/germinal-products, which the germinal-products theme owns. No split-off pointer touches it: origin-page and design-snagging touch only the live-animals and plants origin folders.",
+        "The shared return-marker and trail rule in the animals frontend is read, not changed, by this row: the split-off journey-foundation theme owns it."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/origin",
+        "frontend:src/server/app/sets/germinal-products",
         "tests:tests/animals/e2e/germinal-products"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
-        "tests:page-objects/germinal-products"
-      ],
+      "shared": [],
       "existingRow": "inc-186"
-    },
-    {
-      "title": "Country search results take the design's own screen-reader wording, if design says the component's own cannot stand",
-      "detail": "The target design labels the country results 'Country search results' for screen readers and announces 'Selected <country>' when one is chosen. The 9 October afternoon ruling builds the accessible autocomplete's own result and selection announcements now, and puts this custom wording to design as question 13. If design says the component's own announcements cannot stand, the origin page of each animals set and of the high-risk plants journey takes the custom wording; otherwise this row is dropped. There is no safe default to build, so it waits on design.",
-      "acceptanceCriteria": [
-        "With JavaScript, on the live animals origin page, the germinal products origin page and the high-risk plants origin page, the country results are labelled 'Country search results' for screen readers (prototype:dr2-1-source prototype-dr2-1-source-p2-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-036; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-015, p1-058, p3-032; conflicts:c-009)",
-        "With JavaScript, choosing a country on any of those three origin pages announces 'Selected <country>' to a screen reader, for example 'Selected France' (prototype:dr2-1-source prototype-dr2-1-source-p2-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-037, p12-009; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-014, p1-058; conflicts:c-009)",
-        "With Welsh chosen, the results label and the selection announcement show their Welsh counterparts on each of those three origin pages (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-028)"
-      ],
-      "requirements": ["req-020"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-033" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-036, p2-037, p12-009" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-014, p1-015, p1-058, p3-032" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-013, p6-048" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p4-023" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p4-117" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-028" }
-      ],
-      "repos": ["frontend", "plantsfrontend", "tests"],
-      "kind": "feat",
-      "status": "blocked",
-      "gate": null,
-      "openQuestions": [
-        "Design question 13: design must say whether the accessible autocomplete's own result and selection announcements can stand. The custom wording is built only if design says they cannot; otherwise this row is dropped. No safe default: the ruling puts it to design."
-      ],
-      "notes": "Keeps inc-189, rewritten only where the requirement has moved on: it now names the germinal products set's origin page as well, because req-020 covers the origin page of both animals sets, and the criteria are split so that the results label and the selection announcement are checked separately. Kept apart from any Search-button row because it waits on a different design question; if the arrival-and-transit area drafts the same question for the port and transit boxes, the combiner may merge them into one waiting-on-design row. The wording is a change to the shared accessible-autocomplete wrapper's options in each frontend (src/client/javascripts/components/accessible-autocomplete.js, kept identical in both), plus the origin pages' copy keys, so it is listed under shared rather than touches: journey-foundation and design-snagging both own parts of that wrapper on their own branches, and design snagging has already reworked it on main (page placeholder, bolded matches through templates.suggestion, decorative joined search span, change event on confirm, the selectText and searchPlaceholder copy keys). The germinal products clause can only be observed once the germinal products set's origin page exists, which the germinal-products theme builds: that is a real ordering need for the combiner to record, not a criterion that cannot be observed. This row's existing theme is waiting-on-design, which sources.json's goal reserves for JavaScript-only prototype behaviour blocked on design, one increment per design question; the requirements behind it have not moved to another theme's code, so it keeps that theme, and waiting-on-design's touches do not claim the autocomplete wrapper, so no theme overlap arises.",
-      "touches": [
-        "tests:tests/animals/e2e/enhancements",
-        "tests:tests/plants/e2e/enhancements"
-      ],
-      "shared": [
-        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin/copy",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy"
-      ],
-      "existingRow": "inc-189"
     }
   ],
   "unobservable": [],
   "splitOff": [
     {
-      "requirement": "req-032",
+      "requirement": "req-051",
       "theme": "origin-page",
-      "why": "It makes the country of origin mandatory to save the origin page, which changes the live-animals origin feature folder's validation (features/origin/validate.js, repo-frontend-p4-084), its obligation section, its fit spec (origin.fit.spec.js, repo-frontend-p4-114) and the end-to-end spec that proves today's countryless save (tests/animals/e2e/pages/origin.spec.ts, repo-tests-p1-027). All four sit inside origin-page's touches (frontend:src/server/app/sets/live-animals/journeys/linear/features/origin, frontend:src/server/app/sets/live-animals/obligations/sections/origin.js, tests:tests/animals/e2e/pages/origin.spec.ts), so the origin-page branch builds it. It is new to this re-distil: c-319 settles it on the V4 data page's 2 November change, after the split, and no row in the parent backlog covers it. Two things travel with it. First, c-319 leaves open what the missing-country message says, so the origin-page branch needs that answer or a default before it builds the row. Second, req-032 also covers the germinal products set's origin page, whose code the germinal-products theme owns; the germinal pages are built as copies of the live-animals pages, so the germinal copy inherits the mandatory rule from whatever the origin-page branch builds, and the overview task row and check-page halves of req-032 are today's behaviour and change nothing."
+      "why": "It changes the live-animals origin page's exits: the page gains a secondary 'Save and return to overview' button that saves before showing the overview and a 'Cancel and return to overview' link that reaches the overview even with no answers. That is frontend:src/server/app/sets/live-animals/journeys/linear/features/origin, its obligation section frontend:src/server/app/sets/live-animals/obligations/sections/origin.js and the page spec tests:tests/animals/e2e/pages/origin.spec.ts, all in theme origin-page's touches, and origin-page is the theme whose rows are the origin page's own behaviour. Its germinal half needs no row here: ruling:sam-2026-10-09 (ruling-sam-2026-10-09-p1-014) makes each germinal page a copy of its live-animals feature folder taken after the live twin is built, inc-176 copies the finished live-animals origin page into the germinal set, and inc-244 already covers both save buttons making the same checks on every germinal page that shows them. The blocker c-003 recorded (the 10 November ruling held the return links until the save and continue work merged) is gone: that work merged on 11 November, so req-051 carries no blockedBy and the row is buildable on the origin-page branch. The split-off design-snagging theme also lists the origin folder in its touches, but only to port finished origin-page work to main; origin-page is where the behaviour itself is built."
     }
   ]
 }

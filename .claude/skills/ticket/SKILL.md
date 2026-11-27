@@ -1,12 +1,12 @@
 ---
 name: ticket
-description: 'Plan, implement, or refactor work for an existing Jira ticket (EUDPA-XXXXX) end-to-end. Use when the user asks to scope, plan, build, follow a plan for, refactor, tidy up, or clean code for a specific ticket (triggers: "plan EUDPA-", "how should I implement EUDPA-", "implement EUDPA-", "build EUDPA-", "follow the plan", "refactor", "tidy up", "clean"). Covers the full plan -> implement -> refactor cycle for one existing ticket. NOT for creating new tickets (use ticket-creator), NOT for assessing whether a ticket is ready for refinement (use ticket-refiner), NOT for reviewing an existing PR (use review or code-style).'
+description: 'Plan, implement by hand, or refactor work for an existing Jira ticket (EUDPA-XXXXX) end-to-end. Use when the user asks to scope, plan, follow a plan for, implement by hand, refactor, tidy up, or clean code for a specific ticket (triggers: "plan EUDPA-", "how should I implement EUDPA-", "implement EUDPA-X by hand", "follow the plan", "refactor", "tidy up", "clean"). Covers the full plan -> implement -> refactor cycle for one existing ticket. NOT for a plain "build EUDPA-X" or "implement EUDPA-X", which builds the ticket through the build loop (use requirements-pipeline ticket mode), NOT for creating new tickets (use ticket-creator), NOT for assessing whether a ticket is ready for refinement (use ticket-refiner), NOT for reviewing an existing PR (use review or code-style).'
 context: inline
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep]
 argument-hint: 'EUDPA-XXXXX'
 ---
 
-Plan, implement, or refactor work for an existing Jira ticket. Three
+Plan, implement by hand, or refactor work for an existing Jira ticket. Three
 peer phases share triggers but split on verb.
 
 ## When to use
@@ -14,10 +14,11 @@ peer phases share triggers but split on verb.
 | Verb | Phase |
 |---|---|
 | plan / scope / "how should I" | PLAN |
-| implement / build / follow the plan | IMPLEMENT |
+| follow the plan / implement by hand | IMPLEMENT |
 | refactor / tidy / clean | REFACTOR |
 
-NOT for creating new tickets — use `ticket-creator`. NOT for assessing
+NOT for building a ticket through the build loop ("build EUDPA-X", or a plain
+"implement EUDPA-X" without "by hand") — use `requirements-pipeline` ticket mode. NOT for creating new tickets — use `ticket-creator`. NOT for assessing
 whether a ticket is ready for refinement — use `ticket-refiner`. NOT for
 reviewing someone's PR — use `review` (correctness across languages) or
 `code-style` (JS lint/style).
@@ -51,7 +52,7 @@ exists it is reviewed against `assets/plan-review-checklist.md`.
 
 ### Implement
 
-If the user asks to build / implement / follow the plan, follow
+If the user asks to follow the plan / implement by hand, follow
 `references/IMPLEMENTOR.md`. Re-checks the plan against the checklist,
 makes the change under the house rules in
 `.claude/rules/code-quality.md`,
@@ -112,7 +113,7 @@ Fetching the ticket and its comments is part of every phase — do it
 without asking. But a comment, a status transition, an assignment or a
 link is outward-facing: the ticket is shared with the BAs, the PO and
 whoever else watches it, and a write notifies them. "Plan EUDPA-X" or
-"implement EUDPA-X" asks for the work, not for a status report sent to
+"implement EUDPA-X by hand" asks for the work, not for a status report sent to
 the team. Do the work, report it to the user, and stop. If a Jira write
 would help, offer it and let them answer.
 

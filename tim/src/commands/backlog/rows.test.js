@@ -1,58 +1,58 @@
-import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
-import {
-  cpSync,
-  mkdtempSync,
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  rmSync,
-  realpathSync
-} from 'node:fs'
+import { readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
-import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
+import {
+  BACKLOG_SCHEMA_PATH,
+  INTAKE_SCHEMA_PATH
+} from '../../backlog/backlog-schema.js'
+import {
+  backlogPathIn,
+  readBacklogRows,
+  writeBacklogRows
+} from '../../backlog/__fixtures__/backlog-file.js'
+import { row } from '../../backlog/__fixtures__/backlog-rows.js'
+import {
+  intakeRecord,
+  statement
+} from '../../backlog/__fixtures__/intake-record.js'
+import {
+  makeWorkareaWorkspace,
+  ticketBacklogRepos
+} from '../../backlog/__fixtures__/workarea-workspace.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
-const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 
 const WORKAREA = 'shared/demo'
 
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
+let held
 
-let workspace
-
-const backlogPath = () => join(workspace, 'workareas', WORKAREA, 'backlog.json')
-
-const writeBacklog = (rows) => {
-  mkdirSync(dirname(backlogPath()), { recursive: true })
-  writeFileSync(
-    backlogPath(),
-    JSON.stringify({ programme: 'demo', increments: rows })
-  )
+const openWorkspace = (contents = {}) => {
+  held?.remove()
+  held = makeWorkareaWorkspace({ backlogSchemas: true, ...contents })
 }
 
-const readRows = () =>
-  JSON.parse(readFileSync(backlogPath(), 'utf8')).increments
+const backlogPath = () => backlogPathIn(held.root, WORKAREA)
+
+const writeBacklog = (rows, envelope) =>
+  writeBacklogRows(held.root, WORKAREA, rows, envelope)
+
+const DECLARED_REPOS = {
+  repos: {
+    frontend: 'repos/trade-imports-animals-frontend',
+    plantsfrontend: 'repos/trade-imports-plants-frontend',
+    tests: 'repos/trade-imports-ins-tests'
+  }
+}
+
+const readRows = () => readBacklogRows(held.root, WORKAREA)
 
 const runTim = (args) =>
   execa(
     'node',
-    [cliPath, 'backlog', ...args, '--workspace', workspace, '--json'],
+    [cliPath, 'backlog', ...args, '--workspace', held.root, '--json'],
     {
       reject: false
     }
@@ -61,16 +61,11 @@ const runTim = (args) =>
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
 beforeEach(() => {
-  workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-rows-')))
-  markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
-  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
-  mkdirSync(dirname(schemaCopy), { recursive: true })
-  cpSync(realSchemaPath, schemaCopy)
+  openWorkspace()
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  held.remove()
 })
 
 describe('tim backlog check', () => {
@@ -124,13 +119,120 @@ describe('tim backlog check', () => {
 
   test('names a missing backlog schema', async () => {
     writeBacklog([row()])
-    rmSync(join(workspace, BACKLOG_SCHEMA_PATH))
+    rmSync(join(held.root, BACKLOG_SCHEMA_PATH))
 
     const run = await runTim(['check', WORKAREA])
 
     expect(envelopeOf(run).errors[0].message).toBe(
-      `Can't find the backlog schema at ${join(workspace, BACKLOG_SCHEMA_PATH)}. tim checks every backlog against it.`
+      `Can't find the backlog schema at ${join(held.root, BACKLOG_SCHEMA_PATH)}. tim checks every backlog against it.`
     )
+  })
+
+  describe('a backlog that names a ticket', () => {
+    const ticketBacklog = (...rows) => ({
+      programme: 'demo',
+      ticket: 'EUDPA-100',
+      repos: ticketBacklogRepos,
+      increments: rows
+    })
+
+    const citedRow = () =>
+      row({
+        acceptanceCriteria: [
+          'The list shows only notifications the signed-in user created. (ticket:EUDPA-100 AC1)'
+        ]
+      })
+
+    test('passes with the summary of its intake record when every criterion is covered', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: { [WORKAREA]: intakeRecord() }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(0)
+      expect(envelopeOf(run).result.intake).toEqual({
+        ticket: 'EUDPA-100',
+        readiness: 'READY',
+        statementIds: ['AC1'],
+        statementCount: 1,
+        questionCount: 0,
+        notBuiltStatementIds: [],
+        questions: [],
+        escalation: null,
+        rowsToBuild: ['inc-001'],
+        rowsToBuildCount: 1
+      })
+    })
+
+    test('exits 1 naming the criterion no row covers', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: {
+          [WORKAREA]: intakeRecord({
+            statements: [
+              statement(),
+              statement({
+                id: 'AC2',
+                text: 'The list is sorted by date.',
+                coveredBy: []
+              })
+            ]
+          })
+        }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(1)
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `1 problems in ${backlogPath()}:\nAcceptance criterion AC2 is not covered by a row and has no reason it is not built: "The list is sorted by date."`
+      )
+    })
+
+    test('exits 1 saying the intake writes the record when there is none', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) }
+      })
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(run.exitCode).toBe(1)
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `1 problems in ${backlogPath()}:\nEUDPA-100 has no intake.json beside its backlog. The ticket intake writes it.`
+      )
+    })
+
+    test('exits 1 naming the missing intake schema', async () => {
+      openWorkspace({
+        backlogs: { [WORKAREA]: ticketBacklog(citedRow()) },
+        intakeRecords: { [WORKAREA]: intakeRecord() }
+      })
+      rmSync(join(held.root, INTAKE_SCHEMA_PATH))
+
+      const run = await runTim(['check', WORKAREA])
+
+      expect(envelopeOf(run).errors[0].message).toBe(
+        `Can't find the intake schema at ${join(held.root, INTAKE_SCHEMA_PATH)}. tim checks every ticket backlog against it.`
+      )
+    })
+  })
+
+  test('leaves a stray intake.json beside a backlog with no ticket unread', async () => {
+    openWorkspace({
+      backlogs: { [WORKAREA]: { programme: 'demo', increments: [row()] } },
+      intakeRecords: { [WORKAREA]: { not: 'a record' } }
+    })
+
+    const run = await runTim(['check', WORKAREA])
+
+    expect(envelopeOf(run).result).toEqual({
+      path: backlogPath(),
+      problems: [],
+      counts: { todo: 1 },
+      total: 1
+    })
   })
 })
 
@@ -156,7 +258,7 @@ describe('tim backlog next', () => {
     writeBacklog([row({ status: 'done' })])
     const run = await execa(
       'node',
-      [cliPath, 'backlog', 'next', WORKAREA, '--workspace', workspace],
+      [cliPath, 'backlog', 'next', WORKAREA, '--workspace', held.root],
       { reject: false }
     )
     expect(run.stdout.trim()).toBe('NONE')
@@ -215,6 +317,40 @@ describe('tim backlog set', () => {
     const [updated] = readRows()
     expect(updated.notes).toEqual(['ATTEMPT FAILED: ladder red'])
     expect(updated.openQuestions).toEqual(['Who may see drafts?'])
+  })
+
+  test('removes an open question by its number and keeps the rest', async () => {
+    writeBacklog([
+      row({ openQuestions: ['Who may see drafts?', 'Does it merge?'] })
+    ])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '2'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
+  })
+
+  test('refuses an open question number that is not a whole number from 1', async () => {
+    writeBacklog([row({ openQuestions: ['Who may see drafts?'] })])
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--remove-open-question',
+      '0'
+    ])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--remove-open-question must be the number of an open question, counting from 1.'
+    )
+    expect(readRows()[0].openQuestions).toEqual(['Who may see drafts?'])
   })
 
   test('sets a merge ref per repo and keeps the refs already there', async () => {
@@ -294,6 +430,101 @@ describe('tim backlog set', () => {
     )
   })
 
+  test('replaces the repos the increment builds', async () => {
+    writeBacklog([row({ repos: ['frontend', 'tests'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsfrontend,tests'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'plantsfrontend', 'tests'])
+  })
+
+  test('keeps one of a repo named twice', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,tests,frontend'
+    ])
+
+    expect(run.exitCode).toBe(0)
+    expect(readRows()[0].repos).toEqual(['frontend', 'tests'])
+  })
+
+  test('refuses a repo the backlog does not declare', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend,plantsbackend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "The backlog declares no plantsbackend, so inc-001 can't build it. Its repos are: frontend, plantsfrontend, tests."
+    )
+  })
+
+  test('refuses taking away a repo the increment merges a ref into', async () => {
+    writeBacklog(
+      [row({ repos: ['frontend', 'tests'], merge: { tests: 'origin/main' } })],
+      DECLARED_REPOS
+    )
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      "inc-001 merges a ref into tests, so that repo can't be taken off its repos. Clear the merge ref first."
+    )
+  })
+
+  test('refuses --repos with no repo in it', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim(['set', WORKAREA, 'inc-001', '--repos', ' , '])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must name at least one repo key, such as frontend,tests. A row with no repos builds nothing.'
+    )
+  })
+
+  test('refuses a repo key that is not one', async () => {
+    writeBacklog([row({ repos: ['frontend'] })], DECLARED_REPOS)
+
+    const run = await runTim([
+      'set',
+      WORKAREA,
+      'inc-001',
+      '--repos',
+      'Plants Frontend'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--repos must be repo keys separated by commas, such as frontend,plantsfrontend,tests. "Plants Frontend" is not a repo key.'
+    )
+  })
+
   test('writes nothing when the values are already there', async () => {
     writeBacklog([row()])
     const before = readFileSync(backlogPath(), 'utf8')
@@ -338,7 +569,7 @@ describe('tim backlog set', () => {
     writeBacklog([row()])
     const run = await runTim(['set', WORKAREA, 'inc-001'])
     expect(envelopeOf(run).errors[0].message).toBe(
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
+      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
     )
   })
 
@@ -521,6 +752,60 @@ describe('tim backlog set', () => {
     expect(run.exitCode).toBe(2)
     expect(envelopeOf(run).errors[0].message).toBe(
       "Can't find inc-009 in the backlog."
+    )
+  })
+})
+
+describe('tim backlog combine-candidates', () => {
+  test('lists a pair that shares code and changes no file', async () => {
+    writeBacklog([
+      row({ id: 'inc-001', touches: ['frontend:src/server/origin'] }),
+      row({ id: 'inc-002', touches: ['frontend:src/server/origin/page'] })
+    ])
+    const before = readFileSync(backlogPath(), 'utf8')
+
+    const run = await runTim(['combine-candidates', WORKAREA])
+
+    expect(run.exitCode).toBe(0)
+    expect(envelopeOf(run).result).toMatchObject({
+      rowsToBuild: 2,
+      candidates: [
+        {
+          rows: ['inc-001', 'inc-002'],
+          sharedTouches: ['frontend:src/server/origin/page'],
+          waitingRow: null
+        }
+      ]
+    })
+    expect(readFileSync(backlogPath(), 'utf8')).toBe(before)
+  })
+
+  test('says in plain words which rows pair and why', async () => {
+    writeBacklog([
+      row({ id: 'inc-001' }),
+      row({ id: 'inc-002', dependsOn: ['inc-001'] })
+    ])
+
+    const run = await execa(
+      'node',
+      [
+        cliPath,
+        'backlog',
+        'combine-candidates',
+        WORKAREA,
+        '--workspace',
+        held.root,
+        '--no-ui'
+      ],
+      { reject: false }
+    )
+
+    expect(run.stdout).toBe(
+      [
+        '2 rows still to build, 1 pair to look at for combining.',
+        'inc-001 and inc-002: inc-002 waits only on inc-001',
+        'No touches, so paired only by what they wait on: inc-001, inc-002.'
+      ].join('\n')
     )
   })
 })

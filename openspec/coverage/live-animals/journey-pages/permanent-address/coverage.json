@@ -334,16 +334,16 @@
     },
     {
       "id": "REQ-PERM-ADDR-016",
-      "name": "A line that needs a permanent address with no animal identified yet shows a message in place of the cards",
+      "name": "A message shows in place of the cards when no line that needs a permanent address has an animal identified",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PERM-ADDR-016-A",
-          "name": "The page shows the message and link in place of the cards",
-          "coverage": "partial",
+          "name": "The page shows the add-the-number message and link in place of the cards when no line that needs a permanent address has a number of animals",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should render the page with no cards and the empty-state message carrying the consignment details address, logging once", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the no-animals message in place of the cards, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "not probed red/restored green" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should render the page with no cards and the add-the-number-of-animals message linking to consignment details, logging once", "strength": "partial", "notes": "asserts the message copy and link the controller passes; the rendered sentence is not checked in a browser" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the add-the-number message in place of the cards for an uncounted animal, linking to consignment details, with the save control, and a save from there changes nothing and returns to the consignment addresses page", "strength": "full", "notes": "asserts no card, the rendered sentence, its link to consignment details and the save control; probed red by pointing the add-the-number message's linkedPage at animalIdentificationPage (the URL assertion failed on /commodities/identification), restored green" }
           ]
         },
         {
@@ -351,8 +351,35 @@
           "name": "Saving from the message state changes nothing and returns to the consignment addresses page",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should leave the commodity lines as they were and redirect to the consignment addresses page on a save from there, logging once", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the no-animals message in place of the cards, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "the same test walks the save step too; not probed red/restored green" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should leave the commodity lines as they were and redirect to the consignment addresses page on a save from the add-the-number-of-animals message, logging once", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should leave the commodity lines as they were and redirect to the consignment addresses page on a save from the identify-an-animal message, logging once", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the identify-an-animal message in place of the cards for a counted animal, linking to identification details, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "the same test walks the save step from the identify-an-animal message; not probed red/restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the add-the-number message in place of the cards for an uncounted animal, linking to consignment details, with the save control, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "the same test walks the save step from the add-the-number message and reopens the page to show it unchanged; not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-016-C",
+          "name": "The page shows the identify-an-animal message and link in place of the cards when a line that needs a permanent address has a number of animals and none has an animal identified",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should render the page with no cards and the identify-an-animal message linking to identification details, logging once", "strength": "partial", "notes": "asserts the message copy and link the controller passes; the rendered sentence is not checked in a browser" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the identify-an-animal message in place of the cards for a counted animal, linking to identification details, and a save from there changes nothing and returns to the consignment addresses page", "strength": "full", "notes": "asserts no card, the rendered sentence, its link to identification details and the save control; probed red by pointing the identified message's linkedPage at consignmentDetailsPage (the URL assertion failed on /consignment-details), restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-016-D",
+          "name": "One counted line that needs a permanent address is enough for the identify-an-animal message",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should show the identify-an-animal message when one line that needs a permanent address is counted and another is not", "strength": "full", "notes": "probed red with any-line-counted changed to every-line-counted, restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-016-E",
+          "name": "A number of animals on a line that needs no permanent address does not change the message",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should show the add-the-number-of-animals message when the only counted line is one that needs no permanent address", "strength": "full", "notes": "probed red with every line counted rather than only lines that need a permanent address, restored green" }
           ]
         }
       ]

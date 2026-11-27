@@ -9,7 +9,7 @@ import {
   resolve,
   sep
 } from 'node:path'
-import { load as yamlLoad } from 'js-yaml'
+import { loadYaml } from '../utils/yaml.js'
 import { run } from './exec.js'
 
 export const DEV_OVERLAY_PATH = join('docker', 'stack', 'dev.compose.yml')
@@ -55,7 +55,7 @@ export const devServices = (workspaceRoot) => {
   const overlayPath = join(workspaceRoot, DEV_OVERLAY_PATH)
   if (!existsSync(overlayPath)) return []
   const overlayDir = dirname(overlayPath)
-  const { services = {} } = yamlLoad(readFileSync(overlayPath, 'utf8')) ?? {}
+  const { services = {} } = loadYaml(readFileSync(overlayPath, 'utf8')) ?? {}
   return Object.entries(services)
     .filter(([, definition]) => contextOf(definition?.build))
     .map(([service, definition]) => {

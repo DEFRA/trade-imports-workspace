@@ -1,14 +1,16 @@
 ---
 name: nightly-start
-description: 'Start, or restart, the scheduled nightly maintenance jobs in the always-on Claude Code session: check the session is ready (SONAR_TOKEN set, no ANTHROPIC_API_KEY, inside tmux or screen, gh signed in, tim on PATH, the kill switch off, every checkout clean), fetch every repo, delete the nightly crons this session registered before, then register every job config/nightly-jobs.json turns on as a recurring session cron, and report when each runs next and when they all expire. Run it when the session starts and again every 7 days, because recurring crons expire after 7 days. Triggers: "/nightly-start", "start the nightly jobs", "restart the nightly jobs", "register the nightly crons". NOT for running a nightly job by hand (run that job''s own skill), NOT for changing what a job may do (edit .claude/rules/nightly.md), and NOT for adding a job or changing its schedule (edit config/nightly-jobs.json, then run this).'
+description: 'Start, or restart, the scheduled nightly maintenance jobs in an ordinary Claude Code session that the person opens at the workspace root over SSH and leaves open: check the session is ready (SONAR_TOKEN set, no ANTHROPIC_API_KEY, gh signed in, tim on PATH, the kill switch off, every checkout clean outside workareas/), fetch every repo, delete the nightly crons this session registered before, then register every job config/nightly-jobs.json turns on as a recurring session cron, report when each runs next and when they all expire, and offer to run one job now so the person can watch it work. Run it when the session starts and again every 7 days, because recurring crons expire after 7 days. Triggers: "/nightly-start", "start the nightly jobs", "restart the nightly jobs", "register the nightly crons". NOT for running a nightly job by hand (run that job''s own skill), NOT for changing what a job may do (edit .claude/rules/nightly.md), and NOT for adding a job or changing its schedule (edit config/nightly-jobs.json, then run this).'
 ---
 
-The nightly jobs run in one Claude Code session left open on an always-on Mac,
-inside tmux or screen so closing the SSH connection that started it does not
-end it. `CronCreate` registers them for this session only:
-they fire only while the session is idle, and a recurring cron expires after 7
-days. This skill sets them up in one command, so the weekly restart is one
-command too.
+The nightly jobs run in an ordinary interactive Claude Code session on an
+always-on Mac. Connect to the Mac over SSH, open `claude` at the workspace
+root, run `/nightly-start` and leave the session open. The jobs fire while
+the session is idle, and you can watch each one work in that window.
+
+`CronCreate` registers the jobs for this session only, and a recurring cron
+expires after 7 days. This skill sets them up in one command, so the weekly
+restart is one command too.
 
 It registers what [`config/nightly-jobs.json`](../../../config/nightly-jobs.json)
 turns on. What each job may do once it fires is in
@@ -25,7 +27,7 @@ Every path here is relative to the workspace root. Run Bash from there.
 
 | Trigger | What to do |
 |---|---|
-| "/nightly-start", "start the nightly jobs" | Steps 1 to 6 |
+| "/nightly-start", "start the nightly jobs" | Steps 1 to 6, in a session opened at the workspace root over SSH |
 | "restart the nightly jobs", the 7-day expiry is near | Steps 1 to 6. Step 4 deletes the old crons first, so nothing runs twice |
 | "stop the nightly jobs" | Not this skill. Create the stop file (see "Stopping the jobs") |
 
@@ -54,10 +56,9 @@ then checks:
 |---|---|
 | `sonar-token` | `SONAR_TOKEN` is not set, so the Sonar push gate would skip |
 | `no-anthropic-api-key` | `ANTHROPIC_API_KEY` is set, so the session would bill the API |
-| `detached-session` | neither `TMUX` nor `STY` is set, so the session is not inside tmux or screen and ends when the SSH connection closes |
 | `stop-file` | `workareas/nightly/STOP` exists |
 | `jobs-config` | `config/nightly-jobs.json` is missing or invalid |
-| `clean-checkouts` | the workspace or a cloned repo has uncommitted changes |
+| `clean-checkouts` | the workspace or a cloned repo has uncommitted changes. Changes under the workspace's `workareas/`, tracked or untracked, do not count |
 | `fetch` | fetching origin failed in the workspace or a repo |
 
 If `result.ready` is false, print each check whose `ok` is false, with its
@@ -113,9 +114,22 @@ Then say:
 - the crons expire 7 days from now, on the date (for example
   "21 November 2026"), so run `/nightly-start` again before then
 - the jobs fire only while this session is idle, so leave it open with no
-  prompt running, and keep the Mac awake
+  prompt running, and keep the Mac awake. Each job works in this window, so
+  you can watch it
 - the digest for each morning will be at
   `workareas/nightly/<yyyy-mm-dd>/digest.md`
+
+Then offer to run one job now, so the person can watch it work without
+waiting for its cron. List the jobs from step 3 by name and ask which one to
+run, or none. If they name one, call `CronCreate` with:
+
+- `cron`: the next minute, in local time
+- `prompt`: that job's `cronPrompt` from step 1, exactly as written, so it
+  starts with `[nightly:<name>]` and runs under
+  [`.claude/rules/nightly.md`](../../rules/nightly.md) as it would at night
+- `recurring`: false
+
+Tell the person it starts within a minute, once the session is idle.
 
 ## Stopping the jobs
 

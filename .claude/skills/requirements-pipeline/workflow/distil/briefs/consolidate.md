@@ -28,7 +28,7 @@ Read these before you write a row:
 - **Pass 2, combine.** Merge related slices where building them apart would repeat the same set-up, review and
   ladder for little gain: the same page or journey step, the same record, the same integration. Keep a slice apart
   where it carries an open question the others do not, or would make the increment too big to review in one
-  sitting. Aim for three to ten acceptance criteria an increment. Say in each row's `notes` which slices it
+  sitting. Aim for up to about 15 acceptance criteria an increment. Say in each row's `notes` which slices it
   combines and why.
 
 The drafter does pass 1 and pass 2 within its area. The combiner does pass 2 again across areas, merging rows from
@@ -52,6 +52,8 @@ criterion covers only what the row changes, stated as what is true once the row 
 - `requirements`: the requirement ids it covers. Every adopted `new` or `change` requirement sits in exactly one
   increment whose status is `todo`, `blocked`, `done` or `deferred`.
 - `sources`, `repos`, `kind`, `dependsOn` (a real ordering need only, never a layer order), `status`.
+- `touches`: the code areas the row owns, copied from the draft row's `touches` as `<repoKey>:<path prefix>`. A row
+  built from several drafts carries every one of theirs. `tim backlog combine-candidates` compares them.
 - `repos` is written in **merge order**, provider before consumer: a service before the frontend that calls it, a
   stub before the service that calls it, and a tests or performance-tests repo after every service it exercises.
   The build loop merges a row's PRs in that order, unless the keys are exactly `frontend`, `backend` and `tests`,
@@ -256,3 +258,6 @@ The combiner:
 2. Runs both check commands its prompt gives, `tim backlog check` and `tim distil coverage`. Each exits 1 and names
    every problem. Fix every one and run both again, until both pass.
 3. Answers with the structured output its prompt asks for, including how many themes and every decision it made.
+
+A combine review follows the combiner. It looks at the finished rows and merges those that suit combining, as
+`combine-review.md` says.

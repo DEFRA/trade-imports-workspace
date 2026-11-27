@@ -42,16 +42,23 @@ const workareaSchema = z
 const BRANCH_NAME =
   /^(?!-)(?!.*\.\.)(?!.*\/\/)(?!.*@\{)(?!.*\.lock(\/|$))[A-Za-z0-9._/-]+(?<![./])$/
 
-const branchOptionsSchema = z.object({
-  workarea: workareaSchema,
-  branch: z
-    .string()
-    .trim()
-    .regex(
-      BRANCH_NAME,
-      'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
-    )
-})
+const branchOptionsSchema = z
+  .object({
+    workarea: workareaSchema,
+    branch: z
+      .string()
+      .trim()
+      .regex(
+        BRANCH_NAME,
+        'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
+      )
+      .optional(),
+    open: z.boolean()
+  })
+  .refine(({ branch, open }) => branch !== undefined || open, {
+    message: 'Name a branch, or use --open to take it from the backlog.',
+    path: ['branch']
+  })
 
 const gateOptionsSchema = z.object({
   workarea: workareaSchema,
@@ -74,6 +81,8 @@ const gateOptionsSchema = z.object({
       message: `--e2e must be one of: ${E2E_LOCATIONS.join(', ')}.`
     })
     .optional(),
+  base: z.string().trim().min(1).optional(),
+  coveredSpec: z.array(z.string().trim().min(1)).optional(),
   serial: z.boolean()
 })
 
@@ -91,7 +100,9 @@ const gateWaitOptionsSchema = z.object({
     .max(MAX_WAIT_SECONDS, `--seconds must be ${MAX_WAIT_SECONDS} or fewer.`)
 })
 
-const describeBranchRepo = ({
+const shortSha = (sha) => sha?.slice(0, 12) ?? 'no commits'
+
+const describeBranchMove = ({
   repo,
   branch,
   head,
@@ -102,13 +113,35 @@ const describeBranchRepo = ({
   error
 }) => {
   if (!ok) return `  ${repo}  FAILED — ${error}`
-  const shortHead = head?.slice(0, 12) ?? 'no commits'
   if (created) {
-    return `  ${repo}  cut ${branch} from ${createdFrom} at ${shortHead}`
+    return `  ${repo}  cut ${branch} from ${createdFrom} at ${shortSha(head)}`
   }
-  if (switched) return `  ${repo}  switched to ${branch} at ${shortHead}`
-  return `  ${repo}  already on ${branch} at ${shortHead}`
+  if (switched) {
+    return `  ${repo}  switched to ${branch} at ${shortSha(head)}`
+  }
+  return `  ${repo}  already on ${branch} at ${shortSha(head)}`
 }
+
+const describeOrigin = ({ onOrigin, pushNeeded, originError }) => {
+  if (onOrigin === null) return `    origin could not be read: ${originError}`
+  if (!onOrigin) return '    not on origin yet, needs a push'
+  return pushNeeded
+    ? '    on origin at a different head, needs a push'
+    : '    on origin at the same head, no push needed'
+}
+
+const describeOpened = (repo) =>
+  repo.openingCommit === undefined
+    ? []
+    : [
+        repo.openingCommit
+          ? `    opening commit ${shortSha(repo.openingCommit)}`
+          : '    no opening commit needed',
+        describeOrigin(repo)
+      ]
+
+const describeBranchRepo = (repo) =>
+  [describeBranchMove(repo), ...describeOpened(repo)].join('\n')
 
 /**
  * The plain-text report of `tim build branch`.
@@ -147,12 +180,20 @@ const describeRungAndPorts = (rung) => [
 
 const rungLabel = ({ repo, name }) => `${repo} ${name}`
 
-const describeE2eLeftToCi = ({ leftToCi = [], evidence = null } = {}) =>
-  leftToCi.length > 0
-    ? [
-        `Left to CI, not run here: ${leftToCi.map(rungLabel).join(', ')}. The evidence is ${evidence}`
-      ]
-    : []
+const describeE2eLeftToCi = ({
+  where,
+  leftToCi = [],
+  evidence = null
+} = {}) => {
+  if (leftToCi.length > 0) {
+    return [
+      `Left to CI, not run here: ${leftToCi.map(rungLabel).join(', ')}. The evidence is ${evidence}`
+    ]
+  }
+  // A narrowed run that selected no spec runs no E2E rung at all, and a gate
+  // that says only "passed" reads exactly like one that ran the suite.
+  return where === 'targeted' ? [evidence] : []
+}
 
 const describeMachine = (machine) =>
   machine ? [`Ran with this machine’s settings from ${machine.config}.`] : []
@@ -284,8 +325,8 @@ const branchEnvelope = (outcome, ok, timVersion) => ({
   ok,
   errors: outcome.repos
     .filter((repo) => !repo.ok)
-    .map(({ repo, error }) => ({
-      code: 'CHECKOUT_FAILED',
+    .map(({ repo, error, errorCode = 'CHECKOUT_FAILED' }) => ({
+      code: errorCode,
       message: `${repo}: ${error}`
     }))
 })
@@ -310,20 +351,28 @@ const registerBranch = (build, timVersion) =>
       '<workarea>',
       'The workarea under workareas/, such as shared/my-programme'
     )
-    .argument('<branch>', 'The branch every repo in the backlog should be on')
+    .argument(
+      '[branch]',
+      'The branch every repo in the backlog should be on. Required unless --open takes it from the backlog'
+    )
+    .option(
+      '--open',
+      'Open the branch for a ticket: take the branch from the backlog when none is given, include the workspace repo, and give each repo with no commits of its own on the branch one empty opening commit. Reports for each repo whether origin has the branch, and never pushes or calls GitHub'
+    )
     .description(
-      'Put every repo the backlog builds on one branch. Checks it out where it exists, otherwise cuts it with --no-track from the repo\'s default branch. Refuses before changing anything if a repo has uncommitted work, except the workspace repo itself (path "." in the backlog\'s repos), whose uncommitted files travel with it.'
+      'Put every repo the backlog builds on one branch. Checks it out where it exists, otherwise cuts it with --no-track from the repo\'s default branch. Refuses before changing anything if a repo has uncommitted work, except the workspace repo itself (path "." in the backlog\'s repos), whose uncommitted files travel with it. With --open it also adds the workspace repo and an opening commit where a repo has none of its own.'
     )
     .addHelpText(
       'after',
-      '\nExample:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --json'
+      '\nExamples:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --json\n  tim build branch shared/my-programme --open --json'
     )
-    .action(async function branchAction(workarea, branch) {
+    .action(async function branchAction(workarea, branch, options) {
       const globalOpts = this.optsWithGlobals()
       try {
         const parsed = parseOptions(branchOptionsSchema, {
           workarea,
-          branch
+          branch,
+          open: options.open ?? false
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
@@ -395,7 +444,16 @@ const registerGate = (build, timVersion) =>
     )
     .option(
       '--e2e <where>',
-      'Where the E2E rungs run: local, against the workspace stack, or ci, left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+      'Where the E2E rungs run: local, the whole suite against the workspace stack; targeted, only the spec files the branch has changed since --base, with the whole suite left to the pull request; or ci, every E2E rung left to each pull request’s E2E Tests check, with no lease taken and no stack started (default: this machine’s e2e setting, else local)'
+    )
+    .option(
+      '--base <ref>',
+      'The ref --e2e targeted diffs the branch against to find the spec files it has changed. Imports are never followed, so a changed page object selects no spec of its own (default: origin/main)'
+    )
+    .option(
+      '--covered-spec <repoKey:path>',
+      'A spec --e2e targeted runs whether or not the branch changed it, such as one the Behaviour Spec links to a scenario this change touches, named repo-first as `tests:tests/animals/e2e/features/amend.spec.ts`. Repeat for more than one. The build loop passes none: this is for a gate you run by hand',
+      (path, paths = []) => [...paths, path]
     )
     .option(
       '--detach',
@@ -420,6 +478,8 @@ const registerGate = (build, timVersion) =>
           repo: opts.repo?.length ? opts.repo : undefined,
           holder: opts.holder,
           e2e: opts.e2e,
+          base: opts.base,
+          coveredSpec: opts.coveredSpec?.length ? opts.coveredSpec : undefined,
           serial: opts.serial === true
         })
         const workspaceRoot = resolveWorkspaceRoot({
@@ -451,6 +511,8 @@ const registerGate = (build, timVersion) =>
           serial: parsed.serial,
           logsDir,
           ...(parsed.e2e ? { e2e: parsed.e2e } : {}),
+          ...(parsed.base ? { base: parsed.base } : {}),
+          ...(parsed.coveredSpec ? { coveredSpecs: parsed.coveredSpec } : {}),
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         const envelope = gateEnvelope(outcome, timVersion)

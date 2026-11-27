@@ -1,4 +1,4 @@
-import { load as yamlLoad } from 'js-yaml'
+import { loadYaml } from '../utils/yaml.js'
 import picomatch from 'picomatch'
 import { gitLines } from './git-files.js'
 import { run } from '../exec/exec.js'
@@ -72,7 +72,7 @@ const pathVerdict = (filters, files) => {
  * @returns {{name: string|null, starts: boolean, reason: string}}
  */
 export const pushVerdict = (source, { branch, files }) => {
-  const workflow = yamlLoad(source) ?? {}
+  const workflow = loadYaml(source) ?? {}
   const name = typeof workflow.name === 'string' ? workflow.name : null
   const { found, filters } = pushTriggerOf(workflow.on)
   if (!found) return { name, starts: false, reason: 'it has no push trigger' }

@@ -97,12 +97,16 @@ models        {} for the recommended split, pass that unless the user asks
               included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
-e2e           where a row's end-to-end proof comes from: local (the gate's e2e
-              phase against the workspace stack) or ci (no local e2e, no stack
-              lease, no images built; the baseline reads each repo's open pull
-              request with `gh pr checks`). Settle it at the launch from what
-              this machine can do, and say which evidence decided it — see
-              "Choosing e2e" below
+e2e           where a row's end-to-end proof comes from: targeted (the
+              recommended default: the baseline reads every check on each
+              repo's open pull request instead of running rungs, and the
+              ladder's e2e rung runs only the specs the change reaches),
+              local (the whole suite in the gate's e2e phase against the
+              workspace stack, and a baseline that runs every rung locally)
+              or ci (no local e2e at all, no stack lease, no images built;
+              the baseline runs unit and FIT locally and reads each repo's
+              open pull request for its e2e evidence). Pass targeted unless
+              the user asks otherwise — see "Choosing e2e" below
 resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
               take it from the row's own attempt record, or build to ignore
               that record and rebuild the row from the top. Set build when a
@@ -138,19 +142,54 @@ launch would silently rebuild rows that had nothing wrong with them.
 
 ### Choosing e2e
 
-This is the one parameter to work out from the machine rather than the backlog.
-Run each, one call per command:
+**Pass `targeted` unless the user asks otherwise.** It is what a developer does:
+run the tests that cover the change, push, and let CI run everything. The two
+other values are there for the cases below, and `local` in particular is a
+deliberate choice to pay for a full local proof.
 
-```
-docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
-ls config/machine.json
-tim docker lease status --json
-```
+**What `targeted` does depends on the lifecycle, and only one half of it is
+lifecycle-bound.** The narrowed ladder rung applies to both. The pull-request
+baseline applies to the **branch lifecycle only**: a full-lifecycle run cuts a
+fresh branch per increment and raises its pull requests after the build, so at
+baseline time there is nothing to read, and that run keeps its local baseline
+gate — narrowed by the same `--e2e`. The loop derives this itself
+(`BASELINE_FROM_PULL_REQUESTS`), so `targeted` is safe to pass either way; this
+is what it means in each.
 
-Recommend `ci` when Docker holds under half the machine's memory, or when
-`config/machine.json` is absent so `tim build tune --write` has never run here,
-and say which of the two decided it. Recommend `local` otherwise. Give the
-recommendation and its evidence rather than asking cold.
+**Why `targeted`'s baseline reads the pull requests instead of running rungs.**
+Under the branch lifecycle every repo already has an open pull request — the run
+refuses to start without one — and at baseline time the branch holds only what
+that pull request has already run every check against, on CI's own machines. So
+the baseline's question is already answered, for free. It costs nothing extra in
+time either: the run is going to block on the pull request's slowest check
+anyway, and every other check on the same pull request arrives inside that same
+wait. Running them again locally adds tens of minutes and adds failures CI does
+not have — a suite racing a 22-service stack for one laptop's memory times out
+in ways an unloaded CI runner never does.
+
+Two real stops on Design Release 2.1's manage-notifications theme, both before
+the theme had built anything, were of exactly that kind: five `@visual`
+screenshots whose macOS baselines were stale while CI's Linux ones were current,
+and a 5-second socket timeout in a metrics test under a full stack. Neither was
+the row's doing and neither reproduced on CI.
+
+Reach for the others when:
+
+- **`local`** — there is no CI to lean on (no pull request yet, a GitHub
+  outage), or you are debugging the stack itself and want every rung run here.
+  Work out whether this machine can take it, one call per command:
+
+  ```
+  docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
+  ls config/machine.json
+  tim docker lease status --json
+  ```
+
+  Docker holding under half the machine's memory, or no `config/machine.json`
+  because `tim build tune --write` has never run here, both say this machine
+  cannot take a full local run. Say which of the two decided it.
+- **`ci`** — this machine has no stack at all, or no capacity to run one.
+  Nothing runs here.
 
 A `ci` run leaves the end-to-end proof to the pull requests, which run each
 repo's own domain plus the specs elsewhere carrying its service tag
@@ -159,8 +198,31 @@ after deployment. The loop still stops at `ci-red`. A `local` run's gate takes t
 same scope and runs it the same way: the suites whole in its `e2e` rung, then the
 tagged specs from every domain in an `e2e-tagged` rung.
 
+Under `targeted` the gate runs its E2E rung narrowed to the row's own change:
+**the spec files the row has changed, and nothing else**. The loop passes
+`--base HEAD`, so that is the row's uncommitted work — the ladder runs before
+the land stage — rather than every row the theme has landed so far. A theme-end
+gate passes the base branch instead, because the whole branch is what it
+reviews. Imports are never followed. `tim/src/build/changed-scope.js`
+is the contract, and says why: Playwright's `--only-changed` cannot narrow this
+suite, because every spec imports the `@fixtures` barrel and that imports the
+`@page-objects` barrel, so one changed page object selects 871 tests in 173 files.
+**So a change to a page object, a fixture or a journey flow selects no spec of
+its own here, and the pull request's whole-suite run is its only proof.** A repo
+the row never touched plans no E2E rung at all, which is what keeps the k6
+performance suite — a rung with its own scope and no spec granularity — from
+running whole on a row that changed nothing in it. The whole suite
+still runs on the pull request, and the loop still stops at `ci-red`.
+
+`--covered-spec` runs a spec whether or not the row changed it, named repo-first
+(`tests:tests/animals/e2e/features/amend.spec.ts`). **The loop passes none** —
+it is for a gate you run by hand. Filling it from the scenarios' coverage links
+in `openspec/coverage/` would let a row re-prove behaviour it changed without
+touching the spec that covers it; until then, that case is the pull request's
+alone.
+
 The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
-<local or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
+<local, targeted or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
 starts no stack; it lists the rungs it left out in its result's
 `e2e.leftToCi`, and the loop's wait for the pull requests' checks gates the
 merge. A clone with no stack at all can also set `"e2e": "ci"` in its own
@@ -721,7 +783,7 @@ Build the args object with every key below:
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
   stopAfter: '<a positive number, or "all">',
-  e2e: '<local or ci>', // where a row's end-to-end proof comes from — see "Choosing e2e"
+  e2e: 'targeted', // targeted, local or ci — pass targeted unless the user asks otherwise; see "Choosing e2e"
   resumeFrom: null, // null takes each row's own attempt record; 'build' rebuilds the first row from the top
   rigour: 'standard' // full, standard or fast — see "Choosing rigour". A row's own wins for that row
 }
@@ -770,12 +832,13 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, ticketClaim, stopped}`:
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, notOurs, ticketClaim, stopped}`:
 one entry per increment it attempted, each with its `outcome`, one entry per theme whose spec it
 checked, the checks left for whoever reviews a finished theme, one entry per theme checked for
-signed-off changes (branch lifecycle), every review finding verification refuted, what claiming
-the run's ticket did, and one `stopped` saying which condition ended the run. Do not trust that
-report on its own.
+signed-off changes (branch lifecycle), every review finding verification refuted, every row that
+landed with a check the base branch fails the same way ([Red on the base branch
+too](#red-on-the-base-branch-too)), what claiming the run's ticket did, and one `stopped` saying
+which condition ended the run. Do not trust that report on its own.
 
 **The run's ticket.** Before any row the loop assigns the run's ticket to you and moves it onto
 the board: `epic` under the full lifecycle, or the Jira key in the branch name under the branch
@@ -793,6 +856,33 @@ already there before the row is the row's to fix, not to report as pre-existing.
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
 its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
 did not stop it.
+
+<a id="red-on-the-base-branch-too"></a>**Red on the base branch too.** A check can be red because the row broke it, because the base
+branch is red for everyone, or because this run has taken `main` into some of the branch's repos and not others. The
+watcher decides which, for every red thing, before a fixer spends an attempt — and it checks the half-taken base
+first, because that one is the run's own doing and the likeliest cause of a failure nobody recognises.
+
+**Branch lifecycle only.** A full-lifecycle row merges when it goes green, so a check the base branch fails the same
+way still has to block that merge — its watcher sets `blocked` instead, and the run stops at once rather than
+spending every fix attempt on a fixer told to change nothing. The loop keys this on the lifecycle
+(`CARRY_ON_PAST_BASE_RED`), not on `e2e`.
+
+A row whose **every** remaining red thing fails the same way on the base branch **does not stop the run**. No commit
+on the branch can clear it, so spending fix attempts on it would burn up to `ciWatchMinutes` each to reach the same
+place. Instead the row lands — built, reviewed, pushed, its PRs recorded — with its `ci` reading `red on the base
+branch too, so not this row's`, a comment on each pull request saying exactly that, and an entry in the run's
+`notOurs`. The loop carries on to the next row.
+
+That is deliberate for an unattended run: overnight you get the theme built and pushed rather than one row built and
+the rest untouched, and the person merging the theme rules on the base's own failure. It is also why the branch
+lifecycle merges nothing — the unproven specs cannot reach `main` behind anyone's back.
+
+A single failure of the row's own makes `onlyNotOurs` false, however many of the base's sit beside it: the fixer gets
+the row's, and only once those are green can the rest be read as the base's.
+
+**This is not a failure being closed.** "Pre-existing" closes nothing. Report every `notOurs` entry with its spec and
+the base run that fails the same way, and land the fix on the base branch — its own branch and PR, as the macOS
+visual baselines were on 26 November. The theme's pull requests go green on their own once it merges.
 
 <a id="the-signed-off-check"></a>**The signed-off check.** It stops a change to a signed-off scenario,
 or to a test linked to one, from reaching `main` before a person approves it. It never stops a
@@ -1179,7 +1269,7 @@ handover prompt.
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`, and at least one red thing was this branch's doing. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so. A row whose every red thing is red on the base branch too does **not** stop here — see "Red on the base branch too" below |
 | `pr-conflict` | A PR conflicts with its base, so GitHub runs no checks on it. The CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches any checks, and stops on CONFLICTING or DIRTY, with `stopReason: "pr-conflict"` and no fix attempt spent. Nothing merged and every PR stays open. The detail names the PR: merge the base into the branch in that repo, push, then launch again. Both lifecycles |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call. With `stopReason: "base-branch-unverified"`, a workflow that `tim build push-workflows` says the merge commit starts has no run on `main`: check the repo's Actions page. A merge that starts no workflow at all (its files miss every push trigger's paths) is not a stop: it counts as green, and the run log names each workflow's reason. Nor is a run whose own status stays in progress after every job in it has passed, by `tim build run-jobs`: it counts as green, and the landed result lists it under `mainRunsGreenByJobs` |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
@@ -1297,8 +1387,9 @@ conflict.
 - **Which branch.** Under the full lifecycle each increment still cuts its own branch off `main` and merges there,
   and the split's `branch` is not used. To build a theme onto one branch instead, create the split's `branch` in
   every repo of its `repos`, open each pull request, and run `lifecycle: 'branch'` with `branch` set to it (see
-  [Branch lifecycle](#branch-lifecycle)). The branch name is the same in every repo, as the workspace's branch rule
-  needs.
+  [Branch lifecycle](#branch-lifecycle)). `tim build branch <workarea> --open --json` cuts it in every repo and the
+  workspace, with one empty opening commit where a repo has none of its own, and never pushes. The branch name is the
+  same in every repo, as the workspace's branch rule needs.
 - **Keep the plan inside the theme.** The split envelope's `touches` names the code the theme owns. A plan that
   must change code outside it would conflict with another theme: stop and re-distil instead.
 - **Re-distil the parent, then split again.** Never edit a split backlog's rows by hand. A re-split keeps every row
@@ -1357,7 +1448,8 @@ repo, each with its pull request already open, and leaves the merging to a human
 When the user names an existing branch and says the work goes onto it: a programme that syncs a feature branch
 with `main`, or that finishes a branch somebody else will merge. The first user is
 `workareas/shared/frontend-alignment/sync`, which brings `feat/NO_JIRA-frontend-alignment` up to date with `main`
-across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
+across ins, animals, plants and tests. The second user is a ticket backlog, built on the branch its envelope names and
+opened with `tim build branch --open`: see [`TICKET.md`](TICKET.md). Everything else uses `lifecycle: 'full'`.
 
 ### What it never does
 
@@ -1373,7 +1465,8 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
   Everything else about the theme's tickets happens outside the loop: the orchestrating session runs the
   `theme-ticket` skill before it ("the build loop is starting on `<theme>`" — statuses to In Dev) and after it
   ("write the business tickets for `<theme>`" — one Story per service domain, acceptance criteria copied from
-  `openspec/`).
+  `openspec/`). A ticket backlog's own ticket gets one what-shipped comment instead, never a rewrite: see
+  [`TICKET.md`](TICKET.md).
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
   a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can
@@ -1420,6 +1513,8 @@ keys are, exactly as for the full lifecycle: the preflight and the branch stage 
 and the args name different repos. The worked example in
 [`../workflow/README.md`](../workflow/README.md#the-branch-lifecycle) is the one for the frontend alignment sync.
 
+For a ticket backlog, `branch` is the envelope's `branch` and `scope` is its `ticket`.
+
 ### Checking what landed
 
 A landed row is `done` in the backlog with its `commit` and `prs`, and is pushed to the branch. Nothing is merged,
@@ -1427,6 +1522,24 @@ so there is no `main-red` to watch for. Each landed entry in the result carries 
 row set `awaitCi: false`) or `none` (the row changes no backlog repo). Report a row whose CI was not awaited as
 exactly that, never as green. An entry that carries `resumedFrom` landed from an earlier attempt's work, picked up
 at that stage: say so when you report it, because it was not planned or implemented in this run.
+
+### How the session ends a ticket run
+
+A ticket backlog's run ends at green pull requests, never at a merge. The loop never creates, edits, takes out of draft or merges a pull request, so the
+session does these steps in this order, with the commands in [`TICKET.md`](TICKET.md):
+
+1. Commit the run's `leftUncommitted` workspace files by explicit path. Never use `add -A`, `commit -a` or a commit
+   without a pathspec.
+2. Push the workspace branch with the fully qualified refspec
+   (`git -C . push origin refs/heads/<branch>:refs/heads/<branch>`). Without this the workspace pull request holds
+   only its opening commit, and the ticket comment's spec links point at files GitHub does not have.
+3. Write each pull request's description with `gh pr edit`, as `docs/best-practices/pull-requests.md` says.
+4. Take each pull request out of draft with `gh pr ready`. If the signed-off check made them drafts, report the hold
+   and stop.
+5. Post the ticket's what-shipped comment, only after the workspace push.
+6. Watch each pull request's checks with a background `gh pr checks --watch`.
+7. When every check is green, post the links and the evidence, then stop for the user's go to merge.
+8. After the merge, run the comment step again so its links point at `main`, then move the ticket to Deskcheck.
 
 ### The stop reasons it adds
 
@@ -1459,7 +1572,7 @@ board        <board>
 repos        <the repos table, one JSON object>
 models       {}, the recommended split (think opus, code sonnet, light haiku)
 stopAfter    <a number, or all>
-e2e          <local or ci>
+e2e          <targeted, local or ci>
 resumeFrom   null
 rigour       <full, standard or fast>, and any row that sets its own
 
@@ -1470,6 +1583,7 @@ Held for a signed-off ruling: <none, or each id and its ticket; or each theme wh
 Owed to a human: <none, or each thing and who owes it>
 Review checks for the end of the theme: <none, or each gate's check, each theme's refuted findings, and each theme engineering review's commit and unreviewed repos>
 Refuted findings not yet reviewed: <none, or each id, file and reason from refutedFindings>
+Red on the base branch, not the rows': <none, or each spec and the base run that fails it, from notOurs — land these on the base branch>
 
 Read workareas/<workarea>/PROGRAMME-NOTES.md and deferred.md before the first increment.
 Raise Dynamic workflow size in /config first.

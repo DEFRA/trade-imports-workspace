@@ -11,6 +11,7 @@ import {
   rowStatusOf
 } from './files.js'
 import { inspectSources, readSources } from './checks.js'
+import { namesId } from './ids-in-text.js'
 import {
   challengeApplicationProblems,
   challengeProblems,
@@ -333,21 +334,13 @@ const NEVER_IN_AN_INCREMENT = {
   'out-of-scope': 'is out of scope'
 }
 
-const escapeForPattern = (text) =>
-  text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// A claim id stands alone when no letter, digit or hyphen touches it, so
-// `-003` never matches inside `-003-m1`.
-const mentionsClaim = (text, claimId) =>
-  new RegExp(`(?<![\\w-])${escapeForPattern(claimId)}(?![\\w-])`).test(text)
-
 // Only a row the consolidator may rewrite is held to what precedence set
 // aside. A done or deferred row keeps what it was built or parked with.
 const overruledRowProblems = (editable, overruledBy) =>
   editable.flatMap((increment) => {
     const text = JSON.stringify(increment)
     return [...overruledBy]
-      .filter(([claimId]) => mentionsClaim(text, claimId))
+      .filter(([claimId]) => namesId(text, claimId))
       .map(
         ([claimId, conflictIds]) =>
           `${increment.id} still names ${claimId}, which ${conflictIds.join(' and ')} overruled. Rewrite the row to what ${conflictIds.join(' and ')} adopted, and take the claim out of it.`

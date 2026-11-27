@@ -68,12 +68,22 @@ describe('#readMachineConfig e2e', () => {
     expect(readMachineConfig(path)).toEqual({ path, e2e: 'ci', workers: {} })
   })
 
-  test('Should refuse an e2e setting other than local or ci, naming the field', () => {
+  test('Should refuse an e2e setting the gate does not offer, naming the field', () => {
     const path = fileWith(JSON.stringify({ e2e: 'cloud' }))
 
     expect(() => readMachineConfig(path)).toThrow(
-      'e2e: e2e must be one of: local, ci.'
+      'e2e: e2e must be one of: local, targeted, ci.'
     )
+  })
+
+  test('Should read targeted as an e2e setting', () => {
+    const path = fileWith(JSON.stringify({ e2e: 'targeted' }))
+
+    expect(readMachineConfig(path)).toEqual({
+      path,
+      e2e: 'targeted',
+      workers: {}
+    })
   })
 })
 

@@ -2,6 +2,7 @@ import { createGovukChangelogClient } from '../../clients/govuk-changelog-client
 import { createNpmRegistryClient } from '../../clients/npm-registry-client.js'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
+import { localDateOf } from '../../deps/holds.js'
 import { applyVersion } from '../../govuk/apply.js'
 import {
   addVersionEvidence,
@@ -238,17 +239,35 @@ const STATE_WRITES = [
         )
         .option(
           '--reason <text>',
-          'Why the repo is not affected, or what a person has to decide'
+          'Why the repo is not affected, what a person has to decide, or what they accepted'
+        )
+        .option(
+          '--accepted-by <name>',
+          'For an applied row with no code change: the person who accepted it. Records today as the date'
+        )
+        .option(
+          '--replace',
+          "Put the row in place of the version's row for the same item, instead of adding one"
         ),
     helpNotes:
-      '\nOutcomes:\n  applied         the pattern must have hits now\n  not-applicable  needs a reason; a pattern, if given, must have no hits\n  needs-a-person  needs a reason: what the person has to decide\n\nUncommitted edits count as hits. Untracked files, binary files and package-lock.json do not.\n',
+      '\nOutcomes:\n  applied         the pattern must have hits now; or, with no pattern, --accepted-by and a reason saying what was accepted\n  not-applicable  needs a reason; a pattern, if given, must have no hits\n  needs-a-person  needs a reason: what the person has to decide\n\nUncommitted edits count as hits. Untracked files, binary files and package-lock.json do not.\n\nWith --replace, --item must match the row exactly. When the pattern is the same as the row it replaces, the row keeps the hits counted before the change, so an applied row can be recorded after the change is made.\n',
     examples: [
       '--item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name',
       '--item "Fix focus style in the accordion" --outcome not-applicable --reason "We use no accordion"',
-      '--item "Change the header link colour" --outcome needs-a-person --reason "Check the header against the design"'
+      '--item "Change the header link colour" --outcome needs-a-person --reason "Check the header against the design"',
+      '--item "Change the header link colour" --outcome applied --accepted-by "Sam Farrington" --reason "The new colour is taken as it comes" --replace'
     ],
-    write: (ids, { item, outcome, pattern, reason }) =>
-      addVersionEvidence({ ...ids, item, outcome, pattern, reason })
+    write: (ids, { item, outcome, pattern, reason, acceptedBy, replace }) =>
+      addVersionEvidence({
+        ...ids,
+        item,
+        outcome,
+        pattern,
+        reason,
+        acceptedBy,
+        today: localDateOf(new Date()),
+        replace: replace === true
+      })
   },
   {
     name: 'check-evidence',
@@ -256,7 +275,7 @@ const STATE_WRITES = [
       "Count every evidence row's pattern in the repo again, record it as the hits after the change, and say whether every row of the version is clean. Exits 0 when every row is clean and 1 when any row is not, or the version has no rows.",
     options: (command) => command,
     helpNotes:
-      '\nAn applied row is clean when its pattern has 0 hits after the change. A not-applicable row is clean when it has a reason and its pattern, if any, still has 0 hits. A needs-a-person row is never clean.\n',
+      '\nAn applied row is clean when its pattern has 0 hits after the change, or, with no pattern, when it names who accepted it, when, and what they accepted. A not-applicable row is clean when it has a reason and its pattern, if any, still has 0 hits. A needs-a-person row is never clean.\n',
     examples: ['', '--json'],
     write: (ids) => checkVersionEvidence(ids),
     exitCodeForResult: ({ allClean }) => (allClean ? OK : ERROR)
@@ -309,7 +328,7 @@ const registerStart = (govuk, { timVersion }) =>
   govuk
     .command('start')
     .description(
-      "Start a govuk-frontend upgrade run. Finds every repo under repos/ whose package.json depends on govuk-frontend, puts each on the run's branch, seeds each repo's versions file with every stable version up to the target, caches each version's changelog section and the best-practices bundle, prints the run's plans and reports each repo's critical and high npm advisories."
+      "Start a govuk-frontend upgrade run. Finds every repo under repos/ whose package.json depends on govuk-frontend, puts each on the run's branch, seeds each repo's versions file with every stable version after the one its package-lock.json installs up to the target, caches each version's changelog section and the best-practices bundle, prints the run's plans and reports each repo's critical and high npm advisories."
     )
     .option(
       '--ticket <key>',

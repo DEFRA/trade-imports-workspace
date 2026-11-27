@@ -5,8 +5,11 @@ import { splitOffOf } from '../backlog/split-off.js'
 import {
   backlogSnapshotPathOf,
   canonicalJsonOf,
-  isEditableRow
+  isEditableRow,
+  isMergedAway,
+  isToBuild
 } from './files.js'
+import { namesId } from './ids-in-text.js'
 
 const isObject = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -20,10 +23,6 @@ const rowsOf = (backlog, path) => {
 
 const frozenRowsOf = (rows) => rows.filter((row) => !isEditableRow(row))
 
-/**
- * A split-off pointer as a re-distil must keep it: every field but `pickUp`,
- * which the consolidator may add to.
- */
 const fixedPartOf = ({ pickUp, ...pointer }) => pointer
 
 const movedRowIdsOf = (pointers) =>
@@ -58,21 +57,30 @@ const readSaved = (path, tag) => {
   }
 }
 
-/**
- * What changed since a saved snapshot: rows removed, rows built or set aside
- * (any status but todo or blocked) that are no longer exactly as they were,
- * by id, and themes split off early whose pointer is gone or changed in any
- * field but `pickUp`. A row that moved with a theme split off since is not
- * removed.
- *
- * @param {{rowIds: string[], frozen: object[], splitOff?: object[]}} saved
- * @param {object[]} rows - The backlog's rows now
- * @param {object[]} pointers - The backlog's split-off pointers now
- * @returns {{removed: string[], changed: string[], splitOffChanged: string[]}}
- */
+const notesTextOf = (row) =>
+  [row.notes]
+    .flat()
+    .filter((note) => typeof note === 'string')
+    .join('\n')
+
+const rowMergedInto = (row, byId) => {
+  const notes = notesTextOf(row)
+  const named = [...byId.values()].filter(
+    (other) =>
+      other.id !== row.id && isToBuild(other) && namesId(notes, other.id)
+  )
+  return named.length === 1 ? named[0].id : null
+}
+
+const mergedAwayFrom = (saved, byId) =>
+  asList(saved.rowsToBuild)
+    .filter((id) => byId.has(id) && isMergedAway(byId.get(id)))
+    .map((id) => ({ id, into: rowMergedInto(byId.get(id), byId) }))
+
 const differencesFrom = (saved, rows, pointers) => {
   const byId = new Map(rows.map((row) => [row.id, row]))
   const moved = movedRowIdsOf(pointers)
+  const savedIds = new Set(saved.rowIds)
   return {
     removed: saved.rowIds.filter((id) => !byId.has(id) && !moved.has(id)),
     changed: saved.frozen
@@ -82,7 +90,9 @@ const differencesFrom = (saved, rows, pointers) => {
           canonicalJsonOf(byId.get(row.id)) !== canonicalJsonOf(row)
       )
       .map((row) => row.id),
-    splitOffChanged: splitOffChangesFrom(saved, pointers)
+    splitOffChanged: splitOffChangesFrom(saved, pointers),
+    added: rows.map((row) => row.id).filter((id) => !savedIds.has(id)),
+    mergedAway: mergedAwayFrom(saved, byId)
   }
 }
 
@@ -96,19 +106,22 @@ const splitOffSummaryOf = (pointer) => ({
 })
 
 /**
- * The backlog's row ids and its rows built or set aside (any status but todo
- * or blocked), which a re-distil must keep exactly as they are, and the
- * pointers to the themes split off it early, which it must carry over.
- * `save` keeps them under a tag; `compareTo` reports every row removed, every
- * such row changed and every pointer gone or changed, since the snapshot with
- * that tag. The consolidate step is held to them by this, not by a hash an
- * agent copies by hand.
+ * `save` keeps, under a tag, the backlog's row ids, the ids of the rows still
+ * to build (status `todo`), its rows built or set aside (any status but todo
+ * or blocked) and the pointers to the themes split off it early.
+ * `compareTo` reports, since the snapshot with that tag: every row removed,
+ * every built or set-aside row changed, every pointer gone or changed in any
+ * field but `pickUp`, every row added, and every row that was still to build
+ * and is now `merged-into`. A merged-away row's `into` is the one other row
+ * still to build that its notes name, and null when its notes name none or
+ * more than one. A snapshot saved without the rows-to-build
+ * ids reports no merged-away rows.
  *
  * @param {object} args
  * @param {object} args.layout - From `distilLayout`
  * @param {string} [args.save] - A tag to keep this snapshot under
  * @param {string} [args.compareTo] - The tag of an earlier snapshot to compare with
- * @returns {{path: string, rows: number, rowIds: string[], frozen: string[], frozenHash: string, splitOff: object[], saved: string|null, compared: {tag: string, removed: string[], changed: string[], splitOffChanged: string[]}|null}}
+ * @returns {{path: string, rows: number, rowIds: string[], frozen: string[], frozenHash: string, splitOff: object[], saved: string|null, compared: {tag: string, removed: string[], changed: string[], splitOffChanged: string[], added: string[], mergedAway: Array<{id: string, into: string|null}>}|null}}
  * @throws {TimError} NOT_FOUND with no backlog.json or no snapshot under `compareTo`, PARSE when a file is not JSON, LINT when backlog.json has no increments list
  */
 export const snapshotBacklog = ({ layout, save, compareTo }) => {
@@ -131,6 +144,7 @@ export const snapshotBacklog = ({ layout, save, compareTo }) => {
   if (savedPath) {
     writeJsonAtomic(savedPath, {
       rowIds,
+      rowsToBuild: rows.filter(isToBuild).map((row) => row.id),
       frozen,
       splitOff: pointers.map(fixedPartOf)
     })

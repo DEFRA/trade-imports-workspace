@@ -94,6 +94,26 @@ describe('#renderEvidenceTable', () => {
     )
   })
 
+  test('Should show who accepted an applied row with no pattern, and when, before what they accepted', () => {
+    const rendered = renderEvidenceTable([
+      {
+        item: 'Give every date input item an error state',
+        outcome: 'applied',
+        reason: 'The red border is taken as it comes.',
+        acceptedBy: 'Sam Farrington',
+        acceptedOn: '2026-11-25'
+      }
+    ])
+
+    expect({
+      allClean: rendered.allClean,
+      line: rendered.markdown.split('\n')[2]
+    }).toEqual({
+      allClean: true,
+      line: '| Give every date input item an error state | Applied | Accepted by Sam Farrington on 2026-11-25, with no code change.<br>The red border is taken as it comes. |'
+    })
+  })
+
   test('Should show an unchecked row as not counted and not clean', () => {
     const rendered = renderEvidenceTable([{ ...appliedRow, hitsAfter: null }])
 

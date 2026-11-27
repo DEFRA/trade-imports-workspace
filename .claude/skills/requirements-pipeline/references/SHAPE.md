@@ -7,7 +7,30 @@ field has a `description` there. Read it for the fields; this file keeps only th
 `tim backlog check <workarea>` validates a backlog against that schema, then checks what a schema cannot: every
 `dependsOn` id is in the backlog, no row depends on itself, there is no cycle, no id appears twice, every repo a
 row's `merge` names is in the row's `repos` and in the envelope's, the theme rules below hold, the rules for a theme
-split off early hold, and every `externalDependsOn` names a row that its workarea's backlog has.
+split off early hold, every `externalDependsOn` names a row that its workarea's backlog has, and a backlog whose
+envelope names a ticket keeps to its intake record (see "Ticket backlogs").
+
+## Ticket backlogs
+
+A backlog built from one Jira ticket names it in the envelope's `ticket` (a row's own `ticket` is the key the build loop raised for that increment), and may carry the `branch` it builds on.
+The ticket intake writes `intake.json` beside it, in the shape of [`intake.schema.json`](intake.schema.json).
+`tim backlog check` then holds the backlog to the record:
+
+- **No record, no pass.** A ticket backlog with no `intake.json` is refused. The record's `ticket` is the
+  envelope's.
+- **Coverage.** An acceptance criterion statement passes when a row its `coveredBy` names is `todo`, `blocked` or
+  `done`, or when it carries a `notBuilt` reason. A criterion covered only by a `dropped`, `rejected`,
+  `merged-into` or `deferred` row is refused. A `coveredBy` id the backlog does not have is always refused.
+- **Citations.** Each acceptance criterion of a `todo` or `blocked` row ends with a provenance bracket naming at
+  least one of: this ticket with statement ids (`ticket:EUDPA-838 AC1`, or `AC1, AC2`), a `repo:` source, or a
+  `ruling:` source. A `ticket:` citation naming another key, no statement id or an id the record does not have is
+  refused. Rows `done` or withheld are left as built.
+- **Questions.** A question that holds the launch names its cause: security, access, data integrity, a signed-off
+  scenario or a rulings-ledger entry. A question that does not hold it names none.
+- **Escalation.** The record names an escalation when the readiness verdict is `SPIKE REQUIRED`, when it holds
+  more than 3 questions, or when more than 4 rows are still to build. An escalated ticket has no row to build.
+- **No themes.** A ticket builds on one branch, so the backlog has no `themes` or `theme`, and so no `splitOff` or
+  `movedOut`.
 
 ## Themes
 
@@ -121,6 +144,22 @@ A row covers every repo the behaviour needs, and its acceptance can be observed 
 backend half of X" or "the tests for X". A row whose acceptance can only be observed once another row in a different
 repo lands is a layer split, and is wrong. `dependsOn` is a real ordering need, not a layer order.
 
+## Rows are combined by default
+
+Every stage that creates rows combines them: DISTIL's combine review and the ticket intake. Each row carries a fixed
+cost: a ticket, a branch, a plan, its reviews, the ladder, pull requests and CI. Two rows that share set-up cost
+that twice for nothing.
+
+A row stands alone only with a reason in its notes:
+
+- an open question the other row does not carry
+- a different code area with no shared set-up
+- too much for one plan: more than 3 service repos, or about 15 acceptance criteria
+
+These are not reasons: smaller is safer, a layer split, or different headings in the source.
+
+A row merged away keeps its id, with status `merged-into` naming the row that took it.
+
 ## A prototype sets look and feel, never structure
 
 A row may change page content, wording, layout, components and question order to match a design prototype. No row
@@ -167,3 +206,6 @@ Each acceptance criterion ends with where it came from, in brackets: the source 
 `(confluence:6518997274 §Notification data; trace:ched-pp pages/country-of-origin.json fields[0])`. A row's `sources`
 list the same sources as `{ "source": "<source id>", "ref": "<place>" }`, and `requirements` names the distiller's
 requirement ids it covers.
+
+On a ticket backlog the source is `ticket:<KEY>` and the place is a statement id of `intake.json`, such as
+`(ticket:EUDPA-838 AC1)`.

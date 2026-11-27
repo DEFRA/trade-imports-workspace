@@ -13,8 +13,10 @@ import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import {
+  configureIdentity,
   createBareRepo,
-  createFatClone
+  createFatClone,
+  installRefusingPreCommitHook
 } from '../../test-support/git-fixtures.js'
 import { GATES_PATH } from '../../build/gates.js'
 import { renderBranchText, renderGateText } from './index.js'
@@ -24,9 +26,11 @@ const cliPath = join(here, '..', '..', 'cli.js')
 const WORKAREA = 'shared/programme'
 
 let root
+let container
 
 afterEach(() => {
-  rmSync(root, { recursive: true, force: true })
+  rmSync(container ?? root, { recursive: true, force: true })
+  container = undefined
 })
 
 const runTim = (args) =>
@@ -60,6 +64,35 @@ const seedClonedRepo = async (folder) => {
   })
   await createFatClone(barePath, join(root, 'repos', folder))
   return shas
+}
+
+const seedOpenableWorkspace = async () => {
+  container = mkdtempSync(join(tmpdir(), 'tim-build-open-'))
+  root = join(container, 'ws')
+  const origins = join(container, 'origins')
+  mkdirSync(origins)
+  const workspaceOrigin = await createBareRepo(origins, 'workspace', {
+    withGhPages: false
+  })
+  await createFatClone(workspaceOrigin.barePath, root)
+  const frontendOrigin = await createBareRepo(origins, 'frontend', {
+    withGhPages: false
+  })
+  const frontendPath = join(root, 'repos', 'frontend')
+  await createFatClone(frontendOrigin.barePath, frontendPath)
+  await Promise.all([root, frontendPath].map(configureIdentity))
+  markWorkspaceRoot(root)
+  const workarea = join(root, 'workareas', 'shared', 'programme')
+  mkdirSync(workarea, { recursive: true })
+  writeFileSync(
+    join(workarea, 'backlog.json'),
+    JSON.stringify({
+      branch: 'feat/EUDPA-10-open',
+      ticket: 'EUDPA-10',
+      repos: { frontend: { path: 'repos/frontend' } }
+    })
+  )
+  return frontendPath
 }
 
 const seedGateRepo = (scripts) => {
@@ -131,6 +164,86 @@ describe('tim build branch', () => {
       exitCode: run.exitCode,
       code: envelopeOf(run).errors[0].code
     }).toEqual({ exitCode: 1, code: 'DIRTY_TREE' })
+  })
+
+  test('exits 2 with a plain message when no branch and no --open are given', async () => {
+    seedWorkspace(['frontend'])
+
+    const run = await runTim(['build', 'branch', WORKAREA])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr }).toEqual({
+      exitCode: 2,
+      stderr: expect.stringContaining('Name a branch, or use --open')
+    })
+  })
+
+  test('emits a USAGE envelope with --json when no branch and no --open are given', async () => {
+    seedWorkspace(['frontend'])
+
+    const run = await runTim(['build', 'branch', WORKAREA, '--json'])
+
+    expect({
+      exitCode: run.exitCode,
+      ok: envelopeOf(run).ok,
+      code: envelopeOf(run).errors[0].code
+    }).toEqual({ exitCode: 2, ok: false, code: 'USAGE' })
+  })
+
+  test('opens the envelope’s branch in every repo and the workspace and reports each repo’s origin', async () => {
+    await seedOpenableWorkspace()
+
+    const run = await runTim(['build', 'branch', WORKAREA, '--open', '--json'])
+
+    expect({ exitCode: run.exitCode, envelope: envelopeOf(run) }).toEqual({
+      exitCode: 0,
+      envelope: expect.objectContaining({
+        ok: true,
+        result: expect.objectContaining({
+          branch: 'feat/EUDPA-10-open',
+          repos: [
+            expect.objectContaining({
+              key: 'frontend',
+              openingCommit: expect.stringMatching(/^[0-9a-f]{40}$/),
+              onOrigin: false,
+              pushNeeded: true
+            }),
+            expect.objectContaining({
+              key: 'workspace',
+              repo: 'trade-imports-workspace',
+              openingCommit: expect.stringMatching(/^[0-9a-f]{40}$/),
+              onOrigin: false,
+              pushNeeded: true
+            })
+          ]
+        })
+      })
+    })
+  })
+
+  test('exits 1 with OPENING_COMMIT_FAILED when a hook refuses the opening commit', async () => {
+    const frontendPath = await seedOpenableWorkspace()
+    installRefusingPreCommitHook(frontendPath, 'no commits today')
+
+    const run = await runTim(['build', 'branch', WORKAREA, '--open', '--json'])
+
+    expect({ exitCode: run.exitCode, errors: envelopeOf(run).errors }).toEqual({
+      exitCode: 1,
+      errors: [
+        { code: 'OPENING_COMMIT_FAILED', message: 'frontend: no commits today' }
+      ]
+    })
+  })
+
+  test('shows --open and an open-mode example in --help', async () => {
+    seedWorkspace(['frontend'])
+
+    const run = await runTim(['build', 'branch', '--help'])
+
+    expect(run.stdout).toEqual(
+      expect.stringMatching(
+        /--open[\s\S]*pushes or calls GitHub[\s\S]*tim build branch shared\/my-programme --open --json/
+      )
+    )
   })
 })
 
@@ -238,14 +351,14 @@ describe('tim build gate', () => {
     expect(envelopeOf(run).result.serial).toBe(false)
   })
 
-  test('refuses an --e2e other than local or ci', async () => {
+  test('refuses an --e2e the gate does not offer', async () => {
     seedGateRepo({ test: 'echo tested' })
 
     const run = await runTim(['build', 'gate', WORKAREA, '--e2e', 'cloud'])
 
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,
-      stderr: '--e2e must be one of: local, ci.'
+      stderr: '--e2e must be one of: local, targeted, ci.'
     })
   })
 
@@ -700,6 +813,60 @@ describe('renderBranchText', () => {
         'Every repo on feat/x:',
         '  frontend  cut feat/x from origin/main at abcdef012345',
         '  backend  already on feat/x at 0123456789ab'
+      ].join('\n')
+    )
+  })
+})
+
+describe('renderBranchText for an opened branch', () => {
+  const opened = {
+    repo: 'frontend',
+    branch: 'feat/x',
+    head: 'abcdef0123456789',
+    created: true,
+    createdFrom: 'origin/main',
+    ok: true,
+    openingCommit: 'abcdef0123456789',
+    onOrigin: false,
+    pushNeeded: true,
+    originError: null
+  }
+
+  test('says whether each repo got an opening commit and needs a push', () => {
+    expect(
+      renderBranchText({
+        branch: 'feat/x',
+        repos: [
+          opened,
+          {
+            ...opened,
+            repo: 'backend',
+            created: false,
+            openingCommit: null,
+            onOrigin: true,
+            pushNeeded: false
+          },
+          {
+            ...opened,
+            repo: 'stub',
+            onOrigin: null,
+            pushNeeded: null,
+            originError: 'no remote'
+          }
+        ]
+      })
+    ).toBe(
+      [
+        'Every repo on feat/x:',
+        '  frontend  cut feat/x from origin/main at abcdef012345',
+        '    opening commit abcdef012345',
+        '    not on origin yet, needs a push',
+        '  backend  already on feat/x at abcdef012345',
+        '    no opening commit needed',
+        '    on origin at the same head, no push needed',
+        '  stub  cut feat/x from origin/main at abcdef012345',
+        '    opening commit abcdef012345',
+        '    origin could not be read: no remote'
       ].join('\n')
     )
   })

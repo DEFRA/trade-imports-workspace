@@ -303,11 +303,13 @@ tim theme-ticket start "which theme tickets are stale" --workarea shared/design-
 tim theme-ticket derive --workarea shared/design-release-2-1 --theme origin-page --out derived.json
 tim theme-ticket stale --workarea shared/design-release-2-1
 tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journey --confirm
+tim theme-ticket comment --workarea shared/eudpa-832 --derived workareas/shared/eudpa-832/tickets/derived.json --confirm
 ```
 
 - `start` prints `MODE: <NAME>` (STUB, START, WRITE, MERGE or STALE, from
   `--mode` or the trigger phrase), then indented JSON with the workarea's
-  paths, the branch and each ticket folder with its Jira key. It makes the
+  paths, the branch, the Jira ticket its backlog names (`ticket`, null when
+  it names none) and each ticket folder with its Jira key. It makes the
   workarea's `tickets/` folder if it is missing.
 - `derive` finds the commits that wrote the theme's openspec (scoped by the
   theme, a Jira key `tickets.json` records for it, or a row scope), takes
@@ -323,7 +325,14 @@ tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journe
   update, as instants with their offsets. It reads only.
 - `push` posts `description.txt` and the summary from `ticket.json` in one
   update, refusing hard-wrapped prose and `{expand}`. It is a dry run that
-  sends nothing until `--confirm`.
+  sends nothing until `--confirm`. It refuses the ticket a ticket backlog
+  names: that description is a person's.
+- `comment` posts one what-shipped comment on the ticket a ticket backlog
+  names, from the file `derive --out` wrote: each domain's scenarios, each
+  linked to its spec file. It finds the earlier comment by its heading line
+  and edits it in place, so a second run never adds a second comment, and
+  refuses a ticket with more than one. It never changes the description or
+  summary, and is a dry run until `--confirm`.
 - A usage error exits 2; every other refusal exits 1.
 
 ### `tim understanding-check` — the understanding-check skill's steps
@@ -431,6 +440,7 @@ tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend -
 tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
 tim govuk start --unattended --ticket NO_JIRA --target 6.6.0
 tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --item "Remove the service name link class" --outcome applied --pattern govuk-header__link--service-name
+tim govuk add-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-plants-prototype --govuk-version 6.4.0 --item "Give date input items an error state" --outcome applied --accepted-by "Sam Farrington" --reason "The red border is taken as it comes" --replace
 tim govuk check-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0
 tim govuk apply --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --govuk-version 6.6.0 --unattended --trailer "Co-Authored-By: Claude <noreply@anthropic.com>"
 tim govuk render-evidence --run-id EUDPA-802-govuk-frontend-6.6.0 --repo trade-imports-animals-frontend --json
@@ -496,10 +506,19 @@ Unattended mode, for the nightly jobs (the govuk-upgrade skill's
   `applied` row needs a pattern with hits; a `not-applicable` row needs a
   reason, and its pattern, if any, must have none; a `needs-a-person` row
   needs a reason. Hits are counted as `tim deps evidence count` counts
-  them.
+  them. An `applied` row a person accepted with no code change takes
+  `--accepted-by <name>` and a reason saying what they accepted, and no
+  pattern; the row records `acceptedBy` and today's date as `acceptedOn`.
+  `--replace` puts the row in place of the version's row for the same
+  `--item` (an exact match, else exit 1) rather than adding one. When its
+  pattern is the same as the replaced row's, it keeps that row's
+  `hitsBefore`, which was counted before the change, so a row first
+  recorded as `needs-a-person` can become `applied` after the change is
+  made.
 - `check-evidence` counts every row of a version again and records
   `hitsAfter`. It exits 0 when every row is clean, and 1 when any row is
-  not or the version has no rows.
+  not or the version has no rows. An accepted `applied` row with no
+  pattern is clean only when it names who accepted it, when, and what.
 - `apply --unattended` counts the version's evidence again, without
   writing it, when moving govuk-frontend to it is `changelog-driven` in
   `config/dependency-sets.json`. It exits 1, changing nothing, when any
@@ -1009,7 +1028,7 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
-Four commands work on any workarea's `backlog.json` in the one backlog shape,
+These commands work on any workarea's `backlog.json` in the one backlog shape,
 with no registration. The shape is defined by
 `.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
 `check` reads from the workspace at runtime and validates against; it then checks
@@ -1019,8 +1038,12 @@ workarea's backlog). The requirements-pipeline skill's DISTIL and BUILD phases
 and the build loop use them:
 
 ```bash
-tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; exits 1 when out of shape
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; a ticket backlog is also held to its intake.json; exits 1 when out of shape
 tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
+tim backlog combine-candidates shared/my-programme --json   # the rows still to build that share a code area or wait only on each other; changes no file
+tim backlog from-ticket EUDPA-123 --json         # fetch a Jira ticket into a workarea and name it as a distil source
+tim backlog from-ticket EUDPA-123 --check --json # has the ticket changed in Jira since; changes no file
+tim backlog from-ticket EUDPA-123 --workarea shared/eudpa-123-my-ticket --json   # when the key alone finds more than one workarea
 tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
 tim backlog set shared/my-programme inc-004 --attempt '{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}' --json
@@ -1036,6 +1059,26 @@ tim backlog notes shared/my-programme inc-004 --replace 3=note.txt --remove 6 --
 ```
 
 `move`, `add` and a `notes` edit are dry runs unless given `--write`.
+
+`from-ticket` reads a Jira ticket and writes, under
+`workareas/shared/<key in lower case>-<slug>/`, `sources/ticket-<key>.md` (the
+description, comments, linked Confluence pages, parent, linked tickets, subtasks
+and a list of the attachments), `sources/ticket-<key>.json` (the ticket's branch,
+and its last update time, which `--check` reads), `sources/attachments/` (the image and PDF
+attachments) and a `sources.json` with the tests repo and one `ticket` source.
+The slug is the first five words of the summary. The result gives the branch,
+`fix/`, `feat/` or `chore/` by the ticket's type, and lists each blocker it sees:
+a Done or Closed status, no acceptance criteria heading, or an open "is blocked
+by" link. It finds the ticket's workarea from the key alone: the one folder under
+`workareas/shared/` named for the key. A second run writes into that folder
+whatever the summary now says, and keeps a `sources.json` already there. It
+refuses a workarea whose backlog has a built row, and refuses more than one
+matching folder until `--workarea` names one. `--check` changes no file.
+
+`combine-candidates` lists, each pair once, the rows still to build whose
+`touches` share a code area (the same path, or one inside the other, in one repo)
+or where one waits only on the other, with the count of rows still to build and
+the rows that have no `touches`. The distil workflow runs it after the combiner.
 
 `set --attempt` records how far a failed attempt at an increment got, so the
 build loop's next launch restores its work and re-enters the pipeline at that
@@ -1174,8 +1217,8 @@ tim distil challenge shared/my-programme --json             # the question confl
 tim distil challenge shared/my-programme --conflict c-002 --json   # check one verdict
 tim distil challenge shared/my-programme --clear --json     # remove every verdict
 tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, sources, verdicts, and the backlog
-tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids and the rows built or set aside
-tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, and rows built or set aside that changed, since
+tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids, the rows still to build, and the rows built or set aside
+tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, rows built or set aside that changed, rows added, and rows still to build that are now merged-into (with the row their notes name), since
 tim distil trace shared/my-programme --source trace:ched-p --folder part2 --out actions.txt --json -- actions   # playwright trace, in a sub-folder of the source's .work folder
 ```
 
@@ -1360,6 +1403,7 @@ Each reads the repos a backlog builds from its envelope `repos` map.
 tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 \
   --in-dev-status "In Dev" --done-status Done --json  # derive, ticket, branch
 tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
+tim build branch shared/my-programme --open --json          # the envelope's branch, opened in every repo and the workspace
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
 tim build gate shared/my-programme --json                   # unit+FIT (repos at once), then k6 alone, then E2E
 tim build gate shared/my-programme --serial --json          # one rung at a time: unit, then FIT, then E2E
@@ -1400,9 +1444,23 @@ remote has it, else from the repo's default branch. It changes nothing if a
 repo it would move has uncommitted work (exit 1, `DIRTY_TREE`, naming the
 files). Running it again is a no-op.
 
+`tim build branch --open` opens a ticket's branch. It takes the branch from
+the backlog's envelope when none is given, adds the workspace repo after the
+envelope's repos (unless the envelope maps it), and gives each repo with no
+commits of its own on the branch, counted from its default branch, one empty
+opening commit. The commit runs the repo's own git hooks and takes nothing
+from the index. A hook that refuses it fails that repo with
+`OPENING_COMMIT_FAILED`; the others still report. Each repo's result also
+says whether origin has the branch and whether a push is still needed, read
+with `git ls-remote origin`, or null with git's reason when origin cannot be
+read. It never pushes and never calls GitHub. Like the rest of `tim build
+branch` it has no dry run: it refuses before any change when a repo has
+uncommitted work, and a second run is a no-op.
+
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog
-repo: the unit rungs, the FIT rungs (each on the first free port at or above
+repo, keyed by the repo's folder name (the workspace repo's is
+`trade-imports-workspace`, wherever it is cloned): the unit rungs, the FIT rungs (each on the first free port at or above
 the one gates.json plans for it, passed to its script as `PORT`; a rung that
 moves records `{planned, used, heldBy}` in its `ports`, so two clones can run
 the same FIT suite at once) and the E2E rungs against
@@ -1539,6 +1597,59 @@ names. It always exits 0. The build loop's merge stage uses it to tell a merge
 that starts no workflow, which has nothing to watch, from a run that has not
 started yet.
 
+### `tim build gate-wait` — wait for a gate run in the background
+
+```bash
+tim build gate-wait /tmp/gate-logs/gate-result.json --json
+tim build gate-wait /tmp/gate-logs/gate-result.json --seconds 300
+```
+
+Waits for a gate started with `tim build gate --result <file>` to finish, then
+prints its result and exits as the gate did: 0 when every rung passed, 1
+otherwise. Each wait ends inside the Bash tool's 600-second limit, so you can
+wait on a longer gate in slices. `--seconds` sets how long to wait before giving
+up for now, at most 590 (default 540).
+
+A gate still running when the wait ends prints `GATE_STILL_RUNNING` and exits 1:
+run the same wait again. A gate whose process has stopped without writing a
+result prints `GATE_DIED` and exits 1 at once: it did not finish, so run it
+again.
+
+### `tim build measure` — sample the machine while a command runs
+
+```bash
+tim build measure --label plants-fit-w4 --out /tmp/m --cwd repos/trade-imports-plants-frontend -- npm run test:fit:ci -- --workers=4
+tim build measure --label backend-verify --out /tmp/m --cwd repos/trade-imports-ins-backend --json -- mvn -B verify
+```
+
+Runs one command, given after `--`, with its output in a log, and samples the
+machine while it runs: load, free memory, memory in use and swap (macOS
+`sysctl`, `memory_pressure` and `vm_stat`), the Docker containers' memory and
+CPU, and how long a shell takes to start, which is how the terminal feels. A
+reading this machine cannot take is left empty.
+
+It writes `<label>.log`, every sample as `<label>.csv`, and a summary as
+`<label>.json` with the peaks, the lowest free memory, the pages swapped out
+and the test result lines, all to `--out`. `--cwd` is the folder to run the
+command in (default `.`), and `--interval` how often to sample, in seconds
+(default 5). It exits 1 when the command fails. Use it to tune the gate's
+worker counts to a machine: see
+`.claude/skills/requirements-pipeline/references/machine-tuning.md`.
+
+### `tim build rigour` — propose a rigour preset for each increment
+
+```bash
+tim build rigour shared/my-programme
+tim build rigour shared/my-programme --json
+```
+
+Proposes a rigour preset — `full`, `standard` or `fast` — for every increment
+still to build, from the row alone: its repos and its kind. A row that sets its
+own rigour keeps it. The reason beside each row says what the proposal keyed
+on. It cannot read the code a row changes, which is what the row is really
+worth, so the launch shows these proposals and the operator decides. Change
+one with `tim backlog set <workarea> <id> --rigour <preset>`.
+
 ### `tim spec diff` — what commits changed in the Behaviour Spec
 
 ```bash
@@ -1634,6 +1745,44 @@ a person to approve or refuse. It is `null` when nothing is found.
 
 A missing `git` also exits 3. Read `ok` in the `--json` envelope to tell the
 two apart.
+
+### `tim spec lint` — check the Behaviour Spec's conventions and coverage links
+
+```bash
+tim spec lint --json
+tim spec lint --specs --coverage
+tim spec lint --capability live-animals/addresses
+tim spec lint --root ../another-workspace-checkout
+```
+
+Checks `openspec/` in three groups, named for what each one reads:
+
+| Group        | What it checks                                                                                                                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--specs`    | `spec.md` conventions: stable ids, MUST not SHALL, a THEN in every scenario, cross-references that resolve                                      |
+| `--coverage` | `coverage.json` on its own: its shape, both rollups, a note on every `none`, `areaCode`, `specFile`, no id used twice                           |
+| `--binding`  | The joins: a `coverage.json` for every `spec.md`, the same ids in both, names copied exactly, each link's test title in its file under `repos/` |
+
+Naming any group narrows the check to those groups. Naming none runs all three.
+Whatever does not run is listed as not selected, so a narrow pass never reads
+like a full one. `--capability <path>` checks one capability and everything
+under it, and `--root <checkout>` checks another checkout instead of this one.
+It exits non-zero on any finding.
+
+### `tim spec gaps` — scenarios no test fully proves
+
+```bash
+tim spec gaps --json
+tim spec gaps --none
+tim spec gaps --capability live-animals/addresses
+```
+
+Lists every scenario the coverage matrix records as not `full` — `none` and
+`partial` — riskiest first. `--none` and `--partial` narrow the list to that
+coverage; name both, or neither, for every row that is not `full`. They work
+like `tim spec lint`'s group flags. `--capability <path>` narrows it to one
+capability and everything under it. The `spec-cover` skill works through this
+list.
 
 ### `tim build run-jobs` — whether every job of a run has passed
 
@@ -2101,11 +2250,18 @@ The generated file has:
   arrives as one PR for the whole set
 - an npm `ignore` entry for every member of each set with
   `"scope": "cross-repo"`, because the nightly job moves those in every repo
-  at once on one branch name
+  at once on one branch name. Each entry lists every version update type
+  (`version-update:semver-major`, `-minor` and `-patch`) under
+  `update-types`. That blocks every version update but leaves security
+  updates on: an ignore entry with no `update-types` blocks security updates
+  too. A security pull request for a set member lands in one repo only, so
+  the nightly digest lists the open alert for a person rather than merging
+  it alone
 - an npm `ignore` entry, with `versions`, for each hold that lists the repo,
   beside any other ignore for the same package, so Dependabot stops
   proposing the versions the hold covers. A repo the hold does not list is
-  unchanged
+  unchanged. A hold's entry has no `update-types`, so it blocks security
+  updates inside its range as well
 - `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
   Actions
 - the schedule, pull request limit and versioning strategy from
@@ -2162,7 +2318,10 @@ that package at its current version and records a hold, so the rest of the
 group can merge and Dependabot stops proposing the held versions.
 
 - `hold` adds the hold for a package to `config/dependency-sets.json`, or
-  replaces the one it has, with today's date as `since`. `--versions`,
+  replaces the one it has, with today's date as `since`. A hold blocks
+  security updates inside its range too, so Dependabot raises no security
+  fix for a held version: the nightly digest lists open alerts on held
+  packages. `--versions`,
   `--repo` (once for each repo), `--reason` and `--failing-test` are
   required. A repo out of scope, a wildcard package name, a version range
   npm cannot read or a link that is not a URL exits 2. It prints the `tim deps dependabot <repo> --write`
@@ -2177,6 +2336,30 @@ group can merge and Dependabot stops proposing the held versions.
 so the diff shows only the hold. `tim deps dependabot` refuses, in every
 mode, a config whose hold covers a repo out of scope, so a misspelt repo
 cannot leave a hold that affects nothing.
+
+### `tim deps drift` — packages behind their latest release
+
+```bash
+tim deps drift
+tim deps drift --json
+tim deps drift --repo trade-imports-animals-frontend --repo tim
+```
+
+Reads each repo's `package.json` at `origin/main` (`--ref` to change it)
+and asks npm-check-updates which packages have a newer release. It changes
+nothing: no checkout moves and no file is written. The nightly digest uses
+it for npm drift and for the cross-repo sets that are waiting.
+
+- Without `--repo`, it reads every repo in scope for the dependency sets.
+  A repo out of scope exits 2.
+- Each package carries its declared range, the proposed range, the jump
+  (`major`, `minor` or `patch`, or none for a range such as a git URL), its
+  set and whether a hold covers it in that repo.
+- `setsBehind` lists each cross-repo set with members that some repo has
+  not moved to the latest release, with the repos behind.
+- A repo with no checkout, or no `package.json` at the ref, is listed with
+  `read: false`.
+- `--json` gives `{ref, repos: [{repo, read, packages, counts}], setsBehind}`.
 
 ### `tim deps policy` — can an upgrade merge on green CI
 
@@ -2252,10 +2435,10 @@ tim nightly check --fetch --json  # is this session ready to run the jobs unatte
 tim nightly stopped --json        # is the kill switch on
 ```
 
-`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not, the
-session runs inside tmux or screen (`TMUX` or `STY` is set, so the session
-outlives the SSH connection that started it), `workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
-workspace and every cloned repo are clean. `--fetch` fetches origin in each
+`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not,
+`workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
+workspace and every cloned repo are clean. Changes under the workspace's
+`workareas/`, tracked or untracked, do not count. `--fetch` fetches origin in each
 first. It lists every job with the `cronPrompt` to register, which starts
 `[nightly:<name>]`. It exits 0 when ready and 3 when not. It checks nothing on
 GitHub: run `gh auth status` for that.

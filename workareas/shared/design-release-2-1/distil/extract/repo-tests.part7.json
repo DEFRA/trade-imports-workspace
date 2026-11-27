@@ -1,0 +1,1030 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 7 read the 9 specs under tests/animals/e2e/features/address-book in full (addresses-add-handshake 423 lines, addresses-picker 227, addresses-edit 216, addresses-copied 200, addresses-same-as 151, address-book-navigation 160, addresses-submit-freeze 106, addresses-read-only 84, transporter-added-via-address-book 65; 1,632 lines, 36 real test functions once each file's test.describe and test.slow() calls are discounted from the partition's \"test(\" counts), together with every support file the partition named: page-objects/animals/{addresses-page, party-picker-page, party-edit-page, contact-address-page, permanent-address-page, transporter-page, transporter-add-page}.ts, page-objects/shared/{party-edit-form, address-picker-results, base-page}.ts, page-objects/ins/address-book/{add-page, form-page, shared-form-fields, address-type-page, url-with-return, list-page}.ts, domain/shared/constants/{address-types, journey-party-names, test-record-names}.ts, domain/ins/constants/{address-book-journey, address-book-types, address-form, trader-address, address-details}.ts, flows/shared/address-book-seed.ts, flows/animals/journey.ts, fixtures/ui.ts, utils/{address-book-cleanup, roles-options-assertions}.ts and bin/reset-e2e-address-book.ts. It also read, as context for verbatim copy and the pages each spec reaches, domain/animals/constants/consignment-addresses-page.ts, page-objects/animals/index.ts (the picker and edit page slugs and headings), flows/animals/seeded-journey.ts (the createDraft*/createSubmitted* helpers the specs use) and the reviewHeadingText and expectOpenFromReview helpers. Covered: the add hand-off from each of the five party pickers and from the contact address page to the INS frontend's /address-book/add and back (save-and-select, save-and-return, save-and-continue, cancel, Back, banner lifetime, the roles question, the country select, validation); the Consignment addresses page's party rows, their Add, Change, Edit details and same-as controls; each party picker's role filter, search, eight-a-page paging, chosen-address restatement, row layout and View link; what a journey edit of a copied address changes and does not change; addresses being copied rather than linked, including book rename and delete; the submit freeze on a submitted notification and its amendment; the cross-service navigation and return-URL honouring between the animals journey and the INS address book; and a transporter created in the address book reaching the journey's transporter list. Seven gaps are recorded where the constants in the slice name something no test in it asserts.",
+  "claims": [
+    {
+      "id": "repo-tests-p7-001",
+      "statement": "The add-an-address hand-off between the animals journey and the INS address book is only exercised where both frontends run, the compose stack and CDP, and is skipped when the animals frontend runs in stub mode.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:86-90",
+      "quote": "skipUnlessNonStubStackEnvironment(\n      'the handshake crosses the animals and INS frontends, which both run on the compose stack and in CDP',\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-002",
+      "statement": "From each of the five party pickers (Place of origin, Consignor, Consignee, Importer, Place of destination) the add control opens the INS frontend's /address-book/add page with a non-empty query string.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:102",
+      "quote": "await expect(pages.page).toHaveURL((url) => url.origin === insOrigin && url.pathname === '/address-book/add' && url.search !== '');",
+      "confidence": "verbatim",
+      "note": "PARTY_ROLES at :27 names the five roles the loop runs over."
+    },
+    {
+      "id": "repo-tests-p7-003",
+      "statement": "The INS add page reached from a party picker offers a Back link, a Save and select button, a Save and return to address page button and a Cancel and return to hub link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:103-106",
+      "quote": "await expect(addPage.linkBack).toBeVisible();\n        await expect(addPage.btnSaveAndSelect).toBeVisible();\n        await expect(addPage.btnSaveAndReturnToAddressPage).toBeVisible();\n        await expect(addPage.linkCancelAndReturnToHub).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-004",
+      "statement": "Save and select on the INS add page returns the user to the animals Consignment addresses page, showing a success banner reading \"<name> address added to your address book\", the party's address lines filled with the new address and a Change link for that party.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:67-69,110-115",
+      "quote": "return `${details.name} address added to your address book`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-005",
+      "statement": "An address saved by Save and select holds exactly the role of the picker it was reached from: PLACE_OF_ORIGIN, CONSIGNOR, CONSIGNEE, IMPORTER or PLACE_OF_DESTINATION.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:29-35,117-118",
+      "quote": "const saved = await addressBookApi.findByName(details.name);\n        expect(rolesFieldOf(saved)).toEqual(ROLES_HELD_BY_PARTY[role]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-006",
+      "statement": "The Consignment addresses page landed on after Save and select has a Back link whose href is the notification's Overview page, and following it opens the Overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:120-125",
+      "quote": "await expect(animalsPages.addresses.linkBack).toHaveAttribute(\n          'href',\n          animalsPages.overview.expectedUrl(animalsPages.addresses.referenceNumberFromUrl()),\n        );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-007",
+      "statement": "Save and return to address page on the INS add page lands back on the party picker it was reached from, with the added banner shown and no address selected.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:144-146",
+      "quote": "await expect(picker.heading).toBeVisible();\n        await expect(picker.successBanner.getByText(addedBannerText(details), { exact: true })).toBeVisible();\n        await expect(picker.checkedParties).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-008",
+      "statement": "After Save and return to address page, searching the picker for the run's token lists the newly added address first and the address already in the book second, with neither checked.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:148-152",
+      "quote": "await picker.search(token);\n        await expect(picker.listedParties).toHaveCount(2);\n        expect(await picker.listedPartyIds()).toEqual([added.id, alreadyInTheBook.id]);\n        await expect(picker.checkedParties).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-009",
+      "statement": "Cancel and return to hub on the INS add page lands on the notification Overview and saves no address.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:165-167",
+      "quote": "await addPage.linkCancelAndReturnToHub.click();\n\n        await expect(animalsPages.overview.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-010",
+      "statement": "After a cancelled add, the party's section on the Consignment addresses page offers only its add link, and searching the picker for the abandoned name shows the no-matches message.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:169-177",
+      "quote": "await expect(animalsPages.addresses.partyLinks(role)).toHaveText([AnimalsAddressesPage.addLinkName(role)]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-011",
+      "statement": "The Consignment addresses page is reached from the Overview by the task named \"Consignment addresses\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:169; domain/animals/constants/consignment-addresses-page.ts:1",
+      "quote": "export const CONSIGNMENT_ADDRESSES = 'Consignment addresses';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-012",
+      "statement": "The add link a party section offers is named for its role: \"Add a consignor\", \"Add a place of destination\", \"Add a place of origin\", \"Add a consignee\" and \"Add an importer\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/addresses-page.ts:10-16",
+      "quote": "const ADD_LINK_BY_ROLE: Record<PartyRole, string> = {\n  Consignor: 'Add a consignor',\n  'Place of destination': 'Add a place of destination',\n  'Place of origin': 'Add a place of origin',\n  Consignee: 'Add a consignee',\n  Importer: 'Add an importer',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-013",
+      "statement": "The contact address page offers an \"add a new branch address\" link that opens the INS address book add page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:781-785; page-objects/animals/contact-address-page.ts:58-60",
+      "quote": "await this.animalsPages.contactAddress.addNewBranchAddressLink.click();\n    await addressBookAdd.completeSignInIfRequested();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-014",
+      "statement": "The INS add page reached from the contact address page asks no roles question: its form labels are exactly the nine address and contact fields in order.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:189-190",
+      "quote": "await animalsJourney.toInsAddAddressFromContact(addPage);\n      await expect(addPage.formLabels).toHaveText(ADDRESS_FORM_FIELD_LABELS_IN_ORDER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-015",
+      "statement": "The address form's nine fields are labelled, in order, \"Name or organisation\", \"Address line 1\", \"Address line 2 (optional)\", \"Town or city\", \"County (optional)\", \"Postcode or Zip code\", \"Country\", \"Email address\" and \"Phone number\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-form.ts:1-23",
+      "quote": "export const ADDRESS_FORM_FIELD_LABELS = {\n  name: 'Name or organisation',\n  addressLine1: 'Address line 1',\n  addressLine2: 'Address line 2 (optional)',\n  townOrCity: 'Town or city',\n  county: 'County (optional)',\n  postcode: 'Postcode or Zip code',\n  country: 'Country',\n  email: 'Email address',\n  phone: 'Phone number',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-016",
+      "statement": "Save and continue on the INS add page reached from the contact address page returns to the contact address page with the added banner.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:193-196",
+      "quote": "await addPage.btnSaveAndContinue.click();\n\n      await expect(animalsPages.contactAddress.heading).toBeVisible();\n      await expect(animalsPages.contactAddress.successBanner.getByText(addedBannerText(details), { exact: true })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-017",
+      "statement": "An address added from the contact address page is saved holding the BRANCH_ADDRESS role.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:198-199; domain/shared/constants/address-types.ts:47",
+      "quote": "expect(rolesFieldOf(saved)).toEqual(heldAsBranchAddress);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-018",
+      "statement": "The newly added branch address is listed above both branch addresses already in the book and is the option shown as chosen on the contact address page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:203-209",
+      "quote": "expect(listedIds.indexOf(saved.id)).toBeLessThan(listedIds.indexOf(seededContactBranch.id));\n      expect(listedIds.indexOf(saved.id)).toBeLessThan(listedIds.indexOf(seededSecondBranch.id));\n      await expect(animalsPages.contactAddress.chosenAddress).toHaveAttribute('value', saved.id);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-019",
+      "statement": "The two branch addresses seeded for the journey are \"Animal and Plant Health Agency\" and \"Riverside Distribution Centre\".",
+      "kind": "data",
+      "ref": "domain/shared/constants/journey-party-names.ts:6-7; flows/shared/address-book-seed.ts:20-40",
+      "quote": "export const CONTACT_ADDRESS_NAME = 'Animal and Plant Health Agency';\nexport const SECOND_BRANCH_ADDRESS_NAME = 'Riverside Distribution Centre';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-020",
+      "statement": "The added banner shown on the contact address page is still shown ten seconds later and is gone after the page is reloaded.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:228-233",
+      "quote": "await pages.page.clock.runFor(10_000);\n      await expect(addedBanner).toBeVisible();\n\n      await pages.page.reload();\n      await expect(animalsPages.contactAddress.heading).toBeVisible();\n      await expect(animalsPages.contactAddress.successBanner).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-021",
+      "statement": "The added banner shown on the Consignment addresses page after Save and select is still shown ten seconds later and is gone after the page is reloaded.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:252-257",
+      "quote": "await pages.page.clock.runFor(10_000);\n      await expect(addedBanner).toBeVisible();\n\n      await pages.page.reload();\n      await expect(animalsPages.addresses.heading).toBeVisible();\n      await expect(animalsPages.addresses.successBanner).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-022",
+      "statement": "Back on the INS add page reached from a party picker lands on that same picker.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:267-270",
+      "quote": "await addPage.linkBack.click();\n\n      await expect(animalsJourney.partyPicker('Consignor').heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-023",
+      "statement": "The INS add page's browser title is \"Add address and contact details - Import notification service - GOV.UK\".",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:281",
+      "quote": "await expect(pages.page).toHaveTitle('Add address and contact details - Import notification service - GOV.UK');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-024",
+      "statement": "The INS add page's heading reads \"Add address and contact details\" with the caption \"Add new address\".",
+      "kind": "copy",
+      "ref": "page-objects/ins/address-book/add-page.ts:10-16",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Add address and contact details' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-025",
+      "statement": "The INS add page reached from the journey shows the notification's status as a \"Draft\" tag and shows the notification's reference number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:284-285",
+      "quote": "await expect(addPage.statusTag).toHaveText('Draft');\n      await expect(addPage.notificationReference).toHaveText(journeyContext.referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-026",
+      "statement": "The INS add page groups its fields under two section headings, \"Address\" and \"Contact details\".",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:286-287",
+      "quote": "await expect(addPage.sectionHeading('Address')).toBeVisible();\n      await expect(addPage.sectionHeading('Contact details')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-027",
+      "statement": "Reached from the Consignor picker, the INS add page's labels are the nine address fields followed by one roles option labelled \"Place of origin\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:288",
+      "quote": "await expect(addPage.formLabels).toHaveText([...ADDRESS_FORM_FIELD_LABELS_IN_ORDER, rolesQuestionLabels.PLACE_OF_ORIGIN]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-028",
+      "statement": "On the INS add page the name field carries no autocomplete attribute, while address line 1, address line 2, town or city, postcode, email and phone carry address-line1, address-line2, address-level2, postal-code, email and tel.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:289-295",
+      "quote": "await expect(addPage.inputName).not.toHaveAttribute('autocomplete');\n      await expect(addPage.inputAddressLine1).toHaveAttribute('autocomplete', 'address-line1');\n      await expect(addPage.inputAddressLine2).toHaveAttribute('autocomplete', 'address-line2');\n      await expect(addPage.inputTownOrCity).toHaveAttribute('autocomplete', 'address-level2');\n      await expect(addPage.inputPostcode).toHaveAttribute('autocomplete', 'postal-code');\n      await expect(addPage.inputEmail).toHaveAttribute('autocomplete', 'email');\n      await expect(addPage.inputPhone).toHaveAttribute('autocomplete', 'tel');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-029",
+      "statement": "Reached from the Consignee picker, the INS add page's Country list opens on \"United Kingdom\" and lists \"Select a country\" first.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:307-308",
+      "quote": "await expect(addPage.countryOptions.first()).toHaveText('Select a country');\n      await expect(addPage.selectedCountryOption).toHaveText('United Kingdom');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-030",
+      "statement": "Reached from the Place of origin or Consignor picker, the INS add page's Country control is a plain select with nothing chosen and \"Select a country\" listed first.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:321-323",
+      "quote": "await expect(addPage.selectCountry).toHaveJSProperty('tagName', 'SELECT');\n        await expect(addPage.selectCountry).toHaveValue('');\n        await expect(addPage.countryOptions.first()).toHaveText('Select a country');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-031",
+      "statement": "Reached from the Consignee picker, the INS add page asks a roles question legended \"What else should this address be used for?\" and described as \"This address is being added as a Consignee address. Select any other roles or addresses this address should be used for.\"",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:336; domain/ins/constants/address-book-types.ts:169-172",
+      "quote": "export const journeyRolesQuestion = {\n  legend: 'What else should this address be used for?',\n  consigneeHint: 'This address is being added as a Consignee address. Select any other roles or addresses this address should be used for.',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-032",
+      "statement": "That roles question offers exactly two options, \"Importer\" and \"Place of destination\", both unticked when the page opens.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:337-339",
+      "quote": "await expectRolesOptions(addPage, journeyRolesQuestion.legend, [addressRoles.importer, addressRoles.placeOfDestination]);\n      await expect(addPage.rolesOption(addressRoles.importer)).not.toBeChecked();\n      await expect(addPage.rolesOption(addressRoles.placeOfDestination)).not.toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-033",
+      "statement": "With Importer ticked on the add page reached from the Consignee picker, Save and select saves the address holding both the CONSIGNEE and IMPORTER roles.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:346-349",
+      "quote": "expect(rolesFieldOf(saved)).toEqual({\n        roles: [addressRoles.consignee, addressRoles.importer],\n      });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-034",
+      "statement": "Saving the INS add page with address line 1, town or city, postcode, email and phone blank keeps the page and lists the errors in field order: \"Enter address line 1\", \"Enter a town or city\", \"Enter a postcode or Zip code\", \"Enter an email address\", \"Enter a phone number\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:366-372; domain/ins/constants/address-form.ts:29-37",
+      "quote": "export const ADDRESS_FORM_VALIDATION_MESSAGES = {\n  nameRequired: 'Enter a name or organisation',\n  addressLine1Required: 'Enter address line 1',\n  townOrCityRequired: 'Enter a town or city',\n  postcodeRequired: 'Enter a postcode or Zip code',\n  countryRequired: 'Select a country',\n  emailRequired: 'Enter an email address',\n  phoneRequired: 'Enter a phone number',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-035",
+      "statement": "A refused save of the INS add page keeps the name already typed and the Importer tick already made, and stores no address.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:373-375",
+      "quote": "await expect(addPage.inputName).toHaveValue(details.name);\n      await expect(addPage.rolesOption(addressRoles.importer)).toBeChecked();\n      expect(await addressBookApi.listAddresses(details.name)).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-036",
+      "statement": "Saving the INS add page with a blank name keeps the page, shows \"Enter a name or organisation\" as an error summary link, and gives the name field the accessible description \"Error: Enter a name or organisation\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:398-400",
+      "quote": "await expect(addPage.errorSummaryLink(ADDRESS_FORM_VALIDATION_MESSAGES.nameRequired)).toBeVisible();\n      await expect(addPage.inputName).toHaveAccessibleDescription(`Error: ${ADDRESS_FORM_VALIDATION_MESSAGES.nameRequired}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-037",
+      "statement": "On the compose stack, the INS add page reached from the Place of origin, Consignor or Consignee picker lists \"Select a country\" first and then every country reference data serves, alphabetically, with United Kingdom in its alphabetical place.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:405-420",
+      "quote": "await expect(addPage.countryOptions).toHaveText(['Select a country', ...addressFormCountryNames]);",
+      "confidence": "verbatim",
+      "note": "The spec skips unless the compose stack is running, because \"the list is the stub's MDM fixture, which only the compose stack is sure to serve\"."
+    },
+    {
+      "id": "repo-tests-p7-038",
+      "statement": "A party picker lists only addresses saved for that party's role, and a record saved for two roles is listed on both roles' pickers.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:15,44-50",
+      "quote": "await animalsJourney.toPartyPicker('Importer');\n    await expect(animalsPages.importerSelection.party(consigneeAndImporterName)).toBeVisible();\n    await expect(animalsPages.importerSelection.party(consigneeOnlyName)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-039",
+      "statement": "A party picker shows a second-level heading \"Select an address\" with a results sentence under it reading \"Showing <shown> out of <found> results\".",
+      "kind": "copy",
+      "ref": "page-objects/shared/address-picker-results.ts:4-17; tests/animals/e2e/features/address-book/addresses-picker.spec.ts:105-106",
+      "quote": "export const PICKER_RESULTS_HEADING = 'Select an address';\nconst NO_MATCHES = 'No addresses match your search.';\n\nexport const ADDRESSES_A_PAGE = 8;\n\nfunction resultsCountSentence(shown: string, found: string): string {\n  return `Showing ${shown} out of ${found} results`;\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-040",
+      "statement": "The picker's search looks only within its own role: a term matching two consignor records and one consignee record lists the two consignors, omits the consignee and reports \"Showing 2 out of 2 results\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:108-112",
+      "quote": "await animalsPages.consignorSelection.search(runOnlySearchToken);\n    await expect(animalsPages.consignorSelection.resultsSummary).toHaveText(pickerResultsCount(2, 2));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-041",
+      "statement": "The row ticked in the picker is the one that saves: Save and continue returns to the Consignment addresses page with that address shown as \"<name> <address line 1> <town>, <postcode>, <country>\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:115-118; page-objects/animals/addresses-page.ts:37-39",
+      "quote": "return `${name} ${addressLine1} ${townOrCity}, ${postcode}, ${country}`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-042",
+      "statement": "Reopening a picker through Change names the already-chosen address between the Search button and the results heading, as \"Selected address: <name>\", entirely below the Search button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:120-122; page-objects/shared/address-picker-results.ts:88-92",
+      "quote": "await expectEntirelyAbove(pickerSearchButton(page), resultsHeading);\n  expect(textBetweenSearchAndResults(await page.getByRole('main').innerText())).toBe(`Selected address: ${name}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-043",
+      "statement": "Once the chosen address's page of results is shown, its row is shown checked, and saving again keeps that same address on the notification.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:124-129",
+      "quote": "await expect(animalsPages.consignorSelection.party(chosenName)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-044",
+      "statement": "A party picker shows eight matches a page, and with nine matches it shows pagination.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:132-164",
+      "quote": "await expect(picker.resultsSummary).toHaveText(pickerResultsCount(ADDRESSES_A_PAGE, names.length));\n    await expect(picker.listedParties).toHaveCount(ADDRESSES_A_PAGE);\n    await expect(picker.pagination).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "ADDRESSES_A_PAGE is 8 (page-objects/shared/address-picker-results.ts:7) and the spec seeds ADDRESSES_A_PAGE + 1 records."
+    },
+    {
+      "id": "repo-tests-p7-045",
+      "statement": "Following the picker's page 2 link keeps the search term in the Search box, keeps the chosen address named above the results and reports \"Showing 1 out of 9 results\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:167-172",
+      "quote": "await expect(picker.searchBox).toHaveValue(token);\n    await expect(picker.resultsSummary).toHaveText(pickerResultsCount(1, names.length));\n    await expect(picker.listedParties).toHaveCount(1);\n    await expectChosenAddressNamedAboveResults(picker.resultsHeading, chosenName);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-046",
+      "statement": "Save and continue pressed from the picker's second page still saves the address chosen on the first page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:174-186",
+      "quote": "await picker.saveAndContinue.click();\n\n    await expect(animalsPages.addresses.heading).toBeVisible();\n    await expect(animalsPages.addresses.partyAddressLines('Consignor')).toHaveText(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-047",
+      "statement": "A picker row's address cell shows the street line, then the town and postcode together on one line separated by commas.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:189-198; page-objects/shared/address-picker-results.ts:27-30",
+      "quote": "const placeLine = [townOrCity, county, postcode].filter(Boolean).join(', ');\n  return [addressLine1, addressLine2, placeLine].filter(Boolean).join('\\n');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-048",
+      "statement": "A picker row's last cell holds only a \"View <name>\" link and no other action.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:199",
+      "quote": "await expect(animalsPages.consignorSelection.partyActionCell(consignorFixture.name)).toHaveText(`View ${consignorFixture.name}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-049",
+      "statement": "A picker row for a record with a second street line and a county shows each street line on its own line, then the town, county and postcode together on one line.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:202-213",
+      "quote": "await expect.poll(() => animalsPages.consignorSelection.partyAddressCellText(record.name)).toBe(expectedPickerAddressCellText(record));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-050",
+      "statement": "Save and continue on a picker with nothing ticked returns to the Consignment addresses page with that party's section offering only its add link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:216-226",
+      "quote": "await expect(animalsPages.addresses.partyLinks('Consignor')).toHaveText([AnimalsAddressesPage.addLinkName('Consignor')]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-051",
+      "statement": "Each picker row is a radio named \"Select <name>\", so one address at most can be chosen for a party.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/address-picker-results.ts:32-34",
+      "quote": "export function pickerAddressRadio(page: Page, name: string): Locator {\n  return page.getByRole('radio', { name: `Select ${name}`, exact: true });\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-052",
+      "statement": "The five party pickers are served at the notification paths consignors/select, destinations/select, place-of-origin/select, consignees/select and importers/select, with first-level headings Consignor, Place of destination, Place of origin, Consignee and Importer.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/index.ts:41-45",
+      "quote": "consignorSelection: new AnimalsPartyPickerPage(page, 'consignors/select', 'Consignor'),\n    destinationSelection: new AnimalsPartyPickerPage(page, 'destinations/select', 'Place of destination'),\n    placeOfOriginSelection: new AnimalsPartyPickerPage(page, 'place-of-origin/select', 'Place of origin'),\n    consigneeSelection: new AnimalsPartyPickerPage(page, 'consignees/select', 'Consignee'),\n    importerSelection: new AnimalsPartyPickerPage(page, 'importers/select', 'Importer'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-053",
+      "statement": "A picker search is submitted as a POST to the picker's own /select path, so the page works without JavaScript.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/party-picker-page.ts:112-118",
+      "quote": "const isSearchResponse = (response: Response): boolean =>\n      response.request().method() === 'POST' && new URL(response.url()).pathname.endsWith('/select');",
+      "confidence": "inferred",
+      "note": "mechanism: the page object waits on a POST response to the picker's own path, which the suite relies on to tell a search apart from other navigation; the spec asserts the search's effect rather than the method."
+    },
+    {
+      "id": "repo-tests-p7-054",
+      "statement": "When a picker search matches nothing it shows the message \"No addresses match your search.\"",
+      "kind": "copy",
+      "ref": "page-objects/shared/address-picker-results.ts:5,68-70; tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:177",
+      "quote": "const NO_MATCHES = 'No addresses match your search.';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-055",
+      "statement": "A party row holding an address offers two links, \"Change <party>\" and \"Edit details <party>\", in that order.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:164-165; page-objects/animals/addresses-page.ts:53-56",
+      "quote": "const { change, editDetails } = AnimalsAddressesPage.partyLinkNames('Consignor');\n    await expect(animalsPages.addresses.partyLinks('Consignor')).toHaveText([change, editDetails]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-056",
+      "statement": "Edit details opens a page headed \"Edit address details\" at the party's own edit path carrying return=addresses, with the party's role as a caption.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:128-130; page-objects/shared/party-edit-form.ts:33-39",
+      "quote": "await expect(pages.page).toHaveURL(/\\/consignors\\/edit\\?return=addresses/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-057",
+      "statement": "The edit form carries the hint \"Changes apply to this notification only. Your address book is not changed.\"",
+      "kind": "copy",
+      "ref": "page-objects/shared/party-edit-form.ts:41-43",
+      "quote": "return this.page.getByText('Changes apply to this notification only. Your address book is not changed.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-058",
+      "statement": "The edit form opens prefilled with the copied address's name, both street lines, town, county, postcode, country, phone and email.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:63-87",
+      "quote": "await expect(form.county).toHaveValue(OWN_RECORD.county);\n      await expect(form.postcode).toHaveValue(OWN_RECORD.postcode);\n      await expect(form.country).toHaveValue(OWN_RECORD.countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-059",
+      "statement": "The edit form's fields are labelled \"Name or organisation name\", \"Address line 1\", \"Address line 2 (optional)\", \"Town or city\", \"County (optional)\", \"Postcode or Zip code\", \"Country\", \"Phone number\" and \"Email address\", and it ends with Save changes and Cancel.",
+      "kind": "copy",
+      "ref": "page-objects/shared/party-edit-form.ts:45-87",
+      "quote": "return this.page.getByLabel('Name or organisation name', { exact: true });",
+      "confidence": "verbatim",
+      "note": "The journey edit form labels the name field \"Name or organisation name\", where the INS add form labels it \"Name or organisation\" (domain/ins/constants/address-form.ts:2)."
+    },
+    {
+      "id": "repo-tests-p7-060",
+      "statement": "Saving an edit of a copied address changes this notification only: the Consignment addresses page and the review both show the edited name, town and postcode and no longer the original town.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:41-49",
+      "quote": "await expect(consignorRow).toContainText('Penrith');\n    await expect(consignorRow).toContainText('CA11 9ZZ');\n    await expect(consignorRow).not.toContainText('Carlisle');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-061",
+      "statement": "An edit made in the journey leaves the address book record exactly as it was created, and not deleted.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:51-53",
+      "quote": "const record = await addressBookApi.getAddress(address.id);\n    expect(record).toMatchObject({ name, townOrCity: 'Carlisle', postcode: 'CA1 5EE', deleted: false });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-062",
+      "statement": "Another notification holding a copy of the same address book record is untouched by an edit made on one notification.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:55-60",
+      "quote": "await expect(consignorRow).toContainText(name);\n    await expect(consignorRow).toContainText('Carlisle');\n    await expect(consignorRow).not.toContainText(editedName);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-063",
+      "statement": "An edit breaking the address book's rules is refused with its messages at the top and against each field: \"Enter a name\", \"Postcode must be 12 characters or fewer\", \"Enter an email address in the correct format\" and \"Enter a country\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:103-111",
+      "quote": "await expect(form.errorSummary).toContainText('Enter a name');\n    await expect(form.errorSummary).toContainText('Postcode must be 12 characters or fewer');\n    await expect(form.errorSummary).toContainText('Enter an email address in the correct format');\n    await expect(form.errorSummary).toContainText('Enter a country');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-064",
+      "statement": "A refused edit saves nothing: the review still shows the address as it was, with neither the cleared name nor the over-long postcode.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:113-117",
+      "quote": "await expect(originRow).toContainText('Origin Farm');\n    await expect(originRow).toContainText('V95 X7P2');\n    await expect(originRow).not.toContainText('CA11 9ZZ 1234');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-065",
+      "statement": "Cancel on a party edit started from the Consignment addresses page returns there with the address as it was.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:132-136",
+      "quote": "await expect(animalsPages.addresses.partySection('Consignor')).toContainText('Astra Rosales');\n    await expect(animalsPages.addresses.partySection('Consignor')).not.toContainText('Never Saved Ltd');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-066",
+      "statement": "Cancel on a contact address edit started from the review returns to the review with the address as it was.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:149-154",
+      "quote": "await expect(animalsPages.notificationView.heading).toBeVisible();\n    const contactRow = animalsPages.notificationView.partyRow('Contact address', 'Contact address');\n    await expect(contactRow).toContainText('Addlestone');\n    await expect(contactRow).not.toContainText('Never Saved Town');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-067",
+      "statement": "On the review, the Consignment addresses card offers only one link, \"Change consignment addresses (Consignment addresses)\", and no per-party edit.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:173-175",
+      "quote": "await expect(animalsPages.notificationView.cardLinks(CONSIGNMENT_ADDRESSES)).toHaveText([\n      `${CONSIGNMENT_ADDRESSES_CHANGE_LINK} (${CONSIGNMENT_ADDRESSES})`,\n    ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-068",
+      "statement": "On the review, the Contact address card offers two links, \"Change contact address (Contact address)\" and \"Edit details contact address\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:176-179",
+      "quote": "await expect(animalsPages.notificationView.cardLinks('Contact address')).toHaveText([\n      'Change contact address (Contact address)',\n      'Edit details contact address',\n    ]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-069",
+      "statement": "The contact address page's main headings are exactly \"Contact address for consignment\" then \"Select an address\", with the answered contact shown checked and a Save and continue button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:167-170; page-objects/animals/contact-address-page.ts:11-14",
+      "quote": "static readonly headings = [PAGE_HEADING, PICKER_RESULTS_HEADING];",
+      "confidence": "verbatim",
+      "note": "The contact address page is served at the notification path consignment/contact/select."
+    },
+    {
+      "id": "repo-tests-p7-070",
+      "statement": "A party with no address answered offers only its add link, and an unanswered contact address page shows no option chosen.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:181-186",
+      "quote": "await expect(animalsPages.addresses.partyLinks('Consignor')).toHaveText([AnimalsAddressesPage.addLinkName('Consignor')]);\n\n    await animalsSeededJourney.resumeInUi(unansweredReferenceNumber, animalsPages.contactAddress);\n    await expect(animalsPages.contactAddress.chosenAddress).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-071",
+      "statement": "Editing the contact address from the review changes only that notification: the review shows the edited name and town, the address book record keeps its own street and town, and no new record is created with the edited name.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts:206-214",
+      "quote": "const record = await addressBookApi.findByName(contact);\n    expect(record).toMatchObject({ addressLine1: 'Woodham Lane', townOrCity: 'Addlestone' });\n    expect(await addressBookApi.listAddresses(editedName)).toHaveLength(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-072",
+      "statement": "The journey's seeded parties are Origin Farm (place of origin), Astra Rosales (consignor), British Livestock Ltd (consignee), Import Co UK (importer), Tech Imports Ltd (place of destination) and Animal and Plant Health Agency (contact address).",
+      "kind": "data",
+      "ref": "domain/shared/constants/journey-party-names.ts:1-7",
+      "quote": "export const PLACE_OF_ORIGIN_NAME = 'Origin Farm';\nexport const CONSIGNOR_NAME = 'Astra Rosales';\nexport const CONSIGNEE_NAME = 'British Livestock Ltd';\nexport const IMPORTER_NAME = 'Import Co UK';\nexport const DESTINATION_NAME = 'Tech Imports Ltd';\nexport const CONTACT_ADDRESS_NAME = 'Animal and Plant Health Agency';",
+      "confidence": "verbatim",
+      "note": "Each fixture's address, country code, phone and email are in flows/shared/address-book-seed.ts:20-172; the seeder keeps exactly one live record per fixture name and soft-deletes duplicates."
+    },
+    {
+      "id": "repo-tests-p7-073",
+      "statement": "An address picked onto a notification is copied, not linked: changing the record in the address book afterwards leaves the notification's copy unchanged, after a reload and on the review.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:32-54",
+      "quote": "await expect(consignorCyaRow).toContainText(originalName);\n      await expect(consignorCyaRow).toContainText('Carlisle');\n      await expect(consignorCyaRow).toContainText('CA1 1AA');\n      await expect(consignorCyaRow).not.toContainText(renamed);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-074",
+      "statement": "A picked record reads back on the review as its name, both address lines, town, county, postcode and country, each on its own line.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:86-92",
+      "quote": "await expect(consignorCyaRow.getByRole('definition')).toHaveText(\n      [record.name, record.addressLine1, record.addressLine2, record.townOrCity, record.county, record.postcode, 'United Kingdom'].join(\n        '\\n',\n      ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-075",
+      "statement": "Deleting the address book record after it was picked leaves the copy on the draft unchanged with no error shown, and the party keeps its Change and Edit details links.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:119-128",
+      "quote": "await expect(consignorAddressLines).toHaveText(chosenAddressText, { useInnerText: true });\n      const { change, editDetails } = AnimalsAddressesPage.partyLinkNames('Consignor');\n      await expect(animalsPages.addresses.partyLinks('Consignor')).toHaveText([change, editDetails]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-076",
+      "statement": "Deleting an address in the address book is a soft delete: the record can still be read back and reports deleted true.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:115-117",
+      "quote": "const tombstone = await addressBookApi.getAddress(address.id);\n      expect(tombstone.deleted).toBe(true);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-077",
+      "statement": "A deleted record is dropped from the party picker: nothing is shown checked and a search for its name lists no row.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:132-137",
+      "quote": "await expect(animalsPages.consignorSelection.checkedParties).toHaveCount(0);\n      await animalsPages.consignorSelection.searchBox.fill(name);\n      await animalsPages.consignorSelection.searchButton.click();\n      await expect(animalsPages.consignorSelection.party(name)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-078",
+      "statement": "A notification whose copied address was deleted from the address book still continues from the review to the declaration.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:128-130",
+      "quote": "await expect(animalsPages.notificationView.errorSummary).toHaveCount(0);\n      await animalsPages.notificationView.continueButton.click();\n      await expect(animalsPages.declaration.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-079",
+      "statement": "A copied address that breaks the address book's rules is named on the review with \"Correct the address details for the consignor\", both in the error summary and against that party's row, and it blocks Continue and blocks submit.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:166-183",
+      "quote": "const message = 'Correct the address details for the consignor';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-080",
+      "statement": "The review's error summary link for a broken copied address opens that party's edit form, and correcting the field clears the error, lets the notification continue to the declaration and lets it be submitted, ending on \"Import notification submitted\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts:185-198",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'Import notification submitted' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-081",
+      "statement": "The same-as shortcut is a button offered only on the Consignor, Importer and Place of destination sections; the Place of origin and Consignee sections hold no button.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:44-48",
+      "quote": "await expect(animalsPages.addresses.partySection('Place of origin').getByRole('button')).toHaveCount(0);\n      await expect(animalsPages.addresses.partySection('Consignee').getByRole('button')).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-082",
+      "statement": "The Consignor's shortcut reads \"Same as place of origin\", and the Importer's and Place of destination's each read \"Same as consignee\".",
+      "kind": "copy",
+      "ref": "page-objects/animals/addresses-page.ts:18-22",
+      "quote": "const SAME_AS_LABEL_BY_ROLE: Partial<Record<PartyRole, string>> = {\n  Consignor: 'Same as place of origin',\n  Importer: 'Same as consignee',\n  'Place of destination': 'Same as consignee',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-083",
+      "statement": "Pressing a same-as shortcut fills that party with the full address of the paired party already picked, staying on the Consignment addresses page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:51-65",
+      "quote": "await animalsPages.addresses.sameAsParty('Consignor').click();\n      await expect(animalsPages.addresses.heading).toBeVisible();\n      await expect(animalsPages.addresses.partyAddressLines('Consignor')).toHaveText(expectedOriginText, { useInnerText: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-084",
+      "statement": "Once a same-as shortcut has been pressed it is no longer shown for that party, and once all three have been pressed no same-as button remains on the page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:54,66",
+      "quote": "await expect(animalsPages.addresses.sameAsParty('Consignor')).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-085",
+      "statement": "A party filled by a same-as shortcut is not offered the source party's record in its own picker.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:68-69",
+      "quote": "await animalsPages.addresses.changeParty('Consignor').click();\n      await expect(animalsPages.consignorSelection.party(originRecord.name)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-086",
+      "statement": "Changing the place of origin to a different record afterwards leaves the consignor showing the place-of-origin record it was filled from.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:99-105",
+      "quote": "const expectedFirstOriginText = AnimalsAddressesPage.expectedAddressText({ ...firstOrigin, country: 'United Kingdom' });\n      await expect(animalsPages.addresses.partyAddressLines('Consignor')).toHaveText(expectedFirstOriginText, { useInnerText: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-087",
+      "statement": "An importer filled from the consignee reads on the review as the consignee record's name, both address lines, town, county, postcode and country, with no telephone or email.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-same-as.spec.ts:109-148",
+      "quote": "await expect(importerValue).toHaveText(\n        [\n          consigneeRecord.name,\n          consigneeRecord.addressLine1,\n          consigneeRecord.addressLine2,\n          consigneeRecord.townOrCity,\n          consigneeRecord.county,\n          consigneeRecord.postcode,\n          'United Kingdom',\n        ].join(' '),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-088",
+      "statement": "In stub mode a party picker offers no add-address control at all, neither as a button nor as a link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:42-48",
+      "quote": "await expect(picker.addNewAddress).toHaveCount(0);\n          await expect(pages.page.getByRole('link', { name: ADD_NEW_ADDRESS })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-089",
+      "statement": "In stub mode a party picker's heading row holds only the caption \"Addresses\" and the role heading.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:50-54; domain/animals/constants/consignment-addresses-page.ts:3",
+      "quote": "await expect(picker.headingRowParts).toHaveText([ADDRESSES_CAPTION, picker.expectedHeading]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-090",
+      "statement": "Outside stub mode a party picker's heading row holds the caption, the role heading and exactly one \"Add a new address\" control, rendered as a button rather than a link, whose target is the INS address book add page with journey-type=gbn-ag.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:56-67",
+      "quote": "await expect(picker.headingRowParts).toHaveText([ADDRESSES_CAPTION, picker.expectedHeading, ADD_NEW_ADDRESS]);\n          await expect(picker.addNewAddress).toHaveAttribute('href', /\\/address-book\\/add\\?journey-type=gbn-ag/);\n          await expect(pages.page.getByRole('button', { name: ADD_NEW_ADDRESS })).toHaveCount(1);\n          await expect(pages.page.getByRole('link', { name: ADD_NEW_ADDRESS })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-091",
+      "statement": "Each party picker puts its role description straight under the heading row: the consignor's reads \"This is the sender of the consignment.\"",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:11-14,69-71",
+      "quote": "    role: 'Consignor',\n    description: 'This is the sender of the consignment.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-092",
+      "statement": "The place of origin picker's description reads \"The address where the animals begin their journey to Great Britain\".",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:15-18",
+      "quote": "    role: 'Place of origin',\n    description: 'The address where the animals begin their journey to Great Britain',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-093",
+      "statement": "The consignee picker's description reads \"This is the receiver or buyer of the consignment being shipped or transported.\"",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:19-22",
+      "quote": "    role: 'Consignee',\n    description: 'This is the receiver or buyer of the consignment being shipped or transported.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-094",
+      "statement": "The importer picker's description reads \"This is usually the same as the consignee. You can select a different person if needed.\"",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:23-26",
+      "quote": "    role: 'Importer',\n    description: 'This is usually the same as the consignee. You can select a different person if needed.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-095",
+      "statement": "The place of destination picker's description reads \"This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.\"",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:27-31",
+      "quote": "    description:\n      'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-096",
+      "statement": "The journey no longer serves its own create-an-address page: the live-animals addresses/create path answers 404.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-read-only.spec.ts:76-83",
+      "quote": "const response = await pages.page.goto(`${SET_BASES.liveAnimals}/notifications/${referenceNumber}/addresses/create?for=consignor`);\n\n    expect(response?.status()).toBe(404);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-097",
+      "statement": "Renaming and moving the address book record after a notification is submitted changes neither the submitted view nor the amendment: both still show the name and town copied at submission, and the submitted view's status tag reads \"Submitted\".",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts:44-57",
+      "quote": "await expect(animalsPages.notificationView.viewHeader.statusTag).toHaveText('Submitted');\n    await expect(originRow).toContainText(originalName);\n    await expect(originRow).toContainText('Carlisle');\n    await expect(originRow).not.toContainText(renamed);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-098",
+      "statement": "An amendment opened on a submitted notification is headed \"Review your notification\" and tagged \"Amend\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts:51-53; page-objects/animals/notification-view-page.ts:18",
+      "quote": "await expect(animalsPages.notificationView.heading).toHaveText(reviewHeadingText);\n    await expect(animalsPages.notificationView.statusTag).toHaveText('Amend');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-099",
+      "statement": "Cancelling an amendment, confirmed on its own confirmation page, returns to the notification view at ?cancelled=1 with the status back to Submitted and the copied address still as it was.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts:59-65",
+      "quote": "await animalsPages.notificationView.btnCancelAmend.click();\n    await animalsPages.notificationCancelAmend.confirm.click();\n    await expect(pages.page).toHaveURL(/\\/notification-view\\?cancelled=1$/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-100",
+      "statement": "Deleting the address book record after submission changes neither the submitted view nor its amendment, and shows no error on either.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts:92-104",
+      "quote": "await expect(originRow).toContainText(originalName);\n    await expect(originRow).toContainText('Carlisle');\n    await expect(animalsPages.notificationView.errorSummary).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-101",
+      "statement": "The animals notification dashboard offers an \"Address book\" link that leaves the animals frontend and lands on the INS frontend's /address-book page, headed \"Address book\", signing the user in if the INS frontend asks.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:25-31",
+      "quote": "await Promise.all([pages.page.waitForURL((url) => url.origin !== animalsOrigin), animalsPages.dashboard.linkAddressBook.click()]);\n    await insPages.addressBookList.completeSignInIfRequested();\n\n    await expect(pages.page).toHaveURL((url) => url.origin === insOrigin && url.pathname === '/address-book');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-102",
+      "statement": "From the INS address book the Dashboard link opens the INS dashboard, and creating a new notification there and choosing Live animals lands back on the animals frontend under the live-animals set base.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:33-38",
+      "quote": "await insPages.dashboard.btnCreateNew.click();\n    await insPages.notificationType.chooseNotificationType(LIVE_ANIMALS);\n\n    await expect(pages.page).toHaveURL((url) => url.origin === animalsOrigin && url.pathname.startsWith(SET_BASES.liveAnimals));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-103",
+      "statement": "An address opened in the INS address book with a return to a live-animals journey page goes Back to that exact page.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:51-56; page-objects/ins/address-book/url-with-return.ts:1",
+      "quote": "export const urlWithReturn = (url: string, returnTo: string): string => `${url}?return=${encodeURIComponent(returnTo)}`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-104",
+      "statement": "Deleting an address opened with such a return goes to the return page after the delete is confirmed, and the record is marked deleted.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:70-77",
+      "quote": "await insPages.addressBookDelete.confirm();\n\n      await expect(pages.page).toHaveURL(journeyPageUrl);\n      await expect(animalsPages.overview.heading).toBeVisible();\n      await expect.poll(async () => (await addressBookApi.getAddress(createdAddress.id)).deleted).toBe(true);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-105",
+      "statement": "A picker row's View link opens that address in the INS address book, and its Back returns to the same picker with the search term kept in the URL's q parameter and the row still listed.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:93-101",
+      "quote": "await expect(pages.page).toHaveURL(\n        (url) => url.origin === pickerOrigin && url.pathname === pickerPath && url.searchParams.get('q') === name,\n      );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-106",
+      "statement": "A View link followed while changing an answer returns, through Back, to the same picker keeping both the search term and the from trail, with the chosen row still checked.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:126-135",
+      "quote": "          url.searchParams.get('q') === chosenName &&\n          url.searchParams.get('from') === pickerUrl.searchParams.get('from'),\n      );\n      await expect(chosenRow).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-107",
+      "statement": "Saving the picker after that round trip returns to the Consignment addresses page still carrying the trail from the review, showing the chosen address.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:137-140",
+      "quote": "await expectOpenFromReview(pages.page, animalsPages.addresses, referenceNumber, animalsPages.notificationView.slug);\n      await expect(animalsPages.addresses.partyAddressLines('Consignor')).toContainText(chosenName);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-108",
+      "statement": "An address opened with a return to an animals frontend URL that no page serves is still returned to by Back, without the address book checking that the page exists.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:144-158",
+      "quote": "const unservedAnimalsReturnUrl = `${animalsOrigin}/germinal-products/notifications`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-109",
+      "statement": "The cross-service address book navigation tests run only against the compose stack and are tagged as touching the INS frontend.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:14",
+      "quote": "test.describe('Address book navigation between services', { tag: ['@compose', '@ins-frontend'] }, () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-110",
+      "statement": "A transporter created in the INS address book appears on the transporter list of the organisation's next notification.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:22-29",
+      "quote": "const created = await addressBookApi.createTransporter({ ...commercialTransporter, name });\n\n    await animalsJourney.startNotification();\n    await animalsJourney.answerCommodity();\n    await animalsJourney.reachTransporterFromHub();\n\n    await expect(animalsPages.transporter.transporter(name)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-111",
+      "statement": "That transporter's row on the journey's list shows its approval number and a status tag reading \"New\".",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:30-31",
+      "quote": "await expect(animalsPages.transporter.approvalNumberCell(name)).toHaveText(created.approvalNumber ?? '');\n    await expect(animalsPages.transporter.rowStatusTag(name)).toHaveText('New');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-112",
+      "statement": "The transporter can be picked and saved with Save and return to overview, and reopening the transporter page from the Overview shows it still checked.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:33-39",
+      "quote": "await animalsPages.transporter.saveAndReturnToOverview.click();\n\n    await expect(animalsPages.overview.heading).toBeVisible();\n\n    await animalsJourney.openTransporterFromOverview();\n    await expect(animalsPages.transporter.transporter(name)).toBeChecked();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-113",
+      "statement": "A transporter row's View details link opens that transporter's address book record in the INS frontend, and Back returns to the same transporter list URL, headed \"Transporter details\".",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:57-63; page-objects/animals/transporter-page.ts:10-12",
+      "quote": "await expect(insPages.addressBookTransporterView.heading(name)).toBeVisible();\n    await insPages.addressBookTransporterView.linkBack.click();\n\n    await expect(pages.page).toHaveURL(listUrl);\n    await expect(animalsPages.transporter.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-114",
+      "statement": "A transporter record carries a name, the Standard Address Block fields, a phone and email, a private-or-commercial type and an approval number, and a commercial transporter's country is the Northern Ireland code.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:5-14",
+      "quote": "const commercialTransporter: Omit<TransporterRequest, 'name'> = {\n  addressLine1: '7 Dockside Way',\n  townOrCity: 'Belfast',\n  postcode: 'BT1 1AA',\n  countryCode: COMMERCIAL_TRANSPORTER_COUNTRY_CODE,\n  phone: '+44 28 9000 1122',\n  email: 'ops@crossservice.example',\n  type: transporterTypes.commercial,\n  approvalNumber: 'NI/TA/CROSS/0001',\n};",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-115",
+      "statement": "The journey reaches its transporter list from the Overview task \"Transport details\", after arrival details and transit countries are answered.",
+      "kind": "behaviour",
+      "ref": "flows/animals/journey.ts:440-453",
+      "quote": "async openTransporterFromOverview(): Promise<void> {\n    await this.animalsPages.overview.heading.waitFor(pageLoadWait);\n    await this.animalsPages.overview.task('Transport details').click();\n    await this.animalsPages.transporter.heading.waitFor(pageLoadWait);\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-116",
+      "statement": "The address book holds six roles an address can play on a notification: place of origin, consignor, place of destination, consignee, importer and branch address.",
+      "kind": "data",
+      "ref": "domain/shared/constants/address-types.ts:20-27",
+      "quote": "export const addressRoles = {\n  placeOfOrigin: 'PLACE_OF_ORIGIN',\n  consignor: 'CONSIGNOR',\n  placeOfDestination: 'PLACE_OF_DESTINATION',\n  consignee: 'CONSIGNEE',\n  importer: 'IMPORTER',\n  branchAddress: 'BRANCH_ADDRESS',\n} as const;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-117",
+      "statement": "The roles question labels a role on a form as \"Place of origin\", \"Consignor\", \"Place of destination\", \"Consignee\", \"Importer\" and \"Branch address\".",
+      "kind": "copy",
+      "ref": "domain/ins/constants/address-book-types.ts:16-34",
+      "quote": "  PLACE_OF_ORIGIN: { columnLabel: 'Place of origin', optionLabel: 'Place of Origin', formLabel: 'Place of origin' },\n  CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor', formLabel: 'Consignor' },\n  PLACE_OF_DESTINATION: { columnLabel: 'Place of destination', optionLabel: 'Place of Destination', formLabel: 'Place of destination' },\n  CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee', formLabel: 'Consignee' },\n  IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer', formLabel: 'Importer' },\n  BRANCH_ADDRESS: { columnLabel: 'Branch', optionLabel: 'Branch Address', formLabel: 'Branch address' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p7-118",
+      "statement": "Every address book record a test creates in the shared end-to-end organisation is soft-deleted again after the test, one at a time, and a failed delete is logged rather than failing the test.",
+      "kind": "non-functional",
+      "ref": "utils/address-book-cleanup.ts:33-46; fixtures/ui.ts:179-183",
+      "quote": "/** Soft-deletes every tracked record one at a time, logging each delete that fails. Never throws. */\n  async deleteTrackedRecordsOneByOne(): Promise<void> {",
+      "confidence": "verbatim",
+      "note": "mechanism: a tracking wrapper round the address book API client; it works on the ids of records the test created, not on anything a user sees."
+    },
+    {
+      "id": "repo-tests-p7-119",
+      "statement": "Records the suite leaves behind in a CDP environment's shared organisation address book are cleared by name template, keeping every record a test did not create and re-seeding the journey fixtures afterwards, and the reset refuses to run against production.",
+      "kind": "non-functional",
+      "ref": "bin/reset-e2e-address-book.ts:12-21,173-185",
+      "quote": "Soft-deletes the records tests leave behind in the shared e2e organisation's\naddress book on the CDP environment ENVIRONMENT (or PLAYWRIGHT_ENVIRONMENT)\nnames. Only records whose name matches a template in\ndomain/shared/constants/test-record-names.ts are deleted; every other record is kept.",
+      "confidence": "verbatim",
+      "note": "mechanism: a maintenance script over the address book API; it lists live records, matches each name against the templates in domain/shared/constants/test-record-names.ts and soft-deletes the matches, dry run by default."
+    },
+    {
+      "id": "repo-tests-p7-120",
+      "statement": "No test in the animals address-book slice asserts a Remove action on a party row of the Consignment addresses page: the page offers Add, Change and Edit details only, with no remove control anywhere in the page object or the specs.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/addresses-page.ts:74-92; tests/animals/e2e/features/address-book/*.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for a remove or delete control on the addresses page object and in all nine specs; the only party controls are addParty, changeParty, sameAsParty and editPartyDetails."
+    },
+    {
+      "id": "repo-tests-p7-121",
+      "statement": "No test in the animals address-book slice asserts the incomplete-card validation wording for the Consignment addresses task, although the domain constants name it \"Complete consignment addresses\".",
+      "kind": "copy",
+      "ref": "domain/animals/constants/consignment-addresses-page.ts:5; tests/animals/e2e/features/address-book/*.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "CONSIGNMENT_ADDRESSES_INCOMPLETE is declared in the same constants file the slice's specs import, but none of the nine specs reads it; whichever part owns the overview and review specs may assert it."
+    },
+    {
+      "id": "repo-tests-p7-122",
+      "statement": "No test in the animals address-book slice asserts the roles question's legend, hint or options on the INS add page reached from the Place of origin, Importer or Place of destination pickers; only the Consignee picker's question and the Consignor picker's single option are proven.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:288,336-339",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The per-role loop at :92 asserts only the roles the saved record ends up holding, not what the question offered on the way."
+    },
+    {
+      "id": "repo-tests-p7-123",
+      "statement": "No test in the animals address-book slice proves the country-required message on the INS add page reached from the journey, although the constants name it \"Select a country\".",
+      "kind": "rule",
+      "ref": "domain/ins/constants/address-form.ts:34; tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:366-372",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The missing-answers test clears address line 1, town, postcode, email and phone but leaves the country chosen, so countryRequired is never exercised from the journey hand-off."
+    },
+    {
+      "id": "repo-tests-p7-124",
+      "statement": "No test in the animals address-book slice walks the add-a-transporter pages: the transporter it proves reaching the journey is created through the address book API, so the type question, its warning and the private transporter's country are unproven here.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:23,50; page-objects/animals/transporter-add-page.ts:9-30",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The transporter-add page object in the slice's read list names the heading \"Choose a transporter type\", the warning \"Check the transporter list before adding new transporters to avoid duplicates.\" and the radios Commercial and Private transporter, none of which any spec in this slice asserts."
+    },
+    {
+      "id": "repo-tests-p7-125",
+      "statement": "No test in the animals address-book slice asserts a \"Selected address\" restatement on the contact address page, although the party pickers carry one.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/contact-address-page.ts:28-52; page-objects/shared/address-picker-results.ts:88-92",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The contact address page object exposes resultsHeading and listedAddressIds but no chosen-address restatement helper, and no spec in the slice looks for one."
+    },
+    {
+      "id": "repo-tests-p7-126",
+      "statement": "No test in the animals address-book slice asserts a page size or pagination on the contact address page: the eight-a-page rule is proven for the party pickers only.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts:132-187; tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts:182-211",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The contact address test asserts only the relative order of three listed branch addresses, never a count or a pagination control."
+    }
+  ]
+}

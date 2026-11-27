@@ -1,0 +1,943 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 11, the high-risk plants journey's endings, read in full: the four feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features/ named declaration (page.js, controller.js, controller.test.js, template.njk, declaration.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js), confirmation (the same eight files), delete-notification (the same eight files) and cancel-amend (the same eight files, its page.js carrying id but no slug), plus review/lateness.js and src/server/app/shared/kit.js for context only (parts 10 and 13 claim those), and src/server/app/shared/paths.js and src/server/app/shared/copy.en.js's notificationActions block read only far enough to resolve the paths and the delete success banner the slice's files reference, and fit/high-risk-plants-journey.js lines 985-1024 for the two declaration helpers the fit specs drive the pages through. It covers four served pages: the declaration at /notifications/{journeyId}/declaration (GET and POST), the confirmation at /notifications/{journeyId}/confirmation (GET only), the delete confirmation at /notifications/{journeyId}/delete (GET and POST) and the cancel-amendment confirmation at /notifications/{journeyId}/cancel-amend (GET and POST); every copy key of the four features in English and in machine-draft Welsh; each page's heading, body, components, buttons, links, back link, status strip, hidden form fields and where each outcome leads; the declaration's single required checkbox with its error message, the lateness flag written at first submission and the submission and refusal outcomes; the confirmation's panel, dated receipt, conditional late banner and two exit links; the delete page's deletable states, soft delete and dashboard success banner; the cancel-amendment page's restore of the submitted snapshot; and all 26 fit tests (8 declaration, 2 confirmation, 4 delete-notification, 12 cancel-amend) with what each proves, the no-JavaScript cancel-amend path and the axe checks among them. It stops at check your answers (notification-view), the review foot controls' own feature, the dashboard feature and the shared kit, which other parts claim; where a fit spec in this slice reaches those pages the claim records only what the slice's test asserts.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p11-001",
+      "statement": "The high-risk plants declaration page is served at /notifications/{journeyId}/declaration and answers both GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/page.js:1-5 and controller.js:132",
+      "quote": "export const declarationPage = {\n  id: 'declaration',\n  slug: 'declaration',\n  maturity: 'exploring'\n}\n…\nexport const routes = kit.pageRoutes(page, { get, post })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-002",
+      "statement": "The declaration page's maturity level is 'exploring', so its behaviour is not signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/page.js:4",
+      "quote": "maturity: 'exploring'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-003",
+      "statement": "The declaration page's H1 reads 'Declaration', as a large heading, and is also the page title.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:11 and copy/copy.en.js:2",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ copy.title }}</h1>\n…\n  title: 'Declaration',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-004",
+      "statement": "The declaration page shows no section caption above its heading, so the heading is the first thing in the page's content column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:61 and declaration.fit.spec.js:69-75",
+      "quote": "expect(h.captured.view.context.caption).toBeUndefined()\n…\ntest('starts the page with the heading', async ({ page }) => {\n  await openDeclaration(page)\n\n  await expect(\n    page.locator('main .govuk-grid-column-two-thirds > :first-child')\n  ).toHaveText(declarationCopy.title)\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-005",
+      "statement": "The declaration page shows three statements as a bulleted list above the confirmation checkbox.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:13-15 and copy/copy.test.js:9-11",
+      "quote": "<ul class=\"govuk-list govuk-list--bullet\">\n    {% for item in copy.body %}<li>{{ item }}</li>{% endfor %}\n  </ul>\n…\nit.each([en, cy])('Should contain three plants statements', (copy) => {\n    expect(copy.body).toHaveLength(3)\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-006",
+      "statement": "The declaration's first statement reads 'I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:4",
+      "quote": "'I am notifying the competent authority of this consignment as required under the Plant Health National Notification Scheme.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-007",
+      "statement": "The declaration's second statement reads 'I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:5",
+      "quote": "'I understand that the relevant plant health authority (APHA, the Forestry Commission or Scottish Government) may carry out a spot check on this consignment, without prior notice, at its place of destination or where it is currently held.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-008",
+      "statement": "The declaration's third statement reads 'I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js:6",
+      "quote": "'I understand that failing to notify, notifying late or giving incorrect details may be treated as a non-compliance.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-009",
+      "statement": "The declaration page asks the notifier to tick one small checkbox, value 'confirmed', labelled 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:21-38 and copy/copy.en.js:8-9",
+      "quote": "{{ govukCheckboxes({\n      name: \"declaration\",\n      classes: \"govuk-checkboxes--small\",\n…\n        {\n          value: \"confirmed\",\n          text: copy.declarationLabel,\n…\n  declarationLabel:\n    'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-010",
+      "statement": "The confirmation checkbox sits in a group whose legend reads 'Declaration confirmation' and that legend is visually hidden, so only assistive technology announces it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:24-29, copy/copy.en.js:10 and declaration.fit.spec.js:44-55",
+      "quote": "fieldset: {\n        legend: {\n          text: copy.declarationLegend,\n          classes: \"govuk-visually-hidden\"\n        }\n      },\n…\n  declarationLegend: 'Declaration confirmation',\n…\n  const group = page.getByRole('group', {\n    name: declarationCopy.declarationLegend\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-011",
+      "statement": "The declaration page shows the line 'Date of declaration:' followed by the date in bold.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:40 and copy/copy.en.js:11",
+      "quote": "<p class=\"govuk-body\">{{ copy.dateOfDeclaration }} <strong>{{ submissionDate }}</strong></p>\n…\n  dateOfDeclaration: 'Date of declaration:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-012",
+      "statement": "The date of declaration is the day the page is being viewed, in London time, written as a long day such as '2 June 2026', and it is recalculated on every render rather than read from stored state.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:46, controller.test.js:49-60 and declaration.fit.spec.js:57-67",
+      "quote": "submissionDate: formatMomentAsLongDay(requestClock(request)),\n…\n    request.app.clock = () => new Date('2026-06-01T23:30:00Z')\n    await get(request, h)\n…\n      submissionDate: '2 June 2026',\n…\n  await expect(date).toHaveText(/^\\d{1,2} [A-Z][a-z]+ \\d{4}$/)",
+      "confidence": "verbatim",
+      "note": "mechanism: formats the request clock for display; the clock comes from request.app.clock via requestClock in review/lateness.js, which part 10 claims."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-013",
+      "statement": "The declaration page's only button reads 'Continue', even though pressing it submits the notification.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:42 and copy/copy.en.js:12",
+      "quote": "{{ govukButton({ text: copy.continueButton }) }}\n…\n  continueButton: 'Continue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-014",
+      "statement": "The declaration page offers no save-and-return or cancel-and-return action: its form holds the single Continue button and nothing else.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:17-43",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n…\n    {{ govukButton({ text: copy.continueButton }) }}\n  </form>",
+      "confidence": "inferred",
+      "note": "The template includes no shared/save-actions.njk and no second button, so the only way off the page is Continue or the Back link."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-015",
+      "statement": "The declaration page's form carries a hidden crumb field and a hidden concurrencyToken field holding the journey's current token.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk:18-19, controller.test.js:70-76 and declaration.fit.spec.js:77-86",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n…\n    expect(h.captured.view.context.concurrencyToken).toBe(\n      (await store.get(id)).concurrencyToken\n    )\n…\n  await expect(page.locator('input[name=\"concurrencyToken\"]')).toHaveAttribute(\n    'value',\n    /.+/\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-016",
+      "statement": "The declaration page's Back link goes to the notification view at /notifications/{journeyId}/notification-view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:39, controller.test.js:57 and declaration.fit.spec.js:36-41",
+      "quote": "backLink: pagePath(journey.journeyId, kit.CYA_SLUG),\n…\n      backLink: `${SET_BASE}/notifications/${id}/notification-view`,\n…\n  await page\n    .getByRole('link', { name: sharedCopy.layout.back, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/notification-view$`)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-017",
+      "statement": "The declaration page shows no journey status strip, on a draft or on an amendment, so the Draft and Amend tags and the Cancel amend control are both absent from it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:41, controller.test.js:64-68 and 78-84",
+      "quote": "showJourneyStrip: false,\n…\n  it('Should render no status strip on a draft', async () => {\n…\n    expect(h.captured.view.context.journeyStrip).toBeNull()\n…\n  it('Should render no status strip on an amendment', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-018",
+      "statement": "Opening the declaration page shows the confirmation checkbox already ticked when the notifier has confirmed it before, and unticked otherwise.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:74, template.njk:35 and declaration.fit.spec.js:29-31",
+      "quote": "  return render(request, h, journey, { declaration: answers.declaration ?? '' })\n…\n          checked: values.declaration == \"confirmed\"\n…\n  await expect(\n    page.getByRole('checkbox', { name: declarationCopy.declarationLabel })\n  ).not.toBeChecked()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-019",
+      "statement": "Pressing Continue without ticking the checkbox refuses the submission with the error 'Confirm that the information is true and correct before submitting', answers 400, keeps the posted value on the page and writes nothing to the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:26-28 and 89-94, copy/copy.en.js:13-16, controller.test.js:86-100",
+      "quote": "const fields = compose(\n  requiredOneOf('declaration', ['confirmed'], copy.errors.declarationRequired)\n)\n…\n    declarationRequired:\n      'Confirm that the information is true and correct before submitting'\n…\n      expect(result.statusCode).toBe(400)\n      expect(h.captured.view.context.values).toEqual({ declaration })\n…\n      expect((await store.get(id)).answers).toEqual(COMPLETE_NOTIFICATION)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-020",
+      "statement": "Only the value 'confirmed' on its own satisfies the declaration: an empty answer, any other value and a pair of values including 'confirmed' are all refused.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:86-87",
+      "quote": "it.each(['', 'no', ['confirmed', 'no']])(\n    'Should refuse invalid declaration %j without writing and preserve the input',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-021",
+      "statement": "A refused declaration shows the shared error summary with one entry carrying the declaration error message and linking to #declaration, and following that link moves focus to the confirmation checkbox.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:94-96 and declaration.fit.spec.js:88-105",
+      "quote": "      expect(h.captured.view.context.errorSummary.errorList).toEqual([\n        { text: copy.errors.declarationRequired, href: '#declaration' }\n      ])\n…\n  await link.click()\n  await expect(\n    page.getByRole('checkbox', { name: declarationCopy.declarationLabel })\n  ).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-022",
+      "statement": "A declaration refused for a missing tick is not logged, because it is the notifier's own input error shown back on the form.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:98",
+      "quote": "      expectNoRefusalLogged(request.logger)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-023",
+      "statement": "The declaration page and the declaration page in its error state each pass an axe check with no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:35 and 104",
+      "quote": "  await expectNoSeriousOrCriticalViolations(page, 'Declaration')\n…\n  await expectNoSeriousOrCriticalViolations(page, 'Declaration with an error')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-024",
+      "statement": "The declaration is the only answer the declaration page collects.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:21 and controller.test.js:44-47",
+      "quote": "export const meta = { ...page, collects: ['declaration'] }\n…\n    expect(meta.collects).toEqual(['declaration'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-025",
+      "statement": "A confirmed declaration on a draft records a late-or-on-time notification indicator worked out from the day of submission, the commodity type and the arrival date, and that indicator is system-owned rather than asked for.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:100-109 and controller.test.js:46 and 102-131",
+      "quote": "      await state.commit(request, h, {\n        declaration: value.declaration,\n        ...(journey.status === state.DRAFT && {\n          lateNotificationIndicator: lateness(\n            requestClock(request),\n            answers.commodityType,\n            answers.arrivalDate\n          )\n        })\n…\n    expect(SYSTEM_POPULATED.has(lateNotificationIndicator.name)).toBe(true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-026",
+      "statement": "A late-or-on-time indicator posted in the form is ignored: the stored indicator is the one the service works out.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:102-120",
+      "quote": "    'Should commit %s as %s before finalising and ignore forged system input',\n…\n      request.payload = {\n        declaration: 'confirmed',\n        lateNotificationIndicator: 'forged'\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-027",
+      "statement": "The late-or-on-time indicator is written before the notification is finalised, so the submitted record already carries it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:100-110 and controller.test.js:114-119",
+      "quote": "      const finalise = async (...args) => {\n        expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n          expected\n        )\n        return recordsStub.finalise(...args)\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-028",
+      "statement": "Confirming the declaration on an amendment leaves the indicator recorded at first submission untouched, so a notification submitted on time stays on time however late the amendment is made.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:102 and controller.test.js:186-200",
+      "quote": "  it('Should preserve first-submission lateness when finalising an amendment', async () => {\n…\n    expect((await store.get(id)).answers.lateNotificationIndicator).toBe(\n      'on-time'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-029",
+      "statement": "A confirmed declaration that the service accepts submits the notification and opens its confirmation page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:110 and 129, controller.test.js:121-126",
+      "quote": "      result = await state.submitJourney(request, h)\n…\n  return h.redirect(pagePath(journey.journeyId, 'confirmation'))\n…\n      expect(await post(request, h)).toEqual({\n        redirect: `${SET_BASE}/notifications/${id}/confirmation`\n      })\n      const saved = await store.get(id)\n      expect(saved.status).toBe(state.SUBMITTED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-030",
+      "statement": "A declaration confirmed on a notification whose answers are still incomplete is refused: nothing is submitted, the notifier is sent back to the notification view and the service logs the refusal once at info as 'Declaration refused' with the reason 'review-outstanding', the journey id and the concurrency token.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:52-67 and 83-85, controller.test.js:133-149",
+      "quote": "export const DECLARATION_REFUSAL = Object.freeze({\n  review: 'review-outstanding',\n  submission: 'submission-rejected'\n})\n…\n      'Declaration refused'\n…\n    expect((await store.get(id)).status).toBe(state.DRAFT)\n…\n        refusal: DECLARATION_REFUSAL.review,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-031",
+      "statement": "A notification whose copied address breaks the address-book rules is refused at the declaration too: it stays a draft with its answers unchanged and the notifier is returned to the notification view.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:151-167",
+      "quote": "  it('Should send a copied address that breaks the address-book rules back to check answers, unsubmitted', async () => {\n…\n    expect(saved.status).toBe(state.DRAFT)\n    expect(saved.answers).toEqual(seed)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-032",
+      "statement": "A submission the service rejects is refused with the reason 'submission-rejected', logged the same way, and the notifier is returned to the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:121-128",
+      "quote": "  if (!result.ok) {\n    return refuseDeclaration(\n      request,\n      h,\n      journey,\n      DECLARATION_REFUSAL.submission\n    )\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-033",
+      "statement": "A recoverable backend failure while submitting shows the declaration page again at 500 with the recoverable-failure banner and the notifier's tick still in place, rather than losing the answer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:97-119 and controller.test.js:202-213",
+      "quote": "    expect((await post(request, h)).statusCode).toBe(500)\n    expect(h.captured.view.context).toMatchObject({\n      recoverableError: true,\n      values: { declaration: 'confirmed' }\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-034",
+      "statement": "A persistence failure that is not recoverable is not dressed up as a banner: it escapes the declaration page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js:215-225",
+      "quote": "  it('Should let unexpected persistence errors escape', async () => {\n…\n    await expect(post(request, h)).rejects.toThrow('unexpected')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-035",
+      "statement": "Opening or posting the declaration page for a notification that is already submitted sends the notifier to its confirmation page instead, and changes nothing about the stored notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:71-73 and 80-82, controller.test.js:169-184, declaration.fit.spec.js:139-142",
+      "quote": "  if (journey.status === state.SUBMITTED) {\n    return h.redirect(pagePath(journey.journeyId, 'confirmation'))\n  }\n…\n  await page.goto(`${BASE}/notifications/${reference}/declaration`)\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/confirmation$`)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-036",
+      "statement": "A declaration posted against a notification that changed since the page was shown is sent back to the declaration page with a staleAction marker rather than overwriting the change.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:132 and src/server/app/shared/kit.js:322-355",
+      "quote": "export const routes = kit.pageRoutes(page, { get, post })\n…\nconst redirectOnStaleAction = (post) => async (request, h) => {\n…\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "inferred",
+      "note": "The declaration builds its routes with kit.pageRoutes, which wraps every POST in the stale-token redirect. The delete and cancel-amend pages in this slice build their routes by hand and so do not get it."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-037",
+      "statement": "A notifier reaches the declaration page by pressing Continue at the foot of the notification view.",
+      "kind": "behaviour",
+      "ref": "fit/high-risk-plants-journey.js:991-1000",
+      "quote": "export const openDeclaration = async (page, options) => {\n  const reference = await completePotatoNotification(page, options)\n  await page\n    .getByRole('button', { name: checkAnswersCopy.continue, exact: true })\n    .click()\n  await expect(page).toHaveURL(\n    new RegExp(`${BASE}/notifications/${reference}/declaration$`)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-038",
+      "statement": "A notification submitted late keeps its late banner on the read-only notification view after submission, and that view offers neither Continue nor any Change link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:107-143",
+      "quote": "  await expect(\n    page.getByRole('heading', { name: checkAnswersCopy.late.heading })\n  ).toBeVisible()\n…\n  await expect(\n    page.getByRole('button', { name: checkAnswersCopy.continue, exact: true })\n  ).toHaveCount(0)\n  await expect(page.getByRole('link', { name: /^Change/ })).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The notification view itself is part 10's; this claim records only what the declaration fit spec asserts about it after submission."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-039",
+      "statement": "The read-only view of a submitted late notification passes an axe check with no serious or critical accessibility violations, and keeps its late banner after a reload.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:131-138",
+      "quote": "  await expectNoSeriousOrCriticalViolations(\n    page,\n    'Submitted notification with a late banner'\n  )\n  await page.reload()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-040",
+      "statement": "A notification submitted on time shows no late banner on its notification view after submission, and that view shows the notification reference as a heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js:145-169",
+      "quote": "test('submits an on-time notification without a late banner', async ({\n…\n  await expect(notificationReferenceHeading(page)).toBeVisible()\n  await expect(\n    page.getByRole('heading', { name: checkAnswersCopy.late.heading })\n  ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-041",
+      "statement": "Every declaration string has a Welsh counterpart, marked a machine draft that no translator has reviewed and not to be shipped without Welsh Language Standards sign-off.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.cy.js:1-18 and copy/copy.test.js:7",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.\nexport const copy = {\n  title: 'Datganiad',\n…\n  itHoldsCopyAtEveryLeaf(en, cy)",
+      "confidence": "verbatim",
+      "note": "The Welsh leaves are title 'Datganiad', three body statements, declarationLabel, declarationLegend 'Cadarnhau’r datganiad', dateOfDeclaration 'Dyddiad y datganiad:', continueButton 'Parhau' and errors.declarationRequired 'Cadarnhewch fod yr wybodaeth yn wir ac yn gywir cyn cyflwyno'."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-042",
+      "statement": "The confirmation page is served at /notifications/{journeyId}/confirmation and answers GET only, so it can be reloaded and bookmarked but never posted to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/page.js:1-5, controller.js:47-54 and controller.test.js:31-37",
+      "quote": "export const confirmationPage = {\n  id: 'confirmation',\n  slug: 'confirmation',\n  maturity: 'exploring'\n}\n…\n    expect(routes.map(({ method }) => method)).toEqual(['GET'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-043",
+      "statement": "The confirmation page's maturity level is 'exploring', so its behaviour is not signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/page.js:4",
+      "quote": "maturity: 'exploring'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-044",
+      "statement": "The confirmation page opens with a GOV.UK panel whose heading reads 'Notification submitted' and whose body reads 'Your notification reference' on one line and the notification's reference in bold on the next.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:7-9 and copy/copy.en.js:2-3",
+      "quote": "{% set referenceHtml %}{{ copy.reference }}<br><strong>{{ reference }}</strong>{% endset %}\n…\n  {{ govukPanel({ titleText: copy.title, html: referenceHtml }) }}\n…\n  title: 'Notification submitted',\n  reference: 'Your notification reference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-045",
+      "statement": "The reference the confirmation panel shows is the notification's own journey id.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:38 and controller.test.js:53",
+      "quote": "    reference: journey.journeyId,\n…\n        reference: journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-046",
+      "statement": "Below the panel the confirmation page reads 'Your notification has been submitted. Keep the reference for your records.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:10 and copy/copy.en.js:4",
+      "quote": "<p class=\"govuk-body\">{{ copy.body }}</p>\n…\n  body: 'Your notification has been submitted. Keep the reference for your records.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-047",
+      "statement": "The confirmation page shows 'Date of notification:' followed by the London date the notification was submitted.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:11-13, copy/copy.en.js:5, controller.js:39 and controller.test.js:93-109",
+      "quote": "  {% if notificationDate %}\n    <p class=\"govuk-body\">{{ copy.dateOfNotification }} {{ notificationDate }}</p>\n  {% endif %}\n…\n  dateOfNotification: 'Date of notification:',\n…\n      { submittedAt: '2026-08-11T23:30:00Z', shown: '12 August 2026' },\n      { submittedAt: '2026-01-11T23:30:00Z', shown: '11 January 2026' }",
+      "confidence": "verbatim",
+      "note": "The two dated cases prove the date is the London day rather than the UTC one: an instant late on 11 August UTC shows as 12 August, while the same clock time in January shows as 11 January."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-048",
+      "statement": "A submitted notification holding no submission instant shows no date-of-notification line at all, rather than a blank or placeholder date.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:11 and controller.test.js:112-132",
+      "quote": "  {% if notificationDate %}\n…\n      expect(h.captured.view.context.notificationDate).toBeNull()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-049",
+      "statement": "A notification recorded as late shows a GOV.UK notification banner on its confirmation page titled 'Important', headed 'Your notification was made outside the required timing', whose body gives the timing rule the notification missed followed by 'It has still been accepted and recorded.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:14-20 and copy/copy.en.js:6-9",
+      "quote": "  {% if late %}\n    {% set lateBody %}\n      <h2 class=\"govuk-notification-banner__heading\">{{ copy.late.heading }}</h2>\n      <p class=\"govuk-body\">{{ lateRule }} {{ copy.late.accepted }}</p>\n    {% endset %}\n    {{ govukNotificationBanner({ titleText: copy.late.title, html: lateBody }) }}\n…\n  late: {\n    title: 'Important',\n    heading: 'Your notification was made outside the required timing',\n    accepted: 'It has still been accepted and recorded.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-050",
+      "statement": "The confirmation page shows the late banner only when the notification's stored late-or-on-time indicator reads 'late', and reads that stored indicator rather than working lateness out again.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:40 and controller.test.js:62-88",
+      "quote": "    late: answers.lateNotificationIndicator === 'late',\n…\n    'Should date the receipt and read the $indicator banner from the stored indicator',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-051",
+      "statement": "The late timing rule for a potato consignment reads 'Notifications for potatoes must be made at least <days> days before the expected date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js:10-11 and controller.test.js:85",
+      "quote": "    potatoes: (days) =>\n      `Notifications for potatoes must be made at least ${days} days before the expected date of arrival.`,\n…\n        lateRule: copy.late.potatoes(POTATO_DAYS_BEFORE_ARRIVAL)",
+      "confidence": "verbatim",
+      "note": "The number of days comes from the set's timing-windows module, which another part claims; the confirmation page only writes it into the sentence."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-052",
+      "statement": "The late timing rule for a plants-for-planting or wood consignment reads 'Notifications for plants for planting and wood must be made no later than <days> days after the date of arrival.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js:12-13 and controller.test.js:134-147",
+      "quote": "    plantsAndWood: (days) =>\n      `Notifications for plants for planting and wood must be made no later than ${days} days after the date of arrival.`\n…\n    expect(h.captured.view.context.lateRule).toBe(\n      copy.late.plantsAndWood(PLANTS_WOOD_DAYS_AFTER_ARRIVAL)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-053",
+      "statement": "Both locales write the timing window's number of days into the late rule sentence.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.test.js:9-15",
+      "quote": "    'Should write the timing window into both late rules',\n    (copy) => {\n      expect(copy.late.potatoes(2)).toContain('2')\n      expect(copy.late.plantsAndWood(4)).toContain('4')\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-054",
+      "statement": "The confirmation page ends with two links, 'View your notification' going to the notification view and 'Return to dashboard' going to the set's notification list at its root.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:21-22, copy/copy.en.js:15-16, controller.js:42-43 and controller.test.js:52-53",
+      "quote": "<p class=\"govuk-body\"><a class=\"govuk-link\" href=\"{{ notificationHref }}\">{{ copy.viewNotification }}</a></p>\n  <p class=\"govuk-body\"><a class=\"govuk-link\" href=\"{{ dashboardHref }}\">{{ copy.returnToDashboard }}</a></p>\n…\n  viewNotification: 'View your notification',\n  returnToDashboard: 'Return to dashboard'\n…\n        notificationHref: `${SET_BASE}/notifications/${journeyId}/notification-view`,\n        dashboardHref: SET_BASE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-055",
+      "statement": "The confirmation page has no Back link and no section caption, so the only ways on from it are its two links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js:56-57 and confirmation.fit.spec.js:38-40",
+      "quote": "      expect(h.captured.view.context.backLink).toBeUndefined()\n      expect(h.captured.view.context.caption).toBeUndefined()\n…\n  await expect(\n    page.getByRole('link', { name: sharedCopy.layout.back, exact: true })\n  ).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-056",
+      "statement": "The confirmation page shows the journey status strip carrying the notification's reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:36 and controller.test.js:54",
+      "quote": "    ...kit.base(copy.title, { journey, page }),\n…\n        journeyStrip: { reference: journeyId }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-057",
+      "statement": "Reloading or revisiting the confirmation page shows the same receipt and changes nothing about the stored notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js:39-60 and confirmation.fit.spec.js:42-45",
+      "quote": "    for (let visit = 0; visit < 2; visit++) {\n…\n    expect(await store.get(journeyId)).toEqual(before)\n…\n  await page.reload()\n  await expect(\n    page.getByRole('heading', { name: confirmationCopy.title, level: 1 })\n  ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-058",
+      "statement": "The confirmation page refuses to show a receipt for a notification that is not submitted: a draft or an amendment is sent to its declaration page instead, and the status is left as it was.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:23-34, controller.test.js:149-171 and confirmation.fit.spec.js:66-77",
+      "quote": "  if (journey.status !== state.SUBMITTED) {\n…\n    return h.redirect(pagePath(journey.journeyId, declarationPage.slug))\n…\n    'Should send %s to its declaration, log the refusal and leave the status unchanged',\n…\ntest('sends a draft to its declaration instead of showing a receipt', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-059",
+      "statement": "A refused confirmation is logged once at info as 'Confirmation refused' with the journey id, the journey's status, the signed-in organisation's id and the reason 'not-submitted'.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:24-32 and controller.test.js:159-168",
+      "quote": "    request.logger.info(\n      {\n        journeyId: journey.journeyId,\n        status: journey.status,\n        organisationId: organisationIdOf(request),\n        refusal: 'not-submitted'\n      },\n      'Confirmation refused'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-060",
+      "statement": "The confirmation page collects no answers.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js:18 and controller.test.js:32",
+      "quote": "export const meta = { ...page, collects: [] }\n…\n    expect(meta.collects).toEqual([])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-061",
+      "statement": "The journey's review section runs notification view, then declaration, then confirmation, in that order.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js:34-37",
+      "quote": "    expect(\n      sections.find(({ id }) => id === 'review').pages.map(({ id }) => id)\n    ).toEqual(['notification-view', 'declaration', 'confirmation'])",
+      "confidence": "verbatim",
+      "note": "The flow file itself is another part's; this claim records what the confirmation's own test pins down."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-062",
+      "statement": "The confirmation page passes an axe check with no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js:41",
+      "quote": "  await expectNoSeriousOrCriticalViolations(page, 'Confirmation')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-063",
+      "statement": "Following 'View your notification' from the confirmation opens the read-only notification view, which offers no Change links; following 'Return to dashboard' opens the notification list with its start button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js:46-63",
+      "quote": "  await expect(page.getByRole('link', { name: /^Change/ })).toHaveCount(0)\n…\n  await expect(page).toHaveURL(BASE)\n  await expect(\n    page.getByRole('button', { name: dashboardCopy.startButton })\n  ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-064",
+      "statement": "Every confirmation string has a Welsh counterpart, marked a machine draft that no translator has reviewed.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.cy.js:1-18 and copy/copy.test.js:7",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator.\nexport const copy = {\n  title: 'Hysbysiad wedi’i gyflwyno',\n…\n  itHoldsCopyAtEveryLeaf(en, cy)",
+      "confidence": "verbatim",
+      "note": "The Welsh leaves are title 'Hysbysiad wedi’i gyflwyno', reference 'Cyfeirnod eich hysbysiad', body, dateOfNotification 'Dyddiad yr hysbysiad:', late.title 'Pwysig', late.heading, late.accepted, both late rule sentences, viewNotification 'Gweld eich hysbysiad' and returnToDashboard 'Dychwelyd i’r dangosfwrdd'. Unlike the English file its header omits the Welsh Language Standards sign-off warning the other three features carry."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-065",
+      "statement": "The confirmation page tells the notifier nothing about what happens next: beyond the one-sentence receipt and the dated line it offers no next-steps heading, no guidance on checks or timing, and no contact details.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk:6-23 and copy/copy.en.js:1-17",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the confirmation template (every block of it) and in both its copy files; the only content is the panel, the one body sentence, the conditional date line, the conditional late banner and the two exit links."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-066",
+      "statement": "The delete confirmation page is served at /notifications/{journeyId}/delete and answers both GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/page.js:1-5 and controller.js:78-91",
+      "quote": "export const deleteNotificationPage = {\n  id: 'delete-notification',\n  slug: 'delete',\n  maturity: 'exploring'\n}",
+      "confidence": "verbatim",
+      "note": "The feature's id is delete-notification but the served slug is the shorter 'delete'."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-067",
+      "statement": "The delete confirmation page's maturity level is 'exploring', so its behaviour is not signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/page.js:4",
+      "quote": "maturity: 'exploring'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-068",
+      "statement": "A notifier reaches the delete confirmation page from the Delete action on the notification's card in the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:17-29 and src/server/app/shared/copy.en.js:55-59",
+      "quote": "  await cardLink(\n    page,\n    sharedCopy.notificationActions.delete.text,\n    reference\n  ).click()\n…\n    delete: {\n      text: 'Delete',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-069",
+      "statement": "The delete confirmation page's H1 asks 'Delete this notification?'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:5, copy/copy.en.js:2 and controller.test.js:41",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n…\n  title: 'Delete this notification?',\n…\n      heading: 'Delete this notification?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-070",
+      "statement": "The delete confirmation page warns 'This cannot be undone.' in a plain paragraph, with no GOV.UK warning-text or inset component.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:6 and copy/copy.en.js:3",
+      "quote": "<p class=\"govuk-body\">{{ copy.body }}</p>\n…\n  body: 'This cannot be undone.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-071",
+      "statement": "The delete confirmation page offers two controls in one button group: a warning-styled 'Yes, delete notification' that posts, and a secondary 'No, return to dashboard' that links to the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:11-21, copy/copy.en.js:4-5 and delete-notification.fit.spec.js:45-50",
+      "quote": "<div class=\"govuk-button-group\">\n      {{ govukButton({\n        text: copy.confirmButton,\n        classes: \"govuk-button--warning\"\n      }) }}\n      {{ govukButton({\n        text: copy.noLink,\n        href: noHref,\n        classes: \"govuk-button--secondary\"\n      }) }}\n…\n  confirmButton: 'Yes, delete notification',\n  noLink: 'No, return to dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-072",
+      "statement": "The delete confirmation page's Back link also goes to the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:34 and delete-notification.fit.spec.js:51-53",
+      "quote": "      backLink: dashboardPath(),\n…\n    await expect(\n      page.getByRole('link', { name: sharedCopy.layout.back, exact: true })\n    ).toHaveAttribute('href', BASE)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-073",
+      "statement": "The delete confirmation page's form posts back to the delete page itself and carries a hidden crumb field and a hidden concurrencyToken field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:8-10, controller.js:40 and controller.test.js:42",
+      "quote": "<form method=\"post\" action=\"{{ deleteAction }}\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n…\n      deleteAction: pagePath(journey.journeyId, 'delete'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-074",
+      "statement": "The delete confirmation page shows the journey status strip, so the notification's reference and its status tag identify what is about to be deleted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42 and src/server/app/shared/kit.js:252-280",
+      "quote": "const render = (h, journey, { recoverableError = false } = {}) =>\n  h.view(view, {\n    ...kit.base(copy.title, {\n      backLink: dashboardPath(),\n      journey,\n      recoverableError\n    }),",
+      "confidence": "inferred",
+      "note": "The render passes the journey and leaves the shared chrome's showJourneyStrip at its default of true, so the strip renders with the reference and the status tag. Neither the unit tests nor the fit spec asserts it, so the page's own heading and body name no reference."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-075",
+      "statement": "The delete confirmation page is shown only for a notification that is a draft, submitted or being amended; for any other state, an already-deleted one included, the notifier is sent to the notification list on both opening the page and confirming.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:23-26, 49 and 57-59, controller.test.js:62-72",
+      "quote": "const deletable = (journey) =>\n  journey.status === state.DRAFT ||\n  journey.status === state.SUBMITTED ||\n  journey.status === state.AMEND\n…\n  it('Should handle an already-deleted journey without another transition', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-076",
+      "statement": "A notification the session does not hold is neither shown on the delete page nor deleted: both opening the page and confirming send the requester to the notification list and the record keeps its status.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:28-29, 45-47 and 53-55, controller.test.js:74-84",
+      "quote": "const journeyBelongsToSession = (request) =>\n  isKnownJourney(request, request.params.journeyId)\n…\n  it('Should refuse to disclose or delete a journey the session does not hold', async () => {\n…\n    expect(getResponse).toEqual({ redirect: SET_BASE })\n    expect(postResponse).toEqual({ redirect: SET_BASE })",
+      "confidence": "verbatim",
+      "note": "Guards the notification-scoped delete surface against a request for someone else's reference."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-077",
+      "statement": "Confirming the deletion soft-deletes the notification and returns the notifier to the notification list carrying a deleted marker in the address, and the notification no longer appears in the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:61-75, controller.test.js:48-60 and delete-notification.fit.spec.js:69-86",
+      "quote": "  return deleted\n    ? h.redirect(`${dashboardPath()}?deleted=1`)\n    : h.redirect(dashboardPath())\n…\n    expect(response).toEqual({ redirect: `${SET_BASE}?deleted=1` })\n    expect((await records.load({ journeyId: journey.journeyId })).status).toBe(\n      DELETED\n    )\n    expect(\n      (await records.list({ journeyIds: [journey.journeyId] })).rows\n    ).toEqual([])",
+      "confidence": "verbatim",
+      "note": "The record is kept and marked deleted rather than removed, and the list filters it out."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-078",
+      "statement": "After a confirmed deletion the notification list shows the success message 'Notification deleted' with the body 'The notification has been deleted.' and the deleted notification's reference is gone from the list.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:76-86 and src/server/app/shared/copy.en.js:55-59",
+      "quote": "    await expect(\n      page.getByText(sharedCopy.notificationActions.delete.successTitle)\n    ).toBeVisible()\n…\n      successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
+      "confidence": "verbatim",
+      "note": "The shared notification-actions copy is part 13's; this claim records what the delete fit spec proves the list shows after a deletion."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-079",
+      "statement": "Pressing 'No, return to dashboard' leaves the notification in place: the notifier returns to the notification list and the notification is still there under its reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:56-67",
+      "quote": "test('No returns to the dashboard and keeps the notification', async ({\n…\n    await expect(page).toHaveURL(BASE)\n    await expect(\n      page.getByRole('heading', { name: reference, exact: true })\n    ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-080",
+      "statement": "A recoverable backend failure while deleting shows the delete confirmation page again at 500 with the recoverable-failure banner rather than claiming the notification was deleted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:61-71 and controller.test.js:86-100",
+      "quote": "    expect(response.statusCode).toBe(500)\n    expect(response.context.recoverableError).toBe(true)\n    expect(response.view).toBe(view)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-081",
+      "statement": "The delete confirmation page, and the notification list shown after confirming a deletion, each pass an axe check with no serious or critical accessibility violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:88-105",
+      "quote": "    await expectNoSeriousOrCriticalViolations(\n      page,\n      'Delete notification confirmation'\n    )\n…\n    await expectNoSeriousOrCriticalViolations(\n      page,\n      'Dashboard after confirming a deletion'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-082",
+      "statement": "The delete confirmation page's four strings are pinned verbatim by its own test, so changing any of them breaks the build.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.test.js:14-21",
+      "quote": "  it('Should carry the four spec strings verbatim', () => {\n    expect(copy).toEqual({\n      title: 'Delete this notification?',\n      body: 'This cannot be undone.',\n      confirmButton: 'Yes, delete notification',\n      noLink: 'No, return to dashboard'\n    })\n  })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-083",
+      "statement": "The delete page's Welsh strings are the animals service's machine draft, pinned verbatim by its own test and marked as needing Welsh Language Standards sign-off.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.cy.js:1-7 and copy/copy.test.js:23-30",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.\nexport const copy = {\n  title: \"Dileu'r hysbysiad hwn?\",\n  body: 'Ni ellir dadwneud hyn.',\n  confirmButton: \"Iawn, dileu'r hysbysiad\",\n  noLink: \"Na, dychwelyd i'r dangosfwrdd\"\n}\n…\n  it('Should carry the animals machine-draft Welsh for the same four leaves', () => {",
+      "confidence": "verbatim",
+      "note": "The test's own title names the animals service as where this Welsh came from."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-084",
+      "statement": "The cancel-amendment confirmation page is served at /notifications/{journeyId}/cancel-amend and answers both GET and POST.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:19 and 85-98, src/server/app/shared/kit.js:73",
+      "quote": "const { CANCEL_AMEND_SLUG } = kit\n…\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n…\nexport const CANCEL_AMEND_SLUG = 'cancel-amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-085",
+      "statement": "The cancel-amendment page's maturity level is 'exploring', so its behaviour is not signed off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/page.js:1",
+      "quote": "export const cancelAmendPage = { id: 'cancel-amend', maturity: 'exploring' }",
+      "confidence": "verbatim",
+      "note": "mechanism: unlike the other three features in this slice, the cancel-amendment page descriptor holds no slug of its own and the route reads the shared kit's CANCEL_AMEND_SLUG instead."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-086",
+      "statement": "The cancel-amendment page's H1 asks 'Cancel this amendment?'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:5, copy/copy.en.js:2 and controller.test.js:68",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n…\n  title: 'Cancel this amendment?',\n…\n      heading: 'Cancel this amendment?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-087",
+      "statement": "The cancel-amendment page says what cancelling discards: 'Your changes since you started amending will be discarded and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:6, copy/copy.en.js:3 and controller.test.js:72",
+      "quote": "<p class=\"govuk-body\">{{ copy.body }}</p>\n…\n  body: 'Your changes since you started amending will be discarded and the submitted version restored.',\n…\n    expect(response.context.copy.body).toContain('submitted version restored')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-088",
+      "statement": "The cancel-amendment page offers two controls in one button group: a default-styled 'Yes, cancel amendment' that posts, and a secondary 'No, return to notification' that links to the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:11-18, copy/copy.en.js:4-5, controller.js:46 and cancel-amend.fit.spec.js:80-85",
+      "quote": "<div class=\"govuk-button-group\">\n      {{ govukButton({ text: copy.confirmButton }) }}\n      {{ govukButton({\n        text: copy.noLink,\n        href: noHref,\n        classes: \"govuk-button--secondary\"\n      }) }}\n…\n  confirmButton: 'Yes, cancel amendment',\n  noLink: 'No, return to notification'",
+      "confidence": "verbatim",
+      "note": "Unlike the delete page's warning-styled Yes, the cancel-amendment Yes takes no warning class."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-089",
+      "statement": "The cancel-amendment page's Back link also goes to the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:38 and cancel-amend.fit.spec.js:86-88",
+      "quote": "      backLink: cyaPath(journey.journeyId),\n…\n  await expect(\n    page.getByRole('link', { name: sharedCopy.layout.back, exact: true })\n  ).toHaveAttribute('href', cyaHref)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-090",
+      "statement": "The cancel-amendment page's form posts back to the cancel-amendment page itself and carries a hidden crumb field and a hidden concurrencyToken field.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:8-10, controller.js:45 and controller.test.js:69",
+      "quote": "<form method=\"post\" action=\"{{ cancelAction }}\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n…\n      cancelAction: pagePath(journeyId, 'cancel-amend'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-091",
+      "statement": "The cancel-amendment page shows the Amend status tag in its strip but offers no Cancel amend control there, so the strip above the heading is the only thing before the H1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:41, controller.test.js:49-56 and cancel-amend.fit.spec.js:89-94",
+      "quote": "      offerCancelAmend: false\n…\n    expect(response.context.journeyStrip.status.text).toBe('Amend')\n    expect(response.context.journeyStrip.cancelAmend).toBeUndefined()\n…\n  await expect(beforeTitle).toHaveCount(1)\n  await expect(beforeTitle).toContainText(sharedCopy.journeyStrip.amend)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-092",
+      "statement": "The cancel-amendment page is shown only for a notification being amended; a submitted one is sent to its notification view and any other state, a draft or a reference no record exists for, to the notification list, on both opening the page and confirming.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:27-30, 54-56 and 64-66, controller.test.js:91-108 and 126-135",
+      "quote": "const nonAmendTarget = (journey) =>\n  journey.status === state.SUBMITTED\n    ? cyaPath(journey.journeyId)\n    : dashboardPath()\n…\n  it('Should redirect non-AMEND journeys without attempting the transition', async () => {\n…\n  it('Should redirect a journeyId no record exists for', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-093",
+      "statement": "An amendment the session does not hold is neither shown on the cancel-amendment page nor cancelled: both opening the page and confirming send the requester to the notification list, and the notification keeps its amending status and its amended content.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:32-33, 50-52 and 60-62, controller.test.js:110-124",
+      "quote": "  it('Should refuse to disclose or cancel an amendment the session does not hold', async () => {\n…\n    expect(after.status).toBe(AMEND)\n    expect(projectAnswers(after.fulfilment).producerIdentificationNumber).toBe(\n      'AmendedRef'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-094",
+      "statement": "Confirming the cancellation puts the notification back to submitted, restores the answers as they were at submission, keeps the original submission instant and opens the notification view with a cancelled marker in the address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:68-83 and controller.test.js:75-89",
+      "quote": "  return restored\n    ? h.redirect(`${cyaPath(restored.journeyId)}?cancelled=1`)\n    : h.redirect(dashboardPath())\n…\n    expect(restored.status).toBe(SUBMITTED)\n    expect(restored.submittedAt).toBe(submittedAt)\n    expect(\n      projectAnswers(restored.fulfilment).producerIdentificationNumber\n    ).toBe('SubmittedRef')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-095",
+      "statement": "After a cancelled amendment the notification view shows the Submitted tag, the answer as it was at submission and no sign of the discarded change, offers no Change links, and keeps all of that after a reload.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:299-316",
+      "quote": "  await expect(\n    viewHeaderTag(page, sharedCopy.journeyStrip.submitted)\n  ).toBeVisible()\n  await expect(page.getByText('DiscardMe99', { exact: true })).toHaveCount(0)\n  await expect(page.getByText('P123', { exact: true })).toBeVisible()\n  await expect(page.getByRole('link', { name: /^Change/ })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-096",
+      "statement": "The restored submitted notification view passes an axe check with no serious or critical accessibility violations, as does the cancel-amendment page itself.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:94 and 310-313",
+      "quote": "  await expectNoSeriousOrCriticalViolations(page, 'Cancel amendment page')\n…\n  await expectNoSeriousOrCriticalViolations(\n    page,\n    'Submitted notification after a cancelled amendment'\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-097",
+      "statement": "Pressing 'No, return to notification' keeps the amendment: the notifier returns to the notification view, which still shows the Amend tag, the amended answer and the Cancel amend control, and still does after a reload.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:97-107 and 127-135",
+      "quote": "test('No preserves the amendment and its changes after reload', async ({\n…\n  await page.reload()\n  await expect(\n    journeyStripStatus(page, sharedCopy.journeyStrip.amend)\n  ).toBeVisible()\n  await expect(page.getByText('DiscardMe99', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-098",
+      "statement": "While a notification is being amended, Cancel amend is offered in the status strip of its question pages and of its overview, and both open the cancel-amendment confirmation page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:109-143 and 249-259",
+      "quote": "test('Cancel amend in the strip of a question page opens the confirmation page and No keeps the amendment', async ({\n…\ntest('Overview offers Cancel amend in its status strip while amending', async ({\n…\ntest('Cancel amend on the Overview opens the confirmation page', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-099",
+      "statement": "The question-page status strip while amending also shows the notification's reference alongside the Amend tag.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:114-117",
+      "quote": "  await expect(\n    journeyStripStatus(page, sharedCopy.journeyStrip.amend)\n  ).toBeVisible()\n  await expect(journeyStrip(page)).toContainText(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-100",
+      "statement": "An amendment's notification view ends with exactly three controls in one group, in the order Continue, Cancel amend and Save and return to overview, and offers no Delete notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:145-175",
+      "quote": "  await expect(reviewFootControls(page)).toHaveText([\n    copy.continue,\n    sharedCopy.journeyStrip.cancelAmend,\n    sharedCopy.saveActions.saveAndReturnToHub\n  ])\n…\n  await expect(\n    page.getByRole('button', { name: copy.delete, exact: true })\n  ).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The notification view's foot controls are part 10's; this records what the cancel-amendment fit spec proves about them while amending."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-101",
+      "statement": "Cancel amend appears exactly once on an amendment's notification view, as a secondary button whose address is the cancel-amendment page, and it opens that page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:159-175",
+      "quote": "  await expect(cancelAmendButton).toHaveAttribute('href', CANCEL_AMEND_URL)\n  await expect(\n    page\n      .getByRole('button', { name: sharedCopy.journeyStrip.cancelAmend })\n      .or(page.getByRole('link', { name: sharedCopy.journeyStrip.cancelAmend }))\n  ).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-102",
+      "statement": "Pressing Continue on an incomplete amendment refuses it on the notification view with the shared 'There is a problem' summary naming the outstanding task, and the Amend tag stays in the strip.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:177-201",
+      "quote": "  const summary = errorSummary(page)\n  await expect(\n    summary.getByRole('heading', { name: sharedCopy.errorSummary.title })\n  ).toBeVisible()\n  await expect(\n    summary.getByRole('link', {\n      name: copy.errors.cards.commodities,\n      exact: true\n    })\n  ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-103",
+      "statement": "While amending, the commodities list page ends the same way it does on a draft: Save and continue only, with no Save and return to overview, and Save and continue opens the origin page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:203-220",
+      "quote": "  await expect(saveAndContinue(page)).toBeVisible()\n  await expect(\n    page.getByRole('button', {\n      name: sharedCopy.saveActions.saveAndReturnToHub\n    })\n  ).toHaveCount(0)\n…\n  await expect(page).toHaveURL(\n    pageUrlWithTrail(`/notifications/${reference}/origin`, ['commodities'])\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-104",
+      "statement": "Cancel and return to overview on a question page while amending opens the overview without saving the typed answer, and the strip there keeps the Amend tag and the Cancel amend control.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:222-247",
+      "quote": "test('Cancel and return to overview while amending opens Overview without saving, and the strip keeps Amend and Cancel amend', async ({\n…\n  await expect(\n    page.getByLabel(idsCopy.fields.producerIdentificationNumber.label, {\n      exact: true\n    })\n  ).not.toHaveValue('NotSaved1')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-105",
+      "statement": "Cancelling an amendment works with JavaScript turned off: the strip's Cancel amend reaches the confirmation page and Yes restores the notification to Submitted.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:261-281",
+      "quote": "test.describe('without JavaScript', () => {\n  test('the strip Cancel amend reaches the confirmation and Yes restores Submitted', async ({\n…\n      await expect(noJs).toHaveURL(/\\/notification-view\\?cancelled=1$/)\n      await expect(\n        viewHeaderTag(noJs, sharedCopy.journeyStrip.submitted)\n      ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-106",
+      "statement": "Back from the restored submitted notification view opens the notification list, headed by the list's notifications heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:283-297",
+      "quote": "test('Back from the restored submitted view opens the notification list', async ({\n…\n  await expect(page).toHaveURL(BASE)\n  await expect(\n    page.getByRole('heading', { name: dashboardCopy.notificationsHeading })\n  ).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-107",
+      "statement": "A notifier reaches the cancel-amendment page from the Cancel amend action on the notification's card in the notification list, as well as from the status strip and the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:63-70",
+      "quote": "  await page\n    .getByRole('link', {\n      name: `${dashboardCopy.actions.cancelAmend} (${reference})`,\n      exact: true\n    })\n    .click()\n  await expect(page).toHaveURL(CANCEL_AMEND_URL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-108",
+      "statement": "An amendment is started from the Amend notification button on the notification's card in the notification list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:49-55",
+      "quote": "  await page.goto(BASE)\n  await page\n    .getByRole('button', {\n      name: `Amend notification ${reference}`,\n      exact: true\n    })\n    .click()",
+      "confidence": "verbatim",
+      "note": "The list's own row actions are another part's; this records the route the cancel-amendment fit spec drives to reach an amendment."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-109",
+      "statement": "A recoverable backend failure while cancelling an amendment shows the cancel-amendment page again at 500 with the recoverable-failure banner, and the failure is logged once at warn with the journey id and the error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:68-78 and controller.test.js:137-158",
+      "quote": "    expect(response.statusCode).toBe(500)\n    expect(response.context.recoverableError).toBe(true)\n…\n    expectOneSaveFallbackLogged(request.logger, { journeyId, err: failure })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p11-110",
+      "statement": "Every cancel-amendment string has a Welsh counterpart, marked a machine draft that no translator has reviewed and not to be shipped without Welsh Language Standards sign-off.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.cy.js:1-8",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.\nexport const copy = {\n  title: 'Canslo’r diwygiad hwn?',\n  body: 'Bydd eich newidiadau ers i chi ddechrau diwygio yn cael eu dileu a bydd y fersiwn a gyflwynwyd yn cael ei hadfer.',\n  confirmButton: 'Iawn, canslo’r diwygiad',\n  noLink: 'Na, dychwelyd i’r hysbysiad'\n}",
+      "confidence": "verbatim",
+      "note": "Its own copy test checks only that the English values are non-empty strings and never reads the Welsh file, so neither the Welsh wording nor the two locales agreeing on keys is pinned down inside this feature, unlike the other three features in this slice."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-111",
+      "statement": "A declaration or cancel-amendment page posted against a notification that changed since the page was shown has no stale-change guard of its own, unlike the declaration, because the delete and cancel-amendment features declare their routes directly instead of through the shared page-route helper.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:85-98 and delete-notification/controller.js:78-91",
+      "quote": "export const routes = [\n  {\n    method: 'GET',\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n    options: kit.pageRouteOptions(cancelAmendPage),\n    handler: get\n  },\n  {\n    method: 'POST',\n    path: pageRoutePath(CANCEL_AMEND_SLUG),\n    options: kit.pageRouteOptions(cancelAmendPage),\n    handler: post\n  }\n]",
+      "confidence": "inferred",
+      "note": "mechanism: works on the posted concurrency token. Both templates render a hidden concurrencyToken field, but neither handler reads it and neither route is wrapped in the shared stale-action redirect, so the field is sent and ignored. The statement's first clause names the pages whose POST lacks the guard: delete and cancel-amendment."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-112",
+      "statement": "None of the four ending pages is a pop-up or dialog: the declaration, the confirmation, the delete confirmation and the cancel-amendment confirmation are each a page of their own with their own address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js:132, confirmation/controller.js:47-54, delete-notification/controller.js:78-91 and cancel-amend/controller.js:85-98",
+      "quote": "export const routes = kit.pageRoutes(page, { get, post })",
+      "confidence": "inferred",
+      "note": "Each feature declares server routes and extends shared/layout.njk, and every confirmation is reached by a full page load in the fit specs."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-113",
+      "statement": "Neither the delete confirmation nor the cancel-amendment confirmation asks the notifier to type anything or tick anything: each is a two-button Yes or No page with no field and so no validation and no error message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:4-23 and cancel-amend/template.njk:4-20",
+      "quote": "{% block journeyContent %}\n  <h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ copy.body }}</p>\n\n  <form method=\"post\" action=\"{{ cancelAction }}\" novalidate>",
+      "confidence": "verbatim",
+      "note": "Neither template includes the shared error summary and neither copy file holds an errors key, unlike the declaration's."
+    },
+    {
+      "id": "repo-plantsfrontend-p11-114",
+      "statement": "Neither the delete confirmation nor the cancel-amendment confirmation shows a section caption, so each heading stands alone under the status strip.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:31-42, cancel-amend/controller.js:35-47 and src/server/app/shared/kit.js:268",
+      "quote": "    caption: journeySectionCaption(page?.id),",
+      "confidence": "inferred",
+      "note": "mechanism: both renders call the shared chrome without a page descriptor, so the caption is worked out from an undefined page id and nothing is shown. The cancel-amendment fit spec confirms it by asserting exactly one element, the status strip, precedes the H1."
+    }
+  ]
+}

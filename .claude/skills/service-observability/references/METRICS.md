@@ -12,16 +12,52 @@ Ask of each candidate metric: what would someone do differently on
 seeing it change? Drop it if the answer is nothing.
 
 The list agreed for `trade-imports-reference-data` is the worked
-example. It published older PascalCase names until it moved to the one
-way below; "A service built the old way" maps them:
+example. "A service built the old way" maps the older PascalCase names
+to these:
 
-| Metric | Unit | Dimension | Answers |
-|---|---|---|---|
-| `external.call.duration` | ms | `dependency`, `operation` | How many calls, and how slow? |
-| `external.call.failure` | 0 or 1 | `dependency`, `operation` | How many calls failed? |
-| `external.dependency.available` | 1 or 0 | `dependency` | Is each dependency up? |
-| `cache.hit`, `cache.miss` | count | `cache` | Is the cache doing its job? |
-| `lookup` | count | `lookup.type` | Demand on the service, by type |
+| Metric                          | Unit   | Dimension                 | Answers                        |
+| ------------------------------- | ------ | ------------------------- | ------------------------------ |
+| `external.call.duration`        | ms     | `dependency`, `operation` | How many calls, and how slow?  |
+| `external.call.failure`         | 0 or 1 | `dependency`, `operation` | How many calls failed?         |
+| `external.dependency.available` | 1 or 0 | `dependency`              | Is each dependency up?         |
+| `cache.hit`, `cache.miss`       | count  | `cache`                   | Is the cache doing its job?    |
+| `lookup`                        | count  | `lookup.type`             | Demand on the service, by type |
+
+### Options any service can use
+
+Beyond its dependencies, a service can measure its own endpoints and its
+business events. First used on `trade-imports-animals-frontend`
+(`NODE.md`); a Java service has an equivalent for most.
+
+| Metric                                                                                         | Unit  | Dimensions                       | Answers                                       | Java equivalent                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ----- | -------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `http.server.requests`                                                                         | ms    | `method`, `area`, `status.class` | Which part of the service is slow or failing? | Spring Boot's own `http.server.requests` timer, let through the allowlist, with its tags changed to the same three (below); or, instead of this metric, `@Timed("controller.<operation>.time")` per endpoint, as address-book does |
+| `journey.validation.failure`                                                                   | count | `page`                           | Which questions do users get wrong?           | None built yet: a counter in the controller that rejects the input                                                                                                                                                                 |
+| `journey.started`, `journey.submitted`, `journey.amended`, `journey.copied`, `journey.deleted` | count | none                             | How much is the service used, by outcome?     | A business-metrics class, as address-book's `AddressMetrics`: one counter `address.change` tagged `change` (`create`, `update`, `delete`)                                                                                          |
+| `journey.concurrency.conflict`                                                                 | count | none                             | How often do two edits collide?               | A counter where the service refuses a stale version (an `OptimisticLockingFailureException` handler)                                                                                                                               |
+| `journey.entry.redirect`                                                                       | count | none                             | How often are users sent back to the start?   | None: a frontend journey concern                                                                                                                                                                                                   |
+| `cache.hit`, `cache.miss`                                                                      | count | `cache`                          | Is the session store doing its job?           | The Caffeine `StatsCounter` (Rules → "Caches" below)                                                                                                                                                                               |
+| `external.dependency.connection.lost`, `external.dependency.error`                             | count | `dependency`                     | Is a database connection flapping?            | None built yet: count the driver's connection-closed and error events                                                                                                                                                              |
+
+Before tagging a request timer by route, count the routes and the
+CloudWatch metrics they make (method × route × status class). Each
+combination is a metric in every environment. animals-frontend's 84
+routes would make about 170, so it tags by area instead (`NODE.md` →
+"Endpoint layer").
+
+`http.server.requests` has one dimension set in every service,
+`method`, `area` and `status.class`, which the dashboard's Requests
+row and alert rule 4 query. Spring Boot's own timer is tagged `method`,
+`uri`, `status`, `outcome` and `exception`. That costs more than the
+area split: it is split by route, by exact status and by exception
+class, and the Requests row finds none of it. A Java service that
+publishes it changes the tags to the three above: a Micrometer
+`MeterFilter` whose `map` replaces the timer's tags with `method`, a
+`area` worked out from `uri` by the rule in `NODE.md` → "Endpoint
+layer", and a `status.class` from `status`, dropping `uri`, `status`,
+`outcome` and `exception`. `[UNPROVEN]` Not yet built on a Java
+service. A Java service that does not want it uses `@Timed` per
+endpoint instead, which the Timers row shows.
 
 Rules that held:
 
@@ -72,11 +108,11 @@ release is checked there. Read it before writing anything.
 These classes have nothing service-specific. Copy them into the
 service's `metrics` package and change only the package:
 
-| Class | What it does |
-|---|---|
-| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Gauges and distribution summaries publish in the CloudWatch unit of their base unit (`bytes` as Bytes); with no base unit, a distribution summary publishes as Count and a gauge as None. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
-| `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
-| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. address-book's records a call it is given; it does not time one or keep its outcome. dynamics-gateway's is the reference for a recorder that does both: it takes `LastCallOutcomes` and records each call's outcome there, takes an `ExternalCall` naming a `Dependency` enum value, and `measure(call, action)` runs the call, times it by an injected nano-time source and records it as a success or, rethrowing, a failure; its `callStartedAt()` and `elapsedSince(start)` time a call `measure` cannot wrap, such as one an SDK interceptor sees begin and end in two callbacks. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
+| Class                                                                        | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EmfMeterRegistry`                                                           | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Gauges and distribution summaries publish in the CloudWatch unit of their base unit (`bytes` as Bytes); with no base unit, a distribution summary publishes as Count and a gauge as None. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go                                                                                                                                                                                                                                                            |
+| `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `ExternalCallRecorder`                                                       | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. address-book's records a call it is given; it does not time one or keep its outcome. dynamics-gateway's is the reference for a recorder that does both: it takes `LastCallOutcomes` and records each call's outcome there, takes an `ExternalCall` naming a `Dependency` enum value, and `measure(call, action)` runs the call, times it by an injected nano-time source and records it as a success or, rethrowing, a failure; its `callStartedAt()` and `elapsedSince(start)` time a call `measure` cannot wrap, such as one an SDK interceptor sees begin and end in two callbacks. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
@@ -90,7 +126,7 @@ properties, both in address-book's `application.yml` under `aws.emf`:
   to write the EMF documents to stdout.
 - `aws.emf.step` (`${AWS_EMF_STEP:1m}`), bound to a `Duration` and passed
   to `new EmfMeterRegistry(namespace, step, Clock.SYSTEM,
-  MetricsLogger::new)`: how often the registry publishes.
+MetricsLogger::new)`: how often the registry publishes.
 
 Add the method to
 the service's existing `MetricsConfig` in its `configuration` package,
@@ -125,18 +161,18 @@ does not need it.
 
 ### Write for the service
 
-| Class | What it does |
-|---|---|
-| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP, an AWS SDK `ExecutionInterceptor` added to the client's `overrideConfiguration` for an AWS service (dynamics-gateway's `SqsCallRecorder`: one call per SDK execution, its retries counted in its duration, named after the SDK action in kebab case from a fixed set, anything else `other`). Measure at the transport, not in the calling service class, so every call is caught. A client with no hook (the Azure `ServiceBusSenderClient`) is measured where its one method is called (dynamics-gateway's `QueueMessageSender`, through `ExternalCallRecorder.measure`) |
-| `DependencyAvailabilityMetrics` | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below) |
-| A business-metrics class (`AddressMetrics`) | One counter per agreed business metric, tagged by its dimension |
-| `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published |
+| Class                                                                         | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Where calls are measured                                                      | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP, an AWS SDK `ExecutionInterceptor` added to the client's `overrideConfiguration` for an AWS service (dynamics-gateway's `SqsCallRecorder`: one call per SDK execution, its retries counted in its duration, named after the SDK action in kebab case from a fixed set, anything else `other`). Measure at the transport, not in the calling service class, so every call is caught. A client with no hook (the Azure `ServiceBusSenderClient`) is measured where its one method is called (dynamics-gateway's `QueueMessageSender`, through `ExternalCallRecorder.measure`) |
+| `DependencyAvailabilityMetrics`                                               | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| A business-metrics class (`AddressMetrics`)                                   | One counter per agreed business metric, tagged by its dimension                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ### Rules
 
 - **Add every metric name to the service's Micrometer allowlist.**
   address-book's `application.yml` has `management.metrics.enable.all:
-  false` with the names allowed. A name not on it gets a no-op meter:
+false` with the names allowed. A name not on it gets a no-op meter:
   no error, no metric. Add each custom name in full
   (`external.call.duration: true`, `cache.hit: true`) and each `@Timed`
   prefix (`controller: true`, `service: true`). An entry enables every
@@ -197,58 +233,91 @@ does not need it.
 
 ### A service built the old way
 
-These services write EMF directly and publish the older PascalCase
-names, not the dot-case names above (their `main`, checked 2026-11-06).
-`trade-imports-reference-data` and `trade-imports-dynamics-gateway`
-were among them and have moved; the tables below record how, as the
-worked example:
+This section is the one record of which services still publish the
+older PascalCase names, where, and how each moves to the dot-case names
+above. `trade-imports-reference-data` and `trade-imports-dynamics-gateway`
+publish the dot-case names, and the tables below map their old names to
+the new as the worked example. `trade-imports-animals-frontend`
+publishes them too, and `NODE.md` is its recipe.
 
-| Service | Where | Publishes |
-|---|---|---|
-| `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+Each frontend's external calls:
 
+| Service                          | Where                                                        | Publishes                                                                                    |
+| -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `trade-imports-animals-frontend` | `src/server/common/helpers/metrics/external-call-metrics.js` | New: `external.call.duration`, `external.call.failure`, dimensions `dependency`, `operation` |
+| `trade-imports-plants-frontend`  | `src/server/common/helpers/metrics/external-call-metrics.js` | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
+| `trade-imports-ins-frontend`     | `src/server/common/helpers/external-call-metrics.js`         | Old: `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation`     |
+
+The page-request counts have one name set, `page.request.backend.calls`
+and `page.request.session.resolutions` with dimension `request.kind`
+set to `page`. animals-frontend and plants-frontend both publish it from
+`src/server/common/helpers/metrics/page-request-metrics.js`. A
+dashboard, alert or performance-test report reads the counts under
+these names.
+ins-frontend publishes no page-request counts, and
 `trade-imports-animals-admin` publishes none of these metrics.
 
-When this skill runs on one of them, move it to the new names first. A
-Java service moves to the one way above as well; a Node service renames
-the names in its helper (there is no Node recipe yet: `SKILL.md` →
-"What is proven"). The CloudWatch metrics then change name, so
-regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
-alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
-the old ones go quiet.
+When this skill runs on a service still on the old names, move it to
+the new names first. A Java service moves to the one way above as well.
+A Node service:
 
-| Old | New |
-|---|---|
-| `ExternalCallDuration`, `ExternalCallFailure` | `external.call.duration`, `external.call.failure` |
-| `DependencyAvailable` | `external.dependency.available` |
-| `CacheHit`, `CacheMiss` | `cache.hit`, `cache.miss` |
-| `Lookup` | `lookup` |
+- replaces its old `external-call-metrics.js` (table above) with the
+  helpers `NODE.md` names, which publish the new names and measure the
+  calls it missed;
+- makes each call that throws on a refusal name its operation in the
+  error, `Failed to <operation>: <status> <status text>` (`NODE.md`,
+  below its dependency table).
+
+The CloudWatch metrics then change name, so regenerate its dashboard
+(`DASHBOARD.md` → "Generate") and rebuild its alerts from a new build
+sheet (`ALERTS.md` → "Build") in the same run; the old ones go quiet.
+
+Change every reader of the old names in the same run, on a branch with
+the same name as the service's (CLAUDE.md rule 2). A reader left on an
+old name finds no data and says nothing:
+
+- the service's dashboard and alerts, above;
+- `trade-imports-performance-tests`, whose reports read each service's
+  external call metrics and, for a frontend, its page-request counts by
+  the names that service publishes (`src/config/external-calls.js`,
+  `src/lib/external-calls.js`): set the service's `externalCalls` and,
+  for a frontend, `pageRequests` scheme in `SCHEME_BY_SERVICE` to
+  `dotted`.
+
+| Old                                                         | New                                               |
+| ----------------------------------------------------------- | ------------------------------------------------- |
+| `ExternalCallDuration`, `ExternalCallFailure`               | `external.call.duration`, `external.call.failure` |
+| `DependencyAvailable`                                       | `external.dependency.available`                   |
+| `CacheHit`, `CacheMiss`                                     | `cache.hit`, `cache.miss`                         |
+| `Lookup`                                                    | `lookup`                                          |
 | Dimensions `Dependency`, `Operation`, `Cache`, `LookupType` | `dependency`, `operation`, `cache`, `lookup.type` |
 
 The Java classes move as follows. Rows that name a class only one
 service has apply to that service.
 
-| Old | New |
-|---|---|
-| The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallRecorder` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
-| `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` runs the send through `ExternalCallRecorder.measure(call, action)`, which times it, records it as a success or a failure, and records its last outcome. dynamics-gateway's `ExternalCallRecorder` is the reference for `measure` and the outcome; address-book's has neither ("Copy as it is") |
-| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with the response's status for a response of 400 or over, which the call's log line carries as `http.response.status_code` (reference-data's `ExternalCallRecorder` adds a `recordFailure` overload taking the status) |
-| `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallRecorder` stays a copy |
-| The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallRecorder`, or drop it |
-| `EmfMetricWriter` | Deleted; each metric becomes a meter |
-| `@Scheduled` `DependencyAvailabilityMetrics` | One `external.dependency.available` gauge per dependency in `ExternalCall`, tagged `dependency`, reading `LastCallOutcomes`: 1 after a success, 0 after a failure, NaN (not published) before the first call |
-| `@Scheduled` `CacheMetrics` | `cache.hit` and `cache.miss` counters tagged `cache` (Rules → "Caches") |
-| `LookupMetrics` | The counter `lookup` tagged `lookup.type` |
-| `EmfMetricsPublisher` | Deleted |
+| Old                                                                             | New                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`)  | Replaced by address-book's `ExternalCallRecorder` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()`                                                                                                                                                                                                                                                                    |
+| `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` runs the send through `ExternalCallRecorder.measure(call, action)`, which times it, records it as a success or a failure, and records its last outcome. dynamics-gateway's `ExternalCallRecorder` is the reference for `measure` and the outcome; address-book's has neither ("Copy as it is")                                                                                                          |
+| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data)        | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with the response's status for a response of 400 or over, which the call's log line carries as `http.response.status_code` (reference-data's `ExternalCallRecorder` adds a `recordFailure` overload taking the status) |
+| `ExternalCallMetrics.lastCallSucceededByDependency()`                           | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallRecorder` stays a copy                                                                                                                                                                               |
+| The `Interface` property (the volumetrics `SYN-19` id) on each EMF document     | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallRecorder`, or drop it                                                                                                                                                             |
+| `EmfMetricWriter`                                                               | Deleted; each metric becomes a meter                                                                                                                                                                                                                                                                                                                                                                                         |
+| `@Scheduled` `DependencyAvailabilityMetrics`                                    | One `external.dependency.available` gauge per dependency in `ExternalCall`, tagged `dependency`, reading `LastCallOutcomes`: 1 after a success, 0 after a failure, NaN (not published) before the first call                                                                                                                                                                                                                 |
+| `@Scheduled` `CacheMetrics`                                                     | `cache.hit` and `cache.miss` counters tagged `cache` (Rules → "Caches")                                                                                                                                                                                                                                                                                                                                                      |
+| `LookupMetrics`                                                                 | The counter `lookup` tagged `lookup.type`                                                                                                                                                                                                                                                                                                                                                                                    |
+| `EmfMetricsPublisher`                                                           | Deleted                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ### Availability: passive or active
 
 `external.dependency.available` can come from a probe the service sends, or from
 the outcome of the calls it already makes.
 
-- **Passive (used on reference-data).** Report the outcome of the most
-  recent real call, kept in `LastCallOutcomes` ("A service built the
-  old way"). No extra traffic. The cost: the value is as old as
+- **Passive (used on reference-data and animals-frontend).** Report the
+  outcome of the most recent real call, kept in `LastCallOutcomes` ("A
+  service built the old way"), or in Node in
+  `recordDependencyAvailability` (`NODE.md` → "Availability of an HTTP
+  dependency"). No extra traffic. The cost: the value is as old as
   the last call, and nothing is published until the first call after
   start-up. Where a cache sits in front of the dependency, that can be
   as long as the cache lifetime.
@@ -260,9 +329,12 @@ For an HTTP dependency, alert on `external.call.failure` over a time
 window, per `dependency` and `operation` (`ALERTS.md`), not on
 `external.dependency.available`. A passive reading lags by up to the cache
 lifetime and holds a single failure until the next success; an active
-probe is itself a call, so it records `external.call.failure` too. A
-database is the exception: its availability comes from the driver's
-heartbeats, which are fresh, so alert on it (below).
+probe is itself a call, so it records `external.call.failure` too. This
+holds for a Node service as well: its HTTP availability is for the
+dashboard only. A database is the exception: its availability comes
+from the driver's heartbeats, which are fresh, so alert on it (below).
+So is Redis on a Node service, from the client's connection events
+(`NODE.md` → "Redis").
 
 ### A database
 
@@ -277,7 +349,7 @@ is checked there.
   seconds on its own monitoring connections and keeps the result in its
   cluster description. A `ClusterListener` (`MongoAvailability`, added
   with `MongoClientSettings.applyToClusterSettings(b ->
-  b.addClusterListener(...))`) reads the servers the driver monitors now
+b.addClusterListener(...))`) reads the servers the driver monitors now
   on each change. The database is available while a connected server
   accepts writes (`ServerDescription.isPrimary()`: a primary, standalone,
   mongos or load balancer). It is unavailable once every server has been
@@ -295,12 +367,13 @@ is checked there.
   that would be several lines a minute per task. Log once on every
   change of state, naming the servers:
 
-  | Change to | Level | Message |
-  |---|---|---|
-  | Available | INFO | `MongoDB is available, servers {}` |
-  | Unavailable, a server connected but none accepts writes | WARN | `MongoDB is unavailable: servers {} are connected but none accepts writes` |
-  | Unavailable, every check failed | WARN, with the first failed check's exception | `MongoDB is unavailable, servers {}` |
-  | Unknown | WARN | `MongoDB availability is unknown until every server is checked, servers {}` |
+  | Change to                                               | Level                                         | Message                                                                     |
+  | ------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
+  | Available                                               | INFO                                          | `MongoDB is available, servers {}`                                          |
+  | Unavailable, a server connected but none accepts writes | WARN                                          | `MongoDB is unavailable: servers {} are connected but none accepts writes`  |
+  | Unavailable, every check failed                         | WARN, with the first failed check's exception | `MongoDB is unavailable, servers {}`                                        |
+  | Unknown                                                 | WARN                                          | `MongoDB availability is unknown until every server is checked, servers {}` |
+
 - **Know what a check proves.** Monitoring connections may not sign in,
   so a successful check proves the server is up, not that the service's
   credentials work. Where that gap matters, add a scheduled `ping`
@@ -309,15 +382,26 @@ is checked there.
 - **Measure the real commands too, if the team wants query latency.** A
   driver `CommandListener` (`MongoCommandMetrics`, added with
   `addCommandListener`) records every command as `mongodb/<command
-  name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
+name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
   of command names, with anything else as `other`. A command counts as
   a failure when the driver reports it failed (`CommandFailedEvent`: a
   network error or an `ok: 0` reply), or when an `ok: 1` reply carries
-  `writeErrors` (a duplicate key, say) or a `writeConcernError` (a
-  majority write-concern timeout, say). For those two it records a
-  `MongoReplyWriteException` whose message holds only the error codes
-  and code names, never the server's `errmsg`: a duplicate key's
-  `errmsg` holds the key's value. A command that never
+  `writeErrors` (a document failing validation, say) or a
+  `writeConcernError` (a majority write-concern timeout, say). For those
+  two it records a `MongoReplyWriteException` whose message holds only
+  the error codes and code names, never the server's `errmsg`, which
+  can hold a document's values.
+- **A duplicate key is a success, on both paths.** Whether it arrives as
+  a `CommandFailedEvent` (a `MongoServerException`) or in an `ok: 1`
+  reply's `writeErrors`, the server did its job: the caller asked for a
+  unique key and was told it is taken. Test it with
+  `ErrorCategory.fromErrorCode(code) == ErrorCategory.DUPLICATE_KEY`, in
+  one helper both paths call. A service that uses ShedLock needs this
+  most: ShedLock takes a lock by upserting its document, and when
+  another task holds the lock the upsert gets E11000. On
+  animals-backend (EUDPA-816) that was 27 `findAndModify` "failures" in
+  20 minutes from the outbox poller alone, which would have kept the
+  "calls failing" alert firing. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
 - **Alerts.** Which rules a service with a database gets:
@@ -328,7 +412,12 @@ is checked there.
   servers, recovery, and one log line per change at the level and with
   the message above, none while another server still accepts writes),
   unit tests that feed the command listener a reply with `writeErrors`
-  and one with a `writeConcernError`, an integration test that the application's own client
+  and one with a `writeConcernError` (each a failure), unit tests that
+  feed it a `CommandFailedEvent` with a duplicate key and an `ok: 1`
+  reply whose only `writeErrors` are duplicate keys (each a success),
+  and a reply mixing a duplicate key with another write error (a failure
+  whose message names only the other error), as animals-backend's
+  `MongoCallRecorderTest` does, an integration test that the application's own client
   reports available (it goes red if the listener is not registered), and
   an integration test with a throwaway Testcontainers database that is
   started, seen available, stopped, and seen unavailable. Do not stop the
@@ -336,17 +425,21 @@ is checked there.
 
 ### Tests
 
-address-book's tests are the ones to copy.
+address-book's tests are the ones to copy, except for a duplicate key:
+address-book's `aDuplicateKeyInsertIsRecordedAsAFailureOfInsert` still
+records it as a failure. For that, copy animals-backend's
+`ExternalCallRecorderIT` and `MongoCallRecorderTest`.
 
-| Test | Proves |
-|---|---|
-| `EmfMeterRegistryTest` (copied as it is), with `CapturingEmfEnvironment` and a `MockClock` | The EMF documents: namespace, tags as the only dimensions, every recorded value, units, counters per step, gauges skipped while NaN, more than 100 values split, one bad meter not stopping the rest |
-| A unit test per metrics class, with a `SimpleMeterRegistry` | Each meter's name, tags and recorded values |
+| Test                                                                                                                                                                                              | Proves                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EmfMeterRegistryTest` (copied as it is), with `CapturingEmfEnvironment` and a `MockClock`                                                                                                        | The EMF documents: namespace, tags as the only dimensions, every recorded value, units, counters per step, gauges skipped while NaN, more than 100 values split, one bad meter not stopping the rest                                                  |
+| A unit test per metrics class, with a `SimpleMeterRegistry`                                                                                                                                       | Each meter's name, tags and recorded values                                                                                                                                                                                                           |
 | An integration test with `aws.emf.enabled=true`, `aws.emf.environment=Local` and `aws.emf.step=1s` in its `@TestPropertySource` (`EmfMeterRegistryIT`), so EMF writes to the console every second | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
-| The same integration test records a call and waits up to 10 seconds for an EMF document on the console, captured with `testsupport/CapturedConsole` | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start` |
-| An integration test per annotated class (`AddressTimingIT`) | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix |
-| An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects, and a duplicate-key insert) | The failure is recorded against the right dependency and operation |
-| The existing health check test | `/health` is still `UP` with no components |
+| The same integration test records a call and waits up to 10 seconds for an EMF document on the console, captured with `testsupport/CapturedConsole`                                               | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start`                                                                                                                                             |
+| An integration test per annotated class (`AddressTimingIT`)                                                                                                                                       | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix                                                                                                                    |
+| An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects)                                                                                          | The failure is recorded against the right dependency and operation                                                                                                                                                                                    |
+| The same integration test inserts a duplicate key (animals-backend's `insert_shouldRecordASuccess_whenTheKeyIsADuplicate`)                                                                        | The insert is recorded as a success of `mongodb/insert`, not a failure                                                                                                                                                                                |
+| The existing health check test                                                                                                                                                                    | `/health` is still `UP` with no components                                                                                                                                                                                                            |
 
 Run the repo's full build before pushing:
 

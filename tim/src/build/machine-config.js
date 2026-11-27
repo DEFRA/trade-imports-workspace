@@ -7,7 +7,7 @@ import { TimError } from '../errors.js'
  * Where a gate's E2E rungs run: against the local workspace stack, or left to
  * each pull request's own E2E check in GitHub Actions.
  */
-export const E2E_LOCATIONS = ['local', 'ci']
+export const E2E_LOCATIONS = ['local', 'targeted', 'ci']
 
 const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
 

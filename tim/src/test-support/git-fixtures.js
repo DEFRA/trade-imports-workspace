@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { writeFileSync } from 'node:fs'
+import { chmodSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const IDENTITY = [
@@ -91,9 +91,44 @@ export const pushCommit = async (workPath, branch, fileName) => {
 }
 
 /**
+ * Give a clone a committer name and email, so a commit made in it by the code
+ * under test does not depend on the machine's own git identity.
+ */
+export const configureIdentity = async (dir) => {
+  await git(dir, 'config', 'user.name', 'tim-test')
+  await git(dir, 'config', 'user.email', 'tim-test@example.invalid')
+}
+
+/**
+ * Install a pre-commit hook in a clone that refuses every commit, writing
+ * `message` to stderr.
+ */
+export const installRefusingPreCommitHook = (dir, message) => {
+  const hook = join(dir, '.git', 'hooks', 'pre-commit')
+  writeFileSync(hook, `#!/bin/sh\necho "${message}" >&2\nexit 1\n`)
+  chmodSync(hook, 0o755)
+}
+
+/**
  * Full clone with git's default fetch refspec — the pre-exclusion
  * state of a long-lived dev clone, gh-pages objects and all.
  */
 export const createFatClone = async (barePath, dir) => {
   await execa('git', ['clone', '--quiet', `file://${barePath}`, dir])
 }
+
+/**
+ * Ref names with `origin/HEAD` left out, so a recording holds the branches
+ * a run left and not git's pointer at the remote's default branch. Whether
+ * a fetch writes that pointer when it is missing differs between git
+ * versions, and `tim workspace branch` leaves it out of a branch list for
+ * the same reason.
+ *
+ * @param {string[]} refNames
+ * @returns {string[]}
+ */
+export const branchRefsOnly = (refNames) =>
+  refNames.filter(
+    (refName) =>
+      refName !== 'refs/remotes/origin/HEAD' && refName !== 'origin/HEAD'
+  )

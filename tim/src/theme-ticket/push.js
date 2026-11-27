@@ -1,17 +1,9 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { renderUpdateResult, runUpdate } from '../commands/jira/update.js'
 import { TimError } from '../errors.js'
+import { backlogTicketBesideFolder } from './backlog-ticket.js'
+import { isFolder, textFieldOf } from './ticket-folder.js'
 import { hardWrappedLines, usesExpandMacro } from './wiki-markup.js'
-
-const isFolder = (path) =>
-  statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
-
-const textField = (file, field) => {
-  if (!existsSync(file)) return ''
-  const value = JSON.parse(readFileSync(file, 'utf8'))[field]
-  if (value === null || value === undefined || value === false) return ''
-  return String(value)
-}
 
 const refuse = (message) =>
   new TimError('UNKNOWN', `tim theme-ticket push: ${message}`)
@@ -49,7 +41,7 @@ const newlineCount = (text) => text.split('\n').length - 1
  * @param {string} [args.key] - The Jira key; read from `ticket.created.json` when left out
  * @param {boolean} [args.confirm=false]
  * @returns {Promise<{key: string, descriptionFile: string, descriptionLines: number, summary: string|null, mode: 'dry-run'|'updated'|'unchanged', update?: object}>}
- * @throws {TimError} USAGE without a folder; UNKNOWN without a description or key, or for a hard-wrapped description or one using {expand}
+ * @throws {TimError} USAGE without a folder; UNKNOWN without a description or key, for a hard-wrapped description or one using {expand}, or when the key is the ticket the backlog beside the folder's `tickets/` folder names
  */
 export const pushDescription = async ({ folder, key, confirm = false }) => {
   if (!folder || !isFolder(folder)) {
@@ -61,7 +53,7 @@ export const pushDescription = async ({ folder, key, confirm = false }) => {
     throw refuse(`no description.txt in ${folder}`)
   }
 
-  const ticketKey = key || textField(`${folder}/ticket.created.json`, 'key')
+  const ticketKey = key || textFieldOf(`${folder}/ticket.created.json`, 'key')
   if (!ticketKey) {
     throw refuse(
       [
@@ -71,7 +63,13 @@ export const pushDescription = async ({ folder, key, confirm = false }) => {
     )
   }
 
-  const summary = textField(manifestFile, 'summary')
+  if (ticketKey === backlogTicketBesideFolder(folder)) {
+    throw refuse(
+      `${ticketKey} is the ticket the backlog beside ${folder} names, and its description is a person's. Post the what-shipped comment with tim theme-ticket comment instead.`
+    )
+  }
+
+  const summary = textFieldOf(manifestFile, 'summary')
   const description = readFileSync(descriptionFile, 'utf8')
   checkWikiMarkup(descriptionFile, description)
 

@@ -1,11 +1,14 @@
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { ERROR, USAGE } from '../../constants/exitCodes.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { isTimError } from '../../errors.js'
+import { renderCommentResult } from '../jira/comment.js'
 import { deriveTheme } from '../../theme-ticket/derive.js'
 import { pushDescription, renderPushText } from '../../theme-ticket/push.js'
 import { checkStaleTickets, renderStaleText } from '../../theme-ticket/stale.js'
 import { renderStartText, startThemeTicket } from '../../theme-ticket/start.js'
+import { postWhatShippedComment } from '../../theme-ticket/what-shipped.js'
 import { makeRunAction } from '../_run-action.js'
 
 const workspaceRootOf = (opts) =>
@@ -28,7 +31,7 @@ const registerStart = (themeTicket, { timVersion }) =>
     .command('start')
     .argument('[trigger]', 'The trigger phrase, in quotes')
     .description(
-      "Start the theme-ticket skill. Prints MODE: STUB, START, WRITE, MERGE or STALE, then JSON with the workarea's paths, the branch and every ticket folder with the Jira key it produced. Makes the workarea's tickets folder if it is missing."
+      "Start the theme-ticket skill. Prints MODE: STUB, START, WRITE, MERGE or STALE, then JSON with the workarea's paths, the branch, the Jira ticket the backlog names (ticket) and every ticket folder with the Jira key it produced. Makes the workarea's tickets folder if it is missing."
     )
     .option('--workarea <path>', 'The workarea, as a path under workareas/')
     .option('--theme <id>', 'The theme. Every mode but STALE needs it')
@@ -64,6 +67,7 @@ const registerStart = (themeTicket, { timVersion }) =>
 const deriveAndWrite = async (parsed) => {
   const derived = await deriveTheme(parsed)
   if (parsed.out) {
+    mkdirSync(dirname(parsed.out), { recursive: true })
     writeFileSync(parsed.out, `${JSON.stringify(derived, null, 2)}\n`)
   }
   return { derived, out: parsed.out }
@@ -87,7 +91,7 @@ const registerDerive = (themeTicket, { timVersion }) =>
     )
     .option(
       '--out <file>',
-      'Write the JSON to this file and print "Wrote <file>"'
+      'Write the JSON to this file, making its folder if it is missing, and print "Wrote <file>"'
     )
     .addHelpText(
       'after',
@@ -155,7 +159,7 @@ const registerPush = (themeTicket, { timVersion }) =>
     .command('push')
     .argument('[folder]', 'The ticket folder')
     .description(
-      "Post a ticket folder's description.txt and the summary from its ticket.json to Jira in one update. Refuses a hard-wrapped description or one using {expand}. Dry run by default; --confirm sends it and checks it landed."
+      "Post a ticket folder's description.txt and the summary from its ticket.json to Jira in one update. Refuses a hard-wrapped description or one using {expand}. Refuses the ticket a ticket backlog names. Dry run by default; --confirm sends it and checks it landed."
     )
     .option(
       '--key <key>',
@@ -183,6 +187,37 @@ const registerPush = (themeTicket, { timVersion }) =>
       })
     )
 
+const registerComment = (themeTicket, { timVersion }) =>
+  themeTicket
+    .command('comment')
+    .description(
+      "Post the what-shipped comment on the ticket a ticket backlog names, from a file `derive --out` wrote, or edit the one already there. Never changes the ticket's description or summary. Dry run by default; --confirm sends it and checks it landed."
+    )
+    .option('--workarea <path>', 'The workarea, as a path under workareas/')
+    .option('--derived <file>', 'The derived theme file `derive --out` wrote')
+    .option('--confirm', 'Send it for real (the default is a dry run)')
+    .addHelpText(
+      'after',
+      [
+        '',
+        'Examples:',
+        '  tim theme-ticket comment --workarea shared/eudpa-832 --derived workareas/shared/eudpa-832/tickets/derived.json',
+        '  tim theme-ticket comment --workarea shared/eudpa-832 --derived workareas/shared/eudpa-832/tickets/derived.json --confirm'
+      ].join('\n')
+    )
+    .action(
+      themeTicketAction(timVersion, {
+        parseOptions: (opts) => ({
+          workspaceRoot: workspaceRootOf(opts),
+          workarea: opts.workarea,
+          derivedFile: opts.derived,
+          confirm: opts.confirm === true
+        }),
+        run: (_context, parsed) => postWhatShippedComment(parsed),
+        renderText: renderCommentResult
+      })
+    )
+
 /**
  * `tim theme-ticket`: the steps of the theme-ticket skill.
  *
@@ -193,10 +228,11 @@ export const register = (program, { timVersion }) => {
   const themeTicket = program
     .command('theme-ticket')
     .description(
-      "Start the theme-ticket skill, derive a theme's scenarios by domain, report stale theme tickets and post a ticket's description to Jira"
+      "Start the theme-ticket skill, derive a theme's scenarios by domain, report stale theme tickets, post a ticket's description to Jira and post the what-shipped comment on a ticket backlog's ticket"
     )
   registerStart(themeTicket, { timVersion })
   registerDerive(themeTicket, { timVersion })
   registerStale(themeTicket, { timVersion })
   registerPush(themeTicket, { timVersion })
+  registerComment(themeTicket, { timVersion })
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   workareaBacklogReader,
@@ -7,9 +8,11 @@ import {
 import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
+  loadIntakeSchema,
   rigoursOf,
   statusesOf
 } from '../../backlog/backlog-schema.js'
+import { combineCandidatesIn } from '../../backlog/combine-candidates.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import {
   checkBacklog,
@@ -17,12 +20,12 @@ import {
   setRowFields
 } from '../../backlog/shape.js'
 import { TimError } from '../../errors.js'
+import { countOf } from '../../utils/count-of.js'
 import { makeBacklogAction, parseOptions } from './shared.js'
 
 /**
- * The backlog.json under `workareas/<workarea>/`, the same path the build loop
- * and the BUILD phase take. Refuses an absolute path or one that climbs out
- * of workareas/ before any read.
+ * The backlog.json under `workareas/<workarea>/`. Refuses an absolute path or
+ * one that climbs out of workareas/ before any read.
  *
  * @param {string} workspaceRoot
  * @param {unknown} workarea
@@ -31,6 +34,18 @@ import { makeBacklogAction, parseOptions } from './shared.js'
  */
 export const backlogPathFor = (workspaceRoot, workarea) =>
   join(workareaDirFor(workspaceRoot, workarea), 'backlog.json')
+
+const intakeRecordFor = ({ workspaceRoot, workarea, backlog }) => {
+  if (typeof backlog?.ticket !== 'string') return undefined
+  const intakePath = join(
+    workareaDirFor(workspaceRoot, workarea),
+    'intake.json'
+  )
+  return {
+    record: existsSync(intakePath) ? readJsonFile(intakePath) : null,
+    schema: loadIntakeSchema(workspaceRoot)
+  }
+}
 
 const prSchema = z.object({ url: z.string().min(1) }).passthrough()
 
@@ -47,8 +62,17 @@ const setOptsSchemaFor = (statuses) =>
       branch: z.string().trim().min(1).optional(),
       note: z.string().trim().min(1).optional(),
       openQuestion: z.string().trim().min(1).optional(),
+      removeOpenQuestion: z
+        .string()
+        .regex(/^[1-9]\d*$/, {
+          message:
+            '--remove-open-question must be the number of an open question, counting from 1.'
+        })
+        .transform(Number)
+        .optional(),
       pr: z.string().optional(),
       merge: z.array(z.string()).optional(),
+      repos: z.string().optional(),
       dependsOn: z.string().optional(),
       attempt: z.string().optional(),
       rigour: z.string().optional()
@@ -57,7 +81,7 @@ const setOptsSchemaFor = (statuses) =>
       (opts) => Object.values(opts).some((value) => value !== undefined),
       {
         message:
-          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --pr, --merge, --depends-on, --attempt or --rigour.'
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question, --remove-open-question, --pr, --merge, --repos, --depends-on, --attempt or --rigour.'
       }
     )
 
@@ -146,6 +170,29 @@ const parseDependsOn = (raw) => {
   return ids
 }
 
+const REPO_KEY = /^[a-z][a-z0-9-]*$/
+
+const parseRepos = (raw) => {
+  const keys = raw
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
+  if (!keys.length) {
+    throw new TimError(
+      'USAGE',
+      '--repos must name at least one repo key, such as frontend,tests. A row with no repos builds nothing.'
+    )
+  }
+  const invalid = keys.filter((key) => !REPO_KEY.test(key))
+  if (invalid.length) {
+    throw new TimError(
+      'USAGE',
+      `--repos must be repo keys separated by commas, such as frontend,plantsfrontend,tests. "${invalid.join('", "')}" is not a repo key.`
+    )
+  }
+  return [...new Set(keys)]
+}
+
 const collect = (value, previous = []) => [...previous, value]
 
 /**
@@ -165,8 +212,10 @@ export const parseSetOpts = (opts, statuses, rigours) => {
     branch: opts.branch,
     note: opts.note,
     openQuestion: opts.openQuestion,
+    removeOpenQuestion: opts.removeOpenQuestion,
     pr: opts.pr,
     merge: opts.merge,
+    repos: opts.repos,
     dependsOn: opts.dependsOn,
     attempt: opts.attempt,
     rigour: opts.rigour
@@ -176,6 +225,7 @@ export const parseSetOpts = (opts, statuses, rigours) => {
       ...parsed,
       pr: parsed.pr === undefined ? undefined : parsePr(parsed.pr),
       merge: parsed.merge === undefined ? undefined : parseMerge(parsed.merge),
+      repos: parsed.repos === undefined ? undefined : parseRepos(parsed.repos),
       dependsOn:
         parsed.dependsOn === undefined
           ? undefined
@@ -195,12 +245,37 @@ const describeCounts = (counts) =>
     .map(([status, count]) => `${count} ${status}`)
     .join(', ')
 
+const renderIntake = ({
+  ticket,
+  readiness,
+  statementCount,
+  rowsToBuildCount
+}) =>
+  `${ticket} is ${readiness}: ${countOf(statementCount, 'statement')}, ${countOf(rowsToBuildCount, 'row')} still to build.`
+
 const renderCheck = (result) =>
-  result.total
-    ? `${result.total} increments, all in shape: ${describeCounts(result.counts)}.`
-    : 'The backlog is in shape, and has no increments yet.'
+  [
+    result.total
+      ? `${result.total} increments, all in shape: ${describeCounts(result.counts)}.`
+      : 'The backlog is in shape, and has no increments yet.',
+    ...(result.intake ? [renderIntake(result.intake)] : [])
+  ].join('\n')
 
 const renderNext = (result) => result.next ?? 'NONE'
+
+const renderCombineCandidates = (result) =>
+  [
+    `${result.rowsToBuild} rows still to build, ${countOf(result.candidates.length, 'pair')} to look at for combining.`,
+    ...result.candidates.map(
+      ({ rows: [earlier, later], reason }) =>
+        `${earlier} and ${later}: ${reason}`
+    ),
+    ...(result.withoutTouches.length
+      ? [
+          `No touches, so paired only by what they wait on: ${result.withoutTouches.join(', ')}.`
+        ]
+      : [])
+  ].join('\n')
 
 const renderSet = (result) =>
   [
@@ -217,7 +292,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('check <workarea>')
     .description(
-      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, the one backlog shape the distiller writes and the build loop reads, that every dependency is in the backlog with no cycle, that its themes keep to their own code, and that every externalDependsOn row is in its own workarea's backlog`
+      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, that every dependency is in the backlog with no cycle, that its themes keep to their own code, and that every externalDependsOn row is in its own workarea's backlog. A backlog that names a ticket is also held to the intake.json beside it: every criterion of a row still to build (todo or blocked) ends with a bracket citing this ticket's statement ids, a repo or a ruling; every acceptance criterion is covered by a todo, blocked or done row or says why it is not built; a question holds the launch only for a named cause; an escalation is recorded when its signals trip, and then no row is left to build; and the backlog has no themes`
     )
     .addHelpText(
       'after',
@@ -229,10 +304,16 @@ export const register = (backlog, { timVersion }) => {
         run: ({ workspaceRoot, args }) => {
           const path = backlogPathFor(workspaceRoot, args[0])
           const schema = loadBacklogSchema(workspaceRoot)
+          const backlog = readJsonFile(path)
           const result = {
             path,
-            ...checkBacklog(readJsonFile(path), schema, {
-              readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+            ...checkBacklog(backlog, schema, {
+              readWorkareaBacklog: workareaBacklogReader(workspaceRoot),
+              intakeRecord: intakeRecordFor({
+                workspaceRoot,
+                workarea: args[0],
+                backlog
+              })
             })
           }
           if (result.problems.length) {
@@ -274,9 +355,29 @@ export const register = (backlog, { timVersion }) => {
     )
 
   backlog
+    .command('combine-candidates <workarea>')
+    .description(
+      'List the rows still to build that suit combining: pairs that share a code area, or where one waits only on the other. Counts the rows still to build and names those with no touches. Changes no file'
+    )
+    .addHelpText(
+      'after',
+      '\nExample: tim backlog combine-candidates shared/my-programme --json'
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }) => {
+          const path = backlogPathFor(workspaceRoot, args[0])
+          return { path, ...combineCandidatesIn(readJsonFile(path)) }
+        },
+        renderText: renderCombineCandidates,
+        timVersion
+      })
+    )
+
+  backlog
     .command('set <workarea> <id>')
     .description(
-      'Record build state on one increment: status, commit, ticket, branch, dependencies, the last failed attempt and rigour are replaced; a note, an open question or a pull request is added; a merge ref is set per repo'
+      'Record build state on one increment: status, commit, ticket, branch, dependencies, the last failed attempt and rigour are replaced; a note, an open question or a pull request is added; an open question is removed by its number; a merge ref is set per repo'
     )
     .addHelpText(
       'after',
@@ -285,7 +386,9 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --pr \'{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9","number":9}\' --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status done --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status dropped --note "Not needed any more" --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --remove-open-question 1 --json\n' +
         '  tim backlog set shared/my-programme inc-004 --merge tests=origin/main --json\n' +
+        '  tim backlog set shared/my-programme inc-004 --repos frontend,plantsfrontend,tests --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on inc-004,inc-007 --json\n' +
         '  tim backlog set shared/my-programme inc-009 --depends-on "" --json\n' +
         '  tim backlog set shared/my-programme inc-004 --attempt \'{"stage":"ladder","reason":"ladder-red","at":"2026-10-30T11:00:00Z","planReviewed":true,"work":{"kind":"wip","branch":"feat/EUDPA-900-x","sha":"abc1234"}}\' --json\n' +
@@ -305,6 +408,10 @@ export const register = (backlog, { timVersion }) => {
       'An open question to add to the increment'
     )
     .option(
+      '--remove-open-question <number>',
+      'Remove the open question with this number, counting from 1. tim backlog notes <workarea> <id> --open-questions lists them numbered'
+    )
+    .option(
       '--pr <json>',
       'A pull request as JSON with a "url". Merged into the entry with the same url, or added'
     )
@@ -312,6 +419,10 @@ export const register = (backlog, { timVersion }) => {
       '--merge <repoKey=ref>',
       "A ref the branch lifecycle merges into that repo before it builds the increment, such as tests=origin/main. The repo must be in the increment's repos. Repeat for more than one repo",
       collect
+    )
+    .option(
+      '--repos <keys>',
+      "Replace the repos the increment builds, separated by commas, such as frontend,plantsfrontend,tests. Every key must be one the backlog's envelope declares, and a repo the increment merges a ref into cannot be taken away"
     )
     .option(
       '--depends-on <ids>',

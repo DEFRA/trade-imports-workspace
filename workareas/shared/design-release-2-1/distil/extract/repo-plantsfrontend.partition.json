@@ -1,313 +1,397 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "repos/trade-imports-plants-frontend is the high-risk plants notification frontend (Node, Hapi, Nunjucks, GOV.UK Frontend) on the shared journey platform. The set mounts through src/server/app/routes-high-risk-plants.js (113 lines) and lives in src/server/app/sets/high-risk-plants (set.js; journeys/linear with config.js, features/, flow/ and parties/; obligations/ with one file per section; services/commodities; spec/ with the decisions ledger; docs/ with recipe docs). Each page is a feature folder under journeys/linear/features holding page.js, controller.js, template.njk, copy/copy.en.js and copy/copy.cy.js, often fields.js, evaluation.js and a view-model folder, and one *.fit.spec.js (in-process page test). The journey order is flow/flow.js: start (dashboard), commodity (commodity type, commodities list), commodityDetails (commodity details sub-page), origin, arrival (arrival status, arrival details), destination (place of destination), parties (consignor, identification numbers), contact (consignment contact), and review (check answers, declaration, confirmation), with the hub (task list) and the dashboard's row actions (delete notification, cancel or amend) outside the sections. Feature folders are 100 to 1,300 lines each with their fit spec; the in-scope code, templates, copy and fit specs come to roughly 14,000 lines, plus the 1,433-line spec/decisions.json ledger (84 decisions). src/server/app/shared (about 940 lines outside its tests) holds layout.njk, kit.js, save-actions.njk, section-caption.njk, error-summary.njk, error.njk, set-context.js, paths.js and the shared copy (copy.js, copy-leaves.js, copy.en.js, copy.cy.js). The scope leaves out: unit tests (*.test.js, which repeat what the controllers and fit specs show), the journey platform outside the set and shared folders (engine/, flow/, bridge/, model/, services/persistence/, analysis/, auth/), sets/high-risk-plants/docs (developer recipes), and spec/journey-spec.json, spec/conflicts.json, spec/backlog-extras.json and spec/panel/ (the panel's evidence; spec/panel/README.md says decisions.json is the only place a ruling lives). It is cut into 9 parts by what a user sees: shared layout and kit, the flow and hub, the dashboard with its row actions, the commodity pages, origin and arrival, destination and consignor pickers, identification numbers and contact, the review pages, and the decisions ledger.",
+  "structure": "repos/trade-imports-plants-frontend (DEFRA/trade-imports-plants-frontend, read on main at the time of characterising) is the high-risk plants notification frontend: Node.js 24, Hapi, Nunjucks, GOV.UK Frontend plus MOJ frontend and accessible-autocomplete, served on port 3003. It runs the same journey platform as the animals frontend: a journey-agnostic engine, bridge, model and services under src/server/app/ (out of this source's scope), with every piece of journey content in one set beneath it, src/server/app/sets/high-risk-plants/ (37,685 lines across 290 files). The scope takes in that set, src/server/app/shared/ (23 files, 2,828 lines: layout.njk, kit.js, save-actions.njk, section-caption.njk, error.njk, error-summary.njk, trail.js, set-context.js, paths.js, paging.js, render-macro.js, copy-leaves.js and the shared copy.en.js/copy.cy.js pair), the fit specs (22 files, 5,821 lines, 21 of them colocated with their feature and one in the repo-root fit/ folder, which also holds the 1,596-line high-risk-plants-journey.js harness, set-base.js, sign-in.js and seed-fields.js, 1,965 lines in all), and the set's own decisions and rulings ledgers. Inside the set: journeys/linear/features/ holds 20 feature folders (22,582 lines) each with page.js, controller.js, an optional template.njk, fields.js where it collects, a copy/copy.en.js and copy/copy.cy.js pair, a view-model/ folder where it needs one, a <name>.fit.spec.js and unit tests; journeys/linear/flow/ (1,579 lines) holds flow.js (five sections: start, about-the-consignment, arrival-and-destination, consignment-parties and a review section behind a readyForCheckYourAnswers gate), task-rows.js (seven hub rows), entry-guard.js, section-captions/ and a happy-path fixture; journeys/linear/parties/ (91 lines) holds the picked-party rules; obligations/ (816 lines) holds the obligation manifest index.js and seven section files (origin, arrival, parties, destination, commodity, contact, review); services/commodities/ (517 lines) holds the set-owned commodity vocabulary; spec/ (8,675 lines) holds the ledgers - journey-spec.json (2,814 lines: journey, sections, behaviours, fieldGroups, obligations, sources), decisions.json (97 decisions, 1,654 lines), conflicts.json (40 conflicts, 423 lines), backlog-extras.json (557 lines of recorded increments) and panel/ (rulings.json with 8 dockets and 83 rulings in 3,008 lines, critic.json, README.md); docs/ (3,121 lines, 14 markdown files: README.md's served-surface reference, obligation-model.md, features.md, journey-flow-and-gates.md, services.md, limits.md, testing.md, copy-status.md, lighthouse.md and four add-a-* recipes). The served surface is a notification list at /, a task-list hub at /notifications/{journeyId}, the collecting pages commodity-type, commodities and commodities/details, origin, arrival-status, arrival-details, destinations/select, consignors/select, identification-numbers and consignment/contact/select, a review section of notification-view, declaration and confirmation, the action slugs amend, cancel-amend, copy and delete, and a party-edit page reached from a picked address. Scope leaves out the generic engine, bridge, model, analysis, page-maturity and services folders under src/server/app/ (including the persistence, address-book, countries and ports clients), src/server/app/routes-high-risk-plants.js aside, and everything under src/auth, src/config, src/plugins, src/client, src/shared, test/, tests/ and eslint-rules/. The parts below cut the scope by what a user sees - a group of pages at a time - with the obligation manifest, the shared kit, the fit harness, each ledger and the set docs as parts of their own. Unit tests (*.test.js) sit inside the folders the parts name and are read for the behaviour and copy they pin down; the fit specs are claimed in their own right because the scope names them.",
   "parts": [
     {
       "part": 1,
-      "title": "Shared layout, kit, save actions and copy",
-      "scope": "Everything in src/server/app/shared outside its *.test.js files, plus the set's mount and config (set.js, journeys/linear/config.js, routes-high-risk-plants.js). It stops at any one page's own template or copy: those belong to the page's part.",
+      "title": "Notification list and its row actions",
+      "scope": "The notification list served at the service root, every action offered on one of its rows, and POST /notifications which starts a draft. Stops at the task-list hub, which part 2 claims, and at the lateness helpers, which part 10 claims.",
       "read": [
-        "src/server/app/shared/layout.njk",
-        "src/server/app/shared/kit.js",
-        "src/server/app/shared/save-actions.njk",
-        "src/server/app/shared/section-caption.njk",
-        "src/server/app/shared/error-summary.njk",
-        "src/server/app/shared/error.njk",
-        "src/server/app/shared/set-context.js",
-        "src/server/app/shared/paths.js",
-        "src/server/app/shared/copy.js",
-        "src/server/app/shared/copy-leaves.js",
-        "src/server/app/shared/copy.en.js",
-        "src/server/app/shared/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/set.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/config.js",
-        "src/server/app/routes-high-risk-plants.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/ (every file: page.js, controller.js, template.njk, notification-helper.js, notification-helper.test.js, late-tag.test.js, controller.test.js, dashboard.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/sort-options.js, view-model/row/index.js, view-model/row/actions.js, view-model/row/index.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/notification-action-slugs.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js (context only: part 10 claims it)",
+        "src/server/app/shared/layout.njk (context only: part 13 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)",
+        "src/server/app/shared/paging.js (context only: part 13 claims it)"
       ],
       "covers": [
-        "The page layout in layout.njk: header, service name, navigation, phase banner, footer, back link, language toggle, title pattern and every block a page fills",
-        "Every helper kit.js gives pages (form fields, radios, summary rows, buttons and their GOV.UK component options)",
-        "The save actions every question page shows (save-actions.njk): each button and link, its text and where it goes",
-        "The section caption, error summary and error page templates: their headings and wording",
-        "Every shared copy string in copy.en.js and its Welsh counterpart in copy.cy.js, verbatim",
-        "The set's id, base path, layout and session cookie names (set.js, config.js), and how the set mounts and guards entry (routes-high-risk-plants.js, set-context.js, paths.js)"
+        "the list page at '/': its H1, caption, intro, start button, search box, sort control, any filter, the table columns in order, the empty state and the pagination, each with its verbatim copy",
+        "every status tag and the Late tag the list renders, with the condition that shows each",
+        "every action in view-model/row/actions.js: its label, href, method and the notification states it appears for",
+        "POST /notifications: what it creates and where it redirects",
+        "every copy key in dashboard/copy/copy.en.js and dashboard/copy/copy.cy.js, verbatim",
+        "the 16 tests of dashboard.fit.spec.js and what each proves, including the late-tag cases",
+        "notification-helper.js, view-model/row/index.js and view-model/sort-options.js as mechanism claims naming the notification data they reshape"
       ],
       "prefix": "repo-plantsfrontend-p1"
     },
     {
       "part": 2,
-      "title": "Journey flow, run, task rows and hub",
-      "scope": "The journey's page order, the opening run, the task rows and their statuses, the entry guard, section captions, the obligation set index, the feature registry, and the hub (task list) page with its fit spec and the section caption fit spec. It stops at each section's own pages and obligation section files, which belong to the parts that own those pages.",
+      "title": "Task-list hub, journey flow, task rows, section captions and the entry guard",
+      "scope": "The task-list hub page, the flow that orders the journey's sections and pages, the seven hub task rows and their statuses, the section captions, the entry guard and the save-and-continue and navigation behaviour the flow tests pin down. Stops at the pages themselves, which parts 3 to 11 claim, and at notification-action-slugs.js, which part 1 claims.",
       "read": [
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/ (every file: page.js, controller.js, template.njk, hub.fit.spec.js, controller.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
         "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.test.js",
         "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.test.js",
         "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/evaluation.js",
-        "src/server/app/sets/high-risk-plants/obligations/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js",
-        "src/server/app/routes-high-risk-plants.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/save-and-continue.test.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/ (index.js, section-captions.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/fixtures/happy-path.json",
+        "src/server/app/sets/high-risk-plants/journeys/linear/config.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/test-support.js",
+        "src/server/app/shared/save-actions.njk (context only: part 13 claims it)",
+        "src/server/app/shared/section-caption.njk (context only: part 13 claims it)"
       ],
       "covers": [
-        "The 9 sections in flow.js in order, the pages in each, the review gate and the flow-only keys, with the ordering rules its comment states",
-        "The opening run's steps (RUN_STEPS in run.js) and where Continue goes after each",
-        "Every task row in task-rows.js: its label, the pages it covers, its status values and how each status is worked out",
-        "Every entry guard redirect in entry-guard.js and the condition that fires it",
-        "Every section caption and its Welsh counterpart",
-        "The hub page: its route, heading, caption, every task row link, status tag, and button or link, with its copy verbatim, and every test in hub.fit.spec.js and section-caption.fit.spec.js",
-        "The registered routes and dispatch pages in features/index.js, and the obligation set's sections as obligations/index.js lists them"
+        "the hub page at /notifications/{journeyId}: its H1, caption, any intro, the task list and every button or link on it, verbatim",
+        "each of the seven task rows in task-rows.js: its title, hint, href and every status it can show, with the rule that gives each status",
+        "the five flow sections of flow.js (start, about-the-consignment, arrival-and-destination, consignment-parties, review), the pages in each and their order, and the readyForCheckYourAnswers gate on the review section",
+        "FLOW_ONLY_KEYS and what it is set to",
+        "the entry guard: which paths it guards, which it skips, what it tests for and where it redirects",
+        "the section caption for every captioned section, verbatim from section-captions/copy/copy.en.js and copy.cy.js",
+        "what save-and-continue.test.js and navigation.test.js prove about moving between pages and about Save and return to overview",
+        "every copy key in hub/copy/copy.en.js and hub/copy/copy.cy.js, verbatim",
+        "the 10 tests of hub.fit.spec.js and what each proves",
+        "the happy path the flow fixture encodes, as a mechanism claim naming the answers it sets"
       ],
       "prefix": "repo-plantsfrontend-p2"
     },
     {
       "part": 3,
-      "title": "Dashboard, row actions, delete and cancel or amend",
-      "scope": "The notification list (dashboard) with its sorting, row view model, row actions and late tag, plus the two row-action pages it links to: delete notification and cancel or amend. It stops at the journey pages a row's open or change action leads into.",
+      "title": "Commodity type and the set-owned commodity vocabulary",
+      "scope": "The commodity-type question page, the first page of the journey, and the commodity vocabulary the set serves to it and to the commodity pages. Stops at the commodity list and details pages, which part 4 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/sort-options.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/ (every file: evaluation.js, page.js, controller.js, template.njk, controller.test.js, commodity-type.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/services/commodities/ (index.js, commodities.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js (context only: part 2 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
       ],
       "covers": [
-        "The dashboard page: its route, heading, start button, table columns, every status and tag (including the late tag), sort options and their order, pagination or empty state, and its copy verbatim in English and Welsh",
-        "Every row action in view-model/row/actions.js: its text, which statuses show it, and where it leads",
-        "The delete notification page: route, heading, question, options, buttons, error message verbatim and what happens on each answer",
-        "The cancel or amend page: route, heading, question, options, buttons, error message verbatim and what happens on each answer",
-        "Every test in dashboard.fit.spec.js, delete-notification.fit.spec.js and cancel-amend.fit.spec.js"
+        "the commodity-type page (slug 'commodity-type'): its route and how a user reaches it, H1, caption, hint, every radio option with its label and hint, whether an answer is required, every validation rule with its error message verbatim, its buttons and links, and what it saves",
+        "every branch the answer opens, including the potato branch that skips arrival status, and where each leads",
+        "every copy key in commodity-type/copy/copy.en.js and copy/copy.cy.js, verbatim",
+        "the 17 tests of commodity-type.fit.spec.js and what each proves",
+        "what services/commodities/index.js serves: every commodity or commodity type it lists and the shape of each entry, as a data claim that names the prototype-independent owner question (MDM or V4) rather than treating the list as a requirement",
+        "evaluation.js as a mechanism claim naming the answers it binds"
       ],
       "prefix": "repo-plantsfrontend-p3"
     },
     {
       "part": 4,
-      "title": "Commodity type, commodities list and commodity details",
-      "scope": "The commodity section: the commodity type question, the commodities list page, the commodity details entry sub-page, the commodity line form and links, the commodity data service and the commodity obligation section. It stops at origin.",
+      "title": "Commodity lines: the list page and the details sub-page",
+      "scope": "The repeatable commodity collection: its list page, its add-or-edit details sub-page, the fields they collect and the cardinality rules on the collection. Stops at the commodity-type question and the vocabulary service, which part 3 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/entry-index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/links.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/line-form.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/axe.js",
-        "src/server/app/sets/high-risk-plants/services/commodities/index.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/ (every file: evaluation.js, entry-index.js, page.js, links.js, line-form.js, fields.js, list/list.controller.js, list/list.controller.test.js, list/list.njk, list/_cells.njk, list/table-rows.js, list/table-rows.test.js, details/details.controller.js, details/details.controller.test.js, details/details.njk, fit/list.fit.spec.js, fit/details.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/services/commodities/index.js (context only: part 3 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/commodity.js (context only: part 12 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
       ],
       "covers": [
-        "The commodity type page (every file in commodity-type/ except *.test.js): route, heading, caption, every option, hint, error message verbatim, what it saves and where each answer leads",
-        "The commodities list page: route, heading, table or summary list columns, add, change and remove links, empty state, Continue and its error messages verbatim",
-        "The commodity details page: route, heading, every field with its label, hint, options, limits and whether it is required, every validation rule with its error message verbatim, and where save returns",
-        "The commodity data the service offers (services/commodities/index.js) and how pages search or list it",
-        "Every obligation in obligations/sections/commodity.js: what it requires, its gates and scope",
-        "Every test in commodity-type.fit.spec.js, list.fit.spec.js and details.fit.spec.js"
+        "the commodities list page (slug 'commodities'): its route, H1, caption, the table columns in order, every Add, Change or Remove link, the empty state, the continue button and the collection floor or ceiling message, each verbatim",
+        "the commodity details sub-page (slug 'commodities/details'): its route for adding and for editing, H1, caption, and every field in fields.js with its label, hint, options and whether it is required",
+        "every validation rule on either page with its error message verbatim, including the per-instance conditional fields and the condition that shows each",
+        "every copy key in commodities/copy/copy.en.js and copy/copy.cy.js, verbatim",
+        "the 12 tests of fit/list.fit.spec.js and the 18 tests of fit/details.fit.spec.js, and what each proves",
+        "entry-index.js, links.js, line-form.js and list/table-rows.js as mechanism claims naming the commodity-line data they reshape"
       ],
       "prefix": "repo-plantsfrontend-p4"
     },
     {
       "part": 5,
-      "title": "Origin, arrival status and arrival details",
-      "scope": "The origin page, the arrival status question and the arrival details page, with their timing windows, arrival bounds and obligation sections. It stops at the place of destination.",
+      "title": "Origin and arrival status",
+      "scope": "The origin country page and the arrival-status question that decides which arrival wording a notifier sees. Stops at the arrival date and time page, which part 6 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/statuses.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/origin.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/ (every file: evaluation.js, page.js, controller.js, template.njk, controller.test.js, origin.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/ (every file: evaluation.js, page.js, controller.js, template.njk, statuses.js, controller.test.js, arrival-status.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/origin.js (context only: part 12 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js (context only: part 12 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
       ],
       "covers": [
-        "The origin page: route, heading, caption, every field with label, hint and options (and how the country list is shown), every error message verbatim, and what it saves",
-        "The arrival status page: route, heading, every status option and hint, error message verbatim, which commodity types skip it, and where each answer leads",
-        "The arrival details page: route, heading, every field (dates, times, ports, transport and others) with label, hint, format, limits and whether it is required, every validation and bounds rule with its error message verbatim, and how fields change with the arrival status",
-        "The timing windows and arrival bounds the pages enforce",
-        "Every obligation in obligations/sections/origin.js and arrival.js",
-        "Every test in origin.fit.spec.js, arrival-status.fit.spec.js and arrival-details.fit.spec.js"
+        "the origin page (slug 'origin'): its route, H1, caption, every field with its label, hint and whether it is required, the country search control it uses and how it is configured, every validation rule with its error message verbatim, its buttons and links, and what it saves",
+        "the arrival-status page (slug 'arrival-status'): its route, H1, caption, legend, every option in statuses.js with its label and hint, the required rule and its error message verbatim, and where each answer leads",
+        "the scope rule that skips arrival status for a potato notification, and what a notifier sees instead",
+        "every copy key in origin/copy and arrival-status/copy, copy.en.js and copy.cy.js alike, verbatim",
+        "the 19 tests of origin.fit.spec.js and the 18 tests of arrival-status.fit.spec.js, and what each proves",
+        "the two evaluation.js files as mechanism claims naming the answers they bind"
       ],
       "prefix": "repo-plantsfrontend-p5"
     },
     {
       "part": 6,
-      "title": "Place of destination and consignor pickers",
-      "scope": "The two address book picker pages that start the destination and parties sections: place of destination and consignor, with the shared address-book-picker helpers and the destination obligation section. It stops at identification numbers and the consignment contact, which are part 7, though part 7 also reads the picker helpers.",
+      "title": "Arrival details",
+      "scope": "The arrival date and time page, its bounds rule and the wording that changes with the arrival status. Stops at the arrival-status question, which part 5 claims, and at the lateness rule, which part 10 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/view-model/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/view-model/pagination.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/view-model/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/view-model/pagination.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/destination.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/ (every file: evaluation.js, page.js, controller.js, template.njk, fields.js, arrival-bounds.js, arrival-bounds.test.js, controller.test.js, arrival-details.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js (context only: part 12 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js (context only: part 12 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
       ],
       "covers": [
-        "The shared address book picker (address-lines.js, render.js, pagination.js, view-model.js): how an address entry is shown, page size, pagination and empty state",
-        "The place of destination page: route, its three questions and which arrival status shows each, heading, hint, every option, search or pagination control, links to add an address, error messages verbatim and what it saves",
-        "The consignor page: route, heading, hint, every option, pagination, links, error messages verbatim and what it saves",
-        "Every obligation in obligations/sections/destination.js",
-        "Every test in place-of-destination.fit.spec.js and consignor-select.fit.spec.js"
+        "the arrival-details page (slug 'arrival-details'): its route, H1, caption, and every field in fields.js with its label, hint, options and whether it is required, including the date input and any time field and the component each uses",
+        "how the labels and hints change with the arrival status and with the commodity type, each wording verbatim",
+        "every validation rule, the arrival-bounds rule included, with its error message verbatim and the case that fires it",
+        "every copy key in arrival-details/copy/copy.en.js and copy/copy.cy.js, verbatim",
+        "the 26 tests of arrival-details.fit.spec.js and what each proves",
+        "arrival-bounds.js as a mechanism claim naming the dates it compares"
       ],
       "prefix": "repo-plantsfrontend-p6"
     },
     {
       "part": 7,
-      "title": "Identification numbers and consignment contact",
-      "scope": "The rest of the parties section and the contact section: the identification numbers page, the consignment contact picker, the parties helper and the parties and contact obligation sections. The address-book-picker helpers are read for context only: part 6 claims them.",
+      "title": "Consignor picker, identification numbers and consignment contact picker",
+      "scope": "The consignment-parties section bar the destination: the consignor address picker, the identification-numbers page and the consignment contact picker, together with the picked-party rules every picker shares. Stops at the place of destination picker and party edit, which part 8 claims, and at the picker shell itself, which part 9 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/fields.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/pagination.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/parties.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/contact.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/ (every file: evaluation.js, page.js, fields.js, controller.js, controller.test.js, consignor-select.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/ (every file: evaluation.js, page.js, fields.js, controller.js, template.njk, controller.test.js, identification-numbers.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/ (every file: evaluation.js, page.js, fields.js, controller.js, controller.test.js, consignment-contact-select.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/parties/ (index.js, picked-party.js, picked-party.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk (context only: part 9 claims it)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js (context only: part 9 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/parties.js (context only: part 12 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/contact.js (context only: part 12 claims it)"
       ],
       "covers": [
-        "The identification numbers page: route, heading, every field with label, hint, format, limits and whether it is required, every error message verbatim, and what it saves",
-        "The consignment contact page: route, heading, hint, every option, pagination, links, error messages verbatim and what it saves",
-        "How unresolved party references are handled (parties/index.js)",
-        "Every obligation in obligations/sections/parties.js and contact.js",
-        "Every test in identification-numbers.fit.spec.js and consignment-contact-select.fit.spec.js"
+        "the consignor picker page (slug 'consignors/select'): its route, H1, caption, which roles of address it asks the address book for, every field in fields.js with its label and hint, whether a selection is required, every validation rule with its error message verbatim, its buttons and links, and what it saves",
+        "the consignment contact picker page (slug 'consignment/contact/select'): the same, including that it asks for no role and so lists every address",
+        "the identification-numbers page (slug 'identification-numbers'): its route, H1, caption, every field in fields.js with its label, hint, format and whether it is required, every validation rule with its error message verbatim, and what it saves",
+        "the picked-party rules in parties/: how a selection resolves to a record, what a blank save does, what happens to an id the address book no longer holds and what happens when the address book is unavailable, with the error message for each, verbatim",
+        "every copy key in the three features' copy/copy.en.js and copy/copy.cy.js files, verbatim",
+        "the 10 tests of consignor-select.fit.spec.js, the 6 of identification-numbers.fit.spec.js and the 11 of consignment-contact-select.fit.spec.js, and what each proves",
+        "the two view-model/index.js files as mechanism claims naming the address data they reshape"
       ],
       "prefix": "repo-plantsfrontend-p7"
     },
     {
       "part": 8,
-      "title": "Check answers, declaration and confirmation",
-      "scope": "The review section: check your answers (notification view), declaration and confirmation, with the lateness rules they share and the review obligation section. It stops at the dashboard the confirmation links back to.",
+      "title": "Place of destination picker and party edit",
+      "scope": "The place of destination picker, including the pre-arrival and current-location wording, and the party-edit page a notifier reaches from a picked address's Edit details link. Stops at the other pickers, which part 7 claims, and at the picker shell, which part 9 claims.",
       "read": [
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/index.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/outstanding-parties.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/change-link.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/summary-row.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model/rows/value-text.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/page.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/template.njk",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.en.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/copy/copy.cy.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/review/evaluation.js",
-        "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js",
-        "src/server/app/sets/high-risk-plants/obligations/sections/review.js"
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/ (every file: evaluation.js, page.js, fields.js, controller.js, controller.test.js, place-of-destination.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-model.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/ (every file: page.js, party-edit.controller.js, party-edit.controller.test.js, party-edit.njk, party-edit.fit.spec.js, edit-href.js, address-rules.js, address-rules.test.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/parties/picked-party.js (context only: part 7 claims it)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/template.njk (context only: part 9 claims it)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/destination.js (context only: part 12 claims it)"
       ],
       "covers": [
-        "The check answers page: route, heading, every summary card or section and row in order, each row's key, value format and change link, outstanding-party messages, the submit or continue button and any warning, with copy verbatim",
-        "The declaration page: route, heading, declaration text, checkbox or button, error message verbatim and what submitting does",
-        "The confirmation page: route, panel title and body, reference shown, what happens next text and links",
-        "The lateness rules in review/lateness.js and how each review page shows them",
-        "Every obligation in obligations/sections/review.js",
-        "Every test in check-answers.fit.spec.js, declaration.fit.spec.js and confirmation.fit.spec.js"
+        "the place of destination picker page (slug 'destinations/select'): its route, H1, caption, which roles of address it asks the address book for, every field in fields.js with its label and hint, whether a selection is required, every validation rule with its error message verbatim, its buttons and links, and what it saves",
+        "how its wording changes between the intended destination before arrival and the current location after it, each version verbatim, and the rule that chooses",
+        "the party-edit page: its route and how a notifier reaches it, H1, caption, every field with its label, hint and whether it is required, every validation rule in address-rules.js with its error message verbatim, and that an edit changes only the notification's copy of the address",
+        "edit-href.js: which pages offer an Edit details link and where it points",
+        "every copy key in place-of-destination/copy and party-edit/copy, copy.en.js and copy.cy.js alike, verbatim",
+        "the 7 tests of place-of-destination.fit.spec.js and the 5 of party-edit.fit.spec.js, and what each proves",
+        "view-model/index.js and address-rules.js as mechanism claims naming the address data they work on"
       ],
       "prefix": "repo-plantsfrontend-p8"
     },
     {
       "part": 9,
-      "title": "Decisions ledger",
-      "scope": "The set's rulings ledger, spec/decisions.json: 84 decisions, each stamped on a conflict or behaviour. The panel README is read for how the ledger works; the panel's evidence files (rulings.json, critic.json) are out of scope.",
+      "title": "The address book picker shell",
+      "scope": "The shell all three party pickers share: its search box, its results table, its paging, the inset that names the chosen address and the rule that saves a selection. Stops at the picker pages themselves, which parts 7 and 8 claim.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/ (every file: picker-routes.js, render.js, view-model.js, table-rows.js, table-rows.test.js, address-lines.js, address-lines.test.js, pagination.js, results-href.js, results.njk, results.test.js, template.njk, _cells.njk, held-copy.njk, save-selection.js, save-selection.test.js, test-support.js, controller-test-support.js, paging-test-support.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/shared/paging.js (context only: part 13 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
+      ],
+      "covers": [
+        "the shell template.njk, results.njk, _cells.njk and held-copy.njk: every heading, label, hint, button, link and column the picker renders, verbatim",
+        "the search box: its label, hint, button and what a search matches on, and what an empty or no-result search shows, verbatim",
+        "the results list: a radio per address, how many are shown a page, the GOV.UK pagination under the results and the condition that shows it",
+        "the inset above the results that names the address the picker holds as chosen: its wording verbatim and when it appears",
+        "the save rule in save-selection.js: what a selection commits, what a blank save does, and the error message for a refused selection, verbatim",
+        "results-href.js and the routes in picker-routes.js: every route the shell registers and the query it carries",
+        "every copy key in address-book-picker/copy/copy.en.js and copy/copy.cy.js, verbatim",
+        "table-rows.js, address-lines.js, pagination.js, view-model.js and render.js as mechanism claims naming the address data each reshapes"
+      ],
+      "prefix": "repo-plantsfrontend-p9"
+    },
+    {
+      "part": 10,
+      "title": "Check your answers and the review helpers",
+      "scope": "The notification view (check your answers) page, every summary row and card on it, its incomplete-card messages and its refusal, together with the lateness and notification-day helpers it and the list share. Stops at the declaration and confirmation pages, which part 11 claims.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/ (every file: page.js, controller.js, controller.test.js, template.njk, refusal.js, check-answers.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, view-model/index.js, view-model/view-header.js, view-model/view-header.test.js, view-model/incomplete-cards.js, view-model/incomplete-cards.test.js, view-model/invalid-parties.js, view-model/rows/change-link.js, view-model/rows/error-row.js, view-model/rows/summary-row.js, view-model/rows/value-text.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/review/ (every file: evaluation.js, lateness.js, lateness.test.js, late-rule.js, late-rule.test.js, notification-day-text.js, notification-day-text.test.js)",
+        "src/server/app/sets/high-risk-plants/obligations/sections/review.js (context only: part 12 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
+      ],
+      "covers": [
+        "the notification view page (slug 'notification-view'): its route and how a user reaches it, the gate that admits them, its H1, caption, header and every button and link on it, verbatim",
+        "every card on the page with its title, and every summary row with its key, its value text and its change link target",
+        "the incomplete-card messages in incomplete-cards.js, each verbatim, and the condition that shows each",
+        "invalid-parties.js and refusal.js: what makes a party invalid or a submission refused, and the wording shown, verbatim",
+        "the lateness warning: the rule in late-rule.js and lateness.js in calendar days per commodity type, where the warning is shown and its wording verbatim",
+        "notification-day-text.js: every wording it produces and the case that chooses each",
+        "every copy key in check-answers/copy/copy.en.js and copy/copy.cy.js, verbatim",
+        "the 21 tests of check-answers.fit.spec.js and what each proves",
+        "view-model/index.js, view-header.js and the four rows/ helpers as mechanism claims naming the notification data they reshape"
+      ],
+      "prefix": "repo-plantsfrontend-p10"
+    },
+    {
+      "part": 11,
+      "title": "Declaration, confirmation, delete notification and cancel amend",
+      "scope": "The journey's endings: the declaration a notifier agrees to, the confirmation page after submission, the delete confirmation page and the cancel-amend confirmation page. Stops at check your answers, which part 10 claims.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/ (every file: page.js, controller.js, controller.test.js, template.njk, declaration.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/ (every file: page.js, controller.js, controller.test.js, template.njk, confirmation.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/ (every file: page.js, controller.js, controller.test.js, template.njk, delete-notification.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/ (every file: page.js, controller.js, controller.test.js, template.njk, cancel-amend.fit.spec.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.js (context only: part 10 claims it)",
+        "src/server/app/shared/kit.js (context only: part 13 claims it)"
+      ],
+      "covers": [
+        "the declaration page (slug 'declaration'): its route, H1, caption, the declaration text verbatim, every checkbox or field with its label and whether it is required, every validation rule with its error message verbatim, the submit button's wording, and what submitting does",
+        "the confirmation page (slug 'confirmation'): its route, the panel heading and reference it shows, every body paragraph, heading and link verbatim, and any lateness banner with the condition that shows it",
+        "the delete confirmation page (slug 'delete'): its route and how a user reaches it, H1, warning wording, buttons, and where Yes and No each lead",
+        "the cancel-amend confirmation page: the same, with the wording that names what cancelling an amendment discards",
+        "every copy key in the four features' copy/copy.en.js and copy/copy.cy.js files, verbatim",
+        "the 8 tests of declaration.fit.spec.js, the 2 of confirmation.fit.spec.js, the 4 of delete-notification.fit.spec.js and the 12 of cancel-amend.fit.spec.js, and what each proves"
+      ],
+      "prefix": "repo-plantsfrontend-p11"
+    },
+    {
+      "part": 12,
+      "title": "Route registration, the obligation manifest and the cross-page fit specs",
+      "scope": "The set's composition seam and its rule manifest: every route the set registers, the obligation manifest and its seven section files, the amend endings, the timing windows, and the three fit specs that assert behaviour across pages rather than on one page. Stops at each page's own files, which parts 1 to 11 claim.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/set.js",
+        "src/server/app/sets/high-risk-plants/obligations/ (index.js, whitelists.test.js, coverage.test.js, sections/origin.js, sections/arrival.js, sections/parties.js, sections/destination.js, sections/commodity.js, sections/contact.js, sections/review.js)",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/evaluation.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js",
+        "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js",
+        "src/server/app/routes-high-risk-plants.js",
+        "src/server/app/routes.js"
+      ],
+      "covers": [
+        "every route the set registers through features/index.js and routes-high-risk-plants.js, and which pages are dispatch pages and which are action slugs",
+        "every obligation in obligations/index.js and the seven section files: its id, the group it sits in, whether it is required to proceed or to submit, its applyTo or requires condition, its cardinality and the page that collects it",
+        "what whitelists.test.js and coverage.test.js hold the manifest to: the coverage invariant that every obligation is collected by a page, and every exception listed",
+        "the timing windows in timing-windows.js and what each governs",
+        "what amend-endings.test.js proves about where an amendment ends",
+        "the 18 tests of type-ahead.fit.spec.js: which pages use the accessible autocomplete, how it is configured and what it announces",
+        "the 2 tests of section-caption.fit.spec.js and the 2 of page-title.fit.spec.js: the caption and title pattern every page follows, verbatim",
+        "evaluation.js and the composition in routes-high-risk-plants.js as mechanism claims naming what they wire together"
+      ],
+      "prefix": "repo-plantsfrontend-p12"
+    },
+    {
+      "part": 13,
+      "title": "Shared layout, kit, save actions and shared copy",
+      "scope": "Everything in src/server/app/shared: the page layout, the macro kit the templates render through, the save actions every collecting page offers, the error partials, the breadcrumb trail, the set context and the shared copy. Stops at the set's pages, which parts 1 to 11 claim.",
+      "read": [
+        "src/server/app/shared/ (every file: layout.njk, layout.test.js, kit.js, kit.test.js, save-actions.njk, save-actions.test.js, section-caption.njk, section-caption.test.js, error.njk, error-summary.njk, trail.js, trail.test.js, set-context.js, set-context.test.js, paths.js, paging.js, render-macro.js, render-macro.test.js, copy.js, copy.en.js, copy.cy.js, copy.test.js, copy-leaves.js)"
+      ],
+      "covers": [
+        "layout.njk: the service name, header, navigation, phase banner, back link, footer and skip link, every string verbatim, and anything the layout shows only in some conditions",
+        "every macro in kit.js: what it renders, which GOV.UK or MOJ component it wraps, and the options it takes",
+        "save-actions.njk: every button and link it offers a collecting page, their wording verbatim, and the checks each makes - Save and continue and Save and return to overview alike",
+        "error.njk and error-summary.njk: the error summary title and how a field error is shown, verbatim",
+        "section-caption.njk: how a caption is rendered",
+        "every copy key in shared/copy.en.js and shared/copy.cy.js, verbatim, with the pages that use each",
+        "paths.js and paging.js: the URL shapes and the page size they define",
+        "trail.js, set-context.js, render-macro.js and copy-leaves.js as mechanism claims naming the data each works on",
+        "what layout.test.js, kit.test.js, save-actions.test.js and trail.test.js hold these to"
+      ],
+      "prefix": "repo-plantsfrontend-p13"
+    },
+    {
+      "part": 14,
+      "title": "The fit harness and the journey smoke spec",
+      "scope": "The repo-root fit folder: the journey smoke spec and the page-by-page harness it drives the whole notification journey with. Stops at the feature-level fit specs, which parts 1 to 12 claim.",
+      "read": [
+        "fit/journey-smoke.fit.spec.js",
+        "fit/high-risk-plants-journey.js",
+        "fit/set-base.js",
+        "fit/sign-in.js",
+        "fit/seed-fields.js"
+      ],
+      "covers": [
+        "the 4 tests of journey-smoke.fit.spec.js and what each proves end to end",
+        "the journey the harness walks in high-risk-plants-journey.js, page by page in order: the route it visits, the answers it enters on each page and the heading, label or message it asserts, each verbatim",
+        "every branch the harness supports (by commodity type, by arrival status, amend and copy where it covers them) and what changes on each",
+        "set-base.js, sign-in.js and seed-fields.js as mechanism claims naming the set-up each performs, the signed-in organisation included"
+      ],
+      "prefix": "repo-plantsfrontend-p14"
+    },
+    {
+      "part": 15,
+      "title": "The set's journey specification",
+      "scope": "spec/journey-spec.json, the set's own specification of the journey, and the happy-path fixture beside it. Stops at the decisions, conflicts and panel ledgers, which parts 16 and 17 claim.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/spec/journey-spec.json",
+        "src/server/app/sets/high-risk-plants/spec/fixtures/happy-path.json"
+      ],
+      "covers": [
+        "specVersion and every entry under journey and sections: the pages, their order and their stated purpose",
+        "every entry under behaviours: what it says the journey does, with its id",
+        "every entry under fieldGroups and obligations: each field or obligation, its level, its format and whether it is required",
+        "every entry under sources: what the specification cites and for what",
+        "where the specification and the code disagree, as an inferred claim naming both, and anything the specification states that no page implements, as a gap claim"
+      ],
+      "prefix": "repo-plantsfrontend-p15"
+    },
+    {
+      "part": 16,
+      "title": "The decisions and conflicts ledger",
+      "scope": "spec/decisions.json, spec/conflicts.json and spec/backlog-extras.json: the set's record of what has already been ruled, what is still in conflict and which increments it has recorded. Stops at the panel rulings, which part 17 claims.",
       "read": [
         "src/server/app/sets/high-risk-plants/spec/decisions.json",
+        "src/server/app/sets/high-risk-plants/spec/conflicts.json",
+        "src/server/app/sets/high-risk-plants/spec/backlog-extras.json"
+      ],
+      "covers": [
+        "all 97 decisions in decisions.json: each one's id, the conflict or subject it settles, its ruling, its resolution and the rationale, quoting the resolution text that carries the decision",
+        "all 40 conflicts in conflicts.json: each one's id, what the sides are and whether a decision settles it",
+        "every increment in backlog-extras.json that records a decision, a departure or a constraint, claimed as a ruling or an inferred claim; a planned increment on its own is not current behaviour and is claimed only where it records such a judgement",
+        "any decision the code no longer matches, as an inferred claim naming both"
+      ],
+      "prefix": "repo-plantsfrontend-p16"
+    },
+    {
+      "part": 17,
+      "title": "The panel rulings ledger",
+      "scope": "spec/panel: the review panel's dockets and rulings, its reconciliation and the critic's entries. Stops at decisions.json and conflicts.json, which part 16 claims.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/spec/panel/rulings.json",
+        "src/server/app/sets/high-risk-plants/spec/panel/critic.json",
         "src/server/app/sets/high-risk-plants/spec/panel/README.md"
       ],
       "covers": [
-        "Every one of the 84 decisions in decisions.json: its id, subject, ruling, resolution and rationale, who decided it and when, and whether it is superseded, quoted by id and words",
-        "The standing rulings the panel README names (what is out of phase and parked)"
+        "all 8 dockets in rulings.json: each one's id and summary, quoted",
+        "all 83 rulings in rulings.json: each one's id, the docket it belongs to, what it decides and the reason, quoting the ruling text",
+        "the reconciliation block: what it reconciles and to what",
+        "every entry in critic.json: what it challenges and the answer given",
+        "what README.md says the panel is and how a ruling is recorded"
       ],
-      "prefix": "repo-plantsfrontend-p9"
+      "prefix": "repo-plantsfrontend-p17"
+    },
+    {
+      "part": 18,
+      "title": "The set's own docs",
+      "scope": "src/server/app/sets/high-risk-plants/docs: the set's served-surface reference, its guides and its four recipes. Read for behaviour the docs state and for judgements they record, not as a requirement in its own right.",
+      "read": [
+        "src/server/app/sets/high-risk-plants/docs/ (every file: README.md, obligation-model.md, features.md, journey-flow-and-gates.md, services.md, limits.md, testing.md, copy-status.md, lighthouse.md, add-a-field.md, add-a-page.md, add-a-section.md, add-a-collection.md)"
+      ],
+      "covers": [
+        "README.md's 'The served surface today' section: every page, picker and action it describes, and the picker rules it states (role filters, page size, the chosen-address inset, the stored copy, the refused id, the address-book outage)",
+        "README.md's gates section: the entry guard, the section captions and FLOW_ONLY_KEYS, as the docs state them",
+        "obligation-model.md: how an obligation, its group, its gate and its cardinality are defined in this set",
+        "features.md and journey-flow-and-gates.md: the feature anatomy, the flow sections, the task rows and every gate the docs name",
+        "services.md and limits.md: the set-owned services and every limit the set applies, each with its figure",
+        "copy-status.md: which copy is agreed and which is not",
+        "testing.md and lighthouse.md: the suites the set runs and what each covers",
+        "every convention or judgement the four add-a-* recipes record that constrains how a page, field, section or collection may be built, and anything the docs state that the code does not do, as a gap claim"
+      ],
+      "prefix": "repo-plantsfrontend-p18"
     }
   ]
 }

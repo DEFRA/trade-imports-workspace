@@ -3,25 +3,11 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadBacklogSchema } from './backlog-schema.js'
 import { addRow } from './add-row.js'
+import { backlogOf, row } from './__fixtures__/backlog-rows.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
 const schema = loadBacklogSchema(join(here, '..', '..', '..'))
-
-const row = (overrides = {}) => ({
-  id: 'inc-001',
-  title: 'Show the notification list',
-  detail:
-    'An importer sees their own notifications, so they can pick one up again.',
-  acceptanceCriteria: [
-    'The list shows only notifications the signed-in user created.'
-  ],
-  dependsOn: [],
-  status: 'todo',
-  ...overrides
-})
-
-const backlogOf = (...rows) => ({ programme: 'demo', increments: rows })
 
 const idsOf = (backlog) => backlog.increments.map((candidate) => candidate.id)
 

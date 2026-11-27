@@ -1110,6 +1110,11 @@ took the unit rung red twice on 5000ms timeouts in files that pass in 2.85s alon
    taken down and started again under the same lease, for that row. No specs (a whole-suite run)
    asks for nothing in particular; a spec in no known domain asks for every domain. This is what
    stops one row's needs — the Service Bus services, say — from being up for every other row.
+   The **ladder's** gate alone also passes `--narrow-stack`, which starts a stack wider than its
+   specs need again for those alone: the launch estimate reads the rows' repos, not their specs,
+   so it over-reaches, and the ladder is the one gate that knows what it is about to run. One
+   restart per row at most. A folder whose specs have different service needs makes every
+   estimate crude whatever this does — see BUILD.md on splitting `tests/animals-admin/`.
 2. **Every increment reuses it.** The stack stays up across every increment. Every gate
    command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
    `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds

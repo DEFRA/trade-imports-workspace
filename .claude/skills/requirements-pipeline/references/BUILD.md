@@ -591,6 +591,23 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    domain, because narrowing on a reach tim cannot place would run it against
    services that are not there.
 
+   **The ladder's gate also narrows a stack wider than its specs need**, with
+   `--narrow-stack`, which only that gate passes. The launch-time estimate
+   comes from the rows' repos rather than their specs, which nothing can know
+   before a row is built, so it over-reaches: one row that owns a wide suite
+   leaves its services up for every row after it. The ladder knows exactly
+   what it is about to run, so it starts the stack again for those domains
+   alone. It costs one restart, and only at the one gate that proves a row,
+   so a row restarts the stack at most once. A gate whose specs name no
+   domain narrows nothing. **The better fix is upstream of all of this:** a
+   `tests/<domain>/` folder is the unit of service requirements, so a folder
+   holding specs with materially different needs makes every estimate here
+   crude — of the 21 specs in `tests/animals-admin/`, four reach the DLQ and
+   the Service Bus chain and seventeen do not, which is why a row touching
+   the animals backend starts mssql. Splitting such a folder into its own
+   domain fixes it at the source and makes this narrowing a safety net rather
+   than the answer.
+
    **A stack the gate re-ups keeps the lease's domains.** When
    `docker/stack` or `tim/src/stack` has changed since the stack started, no
    single service's refresh can apply that, so the gate starts the stack again

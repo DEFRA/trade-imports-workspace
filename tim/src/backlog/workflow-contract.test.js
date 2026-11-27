@@ -2622,9 +2622,23 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
+          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --narrow-stack --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
+      })
+
+      test('tells only the ladder to narrow the stack, so a row restarts it at most once', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect({
+          ladder: ladderPrompt(run).includes('--narrow-stack'),
+          baseline: promptOf(run, 'inc-900 baseline').includes(
+            '--narrow-stack'
+          ),
+          implement: promptOf(run, 'inc-900 implement').includes(
+            '--narrow-stack'
+          )
+        }).toEqual({ ladder: true, baseline: false, implement: false })
       })
 
       test('tells the ladder a rung green at baseline and red now is the increment’s to fix', async () => {

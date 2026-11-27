@@ -1271,6 +1271,69 @@ describe('#acquireDecision with domains', () => {
   })
 })
 
+describe('#acquireDecision narrowing a stack wider than the run needs', () => {
+  const decisionFor = (leaseDomains, asked, narrow) =>
+    acquireDecision({
+      up: true,
+      lease: {
+        holder: 'run-1',
+        state: 'up',
+        workspace: '/w',
+        containers: ['a'],
+        domains: leaseDomains
+      },
+      holder: 'run-1',
+      workspaceRoot: '/w',
+      containers: ['a'],
+      domains: asked,
+      narrow
+    })
+
+  test('Should start a narrower stack when asked to narrow', () => {
+    expect(
+      decisionFor(
+        ['animals', 'animals-admin', 'plants'],
+        ['animals', 'plants'],
+        true
+      )
+    ).toBe('restart')
+  })
+
+  test('Should narrow a stack started for every domain down to the ones asked for', () => {
+    expect(decisionFor([], ['animals'], true)).toBe('restart')
+  })
+
+  test('Should reuse a stack wider than it needs when it was not asked to narrow', () => {
+    expect(
+      decisionFor(
+        ['animals', 'animals-admin', 'plants'],
+        ['animals', 'plants'],
+        false
+      )
+    ).toBe('reuse')
+  })
+
+  test('Should reuse the stack when nothing in particular is asked for, whole or narrowed', () => {
+    expect([
+      decisionFor(['animals', 'plants'], [], true),
+      decisionFor([], [], true)
+    ]).toEqual(['reuse', 'reuse'])
+  })
+
+  test('Should reuse a stack started for exactly the domains asked for', () => {
+    expect(
+      decisionFor(['animals', 'plants'], ['plants', 'animals'], true)
+    ).toBe('reuse')
+  })
+
+  test('Should still start a wider stack for a domain the lease is missing', () => {
+    expect([
+      decisionFor(['animals'], ['animals', 'plants'], true),
+      decisionFor(['animals'], ['animals', 'plants'], false)
+    ]).toEqual(['restart', 'restart'])
+  })
+})
+
 describe('#acquireDecision when the holder’s own stack lost a container', () => {
   const decisionFor = (recorded, running) =>
     acquireDecision({

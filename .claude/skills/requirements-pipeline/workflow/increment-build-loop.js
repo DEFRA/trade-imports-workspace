@@ -1039,8 +1039,14 @@ const repoFlags = (repoKeys) => (repoKeys ?? []).map((key) => ` --repo ${key}`).
 // would see none of a resumed row's work. The base branch is the row.
 const ROW_CHANGE_BASE = IS_BRANCH ? 'HEAD' : `origin/${BASE_BRANCH}`
 
-const gateCommand = (phase, logs, repoKeys, base = ROW_CHANGE_BASE) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)} --result ${gateResultFile(phase, logs)} --detach`
+const gateCommand = (
+  phase,
+  logs,
+  repoKeys,
+  base = ROW_CHANGE_BASE,
+  { narrowStack = false } = {}
+) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E}${E2E === 'targeted' ? ` --base ${base}` : ''} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"${repoFlags(repoKeys)}${narrowStack ? ' --narrow-stack' : ''} --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never
@@ -1051,8 +1057,8 @@ const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--det
   gate's process stopped without a result: that gate is RED, reported as "the gate died", with the error's message
   copied word for word. A gate that has still written no result after the last wait is RED, reported as "the gate did
   not finish". Never use run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
-const gateCommandList = (phases, logs, repoKeys, base) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys, base)}\``).join('\n')
+const gateCommandList = (phases, logs, repoKeys, base, options) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, repoKeys, base, options)}\``).join('\n')
 
 const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
@@ -4639,17 +4645,19 @@ const ciE2eEvidenceStep = (repoKeys) => {
    completed no end-to-end run yet is not red: say it is awaited. Add no rung for any of this — rungs[] is the gate's.`
 }
 
+const NARROW_AT_LADDER = { narrowStack: true }
+
 const ladderGateStep = (phases, logs, base) => {
   if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
   if (owesWholeGate(phases)) {
     return `1. THE GATE. ONE command — the same one the baseline ran, into its own folder — which runs unit, FIT and E2E
    side by side:
-${gateCommandList([WHOLE_GATE], logs, undefined, base)}
+${gateCommandList([WHOLE_GATE], logs, undefined, base, NARROW_AT_LADDER)}
    Its \`result.rungs[]\` holds every rung of every phase, red or green: you have the whole picture before you repair
    anything.`
   }
   return `1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateCommandList(phases, logs, undefined, base)}
+${gateCommandList(phases, logs, undefined, base, NARROW_AT_LADDER)}
    Run every one, even after a red one, so you have the whole picture before you repair anything.`
 }
 

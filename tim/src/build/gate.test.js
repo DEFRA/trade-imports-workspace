@@ -1861,6 +1861,53 @@ describe('runGate — a narrowed e2e run', () => {
     })
   })
 
+  test('starts a stack wider than its specs need again for those alone, when asked to narrow', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/plants/review.spec.ts')
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER, domains: ['animals', 'plants'] })
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD',
+      narrowStack: true
+    })
+
+    expect({
+      green: outcome.green,
+      calls: stackCalls(),
+      domains: leaseOnDisk().domains
+    }).toEqual({
+      green: true,
+      calls: ['docker compose down', 'tim docker dev'],
+      domains: ['plants']
+    })
+  })
+
+  test('leaves a stack wider than its specs need alone unless asked to narrow', async () => {
+    const env = workspaceWith(narrowedGates)
+    await commitBaseIn('frontend')
+    const testsDir = await commitBaseIn('tests')
+    specIn(testsDir, 'tests/plants/review.spec.ts')
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER, domains: ['animals', 'plants'] })
+
+    const outcome = await gate(env, {
+      phase: 'e2e',
+      e2e: 'targeted',
+      base: 'HEAD'
+    })
+
+    expect({
+      green: outcome.green,
+      calls: stackCalls(),
+      domains: leaseOnDisk().domains
+    }).toEqual({ green: true, calls: [], domains: ['animals', 'plants'] })
+  })
+
   test('asks nothing of a stack started for every domain, so it is reused as it is', async () => {
     const env = workspaceWith(narrowedGates)
     await commitBaseIn('frontend')

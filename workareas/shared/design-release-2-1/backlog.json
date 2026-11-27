@@ -2531,7 +2531,6 @@
         "req-2306",
         "req-2307",
         "req-2486",
-        "req-1956",
         "req-2300",
         "req-2715",
         "req-2716",
@@ -2540,7 +2539,8 @@
         "req-2738",
         "req-2739",
         "req-2740",
-        "req-2741"
+        "req-2741",
+        "req-2966"
       ]
     },
     {
@@ -2851,7 +2851,8 @@
         "The germinal 'Temperature' question comes after all the commodity groups, behind a section break: radios with the legend 'Temperature' at label size and the hint 'How the products will be stored.' (prototype:dr2-1-source prototype-dr2-1-source-p3-038, -p3-040, -p3-092; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-039, -p4-047; prototype:dr2-1-specs prototype-dr2-1-specs-p2-027, -p2-028, -p2-029; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021)",
         "Ticking a germinal species, such as Domestic cattle (Bos taurus) under Cattle, Semen, shows '1 selected' with a 'Cattle, Semen (05111000):' line and a remove button named 'Remove Domestic cattle (Bos taurus)', as the live-animal search does. (prototype:dr2-1-specs prototype-dr2-1-specs-p1-112; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, -p1-014; c-282)",
         "In the published payload a germinal trade line whose stored product type is semen carries the type code SEMEN, one whose product type is embryos carries EMBRYO, and one whose product type is ova carries OVA. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-036, -p1-037, -p1-038, -p1-039; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-029; c-273)",
-        "A notification holding an embryos commodity and an ova commodity publishes them as two trade lines, each carrying its own type code. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-036, -p1-037, -p1-038; c-282)"
+        "A notification holding an embryos commodity and an ova commodity publishes them as two trade lines, each carrying its own type code. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-036, -p1-037, -p1-038; c-282)",
+        "A valid Save and continue on germinal Commodity details, reached in the journey, goes straight to the page the germinal journey puts after Commodity details; the total gross weight is asked only in each species block on Commodity details, and the journey has no page asking a total gross weight for the whole consignment. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-004; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-022; c-231, c-461, c-486)"
       ],
       "requirements": [
         "req-121",
@@ -2867,7 +2868,8 @@
         "req-2599",
         "req-2598",
         "req-1783",
-        "req-1800"
+        "req-1800",
+        "req-2601"
       ],
       "sources": [
         {
@@ -2980,6 +2982,7 @@
         "c-022, c-231, c-232, c-233 (ruled) as before: the answer is a total gross weight held per species line in kilograms; weight and temperature are optional; temperature is asked once and held on every line. c-234 (ruled, reworked by the reconciler on 27 November): the quantity in units or pieces is the line's one required count and its published quantity, and the number of packages is optional, asked where the package-count list names the commodity (c-324, c-459). c-282: the catalogue's content is the central reference data's, so the quantity and the weight are asked on every germinal species block.",
         "Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox; nothing reaches a real downstream system from a local stack and no criterion asks it to.",
         "Combines the temperature's storage (req-1889), germinal publishing on today's profile (req-1895) and the live-animal type code (req-1894): one change to the commodity line and one to the publishing mapper.",
+        "Combiner, re-distil 27 November (germinal weight): req-2601 joins this row from the commodity-details area's draft. It is the same page's Save and continue beside the per-species weight this row already asks, so building it apart would repeat the page's set-up. c-461 and c-486 (ruling:sam-2026-11-27 claim 1 ranks above the 26 November prototype): no consignment-level weight page or hub row is built, so the prototype's hop to that page is set aside. The criterion names the journey's next page rather than Identification details, because inc-052 depends on this row. The row now holds 17 criteria, a little over about 15; it stays whole because every criterion is the same germinal Commodity details page and its record.",
         "Already sits in inc-017, the germinal Commodity details row, which also asks the temperature question and carries the germinal lines' own interim type codes; the combiner keeps that row and its storage criterion stated once.",
         "c-273 (ruled): live lines gain LIVE_ANIMAL alongside the germinal lines' own codes. The PIMS profile, trade-imports-schemas and the dynamics gateway are not in this row's repos, which is how the no-change half of req-1895 is kept; the germinal details' own publishing waits for the PIMS schema update outside this backlog.",
         "Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox, in every environment the row builds in; nothing reaches a real downstream system from a local stack and no criterion asks it to.",
@@ -6550,7 +6553,8 @@
         "One slice: both requirements are the same copied page leaving out a section and its page, so they share one set-up. They already sit in inc-181 with the germinal consignment addresses page and its pickers (consignment-parties area) and the germinal overview's Addresses task (notification-hub area); the combiner keeps them there. The two criteria are worded as inc-181 already carries them.",
         "Draft of the notification-hub half of the existing row that builds the germinal consignment addresses page and its pickers; the combiner keeps it in that row, since the overview task reads the page that row builds.",
         "c-405 ruled by precedence: the owner's 17 November decision fixes the section and task wording as '5. Addresses' and 'Consignment addresses'. The task covers the consignment addresses only, because the germinal set has no county parish holding number or permanent address page.",
-        "Stands alone from inc-182, inc-283, inc-183, inc-184 and inc-185: too much for one plan, the merged row would carry more than about 15 criteria."
+        "Stands alone from inc-182, inc-283, inc-183, inc-184 and inc-185: too much for one plan, the merged row would carry more than about 15 criteria.",
+        "Combiner, re-distil 27 November: req-2966 (each animals party picker refuses a save made after the notification changed and returns to the same picker) changes the live-animals party picker, which the consignment-parties branch owns, so it goes to that pointer's pickUp rather than to this row. The germinal pickers copy the live ones once that branch lands (req-1827), so the planner copies the stale-save refusal along with the rest of the picker."
       ],
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/addresses",

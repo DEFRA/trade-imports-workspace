@@ -21,47 +21,59 @@
       "requirements": ["req-1820", "req-2638"],
       "sources": [
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-101, -p12-102: the transporter page's search, button and table, and the germinal journey picking a transporter; trace-prototype-dr2-1-p9-009: the germinal list's heading and intro" },
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-124: the germinal transporter list shows only the heading and intro" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-124: the transporter authorisation guidance shows only for live animals (transporter.html:48,64)" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-058, -p3-059, -p3-060: the germinal list leaves out the transporter authorisation guidance" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, -p1-009, -p1-011, -p1-014, -p1-057: the germinal set, pages copied from live-animals feature folders, the shared slugs, organisation-wide transporters" },
         { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-049: the germinal copy of the transporter step no longer waits on the live-animals transporter rows" },
         { "source": "ruling:ian-2026-11-06", "ref": "ruling-ian-2026-11-06-p1-002, -p1-012, -p1-055: the address book manages transporters, a journey that needs a new one opens the front door's add pages in journey mode and lands back on save or cancel, and those pages live in the front door" },
         { "source": "ruling:ian-2026-11-25", "ref": "ruling-ian-2026-11-25-p1-007, -p1-022, -p1-025, -p1-035-m1: every address book list and picker pages, at eight, with the chosen-record restatement" },
         { "source": "confluence:6497338582", "ref": "confluence-6497338582-p2-072, -p2-084, -p2-094: the transporter type and both transporter records impact the germinals journey too" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p12-001, -p12-007, -p12-024, -p12-029, -p12-033, -p12-042, -p12-044, -p12-056, -p12-061, -p13-092, -p13-096: the live-animals transporter list the germinal copy is taken from" }
+        { "source": "repo:frontend", "ref": "repo-frontend-p12-001, -p12-007, -p12-024, -p12-029, -p12-033, -p12-042, -p12-044, -p12-056, -p12-061, -p13-092, -p13-096: the live-animals transporter list the germinal copy is taken from (features/transport/transporters)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Rewrite of the existing row inc-178, keeping its id and its germinal-products theme. Adds req-2638, the germinal list's content without transporter authorisation guidance: it is the germinal list's own page, so it builds here rather than on the transporters branch, and it combines with req-1820 because both are the same page and set-up. Everything else is as before: req-1820 names only the transporter list, the add pages are the address book front door's (ruling:ian-2026-11-06 points 2 and 8), and the paging criterion is the list's own behaviour under ruling:ian-2026-11-25 (req-2268 sets it on the live-animals list on the transporters branch). The germinal list is copied from the live-animals list once the transporters branch has built it, so it also takes the live list's selected-transporter summary with Change and Remove (req-2634 to req-2636, on the transporters branch) as part of the copy. Combiner: keep the externalDependsOn guidance from before - the 'Add a transporter' criteria cannot be observed until the transporters branch has built the transporter hand-off (req-2264), so this row depends on shared/design-release-2-1/themes/transporters alongside its dependsOn on the germinal set's foundation row (inc-176).",
+      "notes": "Keeps the existing row inc-178, its id, its germinal-products theme and its dependsOn on the germinal set's foundation row (inc-176). Pass 1 gave two slices on one page, the germinal transporter list (req-1820) and its content without the live-animal authorisation guidance (req-2638); pass 2 combines them because they share one page, one feature folder and one set-up. Neither requirement changed since the last distil, so the criteria stand as they were; checked against c-385 (whose overruled claims repo-frontend-p13-001 and -p13-002 this row does not cite) and c-471 (the banner criterion quotes the name as the trader entered it, matching that question's default). The germinal set does not exist on main yet (only sets/live-animals), so the code lives under sets/germinal-products, which no split-off theme touches: it stays here rather than going to the transporters branch. The add pages are the address book front door's, so the germinal set copies the list only. Combiner: the 'Add a transporter' and save-and-return criteria can only be observed once the transporters branch has built the journey-mode transporter hand-off (req-2264) and the live-animals list this copies; give the row an externalDependsOn on shared/design-release-2-1/themes/transporters for that, as the earlier notes asked. Stands alone from the other germinal rows: merging would carry more than about 15 criteria.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport/transporters",
         "tests:page-objects/germinal-products",
         "tests:tests/animals/e2e/germinal-products"
       ],
       "shared": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow"
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport/page.js"
       ],
       "existingRow": "inc-178"
+    },
+    {
+      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements, in the address book and the commercial transporter form",
+      "detail": "With JavaScript, the design starts the add-a-transporter pages on their address lookup with the address fields and contact-details section not yet shown. The lookup is parked as concept work and blocked on the INS address lookup becoming a real feature, so this waits in the deferred waiting-on-design row with the address book's own search-only layout. Without JavaScript every field shows from the start, which is already how the forms work and stays so.",
+      "acceptanceCriteria": [
+        "With JavaScript, the commercial transporter form opens showing the address search and an 'Enter address manually' link-style button, with the address fields and the 'Enter contact details' section not yet shown, and pressing that button shows them. (prototype:dr2-1-source prototype-dr2-1-source-p7-096, -p7-097; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-057)",
+        "With JavaScript, the address fields and the contact-details section are shown from the start when an address has been looked up, when address line 1 holds a value, when any address field carries an error, or after a refused save, with the search text and the chosen address still shown. (prototype:dr2-1-source prototype-dr2-1-source-p7-097; repo:frontend repo-frontend-p12-085)",
+        "Without JavaScript, the commercial transporter form shows every address and contact field from the start. (repo:frontend repo-frontend-p12-085; trace:animals-fit trace-animals-fit-p20-036)"
+      ],
+      "requirements": ["req-458"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-096, -p7-097 (transporter-add-commercial-fields.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p9-057" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p12-085 (features/transport/commercial-transporter-details, every field shown today)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p20-036" },
+        { "source": "ruling:sam-2026-11-09", "ref": "ruling-sam-2026-11-09-p1-014, -p1-020: address search is parked as concept work" }
+      ],
+      "repos": ["insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "deferred",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "This is the existing deferred row inc-194, which already holds req-458 beside the address book's and party pages' search-only layout. A deferred row is never changed on a re-distil, so the combiner keeps inc-194 exactly as it stands in backlog.json: its id, every field, its full requirements list, its waiting-on-design theme and its externalDependsOn. This draft names only this area's share of it so coverage sees req-458 placed once. req-458's statement has moved since the row was written (it now describes the add-a-transporter pages opening on postcode lookup steps), but it still carries its blockedBy (parked by ruling:sam-2026-11-09 point 2, deferred with address search by the 13 November design ruling, waiting on design question 10 and the INS address lookup), so it stays deferred. When address search is planned, the row is rewritten from the requirement as it then stands; its code is then the address book's transporter add pages, which the split-off transporters theme owns.",
+      "touches": [],
+      "shared": [],
+      "existingRow": "inc-194"
     }
   ],
   "unobservable": [],
-  "splitOff": [
-    { "requirement": "req-466", "theme": "transporters", "why": "It changes how a failed save is shown on the live-animals transporter list and add pages (transport/transporters and transport/transporter-details-save.js), which theme transporters owns." },
-    { "requirement": "req-2170", "theme": "transporters", "why": "It changes which transporter record the live-animals transporter pages save on the notification (transport/transporters/transporter-record.js and the private and commercial details controllers), which theme transporters owns." },
-    { "requirement": "req-2634", "theme": "transporters", "why": "It adds the selected-transporter summary to the live-animals transporter list (transport/transporters), which theme transporters owns." },
-    { "requirement": "req-2635", "theme": "transporters", "why": "It adds the summary's Change link on the live-animals transporter list (transport/transporters), which theme transporters owns." },
-    { "requirement": "req-2636", "theme": "transporters", "why": "It adds the summary's Remove button on the live-animals transporter list (transport/transporters), which theme transporters owns." },
-    { "requirement": "req-2637", "theme": "transporters", "why": "It changes what the live-animals transporter list saves after a search hides the ticked row (transport/transporters), which theme transporters owns." },
-    { "requirement": "req-2641", "theme": "transporters", "why": "It adds the postcode lookup to the private transporter add page (transport/private-transporter-details, services/address-lookup and the INS backend address lookup), which theme transporters owns." },
-    { "requirement": "req-2642", "theme": "transporters", "why": "It adds the 'Select an address' step to both add-a-transporter pages (transport/private-transporter-details and transport/commercial-transporter-details), which theme transporters owns." },
-    { "requirement": "req-2643", "theme": "transporters", "why": "It adds the 'Enter a postcode' lookup error to both add-a-transporter pages, which theme transporters owns." },
-    { "requirement": "req-2644", "theme": "transporters", "why": "It adds the 'Enter a full UK postcode' lookup error to both add-a-transporter pages, which theme transporters owns." },
-    { "requirement": "req-2645", "theme": "transporters", "why": "It adds the no-addresses-found lookup error to both add-a-transporter pages, which theme transporters owns." },
-    { "requirement": "req-2646", "theme": "transporters", "why": "It adds the 'Select an address' error to both add-a-transporter pages' lookup step, which theme transporters owns." },
-    { "requirement": "req-2647", "theme": "transporters", "why": "It fills the private transporter add page from a looked-up address (transport/private-transporter-details), which theme transporters owns." },
-    { "requirement": "req-458", "theme": "transporters", "why": "It lays out both add-a-transporter pages as lookup steps (transport/private-transporter-details and transport/commercial-transporter-details), which theme transporters owns. It is conditional on design keeping the layout and is also held in the deferred waiting-on-design row inc-194, so the branch builds it only once design confirms." }
-  ]
+  "splitOff": []
 }

@@ -21,37 +21,36 @@
         { "source": "trace:e2e", "ref": "trace-e2e-p3-067, p3-068" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-017, p3-018" }
       ],
-      "repos": ["frontend", "plantsfrontend", "tests"],
+      "repos": ["plantsfrontend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Redraft of inc-126 on this re-distil. It now holds only req-1455 from this area. req-1441 (the amend review's Delete button), req-1479 (the end-to-end proof of amend, cancel amendment, copy and delete) and req-2368 (the three confirmations without JavaScript) move to the split-off themes whose code they change: overview-and-review for the amend review's button group, manage-notifications for the action pages and their specs. The combiner must take them out of inc-126's requirements and drop their criteria. inc-126 also holds req-2032 (plants' banner and its Welsh twin) from the notification-list area: merge that area's draft into this one, since the same delete walk proves both. req-2032 states the plants wording without a closing full stop and req-1455 with one; c-513 settles the message as 'Notification has been deleted.', so the combiner keeps the full stop in both lists. c-513 also settles that the reference form of the message is unreachable on ?deleted=1, so it has no criterion. The 'Success' title is req-1086's. The germinal list's message is a question (req-2860) and the germinal row's. The current wording lives in each frontend's shared copy; this row moves the deletion message into each dashboard feature's own copy and leaves the shared action wording as it is. The delete spec on the manage-notifications branch asserts the old wording, so whichever lands second updates that assertion. Keep inc-126's existing externalDependsOn on the split themes.",
+      "notes": "Redraft of inc-126's req-1455 slice; the combiner merges it back into inc-126 (theme animals-dashboard) with the notification-list area's draft, since one delete walk proves both. The banner is rendered by each set's dashboard feature; today's wording sits in each frontend's shared copy (src/server/app/shared/copy.en.js and copy.cy.js), which the split-off journey-foundation theme owns, so this row moves the deletion message into each dashboard feature's own copy rather than editing the shared wording. c-513 settles the message as 'Notification has been deleted.' with a closing full stop, and that the reference form is unreachable on ?deleted=1, so it has no criterion. The 'Success' title is req-1086's. The germinal list's message is a question (req-2860, c-511) and is not here. The delete fit specs (delete-notification folders) and the e2e notification-delete spec sit in the split-off manage-notifications theme; whichever lands second brings their assertion of the message in step. Keep inc-126's externalDependsOn on the split themes.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
         "tests:page-objects/animals/dashboard-page.ts",
-        "tests:page-objects/plants/dashboard-page.ts",
-        "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts",
-        "tests:tests/plants/e2e/features/dashboard.spec.ts",
-        "tests:tests/plants/e2e/features/start.spec.ts"
+        "tests:page-objects/plants/dashboard-page.ts"
       ],
       "shared": [
         "frontend:src/server/app/shared/copy.en.js",
         "frontend:src/server/app/shared/copy.cy.js",
         "plantsfrontend:src/server/app/shared/copy.en.js",
         "plantsfrontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/delete-notification",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification",
         "tests:tests/animals/e2e/features/notification-delete.spec.ts"
       ],
       "existingRow": "inc-126"
     },
     {
       "title": "Amend, cancel amendment, copy as new and delete for germinal products notifications",
-      "detail": "A submitted germinal products notification is managed on the germinal set's own copies of the live animals amend, cancel-amendment, notification actions and delete pages, taken from those pages once their own work has changed them. The germinal copies count packages where live animals count animals, and a copy of a germinal notification stays a germinal notification, so it opens in the germinal set and nowhere else. Every action lands on the germinal set's own pages and list.",
+      "detail": "A submitted germinal products notification is managed on the germinal set's own copies of the live animals amend, cancel-amendment, notification actions and delete pages, taken from those pages once their own work has changed them. The germinal copies count the quantity in units or pieces where live animals count animals, and a copy of a germinal notification stays a germinal notification, so it opens in the germinal set and nowhere else. Every action lands on the germinal set's own pages and list.",
       "acceptanceCriteria": [
         "A submitted germinal products notification's view page offers 'Amend this notification', 'Copy as new' and 'Delete', and each opens the germinal set's own page for that action, with JavaScript turned on or off (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-024; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014)",
         "'Amend this notification' on a submitted germinal notification opens the germinal set's amend confirmation page, headed 'Amend this notification?', with a summary list of 'Reference number', 'Commodity', 'Number' and 'Origin', the sentence 'Confirm that you want to amend this notification.', a 'Yes, amend' button and a 'No, cancel' link; 'Yes, amend' opens the germinal notification's review page and 'No, cancel' returns to its view page with the notification still submitted (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-024, ruling-sam-2026-11-27-p1-025; prototype:dr2-1-source prototype-dr2-1-source-p12-133, prototype-dr2-1-source-p12-139)",
-        "On the germinal set's amend confirmation page and delete page, the Number row shows the notification's total number of packages (prototype:dr2-1-source prototype-dr2-1-source-p11-175, prototype-dr2-1-source-p12-125, prototype-dr2-1-source-p12-136; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057)",
+        "On the germinal set's amend confirmation page and delete page, the Number row shows the notification's total quantity in units or pieces across its lines (prototype:dr2-1-source prototype-dr2-1-source-p11-175, prototype-dr2-1-source-p12-125, prototype-dr2-1-source-p12-136; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; c-234)",
         "Cancelling the amendment of a germinal notification on the germinal set's cancel-amendment page returns the trader to the notification's view page, with the notification submitted and showing the answers it was submitted with (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-024; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014)",
         "'Yes, delete' on the germinal set's delete page lands the trader on the germinal set's own notification list, which no longer lists the deleted notification (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-110)",
         "Amend, cancel amendment, copy as new or delete for a germinal notification that cannot take that action changes nothing and returns the trader to the germinal set's own notification list with no message (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-110)",
@@ -71,7 +70,7 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Redraft of inc-185, the germinal row that already covers req-1878 and req-1880; it adds req-2863, the 27 November ruling that the germinal actions are copies of the live animals ones as the manage-notifications theme leaves them. The combiner keeps inc-185's id, its germinal-products theme, its dependsOn and its externalDependsOn on the manage-notifications rows it copies (inc-120, inc-121, inc-123, inc-124, inc-125). req-1878 now names the amend confirmation page as well as the delete page, so the Number criterion covers both. The amend page wording is c-512's outcome, which every set that amends shows. The ruling leaves open which design changes reach manage notifications (ruling-sam-2026-11-27-p1-026); they go to that theme's branch, and these copies follow it. req-1880 changes the backend copy, which the manage-notifications theme owns; it stays here because the category it must keep is the germinal theme's own (inc-176 stores it), and the backend on main has no category yet, so the copy file is listed under shared. The germinal list's deletion message is a question (req-2860), so the delete criterion names the landing, not the wording. The Latin-name capitalisation question (req-2859) has no criterion.",
+      "notes": "Redraft of inc-185 (theme germinal-products), unchanged in substance: it covers req-1878 (the Number row as the germinal total quantity, c-234), req-1880 (a copy keeps its category) and req-2863 (the germinal actions are copies of the live animals features as the manage-notifications theme leaves them). Keep inc-185's id, theme, dependsOn (inc-182, inc-126) and externalDependsOn on the manage-notifications rows it copies (inc-120, inc-121, inc-123, inc-124, inc-125). req-1880 changes the backend copy (NotificationCopyMapper.java), which the split-off manage-notifications theme owns; it stays here, listed under shared, because the category it keeps is the germinal theme's own (inc-176 stores it) and the backend on main has no category yet, so on the manage-notifications branch it could not be observed. The row lands after that branch merges, through its externalDependsOn. The ruling leaves open which later design changes reach manage notifications (ruling-sam-2026-11-27-p1-026); they go to that theme's branch and these copies follow it. The germinal list's deletion message (req-2860) and the Latin-name capitalisation (req-2859) are questions with no criterion here.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/amend",
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/cancel-amend",
@@ -81,21 +80,11 @@
         "tests:tests/animals/e2e/germinal-products"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java"
       ],
       "existingRow": "inc-185"
     }
   ],
   "unobservable": [],
-  "splitOff": [
-    { "requirement": "req-1431", "theme": "manage-notifications", "why": "It changes what the backend copy carries of each party, in the copy mapper the manage-notifications theme owns, beside its Copy as new row." },
-    { "requirement": "req-1441", "theme": "overview-and-review", "why": "It adds Delete to the amend review's button group, in the check-answers pages of live animals and plants, which theme overview-and-review owns." },
-    { "requirement": "req-1479", "theme": "manage-notifications", "why": "It changes the tests repo's amend, cancel-amendment, copy and delete specs and page objects, which theme manage-notifications owns." },
-    { "requirement": "req-2003", "theme": "manage-notifications", "why": "It adds Copy as new to plants' view header, which the 25 November ruling gives to the manage-notifications Copy as new row; the header sits in plants' check-answers, which overview-and-review owns and manage-notifications lands after." },
-    { "requirement": "req-2055", "theme": "manage-notifications", "why": "It wires plants' Copy as new route and landing, which the 25 November ruling gives to the manage-notifications Copy as new and stale-copy rows." },
-    { "requirement": "req-2368", "theme": "manage-notifications", "why": "It makes the amend, cancel-amendment and delete confirmations work without JavaScript, in the amend, cancel-amend and delete-notification features the manage-notifications theme owns." },
-    { "requirement": "req-2861", "theme": "manage-notifications", "why": "It adds the summary list to the amend confirmation page, in the amend feature the manage-notifications theme owns." },
-    { "requirement": "req-2862", "theme": "manage-notifications", "why": "It adds the confirmation sentence to the amend confirmation page, in the amend feature the manage-notifications theme owns." }
-  ]
+  "splitOff": []
 }

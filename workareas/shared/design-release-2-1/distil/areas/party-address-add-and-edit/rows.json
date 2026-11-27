@@ -2,27 +2,59 @@
   "area": "party-address-add-and-edit",
   "rows": [
     {
-      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements, in the address book and the commercial transporter form",
-      "detail": "The postcode lookup on the consignee, importer and place of destination add-address pages: an 'Enter address manually' link at every lookup step, the uses checkboxes and save buttons only on the address form, and an error for an empty postcode. Address search is parked until it is planned and the address lookup is a real feature, so this stays in the existing deferred waiting-on-design row.",
+      "title": "Find an address by postcode before the address form, in the consignee, importer and place of destination sections",
+      "detail": "Adding a consignee, importer or place of destination address from a notification starts with a postcode step: the trader enters a UK postcode, picks the address from those found, or is told none were found, and either way can enter the address by hand. The ways out of each step, the errors on each step and the Back links between the steps are what this area adds to the find-address row. Address search is parked until it is planned again and the INS backend's address lookup is a real feature, so this row waits.",
       "acceptanceCriteria": [
-        "The postcode step, the 'Select an address' page and the no-addresses page each show an 'Enter address manually' link, which opens the role's add-address form with empty fields under the same heading as the postcode step (prototype:dr2-1-source p8-170, p8-172, p8-173; trace:prototype-dr2-1 p7-045, p7-055, p7-058, p7-066; prototype:dr2-1-specs p4-069, p4-075, p4-088, p4-090; ruling:sam-2026-10-09 p1-178, p1-180)",
-        "On the consignee, importer and place of destination pages the 'Add to your address book' checkboxes and the save buttons show on the add-address form, and the postcode step and the 'Select an address' page show only the lookup and its own button (prototype:dr2-1-source p8-182; trace:prototype-dr2-1 p7-044, p7-058; ruling:sam-2026-10-09 p1-178, p1-180)",
-        "Pressing 'Find address' with no postcode shows the error 'Enter a postcode', linked to the postcode field, and the browser title starts 'Error: ' (prototype:dr2-1-source p8-174; trace:prototype-dr2-1 p7-049; prototype:dr2-1-specs p4-072; ruling:sam-2026-10-09 p1-178, p1-180)"
+        "The postcode step reached from the consignee, importer or place of destination picker has a Back link that opens that picker and a 'Cancel and return to hub' link that opens the notification's hub. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-046, -p7-047; prototype:dr2-1-specs prototype-dr2-1-specs-p4-070, -p4-071, -p4-088, -p4-090)",
+        "Pressing 'Find address' with a postcode that is not a full UK postcode, such as 'M1', shows the error 'Enter a full UK postcode, like BB4 4AA', and the postcode field still holds 'M1'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-050; prototype:dr2-1-specs prototype-dr2-1-specs-p4-073)",
+        "A full postcode with no addresses opens a page titled 'No addresses found' and headed 'No addresses found for <postcode>', showing 'Postcode' with the postcode and a 'Change postcode' link, then an 'Enter address manually' link and a 'Cancel and return to hub' link, and no button. (trace:prototype-dr2-1 trace-prototype-dr2-1-p7-052, -p7-053, -p7-055; prototype:dr2-1-specs prototype-dr2-1-specs-p4-074, -p4-075)",
+        "Pressing 'Continue' on the 'Select an address' page without choosing an address shows the error 'Select an address' in a 'There is a problem' summary linked to the select, and the browser title starts 'Error: '. (prototype:dr2-1-source prototype-dr2-1-source-p8-180; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-059; prototype:dr2-1-specs prototype-dr2-1-specs-p4-078)",
+        "The 'Select an address' and 'No addresses found' pages have a Back link that opens the postcode step with the postcode searched for filled in, and their 'Change postcode' link opens the postcode step with that postcode filled in. (prototype:dr2-1-source prototype-dr2-1-source-p8-181; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-053, -p7-054; prototype:dr2-1-specs prototype-dr2-1-specs-p4-075)",
+        "The consignee, importer and place of destination add-address form reached from the postcode step, by a found address or by 'Enter address manually', has a Back link that opens that role's postcode step. (prototype:dr2-1-source prototype-dr2-1-source-p8-167; trace:prototype-dr2-1 trace-prototype-dr2-1-p7-065; prototype:dr2-1-specs prototype-dr2-1-specs-p4-083)"
       ],
+      "requirements": ["req-2725", "req-2726", "req-2727", "req-2728", "req-2729", "req-2730"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-167, -p8-180, -p8-181" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p7-046, -p7-047, -p7-050, -p7-052 to -p7-055, -p7-059, -p7-065" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-070, -p4-071, -p4-073 to -p4-075, -p4-078, -p4-083, -p4-088, -p4-090" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-178" },
+        { "source": "ruling:sam-2026-11-09", "ref": "ruling-sam-2026-11-09-p1-002" }
+      ],
+      "repos": ["stub", "insbackend", "insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: address search is parked as concept work the deadline does not need (ruling:sam-2026-11-09 points 2 and 3), and it waits on the INS backend's address lookup becoming a real feature; today only a spike exists, gated to dev and local and not wired in. Who: Sam must plan address search again, and the INS backend's owners must make the lookup real; the address search area is then re-distilled and this row rewritten to it."
+      ],
+      "notes": "Combiner: merge into the existing blocked row inc-282 and keep its id, theme, repos and touches. One slice: the postcode step's ways out, errors and Back links for the three party sections (req-2725 to req-2730), which share the find-address pages, set-up and blocker with the address-lookup area's requirements already in inc-282. Every requirement here carries the same parking blocker, so the row stays blocked with no default to build. Its code falls in the split-off address-book theme (the INS add page's Back link, the address-lookup service) and consignment-parties theme (the party picker's add link), but it is kept here rather than handed to those branches' pickUp, as inc-282 already decided: neither branch can build it until the parking lifts. The criteria name what the user sees on the local and CI stacks (the stub's lookup through the INS backend) and in CDP alike, because the row only builds once the lookup is real in every environment.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-lookup-spike",
+        "insfrontend:src/server/app/services/address-lookup",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated",
+        "tests:tests/ins/e2e/features/address-lookup"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker"
+      ],
+      "existingRow": "inc-282"
+    },
+    {
+      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements, in the address book and the commercial transporter form",
+      "detail": "Carried unchanged. The postcode lookup's 'Enter address manually' link at every step, the uses checkboxes shown only on the add-address form, and the empty-postcode error already sit in this deferred row.",
+      "acceptanceCriteria": [],
       "requirements": ["req-652", "req-653", "req-654"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p8-170, p8-172, p8-173, p8-174, p8-182" },
-        { "source": "trace:prototype-dr2-1", "ref": "p7-044, p7-045, p7-049, p7-055, p7-058, p7-066" },
-        { "source": "prototype:dr2-1-specs", "ref": "p4-069, p4-072, p4-075, p4-088, p4-090" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-178, p1-180" },
-        { "source": "ruling:sam-2026-11-09", "ref": "p1-002" }
+        { "source": "ruling:sam-2026-11-09", "ref": "ruling-sam-2026-11-09-p1-002" }
       ],
       "repos": ["insfrontend", "frontend", "tests"],
       "kind": "feat",
       "status": "deferred",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combiner: keep the existing deferred row inc-194 exactly as it is: its id, text, requirements, theme, dependsOn and externalDependsOn. It already holds req-652, req-653 and req-654 beside this area's req-649 and req-1957, and a deferred row is never rewritten on a re-distil. This draft only records that the three requirements still to build from this area sit there. All three carry blockedBy: ruling:sam-2026-11-09 points 2 and 3 park address search as concept work not needed for the deadline, and it waits on the INS backend's address lookup becoming a real feature. Touches are left empty: the lookup and add pages it would change sit in the address-book split-off theme's code (insfrontend features/address-book/add and services/address-lookup), and inc-194 reaches them only through its externalDependsOn.",
+      "notes": "Combiner: inc-194 is deferred, so keep it exactly as it is in backlog.json, every field unchanged. This draft only records that req-652, req-653 and req-654 already sit there, so no other row may take them. They now also carry the address-search parking blocker, which the deferral already reflects.",
       "touches": [],
       "shared": [],
       "existingRow": "inc-194"

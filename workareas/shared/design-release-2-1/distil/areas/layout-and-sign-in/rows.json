@@ -2,16 +2,16 @@
   "area": "layout-and-sign-in",
   "rows": [
     {
-      "title": "The performance suite's INS readiness probe follows the INS home's heading",
-      "detail": "The performance suite waits for the stack to be ready by reading the INS home and the address book. Its INS probe matches the home's main heading exactly, so it must change in the same increment that renames the home's heading to 'Import notification service': changed first it breaks every performance run on main, changed late every run's readiness fails after five minutes. The home's heading change waits until the front door dashboard's requirements are firmed up, so this probe change waits with it.",
+      "title": "The performance suite's readiness probe follows the INS home's heading when the overall home lands",
+      "detail": "The performance suite's 'INS signed-in page' readiness probe matches the INS home's main heading exactly. It must change in the same increment that changes the home's heading to 'Import notification service', or every performance run's readiness fails after 300 seconds. That heading change belongs to the overall INS home, which waits until the front door dashboard's requirements firm up, so the probe waits with it.",
       "acceptanceCriteria": [
-        "The 'INS signed-in page' readiness probe passes when the INS home answers 200 to a signed-in request with the main heading 'Import notification service' (repo:perftests src/k6/readiness.js; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-075, p3-076)",
-        "The 'address book read' readiness probe passes when the front door's address book answers 200 with the heading 'Address book' (repo:perftests src/k6/readiness.js; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-075)",
-        "The stack counts as functionally ready only when one pass succeeds for all six readiness probes, and readiness otherwise fails after 300 seconds naming the probes that failed (repo:perftests src/k6/readiness.js; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-076)"
+        "The 'INS signed-in page' readiness probe passes when the home answers 200 to a signed-in trader with the main heading 'Import notification service' (repo:perftests repo-perftests-p2-040; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-075, p3-076)",
+        "The 'address book read' readiness probe still passes when the front door's address book answers 200 with the heading 'Address book' (repo:perftests repo-perftests-p2-041)",
+        "The stack counts as functionally ready only when one pass succeeds for all six readiness probes, and readiness otherwise fails after 300 seconds naming the probes that failed (repo:perftests repo-perftests-p2-042)"
       ],
       "requirements": ["req-1905"],
       "sources": [
-        { "source": "repo:perftests", "ref": "src/k6/readiness.js:94, :103" },
+        { "source": "repo:perftests", "ref": "repo-perftests-p2-040, p2-041, p2-042 (src/k6/readiness.js)" },
         { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-075, p3-076" }
       ],
       "repos": ["insfrontend", "tests", "perftests"],
@@ -21,14 +21,17 @@
       "openQuestions": [
         "Blocked: the probe matches the INS home's heading exactly (c-146), so it changes only in the increment that changes that heading, and that increment is blocked until the front door dashboard's requirements firm up and are agreed (ruling:sam-2026-10-09-pm claim 52). Who: whoever owns the front door dashboard's requirements must firm them up and agree them with Sam."
       ],
-      "notes": "Already sits in inc-128, the overall INS home, with req-1848's other performance-suite checks of the same heading; keep it there so the probe and the heading land together and the performance suite is never broken on main. This draft adds nothing to that row's three readiness criteria: the combiner should merge it in, not keep a second row. The probe itself lives in perftests src/k6/readiness.js, which no split-off theme touches; the heading it follows lives in the INS dashboard feature folder, which the split-off type-question-and-templates theme owns, but that change belongs to inc-128's other requirements, which were in the row before the split.",
+      "notes": "existingRow inc-128: req-1905 already sits in the overall INS home row, blocked, with req-1848's other performance-suite checks of the same heading. Its three readiness criteria are already in inc-128 word for word, so the combiner should merge this draft into inc-128 and keep one copy, not a second row. The probe lives in perftests src/k6/readiness.js, which no split-off theme touches, so this is not a splitOff entry; the heading it follows lives in the INS dashboard feature folder that the split-off type-question-and-templates theme owns, which is why that folder is shared, not touched, as inc-128's notes already say.",
       "touches": ["perftests:src/k6/readiness.js"],
-      "shared": [],
+      "shared": [
+        "insfrontend:src/server/app/features/dashboard/template.njk",
+        "insfrontend:src/server/app/features/dashboard/copy"
+      ],
       "existingRow": "inc-128"
     },
     {
-      "title": "Germinal products pages carry the shared service chrome, with home links inside the germinal set",
-      "detail": "A trader moving between the live animals and germinal products sets must see one service. Every germinal products page carries the same service navigation, phase banner, footer, browser title pattern, section captions, back links, error summary and banners as a live animals page, and the service name and Dashboard item lead to the germinal set's own root, which shows that set's notification list. The shared layout already resolves the home link, the current item and the error page's chrome per set by the longest mount prefix a path starts with, so this needs no shared layout change: the set only has to be mounted and configured.",
+      "title": "Germinal products pages carry the shared service chrome, scoped to the germinal set",
+      "detail": "Germinal products is its own set beside live animals, mounted at its own prefix in the animals frontend. Every germinal page carries the same chrome as a live animals page, and the set-scoped parts (the home link, the current navigation item and the error page chrome) resolve inside the germinal set. The set's root shows its own notification list, copied from the live animals list as it is today. The shared layout already resolves these per set by mount prefix, so this is the germinal set supplying its configuration, not a layout change.",
       "acceptanceCriteria": [
         "Every germinal products page shows the 'Import notification service' service navigation with the same items, in the same order, as a live animals page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, -p1-009; repo:frontend repo-frontend-p2-009)",
         "Every germinal products page shows the Alpha phase banner with its feedback link, and the footer, as live animals pages do (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006)",
@@ -52,13 +55,18 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Already sits in inc-176, the germinal products set's first row, which combines five areas' drafts; this draft restates its chrome criteria and adds the set-free error page criterion from req-1907's last sentence, so the combiner should merge it into inc-176 rather than keep a second row. c-314 overrules the morning ruling's redirect of a set root to another service's list, so the root shows the germinal list itself, copied from the live animals list on main today (ruling:sam-2026-11-27 p1-021, p1-022). The shared layout under frontend src/server/app/shared already resolves chrome per set and is read, not changed; that folder is the split-off journey-foundation theme's, so if the plan finds it must change, that change belongs on that branch and this row consumes it.",
+      "notes": "existingRow inc-176: req-1907 already sits in the germinal set's first row, which combines five areas' drafts; these eight criteria are already in inc-176 as they stand, so the combiner should merge this draft into inc-176 and keep its id, theme germinal-products, repos, gate, dependsOn and externalDependsOn. c-314 overrules the morning ruling's redirect of a set root to another service's list (ruling-sam-2026-10-09-p1-034), so the root shows the germinal list itself, copied from the live animals list on main today (ruling:sam-2026-11-27 p1-021, p1-022); no criterion names the overruled claim. The shared layout under frontend src/server/app/shared already resolves chrome per set and is read, not changed; that folder is the split-off journey-foundation theme's, so if the plan finds it must change, that change belongs on that branch and this row consumes it. The germinal set's own folder and the tests repo's germinal specs fall in no split-off theme's touches, so req-1907 is not a splitOff entry.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products",
-        "tests:page-objects/germinal-products",
-        "tests:tests/animals/e2e/germinal-products"
+        "frontend:src/server/app/routes-germinal-products.js",
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:page-objects/germinal-products"
       ],
-      "shared": [],
+      "shared": [
+        "frontend:src/server/app/shared",
+        "frontend:src/server/app/routes.js",
+        "frontend:src/server/router.js"
+      ],
       "existingRow": "inc-176"
     }
   ],

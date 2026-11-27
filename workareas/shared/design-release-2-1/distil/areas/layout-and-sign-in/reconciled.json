@@ -284,10 +284,10 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "The INS frontend now joins the page title, the service name and GOV.UK with hyphens (repo-insfrontend-p1-003), and its browser tests prove it on the dashboard, the address book list, an address's own page, the delete, edit and address type pages and the not-found page (repo-insfrontend-p1-123 to p1-128, p1-131). The end-to-end trace's 'X | Import notification service' pattern was recorded before that change (c-layout-and-sign-in-002), so nothing is left to build.",
+      "deltaNote": "The INS frontend now joins the page title, the service name and GOV.UK with hyphens (repo-insfrontend-p1-003), and its browser tests prove it on the dashboard, the address book list, an address's own page, the delete, edit and address type pages and the not-found page (repo-insfrontend-p1-123 to p1-128, p1-131). The end-to-end trace's 'X | Import notification service' pattern was recorded before that change (c-519), so nothing is left to build.",
       "conflicts": [
         "c-146",
-        "c-layout-and-sign-in-002"
+        "c-519"
       ]
     },
     {
@@ -490,7 +490,7 @@
       "delta": "exists",
       "deltaNote": "repo-frontend-p2-023 to p2-025 and p4-049 and repo-plantsfrontend-p13-021 to p13-026 render the strip, its tag and its Cancel amend link, and a page can leave it out (repo-plantsfrontend-p13-025, ruling-sam-2026-10-09-pm-p2-061). The INS layout's strip shows only when a page passes one (repo-insfrontend-p1-029 to p1-031).",
       "conflicts": [
-        "c-layout-and-sign-in-001"
+        "c-518"
       ]
     },
     {
@@ -1806,7 +1806,7 @@
       "delta": "exists",
       "deltaNote": "repo-frontend-p2-151 shows the shared chrome has no pop-up or dialog, p2-025 the Cancel amend link to its own page, and p2-113, p2-166 and p2-167 the posting controls shown as links; the rulings keep it that way (ruling-sam-2026-10-09-pm-p1-078, ruling-interaction-designer-2026-11-09-p1-021 to p1-023), and the Ministry of Justice modal is not an accepted component (ruling-sam-2026-10-09-pm-p1-040).",
       "conflicts": [
-        "c-layout-and-sign-in-001"
+        "c-518"
       ]
     },
     {
@@ -2041,7 +2041,7 @@
       "conflicts": []
     },
     {
-      "id": "req-layout-and-sign-in-001",
+      "id": "req-2944",
       "statement": "Every page of every frontend shows the refreshed GOV.UK brand the design uses: the current GOV.UK header, logo and colours that GOV.UK Frontend applies by default.",
       "why": "The design is built on the rebranded GOV.UK Frontend styles, and look and feel follows the design.",
       "claims": [
@@ -2056,7 +2056,7 @@
       "conflicts": []
     },
     {
-      "id": "req-layout-and-sign-in-002",
+      "id": "req-2945",
       "statement": "The INS frontend's content security policy lets its forms post to the journey frontends and to the browser-facing Defra ID origin, so a hand-over from INS to a journey can pass through sign-in.",
       "why": "The type question and the address book hand the trader to the animals or plants frontend, and a hand-over that the browser refuses to post never arrives.",
       "claims": [
@@ -2068,7 +2068,7 @@
       "conflicts": []
     },
     {
-      "id": "req-layout-and-sign-in-003",
+      "id": "req-2946",
       "statement": "The INS frontend takes the address of every service it calls or sends the browser to from its environment configuration: the address book, reference data, the INS backend, the animals frontend and the plants frontend, with no hard-coded host or port. Each outbound connection waits up to one second per address before trying the next, as the animals and plants frontends do.",
       "why": "Links and calls between services have to work in the local Docker stack, the CI Docker stack and CDP alike, which only configuration per environment can give.",
       "claims": [
@@ -2085,7 +2085,7 @@
       ]
     },
     {
-      "id": "req-layout-and-sign-in-004",
+      "id": "req-2947",
       "statement": "On the INS frontend a list page reads its page number from the address, treating a missing, non-numeric or below-1 value as page 1 and a page beyond the last as the last page. A results line gives the range shown and the total, and is left out when there are no items. A list of one page or fewer shows no pagination; otherwise Previous shows except on the first page and Next except on the last, with the first page, the pages either side of the current one, the current page and the last page numbered, the current page marked and an ellipsis wherever numbers are skipped. The helper sets no page size: each list passes its own.",
       "why": "The INS address book pages, and the owner keeps pagination on every list of an organisation's addresses.",
       "claims": [
@@ -2104,7 +2104,7 @@
       "conflicts": []
     },
     {
-      "id": "req-layout-and-sign-in-005",
+      "id": "req-2948",
       "statement": "The INS frontend's hidden Defra ID test pages are not changed by this programme: the sign-in page with its 'Sign in with Defra ID' start button, the signed-in page listing the ID token's and access token's claims and the token response, and the signed-out page. They are English-only internal pages linked from nowhere in the service, served only when the Defra ID discovery settings are configured and discovery succeeds, and they never change the service's own signed-in identity.",
       "why": "These are internal diagnostic pages for checking the real Defra ID in CDP dev, not pages a trader sees, so the design has nothing to say about them.",
       "claims": [
@@ -2124,7 +2124,7 @@
       "conflicts": []
     },
     {
-      "id": "req-layout-and-sign-in-006",
+      "id": "req-2949",
       "statement": "The INS frontend's temporary address lookup spike, a page served only in the dev and local environments that searches by postcode or free text through the INS backend and saves nothing, is not changed by this programme, and neither are the gaps it shows between the lookup's results and the address form.",
       "why": "Address search waits until the INS address lookup is a real feature, and until then every add-address page offers manual entry only.",
       "claims": [
@@ -2211,8 +2211,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The Address book item goes to the INS frontend's address book from the animals frontend, in both animals sets, and from the INS frontend (req-1677). The address book is a shared capability in a separate service, which the single-service prototype cannot express, and the owner's later ruling keeps this conflict and says the prototype never decides services or URL paths. The item, its label and its place in the order still stand, so the prototype's navigation claim is not set aside, and the claim that placed the address book under the prototype's own base path is no longer in this area's working set, so nothing is overruled. Plants is not wired to the INS address book, so its item keeps the destination its page context supplies (req-2084). Rhys's DR1 judgement still moves the address book to the INS frontend, though the 9 October afternoon and templates rulings keep the notification lists in their own frontends (c-314).",
-      "overruled": []
+      "outcome": "The Address book item goes to the INS frontend's address book from the animals frontend, in both animals sets, and from the INS frontend (req-1677). The address book is a shared capability in a separate service, which the single-service prototype cannot express, and the owner's later ruling keeps this conflict and says the prototype never decides services or URL paths. The item, its label and its place in the order still stand, so the prototype's navigation claim is not set aside, and the claim that placed the address book under the prototype's own base path is no longer in this area's working set, so nothing is overruled. Plants is not wired to the INS address book, so its item keeps the destination its page context supplies (req-2084). Rhys's DR1 judgement still moves the address book to the INS frontend, though the 9 October afternoon and templates rulings keep the notification lists in their own frontends (c-314)."
     },
     {
       "id": "c-214",
@@ -2281,8 +2280,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The feedback link stays mailto:APHAServiceDesk@apha.gov.uk on every frontend, plants included (req-1684). DR1 already judged this same difference, a placeholder feedback link in the design, and a DR1 judgement on the same difference outranks the prototype. The INS and plants frontends already use the same destination. The trace claim that recorded the design's placeholder is no longer in this area's working set, so nothing is overruled; the Alpha banner itself is shown by today's claims (req-2119).",
-      "overruled": []
+      "outcome": "The feedback link stays mailto:APHAServiceDesk@apha.gov.uk on every frontend, plants included (req-1684). DR1 already judged this same difference, a placeholder feedback link in the design, and a DR1 judgement on the same difference outranks the prototype. The INS and plants frontends already use the same destination. The trace claim that recorded the design's placeholder is no longer in this area's working set, so nothing is overruled; the Alpha banner itself is shown by today's claims (req-2119)."
     },
     {
       "id": "c-216",
@@ -2346,8 +2344,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The strip reads 'Amend' in every set, plants included, through the one shared strip (req-2061). The owner's ruling outranked both journey frontends' earlier 'Amending' label, and since then both have taken it: the animals and plants strips and the plants Welsh twin now read 'Amend' and 'Diwygio', so nothing is left to build. Nothing is overruled, because the frontend claims now record the ruling's own wording rather than contradicting it. The notification list card's own tag is not named by the ruling and stays as the list area has it.",
-      "overruled": []
+      "outcome": "The strip reads 'Amend' in every set, plants included, through the one shared strip (req-2061). The owner's ruling outranked both journey frontends' earlier 'Amending' label, and since then both have taken it: the animals and plants strips and the plants Welsh twin now read 'Amend' and 'Diwygio', so nothing is left to build. Nothing is overruled, because the frontend claims now record the ruling's own wording rather than contradicting it. The notification list card's own tag is not named by the ruling and stays as the list area has it."
     },
     {
       "id": "c-453",
@@ -2385,7 +2382,7 @@
       "default": "Every link, redirect and form hand-over resolves from the calling service's own configuration with no hard-coded host or port. The end-to-end suite proves each one in the local Docker stack and the CI Docker stack. The INS-to-journey hand-over gets no new check in CDP, as ruled; every other hand-over is walked once by hand on the deployed services in CDP dev and test. CDP perf, pre-production and production take the same configuration and get no proof in this programme."
     },
     {
-      "id": "c-layout-and-sign-in-001",
+      "id": "c-518",
       "about": "Whether cancelling an amendment is confirmed in a dialog over the journey page, as the design's journey pages include, or on its own page.",
       "positions": [
         {
@@ -2416,7 +2413,7 @@
       ]
     },
     {
-      "id": "c-layout-and-sign-in-002",
+      "id": "c-519",
       "about": "How the INS frontend's browser titles are joined today: with hyphens, as its code and browser tests show, or with a pipe, as the end-to-end trace recorded.",
       "positions": [
         {

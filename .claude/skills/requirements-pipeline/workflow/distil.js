@@ -1973,7 +1973,8 @@ const repoKeysNote = `Check each repo's GitHub slug with \`git -C ${TILDE}/<path
 const existingBacklogNote = (round) => {
   if (HAD_BACKLOG) {
     return `${BACKLOG_ABS} already exists: this is a re-distil. Keep every row id and remove no row. Rewrite todo and
-blocked rows to the requirements as they stand now; a blocked row whose blocker a ruling removed becomes todo. Never
+blocked rows to the requirements as they stand now, their dependsOn, externalDependsOn and theme included where a
+ruling changes what the row waits for or which theme carries it; a blocked row whose blocker a ruling removed becomes todo. Never
 change a row with any other status. The workflow compares every such row before and after you. A changed or removed
 row comes back to you as a problem to put right, and the run stops if it is still wrong after ${SEND_BACKS} send-backs.`
   }

@@ -227,6 +227,11 @@ any.
 - A `todo` or `blocked` row changes where the requirements behind it changed. Rewrite its `title`, `detail`,
   `acceptanceCriteria`, `notes` and `openQuestions` to the requirements as they stand now. Where it still has other
   work, take out of its `requirements` any requirement that is now `out-of-scope` or adopted as `exists`.
+- **A `todo` or `blocked` row's `dependsOn`, `externalDependsOn` and `theme` are rewritten too,** where a ruling or
+  the requirements change what the row waits for or which theme carries its work. A ruling that says one theme does
+  not wait for another takes out every `dependsOn` from the first theme's rows to the second's, and moves a row whose
+  work now belongs to the second theme into it. Say in `notes` which ruling changed the ordering. Keep every other
+  dependency: an existing ordering is only redrawn where a ruling or a requirement says so.
 - **A `blocked` row whose blocker a ruling removed becomes `todo`.** Say in `notes` which ruling unblocked it. A row
   still waiting on somebody stays `blocked`, rewritten to what it now waits for. Nobody resets a status by hand.
 - **Never keep a withdrawn claim.** A `todo` or `blocked` row never names a claim that a conflict's `overruled`

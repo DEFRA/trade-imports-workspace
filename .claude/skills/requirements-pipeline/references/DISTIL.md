@@ -362,7 +362,7 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
   Shared files (a journey's flow, the layout, shared copy) go in a foundation theme in an early wave. A theme holding
   most of the rows is a smell.
 - **Re-distilling keeps every id**: requirements, conflicts and rows. A `todo` or `blocked` row is rewritten to the
-  latest rulings, and a blocked row whose blocker a ruling removed becomes `todo`. A row built or set aside never
+  latest rulings, its dependencies and theme included where a ruling changes what it waits for, and a blocked row whose blocker a ruling removed becomes `todo`. A row built or set aside never
   changes. Nobody resets a status by hand.
 
 ## 4. When the run stops early

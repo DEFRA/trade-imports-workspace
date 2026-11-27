@@ -9,7 +9,7 @@
         "Saving, submitting, amending, cancelling an amendment and copying a notification leave its stored category as it was created with, so a copy of a germinal products notification is a germinal products notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-030; repo:backend repo-backend-p2-124)",
         "A notification holds commodities of its one category only: choosing the other type from a live-animals draft starts a new notification of that category, and the abandoned draft keeps the category live animals. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-025, -p1-054, -p1-055, -p1-056)",
         "The read the animals frontend opens a notification with returns the stored category, and live animals for a record that has none. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-031; repo:backend repo-backend-p1-069, repo-backend-p2-080)",
-        "A notification whose record holds no category opens, saves and submits in the live animals set with no data migration. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-035; repo:backend repo-backend-p1-002)",
+        "A notification whose record holds no category opens, saves and submits in the live animals set. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-035; repo:backend repo-backend-p1-002)",
         "The outbox events published for a germinal products notification carry the same envelope fields as a live-animals notification's: id, aggregate id and type, sub-type, version, event type, timestamp, data, actor, status changes and metadata. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-112; repo:backend repo-backend-p4-178; c-272, c-296)"
       ],
       "requirements": ["req-1884", "req-1885", "req-1886"],
@@ -25,7 +25,7 @@
       "openQuestions": [],
       "notes": [
         "Combines the three notification-record slices about the category: stored at the root (req-1884), set on create and never changed (req-1885), returned on the fulfilments read (req-1886). One field on one record, written on create and read on open, so building them apart would repeat the same set-up and ladder.",
-        "Already sits in inc-176, the germinal set's skeleton, which the germinal-products, journey-flow, layout-and-sign-in and notification-list areas also draft into; the frontend half (each set sending its category, the cross-set guard reading it) is theirs, and this row is only the record's half of that row.",
+        "Already sits in inc-176, the germinal set's skeleton, which the germinal-products, journey-flow, layout-and-sign-in and notification-list areas also draft into; the frontend half (each set sending its category, the cross-set guard reading it) is theirs, and this row is only the record's half of that row. Re-distil 27 November: none of the three requirements changed.",
         "c-272 and c-296 (ruled by the 9 October afternoon ruling): the category is not published on any event, so the envelope criterion states the fields it carries; trade-imports-schemas and trade-imports-dynamics-gateway are not in this row's repos. The overruled morning-ruling claims are not used.",
         "The field's name and values are the animals backend's to choose. The create path runs through the controller and service that the split-off manage-notifications and overview-and-review themes own; germinal-products lands after both, and the touches below keep to the request body, the root class and the fulfilments view the germinal-products theme already owns."
       ],
@@ -44,7 +44,7 @@
       "title": "A germinal notification stores its temperature and publishes on today's PIMS profile, and every live-animal trade line says what it is",
       "detail": "The germinal set always asks for the consignment's temperature, which the PIMS profile has no field for, so the animals backend keeps it and shows it back. A germinal notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what today's profile carries and leaving out the sections the germinal set never asks. Once germinal trade lines carry their own type codes, live-animal lines say what they are too.",
       "acceptanceCriteria": [
-        "A temperature saved on a germinal products notification is shown again when its page is reopened. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-040, -p1-042; repo:backend repo-backend-p1-002, repo-backend-p1-090)",
+        "A temperature saved on germinal Commodity details is shown again when the page is reopened. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-040, -p1-042; repo:backend repo-backend-p1-002, repo-backend-p1-090)",
         "A submitted germinal products notification is published on the same GBN-AG events as a live-animals one, and its payload validates against the gbn-ag-pims v0.2.0 profile. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016 to -p1-018, -p1-043; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-112; repo:backend repo-backend-p4-063, repo-backend-p4-176)",
         "The payload published for a germinal products notification carries only fields the gbn-ag-pims v0.2.0 profile defines, so it carries no temperature. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-040 to -p1-042)",
         "That payload carries the sections the germinal set asks, and the mapper leaves out unweaned animals, the CPH number and per-animal permanent addresses, as it leaves out any unanswered section of a live-animals notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-041, -p1-044, -p1-045; repo:backend repo-backend-p4-063)",
@@ -63,7 +63,7 @@
       "openQuestions": [],
       "notes": [
         "Combines the temperature's storage (req-1889), germinal publishing on today's profile (req-1895) and the live-animal type code (req-1894): one change to the commodity line and one to the publishing mapper.",
-        "Already sits in inc-017, the germinal Commodity details row, which also asks the temperature question and carries the germinal lines' own interim type codes; the combiner keeps that row and its storage criterion stated once.",
+        "Already sits in inc-017, the germinal Commodity details row, which also asks the temperature question and carries the germinal lines' own interim type codes; the combiner keeps that row and its storage criterion stated once. Re-distil 27 November: none of the three requirements changed.",
         "c-273 (ruled): live lines gain LIVE_ANIMAL alongside the germinal lines' own codes. The PIMS profile, trade-imports-schemas and the dynamics gateway are not in this row's repos, which is how the no-change half of req-1895 is kept; the germinal details' own publishing waits for the PIMS schema update outside this backlog.",
         "Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox, in every environment the row builds in; nothing reaches a real downstream system from a local stack and no criterion asks it to."
       ],
@@ -96,7 +96,7 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Stands apart from the temperature row only because it already sits in inc-052, the germinal identification page row, whose page asks these four answers; the combiner keeps that row.",
+        "Stands apart from the temperature row only because it already sits in inc-052, the germinal identification page row, whose page asks these four answers; the combiner keeps that row. Re-distil 27 November: the requirement did not change.",
         "Where the four answers sit on the record (the per-item identifier entries or the species line) is the build's call from the real model, so no criterion names a field or class. The touches name the species line: if the build puts them on the per-item identifier entries instead, it edits code the split-off identification-and-permanent-address theme owns, and the germinal-products theme already lands after it."
       ],
       "touches": [

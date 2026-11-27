@@ -15,27 +15,78 @@
         "A trader who signs in afresh sees on the live animals list every notification their organisation has, including ones started in an earlier session, and none of another organisation's. (repo:frontend repo-frontend-p4-069; trace:animals-fit trace-animals-fit-p2-091; trace:e2e trace-e2e-p3-095; ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010)",
         "With Welsh chosen, every string on the live animals list and on plants' list shows in Welsh, and no label is blank in either language. (repo:frontend repo-frontend-p4-083, repo-frontend-p4-084; repo:plantsfrontend repo-plantsfrontend-p1-063, repo-plantsfrontend-p1-066)"
       ],
-      "requirements": ["req-1033", "req-1034", "req-1037", "req-1041", "req-1070", "req-1090", "req-1096", "req-2028", "req-2029", "req-2030"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-021, p13-022, p13-026, p13-046" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-024, p7-036" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-023, p15-024, p15-028, p15-045" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p2-091" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p3-095" },
-        { "source": "repo:frontend", "ref": "features/dashboard (repo-frontend-p4-003 to p4-012, p4-037, p4-038, p4-069, p4-082 to p4-084)" },
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard (repo-plantsfrontend-p1-003 to p1-008, p1-020, p1-045, p1-063, p1-066, p1-072, p1-075)" },
-        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-102" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-020, p3-067, p3-086 to p3-088, p3-096" }
+      "requirements": [
+        "req-1033",
+        "req-1034",
+        "req-1037",
+        "req-1041",
+        "req-1070",
+        "req-1090",
+        "req-1096",
+        "req-2028",
+        "req-2029",
+        "req-2030"
       ],
-      "repos": ["frontend", "plantsfrontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-021, p13-022, p13-026, p13-046"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-024, p7-036"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-023, p15-024, p15-028, p15-045"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p2-091"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p3-095"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard (repo-frontend-p4-003 to p4-012, p4-037, p4-038, p4-069, p4-082 to p4-084)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard (repo-plantsfrontend-p1-003 to p1-008, p1-020, p1-045, p1-063, p1-066, p1-072, p1-075)"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-102"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-020, p3-067, p3-086 to p3-088, p3-096"
+        }
+      ],
+      "repos": [
+        "plantsfrontend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": "Look at the reframed frame on both lists (title, caption, heading, 'Create new', 'Notifications', card names) and the organisation-scoped list before the card, tab, search, filter, paging and germinal list rows copy them.",
       "openQuestions": [
         "What plants' list heading says, when the frame names the category and the design has no plants list (c-303). Default, which the builder follows and says so: 'Plants', with a Welsh machine draft that ships only once a translator signs it off."
       ],
-      "notes": "Combines the frame slices of both lists (title and caption, heading, 'Create new', 'Notifications', card names, Welsh) with the organisation scope, because they change the same template, controller and copy of each list's dashboard feature. 'Create new' keeps today's form post: the set the button belongs to carries the category, and where it points is the frontend's to name (c-251); the category stored on the record is the category-on-create row. Each Welsh string is a machine draft that ships only once a translator signs it off under the Welsh Language Standards; record it as such in the copy. The animals backend already refuses a list call with no organisation header (its trader organisation header filter), so the scope change is the frontend's list read, which today narrows to the session's own journeys; plants' list stays session-scoped (c-300). The k6 journey's list reads (req-1852) live in perftests src/k6/journeys.js, which theme manage-notifications owns, so that requirement is split off to it. The delete and cancel-amendment breadcrumbs keep the shared 'Your notifications' label: only the list's own h2 changes. Under c-496's default the germinal products list copy takes the same frame in the same increment once it exists (see the germinal list row).",
+      "notes": [
+        "Combiner, re-distil 27 November: the k6 journey script's list reads (req-1852) were handed to the split-off manage-notifications branch, which owns that script.",
+        "Combines the frame slices of both lists (title and caption, heading, 'Create new', 'Notifications', card names, Welsh) with the organisation scope, because they change the same template, controller and copy of each list's dashboard feature. 'Create new' keeps today's form post: the set the button belongs to carries the category, and where it points is the frontend's to name (c-251); the category stored on the record is the category-on-create row. Each Welsh string is a machine draft that ships only once a translator signs it off under the Welsh Language Standards; record it as such in the copy. The animals backend already refuses a list call with no organisation header (its trader organisation header filter), so the scope change is the frontend's list read, which today narrows to the session's own journeys; plants' list stays session-scoped (c-300). The k6 journey's list reads (req-1852) live in perftests src/k6/journeys.js, which theme manage-notifications owns, so that requirement is split off to it. The delete and cancel-amendment breadcrumbs keep the shared 'Your notifications' label: only the list's own h2 changes. Under c-496's default the germinal products list copy takes the same frame in the same increment once it exists (see the germinal list row).",
+        "Stands alone from inc-135, inc-138 and inc-141: it carries the plants heading open question those rows do not (inc-135 carries different questions of its own).",
+        "Stands alone from inc-136 and inc-137: too much for one plan, the merged row would carry more than about 15 criteria.",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
@@ -47,17 +98,17 @@
         "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts",
         "tests:tests/plants/e2e/features/dashboard.spec.ts"
       ],
-      "shared": [
-        "frontend:src/server/app/engine/journey.js",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": [],
+      "shared": [],
       "existingRow": "inc-129"
     },
     {
-      "title": "Notification cards show the design's facts and status styles, on the live animals list and on plants' list",
-      "detail": "Each card is relaid to the design: the live animals card shows commodity, arrival date, consignee and status, then the number of animals, origin and consignor; plants' card takes the same layout with its own facts. The arrival date is written in full, a fact not yet answered reads 'Not applicable', and the status tags take the design's styles. The animals backend's list returns every fact the cards show, the number of animals and the category among them, and plants' posting actions move into the card's own action list.",
+      "title": "The deletion message reads 'Notification has been deleted.' on the live animals and plants notification lists",
+      "detail": "After a delete the trader lands on the set's own notification list, whose address marks the deletion so the list shows the message straight away. That address carries no reference, so the list does not know which notification was deleted, and the message names none. The wording goes in each frontend's own list copy, with a Welsh draft beside it, and the shared action wording other pages use stays as it is. Once this lands both the live animals list and the high-risk plants list show the new message after a delete, and the end-to-end suite proves it on each.",
       "acceptanceCriteria": [
+        "After deleting a notification from the live animals list, the list shows a success notification banner with the role alert, titled 'Success', carrying the delete's message. (prototype:dr2-1-source prototype-dr2-1-source-p13-020; repo:frontend repo-frontend-p4-066; repo:tests repo-tests-p3-099; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-085; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-093)",
+        "In the high-risk plants frontend, after 'Yes, delete' on a plants notification's delete page, the trader lands on plants' list, which shows a success notification banner with the role alert, titled 'Success', reading 'Notification has been deleted.' (prototype:dr2-1-source prototype-dr2-1-source-p11-217; repo:plantsfrontend repo-plantsfrontend-p1-034, repo-plantsfrontend-p1-069, repo-plantsfrontend-p1-079, repo-plantsfrontend-p11-078; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067, ruling-sam-2026-10-09-pm-p3-070, ruling-sam-2026-10-09-pm-p3-101)",
+        "With the service in Welsh, plants' success banner shows a Welsh title and message of the same shape, marked in plants' list copy as a machine draft that ships only once a translator signs it off. (repo:plantsfrontend repo-plantsfrontend-p1-034, repo-plantsfrontend-p11-078; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-069)",
+        "Opening either list without an action's flag on its address shows no success banner. (repo:frontend repo-frontend-p4-066; repo:plantsfrontend repo-plantsfrontend-p1-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067)",
         "Each live animals card shows exactly seven facts in two rows: 'Commodity', 'Arrival date', 'Consignee' and 'Notification status', then 'Number of animals', 'Origin' and 'Consignor'. (prototype:dr2-1-source prototype-dr2-1-source-p13-053, prototype-dr2-1-source-p13-132; prototype:dr2-1-specs prototype-dr2-1-specs-p7-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-046; repo:frontend repo-frontend-p4-039; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-090; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-020)",
         "A live animals card's 'Number of animals' shows the count of animals the notification records. (trace:prototype-dr2-1 trace-prototype-dr2-1-p15-046; prototype:dr2-1-specs prototype-dr2-1-specs-p7-037; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-090)",
         "Each plants card shows exactly five facts: 'Commodity', 'Arrival date' and 'Notification status' in the first row, with a red 'Late' tag beside the status when the notification is late, then 'Origin' and 'Consignor'. (prototype:dr2-1-source prototype-dr2-1-source-p13-053, prototype-dr2-1-source-p13-132; repo:plantsfrontend repo-plantsfrontend-p1-021, repo-plantsfrontend-p1-026, repo-plantsfrontend-p1-027, repo-plantsfrontend-p1-087; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-098)",
@@ -66,52 +117,166 @@
         "A live animals card's 'Commodity' is the commodity's name, such as 'Cow' for a commodity chosen as Bos taurus. (prototype:dr2-1-source prototype-dr2-1-source-p13-056; repo:frontend repo-frontend-p4-041, repo-frontend-p4-047; trace:e2e trace-e2e-p3-024)",
         "A draft's status is a 'Draft' tag in a colour other than the blue of the 'Submitted' tag, a submitted notification's status is the default blue 'Submitted' tag, and a notification being amended shows a yellow 'Amend' tag, on the live animals card and on plants' card. (prototype:dr2-1-source prototype-dr2-1-source-p13-062, prototype-dr2-1-source-p13-121; prototype:dr2-1-specs prototype-dr2-1-specs-p7-038; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-050, trace-prototype-dr2-1-p15-054; repo:plantsfrontend repo-plantsfrontend-p1-025; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-090)",
         "On plants' list each posting action sits in the card's own action list beside its title, beside the card's link actions. (prototype:dr2-1-source prototype-dr2-1-source-p13-126; repo:frontend repo-frontend-p4-062; repo:plantsfrontend repo-plantsfrontend-p1-023, repo-plantsfrontend-p1-024; ruling:sam-2026-11-19 ruling-sam-2026-11-19-p1-006)",
-        "The animals backend's list returns for each notification its reference number, status, commodity name, arrival date, origin, consignee name, consignor name and category, with its number of animals or, for a germinal products notification, its number of packages and each line's species and product type; a fact the notification does not hold comes back empty. (repo:frontend repo-frontend-p4-039, repo-frontend-p4-046, repo-frontend-p4-087; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-090, ruling-sam-2026-10-09-pm-p3-105)"
+        "The animals backend's list returns for each notification its reference number, status, commodity name, arrival date, origin, consignee name, consignor name and category, with its number of animals or, for a germinal products notification, its total quantity in units or pieces and each line's species and product type; a fact the notification does not hold comes back empty. (repo:frontend repo-frontend-p4-039, repo-frontend-p4-046, repo-frontend-p4-087; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-090, ruling-sam-2026-10-09-pm-p3-105)"
       ],
-      "requirements": ["req-1071", "req-1072", "req-1073", "req-1074", "req-1075", "req-1076", "req-1077", "req-1078", "req-1079", "req-1098", "req-2031", "req-2347"],
+      "requirements": [
+        "req-1086",
+        "req-2032",
+        "req-1071",
+        "req-1072",
+        "req-1073",
+        "req-1074",
+        "req-1075",
+        "req-1076",
+        "req-1077",
+        "req-1078",
+        "req-1079",
+        "req-1098",
+        "req-2031",
+        "req-2347"
+      ],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-053, p13-055, p13-056, p13-062, p13-121, p13-126, p13-132" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-037, p7-038" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-046, p15-047, p15-050, p15-054" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p3-024" },
-        { "source": "repo:frontend", "ref": "features/dashboard view-model/row and template (repo-frontend-p4-039, p4-041, p4-043, p4-045 to p4-047, p4-062, p4-087)" },
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard (repo-plantsfrontend-p1-021, p1-023 to p1-027, p1-058, p1-061, p1-087)" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-073" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-029" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-090, p3-098, p3-105" },
-        { "source": "ruling:sam-2026-11-19", "ref": "ruling-sam-2026-11-19-p1-006" },
-        { "source": "ruling:sam-2026-11-27", "ref": "ruling-sam-2026-11-27-p1-020" }
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-217"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-101"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-069, p3-070"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-096"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p11-078"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p6-048"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p3-067, p3-068"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p3-017, p3-018"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-020"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard controller (repo-frontend-p4-066)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard template and controller (repo-plantsfrontend-p1-034, p1-069, p1-079)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-099"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-085"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-067, p2-069, p3-070, p3-093, p3-101"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-053, p13-055, p13-056, p13-062, p13-121, p13-126, p13-132"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-037, p7-038"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-046, p15-047, p15-050, p15-054"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p3-024"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard view-model/row and template (repo-frontend-p4-039, p4-041, p4-043, p4-045 to p4-047, p4-062, p4-087)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard (repo-plantsfrontend-p1-021, p1-023 to p1-027, p1-058, p1-061, p1-087)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-073"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-029"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-090, p3-098, p3-105"
+        },
+        {
+          "source": "ruling:sam-2026-11-19",
+          "ref": "ruling-sam-2026-11-19-p1-006"
+        },
+        {
+          "source": "ruling:sam-2026-11-27",
+          "ref": "ruling-sam-2026-11-27-p1-020"
+        }
       ],
-      "repos": ["backend", "frontend", "plantsfrontend", "tests"],
+      "repos": [
+        "backend",
+        "plantsfrontend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the card-facts slices of both lists, the full-month arrival date, 'Not applicable', the status tag styles and the backend facts behind the cards, because they change the same card view model and template and the one list projection. Takes in the card status styles (inc-131, now merged here: same view model, no question of its own). The card's 'Arrival date' label is settled by the 27 November ruling (c-421); the question page and check your answers keep 'Arrival date at port of entry'. Submitted is blue on plants too (c-301); a notification submitted with items outstanding is 'Submitted' like any other (c-418). The card tags take their own styles in the dashboard feature: the journey strip's status map in each frontend's shared kit is theme journey-foundation's, and stays as it is. The backend list projection (NotificationView) sits in theme overview-and-review's files, and the list endpoint in manage-notifications'; this theme lands after both. Under c-496's default the germinal products list copy takes the same card change in the same increment once it exists.",
+      "notes": [
+        "Combiner, re-distil 27 November: the amend review's Delete, the tests repo's amend and delete specs and the no-JavaScript confirmations (req-1441, req-1479, req-2368) were handed to the split-off overview-and-review and manage-notifications branches, whose code they change, and plants' deletion banner (req-2032) moved to inc-140.",
+        "Notification-list area's draft of inc-126, second re-distil pass 27 November: this draft carries only this area's requirements (the 'Success' banner, plants' deletion wording, the card facts and status styles, and the backend list's facts). The live animals deletion message and its end-to-end proof are req-1455, another area's; the combiner merges that area's draft of inc-126 into this one, keeping those criteria, req-1455 and the row's externalDependsOn. None of this row's requirements changed in this pass. req-2032 states the plants wording without a closing full stop and req-1455 with one; c-513 settles the message as 'Notification has been deleted.', so the combiner keeps the full stop in both lists. c-513 also settles that the reference form of the message is unreachable on ?deleted=1, so it has no criterion. The 'Success' title is req-1086's. The germinal list's message is a question (req-2860) and the germinal row's. The current wording lives in each frontend's shared copy; this row moves the deletion message into each dashboard feature's own copy and leaves the shared action wording as it is. The delete spec on the manage-notifications branch asserts the old wording, so whichever lands second updates that assertion. Keep inc-126's existing externalDependsOn on the split themes.",
+        "Absorbed inc-140: both change the deletion message and the success banner on the live animals and plants notification lists, in the same dashboard copy, template and page objects, and one delete walk proves both.",
+        "Absorbed inc-130: both change the same dashboard card template, copy, view model and page objects on the live animals and plants lists, so one plan and one list walk serve both; the row holds 16 criteria across three service repos, within about 15.",
+        "Stands alone from inc-129, inc-135, inc-136, inc-137, inc-138 and inc-141: too much for one plan, this row already carries 16 criteria.",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
         "tests:page-objects/animals/dashboard-page.ts",
         "tests:page-objects/plants/dashboard-page.ts",
         "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts",
-        "tests:tests/plants/e2e/features/dashboard.spec.ts"
+        "tests:tests/plants/e2e/features/dashboard.spec.ts",
+        "tests:tests/plants/e2e/features/start.spec.ts",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationViewData.java",
-        "frontend:src/server/app/shared/kit.js",
-        "plantsfrontend:src/server/app/shared/kit.js",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-129"],
-      "existingRow": "inc-130"
+      "shared": [],
+      "existingRow": "inc-126"
     },
     {
       "title": "The live animals list has 'Submitted', 'Draft and Amend' and 'Past' tabs",
@@ -124,13 +289,36 @@
         "Under the tabs the cards sit under an h3 naming the tab, 'Submitted notifications', 'Draft notifications' or 'Past notifications', followed by its description: 'Notifications you have submitted. You can still change them and add documents.', 'Notifications you have started but not submitted, and notifications that are being amended.' or 'Notifications that have been processed. They move here 2 weeks after the commodity arrival date.' (prototype:dr2-1-source prototype-dr2-1-source-p13-119)",
         "The animals backend's list filters by category (live animals or germinal products, a record with no category counting as live animals) and by tab, and reports how many notifications the 'Submitted' and 'Draft and Amend' tabs each hold. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105)"
       ],
-      "requirements": ["req-1058", "req-1059", "req-1060", "req-1061", "req-1062", "req-1099", "req-2769", "req-2770", "req-2771"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-117 to p13-120, p13-124" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-029" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-101, p3-105" }
+      "requirements": [
+        "req-1058",
+        "req-1059",
+        "req-1060",
+        "req-1061",
+        "req-1062",
+        "req-1099",
+        "req-2769",
+        "req-2770",
+        "req-2771"
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-117 to p13-120, p13-124"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-029"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-101, p3-105"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": null,
@@ -138,7 +326,11 @@
         "Which words and grouping the tabs use (c-497). Default, which the builder follows and says so: 'Submitted', 'Draft and Amend' (drafts and notifications being amended) and 'Past', counts on the first two, the subheadings and descriptions above, and the tabs built as sub navigation links.",
         "What puts a notification in the 'Past' tab (c-498). Default, which the builder follows and says so: completed notifications only, so the tab stays empty until a real source of completion exists; the description is shown as the design words it."
       ],
-      "notes": "Every requirement here is a question with a default, so it is not on the area's to-build list; it is drafted so the tabs keep their row. Stands apart from the search and filter rows because it carries c-497 and c-498, which they rest on. The tab parameter's name and values are the animals frontend's to name (c-251). Under c-496's default the germinal products list copy takes the tabs in the same increment once it exists.",
+      "notes": [
+        "Every requirement here is a question with a default, so it is not on the area's to-build list; it is drafted so the tabs keep their row. Stands apart from the search and filter rows because it carries c-497 and c-498, which they rest on. The tab parameter's name and values are the animals frontend's to name (c-251). Under c-496's default the germinal products list copy takes the tabs in the same increment once it exists.",
+        "Stands alone from inc-136, inc-137, inc-138 and inc-141: it carries open questions those rows do not (inc-137 carries a different one of its own).",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
@@ -148,12 +340,7 @@
         "tests:page-objects/animals/dashboard-page.ts",
         "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-130"],
+      "shared": [],
       "existingRow": "inc-135"
     },
     {
@@ -170,26 +357,83 @@
         "The search and the sort are one GET form to the list's own address: the search button submits both, with the chosen tab when it is not the default and the current page when it is above 1, so the result stays on that tab; changing the sort select submits nothing by itself, and the chosen sort stays selected after the page reloads. (prototype:dr2-1-source prototype-dr2-1-source-p13-026, prototype-dr2-1-source-p13-107; prototype:dr2-1-specs prototype-dr2-1-specs-p7-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-030, trace-prototype-dr2-1-p15-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-033, ruling-sam-2026-10-09-pm-p1-034, ruling-sam-2026-10-09-pm-p1-036)",
         "The animals backend's list sorts by creation date newest first or oldest first and by arrival date, defaults to arrival date newest first, and orders notifications with the same date by a second key, so walking every page lists each notification exactly once. (trace:animals-fit trace-animals-fit-p2-092; trace:e2e trace-e2e-p3-057; repo:frontend repo-frontend-p4-031, repo-frontend-p4-033; repo:tests repo-tests-p3-091)"
       ],
-      "requirements": ["req-1042", "req-1043", "req-1044", "req-1045", "req-1046", "req-1048", "req-1049", "req-1050", "req-1051", "req-1052", "req-1100", "req-1102"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-026 to p13-028, p13-107" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-030, p7-053" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-028, p15-030, p15-031" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p2-005, p2-006, p2-022, p3-057" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p2-092" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p2-016 to p2-022, p2-043, p2-046, p2-047, p3-047" },
-        { "source": "repo:frontend", "ref": "features/dashboard (repo-frontend-p4-013, p4-024, p4-031, p4-033)" },
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard template (repo-plantsfrontend-p1-009, p1-054)" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-085, p3-089, p3-091, p3-098" },
-        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-033, p1-034, p1-036, p1-097, p3-092, p3-096" }
+      "requirements": [
+        "req-1042",
+        "req-1043",
+        "req-1044",
+        "req-1045",
+        "req-1046",
+        "req-1048",
+        "req-1049",
+        "req-1050",
+        "req-1051",
+        "req-1052",
+        "req-1100",
+        "req-1102"
       ],
-      "repos": ["backend", "frontend", "plantsfrontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-026 to p13-028, p13-107"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-030, p7-053"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-028, p15-030, p15-031"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p2-005, p2-006, p2-022, p3-057"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p2-092"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p2-016 to p2-022, p2-043, p2-046, p2-047, p3-047"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard (repo-frontend-p4-013, p4-024, p4-031, p4-033)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard template (repo-plantsfrontend-p1-009, p1-054)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-085, p3-089, p3-091, p3-098"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-033, p1-034, p1-036, p1-097, p3-092, p3-096"
+        }
+      ],
+      "repos": [
+        "backend",
+        "plantsfrontend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the layout, search, sort and one-form slices with the backend's search and sort, because they share the one form, the list read and the backend query. The search, sort and filters apply for real on the server (c-162); the list is always sorted, with no unselected option (c-161); the toolbox components are the GOV.UK and MoJ ones, with no custom JavaScript (c-299). 'Apply filters' joins the form in the filters row. The k6 journey (theme manage-notifications' src/k6/journeys.js) searches the list with ?referenceNumber=<id> and checks the reference is on the page: keep that query answering, or tell that branch the new parameter in the handover. The list endpoint and its query sit in manage-notifications' and overview-and-review's files; this theme lands after both. Plants' own search, sort and 'Update sort' stay until the plants backend can query them (the blocked plants row). Depends on the tabs row because the form carries the chosen tab.",
+      "notes": [
+        "Combines the layout, search, sort and one-form slices with the backend's search and sort, because they share the one form, the list read and the backend query. The search, sort and filters apply for real on the server (c-162); the list is always sorted, with no unselected option (c-161); the toolbox components are the GOV.UK and MoJ ones, with no custom JavaScript (c-299). 'Apply filters' joins the form in the filters row. The k6 journey (theme manage-notifications' src/k6/journeys.js) searches the list with ?referenceNumber=<id> and checks the reference is on the page: keep that query answering, or tell that branch the new parameter in the handover. The list endpoint and its query sit in manage-notifications' and overview-and-review's files; this theme lands after both. Plants' own search, sort and 'Update sort' stay until the plants backend can query them (the blocked plants row). Depends on the tabs row because the form carries the chosen tab.",
+        "Stands alone from inc-137: too much for one plan, the merged row would carry 20 criteria.",
+        "Stands alone from inc-138: inc-138 waits on inc-137, whose open question would then hold this row, and inc-137 waits on this row.",
+        "Stands alone from inc-141: a different code area, the live animals list's search and sort against the germinal set's own list, sharing only the list read.",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
@@ -202,14 +446,7 @@
         "tests:tests/animals/e2e/features/notification-dashboard-sort.spec.ts",
         "tests:tests/animals/security/frontend-dashboard-params.spec.ts"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "frontend:src/server/app/engine/journey.js",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-135"],
+      "shared": [],
       "existingRow": "inc-136"
     },
     {
@@ -228,25 +465,69 @@
         "The filtered results have a 'Clear filters' link that opens the list keeping only the tab and the sort, and the tabs show again. (prototype:dr2-1-source prototype-dr2-1-source-p13-114; prototype:dr2-1-specs prototype-dr2-1-specs-p7-059; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-067)",
         "The animals backend's list filters by status (drafts not being amended, notifications being amended, submitted or completed) and by an arrival-date range whose from and to dates are each optional. (document:dr1-parity-backlog document-dr1-parity-backlog-p2-002, document-dr1-parity-backlog-p2-025, document-dr1-parity-backlog-p2-028; prototype:dr2-1-source prototype-dr2-1-source-p13-110)"
       ],
-      "requirements": ["req-1053", "req-1054", "req-1055", "req-1056", "req-1057", "req-1101", "req-2772", "req-2773", "req-2774", "req-2775"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-031, p13-032, p13-107 to p13-110, p13-112 to p13-114" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-040 to p7-042, p7-045, p7-056, p7-057, p7-059" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-033 to p15-036, p15-039, p15-061 to p15-063, p15-066, p15-067" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p2-001 to p2-008, p2-013, p2-025, p2-028" },
-        { "source": "ruling:interaction-designer-2026-11-09", "ref": "ruling-interaction-designer-2026-11-09-p1-040" },
-        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "ruling:sam-2026-10-26", "ref": "ruling-sam-2026-10-26-p1-002, p1-003, p1-019" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-035, p1-037 to p1-039, p1-101, p1-102" }
+      "requirements": [
+        "req-1053",
+        "req-1054",
+        "req-1055",
+        "req-1056",
+        "req-1057",
+        "req-1101",
+        "req-2772",
+        "req-2773",
+        "req-2774",
+        "req-2775"
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-031, p13-032, p13-107 to p13-110, p13-112 to p13-114"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-040 to p7-042, p7-045, p7-056, p7-057, p7-059"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-033 to p15-036, p15-039, p15-061 to p15-063, p15-066, p15-067"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p2-001 to p2-008, p2-013, p2-025, p2-028"
+        },
+        {
+          "source": "ruling:interaction-designer-2026-11-09",
+          "ref": "ruling-interaction-designer-2026-11-09-p1-040"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "ruling-sam-2026-10-26-p1-002, p1-003, p1-019"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-035, p1-037 to p1-039, p1-101, p1-102"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [
         "Which words the status select uses and what 'Past' holds (c-497, c-498). Default, which the builder follows and says so: 'All statuses', 'Draft', 'Amend', 'Submitted' and 'Past', with 'Past' holding completed notifications only, so choosing it lists none until a real source of completion exists."
       ],
-      "notes": "Combines the disclosure, the arrival-date and date-range filters, their validation, the status select, 'Apply filters', the filtered results with their count and 'Clear filters', and the backend filters, because they share the one form, the list read and the backend query. Date validation is a real constraint the prototype lacks (c-166); the date pickers are the MoJ date picker the interaction designer keeps (c-299). A notification submitted with items outstanding is 'Submitted', and the list has no needs-action filter (c-418). The list endpoint and its query sit in manage-notifications' and overview-and-review's files; this theme lands after both. Under c-496's default the germinal products list copy takes the filters in the same increment once it exists.",
+      "notes": [
+        "Combines the disclosure, the arrival-date and date-range filters, their validation, the status select, 'Apply filters', the filtered results with their count and 'Clear filters', and the backend filters, because they share the one form, the list read and the backend query. Date validation is a real constraint the prototype lacks (c-166); the date pickers are the MoJ date picker the interaction designer keeps (c-299). A notification submitted with items outstanding is 'Submitted', and the list has no needs-action filter (c-418). The list endpoint and its query sit in manage-notifications' and overview-and-review's files; this theme lands after both. Under c-496's default the germinal products list copy takes the filters in the same increment once it exists.",
+        "Stands alone from inc-138: too much for one plan, the merged row would carry 18 criteria.",
+        "Stands alone from inc-141: it carries an open question inc-141 does not.",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
@@ -254,14 +535,7 @@
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
         "tests:tests/animals/e2e/features/notification-dashboard-search.spec.ts"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "frontend:src/server/app/engine/journey.js",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-136"],
+      "shared": [],
       "existingRow": "inc-137"
     },
     {
@@ -276,25 +550,72 @@
         "On the live animals list and on plants' list, a search that matches nothing, with no status filter set, shows the list's controls and no cards, with no text under them. (prototype:dr2-1-source prototype-dr2-1-source-p13-145; document:dr1-parity-backlog document-dr1-parity-backlog-p2-041; repo:frontend repo-frontend-p4-020; repo:plantsfrontend repo-plantsfrontend-p1-015, repo-plantsfrontend-p1-082)",
         "On the live animals list and on plants' list, a tab or list holding no notifications shows no cards and no text under the controls; on the live animals list the tab keeps its subheading and description. (prototype:dr2-1-source prototype-dr2-1-source-p13-119, prototype-dr2-1-source-p13-145; document:dr1-parity-backlog document-dr1-parity-backlog-p2-042; repo:frontend repo-frontend-p4-068; repo:tests repo-tests-p3-120; trace:e2e trace-e2e-p9-097; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-096)"
       ],
-      "requirements": ["req-1063", "req-1064", "req-1066", "req-1067", "req-1068", "req-1069", "req-1103"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-041, p13-042, p13-044, p13-119, p13-145" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p2-037, p2-041, p2-042, p2-042-m1" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p2-039, p2-040, p9-097" },
-        { "source": "repo:frontend", "ref": "features/dashboard (repo-frontend-p4-020, p4-025, p4-035, p4-068, p4-070, p4-071, p4-074)" },
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard (repo-plantsfrontend-p1-013, p1-015, p1-031, p1-057, p1-082, p1-088, p1-092)" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-081, p3-082, p3-092, p3-120" },
-        { "source": "ruling:ian-2026-11-23", "ref": "ruling-ian-2026-11-23-p1-008, p1-010" },
-        { "source": "ruling:ian-2026-11-25", "ref": "ruling-ian-2026-11-25-p1-002, p1-003" },
-        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-092, p3-096" }
+      "requirements": [
+        "req-1063",
+        "req-1064",
+        "req-1066",
+        "req-1067",
+        "req-1068",
+        "req-1069",
+        "req-1103"
       ],
-      "repos": ["backend", "frontend", "plantsfrontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-041, p13-042, p13-044, p13-119, p13-145"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p2-037, p2-041, p2-042, p2-042-m1"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p2-039, p2-040, p9-097"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard (repo-frontend-p4-020, p4-025, p4-035, p4-068, p4-070, p4-071, p4-074)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard (repo-plantsfrontend-p1-013, p1-015, p1-031, p1-057, p1-082, p1-088, p1-092)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-081, p3-082, p3-092, p3-120"
+        },
+        {
+          "source": "ruling:ian-2026-11-23",
+          "ref": "ruling-ian-2026-11-23-p1-008, p1-010"
+        },
+        {
+          "source": "ruling:ian-2026-11-25",
+          "ref": "ruling-ian-2026-11-25-p1-002, p1-003"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-092, p3-096"
+        }
+      ],
+      "repos": [
+        "backend",
+        "plantsfrontend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines page size, numbered pagination, page links that keep the view, and the results-count and empty-list removals, because they change the same list footer, header and paging links on both lists. Page links keep the search and filters because both apply for real (c-163). Plants' list keeps one untabbed list paged at 20 until the plants backend can ask for 8 (c-302, the blocked plants row). Build the numbered pagination in each dashboard feature: the animals frontend's shared paging helper is theme journey-foundation's. The page size the backend serves is its list page size setting. Under c-496's default the germinal products list copy takes the same paging in the same increment once it exists.",
+      "notes": [
+        "Combines page size, numbered pagination, page links that keep the view, and the results-count and empty-list removals, because they change the same list footer, header and paging links on both lists. Page links keep the search and filters because both apply for real (c-163). Plants' list keeps one untabbed list paged at 20 until the plants backend can ask for 8 (c-302, the blocked plants row). Build the numbered pagination in each dashboard feature: the animals frontend's shared paging helper is theme journey-foundation's. The page size the backend serves is its list page size setting. Under c-496's default the germinal products list copy takes the same paging in the same increment once it exists.",
+        "Stands alone from inc-141: a different code area, the live animals list's paging against the germinal set's own list, sharing only the stub list query.",
+        "Re-distil 27 November, second pass: c-496 is now ruled (27 November ruling, point 10): each row that reframes the live animals list also changes the germinal products list copy in the same increment, so the two animals lists stay copies. The germinal list does not exist until the germinal-products theme's list row lands, and that theme waits on this one, so the germinal share of this row's change is built by the germinal reframe row (inc-172), which lands after it; if the combiner lets the germinal list land first, this row takes its germinal criterion instead and adds frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard to its touches."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
@@ -304,157 +625,8 @@
         "tests:tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts",
         "tests:tests/plants/e2e/features/dashboard.spec.ts"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "frontend:src/server/app/shared/paging.js",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-136", "inc-137"],
+      "shared": [],
       "existingRow": "inc-138"
-    },
-    {
-      "title": "The lists' success banner is titled 'Success', and plants' deletion banner reads 'Notification has been deleted'",
-      "detail": "After an action that returns the trader to a list with its flag on the address, such as a delete, the list shows a success banner titled 'Success' with that action's message. Plants' deletion message reads 'Notification has been deleted'. Each list holds this wording in its own copy, so the shared action wording other pages use stays as it is.",
-      "acceptanceCriteria": [
-        "After deleting a notification from the live animals list, the list shows a success notification banner with the role alert, titled 'Success', carrying the delete's message. (prototype:dr2-1-source prototype-dr2-1-source-p13-020; repo:frontend repo-frontend-p4-066; repo:tests repo-tests-p3-099; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-085; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-093)",
-        "After deleting a notification from plants' list, the list shows a success notification banner with the role alert, titled 'Success', reading 'Notification has been deleted', with a Welsh version of both. (repo:plantsfrontend repo-plantsfrontend-p1-034, repo-plantsfrontend-p1-069, repo-plantsfrontend-p1-079; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067, ruling-sam-2026-10-09-pm-p2-069, ruling-sam-2026-10-09-pm-p3-070, ruling-sam-2026-10-09-pm-p3-101)",
-        "Opening either list without an action's flag on its address shows no success banner. (repo:frontend repo-frontend-p4-066; repo:plantsfrontend repo-plantsfrontend-p1-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067)"
-      ],
-      "requirements": ["req-1086", "req-2032"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-020" },
-        { "source": "repo:frontend", "ref": "features/dashboard controller (repo-frontend-p4-066)" },
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard template and controller (repo-plantsfrontend-p1-034, p1-069, p1-079)" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-099" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-085" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-067, p2-069, p3-070, p3-093, p3-101" }
-      ],
-      "repos": ["frontend", "plantsfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines the 'Success' title on both lists with plants' deletion message, because both change the same banner on plants' list. Takes plants' deletion message out of inc-126: that row keeps the other sets' deletion wording and the amend, cancel and delete walks; this row is the only one of this area's that changes plants' banner. The banner keeps being triggered by the action's flag on the redirect, and is never dismissed by itself or held to show once (c-252). Each list feature holds its own banner wording; the shared notificationActions wording (shared copy and layout, theme journey-foundation's) stays as it is. The Welsh strings are machine drafts that ship only once a translator signs them off.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "tests:page-objects/plants/dashboard-page.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/shared/copy.en.js",
-        "frontend:src/server/app/shared/layout.njk",
-        "plantsfrontend:src/server/app/shared/copy.en.js"
-      ],
-      "dependsOn": ["inc-129"],
-      "existingRow": "inc-140"
-    },
-    {
-      "title": "Each set stores the category it creates a draft with",
-      "detail": "A draft started in the live-animals set is stored with the category live animals, and one started in the germinal products set with the category germinal products, so each notification can reach its own list.",
-      "acceptanceCriteria": [
-        "A draft started from the live-animals set's 'Create new' is stored with the category live animals. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, ruling-sam-2026-10-09-p1-030; repo:frontend repo-frontend-p4-001)",
-        "A draft started in the germinal products set is stored with the category germinal products. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-029, ruling-sam-2026-10-09-p1-030)"
-      ],
-      "requirements": ["req-1856", "req-1857"],
-      "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, p1-029, p1-030" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p4-001" }
-      ],
-      "repos": ["backend", "frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "This area's share of inc-176, the germinal set's skeleton, which carries the category on create beside its other requirements: keep it there. The category is read back from the stored record, as the animals backend's list returns it (cards row). A record with no category counts as live animals wherever a list reads it. The backend's record and create path sit in theme overview-and-review's files and the stub create in manage-notifications'; inc-176 already waits on overview-and-review through its externalDependsOn.",
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products",
-        "frontend:src/server/app/services/persistence/records/real/lifecycle/mutate.js",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java",
-        "tests:tests/animals/e2e/germinal-products"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java"
-      ],
-      "dependsOn": [],
-      "existingRow": "inc-176"
-    },
-    {
-      "title": "The germinal products set's root shows its own notification list, a copy of today's live animals list",
-      "detail": "The germinal products set gets its own notification list at its root in the animals frontend, copying the live animals list as it is now, with wording for germinal products and a start button that starts a germinal products notification. Each animals list shows only its own category's notifications, so a germinal products notification never reaches the live animals list.",
-      "acceptanceCriteria": [
-        "A signed-in trader opening the germinal products set's root sees the germinal products notification list there, served by the animals frontend at that address. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008, ruling-sam-2026-10-09-p1-057; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-103, ruling-sam-2026-10-09-pm-p3-104)",
-        "The germinal products list has the caption 'Dashboard', an h1 and an introduction naming germinal products, a start button, the keyword or reference search, the sort with its 'Update sort' button, the results count, a summary card per notification with its facts, status tag and status-driven actions, Previous and Next paging, the empty-list text and the deletion banner, each as the live animals list has it. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-021, ruling-sam-2026-11-27-p1-022; repo:frontend repo-frontend-p4-003, repo-frontend-p4-005, repo-frontend-p4-013, repo-frontend-p4-029, repo-frontend-p4-037, repo-frontend-p4-039, repo-frontend-p4-051, repo-frontend-p4-066, repo-frontend-p4-068, repo-frontend-p4-071)",
-        "Pressing the germinal products list's start button starts a germinal products notification in the germinal products set. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-022; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104; repo:frontend repo-frontend-p4-007)",
-        "The germinal products list shows only germinal products notifications, and the live animals list shows only live animals notifications, a notification stored with no category among them. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-017; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105, ruling-sam-2026-10-09-pm-p3-112)"
-      ],
-      "requirements": ["req-2768", "req-1851", "req-1736", "req-1093"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-015, p13-017" },
-        { "source": "repo:frontend", "ref": "the live-animals dashboard feature (repo-frontend-p4-001 to p4-071)" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-008, p1-023, p1-029, p1-057" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-103 to p3-105, p3-112" },
-        { "source": "ruling:sam-2026-11-27", "ref": "ruling-sam-2026-11-27-p1-021, p1-022" }
-      ],
-      "repos": ["backend", "frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines the germinal list copy with the category split of both animals lists, because the copy is only right once the list read filters by category. The 27 November ruling ships the germinal list now as a copy of the live animals list on main, without waiting for the reframe rows (c-495), so this row depends only on inc-176 (the germinal set and the category on create). Under c-496's default every later reframe row changes this copy in the same increment, so the germinal dashboard folder is in those rows' shared code: the combiner should let this folder's theme land before theme animals-dashboard, or put this row in animals-dashboard, rather than keep germinal-products waiting on animals-dashboard. The backend's category filter is the list query (overview-and-review's service file); the reframed germinal list, with its own card facts, is the germinal card row.",
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
-        "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
-        "frontend:src/server/app/services/persistence/records/stub/list-query.js",
-        "tests:tests/animals/e2e/germinal-products"
-      ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard"
-      ],
-      "dependsOn": ["inc-176"],
-      "existingRow": "inc-141"
-    },
-    {
-      "title": "The germinal products list takes the reframed frame, with its own card facts",
-      "detail": "Once the live animals list is reframed, the germinal products copy follows it: the h1 'Germinal products', the same search, sort, filters and tabs at its own address, and a card showing the species and product type as its commodity and the number of packages as its quantity.",
-      "acceptanceCriteria": [
-        "The germinal products list has the caption 'Dashboard', the h1 'Germinal products', the live animals list's search, sort, additional filters and tabs pointing at its own address, and a 'Create new' button that starts a germinal products notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-103, ruling-sam-2026-10-09-pm-p3-104)",
-        "A germinal products card shows its quantity as 'Quantity (unit/pieces)', the notification's total number of packages across its lines. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105)",
-        "A germinal products card's commodity is the species, then the product type, separated by a comma, such as 'Cattle, Semen'. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105)"
-      ],
-      "requirements": ["req-1092", "req-1737", "req-1738"],
-      "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-029" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-103 to p3-105" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [
-        "Whether the reframe rows carry the germinal products list with them (c-496). Default, which the builder follows and says so: yes, each reframe row changes the germinal copy in the same increment, so this row builds whatever of the reframed frame and card facts is left once those rows have landed."
-      ],
-      "notes": "Every requirement here is a question with a default, so none is on the area's to-build list; drafted so the reframed germinal list keeps its row. Its backend facts (packages, species, product type) come from the cards row. Depends on the germinal list row and on every reframe row. Check the cited claims against the germinal requirements before planning: the card fact claims may be re-cited by the combiner.",
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard",
-        "tests:tests/animals/e2e/germinal-products"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row"
-      ],
-      "dependsOn": ["inc-141", "inc-129", "inc-130", "inc-135", "inc-136", "inc-137", "inc-138"],
-      "existingRow": "inc-172"
     },
     {
       "title": "The live animals list's Summary shows 'Action needed' and 'Status updated' glance cards",
@@ -463,16 +635,41 @@
         "The live animals list has an h2 'Summary' with two glance cards: 'Action needed' with 'Tasks requiring your attention' and a 'View tasks' link to the action-needed list for live animals, and 'Status updated' with 'Changes in the past 24 hours' and a 'View updates' link to the changes list for live animals. (prototype:dr2-1-source prototype-dr2-1-source-p13-024, prototype-dr2-1-source-p13-123; prototype:dr2-1-specs prototype-dr2-1-specs-p7-027, prototype-dr2-1-specs-p7-028, prototype-dr2-1-specs-p7-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-026, trace-prototype-dr2-1-p15-027; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-075, ruling-sam-2026-10-09-pm-p3-099)",
         "The 'Action needed' card shows the number of live animals notifications that need something from the trader, the same number the list its link opens holds. (prototype:dr2-1-source prototype-dr2-1-source-p13-025, prototype-dr2-1-source-p13-069; document:dr1-parity-backlog document-dr1-parity-backlog-p3-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-078; ruling:sam-2026-11-16 ruling-sam-2026-11-16-p1-018)"
       ],
-      "requirements": ["req-1039", "req-1040"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-024, p13-025, p13-069, p13-123" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-027 to p7-029" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-026, p15-027" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-031" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-075, p3-078, p3-099" },
-        { "source": "ruling:sam-2026-11-16", "ref": "ruling-sam-2026-11-16-p1-007, p1-018, p1-019" }
+      "requirements": [
+        "req-1039",
+        "req-1040"
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-024, p13-025, p13-069, p13-123"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-027 to p7-029"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-026, p15-027"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p3-031"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-075, p3-078, p3-099"
+        },
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "ruling-sam-2026-11-16-p1-007, p1-018, p1-019"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -480,16 +677,14 @@
         "Blocked: the front door's dashboard requirements must firm up (Sam, 9 October). Who: Sam and the people those requirements are agreed with. Once they exist this summary information is re-distilled, and what the Summary shows, where its counts come from and which pages its links open are decided then.",
         "Blocked as well for the 'Action needed' count: the outstanding-actions banner the dashboard designs under test introduce must be agreed (Sam, 16 November), because nothing action-required is shown until then. Who: Sam and the designers taking those designs through test."
       ],
-      "notes": "Kept apart from the rows that build now because both requirements wait on a blocker. The 'Status updated' count waits with the authorities' outcomes row.",
+      "notes": [
+        "Kept apart from the rows that build now because both requirements wait on a blocker. The 'Status updated' count waits with the authorities' outcomes row."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java"
-      ],
-      "dependsOn": ["inc-129", "inc-130"],
+      "shared": [],
       "existingRow": "inc-139"
     },
     {
@@ -501,19 +696,56 @@
         "A delayed or finished notification's card offers a single 'View' link, which opens the notification's review page. (prototype:dr2-1-source prototype-dr2-1-source-p13-126; repo:frontend repo-frontend-p4-054; trace:animals-fit trace-animals-fit-p2-088; trace:e2e trace-e2e-p3-093)",
         "The 'Status updated' glance card shows the number of live animals notifications whose status changed in the past 24 hours, the same number the list its link opens holds. (prototype:dr2-1-source prototype-dr2-1-source-p13-025; prototype:dr2-1-specs prototype-dr2-1-specs-p7-029; document:dr1-parity-backlog document-dr1-parity-backlog-p3-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-078, ruling-sam-2026-10-09-pm-p3-080)"
       ],
-      "requirements": ["req-1081", "req-1082", "req-1085", "req-1735", "req-1739"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-025, p13-052, p13-065, p13-118, p13-120, p13-121, p13-126" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p7-029, p7-038" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p15-059" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p2-088" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p3-093" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-031, p3-032" },
-        { "source": "repo:frontend", "ref": "features/dashboard view-model/row/actions.js (repo-frontend-p4-054)" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-078, p3-080" },
-        { "source": "ruling:sam-2026-11-16", "ref": "ruling-sam-2026-11-16-p1-017, p1-020" }
+      "requirements": [
+        "req-1081",
+        "req-1082",
+        "req-1085",
+        "req-1735",
+        "req-1739"
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-025, p13-052, p13-065, p13-118, p13-120, p13-121, p13-126"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-029, p7-038"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-059"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p2-088"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p3-093"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p3-031, p3-032"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "features/dashboard view-model/row/actions.js (repo-frontend-p4-054)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-078, p3-080"
+        },
+        {
+          "source": "ruling:sam-2026-11-16",
+          "ref": "ruling-sam-2026-11-16-p1-017, p1-020"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -524,17 +756,14 @@
         "Whether the finished status reads 'Past' (c-497) and what the 'Past' tab holds (c-498). Default: 'Past', a green tag, holding completed notifications only.",
         "Whether plants' card follows the 'Past' status is decided when this unblocks."
       ],
-      "notes": "Kept apart because every requirement here waits on the authorities' outcome feed. The single 'View' covers only the statuses the service does not have yet; drafts, submitted and amending cards keep their status-driven actions (c-160). The 'Inspection required' card is out of scope now, so it leaves this row.",
+      "notes": [
+        "Kept apart because every requirement here waits on the authorities' outcome feed. The single 'View' covers only the statuses the service does not have yet; drafts, submitted and amending cards keep their status-driven actions (c-160). The 'Inspection required' card is out of scope now, so it leaves this row."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java"
-      ],
-      "dependsOn": ["inc-130", "inc-135", "inc-139"],
+      "shared": [],
       "existingRow": "inc-142"
     },
     {
@@ -545,12 +774,25 @@
         "Plants' list shows 8 notifications a page. (repo:plantsfrontend repo-plantsfrontend-p1-031, repo-plantsfrontend-p1-056; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-072, ruling-sam-2026-10-09-pm-p3-073)",
         "Plants' list has one 'Search by' GET form with its hint and icon-only search button, a keyword search over the reference, commodity and consignor, the sorts 'Newest first', 'Oldest first' and 'Arrival date' applied by that form, the 'Additional filters', and page links that keep them. (repo:plantsfrontend repo-plantsfrontend-p1-011; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-039, ruling-sam-2026-10-09-pm-p3-074, ruling-sam-2026-10-09-pm-p3-097)"
       ],
-      "requirements": ["req-2034", "req-2035", "req-2036"],
-      "sources": [
-        { "source": "repo:plantsfrontend", "ref": "features/dashboard (repo-plantsfrontend-p1-011, p1-025, p1-029, p1-031, p1-032, p1-056)" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-039, p3-072 to p3-074, p3-097" }
+      "requirements": [
+        "req-2034",
+        "req-2035",
+        "req-2036"
       ],
-      "repos": ["plantsfrontend", "tests"],
+      "sources": [
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "features/dashboard (repo-plantsfrontend-p1-011, p1-025, p1-029, p1-031, p1-032, p1-056)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-039, p3-072 to p3-074, p3-097"
+        }
+      ],
+      "repos": [
+        "plantsfrontend",
+        "tests"
+      ],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
@@ -558,24 +800,192 @@
         "Blocked: the plants backend (trade-imports-plants-backend), outside this programme, must let plants' list query plants notifications by status for the tabs and their counts, ask for a page size of 8, and search by keyword, status and arrival date with the new sorts (the plants read model in deferred.md). Who: that backend's owners. Until then plants' list keeps today's search, sort and paging.",
         "Which words the tabs use (c-497). Default: the live animals list's tabs as built."
       ],
-      "notes": "Kept apart because all three requirements wait on the plants backend (c-302).",
+      "notes": [
+        "Kept apart because all three requirements wait on the plants backend (c-302)."
+      ],
       "touches": [
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
         "tests:tests/plants/e2e/features/dashboard.spec.ts"
       ],
-      "shared": [
-        "plantsfrontend:src/server/app/shared/paths.js"
-      ],
-      "dependsOn": ["inc-135", "inc-136", "inc-137", "inc-138"],
+      "shared": [],
       "existingRow": "inc-200"
+    },
+    {
+      "title": "The germinal products set's root shows its own notification list, a copy of today's live animals list",
+      "detail": "The germinal products set gets its own notification list at its root in the animals frontend, copying the live animals list as it is now, with wording for germinal products and a start button that starts a germinal products notification. Each animals list shows only its own category's notifications, so a germinal products notification never reaches the live animals list.",
+      "acceptanceCriteria": [
+        "A signed-in trader opening the germinal products set's root sees the germinal products notification list there, served by the animals frontend at that address. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008, ruling-sam-2026-10-09-p1-057; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-103, ruling-sam-2026-10-09-pm-p3-104)",
+        "The germinal products list has the caption 'Dashboard', an h1 and an introduction naming germinal products, a start button, the keyword or reference search, the sort with its 'Update sort' button, the results count, a summary card per notification with its facts, status tag and status-driven actions, Previous and Next paging, the empty-list text and the deletion banner, each as the live animals list has it. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-021, ruling-sam-2026-11-27-p1-022; repo:frontend repo-frontend-p4-003, repo-frontend-p4-005, repo-frontend-p4-013, repo-frontend-p4-029, repo-frontend-p4-037, repo-frontend-p4-039, repo-frontend-p4-051, repo-frontend-p4-066, repo-frontend-p4-068, repo-frontend-p4-071)",
+        "Pressing the germinal products list's start button starts a germinal products notification in the germinal products set. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-022; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104; repo:frontend repo-frontend-p4-007)",
+        "The germinal products list shows only germinal products notifications, and the live animals list shows only live animals notifications, a notification stored with no category among them. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-017; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, ruling-sam-2026-10-09-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105, ruling-sam-2026-10-09-pm-p3-112)"
+      ],
+      "requirements": [
+        "req-2768",
+        "req-1851",
+        "req-1736",
+        "req-1093"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-015, p13-017"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "the live-animals dashboard feature (repo-frontend-p4-001 to p4-071)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-008, p1-023, p1-029, p1-057"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-103 to p3-105, p3-112"
+        },
+        {
+          "source": "ruling:sam-2026-11-27",
+          "ref": "ruling-sam-2026-11-27-p1-021, p1-022"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combiner, re-distil 27 November: the germinal list now ships as a copy of the live animals list as it stands, without waiting for the reframe rows (c-495), so this row depends only on the germinal set's first row. The germinal-products theme still lands after animals-dashboard, because the set's first row waits on three of its rows, so the copy is taken from the reframed list.",
+        "Combines the germinal list copy with the category split of both animals lists, because the copy is only right once the list read filters by category. The 27 November ruling ships the germinal list now as a copy of the live animals list on main, without waiting for the reframe rows (c-495), so this row depends only on inc-176 (the germinal set and the category on create). Under c-496's default every later reframe row changes this copy in the same increment, so the germinal dashboard folder is in those rows' shared code: the combiner should let this folder's theme land before theme animals-dashboard, or put this row in animals-dashboard, rather than keep germinal-products waiting on animals-dashboard. The backend's category filter is the list query (overview-and-review's service file); the reframed germinal list, with its own card facts, is the germinal card row.",
+        "Stands alone from inc-172 and inc-184: they carry open questions this row does not.",
+        "Stands alone from inc-176 and inc-181: too much for one plan, the merged row would carry more than about 15 criteria.",
+        "Stands alone from inc-177, inc-178, inc-179, inc-182, inc-283, inc-183 and inc-185: a different code area, the germinal list against journey pages, sharing only the germinal end-to-end folder or one spec."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
+        "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
+        "frontend:src/server/app/services/persistence/records/stub/list-query.js",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-141"
+    },
+    {
+      "title": "The germinal products list takes the reframed live animals list, with its own card facts",
+      "detail": "The germinal products list at the germinal set's root stays a copy of the live animals list. Once the live animals list is reframed, the germinal copy follows it: the 'Dashboard' caption, the h1 'Germinal products', 'Create new', the 'Notifications' section with the same search, sort, additional filters, tabs, paging and success banner at its own address, and cards whose commodity is the species and product type and whose quantity is the total in units or pieces.",
+      "acceptanceCriteria": [
+        "A signed-in trader opening the germinal products list sees the browser title 'Dashboard - Import notification service - GOV.UK', the caption 'Dashboard' and the h1 'Germinal products', followed straight away by a primary 'Create new' button. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-021, prototype-dr2-1-source-p13-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-068; prototype:dr2-1-specs prototype-dr2-1-specs-p7-060; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-103)",
+        "Pressing 'Create new' on the germinal products list starts a germinal products notification with the status Draft in the germinal products set and lands on that set's first journey page. (prototype:dr2-1-source prototype-dr2-1-source-p13-022; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104, ruling-sam-2026-10-09-pm-p3-109)",
+        "The germinal products list has the live animals list's 'Notifications' section: the same 'Search by' search, 'Sort by:' sort, 'Additional filters', tabs, filtered results and numbered pagination of 8 a page, each submitting to and linking within the germinal products list's own address and listing only germinal products notifications. (trace:prototype-dr2-1 trace-prototype-dr2-1-p15-069; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-102; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-027)",
+        "Each germinal products card has the accessible name 'Notification <reference>', the reference as its h3, and the live animals card's facts and status tags, with 'Quantity (unit/pieces)' in place of 'Number of animals'. (prototype:dr2-1-source prototype-dr2-1-source-p13-133; prototype:dr2-1-specs prototype-dr2-1-specs-p7-062; repo:frontend repo-frontend-p4-039; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-027)",
+        "A germinal products card's 'Quantity (unit/pieces)' is the total of the quantities in units or pieces across the notification's commodity lines, and 'Not applicable' while no line has one. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-070; ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-004)",
+        "A germinal products card's 'Commodity' is the species, then the product type, separated by a comma, such as 'Cattle, Semen'. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-105; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-070; prototype:dr2-1-specs prototype-dr2-1-specs-p7-063)",
+        "After deleting a germinal products notification, the germinal products list shows the success notification banner titled 'Success' that the live animals list shows. (ruling:sam-2026-11-27 ruling-sam-2026-11-27-p1-027; prototype:dr2-1-source prototype-dr2-1-source-p13-020)"
+      ],
+      "requirements": [
+        "req-1092",
+        "req-1737",
+        "req-1738"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p13-015, p13-020 to p13-022, p13-133"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p7-060, p7-062, p7-063"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-068 to p15-070"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p4-039"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-006, p1-029, p1-102"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-103 to p3-105, p3-109"
+        },
+        {
+          "source": "ruling:sam-2026-11-27",
+          "ref": "ruling-sam-2026-11-27-p1-004, p1-027"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [
+        "Which words the tabs and status filter use and what 'Past' holds (c-497, c-498). Default, which the builder follows and says so: the live animals list's tabs, status filter and 'Past' as built by the tabs and filters rows."
+      ],
+      "notes": [
+        "Second re-distil pass 27 November: req-1092, req-1737 and req-1738 are now adopted. c-496 is ruled (27 November ruling, point 10): each row that reframes the live animals list changes the germinal products copy in the same increment, so the two animals lists stay copies. But the germinal list (inc-141) lives in theme germinal-products, which waits on theme animals-dashboard (inc-176 depends on inc-129, inc-126 and inc-135), so the reframe rows land before any germinal copy exists. This row is therefore where the germinal copy takes the reframe, once inc-141 has landed. It depends on inc-141 and on every reframe row: inc-126, inc-129, inc-135, inc-136, inc-137 and inc-138. If the combiner lets the germinal list land before animals-dashboard, it should instead fold each criterion here into the matching reframe row and drop this row's requirements into them. Its backend facts (total quantity, species, product type, category) come from the cards row (inc-126, req-1098). The deletion message wording on the germinal list is req-2860, another area's question.",
+        "Combiner, re-distil 27 November, after the reconciler's send-back: c-234 makes the card's quantity the total of the lines' quantities in units or pieces (req-1737), so the card criterion reads that total.",
+        "Stands alone from inc-177, inc-178, inc-179, inc-181, inc-182, inc-283, inc-183, inc-184 and inc-185: it carries an open question those rows do not (inc-184 carries a different one of its own).",
+        "Stands alone from inc-176: too much for one plan, inc-176 already carries 27 criteria."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/dashboard",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-172"
+    },
+    {
+      "title": "Each animals set stores its category on the drafts it creates",
+      "detail": "The live animals set and the germinal products set each tell the animals backend which category a new draft belongs to, so each list can show only its own notifications. A record with no category still counts as live animals. This is the notification-list area's share of the germinal set's first row.",
+      "acceptanceCriteria": [
+        "A draft the germinal products set creates is stored with the category germinal products, and a draft the live-animals set creates is stored with the category live animals. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-029, ruling-sam-2026-10-09-p1-030; repo:frontend repo-frontend-p4-001)"
+      ],
+      "requirements": [
+        "req-1856",
+        "req-1857"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-006, p1-029, p1-030"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p4-001"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "This area's share of inc-176, the germinal set's first row, which already holds req-1856 and req-1857: the combiner merges it there and keeps inc-176's id, theme, gate, dependencies and its criterion on the stored category, taking out any criterion stated twice. That each list then shows only its own category is inc-141's criterion, since the germinal list lands after this row. Neither requirement changed in this pass."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products",
+        "frontend:src/server/app/services/persistence/records/real/lifecycle/mutate.js",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-176"
     }
   ],
   "unobservable": [],
-  "splitOff": [
-    {
-      "requirement": "req-1852",
-      "theme": "manage-notifications",
-      "why": "Its code is the k6 journey script's list reads, crumb and reference search in perftests src/k6/journeys.js, which theme manage-notifications owns."
-    }
-  ]
+  "splitOff": []
 }
